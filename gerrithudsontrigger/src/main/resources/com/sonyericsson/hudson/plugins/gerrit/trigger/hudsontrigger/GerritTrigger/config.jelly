@@ -1,0 +1,162 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <!--<j:set var="descriptor" value="${it.descriptor}" />-->
+    <j:set var="types" value="${descriptor.getCompareTypes()}"/>
+    <f:section title="Gerrit Trigger">
+        <f:advanced>
+            <f:section title="Gerrit Reporting Values">
+                <f:entry title="${%Build Started Verified}"
+                         field="gerritBuildStartedVerifiedValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildStartedVerified.html">
+                    <f:textbox name="gerritBuildStartedVerifiedValue"
+                               value="${it.gerritBuildStartedVerifiedValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Started Code Review}"
+                         field="gerritBuildStartedCodeReviewValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildStartedCodeReview.html">
+                    <f:textbox name="gerritBuildStartedCodeReviewValue"
+                               value="${it.gerritBuildStartedCodeReviewValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Successful Verified}"
+                         field="gerritBuildSuccessfulVerifiedValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulVerified.html">
+                    <f:textbox name="gerritBuildSuccessfulVerifiedValue"
+                               value="${it.gerritBuildSuccessfulVerifiedValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Successful Code Review}"
+                         field="gerritBuildSuccessfulCodeReviewValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulCodeReview.html">
+                    <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
+                               value="${it.gerritBuildSuccessfulCodeReviewValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Failed Verified}"
+                         field="gerritBuildFailedVerifiedValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildFailedVerified.html">
+                    <f:textbox name="gerritBuildFailedVerifiedValue"
+                               value="${it.gerritBuildFailedVerifiedValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Failed Code Review}"
+                         field="gerritBuildFailedCodeReviewValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildFailedCodeReview.html">
+                    <f:textbox name="gerritBuildFailedCodeReviewValue"
+                               value="${it.gerritBuildFailedCodeReviewValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Unstable Verified}"
+                         field="gerritBuildUnstableVerifiedValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableVerified.html">
+                    <f:textbox name="gerritBuildUnstableVerifiedValue"
+                               value="${it.gerritBuildUnstableVerifiedValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Build Unstable Code Review}"
+                         field="gerritBuildUnstableCodeReviewValue"
+                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableCodeReview.html">
+                    <f:textbox name="gerritBuildUnstableCodeReviewValue"
+                               value="${it.gerritBuildUnstableCodeReviewValue}"
+                               default=""
+                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+            </f:section>
+        </f:advanced>
+        <f:entry>
+            <f:repeatable var="p" field="gerritProjects" add="Add Project" minimum="1" header="Gerrit Project">
+                <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;">
+                    <tr>
+                        <th style="border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid grey;">
+                            <f:repeatableDeleteButton/>
+                        </th>
+                        <th style="border-top: 1px solid black; border-bottom: 1px solid grey;">
+                            Type
+                        </th>
+                        <th style="border-top: 1px solid black; border-bottom: 1px solid grey;">
+                            Pattern
+                        </th>
+                        <th style="border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid grey;">
+                            Branches
+                        </th>
+                    </tr>
+                    <tr>
+                        <td valign="top" style="border-left: 1px solid black; border-bottom: 1px solid black;" rowspan="2">
+                            <st:nbsp/>
+                        </td>
+                        <td valign="top" style="border-bottom: 1px solid black;" rowspan="2">
+                            <select class="setting-input" name="_.compareType">
+                                <j:forEach items="${types}" var="me">
+                                    <j:choose>
+                                        <j:when test="${loop.getCompareType().name()==me.name()}">
+                                            <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                        </j:when>
+                                        <j:otherwise>
+                                            <option value="${me.name()}">${me.getDisplayName()}</option>
+                                        </j:otherwise>
+                                    </j:choose>
+                                </j:forEach>
+                            </select>
+                        </td>
+                        <td width="150" valign="top" style="border-bottom: 1px solid black;" rowspan="2">
+                            <f:textbox field="pattern" value="${p.pattern}"/>
+                        </td>
+                        <td style="border-right: 1px solid black; border-left: 1px solid grey;">
+                            <table style="margin-top: 0; margin-bottom: 0; width: 100%;" cellspacing="0" cellpadding="2">
+                                <tr>
+                                    <th style="border-bottom: 1px solid grey;">
+                                        Type
+                                    </th>
+                                    <th width="150" style="border-bottom: 1px solid grey;">
+                                        Pattern
+                                    </th>
+                                    <th style="border-bottom: 1px solid grey;" width="65">
+                                        <st:nbsp/>
+                                    </th>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="top" style="border-left: 1px solid grey; border-right: 1px solid black; border-bottom: 1px solid black;">
+                            <f:repeatable var="b" field="branches" add="Add Branch" minimum="1" header="">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            <select class="setting-input" name="_.compareType">
+                                                <j:forEach items="${types}" var="me">
+                                                    <j:choose>
+                                                        <j:when test="${loop.getCompareType().name()==me.name()}">
+                                                            <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                                        </j:when>
+                                                        <j:otherwise>
+                                                            <option value="${me.name()}">${me.getDisplayName()}</option>
+                                                        </j:otherwise>
+                                                    </j:choose>
+                                                </j:forEach>
+                                            </select>
+                                        </td>
+                                        <td width="150">
+                                            <f:textbox field="pattern" value="${p.pattern}"/>
+                                        </td>
+                                        <td>
+                                            <f:repeatableDeleteButton/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </f:repeatable>
+                        </td>
+                    </tr>
+                </table>
+            </f:repeatable>
+        </f:entry>
+    </f:section>
+</j:jelly>

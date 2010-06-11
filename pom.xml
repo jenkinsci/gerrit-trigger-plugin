@@ -1,0 +1,179 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+    <artifactId>gerrit-trigger-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Gerrit Trigger Pom</name>
+    <url>http://wiki.hudson-ci.org/display/HUDSON/Gerrit+Trigger</url>
+
+    <parent>
+        <groupId>org.jvnet.hudson.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.360</version><!-- which version of Hudson is this plugin built against? -->
+        <!--<relativePath>../pom.xml</relativePath>-->
+    </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <comments>Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>rsandell</id>
+            <name>Robert Sandell</name>
+            <email>robert.sandell@sonyericsson.com</email>
+            <organization>Sony Ericsson</organization>
+            <url>http://www.linkedin.com/in/robertsandell</url>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>maintainer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>glundh</id>
+            <name>Gustaf Lundh</name>
+            <email>gustaf.lundh@sonyericsson.com</email>
+            <organization>Sony Ericsson</organization>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <!-- get every artifact through maven.glassfish.org, which proxies all the artifacts that we need -->
+    <repositories>
+        <repository>
+            <id>m.g.o-public</id>
+            <url>http://maven.glassfish.org/content/groups/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>m.g.o-public</id>
+            <url>http://maven.glassfish.org/content/groups/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.15</version>
+            <exclusions>
+                <exclusion>
+                    <groupId></groupId>
+                    <artifactId></artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jms</artifactId>
+                    <groupId>javax.jms</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jmxri</artifactId>
+                    <groupId>com.sun.jmx</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jmxtools</artifactId>
+                    <groupId>com.sun.jdmk</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>cobertura-maven-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <configLocation>swe_checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                    <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+                    <!--<failsOnError>true</failsOnError>-->
+                </configuration>
+            </plugin>
+            <!--<plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.4</version>
+            </plugin>-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.0.1</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <!-- Optional derectory to put findbugs xdoc xml report -->
+                    <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </reporting>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+                <artifactId>gerrit-events</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+                <artifactId>build-config</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>build-config</module>
+        <module>gerrit-events</module>
+        <module>gerrithudsontrigger</module>
+    </modules>
+</project>

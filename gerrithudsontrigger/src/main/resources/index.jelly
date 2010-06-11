@@ -1,0 +1,3 @@
+<div>
+  This plugin allows triggering of builds from Gerrit change requests. Results are reported back to Gerrit and Verified is set.
+</div>

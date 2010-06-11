@@ -1,0 +1,151 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+    <artifactId>gerrit-events</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <name>Gerrit Events</name>
+
+    <parent>
+        <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+        <artifactId>gerrit-trigger-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <comments>Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.</comments>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>rsandell</id>
+            <name>Robert Sandell</name>
+            <email>robert.sandell@sonyericsson.com</email>
+            <organization>Sony Ericsson</organization>
+            <url>http://www.linkedin.com/in/robertsandell</url>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+                <role>maintainer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+        <developer>
+            <id>glundh</id>
+            <name>Gustaf Lundh</name>
+            <email>gustaf.lundh@sonyericsson.com</email>
+            <organization>Sony Ericsson</organization>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+            <timezone>+1</timezone>
+        </developer>
+    </developers>
+
+    <dependencies>
+        <!-- <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>1.1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>apache-sshd</artifactId>
+            <version>0.3.0</version>
+        </dependency>-->
+        <dependency>
+            <groupId>sshtools</groupId>
+            <artifactId>j2ssh-common</artifactId>
+            <version>0.2.2</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>sshtools</groupId>
+            <artifactId>j2ssh-core</artifactId>
+            <version>0.2.2</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.42</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.15</version>
+            <exclusions>
+                <exclusion>
+                    <groupId></groupId>
+                    <artifactId></artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jms</artifactId>
+                    <groupId>javax.jms</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jmxri</artifactId>
+                    <groupId>com.sun.jmx</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jmxtools</artifactId>
+                    <groupId>com.sun.jdmk</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.5.11</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.json-lib</groupId>
+            <artifactId>json-lib</artifactId>
+            <classifier>jdk15</classifier>
+            <version>2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.5</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+                        <artifactId>build-config</artifactId>
+                        <version>1.0-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <goals><goal>checkstyle</goal></goals>
+                        <phase>compile</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+
+
+
