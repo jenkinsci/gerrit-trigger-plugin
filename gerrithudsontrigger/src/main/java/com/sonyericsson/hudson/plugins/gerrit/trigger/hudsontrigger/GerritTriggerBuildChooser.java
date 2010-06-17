@@ -36,6 +36,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     public GerritTriggerBuildChooser() {
     }
 
+    //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative, and could happen.
     /**
      * Determines which Revisions to build.
      *
@@ -91,6 +92,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
         return newLastBuild;
     }
 
+    //CS IGNORE RedundantThrows FOR NEXT 20 LINES. REASON: Informative, and could happen.
     /**
      * Gets the top parent of the given revision.
      *
