@@ -113,27 +113,27 @@
                     </f:section>
                     <f:advanced>
                         <f:section title="Gerrit Commands">
-                            <f:entry title="${%GerritVerifiedCmdBuildStarted}"
+                            <f:entry title="${%Gerrit Verified Cmd for Build Started}"
                                      help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
-                                <f:textbox name="GerritVerifiedCmdBuildStarted"
+                                <f:textbox name="gerritVerifiedCmdBuildStarted"
                                            value="${it.config.gerritCmdBuildStarted}"
                                            default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                             </f:entry>
-                            <f:entry title="${%GerritVerifiedCmdBuildFailed}"
+                            <f:entry title="${%Gerrit Verified Cmd for Build Failed}"
                                      help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
-                                <f:textbox name="GerritVerifiedCmdBuildFailed"
+                                <f:textbox name="gerritVerifiedCmdBuildFailed"
                                            value="${it.config.gerritCmdBuildFailed}"
                                            default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                             </f:entry>
-                            <f:entry title="${%GerritVerifiedCmdBuildUnstable}"
+                            <f:entry title="${%Gerrit Verified Cmd for Build Unstable}"
                                      help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
-                                <f:textbox name="GerritVerifiedCmdBuildUnstable"
+                                <f:textbox name="gerritVerifiedCmdBuildUnstable"
                                            value="${it.config.gerritCmdBuildUnstable}"
                                            default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                             </f:entry>
-                            <f:entry title="${%GerritVerifiedCmdBuildSuccessful}"
+                            <f:entry title="${%Gerrit Verified Cmd for Build Successful}"
                                      help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
-                                <f:textbox name="GerritVerifiedCmdBuildSuccessful"
+                                <f:textbox name="gerritVerifiedCmdBuildSuccessful"
                                            value="${it.config.gerritCmdBuildSuccessful}"
                                            default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                             </f:entry>

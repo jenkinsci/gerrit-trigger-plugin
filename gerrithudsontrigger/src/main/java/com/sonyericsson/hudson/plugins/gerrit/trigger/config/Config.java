@@ -150,19 +150,19 @@ public class Config implements IGerritHudsonTriggerConfig {
                 DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE);
 
         gerritVerifiedCmdBuildStarted = formData.optString(
-                "GerritVerifiedCmdBuildStarted",
+                "gerritVerifiedCmdBuildStarted",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
                 + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildFailed = formData.optString(
-                "GerritVerifiedCmdBuildFailed",
+                "gerritVerifiedCmdBuildFailed",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
                 + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildSuccessful = formData.optString(
-                "GerritVerifiedCmdBuildSuccessful",
+                "gerritVerifiedCmdBuildSuccessful",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
                 + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildUnstable = formData.optString(
-                "GerritVerifiedCmdBuildUnstable",
+                "gerritVerifiedCmdBuildUnstable",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
                 + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(

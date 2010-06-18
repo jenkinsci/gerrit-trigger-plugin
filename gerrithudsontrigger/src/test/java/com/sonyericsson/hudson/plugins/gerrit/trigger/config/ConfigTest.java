@@ -54,13 +54,13 @@ public class ConfigTest {
 
     @Test
     public void testSetValues() {
-        String formString = "{\"GerritVerifiedCmdBuildFailed\":\"gerrit approve <CHANGE>,<PATCHSET> " +
+        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit approve <CHANGE>,<PATCHSET> " +
                 "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"GerritVerifiedCmdBuildStarted\":\"gerrit approve <CHANGE>,<PATCHSET> " +
+                "\"gerritVerifiedCmdBuildStarted\":\"gerrit approve <CHANGE>,<PATCHSET> " +
                 "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"GerritVerifiedCmdBuildSuccessful\":\"gerrit approve <CHANGE>,<PATCHSET>" +
+                "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit approve <CHANGE>,<PATCHSET>" +
                 " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"GerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> " +
+                "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> " +
                 "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
                 "\"gerritAuthKeyFile\":\"/home/local/hudsongerrit/.ssh/id_rsa\"," +
                 "\"gerritAuthKeyFilePassword\":\"passis\"," +

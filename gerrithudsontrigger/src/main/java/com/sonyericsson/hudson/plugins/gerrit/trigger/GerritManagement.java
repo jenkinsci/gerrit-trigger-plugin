@@ -180,8 +180,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             if (SshUtil.checkPassPhrase(file, password)) {
                 if (file.exists() && file.isFile()) {
                     try {
-                        new SshConnection(gerritHostName, gerritSshPort,
+                        SshConnection sshConnection = new SshConnection(gerritHostName, gerritSshPort,
                                 new Authentication(file, gerritUserName, password));
+                        sshConnection.disconnect();
                         return FormValidation.ok("Success");
 
                     } catch (SshConnectException ex) {
