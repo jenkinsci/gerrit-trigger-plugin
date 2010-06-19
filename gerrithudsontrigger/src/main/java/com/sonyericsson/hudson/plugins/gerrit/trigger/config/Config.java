@@ -31,7 +31,6 @@ import java.util.List;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
-import org.slf4j.LoggerFactory;
 
 /**
  * Configuration bean for the global configuration.
@@ -315,7 +314,6 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritCmdBuildFailed() {
-        LoggerFactory.getLogger(getClass()).debug("gerritVerifiedCmdBuildFailed: {}", gerritVerifiedCmdBuildFailed);
         return gerritVerifiedCmdBuildFailed;
     }
 
@@ -330,7 +328,6 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritCmdBuildStarted() {
-        LoggerFactory.getLogger(getClass()).debug("gerritVerifiedCmdBuildStarted: {}", gerritVerifiedCmdBuildStarted);
         return gerritVerifiedCmdBuildStarted;
     }
 

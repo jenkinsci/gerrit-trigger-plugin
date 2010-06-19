@@ -24,16 +24,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import hudson.Plugin;
-import hudson.model.Descriptor.FormException;
 
 import java.io.IOException;
 import java.util.List;
 
-import javax.servlet.ServletException;
 
-import net.sf.json.JSONObject;
 
-import org.kohsuke.stapler.StaplerRequest;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -112,14 +108,6 @@ public class PluginImpl extends Plugin {
         gerritEventManager.shutdown(false);
         //TODO save to regegister listeners?
         gerritEventManager = null;
-    }
-
-    @Override
-    public void configure(StaplerRequest req, JSONObject formData)
-            throws IOException, ServletException, FormException {
-        config = new Config(formData, req);
-        save();
-        //restart();
     }
 
     /**

@@ -330,8 +330,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public void save() throws IOException {
-        logger.trace("save");
-        throw new UnsupportedOperationException("Not supported yet.");
+        logger.debug("SAVE!!!");
     }
 
     /**
