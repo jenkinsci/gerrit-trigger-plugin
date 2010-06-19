@@ -52,9 +52,45 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * The schedule delay for a build so there is some time to save the trigger event.
-     * 3 is a MagicNumber
+     * 3 is a MagicNumber.
      */
     public static final int BUILD_SCHEDULE_DELAY = 3;
+    /**
+     * Parameter name for the commit subject (commit message's 1st. line).
+     */
+    public static final String GERRIT_CHANGE_SUBJECT = "GERRIT_CHANGE_SUBJECT";
+    /**
+     * Parameter name for the branch.
+     */
+    public static final String GERRIT_BRANCH = "GERRIT_BRANCH";
+    /**
+     * Parameter name for the change-id.
+     */
+    public static final String GERRIT_CHANGE_ID = "GERRIT_CHANGE_ID";
+    /**
+     * Parameter name for the change number.
+     */
+    public static final String GERRIT_CHANGE_NUMBER = "GERRIT_CHANGE_NUMBER";
+    /**
+     * Parameter name for the url to the change.
+     */
+    public static final String GERRIT_CHANGE_URL = "GERRIT_CHANGE_URL";
+    /**
+     * Parameter name for the patch set number.
+     */
+    public static final String GERRIT_PATCHSET_NUMBER = "GERRIT_PATCHSET_NUMBER";
+    /**
+     * Parameter name for the patch set revision.
+     */
+    public static final String GERRIT_PATCHSET_REVISION = "GERRIT_PATCHSET_REVISION";
+    /**
+     * Parameter name for the gerrit project name.
+     */
+    public static final String GERRIT_PROJECT = "GERRIT_PROJECT";
+    /**
+     * Parameter name for the refspec.
+     */
+    public static final String GERRIT_REFSPEC = "GERRIT_REFSPEC";
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     private transient AbstractProject myProject;
@@ -171,15 +207,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             boolean ok = myProject.scheduleBuild(BUILD_SCHEDULE_DELAY, cause,
                     new BadgeAction(event),
                     new ParametersAction(
-                    new StringParameterValue("BRANCH", event.getChange().getBranch()),
-                    new StringParameterValue("CHANGE", event.getChange().getNumber()),
-                    new StringParameterValue("PATCHSET", event.getPatchSet().getNumber()),
-                    new StringParameterValue("REFSPEC", StringUtil.makeRefSpec(event)),
-                    new StringParameterValue("GERRIT_PROJECT", event.getChange().getProject()),
-                    new StringParameterValue("CHANGE_SUBJECT", event.getChange().getSubject()),
-                    new StringParameterValue("CHANGE_ID", event.getChange().getId()),
-                    new StringParameterValue("PATCHSET_REVISION", event.getPatchSet().getRevision()),
-                    new StringParameterValue("CHANGE_URL", cause.getUrl())));
+                    new StringParameterValue(GERRIT_BRANCH, event.getChange().getBranch()),
+                    new StringParameterValue(GERRIT_CHANGE_NUMBER, event.getChange().getNumber()),
+                    new StringParameterValue(GERRIT_CHANGE_ID, event.getChange().getId()),
+                    new StringParameterValue(GERRIT_PATCHSET_NUMBER, event.getPatchSet().getNumber()),
+                    new StringParameterValue(GERRIT_PATCHSET_REVISION, event.getPatchSet().getRevision()),
+                    new StringParameterValue(GERRIT_REFSPEC, StringUtil.makeRefSpec(event)),
+                    new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
+                    new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
+                    new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
             logger.info("Project {} Build Scheduled: {}", myProject.getName(), ok);
         }
     }
