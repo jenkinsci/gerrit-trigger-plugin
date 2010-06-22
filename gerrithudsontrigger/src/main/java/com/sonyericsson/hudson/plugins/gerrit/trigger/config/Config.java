@@ -216,7 +216,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritFrontEndUrl() {
-        return gerritFrontEndUrl;
+        String url = gerritFrontEndUrl;
+        if (!url.endsWith("/")) {
+            url += '/';
+        }
+        return url;
     }
 
     /**
@@ -411,9 +415,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritFrontEndUrlFor(String changeSetNumber, String revision) {
         StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
-        if (!getGerritFrontEndUrl().endsWith("/")) {
-            str.append("/");
-        }
         str.append(changeSetNumber);
         return str.toString();
     }
