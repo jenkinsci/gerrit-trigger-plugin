@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -50,7 +51,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     private static ToGerritRunListener instance;
     private transient BuildMemory memory;
-    private transient GerritNotifier notifier;
 
     /**
      * Default Constructor.
@@ -58,7 +58,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     public ToGerritRunListener() {
         super(AbstractBuild.class);
         memory = new BuildMemory();
-        notifier = new GerritNotifier(Config.get(), new GerritSSHCmdRunner(Config.get()));
     }
 
     /**
@@ -86,7 +85,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             PatchSetKey key = memory.completed(event, r);
             if (memory.isAllBuildsCompleted(key)) {
                 logger.info("All Builds are completed for cause: {}", cause);
-                notifier.buildCompleted(memory.getMemoryImprint(key), listener);
+                createNotifier().buildCompleted(memory.getMemoryImprint(key), listener);
                 memory.forget(key);
             } else {
                 logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
@@ -101,7 +100,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (cause != null) {
             PatchSetKey key = memory.started(cause.getEvent(), r);
             BuildsStartedStats stats = memory.getBuildsStartedStats(key);
-            notifier.buildStarted(r, listener, cause.getEvent(), stats);
+            createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
             logger.info("MemoryStatus:\n{}", memory.getStatusReport(key));
         }
@@ -137,5 +136,19 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             }
         }
         return null;
+    }
+
+    /**
+     * Load a new notifier to get the possible new settings.
+     * @return a GerritNotifierObject with fresh config.
+     * @fixfor HUDSON-6814
+     */
+    private static GerritNotifier createNotifier() {
+        if(PluginImpl.getInstance() == null) {
+            //If this happens we are sincerely screwed anyways.
+            throw new IllegalStateException("PluginImpl has not been loaded yet!");
+        }
+        IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+        return new GerritNotifier(config, new GerritSSHCmdRunner(config));
     }
 }

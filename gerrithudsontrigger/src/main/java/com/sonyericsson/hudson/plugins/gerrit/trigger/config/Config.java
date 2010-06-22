@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -82,7 +82,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritVerifiedCmdBuildFailed;
     private String gerritVerifiedCmdBuildStarted;
     private String gerritFrontEndUrl;
-    private static Config singleton;
     private transient List<String> gerritProjects;
     private int gerritBuildStartedVerifiedValue;
     private int gerritBuildStartedCodeReviewValue;
@@ -338,21 +337,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritVerifiedCmdBuildStarted(String cmd) {
         gerritVerifiedCmdBuildStarted = cmd;
-    }
-
-    /**
-     * Flag this as loaded.
-     */
-    public void loaded() {
-        singleton = this;
-    }
-
-    /**
-     * Returns the singleton instance.
-     * @return the singelton.
-     */
-    public static IGerritHudsonTriggerConfig get() {
-        return singleton;
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -98,8 +98,6 @@ public class PluginImpl extends Plugin {
         if (config == null) {
             config = new Config();
         }
-
-        ((Config) config).loaded();
     }
 
     @Override

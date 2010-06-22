@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -197,7 +197,7 @@ public class BuildMemory {
      * Remooves the memory for the provided key.
      * @param key the key to the memory.
      */
-    public void forget(PatchSetKey key) {
+    public synchronized void forget(PatchSetKey key) {
         memory.remove(key);
     }
 
@@ -239,7 +239,7 @@ public class BuildMemory {
          * A list of Project-Build tuple entries.
          * @return the memory entries.
          */
-        public Entry[] getEntries() {
+        public synchronized Entry[] getEntries() {
             return list.toArray(new Entry[list.size()]);
         }
 
@@ -248,7 +248,7 @@ public class BuildMemory {
          * @param project the project.
          * @param build the build.
          */
-        private void set(AbstractProject project, AbstractBuild build) {
+        private synchronized void set(AbstractProject project, AbstractBuild build) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -262,7 +262,7 @@ public class BuildMemory {
          * Adds the project to the list.
          * @param project the project.
          */
-        private void set(AbstractProject project) {
+        private synchronized void set(AbstractProject project) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project);
@@ -276,7 +276,7 @@ public class BuildMemory {
          * @param build the build
          * @param buildCompleted if the build is finished.
          */
-        private void set(AbstractProject project, AbstractBuild build, boolean buildCompleted) {
+        private synchronized void set(AbstractProject project, AbstractBuild build, boolean buildCompleted) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -294,7 +294,7 @@ public class BuildMemory {
          * Tells if all builds has a value (not null).
          * @return true if it is so.
          */
-        public boolean isAllBuildsSet() {
+        public synchronized boolean isAllBuildsSet() {
             for (Entry entry : list) {
                 if (entry.getBuild() == null) {
                     return false;
@@ -307,7 +307,7 @@ public class BuildMemory {
          * Tells if all builds has Completed.
          * @return true if it is so.
          */
-        public boolean isAllBuildsCompleted() {
+        public synchronized boolean isAllBuildsCompleted() {
             for (Entry entry : list) {
                 if (!entry.isBuildCompleted()) {
                     return false;
@@ -321,7 +321,7 @@ public class BuildMemory {
          * Good for logging.
          * @return a report.
          */
-        public String getStatusReport() {
+        public synchronized String getStatusReport() {
             StringBuilder str = new StringBuilder("");
             for (Entry entry : list) {
                 if (entry.getProject() != null) {
@@ -360,7 +360,7 @@ public class BuildMemory {
          * Gets the statistics about builds started.
          * @return the stats.
          */
-        public BuildsStartedStats getBuildsStartedStats() {
+        public synchronized BuildsStartedStats getBuildsStartedStats() {
             int started = 0;
             for (Entry entry : list) {
                 if (entry.getBuild() != null) {
@@ -375,7 +375,7 @@ public class BuildMemory {
          * @return true if it is so, false if not all builds has started or not completed or has any different
          *          result than {@link Result#SUCCESS}.
          */
-        public boolean whereAllBuildsSuccessful() {
+        public synchronized boolean whereAllBuildsSuccessful() {
             for (Entry entry : list) {
                 if (entry.getBuild() == null) {
                     return false;
@@ -393,7 +393,7 @@ public class BuildMemory {
          * Returns if any started and completed build has the result {@link Result#FAILURE}.
          * @return true if it is so.
          */
-        public boolean whereAnyBuildsFailed() {
+        public synchronized boolean whereAnyBuildsFailed() {
             for (Entry entry : list) {
                 if (entry.getBuild() != null && entry.isBuildCompleted()
                         && entry.getBuild().getResult() == Result.FAILURE) {
@@ -407,7 +407,7 @@ public class BuildMemory {
          * Returns if any started and completed build has the result {@link Result#UNSTABLE}.
          * @return true if it is so.
          */
-        public boolean whereAnyBuildsUnstable() {
+        public synchronized boolean whereAnyBuildsUnstable() {
             for (Entry entry : list) {
                 if (entry.getBuild() != null && entry.isBuildCompleted()
                         && entry.getBuild().getResult() == Result.UNSTABLE) {

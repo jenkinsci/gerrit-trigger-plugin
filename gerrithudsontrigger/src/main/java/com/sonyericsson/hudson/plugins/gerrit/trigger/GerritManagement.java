@@ -350,8 +350,6 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     public static IGerritHudsonTriggerConfig getConfig() {
         if (PluginImpl.getInstance() != null) {
             return PluginImpl.getInstance().getConfig();
-        } else if (com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.get() != null) {
-            return com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.get();
         }
         return null;
     }
