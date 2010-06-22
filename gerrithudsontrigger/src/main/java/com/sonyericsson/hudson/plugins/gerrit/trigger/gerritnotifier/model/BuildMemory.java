@@ -90,6 +90,21 @@ public class BuildMemory {
     }
 
     /**
+     * Returns the status report for the given MemoryImprint.
+     * @param key the key to the memory.
+     * @return the status as it is now.
+     * @see MemoryImprint#getStatusReport()
+     */
+    public synchronized String getStatusReport(PatchSetKey key) {
+        MemoryImprint pb = memory.get(key);
+        if (pb != null) {
+            return pb.getStatusReport();
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Tells if all triggered builds has started for a specific event.
      * This is a bit slower than
      * {@link #isAllBuildsStarted(com.sonyericsson.gerrithudsontrigger.gerritnotifier.model.BuildMemory.PatchSetKey)}
@@ -299,6 +314,32 @@ public class BuildMemory {
                 }
             }
             return true;
+        }
+
+        /**
+         * Returns a string describing the projects and builds status in this memory.
+         * Good for logging.
+         * @return a report.
+         */
+        public String getStatusReport() {
+            StringBuilder str = new StringBuilder("");
+            for (Entry entry : list) {
+                if (entry.getProject() != null) {
+                    str.append("  Project/Build: [").append(entry.getProject().getName()).append("]");
+                    str.append(": [#");
+                    if (entry.getBuild() != null) {
+                        str.append(entry.getBuild().getNumber());
+                        str.append(": ").append(entry.getBuild().getResult());
+                    } else {
+                        str.append("XX: NULL");
+                    }
+                    str.append("] Completed: ").append(entry.isBuildCompleted());
+                } else {
+                    str.append("  Project/Build: MISSING PROJECT!");
+                }
+                str.append("\n");
+            }
+            return str.toString();
         }
 
         /**

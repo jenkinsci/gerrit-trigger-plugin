@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 /**
  * Base Listener interface for those that are interested in Gerrit events.
- * The event firering mechanism is using some reflection magic to try and find the best sutable method
- * to call the listener on. So for example if the listener class is implementing a method with the signature
- * {@code public void gerritEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.PatchsetAdded event) }
- * that method will be called directly for every PatchsetAdded event.
+ *
  * The method {@link #gerritEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) }
  * is a fallback method if no other suitable method could be found.
  *
@@ -45,4 +44,16 @@ public interface GerritEventListener {
      * @param event the event
      */
     void gerritEvent(GerritEvent event);
+
+    /**
+     * Called when a Patchset created event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(PatchsetCreated event);
+
+    /**
+     * Called when a change abandoned event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(ChangeAbandoned event);
 }

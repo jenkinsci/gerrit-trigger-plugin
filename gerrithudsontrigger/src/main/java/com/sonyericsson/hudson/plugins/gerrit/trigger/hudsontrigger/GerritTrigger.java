@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -135,25 +135,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildFailedCodeReviewValue,
             Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue) {
-        logger.debug("Constructor: "
-                + "\n\tgerritProjects: {}"
-                + "\n\tgerritBuildStartedVerifiedValue: {}"
-                + "\n\tgerritBuildStartedCodeReviewValue {}"
-                + "\n\tgerritBuildSuccessfulVerifiedValue: {}"
-                + "\n\tgerritBuildSuccessfulCodeReviewValue: {}"
-                + "\n\tgerritBuildFailedVerifiedValue: {}"
-                + "\n\tgerritBuildFailedCodeReviewValue: {}"
-                + "\n\tgerritBuildUnstableVerifiedValue: {}"
-                + "\n\tgerritBuildUnstableCodeReviewValue: {}",
-                new Object[]{gerritProjects,
-                    gerritBuildStartedVerifiedValue,
-                    gerritBuildStartedCodeReviewValue,
-                    gerritBuildSuccessfulVerifiedValue,
-                    gerritBuildSuccessfulCodeReviewValue,
-                    gerritBuildFailedVerifiedValue,
-                    gerritBuildFailedCodeReviewValue,
-                    gerritBuildUnstableVerifiedValue,
-                    gerritBuildUnstableCodeReviewValue, });
+
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
@@ -197,6 +179,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Called when a PatchSetCreated event arrives.
      * @param event the event
      */
+    @Override
     public void gerritEvent(PatchsetCreated event) {
         logger.trace("event: {}", event);
         if (isInteresting(event)) {
@@ -216,7 +199,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
                     new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
                     new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
-            logger.info("Project {} Build Scheduled: {}", myProject.getName(), ok);
+            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{myProject.getName(), ok,
+                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
         }
     }
 

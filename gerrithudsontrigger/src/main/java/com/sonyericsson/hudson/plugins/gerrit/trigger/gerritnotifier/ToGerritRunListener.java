@@ -36,6 +36,8 @@ import hudson.model.Cause;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
@@ -43,6 +45,8 @@ import java.util.List;
  */
 @Extension
 public class ToGerritRunListener extends RunListener<AbstractBuild> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ToGerritRunListener.class);
 
     private static ToGerritRunListener instance;
     private transient BuildMemory memory;
@@ -76,12 +80,17 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     @Override
     public void onCompleted(AbstractBuild r, TaskListener listener) {
         GerritCause cause = getCause(r);
+        logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
             PatchsetCreated event = cause.getEvent();
             PatchSetKey key = memory.completed(event, r);
             if (memory.isAllBuildsCompleted(key)) {
+                logger.info("All Builds are completed for cause: {}", cause);
                 notifier.buildCompleted(memory.getMemoryImprint(key), listener);
                 memory.forget(key);
+            } else {
+                logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
+                        cause, memory.getStatusReport(key));
             }
         }
     }
@@ -93,6 +102,8 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             PatchSetKey key = memory.started(cause.getEvent(), r);
             BuildsStartedStats stats = memory.getBuildsStartedStats(key);
             notifier.buildStarted(r, listener, cause.getEvent(), stats);
+            logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
+            logger.info("MemoryStatus:\n{}", memory.getStatusReport(key));
         }
     }
 
@@ -104,6 +115,13 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     public void onTriggered(AbstractProject project, PatchsetCreated event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
+
+        //Logging
+        String name = null;
+        if (project != null) {
+           name = project.getName();
+        }
+        logger.info("Project [{}] triggered by Gerrit: [{}]", name, event);
     }
 
     /**

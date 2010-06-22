@@ -246,4 +246,11 @@ public class Change implements GerritJsonDTO {
         hash = 29 * hash + (this.number != null ? this.number.hashCode() : 0);
         return hash;
     }
+
+    @Override
+    public String toString() {
+        return "Change: " + getNumber();
+    }
+
+
 }

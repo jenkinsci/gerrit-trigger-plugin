@@ -84,4 +84,11 @@ public class GerritCause extends Cause {
                 event.getChange().getNumber(),
                 event.getPatchSet().getNumber());
     }
+
+    @Override
+    public String toString() {
+        return "GerritCause: " + event;
+    }
+
+
 }

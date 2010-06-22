@@ -103,7 +103,7 @@ public class SshConnection {
      * @throws SshException if so.
      */
     public synchronized void executeCommand(String command) throws SshException {
-        if(!isConnected()) {
+        if (!isConnected()) {
             throw new IllegalStateException("Not connected!");
         }
         logger.debug("Executing command: \"{}\"", command);
@@ -126,7 +126,7 @@ public class SshConnection {
      * @throws SshException if there are any ssh problems.
      */
     public synchronized Reader executeCommandReader(String command) throws SshException, IOException {
-        if(!isConnected()) {
+        if (!isConnected()) {
             throw new IllegalStateException("Not connected!");
         }
         try {

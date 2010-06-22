@@ -24,6 +24,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
@@ -33,8 +35,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -219,7 +219,7 @@ public class GerritHandler extends Thread implements Coordinator {
             } catch (SshAuthenticationException sshAuthEx) {
                 logger.error("Could not authenticate to gerrit server!"
                         + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
-                             new Object[]{ authentication.getUsername(),
+                             new Object[]{authentication.getUsername(),
                             authentication.getPrivateKeyFile(),
                             authentication.getPrivateKeyFilePassword(), });
                 logger.error("AuthenticationException: ", sshAuthEx);
@@ -426,26 +426,16 @@ public class GerritHandler extends Thread implements Coordinator {
     private void notifyListener(GerritEventListener listener, GerritEvent event) {
         logger.debug("Notifying listener {} of event {}", listener, event);
         try {
-            logger.trace("Reflecting closest method");
-            Method method = listener.getClass().getMethod("gerritEvent", event.getClass());
-            method.invoke(listener, event);
-        } catch (IllegalAccessException ex) {
-            logger.debug("Not allowed to invoke the reflected method. Calling default.", ex);
-            notifyListenerDefaultMethod(listener, event);
-        } catch (IllegalArgumentException ex) {
-            logger.debug("Not allowed to invoke the reflected method with specified parameter (REFLECTION BUG). "
-                    + "Calling default.", ex);
-            notifyListenerDefaultMethod(listener, event);
-        } catch (InvocationTargetException ex) {
+            if (event instanceof PatchsetCreated) {
+                listener.gerritEvent((PatchsetCreated) event);
+            } else if (event instanceof ChangeAbandoned) {
+                listener.gerritEvent((ChangeAbandoned) event);
+            } else {
+                listener.gerritEvent(event);
+            }
+        } catch (Exception ex) {
             logger.error("Exception thrown during event handling.", ex);
-        } catch (NoSuchMethodException ex) {
-            logger.debug("No apropriate method found during reflection (REFLECTION BUG?). Calling default.", ex);
-            notifyListenerDefaultMethod(listener, event);
-        } catch (SecurityException ex) {
-            logger.debug("Not allowed to reflect/invoke a method on this listener (DESIGN BUG). Calling default", ex);
-            notifyListenerDefaultMethod(listener, event);
         }
-
     }
 
     /**

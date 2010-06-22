@@ -127,4 +127,11 @@ public class PatchSet implements GerritJsonDTO {
         hash = 79 * hash + (this.revision != null ? this.revision.hashCode() : 0);
         return hash;
     }
+
+    @Override
+    public String toString() {
+        return "PatchSet: " + getNumber();
+    }
+
+
 }

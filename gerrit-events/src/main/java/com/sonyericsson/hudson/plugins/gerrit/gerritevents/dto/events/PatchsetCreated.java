@@ -123,4 +123,11 @@ public class PatchsetCreated implements GerritJsonEvent {
     public boolean equals(PatchsetCreated obj) {
         return change.equals(obj.change) && patchSet.equals(obj.patchSet);
     }
+
+    @Override
+    public String toString() {
+        return "PatchsetCreated: " + change + " " + patchSet;
+    }
+
+
 }
