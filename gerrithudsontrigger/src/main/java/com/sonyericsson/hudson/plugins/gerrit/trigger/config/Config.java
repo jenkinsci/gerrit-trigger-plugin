@@ -218,7 +218,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
-        if (!url.endsWith("/")) url += '/';
+        if (!url.endsWith("/")) {
+            url += '/';
+        }
         return url;
     }
 

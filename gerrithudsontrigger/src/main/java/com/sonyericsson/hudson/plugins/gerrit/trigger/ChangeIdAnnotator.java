@@ -21,23 +21,37 @@ import java.util.regex.Pattern;
 @Extension
 public class ChangeIdAnnotator extends ChangeLogAnnotator {
     @Override
-    public void annotate(AbstractBuild<?,?> build, Entry change, MarkupText text) {
+    public void annotate(AbstractBuild<?, ?> build, Entry change, MarkupText text) {
         IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
         annotate(build.getProject(), text, config);
     }
 
-    public void annotate(AbstractProject<?,?> project, MarkupText text, IGerritHudsonTriggerConfig config) {
+    /**
+     * Annotates Gerrit change IDs in changelogs.
+     * @param project The project
+     * @param text The initial text
+     * @param config The Gerrit Hudson trigger config
+     */
+    public void annotate(AbstractProject<?, ?> project, MarkupText text, IGerritHudsonTriggerConfig config) {
         for (SubText token : text.findTokens(CHANGE_ID)) {
-            if (!hasGerritTrigger(project))   return; // not configured with Gerrit
-
-            token.href(config.getGerritFrontEndUrl()+"r/"+token.getText());
+            if (!hasGerritTrigger(project)) {
+                return; // not configured with Gerrit
+            }
+            token.href(config.getGerritFrontEndUrl() + "r/" + token.getText());
         }
     }
 
+    /**
+     * Does this project have the Gerrit trigger configured?
+     * @param project The project
+     * @return True if the gerrit trigger is configured.
+     */
     private boolean hasGerritTrigger(AbstractProject<?, ?> project) {
-        for (Trigger t : project.getTriggers().values())
-            if (t instanceof GerritTrigger)
+        for (Trigger t : project.getTriggers().values()) {
+            if (t instanceof GerritTrigger) {
                 return true;
+            }
+        }
         return false;
     }
 
