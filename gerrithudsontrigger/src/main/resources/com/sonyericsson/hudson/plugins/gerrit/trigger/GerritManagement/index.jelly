@@ -45,7 +45,7 @@
                     </f:entry>
                     <f:entry title="${%Gerrit Keyfile Password}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
-                        <f:textbox name="gerritAuthKeyFilePassword"
+                        <f:password name="gerritAuthKeyFilePassword"
                                    value="${it.config.gerritAuthKeyFilePassword}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}" />
                     </f:entry>
