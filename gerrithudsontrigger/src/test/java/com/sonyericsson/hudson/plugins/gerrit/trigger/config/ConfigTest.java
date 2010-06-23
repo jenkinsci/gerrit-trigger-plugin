@@ -102,7 +102,7 @@ public class ConfigTest {
         assertEquals(-3, config.getGerritBuildSuccessfulVerifiedValue());
         assertEquals(4, config.getGerritBuildUnstableCodeReviewValue());
         assertEquals(-4, config.getGerritBuildUnstableVerifiedValue());
-        assertEquals("http://gerrit:8088", config.getGerritFrontEndUrl());
+        assertEquals("http://gerrit:8088/", config.getGerritFrontEndUrl());
         assertEquals("gerrit", config.getGerritHostName());
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("hudsongerrit", config.getGerritUserName());

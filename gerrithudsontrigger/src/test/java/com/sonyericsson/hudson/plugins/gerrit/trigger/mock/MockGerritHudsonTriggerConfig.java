@@ -89,7 +89,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public String getGerritFrontEndUrl() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "http://gerrit/";
     }
 
     @Override

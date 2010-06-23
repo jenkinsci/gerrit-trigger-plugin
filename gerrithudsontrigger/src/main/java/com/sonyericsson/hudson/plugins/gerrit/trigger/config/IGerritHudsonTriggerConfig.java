@@ -48,7 +48,7 @@ public interface IGerritHudsonTriggerConfig {
 
     /**
      * Base URL for the Gerrit UI.
-     * @return the gerrit front end URL.
+     * @return the gerrit front end URL. Always ends with '/'
      */
     String getGerritFrontEndUrl();
 
