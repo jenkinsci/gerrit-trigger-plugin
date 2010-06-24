@@ -91,7 +91,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Parameter name for the refspec.
      */
     public static final String GERRIT_REFSPEC = "GERRIT_REFSPEC";
-
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
@@ -182,14 +181,18 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Override
     public void gerritEvent(PatchsetCreated event) {
         logger.trace("event: {}", event);
+        if (myProject.isDisabled()) {
+            logger.trace("Disabled.");
+            return;
+        }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
             ToGerritRunListener.getInstance().onTriggered(myProject, event);
             final GerritCause cause = new GerritCause(event);
             //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
             boolean ok = myProject.scheduleBuild(BUILD_SCHEDULE_DELAY, cause,
-                    new BadgeAction(event),
-                    new ParametersAction(
+                                                 new BadgeAction(event),
+                                                 new ParametersAction(
                     new StringParameterValue(GERRIT_BRANCH, event.getChange().getBranch()),
                     new StringParameterValue(GERRIT_CHANGE_NUMBER, event.getChange().getNumber()),
                     new StringParameterValue(GERRIT_CHANGE_ID, event.getChange().getId()),
@@ -199,8 +202,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
                     new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
                     new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
-            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{myProject.getName(), ok,
-                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{ myProject.getName(), ok,
+                        event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
         }
     }
 
@@ -209,6 +212,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Should probably not be listening on this here.
      * @param event the event.
      */
+    @Override
     public void gerritEvent(ChangeAbandoned event) {
         //TODO Implement
     }
