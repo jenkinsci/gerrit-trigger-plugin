@@ -80,7 +80,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     public void onCompleted(AbstractBuild r, TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.info("Completed. Build: {} Cause: {}", r, cause);
-        if (cause != null) {
+        if (cause != null && !cause.isSilentMode()) {
             PatchsetCreated event = cause.getEvent();
             PatchSetKey key = memory.completed(event, r);
             if (memory.isAllBuildsCompleted(key)) {
@@ -97,7 +97,8 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     @Override
     public void onStarted(AbstractBuild r, TaskListener listener) {
         GerritCause cause = getCause(r);
-        if (cause != null) {
+        logger.info("Started. Build: {} Cause: {}", r, cause);
+        if (cause != null && !cause.isSilentMode()) {
             PatchSetKey key = memory.started(cause.getEvent(), r);
             BuildsStartedStats stats = memory.getBuildsStartedStats(key);
             createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
@@ -144,7 +145,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @fixfor HUDSON-6814
      */
     private static GerritNotifier createNotifier() {
-        if(PluginImpl.getInstance() == null) {
+        if (PluginImpl.getInstance() == null) {
             //If this happens we are sincerely screwed anyways.
             throw new IllegalStateException("PluginImpl has not been loaded yet!");
         }

@@ -35,14 +35,17 @@ import org.kohsuke.stapler.DataBoundConstructor;
 public class GerritCause extends Cause {
 
     private PatchsetCreated event;
+    private boolean silentMode;
 
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
+     * @param silentMode Silent Mode on or off.
      */
     @DataBoundConstructor
-    public GerritCause(PatchsetCreated event) {
+    public GerritCause(PatchsetCreated event, boolean silentMode) {
         this.event = event;
+        this.silentMode = silentMode;
     }
 
     /**
@@ -67,11 +70,38 @@ public class GerritCause extends Cause {
         this.event = event;
     }
 
+    /**
+     * Gets the indication if silent mode was on or off when the build was triggered.
+     * When silent mode is on there will be no communication back to Gerrit,
+     * i.e. no build started/failed/sucessfull approve messages etc.
+     * Default is false.
+     * @return true if silent mode was on.
+     * @see GerritTrigger#isSilentMode()
+     */
+    public boolean isSilentMode() {
+        return silentMode;
+    }
+
+    /**
+     * Sets the indication if silent mode was on or off when the build was triggered.
+     * When silent mode is on there will be no communication back to Gerrit,
+     * i.e. no build started/failed/sucessfull approve messages etc.
+     * Default is false.
+     * @param silentMode true if silent mode was on.
+     * @see GerritTrigger#setSilentMode(boolean)
+     */
+    public void setSilentMode(boolean silentMode) {
+        this.silentMode = silentMode;
+    }
+
     @Override
     public String getShortDescription() {
         String url = getUrl();
         StringBuilder str = new StringBuilder("Triggered by Gerrit: <a href=\"");
         str.append(url).append("\" target=\"_new\">").append(url).append("</a>");
+        if (isSilentMode()) {
+            str.append(" <i>in silent mode.</i>");
+        }
         return str.toString();
     }
 

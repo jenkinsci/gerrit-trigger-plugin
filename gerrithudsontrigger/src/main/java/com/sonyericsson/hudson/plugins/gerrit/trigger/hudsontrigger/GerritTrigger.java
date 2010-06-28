@@ -102,6 +102,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildFailedCodeReviewValue;
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
+    private boolean silentMode;
 
     /**
      * Default DataBound Constructor.
@@ -122,6 +123,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                               null means that the global value should be used.
      * @param gerritBuildUnstableCodeReviewValue    Job specific Gerrit code review vote when a build is unstable,
      *                                               null means that the global value should be used.
+     * @param silentMode                            Silent Mode on or off.
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -133,7 +135,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildFailedVerifiedValue,
             Integer gerritBuildFailedCodeReviewValue,
             Integer gerritBuildUnstableVerifiedValue,
-            Integer gerritBuildUnstableCodeReviewValue) {
+            Integer gerritBuildUnstableCodeReviewValue,
+            boolean silentMode) {
 
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -144,6 +147,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
+        this.silentMode = silentMode;
     }
 
     @Override
@@ -187,8 +191,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            final GerritCause cause = new GerritCause(event);
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            final GerritCause cause = new GerritCause(event, silentMode);
             //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
             boolean ok = myProject.scheduleBuild(BUILD_SCHEDULE_DELAY, cause,
                                                  new BadgeAction(event),
@@ -202,7 +208,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
                     new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
                     new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
-            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{ myProject.getName(), ok,
+            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{myProject.getName(), ok,
                         event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
         }
     }
@@ -375,6 +381,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
+    }
+
+    /**
+     * If silent mode is on or off.
+     * When silent mode is on there will be no communication back to Gerrit,
+     * i.e. no build started/failed/sucessfull approve messages etc.
+     * Default is false.
+     * @return true if silent mode is on.
+     */
+    public boolean isSilentMode() {
+        return silentMode;
+    }
+
+    /**
+     * Sets silent mode to on or off.
+     * When silent mode is on there will be no communication back to Gerrit,
+     * i.e. no build started/failed/sucessfull approve messages etc.
+     * Default is false.
+     * @param silentMode true if silent mode should be on.
+     */
+    public void setSilentMode(boolean silentMode) {
+        this.silentMode = silentMode;
     }
 
     /**
