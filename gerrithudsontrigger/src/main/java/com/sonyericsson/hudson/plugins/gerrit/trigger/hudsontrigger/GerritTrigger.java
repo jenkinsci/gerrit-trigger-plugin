@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -442,7 +443,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         @Override
         public String getDisplayName() {
-            return "Gerrit event";
+            return Messages.TriggerDisplayName();
         }
 
         @Override

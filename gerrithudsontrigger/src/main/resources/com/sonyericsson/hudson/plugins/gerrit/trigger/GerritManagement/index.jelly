@@ -9,41 +9,41 @@
             <j:set var="instance" value="${it}" />
             <j:set var="descriptor" value="${it.descriptor}" />
             <f:form method="post" action="configSubmit" name="config">
-                <f:section title="Global Configuration">
-                    <f:entry title="${%Gerrit Hostname}"
+                <f:section title="${%Gerrit Server}">
+                    <f:entry title="${%Hostname}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritHostname.html">
                         <f:textbox name="gerritHostName"
                                    value="${it.config.gerritHostName}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME}"/>
                     </f:entry>
-                     <f:entry title="${%Gerrit Frontend URL}"
+                     <f:entry title="${%Frontend URL}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritFrontendUrl.html">
                         <f:textbox name="gerritFrontEndUrl"
                                    value="${it.config.gerritFrontEndUrl}"
                                    default="http://${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME}"
                                    checkUrl="'${rootURL}/gerrit-trigger/urlCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Gerrit SSH Port}"
+                    <f:entry title="${%SSH Port}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritSshPort.html">
                         <f:textbox name="gerritSshPort"
                                    value="${it.config.gerritSshPort}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT}"
                                    checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Gerrit Username}"
+                    <f:entry title="${%Username}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritUserName.html">
                         <f:textbox name="gerritUserName"
                                    value="${it.config.gerritUserName}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}" />
                     </f:entry>
-                    <f:entry title="${%Gerrit Keyfile}"
+                    <f:entry title="${%SSH Keyfile}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritKeyFile.html">
                         <f:textbox name="gerritAuthKeyFile"
                                    value="${it.config.gerritAuthKeyFile}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE}"
                                    checkUrl="'${rootURL}/gerrit-trigger/validKeyFileCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Gerrit Keyfile Password}"
+                    <f:entry title="${%SSH Keyfile Password}"
                              help="${rootURL}/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
                         <f:password name="gerritAuthKeyFilePassword"
                                    value="${it.config.gerritAuthKeyFilePassword}"
@@ -53,99 +53,101 @@
                                         progress="${%Testing...}"
                                         method="testConnection"
                                         with="gerritHostName,gerritSshPort,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword" />
-                    <f:section title="Gerrit Reporting Values">
-                        <f:entry title="${%Build Started Verified}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
-                            <f:textbox name="gerritBuildStartedVerifiedValue"
-                                       value="${it.config.gerritBuildStartedVerifiedValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                </f:section>
+                <f:section title="${%Gerrit Reporting Values}">
+                    <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
+                    <f:entry title="${%Started}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
+                        <f:textbox name="gerritBuildStartedVerifiedValue"
+                                   value="${it.config.gerritBuildStartedVerifiedValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Successful}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildSuccessfulVerified.html">
+                        <f:textbox name="gerritBuildSuccessfulVerifiedValue"
+                                   value="${it.config.gerritBuildSuccessfulVerifiedValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Failed}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildFailedVerified.html">
+                        <f:textbox name="gerritBuildFailedVerifiedValue"
+                                   value="${it.config.gerritBuildFailedVerifiedValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Unstable}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildUnstableVerified.html">
+                        <f:textbox name="gerritBuildUnstableVerifiedValue"
+                                   value="${it.config.gerritBuildUnstableVerifiedValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
+                    <f:entry title="${%Started}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
+                        <f:textbox name="gerritBuildStartedCodeReviewValue"
+                                   value="${it.config.gerritBuildStartedCodeReviewValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Successful}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildSuccessfulCodeReview.html">
+                        <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
+                                   value="${it.config.gerritBuildSuccessfulCodeReviewValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Failed}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildFailedCodeReview.html">
+                        <f:textbox name="gerritBuildFailedCodeReviewValue"
+                                   value="${it.config.gerritBuildFailedCodeReviewValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Unstable}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildUnstableCodeReview.html">
+                        <f:textbox name="gerritBuildUnstableCodeReviewValue"
+                                   value="${it.config.gerritBuildUnstableCodeReviewValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                </f:section>
+                <f:advanced>
+                    <f:section title="${%Gerrit Verified Commands}">
+                        <f:entry title="${%Started}"
+                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
+                            <f:textbox name="GerritVerifiedCmdBuildStarted"
+                                       value="${it.config.gerritCmdBuildStarted}"
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                         </f:entry>
-                        <f:entry title="${%Build Started Code Review}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
-                            <f:textbox name="gerritBuildStartedCodeReviewValue"
-                                       value="${it.config.gerritBuildStartedCodeReviewValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                        <f:entry title="${%Successful}"
+                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
+                            <f:textbox name="GerritVerifiedCmdBuildSuccessful"
+                                       value="${it.config.gerritCmdBuildSuccessful}"
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                         </f:entry>
-                        <f:entry title="${%Build Successful Verified}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildSuccessfulVerified.html">
-                            <f:textbox name="gerritBuildSuccessfulVerifiedValue"
-                                       value="${it.config.gerritBuildSuccessfulVerifiedValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                        <f:entry title="${%Failed}"
+                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
+                            <f:textbox name="GerritVerifiedCmdBuildFailed"
+                                       value="${it.config.gerritCmdBuildFailed}"
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                         </f:entry>
-                        <f:entry title="${%Build Successful Code Review}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildSuccessfulCodeReview.html">
-                            <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
-                                       value="${it.config.gerritBuildSuccessfulCodeReviewValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
-                        </f:entry>
-                        <f:entry title="${%Build Failed Verified}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildFailedVerified.html">
-                            <f:textbox name="gerritBuildFailedVerifiedValue"
-                                       value="${it.config.gerritBuildFailedVerifiedValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
-                        </f:entry>
-                        <f:entry title="${%Build Failed Code Review}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildFailedCodeReview.html">
-                            <f:textbox name="gerritBuildFailedCodeReviewValue"
-                                       value="${it.config.gerritBuildFailedCodeReviewValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
-                        </f:entry>
-                        <f:entry title="${%Build Unstable Verified}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildUnstableVerified.html">
-                            <f:textbox name="gerritBuildUnstableVerifiedValue"
-                                       value="${it.config.gerritBuildUnstableVerifiedValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
-                        </f:entry>
-                        <f:entry title="${%Build Unstable Code Review}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritBuildUnstableCodeReview.html">
-                            <f:textbox name="gerritBuildUnstableCodeReviewValue"
-                                       value="${it.config.gerritBuildUnstableCodeReviewValue}"
-                                       default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE}"
-                                       checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                        <f:entry title="${%Unstable}"
+                                 help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
+                            <f:textbox name="GerritVerifiedCmdBuildUnstable"
+                                       value="${it.config.gerritCmdBuildUnstable}"
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
                         </f:entry>
                     </f:section>
-                    <f:advanced>
-                        <f:section title="Gerrit Commands">
-                            <f:entry title="${%Gerrit Verified Cmd for Build Started}"
-                                     help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
-                                <f:textbox name="gerritVerifiedCmdBuildStarted"
-                                           value="${it.config.gerritCmdBuildStarted}"
-                                           default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
-                            </f:entry>
-                            <f:entry title="${%Gerrit Verified Cmd for Build Failed}"
-                                     help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
-                                <f:textbox name="gerritVerifiedCmdBuildFailed"
-                                           value="${it.config.gerritCmdBuildFailed}"
-                                           default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
-                            </f:entry>
-                            <f:entry title="${%Gerrit Verified Cmd for Build Unstable}"
-                                     help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
-                                <f:textbox name="gerritVerifiedCmdBuildUnstable"
-                                           value="${it.config.gerritCmdBuildUnstable}"
-                                           default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
-                            </f:entry>
-                            <f:entry title="${%Gerrit Verified Cmd for Build Successful}"
-                                     help="${rootURL}/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
-                                <f:textbox name="gerritVerifiedCmdBuildSuccessful"
-                                           value="${it.config.gerritCmdBuildSuccessful}"
-                                           default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
-                            </f:entry>
-                        </f:section>
-                        <f:entry title="${%Nr of Event Worker Threads}"
-                                 help="${rootURL}/plugin/gerrit-trigger/help-EventWorkerThreads.html">
-                            <f:textbox name="numberOfWorkerThreads"
-                                       value="${it.config.numberOfWorkerThreads}"
-                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_WORKER_THREADS}" />
-                        </f:entry>
-                    </f:advanced>
-                </f:section>
+                    <f:entry title="${%Nr of Event Worker Threads}"
+                             help="${rootURL}/plugin/gerrit-trigger/help-EventWorkerThreads.html">
+                        <f:textbox name="numberOfWorkerThreads"
+                                   value="${it.config.numberOfWorkerThreads}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_WORKER_THREADS}" />
+                    </f:entry>
+                </f:advanced>
                 <f:block>
                     <f:submit value="${%Save}" />
                 </f:block>

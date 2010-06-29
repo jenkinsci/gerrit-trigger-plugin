@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.Cause;
@@ -96,13 +97,12 @@ public class GerritCause extends Cause {
 
     @Override
     public String getShortDescription() {
-        String url = getUrl();
-        StringBuilder str = new StringBuilder("Triggered by Gerrit: <a href=\"");
-        str.append(url).append("\" target=\"_new\">").append(url).append("</a>");
         if (isSilentMode()) {
-            str.append(" <i>in silent mode.</i>");
+            return Messages.TriggeredShortDescriptionInSilentMode(getUrl());
         }
-        return str.toString();
+        else {
+            return Messages.TriggeredShortDescription(getUrl());
+	}
     }
 
     /**

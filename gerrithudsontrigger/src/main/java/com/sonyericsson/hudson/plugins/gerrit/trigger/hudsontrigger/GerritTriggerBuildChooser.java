@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+
 /**
  * Used by Hudson git plugin to determine the revision to build.
  * @author Andrew Bayer
@@ -137,12 +139,12 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     public static final class DescriptorImpl extends BuildChooserDescriptor {
         @Override
         public String getDisplayName() {
-            return "Gerrit Trigger";
+            return Messages.DisplayName();
         }
 
         @Override
         public String getLegacyId() {
-            return "Gerrit Trigger";
+            return Messages.DisplayName();
         }
     }
 
