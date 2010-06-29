@@ -553,14 +553,17 @@ public class BuildMemory {
                 return false;
             }
             final PatchSetKey other = (PatchSetKey)obj;
-            if (this.changeNumber != other.changeNumber && (this.changeNumber == null
-                    || !this.changeNumber.equals(other.changeNumber))) {
+
+            if ((this.changeNumber != null && !this.changeNumber.equals(other.changeNumber))
+                    || (this.changeNumber == null && other.changeNumber != null)) {
                 return false;
             }
-            if (this.patchSetNumber != other.patchSetNumber && (this.patchSetNumber == null
-                    || !this.patchSetNumber.equals(other.patchSetNumber))) {
+
+            if ((this.patchSetNumber != null && !this.patchSetNumber.equals(other.patchSetNumber))
+                    || (this.patchSetNumber == null && other.patchSetNumber != null)) {
                 return false;
             }
+
             return true;
         }
 
@@ -576,11 +579,24 @@ public class BuildMemory {
 
         @Override
         public int compareTo(PatchSetKey o) {
-            int changeComp = this.changeNumber.compareTo(o.changeNumber);
+            int changeComp = 0;
+
+            if (this.changeNumber != null) {
+                changeComp = this.changeNumber.compareTo(o.changeNumber);
+            } else if (o.changeNumber != null) {
+                return -1;
+            }
+
             if (changeComp != 0) {
-                return this.patchSetNumber.compareTo(o.patchSetNumber);
-            } else {
                 return changeComp;
+            }
+
+            if (this.patchSetNumber != null) {
+                return this.patchSetNumber.compareTo(o.patchSetNumber);
+            } else if (o.patchSetNumber != null) {
+                return -1;
+            } else {
+                return 0;
             }
         }
     }
