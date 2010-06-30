@@ -74,12 +74,12 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getDisplayName() {
-        return PluginImpl.DISPLAY_NAME;
+        return Messages.DisplayName();
     }
 
     @Override
     public String getDescription() {
-        return "Triggers Hudson builds on Gerrit Events";
+        return Messages.PluginDescription();
     }
 
     @Override
@@ -183,21 +183,20 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                         SshConnection sshConnection = new SshConnection(gerritHostName, gerritSshPort,
                                 new Authentication(file, gerritUserName, password));
                         sshConnection.disconnect();
-                        return FormValidation.ok("Success");
+                        return FormValidation.ok(Messages.Success());
 
                     } catch (SshConnectException ex) {
-                        return FormValidation.error("Could not connect!");
+                        return FormValidation.error(Messages.SshConnectException());
                     } catch (SshAuthenticationException ex) {
-                        return FormValidation.error("Authentication failed! {}", ex.getMessage());
+                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
                     } catch (Exception e) {
-                        return FormValidation.error("Connection error : " + e.getMessage());
+                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
                     }
                 } else {
-                    return FormValidation.error("The file \"" + gerritAuthKeyFile
-                            + "\" does not exist or is a directory.");
+                    return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
                 }
             } else {
-                return FormValidation.error("Bad keyfile or password.");
+                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
             }
 
         }
@@ -288,14 +287,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             final String value) {
 
         if (value == null || value.length() <= 0) {
-            return FormValidation.error("Must put something here.");
+            return FormValidation.error(Messages.EmptyError());
         } else {
             try {
                 new URL(value);
 
                 return FormValidation.ok();
             } catch (MalformedURLException ex) {
-                return FormValidation.error("Bad URL format.");
+                return FormValidation.error(Messages.BadUrlError());
             }
         }
     }
@@ -311,14 +310,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         File f = new File(value);
         if (!f.exists()) {
-            return FormValidation.error("The file does not exist.");
+            return FormValidation.error(Messages.FileNotFoundError(value));
         } else if (!f.isFile()) {
-            return FormValidation.error("The given path is not a file.");
+            return FormValidation.error(Messages.NotFileError(value));
         } else {
             if (SshUtil.isPrivateKeyFileValid(f)) {
                 return FormValidation.ok();
             } else {
-                return FormValidation.error("The file is not a valid key-file.");
+                return FormValidation.error(Messages.InvalidKeyFileError(value));
             }
         }
     }

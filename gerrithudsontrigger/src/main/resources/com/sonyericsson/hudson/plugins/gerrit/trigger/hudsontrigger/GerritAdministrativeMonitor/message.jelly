@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--class=error or warning-->
     <div class="error">
-        The connection to Gerrit is down! Check your settings and the Gerrit server.
+        ${%The connection to Gerrit is down!} ${%Check your settings and the Gerrit server.}
     </div>
 </j:jelly>
