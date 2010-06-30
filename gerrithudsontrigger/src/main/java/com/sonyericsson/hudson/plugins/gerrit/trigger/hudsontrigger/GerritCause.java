@@ -99,10 +99,9 @@ public class GerritCause extends Cause {
     public String getShortDescription() {
         if (isSilentMode()) {
             return Messages.TriggeredShortDescriptionInSilentMode(getUrl());
-        }
-        else {
+        } else {
             return Messages.TriggeredShortDescription(getUrl());
-	}
+        }
     }
 
     /**
@@ -119,6 +118,4 @@ public class GerritCause extends Cause {
     public String toString() {
         return "GerritCause: " + event;
     }
-
-
 }
