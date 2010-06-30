@@ -24,15 +24,12 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -43,17 +40,9 @@ import static org.mockito.Mockito.*;
  */
 public class BuildMemoryTest {
 
-    public BuildMemoryTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
+    /**
+     * test.
+     */
     @Test
     public void testGetMemoryImprint() {
         System.out.println("getMemoryImprint");
@@ -71,8 +60,11 @@ public class BuildMemoryTest {
         assertEquals(event, result.getEvent());
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsCompleted_True() {
+    public void testIsAllBuildsCompletedTrue() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -92,8 +84,11 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsCompleted_False() {
+    public void testIsAllBuildsCompletedFalse() {
         System.out.println("isAllBuildsCompleted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -113,8 +108,11 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsCompleted_BuildMemoryPatchSetKey_True() {
+    public void testIsAllBuildsCompletedBuildMemoryPatchSetKeyTrue() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -135,8 +133,11 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsCompleted_BuildMemoryPatchSetKey_False() {
+    public void testIsAllBuildsCompletedBuildMemoryPatchSetKeyFalse() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -155,6 +156,9 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testGetBuildsStartedStats() {
         System.out.println("getBuildsStartedStats");
@@ -179,13 +183,17 @@ public class BuildMemoryTest {
         PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
         BuildsStartedStats result = instance.getBuildsStartedStats(key);
         assertEquals(event, result.getEvent());
+        //CS IGNORE MagicNumber FOR NEXT 3 LINES. REASON: mock.
         assertEquals(4, result.getTotalBuildsToStart());
         assertEquals(2, result.getStartedBuilds());
         assertEquals("(2/4)", result.toString());
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsStarted_PatchsetCreated_True() {
+    public void testIsAllBuildsStartedPatchsetCreatedTrue() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -205,8 +213,11 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsStarted_PatchsetCreated_False() {
+    public void testIsAllBuildsStartedPatchsetCreatedFalse() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -228,8 +239,11 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
-    public void testIsAllBuildsStarted_BuildMemoryPatchSetKey() {
+    public void testIsAllBuildsStartedBuildMemoryPatchSetKey() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -250,6 +264,9 @@ public class BuildMemoryTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testCompleted() {
         System.out.println("completed");
@@ -266,6 +283,9 @@ public class BuildMemoryTest {
         assertTrue(instance.isAllBuildsCompleted(result));
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testStarted() {
         System.out.println("started");
@@ -283,6 +303,9 @@ public class BuildMemoryTest {
         assertFalse(instance.isAllBuildsCompleted(result));
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testTriggered() {
         System.out.println("triggered");
@@ -299,6 +322,9 @@ public class BuildMemoryTest {
         assertFalse(instance.isAllBuildsCompleted(result));
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testForget() {
         System.out.println("forget");

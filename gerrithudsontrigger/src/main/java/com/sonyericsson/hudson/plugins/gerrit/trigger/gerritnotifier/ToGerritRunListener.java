@@ -83,6 +83,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (cause != null && !cause.isSilentMode()) {
             PatchsetCreated event = cause.getEvent();
             PatchSetKey key = memory.completed(event, r);
+            memory.updateTriggerContext(key, cause, r);
             if (memory.isAllBuildsCompleted(key)) {
                 logger.info("All Builds are completed for cause: {}", cause);
                 createNotifier().buildCompleted(memory.getMemoryImprint(key), listener);
@@ -100,6 +101,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         logger.info("Started. Build: {} Cause: {}", r, cause);
         if (cause != null && !cause.isSilentMode()) {
             PatchSetKey key = memory.started(cause.getEvent(), r);
+            memory.updateTriggerContext(key, cause, r);
             BuildsStartedStats stats = memory.getBuildsStartedStats(key);
             createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
@@ -130,6 +132,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @return the GerritCause or null if there is none.
      */
     private GerritCause getCause(AbstractBuild build) {
+        //TODO: Uppgrade to Hudson 1.362 and use getCause(GerritCause.class)
         List<Cause> causes = build.getCauses();
         for (Cause c : causes) {
             if (c instanceof GerritCause) {

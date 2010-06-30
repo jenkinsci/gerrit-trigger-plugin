@@ -38,15 +38,17 @@
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
         <module name="LineLength">
-                    <property name="max" value="120"/>
+                    <property name="max" value="121"/>
         </module>
         <module name="MethodLength"/>
         <module name="EmptyForIteratorPad"/>
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceAfter">
                   <property name="severity" value="warning"/>
+                  <property name="tokens" value="BNOT,DEC,DOT,INC,LNOT,UNARY_MINUS,UNARY_PLUS,TYPECAST"/>
         </module>
         <module name="NoWhitespaceBefore">
+                <property name="allowLineBreaks" value="true"/>
                 <property name="severity" value="warning"/>
                 <property name="tokens" value="SEMI,DOT,POST_DEC,POST_INC"/>
         </module>

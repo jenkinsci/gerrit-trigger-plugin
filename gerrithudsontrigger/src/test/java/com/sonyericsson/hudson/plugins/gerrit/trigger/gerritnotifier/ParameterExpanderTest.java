@@ -23,7 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -38,8 +37,6 @@ import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import java.io.IOException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -48,25 +45,20 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+//CS IGNORE MagicNumber FOR NEXT 250 LINES. REASON: Mocks tests.
+
 /**
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Hudson.class})
+@PrepareForTest({ Hudson.class })
 public class ParameterExpanderTest {
 
-    public ParameterExpanderTest() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
+    /**
+     * test.
+     * @throws Exception Exception
+     */
     @Test
     public void testGetBuildStartedCommand() throws Exception {
         System.out.println("getBuildStartedCommand");
@@ -111,6 +103,9 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testGetMinimumVerifiedValue() {
         System.out.println("getMinimumVerifiedValue");
@@ -158,6 +153,9 @@ public class ParameterExpanderTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testGetMinimumCodeReviewValue() {
         System.out.println("getMinimumCodeReviewValue");
@@ -204,8 +202,13 @@ public class ParameterExpanderTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
     @Test
-    public void testGetBuildCompletedCommand_Successful() throws IOException, InterruptedException {
+    public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
         System.out.println("getBuildCompletedCommand");
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 

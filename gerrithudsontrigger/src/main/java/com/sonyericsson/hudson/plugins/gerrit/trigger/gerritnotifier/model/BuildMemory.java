@@ -24,12 +24,19 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
 import hudson.model.Result;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Keeps track of what builds has been triggered and if all builds are done for specific events.
@@ -38,6 +45,7 @@ import java.util.TreeMap;
 public class BuildMemory {
 
     private TreeMap<PatchSetKey, MemoryImprint> memory = new TreeMap<PatchSetKey, MemoryImprint>();
+    private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
 
     /**
      * Gets the memory of a specific key.
@@ -199,6 +207,71 @@ public class BuildMemory {
      */
     public synchronized void forget(PatchSetKey key) {
         memory.remove(key);
+    }
+
+    /**
+     * Updates the {@link TriggerContext} for the provided key.
+     * The cause and build is the "focal point" for the update, but all memory entities will be updated,
+     * but only the current context will be get {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
+     * @param key the key to have as "focus" for the update.
+     * @param cause the cause.
+     * @param r the build the cause is in.
+     */
+    public synchronized void updateTriggerContext(PatchSetKey key, GerritCause cause, AbstractBuild r) {
+        MemoryImprint imprint = getMemoryImprint(key);
+        TriggerContext context = cause.getContext();
+        context.setThisBuild(r);
+        for (MemoryImprint.Entry entry : imprint.getEntries()) {
+            if (entry.getBuild() != null && !entry.getBuild().equals(r)) {
+                context.addOtherBuild(entry.getBuild());
+                updateTriggerContext(entry, imprint);
+            } else if (entry.getBuild() == null && !entry.getProject().equals(r.getProject())) {
+                context.addOtherProject(entry.getProject());
+            }
+        }
+        if (!r.hasntStartedYet() && !r.isBuilding()) {
+            try {
+                r.save();
+            } catch (IOException ex) {
+                logger.error("Could not save build state for build " + r, ex);
+            }
+        }
+    }
+
+    /**
+     * Updates the {@link TriggerContext} for the provided entry.
+     * @param entryToUpdate the entry to update.
+     * @param imprint the information for the update.
+     */
+    private synchronized void updateTriggerContext(Entry entryToUpdate, MemoryImprint imprint) {
+        if (entryToUpdate.getBuild() != null) {
+            GerritCause cause = null;
+            //TODO: Uppgrade to Hudson 1.362 and use getCause(GerritCause.class)
+            List<Cause> causes = entryToUpdate.getBuild().getCauses();
+            for (Cause c : causes) {
+                if (c instanceof GerritCause) {
+                   cause = (GerritCause) c;
+                   break;
+                }
+            }
+            if (cause != null) {
+                TriggerContext context = cause.getContext();
+                for (MemoryImprint.Entry ent : imprint.getEntries()) {
+                    if (ent.getBuild() != null && !ent.getBuild().equals(entryToUpdate.getBuild())) {
+                        context.addOtherBuild(ent.getBuild());
+                    } else if (ent.getBuild() == null && !ent.getProject().equals(entryToUpdate.getProject())) {
+                        context.addOtherProject(ent.getProject());
+                    }
+                }
+                if (!entryToUpdate.getBuild().hasntStartedYet() && !entryToUpdate.getBuild().isBuilding()) {
+                    try {
+                        entryToUpdate.getBuild().save();
+                    } catch (IOException ex) {
+                        logger.error("Could not save state for build " + entryToUpdate.getBuild(), ex);
+                    }
+                }
+            }
+        }
     }
 
     /**

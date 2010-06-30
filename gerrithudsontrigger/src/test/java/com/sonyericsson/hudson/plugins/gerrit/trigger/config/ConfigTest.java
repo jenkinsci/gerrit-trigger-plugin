@@ -21,18 +21,12 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import java.io.File;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mortbay.util.ajax.JSON;
 import static org.junit.Assert.*;
 
 /**
@@ -41,58 +35,52 @@ import static org.junit.Assert.*;
  */
 public class ConfigTest {
 
-    public ConfigTest() {
-    }
+    //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
+    /**
+     * test.
+     */
     @Test
     public void testSetValues() {
-        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"gerritVerifiedCmdBuildStarted\":\"gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit approve <CHANGE>,<PATCHSET>" +
-                " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\"," +
-                "\"gerritAuthKeyFile\":\"/home/local/hudsongerrit/.ssh/id_rsa\"," +
-                "\"gerritAuthKeyFilePassword\":\"passis\"," +
-                "\"gerritBuildFailedCodeReviewValue\":\"1\"," +
-                "\"gerritBuildFailedVerifiedValue\":\"-1\"," +
-                "\"gerritBuildStartedCodeReviewValue\":\"2\"," +
-                "\"gerritBuildStartedVerifiedValue\":\"-2\"," +
-                "\"gerritBuildSuccessfulCodeReviewValue\":\"3\"," +
-                "\"gerritBuildSuccessfulVerifiedValue\":\"-3\"," +
-                "\"gerritBuildUnstableCodeReviewValue\":\"4\"," +
-                "\"gerritBuildUnstableVerifiedValue\":\"-4\"," +
-                "\"gerritFrontEndUrl\":\"http://gerrit:8088\"," +
-                "\"gerritHostName\":\"gerrit\"," +
-                "\"gerritSshPort\":\"1337\"," +
-                "\"gerritUserName\":\"hudsongerrit\"," +
-                "\"numberOfWorkerThreads\":\"6\"}";
-        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
+        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit approve <CHANGE>,<PATCHSET>"
+                + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritAuthKeyFile\":\"/home/local/hudsongerrit/.ssh/id_rsa\","
+                + "\"gerritAuthKeyFilePassword\":\"passis\","
+                + "\"gerritBuildFailedCodeReviewValue\":\"1\","
+                + "\"gerritBuildFailedVerifiedValue\":\"-1\","
+                + "\"gerritBuildStartedCodeReviewValue\":\"2\","
+                + "\"gerritBuildStartedVerifiedValue\":\"-2\","
+                + "\"gerritBuildSuccessfulCodeReviewValue\":\"3\","
+                + "\"gerritBuildSuccessfulVerifiedValue\":\"-3\","
+                + "\"gerritBuildUnstableCodeReviewValue\":\"4\","
+                + "\"gerritBuildUnstableVerifiedValue\":\"-4\","
+                + "\"gerritFrontEndUrl\":\"http://gerrit:8088\","
+                + "\"gerritHostName\":\"gerrit\","
+                + "\"gerritSshPort\":\"1337\","
+                + "\"gerritUserName\":\"hudsongerrit\","
+                + "\"numberOfWorkerThreads\":\"6\"}";
+        JSONObject form = (JSONObject) JSONSerializer.toJSON(formString);
         Config config = new Config(form);
-        assertEquals("gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
-                config.getGerritCmdBuildFailed());
-        assertEquals("gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
-                config.getGerritCmdBuildStarted());
-        assertEquals("gerrit approve <CHANGE>,<PATCHSET>" +
-                " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
-                config.getGerritCmdBuildSuccessful());
-        assertEquals("gerrit approve <CHANGE>,<PATCHSET> " +
-                "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
-                config.getGerritCmdBuildUnstable());
+        assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildFailed());
+        assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildStarted());
+        assertEquals("gerrit approve <CHANGE>,<PATCHSET>"
+                + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildSuccessful());
+        assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildUnstable());
         assertEquals(new File("/home/local/hudsongerrit/.ssh/id_rsa").getPath(),
-                config.getGerritAuthKeyFile().getPath());
+                     config.getGerritAuthKeyFile().getPath());
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
         assertEquals(1, config.getGerritBuildFailedCodeReviewValue());
         assertEquals(-1, config.getGerritBuildFailedVerifiedValue());
@@ -108,5 +96,4 @@ public class ConfigTest {
         assertEquals("hudsongerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfWorkerThreads());
     }
-
 }

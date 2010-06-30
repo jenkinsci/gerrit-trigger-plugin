@@ -20,12 +20,15 @@ import static org.mockito.Mockito.when;
 
 /**
  * Test for {@link ChangeIdAnnotator}.
- * 
  * @author Kohsuke Kawaguchi
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Hudson.class})
+@PrepareForTest({ Hudson.class })
 public class ChangeIdAnnotatorTest {
+
+    /**
+     * the test.
+     */
     @Test
     public void testFoo() {
         Map m = new HashMap();
@@ -35,22 +38,29 @@ public class ChangeIdAnnotatorTest {
         when(p.getTriggers()).thenReturn(m);
 
         annotateAndVerify(p,
-                "test\ntest\nChange-Id: <a href='http://gerrit/r/I1234567890123456789012345678901234567890'>I1234567890123456789012345678901234567890</a>",
-                "test\ntest\nChange-Id: I1234567890123456789012345678901234567890");
+                          "test\ntest\nChange-Id: <a href='http://gerrit/r/I1234567890123456789012345678901234567890'>"
+                                + "I1234567890123456789012345678901234567890</a>",
+                          "test\ntest\nChange-Id: I1234567890123456789012345678901234567890");
 
         annotateAndVerify(p,
-                "xxxChange-Id: I1234567890123456789012345678901234567890",
-                "xxxChange-Id: I1234567890123456789012345678901234567890");
+                          "xxxChange-Id: I1234567890123456789012345678901234567890",
+                          "xxxChange-Id: I1234567890123456789012345678901234567890");
 
         annotateAndVerify(p,
-                "Change-Id: I1234567890123456789012345678901234567890ffff",
-                "Change-Id: I1234567890123456789012345678901234567890ffff");
+                          "Change-Id: I1234567890123456789012345678901234567890ffff",
+                          "Change-Id: I1234567890123456789012345678901234567890ffff");
     }
 
+    /**
+     * Utility method.
+     * @param p p
+     * @param expected expected
+     * @param plain plain
+     */
     private void annotateAndVerify(AbstractProject p, String expected, String plain) {
         MarkupText t = new MarkupText(plain);
-        new ChangeIdAnnotator().annotate(p,t, new MockGerritHudsonTriggerConfig());
+        new ChangeIdAnnotator().annotate(p, t, new MockGerritHudsonTriggerConfig());
         System.out.println(t.toString(true));
-        Assert.assertEquals(expected,t.toString(true));
+        Assert.assertEquals(expected, t.toString(true));
     }
 }

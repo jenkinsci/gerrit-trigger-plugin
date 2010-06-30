@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Cause;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * A Cause why a build was scheduled.
@@ -37,16 +37,29 @@ public class GerritCause extends Cause {
 
     private PatchsetCreated event;
     private boolean silentMode;
+    private TriggerContext context;
 
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
      * @param silentMode Silent Mode on or off.
      */
-    @DataBoundConstructor
     public GerritCause(PatchsetCreated event, boolean silentMode) {
         this.event = event;
         this.silentMode = silentMode;
+        this.context = new TriggerContext();
+    }
+
+    /**
+     * Default DataBound Constructor.
+     * @param event the event that triggered the build.
+     * @param silentMode Silent Mode on or off.
+     * @param context The context with information about other builds triggered for the same event as this one.
+     */
+    public GerritCause(PatchsetCreated event, boolean silentMode, TriggerContext context) {
+        this.event = event;
+        this.silentMode = silentMode;
+        this.context = context;
     }
 
     /**
@@ -95,6 +108,22 @@ public class GerritCause extends Cause {
         this.silentMode = silentMode;
     }
 
+    /**
+     * The context with information about other builds triggered for the same event as this one.
+     * @return the context.
+     */
+    public TriggerContext getContext() {
+        return context;
+    }
+
+    /**
+     * The context with information about other builds triggered for the same event as this one.
+     * @param context the context.
+     */
+    public void setContext(TriggerContext context) {
+        this.context = context;
+    }
+
     @Override
     public String getShortDescription() {
         if (isSilentMode()) {
@@ -116,6 +145,6 @@ public class GerritCause extends Cause {
 
     @Override
     public String toString() {
-        return "GerritCause: " + event;
+        return "GerritCause: " + event + " silent: " + silentMode;
     }
 }

@@ -29,6 +29,10 @@ import java.io.File;
 import java.util.List;
 import net.sf.json.JSONObject;
 
+/**
+ * Mock class of a Config.
+ * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ */
 public class MockGerritHudsonTriggerConfig implements
         IGerritHudsonTriggerConfig {
 
@@ -126,6 +130,8 @@ public class MockGerritHudsonTriggerConfig implements
     public void setValues(JSONObject form) {
         //Empty
     }
+
+    //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock object.
 
     @Override
     public int getGerritBuildStartedVerifiedValue() {

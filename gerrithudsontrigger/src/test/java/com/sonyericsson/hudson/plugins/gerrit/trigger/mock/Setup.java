@@ -36,16 +36,39 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 
 
-public class Setup {
+/**
+ * Utility class for standard data during testing.
+ * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ */
+public final class Setup {
 
+    /**
+     * Utility class.
+     */
+    private Setup() {
 
-    public static GerritSSHCmdRunner GerritCmdRunner(
+    }
+
+    /**
+     * Gives you a mock of the GerritSSHCmdRunner.
+     * @param config config
+     * @param verifiedValue verifiedValue
+     * @param change change
+     * @param patchset patchset
+     * @return GerritSSHCmdRunner mock.
+     */
+    public static GerritSSHCmdRunner gerritCmdRunner(
             IGerritHudsonTriggerConfig config, int verifiedValue, int change,
             int patchset) {
-        return GerritCmdRunner(config, verifiedValue,
+        return gerritCmdRunner(config, verifiedValue,
                 getCommentFormVerifiedValue(verifiedValue), change, patchset);
     }
 
+    /**
+     * Utility method.
+     * @param verifiedValue verifiedValue
+     * @return comment.
+     */
     private static String getCommentFormVerifiedValue(int verifiedValue) {
         switch (verifiedValue) {
             case 0:
@@ -54,22 +77,45 @@ public class Setup {
                 return "Hudson says ok.http://buildresultURL";
             case -1:
                 return "Hudson says not ok.http://buildresultURL";
+            default:
+                return null;
         }
-        return null;
     }
 
-    public static GerritSSHCmdRunner GerritCmdRunner(
+    /**
+     * Gives you a mock of the GerritSSHCmdRunner.
+     * @param config config
+     * @param verifiedValue verifiedValue
+     * @return GerritSSHCmdRunner mock.
+     */
+    public static GerritSSHCmdRunner gerritCmdRunner(
             IGerritHudsonTriggerConfig config, int verifiedValue) {
-        return GerritCmdRunner(config, verifiedValue,
+        return gerritCmdRunner(config, verifiedValue,
                 getCommentFormVerifiedValue(verifiedValue));
     }
 
-    public static GerritSSHCmdRunner GerritCmdRunner(
+    /**
+     * Gives you a mock of the GerritSSHCmdRunner.
+     * @param config config
+     * @param verifiedValue verifiedValue
+     * @param comment comment
+     * @return GerritSSHCmdRunner mock.
+     */
+    public static GerritSSHCmdRunner gerritCmdRunner(
             IGerritHudsonTriggerConfig config, int verifiedValue, String comment) {
-        return GerritCmdRunner(config, verifiedValue, comment, 2, 1);
+        return gerritCmdRunner(config, verifiedValue, comment, 2, 1);
     }
 
-    public static GerritSSHCmdRunner GerritCmdRunner(
+    /**
+     * Gives you a mock of the GerritSSHCmdRunner.
+     * @param config config
+     * @param verifiedValue verifiedValue
+     * @param comment comment
+     * @param change change
+     * @param patchset patchset
+     * @return GerritSSHCmdRunner mock.
+     */
+    public static GerritSSHCmdRunner gerritCmdRunner(
             IGerritHudsonTriggerConfig config, int verifiedValue,
             String comment, int change, int patchset) {
         GerritSSHCmdRunner verifiedHandler = EasyMock.createMock(GerritSSHCmdRunner.class);
@@ -79,45 +125,28 @@ public class Setup {
         return verifiedHandler;
     }
 
-    public static MockServer HudsonServerMock() {
-        return HudsonServerMock(2, 1, "refs/changes/02/2/1");
-    }
-
-    public static MockServer HudsonServerMock(int change, int patchset,
-            String refspec) {
-        final MockServer mockHudsonServer = MockServer.create().expectHTTPGet(
-                "/hudson/job/PROJECTNAME/build?PROJECT=new/project&CHANGE="
-                + change + "&BRANCH=master&PATCHSET=" + patchset
-                + "&REFSPEC=" + refspec).sendHTTP("");
-        return mockHudsonServer;
-    }
-
-    public static IGerritHudsonTriggerConfig createConfig() {
-        return new MockGerritHudsonTriggerConfig();
-    }
-
-    public static GerritSSHCmdRunner GerritCmdRunner() {
+    /**
+     * Gives you a mock of the GerritSSHCmdRunner.
+     * @return GerritSSHCmdRunner mock.
+     */
+    public static GerritSSHCmdRunner gerritCmdRunner() {
         GerritSSHCmdRunner verifiedHandler = EasyMock.createMock(GerritSSHCmdRunner.class);
         EasyMock.replay(verifiedHandler);
         return verifiedHandler;
     }
 
-    public static void VerifyWithTimeout(Object obj) {
-        for (int j = 0;j < 10;j++) {
-            try {
-                EasyMock.verify(obj);
-                return;
-            } catch (Throwable e) {
-                try {
-                    Thread.sleep(10);
-                } catch (InterruptedException e1) {
-                }
-            }
-        }
-        EasyMock.verify(obj);
-
+    /**
+     * Gives you a Config mock.
+     * @return IGerritHudsonTriggerConfig mock.
+     */
+    public static IGerritHudsonTriggerConfig createConfig() {
+        return new MockGerritHudsonTriggerConfig();
     }
 
+    /**
+     * Gives you a PatchsetCreated mock.
+     * @return PatchsetCreated mock.
+     */
     public static PatchsetCreated createPatchsetCreated() {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
@@ -139,10 +168,20 @@ public class Setup {
         return event;
     }
 
+    /**
+     * Gives you a BuildsStartedStats mock object for the given event.
+     * @param event the event.
+     * @return BuildsStartedStats mock.
+     */
     public static BuildsStartedStats createBuildStartedStats(PatchsetCreated event) {
+        //CS IGNORE MagicNumber FOR NEXT 2 LINES. REASON: mock.
         return new BuildsStartedStats(event, 3, 1);
     }
 
+    /**
+     * EnvVars mock.
+     * @return EnvVars mock
+     */
     public static EnvVars createEnvVars() {
         EnvVars env = new EnvVars();
         env.put("BRANCH", "branch");
@@ -151,20 +190,5 @@ public class Setup {
         env.put("REFSPEC", StringUtil.REFSPEC_PREFIX + "00/1000/1");
         env.put("CHANGE_URL", "http://gerrit/1000");
         return env;
-    }
-
-    public static class EmailMessage {
-
-        String to;
-        String subject;
-        String body;
-        String cc;
-
-        public EmailMessage(String to, String subject, String body, String cc) {
-            this.to = to;
-            this.subject = subject;
-            this.body = body;
-            this.cc = cc;
-        }
     }
 }

@@ -31,14 +31,15 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Tests make ref spec.
+ * TODO move to StringUtilTest
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritTriggerTest {
 
-    public GerritTriggerTest() {
-    }
-
+    /**
+     * test.
+     */
     @Test
     public void testMakeRefSpec1() {
         PatchsetCreated event = new PatchsetCreated();
@@ -53,6 +54,9 @@ public class GerritTriggerTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testMakeRefSpec2() {
 
@@ -68,6 +72,9 @@ public class GerritTriggerTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testMakeRefSpec3() {
 
@@ -83,6 +90,9 @@ public class GerritTriggerTest {
         assertEquals(expResult, result);
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testMakeRefSpec4() {
 

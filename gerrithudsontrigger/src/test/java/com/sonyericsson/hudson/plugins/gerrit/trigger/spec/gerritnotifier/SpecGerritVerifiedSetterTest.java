@@ -48,10 +48,19 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * Scenario tests.
+ * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Hudson.class})
+@PrepareForTest({Hudson.class })
 public class SpecGerritVerifiedSetterTest {
 
+    /**
+     * A test.
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
     @Test
     public void shouldCallGerritWithVerifiedOkFlagWhenBuildWasSuccessful()
             throws IOException, InterruptedException {
@@ -87,13 +96,18 @@ public class SpecGerritVerifiedSetterTest {
         when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
         when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
 
-        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);        
+        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(key), taskListener);
         String parameterStringExpected = "gerrit approve MSG=OK VERIFIED=1 CODEREVIEW=1";
 
         verify(mockGerritCmdRunner).runCmd(parameterStringExpected);
     }
 
+    /**
+     * A test.
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
     @Test
     public void shouldCallGerritWithVerifiedRejectFlagWhenBuildWasNotSuccessful()
             throws IOException, InterruptedException {
@@ -136,6 +150,11 @@ public class SpecGerritVerifiedSetterTest {
         verify(mockGerritCmdRunner).runCmd(parameterStringExpected);
     }
 
+    /**
+     * A test.
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
     @Test
     public void shouldCallGerritWithVerifiedFailedFlagWhenBuildOneBuildFailedAndAnotherSuccessful()
             throws IOException, InterruptedException {

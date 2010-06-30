@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,8 @@ import org.junit.runners.Suite;
  * Some kind of bug with the maven stuff,
  * so the pom is configured to run this testclass,
  * which will run all the tests, if you configure them in here.
- * @author 23052130
+ * <strong>The bug was in the naming of the tests, they are renamed.</strong>
+ * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({   SpecGerritHudsonTrigger.class,

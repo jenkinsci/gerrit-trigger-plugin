@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -40,11 +39,12 @@ import org.junit.runners.Parameterized.Parameters;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+//CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mocks tests.
+
 /**
- * Tests a bunch of different scenarios for
- * {@link ParameterExpander#getCodeReviewValue(hudson.model.Result, GerritTrigger)}
- * and
- * {@link ParameterExpander#getVerifiedValue(hudson.model.Result, GerritTrigger)}
+ * Tests a bunch of different scenarios.
+ * For {@link ParameterExpander#getCodeReviewValue(hudson.model.Result, GerritTrigger)}
+ * and {@link ParameterExpander#getVerifiedValue(hudson.model.Result, GerritTrigger)}
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(Parameterized.class)
@@ -52,22 +52,36 @@ public class ParameterExpanderParameterizedTest {
 
     private TestParameters parameters;
 
+    /**
+     * Constructor.
+     * @param parameters parameters.
+     */
     public ParameterExpanderParameterizedTest(TestParameters parameters) {
         this.parameters = parameters;
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testGetVerifiedValue() {
         ParameterExpander instance = new ParameterExpander(parameters.config);
         assertEquals(parameters.expectedVerified, instance.getVerifiedValue(parameters.result, parameters.trigger));
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testGetCodeReviewValue() {
         ParameterExpander instance = new ParameterExpander(parameters.config);
         assertEquals(parameters.expectedCodeReview, instance.getCodeReviewValue(parameters.result, parameters.trigger));
     }
 
+    /**
+     * Parameters.
+     * @return parameters
+     */
     @Parameters
     public static Collection getParameters() {
         List<TestParameters[]> list = new LinkedList<TestParameters[]>();
@@ -131,6 +145,9 @@ public class ParameterExpanderParameterizedTest {
         return list;
     }
 
+    /**
+     * Parameters for the test.
+     */
     public static class TestParameters {
         IGerritHudsonTriggerConfig config;
         Result result;
@@ -138,7 +155,16 @@ public class ParameterExpanderParameterizedTest {
         int expectedCodeReview;
         int expectedVerified;
 
-        public TestParameters(IGerritHudsonTriggerConfig config, Result result, GerritTrigger trigger, int expectedCodeReview, int expectedVerified) {
+        /**
+         * Constructor.
+         * @param config config
+         * @param result result
+         * @param trigger trigger
+         * @param expectedCodeReview expectedCodeReview
+         * @param expectedVerified expectedVerified
+         */
+        public TestParameters(IGerritHudsonTriggerConfig config, Result result, GerritTrigger trigger,
+                int expectedCodeReview, int expectedVerified) {
             this.config = config;
             this.result = result;
             this.trigger = trigger;
@@ -146,6 +172,9 @@ public class ParameterExpanderParameterizedTest {
             this.expectedVerified = expectedVerified;
         }
 
+        /**
+         * Constructor.
+         */
         public TestParameters() {
         }
     }

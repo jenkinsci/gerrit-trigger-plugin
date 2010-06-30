@@ -28,7 +28,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpanderParameterizedTest.TestParameters;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.Collection;
@@ -36,16 +35,15 @@ import org.junit.runners.Parameterized.Parameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import org.junit.runners.Parameterized;
 import org.junit.runner.RunWith;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+//CS IGNORE LineLength FOR NEXT 200 LINES. REASON: Readability for the parameters.
+//CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock tests.
+
 /**
- *
- * @author 23054798
+ * Tests the patchset key for BuildMemory.
+ * @author Gustaf Lund
  */
 @RunWith(Parameterized.class)
 public class PatchSetKeyParameterizedTest {
@@ -53,12 +51,22 @@ public class PatchSetKeyParameterizedTest {
     private PatchSetKey key2;
     private Boolean res;
 
+    /**
+     * Constructor.
+     * @param key1 key1
+     * @param key2 key2
+     * @param res res
+     */
     public PatchSetKeyParameterizedTest(PatchSetKey key1, PatchSetKey key2, Boolean res) {
         this.key1 = key1;
         this.key2 = key2;
         this.res = res;
     }
 
+    /**
+     * Parameters.
+     * @return parameters
+     */
     @Parameters
     public static Collection getParameters() {
         List<Object[]> list = new LinkedList<Object[]>();
@@ -136,6 +144,12 @@ public class PatchSetKeyParameterizedTest {
         return list;
     }
 
+    /**
+     * Utility method.
+     * @param changeNr changeNr
+     * @param patchNr patchNr
+     * @return PatchsetCreated mock.
+     */
     public static PatchsetCreated createPatchsetCreated(String changeNr, String patchNr) {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
@@ -157,16 +171,25 @@ public class PatchSetKeyParameterizedTest {
         return event;
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testPatchSetKeyEquals() {
         assertEquals(res, key1.equals(key2));
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testPatchSetKeyHashCode() {
         assertEquals(res, key1.hashCode() == key2.hashCode());
     }
 
+    /**
+     * test.
+     */
     @Test
     public void testPatchSetKeyCompareTo() {
         assertEquals(res, key1.compareTo(key2) == 0);

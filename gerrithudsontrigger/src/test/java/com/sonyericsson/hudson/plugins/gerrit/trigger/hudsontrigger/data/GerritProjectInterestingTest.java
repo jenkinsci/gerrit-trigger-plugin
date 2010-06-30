@@ -23,14 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -46,23 +41,26 @@ public class GerritProjectInterestingTest {
 
     private final InterestingScenario scenario;
 
+    /**
+     * Constructor.
+     * @param scenario scenario
+     */
     public GerritProjectInterestingTest(InterestingScenario scenario) {
         this.scenario = scenario;
     }
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
+    /**
+     * Tests {@link GerritProject#isInteresting(java.lang.String, java.lang.String)}.
+     */
     @Test
     public void testInteresting() {
         assertEquals(scenario.expected, scenario.config.isInteresting(scenario.project, scenario.branch));
     }
 
+    /**
+     * The parameters.
+     * @return parameters
+     */
     @Parameters
     public static Collection getParameters() {
 
@@ -107,11 +105,14 @@ public class GerritProjectInterestingTest {
         branches.add(branch);
         config = new GerritProject(CompareType.ANT, "vendor/**/project", branches);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "vendor/semc/master/project",
-                                                            "origin/master", true)});
+                                                            "origin/master", true), });
 
         return parameters;
     }
 
+    /**
+     * A parameter to a test scenario.
+     */
     public static class InterestingScenario {
 
         GerritProject config;
@@ -119,6 +120,13 @@ public class GerritProjectInterestingTest {
         String branch;
         boolean expected;
 
+        /**
+         * Constructor.
+         * @param config config
+         * @param project project
+         * @param branch branch
+         * @param expected expected
+         */
         public InterestingScenario(GerritProject config, String project, String branch, boolean expected) {
             this.config = config;
             this.project = project;
@@ -126,6 +134,9 @@ public class GerritProjectInterestingTest {
             this.expected = expected;
         }
 
+        /**
+         * Constructor.
+         */
         public InterestingScenario() {
         }
     }
