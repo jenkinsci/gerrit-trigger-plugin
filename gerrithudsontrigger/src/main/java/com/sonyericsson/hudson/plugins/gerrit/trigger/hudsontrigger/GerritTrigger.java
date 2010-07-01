@@ -198,7 +198,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             final GerritCause cause = new GerritCause(event, silentMode);
             //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
             boolean ok = myProject.scheduleBuild(BUILD_SCHEDULE_DELAY, cause,
-                                                 new BadgeAction(event),
+                                                 new BadgeAction(event, myProject.getFullName()),
                                                  new ParametersAction(
                     new StringParameterValue(GERRIT_BRANCH, event.getChange().getBranch()),
                     new StringParameterValue(GERRIT_CHANGE_NUMBER, event.getChange().getNumber()),
