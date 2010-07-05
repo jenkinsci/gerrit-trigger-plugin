@@ -6,6 +6,7 @@
     <packaging>pom</packaging>
     <name>Gerrit Trigger Pom</name>
     <url>http://wiki.hudson-ci.org/display/HUDSON/Gerrit+Trigger</url>
+    <description>Integrates Hudson to Gerrit code review.</description>
 
     <parent>
         <groupId>org.jvnet.hudson.plugins</groupId>
@@ -16,6 +17,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.net.id>rsandell</java.net.id>
     </properties>
 
     <licenses>
@@ -170,6 +172,19 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>java.net-m2-repository</id>
+            <url>java-net:/maven2-repository/trunk/repository/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git://github.com/hudson/gerrit-trigger-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:hudson/gerrit-trigger-plugin.git</developerConnection>
+        <url>http://github.com/hudson/gerrit-trigger-plugin</url>
+    </scm>
 
     <modules>
         <module>build-config</module>

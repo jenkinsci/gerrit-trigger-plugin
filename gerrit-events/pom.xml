@@ -13,6 +13,11 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.net.id>rsandell</java.net.id>
+    </properties>
+
     <licenses>
         <license>
             <name>MIT</name>
@@ -143,6 +148,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>java.net-m2-repository</id>
+            <url>java-net:/maven2-repository/trunk/repository/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git://github.com/hudson/gerrit-trigger-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:hudson/gerrit-trigger-plugin.git</developerConnection>
+        <url>http://github.com/hudson/gerrit-trigger-plugin</url>
+    </scm>
 </project>
 
 

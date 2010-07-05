@@ -1,3 +1,3 @@
 <div>
-  This plugin allows triggering of builds from Gerrit change requests. Results are reported back to Gerrit and Verified is set.
+  This plugin integrates Hudson to <a href="http://code.google.com/p/gerrit/">Gerrit</a> code review.
 </div>
