@@ -1,0 +1,23 @@
+<p>
+    <strong>Specify what Gerrit project(s) to trigger a build on.</strong>
+    At least one project and branch pattern needs to be specified for a build to be triggered,
+    and you can specify as many gerrit project to trigger on as you want.
+</p>
+<p>
+    Start by specifying the name of the Gerrit project in the left hand text field.
+    You can specify the name pattern in three different ways, as provided by the &quot;Type&quot; drop-down menu.
+</p>
+<ul>
+    <li><strong>Plain:</strong> The exact name in Gerrit, case sensitive equality.</li>
+    <li><strong>Path:</strong> ANT style pattern. <i>Ex: &quot;**/base/*&quot;</i></li>
+    <li><strong>RegExp:</strong> Regular expression.</li>
+</ul>
+<p>
+    Then provide the name of the branch(es) to trigger on. The same "pattern types" is available as above.
+    So for example to trigger on all branches in the project you can specify:<br/>
+    &nbsp;&nbsp;Type: Path<br/>
+    &nbsp;&nbsp;Pattern: **
+</p>
+<p>
+    You can add more branch patterns by clicking on &quot;Add Branch&quot;
+</p>

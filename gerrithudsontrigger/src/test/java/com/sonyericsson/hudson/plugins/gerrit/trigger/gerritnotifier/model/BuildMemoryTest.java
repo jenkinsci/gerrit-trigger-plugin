@@ -316,5 +316,4 @@ public class BuildMemoryTest {
         instance.forget(result);
         assertNull(instance.getMemoryImprint(result));
     }
-
 }

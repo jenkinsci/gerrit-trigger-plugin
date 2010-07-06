@@ -1,1 +1,21 @@
-Trigger the build on Gerrit patchset-created events.
+<p>Trigger the build on Gerrit patchset-created events.</p>
+<p>
+    <u>The triggered build will be provided with the following parameters:</u>
+</p>
+<ul>
+    <li><strong>GERRIT_CHANGE_ID</strong>: The change id.</li>
+    <li><strong>GERRIT_CHANGE_SUBJECT</strong>: The first line of the commit message.</li>
+    <li><strong>GERRIT_CHANGE_NUMBER</strong>: The change number.</li>
+    <li><strong>GERRIT_CHANGE_URL</strong>: The URL to the change.</li>
+    <li><strong>GERRIT_PATCHSET_NUMBER</strong>: The Patch Set number.</li>
+    <li><strong>GERRIT_PATCHSET_REVISION</strong>: The Patch Set revision id.</li>
+    <li><strong>GERRIT_PROJECT</strong>: The name of the project.</li>
+    <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
+    <li><strong>GERRIT_REFSPEC</strong>: The refspec to download the change.</li>
+</ul>
+<p>
+    <i>
+        The parameters will be available to the build as environment variables.
+        E.g. <strong>$GERRIT_REFSPEC</strong>
+    </i>
+</p>
