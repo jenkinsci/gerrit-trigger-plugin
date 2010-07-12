@@ -111,6 +111,7 @@ public class SshConnection {
             Channel channel = connectSession.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
             channel.connect();
+            channel.disconnect();
         } catch (JSchException ex) {
             throw new SshException(ex);
         }

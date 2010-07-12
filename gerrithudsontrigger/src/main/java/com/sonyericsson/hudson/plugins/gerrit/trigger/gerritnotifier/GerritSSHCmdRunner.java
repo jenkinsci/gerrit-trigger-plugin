@@ -57,6 +57,7 @@ public class GerritSSHCmdRunner {
             SshConnection ssh = new SshConnection(config.getGerritHostName(),
                     config.getGerritSshPort(), config.getGerritAuthentication());
                 ssh.executeCommand(cmd);
+                ssh.disconnect();
                 return true;
         } catch (Exception ex) {
             logger.error("Could not run command " + cmd, ex);
