@@ -31,6 +31,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -99,20 +100,39 @@ public class SshConnection {
 
     /**
      * Execute an ssh command on the server.
+     * After the command is sent the used channel is disconnected.
      * @param command the command to execute.
+     * @return a String containing the output from the command.
      * @throws SshException if so.
      */
-    public synchronized void executeCommand(String command) throws SshException {
+    public synchronized String executeCommand(String command) throws SshException {
         if (!isConnected()) {
             throw new IllegalStateException("Not connected!");
         }
-        logger.debug("Executing command: \"{}\"", command);
         try {
             Channel channel = connectSession.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
+
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(channel.getInputStream()));
             channel.connect();
+
+            // Seems like Gerrit does not like when you disconnect directly after the command has been sent.
+            // For instance, we have seen effects of mails not being sent out. This is the reason for
+            // receiving all incoming the data.
+            String incomingLine = null;
+            StringBuilder commandOutput = new StringBuilder();
+            while ((incomingLine = bufferedReader.readLine()) != null) {
+                commandOutput.append(incomingLine);
+                commandOutput.append('\n');
+            }
+
+            bufferedReader.close();
             channel.disconnect();
+
+            return commandOutput.toString();
         } catch (JSchException ex) {
+            throw new SshException(ex);
+        } catch (IOException ex) {
             throw new SshException(ex);
         }
     }
