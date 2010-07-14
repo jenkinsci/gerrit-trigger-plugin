@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
@@ -37,18 +38,30 @@ import java.util.List;
  */
 public class TriggerContext {
 
+    private PatchsetCreated event;
     private TriggeredItemEntity thisBuild;
     private List<TriggeredItemEntity> others;
 
     /**
      * standard constructor.
      * @param thisBuild this build.
+     * @param event the event for this context.
      * @param others the other building and untriggered builds.
      */
     public TriggerContext(AbstractBuild thisBuild,
-                          List<TriggeredItemEntity> others) {
+            PatchsetCreated event,
+            List<TriggeredItemEntity> others) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
+        this.event = event;
         this.others = others;
+    }
+
+    /**
+     * Standard constructor.
+     * @param event the event for this context.
+     */
+    public TriggerContext(PatchsetCreated event) {
+        this.event = event;
     }
 
     /**
@@ -100,6 +113,14 @@ public class TriggerContext {
      */
     public synchronized void setThisBuild(AbstractBuild thisBuild) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
+    }
+
+    /**
+     * The event for this context.
+     * @return the event.
+     */
+    public PatchsetCreated getEvent() {
+        return event;
     }
 
     /**
@@ -177,6 +198,23 @@ public class TriggerContext {
     }
 
     /**
+     * Gets all the builds in this context.
+     * If some project hasn't started a build yet, that project will be unrepresented in this list.
+     * @return a list of builds from this context.
+     */
+    public List<AbstractBuild> getOtherBuilds() {
+        List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+        if (others != null) {
+            for (TriggeredItemEntity entity : others) {
+                if (entity.getBuild() != null) {
+                    list.add(entity.getBuild());
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
      * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link AbstractProject }.
      */
     public static class TriggeredItemEntity {
@@ -249,7 +287,7 @@ public class TriggerContext {
                 if (buildNumber != null) {
                     getProject();
                     if (project != null) {
-                        build = (AbstractBuild) project.getBuildByNumber(buildNumber);
+                        build = (AbstractBuild)project.getBuildByNumber(buildNumber);
                     }
                 }
             }
@@ -331,7 +369,7 @@ public class TriggerContext {
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final TriggeredItemEntity other = (TriggeredItemEntity) obj;
+            final TriggeredItemEntity other = (TriggeredItemEntity)obj;
             if (this.buildNumber != other.buildNumber && (this.buildNumber == null
                     || !this.buildNumber.equals(other.buildNumber))) {
                 return false;

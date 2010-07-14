@@ -47,7 +47,7 @@ public class GerritCause extends Cause {
     public GerritCause(PatchsetCreated event, boolean silentMode) {
         this.event = event;
         this.silentMode = silentMode;
-        this.context = new TriggerContext();
+        this.context = new TriggerContext(event);
     }
 
     /**

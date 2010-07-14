@@ -29,6 +29,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -38,7 +39,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.powermock.api.mockito.PowerMockito;
 
-//CS IGNORE MagicNumber FOR NEXT 250 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 500 LINES. REASON: Testdata.
 
 /**
  * Tests the TriggerContext's public methods.
@@ -80,8 +81,10 @@ public class TriggerContextTest {
      */
     @Test
     public void testGetOthers() {
-        TriggerContext context = new TriggerContext(mockBuild("projectX", 1),
-                Arrays.asList(new TriggerContext.TriggeredItemEntity[]{new TriggerContext.TriggeredItemEntity(1, "projectY")}));
+        TriggerContext context = new TriggerContext(mockBuild("projectX", 1), null,
+                Arrays.asList(new TriggerContext.TriggeredItemEntity[]{
+                                    new TriggerContext.TriggeredItemEntity(1, "projectY"),
+                                    }));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
@@ -92,7 +95,9 @@ public class TriggerContextTest {
     @Test
     public void testSetOthers() {
         TriggerContext context = new TriggerContext();
-        context.setOthers(Arrays.asList(new TriggerContext.TriggeredItemEntity[]{new TriggerContext.TriggeredItemEntity(1, "projectY")}));
+        context.setOthers(Arrays.asList(new TriggerContext.TriggeredItemEntity[]{
+                                                new TriggerContext.TriggeredItemEntity(1, "projectY"),
+                                                }));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
@@ -103,7 +108,7 @@ public class TriggerContextTest {
     @Test
     public void testGetThisBuild() {
         AbstractBuild build = mockBuild("myProject", 1);
-        TriggerContext context = new TriggerContext(build, null);
+        TriggerContext context = new TriggerContext(build, null, null);
         assertNotNull(context.getThisBuild());
         assertEquals(new Integer(1), context.getThisBuild().getBuildNumber());
         assertEquals("myProject", context.getThisBuild().getProjectId());
@@ -272,8 +277,48 @@ public class TriggerContextTest {
      */
     @Test
     public void testHasOthersFalse() {
-        TriggerContext context = new TriggerContext(mockBuild("p", 2), new LinkedList<TriggeredItemEntity>());
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<TriggeredItemEntity>());
         assertFalse(context.hasOthers());
+    }
+
+    /**
+     * Test of getOtherBuilds method with no others, of class TriggerContext.
+     * With an empty list of "others".
+     */
+    @Test
+    public void testGetOtherBuilds() {
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<TriggeredItemEntity>());
+        List<AbstractBuild> others = context.getOtherBuilds();
+        assertNotNull(others);
+        assertEquals(0, others.size());
+    }
+
+    /**
+     * Test of getOtherBuilds method with no others, of class TriggerContext.
+     * With a null list of "others".
+     */
+    @Test
+    public void testGetOtherBuildsNull() {
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, null);
+        List<AbstractBuild> others = context.getOtherBuilds();
+        assertNotNull(others);
+        assertEquals(0, others.size());
+    }
+
+    /**
+     * Test of getOtherBuilds method with no others, of class TriggerContext.
+     * With a list of "others" containing one build.
+     */
+    @Test
+    public void testGetOtherBuildsOne() {
+        List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
+        bah.add(new TriggeredItemEntity(mockBuild("p2", 3)));
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, bah);
+        List<AbstractBuild> others = context.getOtherBuilds();
+        assertNotNull(others);
+        assertEquals(1, others.size());
+        assertEquals("p2", others.get(0).getProject().getFullName());
+        assertEquals(3, others.get(0).getNumber());
     }
 
 }

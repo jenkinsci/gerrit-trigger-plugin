@@ -53,6 +53,8 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
+
 /**
  * Management link for configuring the global configuration of this trigger.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -64,7 +66,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getIconFileName() {
-        return "/plugin/gerrit-trigger/images/icon.png";
+        return PLUGIN_IMAGES_URL + "icon.png";
     }
 
     @Override

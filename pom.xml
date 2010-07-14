@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.jvnet.hudson.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.360</version><!-- which version of Hudson is this plugin built against? -->
+        <version>1.362</version><!-- which version of Hudson is this plugin built against? -->
         <!--<relativePath>../pom.xml</relativePath>-->
     </parent>
 

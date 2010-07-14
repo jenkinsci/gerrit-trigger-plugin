@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
@@ -196,10 +197,33 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
             final GerritCause cause = new GerritCause(event, silentMode);
-            //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
-            boolean ok = myProject.scheduleBuild(BUILD_SCHEDULE_DELAY, cause,
-                                                 new BadgeAction(event),
-                                                 new ParametersAction(
+            schedule(cause, event);
+        }
+    }
+
+    /**
+     * Schedules a build with parameters from the event.
+     * With {@link #myProject} as the project to build.
+     * @param cause the cause of the build.
+     * @param event the event.
+     */
+    private void schedule(GerritCause cause, PatchsetCreated event) {
+        schedule(cause, event, myProject);
+    }
+
+    /**
+     * Schedules a build with parameters from the event.
+     * @param cause the cause of the build.
+     * @param event the event.
+     * @param project the project to build.
+     */
+    private void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
+        //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
+        boolean ok = project.scheduleBuild(
+                BUILD_SCHEDULE_DELAY,
+                cause,
+                new BadgeAction(event),
+                new ParametersAction(
                     new StringParameterValue(GERRIT_BRANCH, event.getChange().getBranch()),
                     new StringParameterValue(GERRIT_CHANGE_NUMBER, event.getChange().getNumber()),
                     new StringParameterValue(GERRIT_CHANGE_ID, event.getChange().getId()),
@@ -209,8 +233,35 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
                     new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
                     new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
-            logger.info("Project {} Build Scheduled: {} By event: {}", new Object[]{myProject.getName(), ok,
-                        event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+
+        logger.info("Project {} Build Scheduled: {} By event: {}",
+                new Object[]{project.getName(),
+                              ok,
+                              event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(),
+                            });
+    }
+
+    /**
+     * Re-triggers the build in {@link TriggerContext#getThisBuild()} for the context's event.
+     * Will not do any
+     * {@link #isInteresting(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)}
+     * checks.
+     * If more than one build was triggered by the event the results from those builds will be counted again,
+     * but they won't be re-triggered.
+     * If any builds for the event are still running, this new scheduled build will replace it's predesessor.
+     * If the project is currently building the event, no scheduling will be done.
+     * @param context the previous context.
+     */
+    public void retriggerThisBuild(TriggerContext context) {
+        if (!ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(), context.getEvent())) {
+            if (!silentMode) {
+                    ToGerritRunListener.getInstance().onRetriggered(
+                            context.getThisBuild().getProject(),
+                            context.getEvent(),
+                            context.getOtherBuilds());
+            }
+            final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
+            schedule(cause, context.getEvent());
         }
     }
 

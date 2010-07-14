@@ -38,6 +38,16 @@ public final class StringUtil {
     public static final String REFSPEC_PREFIX = "refs/changes/";
 
     /**
+     * The base URL of this plugin.
+     */
+    public static final String PLUGIN_URL = "/plugin/gerrit-trigger/";
+
+    /**
+     * The base URL of the plugin images.
+     */
+    public static final String PLUGIN_IMAGES_URL = PLUGIN_URL + "images/";
+
+    /**
      * Provate Constructor for Utility Class.
      */
     private StringUtil() {
