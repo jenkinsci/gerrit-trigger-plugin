@@ -1,1 +1,21 @@
-Gerritのpatchset-craetedイベントでビルドを開始するトリガです
+<p>Gerritのpatchset-craetedイベントでビルドを開始するトリガです。</p>
+<p>
+    <u>以下のパラメータが、トリガーされたビルドに提供されます:</u>
+</p>
+<ul>
+    <li><strong>GERRIT_CHANGE_ID</strong>: The change id.</li>
+    <li><strong>GERRIT_CHANGE_SUBJECT</strong>: commitメッセージの最初の一行</li>
+    <li><strong>GERRIT_CHANGE_NUMBER</strong>: The change number.</li>
+    <li><strong>GERRIT_CHANGE_URL</strong>: The URL to the change.</li>
+    <li><strong>GERRIT_PATCHSET_NUMBER</strong>: The Patch Set number.</li>
+    <li><strong>GERRIT_PATCHSET_REVISION</strong>: The Patch Set revision id.</li>
+    <li><strong>GERRIT_PROJECT</strong>: プロジェクト名</li>
+    <li><strong>GERRIT_BRANCH</strong>: ブランチ名</li>
+    <li><strong>GERRIT_REFSPEC</strong>: The refspec to download the change.</li>
+</ul>
+<p>
+    <i>
+        パラメータはビルド時に環境変数として利用できます。
+        E.g. <strong>$GERRIT_REFSPEC</strong>
+    </i>
+</p>
