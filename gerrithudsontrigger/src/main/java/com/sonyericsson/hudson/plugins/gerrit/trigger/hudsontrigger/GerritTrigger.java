@@ -37,10 +37,14 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
+import hudson.model.ParameterDefinition;
+import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
+import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterValue;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import java.util.ArrayList;
 import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
@@ -158,7 +162,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         super.start(project, newInstance);
         this.myProject = project;
         try {
-            PluginImpl.getInstance().addListener(this);
+            if (PluginImpl.getInstance() != null) {
+                PluginImpl.getInstance().addListener(this);
+            } else {
+                logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
+                        project.getFullDisplayName());
+            }
         } catch (IllegalStateException e) {
             logger.error("I am too early!", e);
         }
@@ -169,7 +178,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         logger.debug("Stop");
         super.stop();
         try {
-            PluginImpl.getInstance().removeListener(this);
+            if (PluginImpl.getInstance() != null) {
+                PluginImpl.getInstance().removeListener(this);
+            }
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
@@ -187,7 +198,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Override
     public void gerritEvent(PatchsetCreated event) {
         logger.trace("event: {}", event);
-        if (myProject.isDisabled()) {
+        if (!myProject.isBuildable()) {
             logger.trace("Disabled.");
             return;
         }
@@ -207,7 +218,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param cause the cause of the build.
      * @param event the event.
      */
-    private void schedule(GerritCause cause, PatchsetCreated event) {
+    protected void schedule(GerritCause cause, PatchsetCreated event) {
         schedule(cause, event, myProject);
     }
 
@@ -217,28 +228,99 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event the event.
      * @param project the project to build.
      */
-    private void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
+    protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         boolean ok = project.scheduleBuild(
                 BUILD_SCHEDULE_DELAY,
                 cause,
                 new BadgeAction(event),
-                new ParametersAction(
-                    new StringParameterValue(GERRIT_BRANCH, event.getChange().getBranch()),
-                    new StringParameterValue(GERRIT_CHANGE_NUMBER, event.getChange().getNumber()),
-                    new StringParameterValue(GERRIT_CHANGE_ID, event.getChange().getId()),
-                    new StringParameterValue(GERRIT_PATCHSET_NUMBER, event.getPatchSet().getNumber()),
-                    new StringParameterValue(GERRIT_PATCHSET_REVISION, event.getPatchSet().getRevision()),
-                    new StringParameterValue(GERRIT_REFSPEC, StringUtil.makeRefSpec(event)),
-                    new StringParameterValue(GERRIT_PROJECT, event.getChange().getProject()),
-                    new StringParameterValue(GERRIT_CHANGE_SUBJECT, event.getChange().getSubject()),
-                    new StringParameterValue(GERRIT_CHANGE_URL, cause.getUrl())));
+                createParameters(event, cause, project));
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
                 new Object[]{project.getName(),
-                              ok,
-                              event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(),
-                            });
+                    ok,
+                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+    }
+
+    /**
+     * Creates a ParameterAction and fills it with the project's default parameters + the Standard Gerrit parameters.
+     * @param event the event.
+     * @param cause the cause.
+     * @param project the project.
+     * @return the ParameterAction.
+     */
+    protected ParametersAction createParameters(PatchsetCreated event, GerritCause cause, AbstractProject project) {
+        List<ParameterValue> parameters = getDefaultParametersValues(project);
+        setOrCreateStringParameterValue(parameters, GERRIT_BRANCH, event.getChange().getBranch());
+        setOrCreateStringParameterValue(parameters, GERRIT_BRANCH, event.getChange().getBranch());
+        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_NUMBER, event.getChange().getNumber());
+        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_ID, event.getChange().getId());
+        setOrCreateStringParameterValue(parameters, GERRIT_PATCHSET_NUMBER, event.getPatchSet().getNumber());
+        setOrCreateStringParameterValue(parameters, GERRIT_PATCHSET_REVISION, event.getPatchSet().getRevision());
+        setOrCreateStringParameterValue(parameters, GERRIT_REFSPEC, StringUtil.makeRefSpec(event));
+        setOrCreateStringParameterValue(parameters, GERRIT_PROJECT, event.getChange().getProject());
+        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_SUBJECT, event.getChange().getSubject());
+        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_URL, cause.getUrl());
+        return new ParametersAction(parameters);
+    }
+
+    /**
+     * Creates a {@link StringParameterValue} and adds it to the provided list.
+     * If the parameter with the same name already exists in the list it will be replaces by the new parameter,
+     * but its description will be used, unless the parameter type is something else than a StringParameterValue.
+     * @param parameters the list of existing parameters.
+     * @param name the name of the parameter.
+     * @param value the value.
+     */
+    private void setOrCreateStringParameterValue(List<ParameterValue> parameters, String name, String value) {
+        ParameterValue parameter = null;
+        for (ParameterValue p : parameters) {
+            if (p.getName().toUpperCase().equals(name)) {
+                parameter = p;
+                break;
+            }
+        }
+        String description = null;
+        if (parameter != null) {
+            if (parameter instanceof StringParameterValue) {
+                //Perhaps it is manually added to remind the user of what it is for.
+                description = parameter.getDescription();
+            }
+            parameters.remove(parameter);
+        }
+        parameter = new StringParameterValue(name, value, description);
+        parameters.add(parameter);
+    }
+
+    /**
+     * Retrieves all default parameter values for a project.
+     * Copied from {@link AbstractProject#getDefaultParametersValues()} version 1.362.
+     * TODO: This is not a good way to solve the problem.
+     * @param project the project.
+     * @return the default parameter values.
+     */
+    private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
+        ParametersDefinitionProperty paramDefProp =
+                (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
+        List<ParameterValue> defValues = new ArrayList<ParameterValue>();
+
+        /*
+         * This check is made ONLY if someone will call this method even if isParametrized() is false.
+         */
+        if (paramDefProp == null) {
+            return defValues;
+        }
+
+        /* Scan for all parameter with an associated default values */
+        for (ParameterDefinition paramDefinition : paramDefProp.getParameterDefinitions()) {
+            ParameterValue defaultValue = paramDefinition.getDefaultParameterValue();
+
+            if (defaultValue != null) {
+                defValues.add(defaultValue);
+            }
+        }
+
+        return defValues;
     }
 
     /**
@@ -253,12 +335,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param context the previous context.
      */
     public void retriggerThisBuild(TriggerContext context) {
-        if (!ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(), context.getEvent())) {
+        if (context.getThisBuild().getProject().isBuildable()
+            && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(), context.getEvent())) {
+
             if (!silentMode) {
-                    ToGerritRunListener.getInstance().onRetriggered(
-                            context.getThisBuild().getProject(),
-                            context.getEvent(),
-                            context.getOtherBuilds());
+                ToGerritRunListener.getInstance().onRetriggered(
+                        context.getThisBuild().getProject(),
+                        context.getEvent(),
+                        context.getOtherBuilds());
             }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent());
