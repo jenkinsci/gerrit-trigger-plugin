@@ -345,7 +345,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                         context.getOtherBuilds());
             }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
-            schedule(cause, context.getEvent());
+            schedule(cause, context.getEvent(), context.getThisBuild().getProject());
         }
     }
 
