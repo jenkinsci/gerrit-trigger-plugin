@@ -34,7 +34,10 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import hudson.Extension;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
 import hudson.model.ParameterDefinition;
@@ -234,6 +237,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 BUILD_SCHEDULE_DELAY,
                 cause,
                 new BadgeAction(event),
+                new RetriggerAction(cause.getContext()),
+                new RetriggerAllAction(cause.getContext()),
                 createParameters(event, cause, project));
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
@@ -346,6 +351,42 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent(), context.getThisBuild().getProject());
+        }
+    }
+
+
+    //CS IGNORE LineLength FOR NEXT 6 LINES. REASON: Javadoc see syntax.
+    /**
+     * Retriggers all builds in the given context.
+     * The builds will only be triggered if no builds for the event are building.
+     * @param context the context to rebuild.
+     * @see ToGerritRunListener#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
+     */
+    public void retriggerAllBuilds(TriggerContext context) {
+        if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {
+            retrigger(context.getThisBuild().getProject(), context.getEvent());
+            for (AbstractBuild build : context.getOtherBuilds()) {
+                GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
+                if (trigger != null) {
+                    trigger.retrigger(build.getProject(), context.getEvent());
+                }
+            }
+        }
+    }
+
+    /**
+     * Retriggers one build in a set of many.
+     * @param project the project to retrigger.
+     * @param event the event.
+     * @see #retriggerAllBuilds(com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext)
+     */
+    private void retrigger(AbstractProject project, PatchsetCreated event) {
+        if (project.isBuildable()) {
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onRetriggered(project, event, null);
+            }
+            GerritUserCause cause = new GerritUserCause(event, silentMode);
+            schedule(cause, event, project);
         }
     }
 

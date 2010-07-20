@@ -30,7 +30,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -81,7 +80,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         GerritCause cause = getCause(r);
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
-            r.addAction(new RetriggerAction(cause.getContext()));
             if (!cause.isSilentMode()) {
                 PatchsetCreated event = cause.getEvent();
                 PatchSetKey key = memory.completed(event, r);
@@ -101,14 +99,20 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     @Override
     public synchronized void onStarted(AbstractBuild r, TaskListener listener) {
         GerritCause cause = getCause(r);
-        logger.info("Started. Build: {} Cause: {}", r, cause);
-        if (cause != null && !cause.isSilentMode()) {
-            PatchSetKey key = memory.started(cause.getEvent(), r);
-            memory.updateTriggerContext(key, cause, r);
-            BuildsStartedStats stats = memory.getBuildsStartedStats(key);
-            createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
+        logger.debug("Started. Build: {} Cause: {}", r, cause);
+        if (cause != null) {
+            cause.getContext().setThisBuild(r);
+            PatchSetKey key = null;
+            if (!cause.isSilentMode()) {
+                key = memory.started(cause.getEvent(), r);
+                memory.updateTriggerContext(key, cause, r);
+                BuildsStartedStats stats = memory.getBuildsStartedStats(key);
+                createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
+            }
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
-            logger.info("MemoryStatus:\n{}", memory.getStatusReport(key));
+            if (key != null) {
+                logger.info("MemoryStatus:\n{}", memory.getStatusReport(key));
+            }
         }
     }
 
@@ -136,8 +140,8 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param otherBuilds the list of other builds in the previous context.
      */
     public synchronized void onRetriggered(AbstractProject project,
-                                           PatchsetCreated event,
-                                           List<AbstractBuild> otherBuilds) {
+            PatchsetCreated event,
+            List<AbstractBuild> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
 
         //Logging
@@ -156,7 +160,11 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @see BuildMemory#isBuilding(PatchsetCreated, hudson.model.AbstractProject)
      */
     public boolean isBuilding(AbstractProject project, PatchsetCreated event) {
-        return memory.isBuilding(event, project);
+        if (project == null || event == null) {
+            return false;
+        } else {
+            return memory.isBuilding(event, project);
+        }
     }
 
     /**
@@ -166,7 +174,11 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
      */
     public boolean isBuilding(PatchsetCreated event) {
-        return memory.isBuilding(event);
+        if (event == null) {
+            return false;
+        } else {
+            return memory.isBuilding(event);
+        }
     }
 
     /**

@@ -33,6 +33,7 @@ import hudson.model.Cause;
 import hudson.model.Result;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 import org.slf4j.Logger;
@@ -338,6 +339,26 @@ public class BuildMemory {
         PatchSetKey key = createKey(event);
         MemoryImprint pb = memory.get(key);
         return pb != null;
+    }
+
+    /**
+     * Returns all started builds in memory for the given key.
+     * @param key the key for the memory.
+     * @return the list of builds, or null if there is no memory.
+     */
+    public synchronized List<AbstractBuild> getBuilds(PatchSetKey key) {
+        MemoryImprint pb = memory.get(key);
+        if (pb != null) {
+            List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+            for (Entry entry : pb.getEntries()) {
+                if (entry.getBuild() != null) {
+                    list.add(entry.getBuild());
+                }
+            }
+            return list;
+        } else {
+            return null;
+        }
     }
 
     /**

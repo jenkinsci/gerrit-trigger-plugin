@@ -198,16 +198,32 @@ public class TriggerContext {
     }
 
     /**
-     * Gets all the builds in this context.
+     * Gets all the other builds in this context.
      * If some project hasn't started a build yet, that project will be unrepresented in this list.
      * @return a list of builds from this context.
      */
-    public List<AbstractBuild> getOtherBuilds() {
+    public synchronized List<AbstractBuild> getOtherBuilds() {
         List<AbstractBuild> list = new LinkedList<AbstractBuild>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getBuild() != null) {
                     list.add(entity.getBuild());
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Gets all the other projects in this context.
+     * @return a list of projects from this context.
+     */
+    public synchronized List<AbstractProject> getOtherProjects() {
+        List<AbstractProject> list = new LinkedList<AbstractProject>();
+        if (others != null) {
+            for (TriggeredItemEntity entity : others) {
+                if (entity.getProject() != null) {
+                    list.add(entity.getProject());
                 }
             }
         }

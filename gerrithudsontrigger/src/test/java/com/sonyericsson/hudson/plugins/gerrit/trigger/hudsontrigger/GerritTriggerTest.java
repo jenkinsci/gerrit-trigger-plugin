@@ -27,7 +27,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.ParameterDefinition;
@@ -54,7 +61,7 @@ import static org.mockito.Mockito.*;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(AbstractProject.class)
+@PrepareForTest({AbstractProject.class, ToGerritRunListener.class, PluginImpl.class })
 public class GerritTriggerTest {
 
     /**
@@ -156,11 +163,15 @@ public class GerritTriggerTest {
                 anyInt(),
                 same(gerritCause),
                 any(Action.class),
+                any(Action.class),
+                any(Action.class),
                 isParameterActionWithStringParameterValue("MOCK_PARAM", "mock_value"));
         //Just to make sure the normal arguments are there as well.
         verify(project).scheduleBuild(
                 anyInt(),
                 same(gerritCause),
+                any(Action.class),
+                any(Action.class),
                 any(Action.class),
                 isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_URL, "http://mock.url"));
     }
@@ -190,13 +201,174 @@ public class GerritTriggerTest {
                 anyInt(),
                 same(gerritCause),
                 any(Action.class),
+                any(Action.class),
+                any(Action.class),
                 isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_ID, event.getChange().getId()));
         //Just to make sure one more normal arguments is there as well.
         verify(project).scheduleBuild(
                 anyInt(),
                 same(gerritCause),
                 any(Action.class),
+                any(Action.class),
+                any(Action.class),
                 isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_URL, "http://mock.url"));
+    }
+
+    /**
+     * Tests GerritTrigger.retriggerThisBuild.
+     */
+    @Test
+    public void testRetriggerThisBuild() {
+        mockPluginConfig();
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getNumber()).thenReturn(1);
+        when(build.getProject()).thenReturn(project);
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        when(listener.isBuilding(project, event)).thenReturn(false);
+
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+
+        TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
+
+        trigger.retriggerThisBuild(context);
+
+        verify(listener).onRetriggered(same(project), same(event), any(List.class));
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                any(GerritUserCause.class),
+                any(BadgeAction.class),
+                any(RetriggerAction.class),
+                any(RetriggerAllAction.class),
+                any(Action.class));
+    }
+
+    /**
+     * Tests GerritTrigger.retriggerThisBuild when the trigger is configured for silentMode.
+     */
+    @Test
+    public void testRetriggerThisBuildSilent() {
+        mockPluginConfig();
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getNumber()).thenReturn(1);
+        when(build.getProject()).thenReturn(project);
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        when(listener.isBuilding(project, event)).thenReturn(false);
+
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true);
+
+        TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
+
+        trigger.retriggerThisBuild(context);
+
+        verify(listener, never()).onRetriggered(any(AbstractProject.class),
+                                                any(PatchsetCreated.class),
+                                                any(List.class));
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                any(GerritUserCause.class),
+                any(BadgeAction.class),
+                any(RetriggerAction.class),
+                any(RetriggerAllAction.class),
+                any(Action.class));
+    }
+
+    /**
+     * Tests GerritTrigger.retriggerAllBuilds with one additional build in the context.
+     */
+    @Test
+    public void testRetriggerAllBuilds() {
+        mockPluginConfig();
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        AbstractProject thisProject = PowerMockito.mock(AbstractProject.class);
+        when(thisProject.getFullDisplayName()).thenReturn("MockedProject");
+        when(thisProject.isBuildable()).thenReturn(true);
+
+        AbstractBuild thisBuild = mock(AbstractBuild.class);
+        when(thisBuild.getNumber()).thenReturn(1);
+        when(thisBuild.getProject()).thenReturn(thisProject);
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        when(listener.isBuilding(event)).thenReturn(false);
+
+        GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
+
+        GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
+        when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
+        when(otherProject.isBuildable()).thenReturn(true);
+        doReturn(otherTrigger).when(otherProject).getTrigger(GerritTrigger.class);
+
+        AbstractBuild otherBuild = mock(AbstractBuild.class);
+        when(otherBuild.getNumber()).thenReturn(1);
+        when(otherBuild.getProject()).thenReturn(otherProject);
+
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(thisBuild);
+        context.addOtherBuild(otherBuild);
+
+        thisTrigger.retriggerAllBuilds(context);
+
+        verify(listener).onRetriggered(thisProject, event, null);
+
+        verify(thisProject).scheduleBuild(
+                anyInt(),
+                any(GerritUserCause.class),
+                any(BadgeAction.class),
+                any(RetriggerAction.class),
+                any(RetriggerAllAction.class),
+                any(Action.class));
+
+        verify(listener).onRetriggered(otherProject, event, null);
+
+        verify(otherProject).scheduleBuild(
+                anyInt(),
+                any(GerritUserCause.class),
+                any(BadgeAction.class),
+                any(RetriggerAction.class),
+                any(RetriggerAllAction.class),
+                any(Action.class));
+    }
+
+    /**
+     * Does a static mock of {@link PluginImpl}.
+     * And specifically the retrieval of Config and the frontendUrl.
+     */
+    private static void mockPluginConfig() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
     }
 
     /**

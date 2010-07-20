@@ -21,6 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -37,10 +38,10 @@ import org.kohsuke.stapler.StaplerResponse;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
 
 /**
- * Action that retriggers one build with the same event parameters as the build this trigger is in.
+ * Action that retriggers all builds in one event with the same event parameters as the build this trigger is in.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class RetriggerAction implements Action {
+public class RetriggerAllAction implements Action {
 
     private TriggerContext context;
 
@@ -48,20 +49,20 @@ public class RetriggerAction implements Action {
      * Standard Constructor.
      * @param context the original GerritCause's context.
      */
-    public RetriggerAction(TriggerContext context) {
+    public RetriggerAllAction(TriggerContext context) {
         this.context = context;
     }
 
     /**
      * Default constructor.
-     * <strong>Only use this if you are a serializer.</strong>
+     * <strong>Only use this if you are a serialize.r</strong>
      */
-    public RetriggerAction() {
+    public RetriggerAllAction() {
     }
 
     @Override
     public String getIconFileName() {
-        if (!hasPermission() || isBuilding()) {
+        if (!hasPermission() || isBuilding() || !hasOthers()) {
             return null;
         } else {
             return PLUGIN_IMAGES_URL + "icon_retrigger24.png";
@@ -70,45 +71,66 @@ public class RetriggerAction implements Action {
 
     @Override
     public String getDisplayName() {
-        if (!hasPermission() || isBuilding()) {
+        if (!hasPermission() || isBuilding() || !hasOthers()) {
             return null;
         } else {
-            return Messages.Retrigger();
+            return Messages.RetriggerAll();
         }
     }
 
     @Override
     public String getUrlName() {
-        if (!hasPermission() || isBuilding()) {
+        if (!hasPermission() || isBuilding() || !hasOthers()) {
             return null;
         } else {
-            return "gerrit-trigger-retrigger-this";
+            return "gerrit-trigger-retrigger-all";
         }
     }
 
     /**
-     * Checks the current "memory" if the project is currently building this event.
+     * Checks {@link TriggerContext#hasOthers()} if the context exists.
+     * It does a null check on the context before calling.
+     * @return true if there are any other builds in the context.
+     */
+    private boolean hasOthers() {
+        if (context != null) {
+            return context.hasOthers();
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Checks the current "memory" if the event is currently building.
      * @return true if so.
      */
     private boolean isBuilding() {
-        if (context == null || context.getThisBuild() == null || context.getEvent() == null) {
-            return false;
-        } else {
+        if (context != null) {
             return context.getThisBuild().getBuild().isBuilding()
-                    || ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                                                                context.getEvent());
+                    || ToGerritRunListener.getInstance().isBuilding(context.getEvent());
+        } else {
+            //The correct answer here should be null, but hasPermission takes care of a more "correct" answer.
+            return false;
         }
     }
 
     /**
-     * checks if the current user has permission to build the project.
+     * checks if the current user has permission to build this and the other projects.
      * @return true if so.
      */
     private boolean hasPermission() {
-        if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
+        if (context == null || context.getThisBuild() == null) {
             return false;
+        }
+        if (context.getThisBuild().getProject().hasPermission(AbstractProject.BUILD)) {
+            for (AbstractProject project : context.getOtherProjects()) {
+                if (!project.hasPermission(AbstractProject.BUILD)) {
+                    return false;
+                }
+            }
+            return true;
         } else {
-            return context.getThisBuild().getProject().hasPermission(AbstractProject.BUILD);
+            return false;
         }
     }
 
@@ -134,6 +156,11 @@ public class RetriggerAction implements Action {
             return;
         }
 
+        if (!context.hasOthers()) {
+            //There is no reason to run this action on a lonely project.
+            return;
+        }
+
         TriggeredItemEntity entity = context.getThisBuild();
         GerritTrigger trigger = (GerritTrigger)entity.getProject().getTrigger(GerritTrigger.class);
         if (trigger == null) {
@@ -141,7 +168,7 @@ public class RetriggerAction implements Action {
             return;
         }
 
-        trigger.retriggerThisBuild(context);
+        trigger.retriggerAllBuilds(context);
         response.sendRedirect2(entity.getProject().getAbsoluteUrl());
     }
 }
