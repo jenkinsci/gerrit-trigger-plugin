@@ -80,37 +80,14 @@
             <version>0.1.42</version>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.15</version>
-            <exclusions>
-                <exclusion>
-                    <groupId />
-                    <artifactId />
-                </exclusion>
-                <exclusion>
-                    <artifactId>jms</artifactId>
-                    <groupId>javax.jms</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>jmxri</artifactId>
-                    <groupId>com.sun.jmx</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>jmxtools</artifactId>
-                    <groupId>com.sun.jdmk</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.5.11</version>
+            <version>1.6.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.5.11</version>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.6.1</version>
         </dependency>
         <dependency>
             <groupId>net.sf.json-lib</groupId>
