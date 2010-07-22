@@ -155,6 +155,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
             BufferedReader br = null;
             try {
+                logger.trace("Executing stream-events command.");
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
@@ -165,6 +166,7 @@ public class GerritHandler extends Thread implements Coordinator {
                     JSONObject obj = GerritJsonEventFactory.getJsonObjectIfInterestingAndUsable(line);
                     if (obj != null) {
                         try {
+                            logger.trace("putting work on queue: {}", obj);
                             workQueue.put(obj);
                         } catch (InterruptedException ex) {
                             logger.warn("Interrupted while putting work on queue!", ex);
@@ -172,11 +174,18 @@ public class GerritHandler extends Thread implements Coordinator {
                             //TODO try again since it is important
                         }
                     }
+                    logger.trace("Reading next line.");
                     line = br.readLine();
                 } while (line != null);
             } catch (IOException ex) {
                 logger.error("Stream events command error. ", ex);
             } finally {
+                logger.trace("Connection closed, ended read loop.");
+                try {
+                    sshConnection.disconnect();
+                } catch (Exception ex) {
+                    logger.warn("Error when disconnecting sshConnection.", ex);
+                }
                 sshConnection = null;
                 notifyConnectionDown();
                 if (br != null) {
@@ -192,6 +201,7 @@ public class GerritHandler extends Thread implements Coordinator {
         for (EventThread worker : workers) {
             worker.shutdown();
         }
+        logger.debug("End of GerritHandler Thread.");
     }
 
     /**
@@ -206,9 +216,11 @@ public class GerritHandler extends Thread implements Coordinator {
                 return null;
             }
             try {
+                logger.debug("Connecting...");
                 SshConnection ssh = new SshConnection(gerritHostName, gerritSshPort, authentication);
                 notifyConnectionEstablished();
                 connecting = false;
+                logger.debug("connection seems ok, returning it.");
                 return ssh;
             } catch (SshConnectException sshConEx) {
                 logger.error("Could not connect to Gerrit server! "
@@ -238,6 +250,7 @@ public class GerritHandler extends Thread implements Coordinator {
             }
 
             //If we end up here, sleep for a while and then go back up in the loop.
+            logger.trace("Sleeping for a bit.");
             try {
                 Thread.sleep(CONNECT_SLEEP);
             } catch (InterruptedException ex) {

@@ -77,6 +77,7 @@ public class EventThread extends Thread {
      * Ends this worker's reign and ends the thread.
      */
     public void shutdown() {
+        logger.debug("Shutting down worker: {}", this);
         shutdown = true;
         this.interrupt();
     }

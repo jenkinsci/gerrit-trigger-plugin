@@ -110,10 +110,12 @@ public class SshConnection {
             throw new IllegalStateException("Not connected!");
         }
         try {
+            logger.debug("Opening channel");
             Channel channel = connectSession.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(channel.getInputStream()));
+            logger.debug("connecting channel.");
             channel.connect();
 
             // Seems like Gerrit does not like when you disconnect directly after the command has been sent.
@@ -124,9 +126,11 @@ public class SshConnection {
             while ((incomingLine = bufferedReader.readLine()) != null) {
                 commandOutput.append(incomingLine);
                 commandOutput.append('\n');
+                logger.trace("Incoming line: {}", incomingLine);
             }
-
+            logger.trace("Closing reader.");
             bufferedReader.close();
+            logger.trace("disconnecting channel.");
             channel.disconnect();
 
             return commandOutput.toString();
