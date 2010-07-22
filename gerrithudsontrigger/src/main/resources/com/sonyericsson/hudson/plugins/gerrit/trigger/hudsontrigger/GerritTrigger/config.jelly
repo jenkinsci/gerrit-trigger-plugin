@@ -8,7 +8,7 @@
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedVerifiedValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildStartedVerified.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedVerified.html">
                     <f:textbox name="gerritBuildStartedVerifiedValue"
                                value="${it.gerritBuildStartedVerifiedValue}"
                                default=""
@@ -16,7 +16,7 @@
                 </f:entry>
                 <f:entry title="${%Successful}"
                          field="gerritBuildSuccessfulVerifiedValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulVerified.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulVerified.html">
                     <f:textbox name="gerritBuildSuccessfulVerifiedValue"
                                value="${it.gerritBuildSuccessfulVerifiedValue}"
                                default=""
@@ -24,7 +24,7 @@
                 </f:entry>
                 <f:entry title="${%Failed}"
                          field="gerritBuildFailedVerifiedValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildFailedVerified.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedVerified.html">
                     <f:textbox name="gerritBuildFailedVerifiedValue"
                                value="${it.gerritBuildFailedVerifiedValue}"
                                default=""
@@ -32,7 +32,7 @@
                 </f:entry>
                 <f:entry title="${%Unstable}"
                          field="gerritBuildUnstableVerifiedValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableVerified.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableVerified.html">
                     <f:textbox name="gerritBuildUnstableVerifiedValue"
                                value="${it.gerritBuildUnstableVerifiedValue}"
                                default=""
@@ -41,7 +41,7 @@
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedCodeReviewValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildStartedCodeReview.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedCodeReview.html">
                     <f:textbox name="gerritBuildStartedCodeReviewValue"
                                value="${it.gerritBuildStartedCodeReviewValue}"
                                default=""
@@ -49,7 +49,7 @@
                 </f:entry>
                 <f:entry title="${%Successful}"
                          field="gerritBuildSuccessfulCodeReviewValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulCodeReview.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulCodeReview.html">
                     <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
                                value="${it.gerritBuildSuccessfulCodeReviewValue}"
                                default=""
@@ -57,7 +57,7 @@
                 </f:entry>
                 <f:entry title="${%Failed}"
                          field="gerritBuildFailedCodeReviewValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildFailedCodeReview.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedCodeReview.html">
                     <f:textbox name="gerritBuildFailedCodeReviewValue"
                                value="${it.gerritBuildFailedCodeReviewValue}"
                                default=""
@@ -65,7 +65,7 @@
                 </f:entry>
                 <f:entry title="${%Unstable}"
                          field="gerritBuildUnstableCodeReviewValue"
-                         help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableCodeReview.html">
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableCodeReview.html">
                     <f:textbox name="gerritBuildUnstableCodeReviewValue"
                                value="${it.gerritBuildUnstableCodeReviewValue}"
                                default=""
@@ -75,24 +75,24 @@
         </f:advanced>
         <f:entry title="${%Silent Mode}"
                  field="silentMode"
-                 help="${rootURL}/plugin/gerrit-trigger/trigger/help-SilentMode.html">
+                 help="/plugin/gerrit-trigger/trigger/help-SilentMode.html">
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry help="${rootURL}/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
+        <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
-                <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;">
+                <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">
                     <tr>
-                        <th style="border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid grey;">
+                        <th width="50" style="border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid grey;">
                             <f:repeatableDeleteButton/>
                         </th>
-                        <th style="border-top: 1px solid black; border-bottom: 1px solid grey;">
+                        <th width="80" style="border-top: 1px solid black; border-bottom: 1px solid grey;">
                             ${%Type}
                         </th>
                         <th style="border-top: 1px solid black; border-bottom: 1px solid grey;">
                             ${%Pattern}
                         </th>
-                        <th style="border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid grey;">
+                        <th width="50%" style="border-top: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid grey;">
                             ${%Branches}
                         </th>
                     </tr>
@@ -100,7 +100,7 @@
                         <td valign="top" style="border-left: 1px solid black; border-bottom: 1px solid black;" rowspan="2">
                             <st:nbsp/>
                         </td>
-                        <td valign="top" style="border-bottom: 1px solid black;" rowspan="2">
+                        <td valign="top" style="border-bottom: 1px solid black;" rowspan="2" width="80">
                             <select class="setting-input" name="_.compareType">
                                 <j:forEach items="${types}" var="me">
                                     <j:choose>
@@ -114,19 +114,19 @@
                                 </j:forEach>
                             </select>
                         </td>
-                        <td width="150" valign="top" style="border-bottom: 1px solid black;" rowspan="2">
-                            <f:textbox field="pattern" value="${p.pattern}"/>
+                        <td minwidth="150" valign="top" style="border-bottom: 1px solid black;" rowspan="2">
+                            <f:textbox field="pattern" value="${p.pattern}" default=""/>
                         </td>
                         <td style="border-right: 1px solid black; border-left: 1px solid grey;">
                             <table style="margin-top: 0; margin-bottom: 0; width: 100%;" cellspacing="0" cellpadding="2">
                                 <tr>
-                                    <th style="border-bottom: 1px solid grey;">
+                                    <th width="80" style="border-bottom: 1px solid grey;">
                                         ${%Type}
                                     </th>
-                                    <th width="150" style="border-bottom: 1px solid grey;">
+                                    <th minwidth="150" style="border-bottom: 1px solid grey;">
                                         ${%Pattern}
                                     </th>
-                                    <th style="border-bottom: 1px solid grey;" width="65">
+                                    <th width="65" style="border-bottom: 1px solid grey;">
                                         <st:nbsp/>
                                     </th>
                                 </tr>
@@ -136,9 +136,9 @@
                     <tr>
                         <td valign="top" style="border-left: 1px solid grey; border-right: 1px solid black; border-bottom: 1px solid black;">
                             <f:repeatable var="b" field="branches" add="${%Add Branch}" minimum="1" header="">
-                                <table>
+                                <table width="100%">
                                     <tr>
-                                        <td>
+                                        <td width="80">
                                             <select class="setting-input" name="_.compareType">
                                                 <j:forEach items="${types}" var="me">
                                                     <j:choose>
@@ -152,10 +152,10 @@
                                                 </j:forEach>
                                             </select>
                                         </td>
-                                        <td width="150">
-                                            <f:textbox field="pattern" value="${p.pattern}"/>
+                                        <td minwidth="150">
+                                            <f:textbox field="pattern" value="${p.pattern}" default=""/>
                                         </td>
-                                        <td>
+                                        <td width="65">
                                             <f:repeatableDeleteButton/>
                                         </td>
                                     </tr>

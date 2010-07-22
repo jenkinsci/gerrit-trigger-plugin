@@ -63,9 +63,9 @@
             <artifactId>gerrit-events</artifactId>
         </dependency>
         <dependency>
-          <groupId>org.jvnet.hudson.plugins</groupId>
-          <artifactId>git</artifactId>
-          <version>0.9</version>
+            <groupId>org.jvnet.hudson.plugins</groupId>
+            <artifactId>git</artifactId>
+            <version>0.9</version>
         </dependency>
         <dependency>
             <groupId>com.sonyericsson.hudson.plugins.rebuild</groupId>
@@ -127,6 +127,17 @@
     </repositories>
     <build>
         <plugins>
+            <!-- Uncomment to change contextPath -->
+            <!--<plugin>
+                <groupId>org.jvnet.hudson.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>1.52</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <showDeprecation>true</showDeprecation>
+                    <contextPath>/hudson</contextPath>
+                </configuration>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
