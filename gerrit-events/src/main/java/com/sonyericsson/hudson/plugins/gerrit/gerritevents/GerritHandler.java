@@ -215,9 +215,10 @@ public class GerritHandler extends Thread implements Coordinator {
                 connecting = false;
                 return null;
             }
+            SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
-                SshConnection ssh = new SshConnection(gerritHostName, gerritSshPort, authentication);
+                ssh = new SshConnection(gerritHostName, gerritSshPort, authentication);
                 notifyConnectionEstablished();
                 connecting = false;
                 logger.debug("connection seems ok, returning it.");
@@ -242,6 +243,20 @@ public class GerritHandler extends Thread implements Coordinator {
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("IOException: ", ex);
                 notifyConnectionDown();
+            }
+
+            if (ssh != null) {
+                logger.trace("Disconnecting bad connection.");
+                try {
+                    //The ssh lib used is starting at least one thread for each connection.
+                    //The thread isn't shutdown properly when the connection goes down,
+                    //so we need to close it "manually"
+                    ssh.disconnect();
+                } catch(Exception ex) {
+                    logger.warn("Error when disconnecting bad connection.", ex);
+                } finally {
+                    ssh = null;
+                }
             }
 
             if (shutdownInProgress) {
