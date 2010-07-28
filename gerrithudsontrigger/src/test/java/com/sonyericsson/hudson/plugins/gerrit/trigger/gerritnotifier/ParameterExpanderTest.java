@@ -255,7 +255,7 @@ public class ParameterExpanderTest {
         System.out.println("Result: " + result);
 
         assertTrue("Missing ok message", result.indexOf(" MSG='Hudson says ok.") >= 0);
-        assertTrue("Missing BS", result.indexOf(" BS=SUCCESS: http://localhost/test/'") >= 0);
+        assertTrue("Missing BS", result.indexOf(" BS=\n \nSUCCESS: http://localhost/test/'") >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=3") >= 0);

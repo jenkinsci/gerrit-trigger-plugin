@@ -366,14 +366,23 @@ public class ParameterExpander {
         final String rootUrl = hudson.getRootUrl();
 
         Entry[] entries = memoryImprint.getEntries();
-        for (Entry entry : entries) {
-            if (entry.getBuild() != null) {
-                if (str.length() > 0) {
-                    str.append("\t");
+
+        // In Gerrit, all lines before the first empty line is used as the summary.
+        // For the summary all single linefeeds will be removed (only in Gerrit, not sent mails).
+        // Hence, for the multi-builds, we will add a double linefeed before actually listing
+        // the build results.
+        if (entries.length > 0) {
+            str.append("\n");
+            for (Entry entry : entries) {
+                if (entry.getBuild() != null) {
+                    // For some reason, Gerrit wont except command linefeeds with out a space.
+                    str.append(" \n");
+                    str.append(entry.getBuild().getResult().toString()).append(": ");
+                    str.append(rootUrl).append(entry.getBuild().getUrl());
                 }
-                str.append(entry.getBuild().getResult().toString()).append(": ");
-                str.append(rootUrl).append(entry.getBuild().getUrl());
             }
+        } else {
+            logger.error("I got a request to create build statistics, but no entries where found!");
         }
 
         return str.toString();
