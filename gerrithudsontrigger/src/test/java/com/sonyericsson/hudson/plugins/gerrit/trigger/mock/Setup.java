@@ -23,13 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl.GerritSSHCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.EnvVars;
 import org.easymock.EasyMock;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritSSHCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
@@ -165,6 +166,32 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Gives you a ManualPatchsetCreated mock.
+     * @return PatchsetCreated mock.
+     */
+    public static ManualPatchsetCreated createManualPatchsetCreated() {
+        ManualPatchsetCreated event = new ManualPatchsetCreated();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        event.setUserName("Bobby");
         return event;
     }
 

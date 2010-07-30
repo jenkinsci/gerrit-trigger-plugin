@@ -23,22 +23,20 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
@@ -80,17 +78,19 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         GerritCause cause = getCause(r);
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
+            PatchsetCreated event = cause.getEvent();
+            event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
-                PatchsetCreated event = cause.getEvent();
                 PatchSetKey key = memory.completed(event, r);
                 memory.updateTriggerContext(key, cause, r);
                 if (memory.isAllBuildsCompleted(key)) {
                     logger.info("All Builds are completed for cause: {}", cause);
+                    event.fireAllBuildsCompleted();
                     createNotifier().buildCompleted(memory.getMemoryImprint(key), listener);
                     memory.forget(key);
                 } else {
                     logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
-                            cause, memory.getStatusReport(key));
+                                cause, memory.getStatusReport(key));
                 }
             }
         }
@@ -103,6 +103,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (cause != null) {
             cause.getContext().setThisBuild(r);
             PatchSetKey key = null;
+            if (cause.getEvent() != null) {
+                cause.getEvent().fireBuildStarted(r);
+            }
             if (!cause.isSilentMode()) {
                 key = memory.started(cause.getEvent(), r);
                 memory.updateTriggerContext(key, cause, r);
@@ -124,7 +127,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     public synchronized void onTriggered(AbstractProject project, PatchsetCreated event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
-
+        event.fireProjectTriggered(project);
         //Logging
         String name = null;
         if (project != null) {
@@ -140,10 +143,10 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param otherBuilds the list of other builds in the previous context.
      */
     public synchronized void onRetriggered(AbstractProject project,
-            PatchsetCreated event,
-            List<AbstractBuild> otherBuilds) {
+                                           PatchsetCreated event,
+                                           List<AbstractBuild> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
-
+        event.fireProjectTriggered(project);
         //Logging
         String name = null;
         if (project != null) {
@@ -187,14 +190,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @return the GerritCause or null if there is none.
      */
     private GerritCause getCause(AbstractBuild build) {
-        //TODO: Uppgrade to Hudson 1.362 and use getCause(GerritCause.class)
-        List<Cause> causes = build.getCauses();
-        for (Cause c : causes) {
-            if (c instanceof GerritCause) {
-                return (GerritCause)c;
-            }
-        }
-        return null;
+        return (GerritCause)build.getCause(GerritCause.class);
     }
 
     /**
@@ -203,11 +199,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @fixfor HUDSON-6814
      */
     private static GerritNotifier createNotifier() {
-        if (PluginImpl.getInstance() == null) {
-            //If this happens we are sincerely screwed anyways.
-            throw new IllegalStateException("PluginImpl has not been loaded yet!");
-        }
-        IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
-        return new GerritNotifier(config, new GerritSSHCmdRunner(config));
+        return NotificationFactory.getInstance().createGerritNotifier();
     }
 }

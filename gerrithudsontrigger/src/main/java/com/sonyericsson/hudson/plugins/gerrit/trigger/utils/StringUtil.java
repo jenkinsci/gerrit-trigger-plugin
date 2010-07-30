@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,11 @@ public final class StringUtil {
     public static final String PLUGIN_IMAGES_URL = PLUGIN_URL + "images/";
 
     /**
+     * The base URL of the plugin javascripts.
+     */
+    public static final String PLUGIN_JS_URL = PLUGIN_URL + "js/";
+
+    /**
      * Provate Constructor for Utility Class.
      */
     private StringUtil() {
@@ -55,11 +60,19 @@ public final class StringUtil {
 
     /**
      * Creates a refspec string from the data in the event.
+     * Unless the patch-set already has a refspec specified.
      * For a change with number 3456 and patchset 1 the refspec would be refs/changes/56/3456/1
      * @param event the event.
      * @return the refspec.
+     * @see PatchsetCreated#getPatchSet()
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet#getRef()
      */
     public static String makeRefSpec(PatchsetCreated event) {
+        if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {
+            if (event.getPatchSet().getRef().length() > 0) {
+                return event.getPatchSet().getRef();
+            }
+        }
         StringBuilder str = new StringBuilder(REFSPEC_PREFIX);
         String number = event.getChange().getNumber();
         if (number.length() < 2) {
@@ -72,5 +85,26 @@ public final class StringUtil {
         str.append("/").append(number);
         str.append("/").append(event.getPatchSet().getNumber());
         return str.toString();
+    }
+
+    /**
+     * Gets the path to the provided image inside this plugin.
+     * The path returned is "compliant" with what for example {@link hudson.model.Action#getIconFileName()} expects.
+     * @param imageName the fileName of the image.
+     * @return the full path to the image.
+     * @see #PLUGIN_IMAGES_URL
+     */
+    public static String getPluginImageUrl(String imageName) {
+        return PLUGIN_IMAGES_URL + imageName;
+    }
+
+    /**
+     * Gets the path to the provided javascript file inside this plugin.
+     * @param jsName the name if the javascript.
+     * @return the full path to the file.
+     * @see #PLUGIN_JS_URL
+     */
+    public static String getPluginJsUrl(String jsName) {
+        return PLUGIN_JS_URL + jsName;
     }
 }

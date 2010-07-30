@@ -223,7 +223,7 @@ public class Change implements GerritJsonDTO {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Change other = (Change) obj;
+        final Change other = (Change)obj;
         if ((this.project == null) ? (other.project != null) : !this.project.equals(other.project)) {
             return false;
         }

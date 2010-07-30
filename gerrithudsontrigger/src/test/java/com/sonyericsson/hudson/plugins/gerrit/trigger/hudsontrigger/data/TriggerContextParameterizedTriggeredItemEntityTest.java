@@ -23,7 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext.TriggeredItemEntity;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;

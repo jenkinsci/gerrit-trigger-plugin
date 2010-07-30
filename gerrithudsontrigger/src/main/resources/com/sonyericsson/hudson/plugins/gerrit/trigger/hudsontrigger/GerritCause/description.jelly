@@ -1,5 +1,15 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
     <j:choose>
+        <j:when test="${it.manuallyTriggered}">
+            <j:choose>
+                <j:when test="${it.silentMode}">
+                    ${%ManuallyTriggeredShortDescriptionInSilentMode(it.url,it.userName,rootURL)}
+                </j:when>
+                <j:otherwise>
+                    ${%ManuallyTriggeredShortDescription(it.url,it.userName,rootURL)}
+                </j:otherwise>
+            </j:choose>
+        </j:when>
         <j:when test="${it.getUserName() != null}">
             <j:choose>
                 <j:when test="${it.silentMode}">

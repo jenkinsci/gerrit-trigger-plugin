@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext.TriggeredItemEntity;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause.UserCause;
@@ -40,17 +39,17 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
 
 
     /**
-     * Tests that {@link Wrap#getProject()} can find a project from it's name.
+     * Tests that {@link TriggeredItemEntity#getProject()} can find a project from it's name.
      * @throws IOException if so.
      */
     public void testGetProject() throws IOException {
         AbstractProject project = createFreeStyleProject("myProject");
-        TriggeredItemEntity wrap = new TriggerContext.TriggeredItemEntity(null, "myProject");
+        TriggeredItemEntity wrap = new TriggeredItemEntity(null, "myProject");
         assertNotNull(wrap.getProject());
     }
 
     /**
-     * Tests that {@link Wrap#getBuild()} can find a build from plain info.
+     * Tests that {@link TriggeredItemEntity#getBuild()} can find a build from plain info.
      * @throws IOException if so.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
@@ -58,14 +57,14 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
     public void testGetBuild() throws IOException, InterruptedException, ExecutionException {
         AbstractProject project = createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
-        TriggeredItemEntity wrap = new TriggerContext.TriggeredItemEntity(build.getNumber(), "myProject");
+        TriggeredItemEntity wrap = new TriggeredItemEntity(build.getNumber(), "myProject");
         assertNotNull(wrap.getBuild());
         assertEquals("myProject", wrap.getBuild().getProject().getFullName());
     }
 
     /**
      * Thests that the serializable data is correctly set in the Constructor.
-     * {@link Wrap#Wrap(hudson.model.AbstractProject, hudson.model.AbstractBuild)}.
+     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.AbstractProject, hudson.model.AbstractBuild)}.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      * @throws IOException if so.
@@ -73,14 +72,14 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
     public void testInitProjectBuild() throws InterruptedException, ExecutionException, IOException {
         AbstractProject project = createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
-        TriggeredItemEntity wrap = new TriggerContext.TriggeredItemEntity(project, build);
+        TriggeredItemEntity wrap = new TriggeredItemEntity(project, build);
         assertEquals(project.getFullName(), wrap.getProjectId());
         assertEquals(build.getNumber(), wrap.getBuildNumber().intValue());
     }
 
     /**
-     * Thests that the serializable data is correctly set in the Constructor.
-     * {@link Wrap#Wrap(hudson.model.AbstractBuild)}.
+     * Tests that the serializable data is correctly set in the Constructor.
+     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.AbstractBuild)}.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      * @throws IOException if so.
@@ -88,7 +87,7 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
     public void testInitBuild() throws InterruptedException, ExecutionException, IOException {
         AbstractProject project = createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
-        TriggeredItemEntity wrap = new TriggerContext.TriggeredItemEntity(build);
+        TriggeredItemEntity wrap = new TriggeredItemEntity(build);
         assertEquals(project.getFullName(), wrap.getProjectId());
         assertEquals(build.getNumber(), wrap.getBuildNumber().intValue());
     }

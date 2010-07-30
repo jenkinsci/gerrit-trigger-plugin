@@ -65,7 +65,7 @@ public class ConfigTest {
                 + "\"gerritSshPort\":\"1337\","
                 + "\"gerritUserName\":\"hudsongerrit\","
                 + "\"numberOfWorkerThreads\":\"6\"}";
-        JSONObject form = (JSONObject) JSONSerializer.toJSON(formString);
+        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
         assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",

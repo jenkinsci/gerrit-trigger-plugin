@@ -27,14 +27,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext.TriggeredItemEntity;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import java.io.IOException;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
 /**
  * Action that retriggers one build with the same event parameters as the build this trigger is in.
@@ -64,7 +64,7 @@ public class RetriggerAction implements Action {
         if (!hasPermission() || isBuilding()) {
             return null;
         } else {
-            return PLUGIN_IMAGES_URL + "icon_retrigger24.png";
+            return getPluginImageUrl("icon_retrigger24.png");
         }
     }
 

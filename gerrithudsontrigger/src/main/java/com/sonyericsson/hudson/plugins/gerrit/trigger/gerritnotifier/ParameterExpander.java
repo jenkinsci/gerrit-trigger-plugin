@@ -190,7 +190,7 @@ public class ParameterExpander {
      * @return the trigger if there is one, null otherwise.
      */
     private GerritTrigger getTrigger(AbstractProject project) {
-        return (GerritTrigger) project.getTrigger(GerritTrigger.class);
+        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
     /**

@@ -29,6 +29,7 @@ import hudson.model.BuildBadgeAction;
 
 /**
  * Adds an icon to the build-schedule telling users that the build was triggered by Gerrit.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BadgeAction implements BuildBadgeAction {
@@ -37,6 +38,7 @@ public class BadgeAction implements BuildBadgeAction {
 
     /**
      * Constructor.
+     *
      * @param event the event to show.
      */
     public BadgeAction(PatchsetCreated event) {
@@ -66,6 +68,7 @@ public class BadgeAction implements BuildBadgeAction {
 
     /**
      * The event to show.
+     *
      * @return the event.
      */
     public PatchsetCreated getEvent() {
@@ -74,6 +77,7 @@ public class BadgeAction implements BuildBadgeAction {
 
     /**
      * The event to show.
+     *
      * @param event the event.
      */
     public void setEvent(PatchsetCreated event) {
@@ -82,11 +86,16 @@ public class BadgeAction implements BuildBadgeAction {
 
     /**
      * Gets the URL for the change.
+     *
      * @return the URL to the change.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                event.getChange().getNumber(),
-                event.getPatchSet().getNumber());
+        if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
+            return event.getChange().getUrl();
+        } else {
+            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                    event.getChange().getNumber(),
+                    event.getPatchSet().getNumber());
+        }
     }
 }

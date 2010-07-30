@@ -23,11 +23,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import hudson.model.Hudson;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class GerritNotifier {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritNotifier.class);
-    private GerritSSHCmdRunner cmdRunner;
+    private GerritCmdRunner cmdRunner;
     private ParameterExpander parameterExpander;
 
     /**
@@ -48,7 +48,7 @@ public class GerritNotifier {
      * @param config the config.
      * @param cmdRunner the command-runner.
      */
-    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritSSHCmdRunner cmdRunner) {
+    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner) {
         this.cmdRunner = cmdRunner;
         this.parameterExpander = new ParameterExpander(config);
     }
@@ -59,7 +59,7 @@ public class GerritNotifier {
      * @param cmdRunner the command-runner.
      * @param hudson the hudson instance.
      */
-    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritSSHCmdRunner cmdRunner, Hudson hudson) {
+    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner, Hudson hudson) {
         this.cmdRunner = cmdRunner;
         this.parameterExpander = new ParameterExpander(config, hudson);
     }

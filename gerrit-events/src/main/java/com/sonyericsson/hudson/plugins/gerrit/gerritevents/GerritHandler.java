@@ -32,6 +32,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectExcepti
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsStringWork;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Work;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -41,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public class GerritHandler extends Thread implements Coordinator {
     public static final int CONNECT_SLEEP = 2000;
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final Logger logger = LoggerFactory.getLogger(GerritHandler.class);
-    private BlockingQueue<JSONObject> workQueue;
+    private BlockingQueue<Work> workQueue;
     private String gerritHostName;
     private int gerritSshPort;
     private Authentication authentication;
@@ -123,7 +125,7 @@ public class GerritHandler extends Thread implements Coordinator {
         this.authentication = authentication;
         this.numberOfWorkerThreads = numberOfWorkerThreads;
 
-        workQueue = new LinkedBlockingQueue<JSONObject>();
+        workQueue = new LinkedBlockingQueue<Work>();
         gerritEventListeners = new LinkedList<GerritEventListener>();
         connectionListeners = new LinkedList<ConnectionListener>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
@@ -163,11 +165,11 @@ public class GerritHandler extends Thread implements Coordinator {
                 notifyConnectionEstablished();
                 do {
                     logger.debug("Data-line from Gerrit: {}", line);
-                    JSONObject obj = GerritJsonEventFactory.getJsonObjectIfInterestingAndUsable(line);
-                    if (obj != null) {
+                    if (line != null && line.length() > 0) {
                         try {
-                            logger.trace("putting work on queue: {}", obj);
-                            workQueue.put(obj);
+                            StreamEventsStringWork work = new StreamEventsStringWork(line);
+                            logger.trace("putting work on queue: {}", work);
+                            workQueue.put(work);
                         } catch (InterruptedException ex) {
                             logger.warn("Interrupted while putting work on queue!", ex);
                             //TODO check if shutdown
@@ -252,7 +254,7 @@ public class GerritHandler extends Thread implements Coordinator {
                     //The thread isn't shutdown properly when the connection goes down,
                     //so we need to close it "manually"
                     ssh.disconnect();
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     logger.warn("Error when disconnecting bad connection.", ex);
                 } finally {
                     ssh = null;
@@ -424,7 +426,7 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     @Override
-    public BlockingQueue<JSONObject> getWorkQueue() {
+    public BlockingQueue<Work> getWorkQueue() {
         return workQueue;
     }
 
@@ -439,8 +441,28 @@ public class GerritHandler extends Thread implements Coordinator {
     public void notifyListeners(GerritEvent event) {
         synchronized (gerritEventListeners) {
             //Take the performance penalty for synchronization security.
+
+            //Notify lifecycle listeners.
+            if (event instanceof PatchsetCreated) {
+                try {
+                    ((PatchsetCreated)event).fireTriggerScanStarting();
+                } catch (Exception ex) {
+                    logger.error("Error when notifying LifecycleListeners. ", ex);
+                }
+            }
+
+            //The real deed.
             for (GerritEventListener listener : gerritEventListeners) {
                 notifyListener(listener, event);
+            }
+
+            ////Notify lifecycle listeners.
+            if (event instanceof PatchsetCreated) {
+                try {
+                    ((PatchsetCreated)event).fireTriggerScanDone();
+                } catch (Exception ex) {
+                    logger.error("Error when notifying LifecycleListeners. ", ex);
+                }
             }
         }
     }
@@ -455,9 +477,9 @@ public class GerritHandler extends Thread implements Coordinator {
         logger.debug("Notifying listener {} of event {}", listener, event);
         try {
             if (event instanceof PatchsetCreated) {
-                listener.gerritEvent((PatchsetCreated) event);
+                listener.gerritEvent((PatchsetCreated)event);
             } else if (event instanceof ChangeAbandoned) {
-                listener.gerritEvent((ChangeAbandoned) event);
+                listener.gerritEvent((ChangeAbandoned)event);
             } else {
                 listener.gerritEvent(event);
             }
@@ -539,6 +561,21 @@ public class GerritHandler extends Thread implements Coordinator {
                     logger.error("ConnectionListener threw Exception. ", ex);
                 }
             }
+        }
+    }
+
+    /**
+     * "Triggers" an event by adding it to the internal queue and be taken by one of the worker threads.
+     * This way it will be put into the normal flow of events as if it was coming from the stream-events command.
+     * @param event the event to trigger.
+     */
+    public void triggerEvent(GerritEvent event) {
+        logger.debug("Internally trigger event: {}", event);
+        try {
+            logger.trace("putting work on queue.");
+            workQueue.put(new GerritEventWork(event));
+        } catch (InterruptedException ex) {
+            logger.error("Interrupted while putting work on queue!", ex);
         }
     }
 }

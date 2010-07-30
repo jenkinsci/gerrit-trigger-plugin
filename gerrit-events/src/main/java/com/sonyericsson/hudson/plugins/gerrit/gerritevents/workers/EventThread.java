@@ -23,9 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +61,8 @@ public class EventThread extends Thread {
         //TODO implement shutdown functionality.
         while (!shutdown) {
             try {
-                JSONObject obj = coordinator.getWorkQueue().take();
-                GerritEvent event = GerritJsonEventFactory.getEvent(obj);
-                coordinator.notifyListeners(event);
+                Work work = coordinator.getWorkQueue().take();
+                work.perform(coordinator);
             } catch (InterruptedException ex) {
                 logger.debug("Got interrupted while polling work queue", ex);
             }

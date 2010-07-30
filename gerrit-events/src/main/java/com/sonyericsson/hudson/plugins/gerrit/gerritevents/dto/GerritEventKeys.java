@@ -85,6 +85,10 @@ public abstract class GerritEventKeys {
      * revision.
      */
     public static final String REVISION = "revision";
+    /**
+     * ref.
+     */
+    public static final String REF = "ref";
 
     /**
      * Empty default constructor to hinder instantiation.

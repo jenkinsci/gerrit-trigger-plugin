@@ -6,3 +6,7 @@ target
 .settings
 */nb-configuration.xml
 nb-configuration.xml
+*.iml
+*/*.iml
+*.ipr
+*.iws

@@ -17,6 +17,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <powermock.version>1.4.5</powermock.version>
         <java.net.id>rsandell</java.net.id>
     </properties>
 

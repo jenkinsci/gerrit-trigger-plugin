@@ -24,12 +24,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Hudson;
 import org.kohsuke.stapler.export.Exported;
 
 /**
- * Represents a Cause for a retriggered Gerrit job.
+ * Represents a Cause for a re-triggered/user-triggered Gerrit job.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritUserCause extends GerritCause {
@@ -70,6 +71,18 @@ public class GerritUserCause extends GerritCause {
 
     /**
      * Standard Constructor.
+     * @param event the event.
+     * @param silentMode if silentMode.
+     * @param authenticationName the username.
+     */
+    public GerritUserCause(PatchsetCreated event, boolean silentMode,
+            String authenticationName) {
+        super(event, silentMode);
+        this.authenticationName = authenticationName;
+    }
+
+    /**
+     * Standard Constructor.
      * Will take the userName from the current web-context.
      * @param event the event.
      * @param silentMode if silentMode.
@@ -88,5 +101,15 @@ public class GerritUserCause extends GerritCause {
     @Exported(visibility = 3)
     public String getUserName() {
         return authenticationName;
+    }
+
+    @Override
+    protected String getShortGerritDescription() {
+        return Messages.ReTriggeredShortDescription(getUrl(), getUserName());
+    }
+
+    @Override
+    protected String getShortGerritDescriptionSilentMode() {
+        return Messages.ReTriggeredShortDescriptionInSilentMode(getUrl(), getUserName());
     }
 }

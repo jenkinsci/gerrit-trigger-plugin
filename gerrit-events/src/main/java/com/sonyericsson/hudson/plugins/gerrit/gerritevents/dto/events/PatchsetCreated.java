@@ -27,6 +27,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
 import net.sf.json.JSONObject;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
@@ -36,7 +37,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * A DTO representation of the patchset-created Gerrit Event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class PatchsetCreated implements GerritJsonEvent {
+public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonEvent {
 
     /**
      * The Gerrit change the event is related to.
@@ -128,6 +129,4 @@ public class PatchsetCreated implements GerritJsonEvent {
     public String toString() {
         return "PatchsetCreated: " + change + " " + patchSet;
     }
-
-
 }

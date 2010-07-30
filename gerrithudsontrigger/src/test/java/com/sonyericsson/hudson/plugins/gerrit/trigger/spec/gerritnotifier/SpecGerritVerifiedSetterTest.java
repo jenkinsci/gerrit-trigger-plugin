@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl.GerritSSHCmdRunner;
 import hudson.model.Result;
 
 import java.io.IOException;
@@ -32,7 +33,6 @@ import static org.mockito.Mockito.*;
 import org.junit.Test;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritSSHCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;

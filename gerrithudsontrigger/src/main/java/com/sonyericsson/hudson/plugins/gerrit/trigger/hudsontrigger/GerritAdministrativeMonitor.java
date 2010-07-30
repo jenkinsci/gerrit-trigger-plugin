@@ -42,10 +42,19 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     /**
      * Default constructor.
-     * Adds this as a ConnectionListener to PluginImpl.
+     * Adds this as a ConnectionListener to PluginImpl by calling {@link #addThisAsConnectionListener()}.
      * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
      */
     public GerritAdministrativeMonitor() {
+        addThisAsConnectionListener();
+    }
+
+    /**
+     * Adds this monitor as a connection listener to PluginImpl.
+     * If PluginImpl hasn't started yet, a separate Thread will be started that tries again in a little while.
+     * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
+     */
+    protected void addThisAsConnectionListener() {
         if (PluginImpl.getInstance() != null) {
             PluginImpl.getInstance().addListener(this);
         } else {
@@ -69,7 +78,6 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
                     } else {
                         logger.error("Unable to register GerritAdministrativeMonitor");
                     }
-
                 }
             };
             Thread thread = new Thread(runner);

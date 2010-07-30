@@ -21,10 +21,11 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritCmdRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory;
  * Runs SSH commands on the Gerrit server.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritSSHCmdRunner {
+public class GerritSSHCmdRunner implements GerritCmdRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritSSHCmdRunner.class);
 

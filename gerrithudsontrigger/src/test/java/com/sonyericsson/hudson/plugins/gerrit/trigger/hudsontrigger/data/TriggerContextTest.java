@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext.TriggeredItemEntity;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import java.util.Arrays;
@@ -82,9 +81,7 @@ public class TriggerContextTest {
     @Test
     public void testGetOthers() {
         TriggerContext context = new TriggerContext(mockBuild("projectX", 1), null,
-                Arrays.asList(new TriggerContext.TriggeredItemEntity[]{
-                                    new TriggerContext.TriggeredItemEntity(1, "projectY"),
-                                    }));
+                Arrays.asList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
@@ -95,9 +92,7 @@ public class TriggerContextTest {
     @Test
     public void testSetOthers() {
         TriggerContext context = new TriggerContext();
-        context.setOthers(Arrays.asList(new TriggerContext.TriggeredItemEntity[]{
-                                                new TriggerContext.TriggeredItemEntity(1, "projectY"),
-                                                }));
+        context.setOthers(Arrays.asList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }

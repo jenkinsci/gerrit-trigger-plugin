@@ -112,7 +112,7 @@ public class SshConnection {
         try {
             logger.debug("Opening channel");
             Channel channel = connectSession.openChannel("exec");
-            ((ChannelExec) channel).setCommand(command);
+            ((ChannelExec)channel).setCommand(command);
 
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(channel.getInputStream()));
             logger.debug("connecting channel.");
@@ -156,7 +156,7 @@ public class SshConnection {
         }
         try {
             Channel channel = connectSession.openChannel("exec");
-            ((ChannelExec) channel).setCommand(command);
+            ((ChannelExec)channel).setCommand(command);
             InputStreamReader reader = new InputStreamReader(channel.getInputStream());
             channel.connect();
             return reader;

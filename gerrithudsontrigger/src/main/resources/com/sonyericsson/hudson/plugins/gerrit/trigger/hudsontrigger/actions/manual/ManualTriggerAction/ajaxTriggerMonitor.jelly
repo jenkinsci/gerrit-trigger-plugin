@@ -1,0 +1,91 @@
+<!--
+  ~ The MIT License
+  ~
+  ~ Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+  ~
+  ~ Permission is hereby granted, free of charge, to any person obtaining a copy
+  ~ of this software and associated documentation files (the "Software"), to deal
+  ~ in the Software without restriction, including without limitation the rights
+  ~ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  ~ copies of the Software, and to permit persons to whom the Software is
+  ~ furnished to do so, subject to the following conditions:
+  ~
+  ~ The above copyright notice and this permission notice shall be included in
+  ~ all copies or substantial portions of the Software.
+  ~
+  ~ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  ~ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  ~ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  ~ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  ~ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  ~ THE SOFTWARE.
+  -->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:s="/lib/form" xmlns:p="/lib/hudson/project">
+    <l:ajax>
+        <l:pane id="triggerMonitor" title="${%Triggered Builds}" width="3">
+            <j:set var="monitor" value="${request.session.getAttribute('trigger_monitor')}"/>
+            <j:forEach items="${monitor.eventsIterator}" var="state">
+                <tr>
+                    <td width="14">
+                        <img src="${imagesURL}/16x16/${state.ballColor}"/>
+                    </td>
+                    <td colspan="2" style="font-weight: bold;">
+                        <a href="${it.getGerritUrl(state.event)}" target="_new">
+                            <img src="${rootURL}/plugin/gerrit-trigger/images/icon16.png" border="0"/>
+                            ${state.event.change.number},${state.event.patchSet.number}
+                        </a>
+                    </td>
+                </tr>
+                <j:choose>
+                    <j:when test="${state.isUnTriggered()}">
+                        <tr>
+                            <td colspan="3" align="center">
+                                ${%No jobs triggered for this event}
+                            </td>
+                        </tr>
+                    </j:when>
+                    <j:otherwise>
+                        <j:forEach var="build" items="${state.builds}">
+                            <tr>
+                                <td width="14">
+                                    <st:nbsp/>
+                                </td>
+                                <j:choose>
+                                    <j:when test="${build.hasBuild()}">
+                                        <td width="18">
+                                            <img src="${imagesURL}/16x16/${build.build.iconColor.image}"/>
+                                        </td>
+                                        <td>
+                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
+                                            <st:nbsp/>
+                                            <st:nbsp/>
+                                            <a href="${rootURL}/${build.build.url}">${build.build.displayName}</a>
+                                        </td>
+                                    </j:when>
+                                    <j:otherwise>
+                                        <td width="14">
+                                            <img src="${imagesURL}/16x16/grey_anime.gif"/>
+                                        </td>
+                                        <td>
+                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
+                                        </td>
+                                    </j:otherwise>
+                                </j:choose>
+                            </tr>
+                        </j:forEach>
+                    </j:otherwise>
+                </j:choose>
+            </j:forEach>
+            <j:if test="${ajax==null and !h.isAutoRefresh(request)}">
+                <script defer="defer">
+                    window.setTimeout(function() {
+                    refreshPart('triggerMonitor',"./ajaxTriggerMonitor");
+                    }, 500);
+                </script>
+            </j:if>
+        </l:pane>
+    </l:ajax>
+</j:jelly>

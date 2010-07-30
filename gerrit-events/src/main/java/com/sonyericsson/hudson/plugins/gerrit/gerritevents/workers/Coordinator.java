@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import java.util.concurrent.BlockingQueue;
-import net.sf.json.JSONObject;
 
 /**
  * Representation interface of a EventThread workers coordinator.
@@ -36,7 +35,7 @@ public interface Coordinator {
      * Retrieves the work queue for workers to poll.
      * @return the queue
      */
-    BlockingQueue<JSONObject> getWorkQueue();
+    BlockingQueue<Work> getWorkQueue();
 
     /**
      * Notifies the listeners of a GerritEvent.

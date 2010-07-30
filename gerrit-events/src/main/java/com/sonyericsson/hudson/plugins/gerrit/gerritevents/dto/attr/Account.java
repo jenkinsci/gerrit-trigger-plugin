@@ -98,4 +98,28 @@ public class Account implements GerritJsonDTO {
     public void setName(String name) {
         this.name = name;
     }
+
+    //CS IGNORE NeedBraces FOR NEXT 22 LINES. REASON: Auto generated code.
+    //CS IGNORE MagicNumber FOR NEXT 22 LINES. REASON: Auto generated code.
+    //CS IGNORE AvoidInlineConditionals FOR NEXT 22 LINES. REASON: Auto generated code.
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Account account = (Account)o;
+
+        if (email != null ? !email.equals(account.email) : account.email != null) return false;
+        if (name != null ? !name.equals(account.name) : account.name != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        return result;
+    }
 }

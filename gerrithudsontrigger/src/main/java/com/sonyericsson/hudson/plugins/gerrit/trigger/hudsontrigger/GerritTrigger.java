@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
@@ -210,7 +211,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            final GerritCause cause = new GerritCause(event, silentMode);
+            GerritCause cause;
+            if (event instanceof ManualPatchsetCreated) {
+                cause = new GerritManualCause((ManualPatchsetCreated)event, silentMode);
+            } else {
+                cause = new GerritCause(event, silentMode);
+            }
             schedule(cause, event);
         }
     }

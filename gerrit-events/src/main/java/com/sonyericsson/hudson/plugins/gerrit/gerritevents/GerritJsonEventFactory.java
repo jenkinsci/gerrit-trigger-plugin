@@ -40,7 +40,7 @@ public final class GerritJsonEventFactory {
     private static final Logger logger = LoggerFactory.getLogger(GerritJsonEventFactory.class);
 
     /**
-     * Epty private Constructor to hinder instantiation.
+     * Empty private Constructor to hinder instantiation.
      */
     private GerritJsonEventFactory() {
         //Empty
@@ -118,7 +118,7 @@ public final class GerritJsonEventFactory {
             return null;
         }
         try {
-            JSONObject jsonObject = (JSONObject) JSONSerializer.toJSON(jsonString);
+            JSONObject jsonObject = (JSONObject)JSONSerializer.toJSON(jsonString);
             logger.debug("Parsed a JSONObject");
             if (jsonObject.get("type") != null) {
                 logger.trace("It has a type");

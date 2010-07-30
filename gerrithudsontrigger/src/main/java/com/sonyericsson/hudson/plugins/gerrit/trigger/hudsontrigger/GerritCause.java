@@ -124,12 +124,34 @@ public class GerritCause extends Cause {
         this.context = context;
     }
 
+    /**
+     * Gives the short description of the GerritCause.
+     * Intended to be overridden by subclasses.
+     * @return the short description.
+     * @see #getShortGerritDescriptionSilentMode()
+     * @see #getShortDescription()
+     */
+    protected String getShortGerritDescription() {
+        return Messages.TriggeredShortDescription(getUrl());
+    }
+
+    /**
+     * Gives the short description of the GerritCause in silent mode.
+     * Intended to be overridden by subclasses.
+     * @return the short description for silent mode.
+     * @see #getShortGerritDescription()
+     * @see #getShortDescription()
+     */
+    protected String getShortGerritDescriptionSilentMode() {
+        return Messages.TriggeredShortDescriptionInSilentMode(getUrl());
+    }
+
     @Override
     public String getShortDescription() {
         if (isSilentMode()) {
-            return Messages.TriggeredShortDescriptionInSilentMode(getUrl());
+            return getShortGerritDescriptionSilentMode();
         } else {
-            return Messages.TriggeredShortDescription(getUrl());
+            return getShortGerritDescription();
         }
     }
 

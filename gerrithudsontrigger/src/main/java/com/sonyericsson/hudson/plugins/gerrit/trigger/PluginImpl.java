@@ -23,25 +23,23 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import hudson.Plugin;
-
-import java.io.IOException;
-import java.util.List;
-
-
-
-
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import java.util.ArrayList;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import hudson.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Main Plugin entrance.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class PluginImpl extends Plugin {
@@ -67,6 +65,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Gets the global config.
+     *
      * @return the config.
      */
     public IGerritHudsonTriggerConfig getConfig() {
@@ -74,8 +73,9 @@ public class PluginImpl extends Plugin {
     }
 
     /**
-     * Returns this singelton instance.
-     * @return the singelton.
+     * Returns this singleton instance.
+     *
+     * @return the singleton.
      */
     public static PluginImpl getInstance() {
         return instance;
@@ -93,6 +93,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Loads the configuration from disk.
+     *
      * @throws IOException if the unfortunate happens.
      */
     private void loadConfig() throws IOException {
@@ -110,7 +111,7 @@ public class PluginImpl extends Plugin {
         projectListUpdater.shutdown();
         projectListUpdater.join();
         gerritEventManager.shutdown(false);
-        //TODO save to regegister listeners?
+        //TODO save to register listeners?
         gerritEventManager = null;
     }
 
@@ -136,6 +137,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Adds a listener to the EventManager the listener will receive all events from Gerrit.
+     *
      * @param listener the listener.
      * @see GerritHandler#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
      */
@@ -149,6 +151,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Removes a listener from the manager.
+     *
      * @param listener the listener to remove.
      * @see GerritHandler#removeListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
      */
@@ -162,6 +165,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Removes a connection listener from the manager.
+     *
      * @param listener the listener to remove.
      */
     public void removeListener(ConnectionListener listener) {
@@ -174,6 +178,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Starts the connection to Gerrit stream of events.
+     *
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void startConnection() throws Exception {
@@ -195,6 +200,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Stops the connection to Gerrit stream of events.
+     *
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void stopConnection() throws Exception {
@@ -213,6 +219,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Restarts the connection to Gerrit stream of events.
+     *
      * @throws Exception if it is so unfortunate.
      */
     public void restartConnection() throws Exception {
@@ -222,6 +229,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Adds a Connection Listener to the manager.
+     *
      * @param listener the listener.
      */
     public void addListener(ConnectionListener listener) {
@@ -234,6 +242,7 @@ public class PluginImpl extends Plugin {
 
     /**
      * Returns a list of Gerrit projects.
+     *
      * @return list of gerrit projects
      */
     public List<String> getGerritProjects() {
@@ -241,6 +250,21 @@ public class PluginImpl extends Plugin {
             return projectListUpdater.getGerritProjects();
         } else {
             return new ArrayList<String>();
+        }
+    }
+
+    /**
+     * Adds the given event to the stream of events.
+     * It gets added to the same event queue as any event coming from the stream-events command in Gerrit.
+     *
+     * @param event the event.
+     * @see GerritHandler#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     */
+    public void triggerEvent(GerritEvent event) {
+        if (gerritEventManager != null) {
+            gerritEventManager.triggerEvent(event);
+        } else {
+            throw new IllegalStateException("Manager not started!");
         }
     }
 }

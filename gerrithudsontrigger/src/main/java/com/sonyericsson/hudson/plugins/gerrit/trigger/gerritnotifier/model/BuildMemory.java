@@ -60,7 +60,7 @@ public class BuildMemory {
     /**
      * Tells if all triggered builds has started for a specific event.
      * This is a bit slower than
-     * {@link #isAllBuildsCompleted(com.sonyericsson.gerrithudsontrigger.gerritnotifier.model.BuildMemory.PatchSetKey)}
+     * {@link #isAllBuildsCompleted(PatchSetKey)}
      * since an internal key needs to be created.
      * @param event the event.
      * @return true if it is so.
@@ -116,7 +116,7 @@ public class BuildMemory {
     /**
      * Tells if all triggered builds has started for a specific event.
      * This is a bit slower than
-     * {@link #isAllBuildsStarted(com.sonyericsson.gerrithudsontrigger.gerritnotifier.model.BuildMemory.PatchSetKey)}
+     * {@link #isAllBuildsStarted(PatchSetKey)}
      * since an internal key needs to be created.
      * @param event the event.
      * @return true if it is so.
