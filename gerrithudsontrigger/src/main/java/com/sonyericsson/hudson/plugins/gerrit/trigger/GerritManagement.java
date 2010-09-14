@@ -36,14 +36,10 @@ import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.util.FormValidation;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
@@ -353,24 +349,5 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return PluginImpl.getInstance().getConfig();
         }
         return null;
-    }
-
-    /**
-     * Reads a list of gerrit projects from a Reader, one project per line. As from command: gerrit ls-projects.
-     * @param commandReader the Reader.
-     * @throws IOException if something unfortunate happens.
-     */
-    private static void readProjects(Reader commandReader) throws IOException {
-        List<String> projects = new ArrayList<String>();
-        BufferedReader br = new BufferedReader(commandReader);
-        String line = br.readLine();
-
-        while (line != null) {
-            projects.add(line);
-            line = br.readLine();
-        }
-        if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
-            PluginImpl.getInstance().getConfig().setGerritProjects(projects);
-        }
     }
 }

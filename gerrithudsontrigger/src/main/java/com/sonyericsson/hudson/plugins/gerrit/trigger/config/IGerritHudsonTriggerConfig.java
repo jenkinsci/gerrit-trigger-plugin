@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import java.io.File;
-import java.util.List;
 import net.sf.json.JSONObject;
 
 /**
@@ -147,19 +146,6 @@ public interface IGerritHudsonTriggerConfig {
      * @return the value.
      */
     int getGerritBuildUnstableCodeReviewValue();
-
-    /**
-     * Might come in handy some day.
-     * @param projects a list of gerrit projects.
-     */
-    void setGerritProjects(List<String> projects);
-
-
-    /**
-     * Might come in handy some day.
-     * @return a list of gerrit projects
-     */
-    List<String> getGerritProjects();
 
     /**
      * Sets all config values from the provided JSONObject.

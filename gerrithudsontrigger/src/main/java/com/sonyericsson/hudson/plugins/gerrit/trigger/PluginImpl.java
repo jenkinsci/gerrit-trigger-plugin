@@ -36,6 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,11 +47,12 @@ import org.slf4j.LoggerFactory;
 public class PluginImpl extends Plugin {
 
     /**
-     * What to call this plugin to humans.
+     * What to call this plug-in to humans.
      */
     public static final String DISPLAY_NAME = "Gerrit Hudson Trigger";
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private transient GerritHandler gerritEventManager;
+    private transient GerritProjectListUpdater projectListUpdater;
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
     private transient List<GerritEventListener> savedEventListeners;
@@ -84,6 +86,8 @@ public class PluginImpl extends Plugin {
         logger.info("Starting");
         loadConfig();
         startManager();
+        projectListUpdater = new GerritProjectListUpdater();
+        projectListUpdater.start();
         logger.info("Started");
     }
 
@@ -103,6 +107,8 @@ public class PluginImpl extends Plugin {
     @Override
     public void stop() throws Exception {
         logger.info("Shutting down...");
+        projectListUpdater.shutdown();
+        projectListUpdater.join();
         gerritEventManager.shutdown(false);
         //TODO save to regegister listeners?
         gerritEventManager = null;
@@ -147,6 +153,18 @@ public class PluginImpl extends Plugin {
      * @see GerritHandler#removeListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
      */
     public void removeListener(GerritEventListener listener) {
+        if (gerritEventManager != null) {
+            gerritEventManager.removeListener(listener);
+        } else {
+            throw new IllegalStateException("Manager not started!");
+        }
+    }
+
+    /**
+     * Removes a connection listener from the manager.
+     * @param listener the listener to remove.
+     */
+    public void removeListener(ConnectionListener listener) {
         if (gerritEventManager != null) {
             gerritEventManager.removeListener(listener);
         } else {
@@ -211,6 +229,18 @@ public class PluginImpl extends Plugin {
             gerritEventManager.addListener(listener);
         } else {
             throw new IllegalStateException("Manager not started!");
+        }
+    }
+
+    /**
+     * Returns a list of Gerrit projects.
+     * @return list of gerrit projects
+     */
+    public List<String> getGerritProjects() {
+        if (projectListUpdater != null) {
+            return projectListUpdater.getGerritProjects();
+        } else {
+            return new ArrayList<String>();
         }
     }
 }

@@ -26,8 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
@@ -82,7 +80,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritVerifiedCmdBuildFailed;
     private String gerritVerifiedCmdBuildStarted;
     private String gerritFrontEndUrl;
-    private transient List<String> gerritProjects;
     private int gerritBuildStartedVerifiedValue;
     private int gerritBuildStartedCodeReviewValue;
     private int gerritBuildSuccessfulVerifiedValue;
@@ -341,19 +338,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritVerifiedCmdBuildStarted(String cmd) {
         gerritVerifiedCmdBuildStarted = cmd;
-    }
-
-    @Override
-    public void setGerritProjects(List<String> projects) {
-        gerritProjects = projects;
-    }
-
-    @Override
-    public List<String> getGerritProjects() {
-        if (gerritProjects == null) {
-            gerritProjects = new ArrayList<String>();
-        }
-        return gerritProjects;
     }
 
     @Override

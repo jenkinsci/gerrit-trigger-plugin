@@ -23,6 +23,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import hudson.Extension;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.util.ComboBoxModel;
 import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -30,7 +36,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * Base settings for one matcher rule of a Gerrit project.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritProject {
+public class GerritProject implements Describable<GerritProject> {
 
     private CompareType compareType;
     private String pattern;
@@ -121,6 +127,32 @@ public class GerritProject {
             return false;
         } else {
             return false;
+        }
+    }
+
+    @Override
+    public Descriptor<GerritProject> getDescriptor() {
+        return Hudson.getInstance().getDescriptor(getClass());
+    }
+
+    /**
+     * Descriptor allowing for communication within the Repeatable.
+     * Necessary for editable combobox.
+     */
+    @Extension
+    public static final class DescriptorImpl extends Descriptor<GerritProject> {
+        /**
+         * Used to fill the project pattern combobox with AJAX.
+         *
+         * @return ComboBoxModels containing a list of all Gerrit Projects
+         */
+        public ComboBoxModel doFillPatternItems() {
+            return new ComboBoxModel(PluginImpl.getInstance().getGerritProjects());
+        }
+
+        @Override
+        public String getDisplayName() {
+            return null;
         }
     }
 }

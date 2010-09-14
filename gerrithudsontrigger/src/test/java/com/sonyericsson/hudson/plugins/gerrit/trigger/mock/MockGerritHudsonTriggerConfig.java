@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import java.io.File;
-import java.util.List;
 import net.sf.json.JSONObject;
 
 /**
@@ -113,16 +112,6 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public int getNumberOfWorkerThreads() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void setGerritProjects(List<String> projects) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public List<String> getGerritProjects() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
