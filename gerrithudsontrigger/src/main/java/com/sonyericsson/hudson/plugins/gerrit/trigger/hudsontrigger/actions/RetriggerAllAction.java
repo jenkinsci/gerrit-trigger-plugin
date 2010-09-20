@@ -119,7 +119,7 @@ public class RetriggerAllAction implements Action {
      * @return true if so.
      */
     private boolean hasPermission() {
-        if (context == null || context.getThisBuild() == null) {
+        if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         }
         if (context.getThisBuild().getProject().hasPermission(AbstractProject.BUILD)) {
