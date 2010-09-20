@@ -76,17 +76,39 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getIconFileName() {
-        return getPluginImageUrl("icon_retrigger24.png");
+        if (isEnabled()) {
+            return getPluginImageUrl("icon_retrigger24.png");
+        } else {
+            return null;
+        }
     }
 
     @Override
     public String getDisplayName() {
-        return Messages.ManualGerritTrigger();
+        if (isEnabled()) {
+            return Messages.ManualGerritTrigger();
+        } else {
+            return null;
+        }
     }
 
     @Override
     public String getUrlName() {
-        return "gerrit_manual";
+        return "gerrit_manual_trigger";
+    }
+
+    /**
+     * If this page/link is enabled or not.
+     *
+     * @return true if so.
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#isEnableManualTrigger()
+     */
+    public boolean isEnabled() {
+        if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
+            return PluginImpl.getInstance().getConfig().isEnableManualTrigger();
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -95,8 +117,7 @@ public class ManualTriggerAction implements RootAction {
      * @param jsName the javascript filename.
      * @return the full patch from hudson's context root.
      */
-    @SuppressWarnings("unused")
-    //called from jelly
+    @SuppressWarnings("unused") //called from jelly
     public String getJsUrl(String jsName) {
         return StringUtil.getPluginJsUrl(jsName);
     }
@@ -132,6 +153,10 @@ public class ManualTriggerAction implements RootAction {
     @SuppressWarnings("unused") //Called from jelly
     public void doGerritSearch(@QueryParameter("queryString") final String queryString, StaplerRequest request,
                                StaplerResponse response) throws IOException {
+        if (!isEnabled()) {
+            response.sendRedirect2(".");
+            return;
+        }
         IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
         GerritQueryHandler handler = new GerritQueryHandler(config.getGerritHostName(),
                 config.getGerritSshPort(),
@@ -165,6 +190,10 @@ public class ManualTriggerAction implements RootAction {
     @SuppressWarnings("unused") //Called from jelly
     public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
                         StaplerResponse response) throws IOException {
+        if (!isEnabled()) {
+            response.sendRedirect2(".");
+            return;
+        }
         request.getSession(true).removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
         if (selectedIds != null && selectedIds.length() > 0) {
@@ -400,6 +429,7 @@ public class ManualTriggerAction implements RootAction {
 
         /**
          * Standard constructor.
+         *
          * @param type the approval type.
          */
         Approval(String type) {
@@ -408,6 +438,7 @@ public class ManualTriggerAction implements RootAction {
 
         /**
          * Finds the highest and lowest approval value of the approval's type for the specified change.
+         *
          * @param res the change.
          * @return the highest and lowest value. Or 0,0 if there are no values.
          */

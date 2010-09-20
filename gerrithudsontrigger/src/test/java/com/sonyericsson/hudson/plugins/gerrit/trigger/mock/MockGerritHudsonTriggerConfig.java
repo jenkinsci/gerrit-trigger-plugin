@@ -168,6 +168,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public boolean isEnableManualTrigger() {
+        return true;
+    }
+
+    @Override
     public Authentication getGerritAuthentication() {
         return new Authentication(getGerritAuthKeyFile(), getGerritUserName(), getGerritAuthKeyFilePassword());
     }

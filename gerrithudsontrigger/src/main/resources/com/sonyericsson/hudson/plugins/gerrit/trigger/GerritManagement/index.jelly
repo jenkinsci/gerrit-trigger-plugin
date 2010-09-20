@@ -1,13 +1,14 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <l:layout title="${%Gerrit Hudson plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}" />
+                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
             </l:tasks>
         </l:side-panel>
         <l:main-panel>
-            <j:set var="instance" value="${it}" />
-            <j:set var="descriptor" value="${it.descriptor}" />
+            <j:set var="instance" value="${it}"/>
+            <j:set var="descriptor" value="${it.descriptor}"/>
             <f:form method="post" action="configSubmit" name="config">
                 <f:section title="${%Gerrit Server}">
                     <f:entry title="${%Hostname}"
@@ -16,7 +17,7 @@
                                    value="${it.config.gerritHostName}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME}"/>
                     </f:entry>
-                     <f:entry title="${%Frontend URL}"
+                    <f:entry title="${%Frontend URL}"
                              help="/plugin/gerrit-trigger/help-GerritFrontendUrl.html">
                         <f:textbox name="gerritFrontEndUrl"
                                    value="${it.config.gerritFrontEndUrl}"
@@ -34,7 +35,7 @@
                              help="/plugin/gerrit-trigger/help-GerritUserName.html">
                         <f:textbox name="gerritUserName"
                                    value="${it.config.gerritUserName}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}" />
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}"/>
                     </f:entry>
                     <f:entry title="${%SSH Keyfile}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFile.html">
@@ -46,16 +47,23 @@
                     <f:entry title="${%SSH Keyfile Password}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
                         <f:password name="gerritAuthKeyFilePassword"
-                                   value="${it.config.gerritAuthKeyFilePassword}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}" />
+                                    value="${it.config.gerritAuthKeyFilePassword}"
+                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
                     </f:entry>
-                    <f:validateButton   title="${%Test Connection}"
-                                        progress="${%Testing...}"
-                                        method="testConnection"
-                                        with="gerritHostName,gerritSshPort,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword" />
+                    <f:validateButton title="${%Test Connection}"
+                                      progress="${%Testing...}"
+                                      method="testConnection"
+                                      with="gerritHostName,gerritSshPort,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
                 </f:section>
                 <f:section title="${%Gerrit Reporting Values}">
-                    <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
+                                ${%Verify}
+                            </div>
+                        </td>
+                    </tr>
                     <f:entry title="${%Started}"
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
                         <f:textbox name="gerritBuildStartedVerifiedValue"
@@ -84,7 +92,14 @@
                                    default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE}"
                                    checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
+                                ${%Code Review}
+                            </div>
+                        </td>
+                    </tr>
                     <f:entry title="${%Started}"
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
                         <f:textbox name="gerritBuildStartedCodeReviewValue"
@@ -120,36 +135,44 @@
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
                             <f:textbox name="gerritVerifiedCmdBuildStarted"
                                        value="${it.config.gerritCmdBuildStarted}"
-                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Successful}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
                             <f:textbox name="gerritVerifiedCmdBuildSuccessful"
                                        value="${it.config.gerritCmdBuildSuccessful}"
-                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Failed}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
                             <f:textbox name="gerritVerifiedCmdBuildFailed"
                                        value="${it.config.gerritCmdBuildFailed}"
-                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Unstable}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
                             <f:textbox name="gerritVerifiedCmdBuildUnstable"
                                        value="${it.config.gerritCmdBuildUnstable}"
-                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;" />
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                     </f:section>
-                    <f:entry title="${%Nr of Event Worker Threads}"
-                             help="/plugin/gerrit-trigger/help-EventWorkerThreads.html">
-                        <f:textbox name="numberOfWorkerThreads"
-                                   value="${it.config.numberOfWorkerThreads}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_WORKER_THREADS}" />
-                    </f:entry>
+                    <f:section title="${%Misc.}">
+                        <f:entry title="${%Nr of Event Worker Threads}"
+                                 help="/plugin/gerrit-trigger/help-EventWorkerThreads.html">
+                            <f:textbox name="numberOfWorkerThreads"
+                                       value="${it.config.numberOfWorkerThreads}"
+                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_WORKER_THREADS}"/>
+                        </f:entry>
+                        <f:entry title="${%Enable Manual Trigger}"
+                                 help="/plugin/gerrit-trigger/help-EnableManualTrigger.html">
+                            <f:checkbox name="enableManualTrigger"
+                                        checked="${it.config.enableManualTrigger}"
+                                        default="${true}"/>
+                        </f:entry>
+                    </f:section>
                 </f:advanced>
                 <f:block>
-                    <f:submit value="${%Save}" />
+                    <f:submit value="${%Save}"/>
                 </f:block>
             </f:form>
             <div style="width: 250px; border: 1px solid black; margin-top: 15px; float: center; text-align: center;"

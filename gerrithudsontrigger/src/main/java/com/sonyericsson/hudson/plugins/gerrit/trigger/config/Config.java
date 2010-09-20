@@ -68,6 +68,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      *  Default verified vote to Gerrit when a build is successful.
      */
     public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE = 1;
+    /**
+     *  Default verified vote to Gerrit when a build is successful.
+     */
+    public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -88,6 +92,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildFailedCodeReviewValue;
     private int gerritBuildUnstableVerifiedValue;
     private int gerritBuildUnstableCodeReviewValue;
+    private boolean enableManualTrigger;
 
     /**
      * Constructor.
@@ -164,6 +169,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
                 "http://" + GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME);
+        enableManualTrigger = formData.optBoolean(
+                "enableManualTrigger",
+                DEFAULT_ENABLE_MANUAL_TRIGGER);
     }
 
     /**
@@ -222,7 +230,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * GerritFrontEndURL.
      * @param gerritFrontEndURL the URL
-     * @see #getGerritFrontEndURL()
+     * @see #getGerritFrontEndUrl()
      */
     public void setGerritFrontEndURL(String gerritFrontEndURL) {
         this.gerritFrontEndUrl = gerritFrontEndURL;
@@ -292,7 +300,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * GerritVerifiedCmdBuildSuccessful.
      * @param cmd the command
-     * @see #getGerritVerifiedCmdBuildSuccessful()
+     * @see #getGerritCmdBuildSuccessful()
      */
     public void setGerritVerifiedCmdBuildSuccessful(String cmd) {
         gerritVerifiedCmdBuildSuccessful = cmd;
@@ -306,7 +314,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * GerritVerifiedCmdBuildUnstable.
      * @param cmd the command
-     * @see #getGerritVerifiedCmdBuildUnstable()
+     * @see #getGerritCmdBuildUnstable()
      */
     public void setGerritVerifiedCmdBuildUnstable(String cmd) {
         gerritVerifiedCmdBuildUnstable = cmd;
@@ -334,7 +342,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * GerritVerifiedCmdBuildStarted.
      * @param cmd the command
-     * @see #getGerritVerifiedCmdBuildStarted()
+     * @see #getGerritCmdBuildStarted()
      */
     public void setGerritVerifiedCmdBuildStarted(String cmd) {
         gerritVerifiedCmdBuildStarted = cmd;
@@ -385,6 +393,20 @@ public class Config implements IGerritHudsonTriggerConfig {
         StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
         str.append(changeSetNumber);
         return str.toString();
+    }
+
+    @Override
+    public boolean isEnableManualTrigger() {
+        return enableManualTrigger;
+    }
+
+    /**
+     * Sets if the manual trigger should be enabled or not.
+     * @param enableManualTrigger true if it should be enabled/shown.
+     * @see #isEnableManualTrigger()
+     */
+    public void setEnableManualTrigger(boolean enableManualTrigger) {
+        this.enableManualTrigger = enableManualTrigger;
     }
 
     @Override

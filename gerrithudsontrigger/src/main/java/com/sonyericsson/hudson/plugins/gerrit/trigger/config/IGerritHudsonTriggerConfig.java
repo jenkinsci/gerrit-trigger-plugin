@@ -163,6 +163,12 @@ public interface IGerritHudsonTriggerConfig {
     String getGerritFrontEndUrlFor(String number, String revision);
 
     /**
+     * If the manual trigger is enables (shown to users) or not.
+     * @return true if so.
+     */
+    boolean isEnableManualTrigger();
+
+    /**
      * The the Gerrit authentication credentials.
      * Containing
      * {@link #getGerritAuthKeyFile() },
