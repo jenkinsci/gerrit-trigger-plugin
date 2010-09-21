@@ -29,7 +29,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 import hudson.Plugin;
+import hudson.model.Hudson;
+import hudson.model.Items;
+import hudson.model.Run;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,11 +88,27 @@ public class PluginImpl extends Plugin {
     @Override
     public void start() throws Exception {
         logger.info("Starting");
+        doXStreamRegistrations();
         loadConfig();
         startManager();
         projectListUpdater = new GerritProjectListUpdater();
         projectListUpdater.start();
         logger.info("Started");
+    }
+
+    /**
+     * Registers XStream alias and converters to handle backwards compatibility with old data.
+     */
+    protected static void doXStreamRegistrations() {
+        logger.trace("doing XStream alias registrations.");
+
+        //Register it in all known XStreams just to be sure.
+        Items.XSTREAM.registerConverter(new TriggerContextConverter());
+        Hudson.XSTREAM.registerConverter(new TriggerContextConverter());
+        //This is where the problems where, reading builds.
+        Run.XSTREAM.registerConverter(new TriggerContextConverter());
+
+        logger.trace("XStream alias registrations done.");
     }
 
     /**

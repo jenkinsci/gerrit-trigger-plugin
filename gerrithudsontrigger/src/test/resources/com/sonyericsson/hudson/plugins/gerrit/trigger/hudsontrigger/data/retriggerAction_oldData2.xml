@@ -1,0 +1,36 @@
+<com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction>
+    <context>
+        <event>
+            <change>
+                <project>semctools/hudson/plugins/gerrit-trigger-plugin</project>
+                <branch>master</branch>
+                <id>I73fce563dca90ed43a6550e54a2978de80486379</id>
+                <number>49954</number>
+                <subject>yyyyyl</subject>
+                <owner>
+                    <name>Sandell, Robert</name>
+                    <email>robert.sandell@sonyericsson.com</email>
+                </owner>
+                <url>https://review-test.sonyericsson.net/49954</url>
+            </change>
+            <patchSet>
+                <number>1</number>
+                <revision>73fce563dca90ed43a6550e54a2978de80486379</revision>
+            </patchSet>
+        </event>
+        <thisBuild>
+            <buildNumber>6</buildNumber>
+            <projectId>EXPERIMENTAL_Gerrit_Trigger_1</projectId>
+        </thisBuild>
+        <others class="linked-list">
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+                <buildNumber>16</buildNumber>
+                <projectId>EXPERIMENTAL_Gerrit_Trigger_2</projectId>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+                <buildNumber>15</buildNumber>
+                <projectId>EXPERIMENTAL_Gerrit_Trigger_3</projectId>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+        </others>
+    </context>
+</com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction>

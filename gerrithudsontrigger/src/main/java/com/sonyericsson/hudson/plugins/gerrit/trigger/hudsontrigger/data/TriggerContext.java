@@ -34,6 +34,11 @@ import java.util.List;
  * This bean contains information to the
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause}
  * about what other builds was involved in the same event.
+ *
+ * For backwards compatibility reasons this class is serialized by the help of the
+ * XStream converter {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter}
+ * so any future additions to this class needs to be handled in that class as well or it won't be serialized correctly.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class TriggerContext {
@@ -44,13 +49,14 @@ public class TriggerContext {
 
     /**
      * standard constructor.
+     *
      * @param thisBuild this build.
-     * @param event the event for this context.
-     * @param others the other building and untriggered builds.
+     * @param event     the event for this context.
+     * @param others    the other building and untriggered builds.
      */
     public TriggerContext(AbstractBuild thisBuild,
-            PatchsetCreated event,
-            List<TriggeredItemEntity> others) {
+                          PatchsetCreated event,
+                          List<TriggeredItemEntity> others) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
         this.event = event;
         this.others = others;
@@ -58,6 +64,7 @@ public class TriggerContext {
 
     /**
      * Standard constructor.
+     *
      * @param event the event for this context.
      */
     public TriggerContext(PatchsetCreated event) {
@@ -72,6 +79,7 @@ public class TriggerContext {
 
     /**
      * A list of builds that was triggered by the same event as "this" build.
+     *
      * @return the builds.
      */
     public synchronized List<TriggeredItemEntity> getOthers() {
@@ -80,11 +88,13 @@ public class TriggerContext {
 
     /**
      * A list of builds that was triggered by the same event as "this" build.
-     * Could contain non triggered builds represented by {@link TriggeredItemEntity#getBuild()} == null.
+     * Could contain non triggered builds represented by
+     * {@link TriggeredItemEntity#getBuild()} == null.
      * <strong>
      * Do not use this method unless you are a serializer,
      * use {@link #addOtherBuild(hudson.model.AbstractBuild)} for adding builds.
      * </strong>
+     *
      * @param otherBuilds the builds.
      */
     public synchronized void setOthers(List<TriggeredItemEntity> otherBuilds) {
@@ -93,6 +103,7 @@ public class TriggerContext {
 
     /**
      * The build that this context represents.
+     *
      * @return the build.
      */
     public synchronized TriggeredItemEntity getThisBuild() {
@@ -101,6 +112,7 @@ public class TriggerContext {
 
     /**
      * The build that this context represents.
+     *
      * @param thisBuild the build.
      */
     public synchronized void setThisBuild(TriggeredItemEntity thisBuild) {
@@ -109,6 +121,7 @@ public class TriggerContext {
 
     /**
      * The build that this context represents.
+     *
      * @param thisBuild the build.
      */
     public synchronized void setThisBuild(AbstractBuild thisBuild) {
@@ -117,6 +130,7 @@ public class TriggerContext {
 
     /**
      * The event for this context.
+     *
      * @return the event.
      */
     public PatchsetCreated getEvent() {
@@ -124,9 +138,19 @@ public class TriggerContext {
     }
 
     /**
+     * The event for this context.
+     *
+     * @param event the event.
+     */
+    void setEvent(PatchsetCreated event) {
+        this.event = event;
+    }
+
+    /**
      * Adds a build to the list of other builds if it doesn't exist in the list.
      * Also if the build's project exists in the list of other projects,
      * the project will be removed from that list.
+     *
      * @param build the build to add.
      * @see #getOtherBuilds()
      */
@@ -147,6 +171,7 @@ public class TriggerContext {
 
     /**
      * Adds a project to the list of other projects if it doesn't exist in the list.
+     *
      * @param project the project to add.
      * @see #getOtherProjects()
      */
@@ -161,6 +186,7 @@ public class TriggerContext {
 
     /**
      * Tells if there are any other builds or projects in this context.
+     *
      * @return true if it is so.
      * @see #getOtherBuilds()
      * @see #getOtherProjects()
@@ -171,6 +197,7 @@ public class TriggerContext {
 
     /**
      * finds the orther object for the specified build, or null if the build does not exist.
+     *
      * @param build a build.
      * @return the other object if there is some, null if there is none.
      */
@@ -185,6 +212,7 @@ public class TriggerContext {
 
     /**
      * Finds the object for the specified project, or null if the project does not exists in the list.
+     *
      * @param project the project.
      * @return the other object, or null if none.
      */
@@ -200,6 +228,7 @@ public class TriggerContext {
     /**
      * Gets all the other builds in this context.
      * If some project hasn't started a build yet, that project will be unrepresented in this list.
+     *
      * @return a list of builds from this context.
      */
     public synchronized List<AbstractBuild> getOtherBuilds() {
@@ -216,6 +245,7 @@ public class TriggerContext {
 
     /**
      * Gets all the other projects in this context.
+     *
      * @return a list of projects from this context.
      */
     public synchronized List<AbstractProject> getOtherProjects() {
