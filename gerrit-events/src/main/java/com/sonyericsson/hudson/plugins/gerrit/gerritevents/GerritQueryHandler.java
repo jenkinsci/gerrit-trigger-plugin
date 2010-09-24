@@ -65,7 +65,18 @@ public class GerritQueryHandler {
 
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 17 LINES. REASON: Informative.
+    /**
+     * Creates a GerritQueryHandler with the specified config.
+     * @param config the config.
+     */
+    public GerritQueryHandler(GerritConnectionConfig config) {
+        this(config.getGerritHostName(),
+                config.getGerritSshPort(),
+                config.getGerritAuthentication());
+    }
+
+    //CS IGNORE RedundantThrows FOR NEXT 18 LINES. REASON: Informative.
+    //CS IGNORE JavadocMethod FOR NEXT 17 LINES. REASON: It is there.
 
     /**
      * Runs the query and returns the result as a list of Java JSONObjects.
@@ -80,7 +91,8 @@ public class GerritQueryHandler {
         return queryJava(queryString, true, true);
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 17 LINES. REASON: Informative.
+    //CS IGNORE RedundantThrows FOR NEXT 18 LINES. REASON: Informative.
+    //CS IGNORE JavadocMethod FOR NEXT 17 LINES. REASON: It is there.
 
     /**
      * Runs the query and returns the result as a list of Java JSONObjects.
@@ -157,7 +169,8 @@ public class GerritQueryHandler {
         return list;
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 17 LINES. REASON: Informative.
+    //CS IGNORE RedundantThrows FOR NEXT 18 LINES. REASON: Informative.
+    //CS IGNORE JavadocMethod FOR NEXT 17 LINES. REASON: It is there.
 
     /**
      * Runs the query on the Gerrit server and lets the provided visitor handle each line in the result.

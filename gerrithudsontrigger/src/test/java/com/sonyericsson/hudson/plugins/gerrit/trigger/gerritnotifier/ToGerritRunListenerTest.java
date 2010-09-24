@@ -24,6 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -54,6 +55,7 @@ import static org.mockito.Mockito.*;
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
+    private NotificationFactory mockNotificationFactory;
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -62,10 +64,10 @@ public class ToGerritRunListenerTest {
     @Before
     public void setup() throws Exception {
         PowerMockito.mockStatic(NotificationFactory.class);
-        NotificationFactory factory = mock(NotificationFactory.class);
+        mockNotificationFactory = mock(NotificationFactory.class);
         mockNotifier = mock(GerritNotifier.class);
-        doReturn(mockNotifier).when(factory).createGerritNotifier();
-        PowerMockito.when(NotificationFactory.class, "getInstance").thenReturn(factory);
+        doReturn(mockNotifier).when(mockNotificationFactory).createGerritNotifier(any(GerritCmdRunner.class));
+        PowerMockito.when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
     }
 
     /**
@@ -118,7 +120,8 @@ public class ToGerritRunListenerTest {
 
         verify(event).fireBuildCompleted(same(build));
         verify(event).fireAllBuildsCompleted();
-        verify(mockNotifier).buildCompleted(any(BuildMemory.MemoryImprint.class), any(TaskListener.class));
+        verify(mockNotificationFactory).queueBuildCompleted(
+                any(BuildMemory.MemoryImprint.class), any(TaskListener.class));
     }
 
     /**
@@ -160,7 +163,7 @@ public class ToGerritRunListenerTest {
         toGerritRunListener.onStarted(build, mock(TaskListener.class));
 
         verify(event).fireBuildStarted(same(build));
-        verify(mockNotifier).buildStarted(same(build),
+        verify(mockNotificationFactory).queueBuildStarted(same(build),
                                           any(TaskListener.class),
                                           same(event),
                                           any(BuildsStartedStats.class));

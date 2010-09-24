@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -93,6 +94,8 @@ public class PluginImpl extends Plugin {
         startManager();
         projectListUpdater = new GerritProjectListUpdater();
         projectListUpdater.start();
+        //Starts the send-command-queue
+        GerritSendCommandQueue.getInstance(config);
         logger.info("Started");
     }
 
@@ -133,6 +136,7 @@ public class PluginImpl extends Plugin {
         gerritEventManager.shutdown(false);
         //TODO save to register listeners?
         gerritEventManager = null;
+        GerritSendCommandQueue.shutdown();
     }
 
     /**
@@ -148,11 +152,7 @@ public class PluginImpl extends Plugin {
      * Creates the GerritEventManager
      */
     private void createManager() {
-        gerritEventManager = new GerritHandler(
-                config.getGerritHostName(),
-                config.getGerritSshPort(),
-                config.getGerritAuthentication(),
-                config.getNumberOfWorkerThreads());
+        gerritEventManager = new GerritHandler(config);
     }
 
     /**

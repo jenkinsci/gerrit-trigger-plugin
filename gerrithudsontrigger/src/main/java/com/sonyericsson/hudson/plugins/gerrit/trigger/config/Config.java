@@ -23,15 +23,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import java.io.File;
 import net.sf.json.JSONObject;
-
 import org.kohsuke.stapler.StaplerRequest;
+
+import java.io.File;
+
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.*;
 
 /**
  * Configuration bean for the global configuration.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class Config implements IGerritHudsonTriggerConfig {
@@ -41,35 +43,35 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final int DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE = 0;
     /**
-     *  Default code review vote to Gerrit when a build is started.
+     * Default code review vote to Gerrit when a build is started.
      */
     public static final int DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE = 0;
     /**
-     *  Default verified vote to Gerrit when a build is unstable.
+     * Default verified vote to Gerrit when a build is unstable.
      */
     public static final int DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE = 0;
     /**
-     *  Default code review vote to Gerrit when a build is unstable.
+     * Default code review vote to Gerrit when a build is unstable.
      */
     public static final int DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE = -1;
     /**
-     *  Default verified vote to Gerrit when a build is failed.
+     * Default verified vote to Gerrit when a build is failed.
      */
     public static final int DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE = -1;
     /**
-     *  Default code review vote to Gerrit when a build is failed.
+     * Default code review vote to Gerrit when a build is failed.
      */
     public static final int DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE = 0;
     /**
-     *  Default code review vote to Gerrit when a build is successful.
+     * Default code review vote to Gerrit when a build is successful.
      */
     public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE = 0;
     /**
-     *  Default verified vote to Gerrit when a build is successful.
+     * Default verified vote to Gerrit when a build is successful.
      */
     public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE = 1;
     /**
-     *  Default verified vote to Gerrit when a build is successful.
+     * Default verified vote to Gerrit when a build is successful.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
 
@@ -93,9 +95,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildUnstableVerifiedValue;
     private int gerritBuildUnstableCodeReviewValue;
     private boolean enableManualTrigger;
+    private int numberOfSendingWorkerThreads;
 
     /**
      * Constructor.
+     *
      * @param formData the data.
      */
     public Config(JSONObject formData) {
@@ -104,26 +108,35 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public void setValues(JSONObject formData) {
-        gerritHostName = formData.optString("gerritHostName", GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME);
-        gerritSshPort = formData.optInt("gerritSshPort", GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT);
-        gerritUserName = formData.optString("gerritUserName", GerritDefaultValues.DEFAULT_GERRIT_USERNAME);
+        gerritHostName = formData.optString("gerritHostName", DEFAULT_GERRIT_HOSTNAME);
+        gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
+        gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
         } else {
-            gerritAuthKeyFile = GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
+            gerritAuthKeyFile = DEFAULT_GERRIT_AUTH_KEY_FILE;
         }
         gerritAuthKeyFilePassword = formData.optString(
                 "gerritAuthKeyFilePassword",
-                GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD);
+                DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD);
 
         if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() <= 0) {
             gerritAuthKeyFilePassword = null;
         }
 
         numberOfWorkerThreads = formData.optInt(
-                "numberOfWorkerThreads",
-                GerritDefaultValues.DEFAULT_NR_OF_WORKER_THREADS);
+                "numberOfReceivingWorkerThreads",
+                DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
+        if (numberOfWorkerThreads <= 0) {
+            numberOfWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
+        }
+        numberOfSendingWorkerThreads = formData.optInt(
+                "numberOfSendingWorkerThreads",
+                DEFAULT_NR_OF_SENDING_WORKER_THREADS);
+        if (numberOfSendingWorkerThreads <= 0) {
+            numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
+        }
 
         gerritBuildStartedVerifiedValue = formData.optInt(
                 "gerritBuildStartedVerifiedValue",
@@ -153,22 +166,22 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildFailed = formData.optString(
                 "gerritVerifiedCmdBuildFailed",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildSuccessful = formData.optString(
                 "gerritVerifiedCmdBuildSuccessful",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
-                "http://" + GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME);
+                "http://" + DEFAULT_GERRIT_HOSTNAME);
         enableManualTrigger = formData.optBoolean(
                 "enableManualTrigger",
                 DEFAULT_ENABLE_MANUAL_TRIGGER);
@@ -183,8 +196,9 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * Unused Constructor?
+     *
      * @param formData the data
-     * @param req a path.
+     * @param req      a path.
      */
     public Config(JSONObject formData, StaplerRequest req) {
         this(formData);
@@ -197,6 +211,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritAuthKeyFile.
+     *
      * @param gerritAuthKeyFile the file
      * @see #getGerritAuthKeyFile()
      */
@@ -211,6 +226,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritAuthKeyFilePassword.
+     *
      * @param gerritAuthKeyFilePassword the password
      * @see #getGerritAuthKeyFilePassword()
      */
@@ -229,6 +245,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritFrontEndURL.
+     *
      * @param gerritFrontEndURL the URL
      * @see #getGerritFrontEndUrl()
      */
@@ -243,6 +260,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritHostName.
+     *
      * @param gerritHostName the hostname
      * @see #getGerritHostName()
      */
@@ -257,6 +275,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritSshPort.
+     *
      * @param gerritSshPort the port
      * @see #getGerritSshPort()
      */
@@ -271,6 +290,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritUserName.
+     *
      * @param gerritUserName the username
      * @see #getGerritUserName()
      */
@@ -279,17 +299,29 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public int getNumberOfWorkerThreads() {
+    public int getNumberOfReceivingWorkerThreads() {
+        if (numberOfWorkerThreads <= 0) {
+            numberOfWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
+        }
         return numberOfWorkerThreads;
+    }
+
+    @Override
+    public int getNumberOfSendingWorkerThreads() {
+        if (numberOfSendingWorkerThreads <= 0) {
+            numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
+        }
+        return numberOfSendingWorkerThreads;
     }
 
     /**
      * NumberOfWorkerThreads.
-     * @param numberOfWorkerThreads nr of threads.
-     * @see #getNumberOfWorkerThreads()
+     *
+     * @param numberOfReceivingWorkerThreads nr of threads.
+     * @see #getNumberOfReceivingWorkerThreads()
      */
-    public void setNumberOfWorkerThreads(int numberOfWorkerThreads) {
-        this.numberOfWorkerThreads = numberOfWorkerThreads;
+    public void setNumberOfReceivingWorkerThreads(int numberOfReceivingWorkerThreads) {
+        this.numberOfWorkerThreads = numberOfReceivingWorkerThreads;
     }
 
     @Override
@@ -299,6 +331,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritVerifiedCmdBuildSuccessful.
+     *
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
      */
@@ -313,6 +346,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritVerifiedCmdBuildUnstable.
+     *
      * @param cmd the command
      * @see #getGerritCmdBuildUnstable()
      */
@@ -327,6 +361,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritVerifiedCmdBuildFailed.
+     *
      * @param cmd the command
      * @see #setGerritVerifiedCmdBuildFailed(java.lang.String)
      */
@@ -341,6 +376,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * GerritVerifiedCmdBuildStarted.
+     *
      * @param cmd the command
      * @see #getGerritCmdBuildStarted()
      */
@@ -402,6 +438,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     /**
      * Sets if the manual trigger should be enabled or not.
+     *
      * @param enableManualTrigger true if it should be enabled/shown.
      * @see #isEnableManualTrigger()
      */

@@ -158,9 +158,7 @@ public class ManualTriggerAction implements RootAction {
             return;
         }
         IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
-        GerritQueryHandler handler = new GerritQueryHandler(config.getGerritHostName(),
-                config.getGerritSshPort(),
-                config.getGerritAuthentication());
+        GerritQueryHandler handler = new GerritQueryHandler(config);
         clearSessionData(request);
         request.getSession(true).setAttribute("queryString", queryString);
 

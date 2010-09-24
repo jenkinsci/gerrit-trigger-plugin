@@ -23,57 +23,20 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import java.io.File;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import net.sf.json.JSONObject;
 
 /**
  * Interface for the Global configuration.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public interface IGerritHudsonTriggerConfig {
-
-    /**
-     * The path to the private key.
-     * @return the path.
-     */
-    File getGerritAuthKeyFile();
-
-    /**
-     * The password for the private key, or null if there is none.
-     * @return the password
-     */
-    String getGerritAuthKeyFilePassword();
+public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
 
     /**
      * Base URL for the Gerrit UI.
      * @return the gerrit front end URL. Always ends with '/'
      */
     String getGerritFrontEndUrl();
-
-    /**
-     * The hostname for gerrit where it is listening to ssh commands.
-     * @return the hostname.
-     */
-    String getGerritHostName();
-
-    /**
-     * The port to connect with ssh to.
-     * @return the port.
-     */
-    int getGerritSshPort();
-
-    /**
-     * The username to authenticate to gerrit with.
-     * @return the username.
-     */
-    String getGerritUserName();
-
-    /**
-     * The number of threads to send events into hudson with.
-     * @return the number of worker threads.
-     */
-    int getNumberOfWorkerThreads();
 
     /**
      * The command template to use when sending build-started messages to gerrit.
@@ -163,18 +126,9 @@ public interface IGerritHudsonTriggerConfig {
     String getGerritFrontEndUrlFor(String number, String revision);
 
     /**
-     * If the manual trigger is enables (shown to users) or not.
+     * If the manual trigger is enabled (shown to users) or not.
      * @return true if so.
      */
     boolean isEnableManualTrigger();
 
-    /**
-     * The the Gerrit authentication credentials.
-     * Containing
-     * {@link #getGerritAuthKeyFile() },
-     * {@link #getGerritUserName() } and
-     * {@link #getGerritAuthKeyFilePassword() }.
-     * @return the credentials.
-     */
-    Authentication getGerritAuthentication();
 }

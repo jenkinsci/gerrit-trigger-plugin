@@ -24,13 +24,22 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl.GerritSSHCmdRunner;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildStartedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 
 /**
- * A factory for creating {@link GerritCmdRunner} and {@link GerritNotifier}.
+ * A factory for creating notification entities.
  * This factory is mainly created and used to ease unit testing.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class NotificationFactory {
@@ -38,6 +47,7 @@ public class NotificationFactory {
 
     /**
      * Gets the singleton instance of the NotificationFactory.
+     *
      * @return the NotificationFactory.
      */
     public static NotificationFactory getInstance() {
@@ -48,17 +58,9 @@ public class NotificationFactory {
     }
 
     /**
-     * Factory method for creating a GerritCmdRunner.
-     * @return a GerritCmdRunner
-     */
-    public GerritCmdRunner createGerritCmdRunner() {
-        IGerritHudsonTriggerConfig config = getConfig();
-        return new GerritSSHCmdRunner(config);
-    }
-
-    /**
      * Shortcut method to get the config from {@link com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl}.
      * Throws an IllegalStateException if PluginImpl hasn't been started yet.
+     *
      * @return the plugin-config.
      */
     public IGerritHudsonTriggerConfig getConfig() {
@@ -71,11 +73,58 @@ public class NotificationFactory {
 
     /**
      * Factory method for creating a GerritNotifier.
+     *
+     * @param cmdRunner - something capable of sending commands to gerrit.
      * @return a GerritNotifier
      */
-    public GerritNotifier createGerritNotifier() {
+    public GerritNotifier createGerritNotifier(GerritCmdRunner cmdRunner) {
         IGerritHudsonTriggerConfig config = getConfig();
-        return new GerritNotifier(config, createGerritCmdRunner());
+        return createGerritNotifier(config, cmdRunner);
     }
 
+    /**
+     * Factory method for creating a GerritNotifier.
+     *
+     * @param config    - a configuration to use for parameter expansion.
+     * @param cmdRunner - something capable of sending commands to gerrit.
+     * @return a GerritNotifier
+     */
+    public GerritNotifier createGerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner) {
+        return new GerritNotifier(config, cmdRunner);
+    }
+
+    //CS IGNORE LineLength FOR NEXT 8 LINES. REASON: Javadoc
+
+    /**
+     * Queues a build completed command on the send-command queue.
+     *
+     * @param memoryImprint the memory of the builds.
+     * @param listener      a listener.
+     * @see GerritSendCommandQueue#queue(com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
+     * @see BuildCompletedCommandJob
+     */
+    public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
+        BuildCompletedCommandJob job = new BuildCompletedCommandJob(getConfig(),
+                memoryImprint, listener);
+        GerritSendCommandQueue.queue(job);
+    }
+
+    //CS IGNORE LineLength FOR NEXT 10 LINES. REASON: Javadoc
+
+    /**
+     * Queues a build started command on the send-command queue.
+     *
+     * @param build    the build.
+     * @param listener a listener.
+     * @param event    the event.
+     * @param stats    the started stats.
+     * @see GerritSendCommandQueue#queue(com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
+     * @see BuildStartedCommandJob
+     */
+    public void queueBuildStarted(AbstractBuild build, TaskListener listener,
+                                  PatchsetCreated event, BuildsStartedStats stats) {
+        BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(),
+                build, listener, event, stats);
+        GerritSendCommandQueue.queue(job);
+    }
 }

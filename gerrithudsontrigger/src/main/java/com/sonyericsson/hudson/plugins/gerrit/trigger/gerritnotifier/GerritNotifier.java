@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -66,19 +67,19 @@ public class GerritNotifier {
 
     /**
      * Generates the build-started command based on configured templates and build-values and sends it to Gerrit.
-     * @param r the build.
+     * @param build the build.
      * @param taskListener the taskListener.
      * @param event the event.
      * @param stats the stats.
      */
-    public void buildStarted(AbstractBuild r, TaskListener taskListener,
+    public void buildStarted(AbstractBuild build, TaskListener taskListener,
             PatchsetCreated event, BuildsStartedStats stats) {
 
         try {
-            String command = parameterExpander.getBuildStartedCommand(r, taskListener, event, stats);
+            String command = parameterExpander.getBuildStartedCommand(build, taskListener, event, stats);
             if (command != null) {
                 logger.info("Notifying BuildStarted to gerrit: {}", command);
-                cmdRunner.runCmd(command);
+                cmdRunner.sendCommand(command);
             } else {
                 logger.error("Something wrong during parameter extraction. "
                         + "Gerrit will not be notified of BuildStarted");
@@ -100,7 +101,7 @@ public class GerritNotifier {
 
             if (command != null) {
                 logger.info("Notifying BuildCompleted to gerrit: {}", command);
-                cmdRunner.runCmd(command);
+                cmdRunner.sendCommand(command);
             } else {
                 logger.error("Something wrong during parameter extraction. "
                         + "Gerrit will not be notified of BuildCompleted");

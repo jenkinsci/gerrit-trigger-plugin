@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -31,8 +31,16 @@ public interface GerritCmdRunner {
     /**
      * Runs a command on the gerrit server.
      * Any exception that could happen is hidden but logged.
-     * @param cmd the command.
+     * @param command the command.
      * @return true if the command was successful, false otherwise.
      */
-    boolean runCmd(String cmd);
+    boolean sendCommand(String command);
+
+    /**
+     * Runs a command on the gerrit server and returns the output from the command.
+     * Any exception that could happen is hidden but logged.
+     * @param command the command.
+     * @return the output of the command, or null if something went wrong.
+     */
+    String sendCommandStr(String command);
 }

@@ -23,33 +23,33 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl.GerritSSHCmdRunner;
-import hudson.model.Result;
-
-import java.io.IOException;
-
-import static org.mockito.Mockito.*;
-import org.junit.Test;
-
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import junit.framework.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
+
+import static org.mockito.Mockito.*;
+
 /**
  * Scenario tests.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
@@ -58,7 +58,8 @@ public class SpecGerritVerifiedSetterTest {
 
     /**
      * A test.
-     * @throws IOException IOException
+     *
+     * @throws IOException          IOException
      * @throws InterruptedException InterruptedException
      */
     @Test
@@ -70,7 +71,7 @@ public class SpecGerritVerifiedSetterTest {
 
         TaskListener taskListener = mock(TaskListener.class);
 
-        GerritSSHCmdRunner mockGerritCmdRunner = mock(GerritSSHCmdRunner.class);
+        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
 
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.SUCCESS);
@@ -100,12 +101,13 @@ public class SpecGerritVerifiedSetterTest {
         notifier.buildCompleted(memory.getMemoryImprint(key), taskListener);
         String parameterStringExpected = "gerrit approve MSG=OK VERIFIED=1 CODEREVIEW=1";
 
-        verify(mockGerritCmdRunner).runCmd(parameterStringExpected);
+        verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }
 
     /**
      * A test.
-     * @throws IOException IOException
+     *
+     * @throws IOException          IOException
      * @throws InterruptedException InterruptedException
      */
     @Test
@@ -117,7 +119,7 @@ public class SpecGerritVerifiedSetterTest {
 
         TaskListener taskListener = mock(TaskListener.class);
 
-        GerritSSHCmdRunner mockGerritCmdRunner = mock(GerritSSHCmdRunner.class);
+        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
 
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.FAILURE);
@@ -147,12 +149,13 @@ public class SpecGerritVerifiedSetterTest {
         notifier.buildCompleted(memory.getMemoryImprint(key), taskListener);
         String parameterStringExpected = "gerrit approve MSG=Failed VERIFIED=-1 CODEREVIEW=-1";
 
-        verify(mockGerritCmdRunner).runCmd(parameterStringExpected);
+        verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }
 
     /**
      * A test.
-     * @throws IOException IOException
+     *
+     * @throws IOException          IOException
      * @throws InterruptedException InterruptedException
      */
     @Test
@@ -163,7 +166,7 @@ public class SpecGerritVerifiedSetterTest {
 
         TaskListener taskListener = mock(TaskListener.class);
 
-        GerritSSHCmdRunner mockGerritCmdRunner = mock(GerritSSHCmdRunner.class);
+        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
 
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.SUCCESS);
@@ -211,6 +214,6 @@ public class SpecGerritVerifiedSetterTest {
         notifier.buildCompleted(memory.getMemoryImprint(key), taskListener);
         String parameterStringExpected = "gerrit approve MSG=FAILED VERIFIED=-1 CODEREVIEW=-1";
 
-        verify(mockGerritCmdRunner).runCmd(parameterStringExpected);
+        verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }
 }

@@ -77,12 +77,12 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Creates a GerritHandler with all the default values set.
-     * @see #DEFAULT_GERRIT_HOSTNAME
-     * @see #DEFAULT_GERRIT_SSH_PORT
-     * @see #DEFAULT_GERRIT_USERNAME
-     * @see #DEFAULT_AUTH_KEY_FILE
-     * @see #DEFAULT_AUTH_KEY_FILE_PASSWORD
-     * @see #DEFAULT_NR_OF_WORKER_THREADS
+     * @see GerritDefaultValues#DEFAULT_GERRIT_HOSTNAME
+     * @see GerritDefaultValues#DEFAULT_GERRIT_SSH_PORT
+     * @see GerritDefaultValues#DEFAULT_GERRIT_USERNAME
+     * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE
+     * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD
+     * @see GerritDefaultValues#DEFAULT_NR_OF_RECEIVING_WORKER_THREADS
      */
     public GerritHandler() {
         this(DEFAULT_GERRIT_HOSTNAME,
@@ -90,7 +90,7 @@ public class GerritHandler extends Thread implements Coordinator {
              new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
                                 DEFAULT_GERRIT_USERNAME,
                                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD),
-             DEFAULT_NR_OF_WORKER_THREADS);
+             DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
@@ -105,7 +105,18 @@ public class GerritHandler extends Thread implements Coordinator {
         this(gerritHostName,
              gerritSshPort,
              authentication,
-             DEFAULT_NR_OF_WORKER_THREADS);
+             DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
+    }
+
+    /**
+     * Creates a GerritHandler with the specified values.
+     * @param config the configuration containing the connection values.
+     */
+    public GerritHandler(GerritConnectionConfig config) {
+        this(config.getGerritHostName(),
+             config.getGerritSshPort(),
+             config.getGerritAuthentication(),
+             config.getNumberOfReceivingWorkerThreads());
     }
 
     /**

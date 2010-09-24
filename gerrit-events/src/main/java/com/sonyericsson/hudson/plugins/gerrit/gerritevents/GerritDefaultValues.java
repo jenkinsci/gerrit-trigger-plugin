@@ -61,5 +61,9 @@ public final class GerritDefaultValues {
     /**
      * The default nr of event worker threads.
      */
-    public static final int DEFAULT_NR_OF_WORKER_THREADS = 3;
+    public static final int DEFAULT_NR_OF_RECEIVING_WORKER_THREADS = 3;
+    /**
+     * The default nr of worker threads that sends approvals/review commands.
+     */
+    public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
 }

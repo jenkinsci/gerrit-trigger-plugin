@@ -64,7 +64,8 @@ public class ConfigTest {
                 + "\"gerritHostName\":\"gerrit\","
                 + "\"gerritSshPort\":\"1337\","
                 + "\"gerritUserName\":\"hudsongerrit\","
-                + "\"numberOfWorkerThreads\":\"6\"}";
+                + "\"numberOfSendingWorkerThreads\":\"4\","
+                + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
         assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
@@ -94,6 +95,7 @@ public class ConfigTest {
         assertEquals("gerrit", config.getGerritHostName());
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("hudsongerrit", config.getGerritUserName());
-        assertEquals(6, config.getNumberOfWorkerThreads());
+        assertEquals(6, config.getNumberOfReceivingWorkerThreads());
+        assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }
 }

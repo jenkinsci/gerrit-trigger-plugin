@@ -23,15 +23,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Displays a warning message in Manage Hudson if the Gerrit connection is down.
+ * Displays a warning message in Manage Hudson if the Gerrit connection is down or some other warning.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
@@ -43,6 +45,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     /**
      * Default constructor.
      * Adds this as a ConnectionListener to PluginImpl by calling {@link #addThisAsConnectionListener()}.
+     *
      * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
      */
     public GerritAdministrativeMonitor() {
@@ -52,6 +55,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     /**
      * Adds this monitor as a connection listener to PluginImpl.
      * If PluginImpl hasn't started yet, a separate Thread will be started that tries again in a little while.
+     *
      * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
      */
     protected void addThisAsConnectionListener() {
@@ -86,9 +90,41 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
         }
     }
 
+    /**
+     * Tells if there is a warning with the send-commands-queue.
+     * Utility method for the jelly page,
+     *
+     * @return true if so.
+     */
+    public boolean isSendQueueWarning() {
+        return getSendQueueSize() >= GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD;
+    }
+
+    /**
+     * Gets the current send-command queue size.
+     * Utility method for the jelly page,
+     *
+     * @return the amount of jobs in the queue.
+     */
+    public int getSendQueueSize() {
+        return GerritSendCommandQueue.getQueueSize();
+    }
+
+    /**
+     * Tells if there is a connection warning.
+     * Utility method for the jelly page,
+     *
+     * @return true if so.
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public boolean isConnectionWarning() {
+        return !connected;
+    }
+
     @Override
     public boolean isActivated() {
-        return !connected;
+        return !connected || isSendQueueWarning();
     }
 
     @Override

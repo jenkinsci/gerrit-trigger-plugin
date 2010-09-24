@@ -86,7 +86,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 if (memory.isAllBuildsCompleted(key)) {
                     logger.info("All Builds are completed for cause: {}", cause);
                     event.fireAllBuildsCompleted();
-                    createNotifier().buildCompleted(memory.getMemoryImprint(key), listener);
+                    NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(key), listener);
                     memory.forget(key);
                 } else {
                     logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
@@ -110,7 +110,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 key = memory.started(cause.getEvent(), r);
                 memory.updateTriggerContext(key, cause, r);
                 BuildsStartedStats stats = memory.getBuildsStartedStats(key);
-                createNotifier().buildStarted(r, listener, cause.getEvent(), stats);
+                NotificationFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
             }
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
             if (key != null) {
@@ -191,14 +191,5 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      */
     private GerritCause getCause(AbstractBuild build) {
         return (GerritCause)build.getCause(GerritCause.class);
-    }
-
-    /**
-     * Load a new notifier to get the possible new settings.
-     * @return a GerritNotifierObject with fresh config.
-     * @fixfor HUDSON-6814
-     */
-    private static GerritNotifier createNotifier() {
-        return NotificationFactory.getInstance().createGerritNotifier();
     }
 }

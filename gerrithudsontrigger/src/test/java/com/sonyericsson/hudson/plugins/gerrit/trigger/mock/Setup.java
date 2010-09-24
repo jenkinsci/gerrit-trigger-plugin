@@ -23,18 +23,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.impl.GerritSSHCmdRunner;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import hudson.EnvVars;
-import org.easymock.EasyMock;
-
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import hudson.EnvVars;
 
 
 /**
@@ -50,20 +47,6 @@ public final class Setup {
 
     }
 
-    /**
-     * Gives you a mock of the GerritSSHCmdRunner.
-     * @param config config
-     * @param verifiedValue verifiedValue
-     * @param change change
-     * @param patchset patchset
-     * @return GerritSSHCmdRunner mock.
-     */
-    public static GerritSSHCmdRunner gerritCmdRunner(
-            IGerritHudsonTriggerConfig config, int verifiedValue, int change,
-            int patchset) {
-        return gerritCmdRunner(config, verifiedValue,
-                getCommentFormVerifiedValue(verifiedValue), change, patchset);
-    }
 
     /**
      * Utility method.
@@ -81,59 +64,6 @@ public final class Setup {
             default:
                 return null;
         }
-    }
-
-    /**
-     * Gives you a mock of the GerritSSHCmdRunner.
-     * @param config config
-     * @param verifiedValue verifiedValue
-     * @return GerritSSHCmdRunner mock.
-     */
-    public static GerritSSHCmdRunner gerritCmdRunner(
-            IGerritHudsonTriggerConfig config, int verifiedValue) {
-        return gerritCmdRunner(config, verifiedValue,
-                getCommentFormVerifiedValue(verifiedValue));
-    }
-
-    /**
-     * Gives you a mock of the GerritSSHCmdRunner.
-     * @param config config
-     * @param verifiedValue verifiedValue
-     * @param comment comment
-     * @return GerritSSHCmdRunner mock.
-     */
-    public static GerritSSHCmdRunner gerritCmdRunner(
-            IGerritHudsonTriggerConfig config, int verifiedValue, String comment) {
-        return gerritCmdRunner(config, verifiedValue, comment, 2, 1);
-    }
-
-    /**
-     * Gives you a mock of the GerritSSHCmdRunner.
-     * @param config config
-     * @param verifiedValue verifiedValue
-     * @param comment comment
-     * @param change change
-     * @param patchset patchset
-     * @return GerritSSHCmdRunner mock.
-     */
-    public static GerritSSHCmdRunner gerritCmdRunner(
-            IGerritHudsonTriggerConfig config, int verifiedValue,
-            String comment, int change, int patchset) {
-        GerritSSHCmdRunner verifiedHandler = EasyMock.createMock(GerritSSHCmdRunner.class);
-        verifiedHandler.runCmd("CHANGE=" + change + " PATCHSET=" + patchset
-                + " VERIFIED=" + verifiedValue + " MSG=" + comment);
-        EasyMock.replay(verifiedHandler);
-        return verifiedHandler;
-    }
-
-    /**
-     * Gives you a mock of the GerritSSHCmdRunner.
-     * @return GerritSSHCmdRunner mock.
-     */
-    public static GerritSSHCmdRunner gerritCmdRunner() {
-        GerritSSHCmdRunner verifiedHandler = EasyMock.createMock(GerritSSHCmdRunner.class);
-        EasyMock.replay(verifiedHandler);
-        return verifiedHandler;
     }
 
     /**
