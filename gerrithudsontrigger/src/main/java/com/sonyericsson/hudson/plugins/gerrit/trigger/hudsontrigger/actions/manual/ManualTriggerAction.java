@@ -73,6 +73,10 @@ public class ManualTriggerAction implements RootAction {
      * The char that separates the different id components in a search-result-row.
      */
     public static final String ID_SEPARATOR = ":";
+    /**
+     * The maximum length of a change subject to display.
+     */
+    private static final int MAX_SUBJECT_STR_LENGTH = 65;
 
     @Override
     public String getIconFileName() {
@@ -117,7 +121,7 @@ public class ManualTriggerAction implements RootAction {
      * @param jsName the javascript filename.
      * @return the full patch from hudson's context root.
      */
-    @SuppressWarnings("unused") //called from jelly
+    @SuppressWarnings("unused")   //called from jelly
     public String getJsUrl(String jsName) {
         return StringUtil.getPluginJsUrl(jsName);
     }
@@ -143,6 +147,24 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
+     * Cuts the string to a max length of {@link #MAX_SUBJECT_STR_LENGTH} and escapes unsafe HTML characters.
+     * @param subject the string to fix if needed.
+     * @return the fixed string.
+     * @see hudson.Util#escape(String)
+     */
+    @SuppressWarnings("unused")  //Called from jelly
+    public String toReadableHtml(String subject) {
+        if (subject != null && subject.length() > MAX_SUBJECT_STR_LENGTH) {
+            subject = subject.substring(0, MAX_SUBJECT_STR_LENGTH);
+        }
+        if (subject != null) {
+            return hudson.Util.escape(subject);
+        } else {
+            return "";
+        }
+    }
+
+    /**
      * Does a search.
      *
      * @param queryString the query to send to Gerrit.
@@ -150,7 +172,7 @@ public class ManualTriggerAction implements RootAction {
      * @param response    the response.
      * @throws IOException if the unfortunate happens.
      */
-    @SuppressWarnings("unused") //Called from jelly
+    @SuppressWarnings("unused")  //Called from jelly
     public void doGerritSearch(@QueryParameter("queryString") final String queryString, StaplerRequest request,
                                StaplerResponse response) throws IOException {
         if (!isEnabled()) {
@@ -185,7 +207,7 @@ public class ManualTriggerAction implements RootAction {
      * @param response    the response.
      * @throws IOException if the unfortunate happens.
      */
-    @SuppressWarnings("unused") //Called from jelly
+    @SuppressWarnings("unused")  //Called from jelly
     public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
                         StaplerResponse response) throws IOException {
         if (!isEnabled()) {
