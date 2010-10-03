@@ -464,7 +464,12 @@ public class GerritHandler extends Thread implements Coordinator {
 
             //The real deed.
             for (GerritEventListener listener : gerritEventListeners) {
-                notifyListener(listener, event);
+                try {
+                    notifyListener(listener, event);
+                } catch (Exception ex) {
+                    logger.error("When notifying listener: {} about event: {}", listener, event);
+                    logger.error("Notify-error: ", ex);
+                }
             }
 
             ////Notify lifecycle listeners.
