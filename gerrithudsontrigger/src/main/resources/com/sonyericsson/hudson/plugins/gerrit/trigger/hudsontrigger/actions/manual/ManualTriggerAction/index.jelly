@@ -194,7 +194,7 @@
                                                                    class="pane">
                                                                 <tr>
                                                                     <td class="pane-header" colspan="2">
-                                                                        ${%Build Details}
+                                                                        ${%Patch Set Details}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
@@ -293,7 +293,7 @@
                                     -->
                                 </f:block>
                             </f:section>
-                            <f:section title="${%Build}">
+                            <f:section title="${%Trigger}">
                                 <j:if test="${!empty(request.session.getAttribute('error_build'))}">
                                     <f:block>
                                         <p class="error">
@@ -302,7 +302,7 @@
                                     </f:block>
                                 </j:if>
                                 <f:block>
-                                    <f:submit value="${%Build Selected}"/>
+                                    <f:submit value="${%Trigger Selected}"/>
                                 </f:block>
                             </f:section>
                         </f:form>
