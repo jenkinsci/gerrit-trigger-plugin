@@ -28,7 +28,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.EnvVars;
@@ -68,9 +67,9 @@ public final class Setup {
 
     /**
      * Gives you a Config mock.
-     * @return IGerritHudsonTriggerConfig mock.
+     * @return MockGerritHudsonTriggerConfig mock.
      */
-    public static IGerritHudsonTriggerConfig createConfig() {
+    public static MockGerritHudsonTriggerConfig createConfig() {
         return new MockGerritHudsonTriggerConfig();
     }
 

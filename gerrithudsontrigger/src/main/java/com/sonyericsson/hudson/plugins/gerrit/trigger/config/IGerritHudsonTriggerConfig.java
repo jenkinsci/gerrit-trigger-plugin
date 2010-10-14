@@ -131,4 +131,10 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
      */
     boolean isEnableManualTrigger();
 
-}
+    /**
+     * Returns the BuildScheduleDelay.
+     * @return the value.
+     */
+   int getBuildScheduleDelay();
+
+ }

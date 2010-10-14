@@ -22,7 +22,6 @@
  *  THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
-
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -58,6 +57,7 @@ import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+//CS IGNORE MagicNumber FOR NEXT 720 LINES. REASON: testdata.
 
 /**
  * Tests make ref spec.
@@ -67,7 +67,6 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AbstractProject.class, ToGerritRunListener.class, PluginImpl.class })
 public class GerritTriggerTest {
-
     /**
      * test.
      */
@@ -126,7 +125,6 @@ public class GerritTriggerTest {
      */
     @Test
     public void testMakeRefSpec4() {
-
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setNumber("2131");
@@ -137,6 +135,106 @@ public class GerritTriggerTest {
         String expResult = StringUtil.REFSPEC_PREFIX + "31/2131/1";
         String result = StringUtil.makeRefSpec(event);
         assertEquals(expResult, result);
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with an average buildScheduleDelay 20.
+     */
+     @Test
+    public void testScheduleWithAverageBuildScheduleDelay() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+         when(config.getBuildScheduleDelay()).thenReturn(20);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+        verify(project).scheduleBuild(
+                eq(20),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with an negative buildScheduleDelay -20.
+     */
+     @Test
+    public void testScheduleWithNegativeBuildScheduleDelay() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+         when(config.getBuildScheduleDelay()).thenReturn(-20);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+        verify(project).scheduleBuild(
+                //negative value will be reset into default value 3
+                eq(3),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class));
+    }
+
+     /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with an negative buildScheduleDelay 10000.
+     */
+     @Test
+    public void testScheduleWithMaximumBuildScheduleDelay() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+         when(config.getBuildScheduleDelay()).thenReturn(10000);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+        verify(project).scheduleBuild(
+                eq(10000),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class));
     }
 
     /**
@@ -287,8 +385,8 @@ public class GerritTriggerTest {
         trigger.retriggerThisBuild(context);
 
         verify(listener, never()).onRetriggered(isA(AbstractProject.class),
-                                                isA(PatchsetCreated.class),
-                                                anyListOf(AbstractBuild.class));
+                isA(PatchsetCreated.class),
+                anyListOf(AbstractBuild.class));
 
         verify(project).scheduleBuild(
                 anyInt(),

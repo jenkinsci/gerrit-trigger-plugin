@@ -126,7 +126,6 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock object.
-
     @Override
     public int getGerritBuildStartedVerifiedValue() {
         return 1;
@@ -179,6 +178,12 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public Authentication getGerritAuthentication() {
-        return new Authentication(getGerritAuthKeyFile(), getGerritUserName(), getGerritAuthKeyFilePassword());
+        return new Authentication(getGerritAuthKeyFile(), getGerritUserName(),
+                getGerritAuthKeyFilePassword());
+    }
+
+    @Override
+    public int getBuildScheduleDelay() {
+        return 3;
     }
 }

@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -62,11 +63,6 @@ import java.util.List;
  */
 public class GerritTrigger extends Trigger<AbstractProject> implements GerritEventListener {
 
-    /**
-     * The schedule delay for a build so there is some time to save the trigger event.
-     * 3 is a MagicNumber.
-     */
-    public static final int BUILD_SCHEDULE_DELAY = 3;
     /**
      * Parameter name for the commit subject (commit message's 1st. line).
      */
@@ -253,7 +249,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         boolean ok = project.scheduleBuild(
-                BUILD_SCHEDULE_DELAY,
+                getBuildScheduleDelay(),
                 cause,
                 new BadgeAction(event),
                 new RetriggerAction(cause.getContext()),
@@ -261,9 +257,30 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 createParameters(event, cause, project));
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
-                new Object[]{project.getName(),
-                        ok,
-                        event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+                new Object[]{project.getName(), ok,
+                event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+    }
+
+    /**
+     * getBuildScheduleDelay method will return configured
+     * buildScheduledelay value.
+     * If the value is missing or invalid it the method
+     * will return default schedule delay or
+     * {@link GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
+     * @return buildScheduleDelay.
+     */
+    public int getBuildScheduleDelay() {
+        if (PluginImpl.getInstance() == null || PluginImpl.getInstance().getConfig() == null) {
+            return DEFAULT_BUILD_SCHEDULE_DELAY;
+        } else {
+            int buildScheduleDelay = PluginImpl.getInstance().getConfig().getBuildScheduleDelay();
+            if (buildScheduleDelay < DEFAULT_BUILD_SCHEDULE_DELAY) {
+                return DEFAULT_BUILD_SCHEDULE_DELAY;
+            } else {
+                return buildScheduleDelay;
+            }
+        }
+
     }
 
     /**
@@ -365,7 +382,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void retriggerThisBuild(TriggerContext context) {
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                                                                 context.getEvent())) {
+                context.getEvent())) {
 
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
@@ -378,9 +395,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
-
     //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: Javadoc see syntax.
-
     /**
      * Retriggers all builds in the given context.
      * The builds will only be triggered if no builds for the event are building.

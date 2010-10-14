@@ -66,4 +66,8 @@ public final class GerritDefaultValues {
      * The default nr of worker threads that sends approvals/review commands.
      */
     public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
+    /**
+     * The default build schedule delay.
+     */
+    public static final int DEFAULT_BUILD_SCHEDULE_DELAY = 3;
 }

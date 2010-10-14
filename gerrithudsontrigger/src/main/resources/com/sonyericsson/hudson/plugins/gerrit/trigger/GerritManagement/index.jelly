@@ -169,6 +169,13 @@
                                        value="${it.config.numberOfSendingWorkerThreads}"
                                        default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
                         </f:entry>
+                        <f:entry title="${%Build Schedule Delay}"
+                                 help="/plugin/gerrit-trigger/help-BuildScheduleDelay.html">
+                            <f:textbox name="buildScheduleDelay"
+                                   value="${it.config.buildScheduleDelay}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
                         <f:entry title="${%Enable Manual Trigger}"
                                  help="/plugin/gerrit-trigger/help-EnableManualTrigger.html">
                             <f:checkbox name="enableManualTrigger"

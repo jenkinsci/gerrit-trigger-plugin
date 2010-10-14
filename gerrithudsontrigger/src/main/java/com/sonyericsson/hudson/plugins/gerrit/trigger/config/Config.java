@@ -26,9 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
-
 import java.io.File;
-
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.*;
 
 /**
@@ -74,7 +72,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default verified vote to Gerrit when a build is successful.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
-
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritUserName;
@@ -96,6 +93,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildUnstableCodeReviewValue;
     private boolean enableManualTrigger;
     private int numberOfSendingWorkerThreads;
+    private int buildScheduleDelay;
 
     /**
      * Constructor.
@@ -166,25 +164,31 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildFailed = formData.optString(
                 "gerritVerifiedCmdBuildFailed",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildSuccessful = formData.optString(
                 "gerritVerifiedCmdBuildSuccessful",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
                 "http://" + DEFAULT_GERRIT_HOSTNAME);
         enableManualTrigger = formData.optBoolean(
                 "enableManualTrigger",
                 DEFAULT_ENABLE_MANUAL_TRIGGER);
+        buildScheduleDelay = formData.optInt(
+                "buildScheduleDelay",
+                DEFAULT_BUILD_SCHEDULE_DELAY);
+        if (buildScheduleDelay <= DEFAULT_BUILD_SCHEDULE_DELAY) {
+            buildScheduleDelay = DEFAULT_BUILD_SCHEDULE_DELAY;
+        }
     }
 
     /**
@@ -281,6 +285,20 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritSshPort(int gerritSshPort) {
         this.gerritSshPort = gerritSshPort;
+    }
+
+    @Override
+    public int getBuildScheduleDelay() {
+        return buildScheduleDelay;
+    }
+
+    /**
+     *Setting buildScheduleDelay.
+     * @param buildScheduleDelay the delay time
+     * @see #getBuildScheduleDelay()
+     */
+    public void setBuildScheduleDelay(int buildScheduleDelay) {
+        this.buildScheduleDelay = buildScheduleDelay;
     }
 
     @Override
