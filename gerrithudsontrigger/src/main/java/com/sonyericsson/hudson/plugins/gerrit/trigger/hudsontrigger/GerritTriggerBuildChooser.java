@@ -105,7 +105,9 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      */
     private ObjectId getFirstParent(String revName, IGitAPI git) throws GitException {
         String result = ((GitAPI)git).launchCommand("log", "-1", "--pretty=format:%P", revName);
-        return ObjectId.fromString(firstLine(result).trim());
+        String parents = firstLine(result).trim();
+        String firstParent = parents.split(" ")[0];
+        return ObjectId.fromString(firstParent);
     }
 
     /**
