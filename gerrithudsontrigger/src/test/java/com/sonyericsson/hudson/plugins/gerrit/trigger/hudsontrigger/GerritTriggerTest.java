@@ -156,7 +156,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -194,7 +194,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -241,7 +241,7 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -280,7 +280,7 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true);
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -322,10 +322,10 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(event)).thenReturn(false);
 
-        GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
 
-        GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
         when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
         when(otherProject.isBuildable()).thenReturn(true);
@@ -378,7 +378,7 @@ public class GerritTriggerTest {
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -409,7 +409,7 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.isBuildable()).thenReturn(false);
 
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -437,7 +437,7 @@ public class GerritTriggerTest {
         GerritProject gP = mock(GerritProject.class);
         doReturn(false).when(gP).isInteresting(any(String.class), any(String.class));
 
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -466,7 +466,7 @@ public class GerritTriggerTest {
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false);
+        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -500,7 +500,7 @@ public class GerritTriggerTest {
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true);
+        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -535,7 +535,7 @@ public class GerritTriggerTest {
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true);
+        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();

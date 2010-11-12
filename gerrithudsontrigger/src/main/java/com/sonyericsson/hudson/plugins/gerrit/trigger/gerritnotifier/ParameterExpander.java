@@ -51,6 +51,11 @@ public class ParameterExpander {
      */
     public static final int DEFAULT_PARAMETERS_COUNT = 11;
 
+    /**
+     * The delimiter used to separate build URLs from their messages
+     */
+    public static final String MESSAGE_DELIMITER = " : ";
+
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
     private Hudson hudson;
@@ -84,15 +89,20 @@ public class ParameterExpander {
     public String getBuildStartedCommand(AbstractBuild r, TaskListener taskListener,
             PatchsetCreated event, BuildsStartedStats stats) {
 
+        GerritTrigger trigger = getTrigger(r.getProject());
         String gerritCmd = config.getGerritCmdBuildStarted();
         Map<String, String> parameters = createStandardParameters(r, event,
                 getBuildStartedCodeReviewValue(r),
                 getBuildStartedVerifiedValue(r));
-        String startedStats = "";
+        StringBuilder startedStats = new StringBuilder();
         if (stats.getTotalBuildsToStart() > 1) {
-            startedStats = stats.toString();
+            startedStats.append(stats.toString());
         }
-        parameters.put("STARTED_STATS", startedStats);
+        String buildStartMessage = trigger.getBuildStartMessage();
+        if (buildStartMessage != null && !buildStartMessage.equals("")) {
+            startedStats.append(" \n ").append(buildStartMessage);
+        }
+        parameters.put("STARTED_STATS", startedStats.toString());
         return expandParameters(gerritCmd, r, taskListener, parameters);
     }
 
@@ -374,11 +384,34 @@ public class ParameterExpander {
         if (entries.length > 0) {
             str.append("\n");
             for (Entry entry : entries) {
-                if (entry.getBuild() != null) {
-                    // For some reason, Gerrit wont except command linefeeds with out a space.
+                AbstractBuild build = entry.getBuild();
+                if (build != null) {
+                    GerritTrigger trigger = getTrigger(build.getProject());
+                    Result res = build.getResult();
+                    String customMessage = null;
+
+                    // For some reason, Gerrit wont accept command linefeeds with out a space.
                     str.append(" \n");
-                    str.append(entry.getBuild().getResult().toString()).append(": ");
                     str.append(rootUrl).append(entry.getBuild().getUrl());
+                    str.append(MESSAGE_DELIMITER);
+
+                    if (res == Result.SUCCESS) {
+                        customMessage = trigger.getBuildSuccessfulMessage();
+                    } else if (res == Result.FAILURE || res == Result.ABORTED) {
+                        customMessage = trigger.getBuildFailureMessage();
+                    } else if (res == Result.UNSTABLE) {
+                        customMessage = trigger.getBuildUnstableMessage();
+                    } else {
+                        customMessage = trigger.getBuildFailureMessage();
+                    }
+
+                    // if the user has specified a message, use it
+                    // otherwise use a generic indicator
+                    if (customMessage == null || customMessage.equals("")) {
+                        str.append(res.toString());
+                    } else {
+                        str.append(customMessage);
+                    }
                 }
             }
         } else {
