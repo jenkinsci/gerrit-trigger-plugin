@@ -49,12 +49,14 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterValue;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.kohsuke.stapler.QueryParameter;
 
 /**
  * Triggers a build based on Gerrit events.
@@ -678,6 +680,27 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Extension
     public static final class DescriptorImpl extends TriggerDescriptor {
 
+
+   /**
+     * Checks that the provided parameter is an empty string or an integer.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doEmptyOrIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        if (value == null || value.length() <= 0) {
+            return FormValidation.ok();
+        } else {
+            try {
+                Integer.parseInt(value);
+                return FormValidation.ok();
+            } catch (NumberFormatException e) {
+                return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+            }
+        }
+    }
         /**
          * Default Constructor.
          */

@@ -11,7 +11,7 @@
                     <f:textbox name="gerritBuildStartedVerifiedValue"
                                value="${it.gerritBuildStartedVerifiedValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Successful}"
                          field="gerritBuildSuccessfulVerifiedValue"
@@ -19,7 +19,7 @@
                     <f:textbox name="gerritBuildSuccessfulVerifiedValue"
                                value="${it.gerritBuildSuccessfulVerifiedValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Failed}"
                          field="gerritBuildFailedVerifiedValue"
@@ -27,7 +27,7 @@
                     <f:textbox name="gerritBuildFailedVerifiedValue"
                                value="${it.gerritBuildFailedVerifiedValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Unstable}"
                          field="gerritBuildUnstableVerifiedValue"
@@ -35,7 +35,7 @@
                     <f:textbox name="gerritBuildUnstableVerifiedValue"
                                value="${it.gerritBuildUnstableVerifiedValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
                 <f:entry title="${%Started}"
@@ -44,7 +44,7 @@
                     <f:textbox name="gerritBuildStartedCodeReviewValue"
                                value="${it.gerritBuildStartedCodeReviewValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Successful}"
                          field="gerritBuildSuccessfulCodeReviewValue"
@@ -52,7 +52,7 @@
                     <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
                                value="${it.gerritBuildSuccessfulCodeReviewValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Failed}"
                          field="gerritBuildFailedCodeReviewValue"
@@ -60,7 +60,7 @@
                     <f:textbox name="gerritBuildFailedCodeReviewValue"
                                value="${it.gerritBuildFailedCodeReviewValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
                 <f:entry title="${%Unstable}"
                          field="gerritBuildUnstableCodeReviewValue"
@@ -68,7 +68,7 @@
                     <f:textbox name="gerritBuildUnstableCodeReviewValue"
                                value="${it.gerritBuildUnstableCodeReviewValue}"
                                default=""
-                               checkUrl="'${rootURL}/gerrit-trigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
             </f:section>
         </f:advanced>
