@@ -97,6 +97,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Parameter name for the gerrit project name.
      */
     public static final String GERRIT_PROJECT = "GERRIT_PROJECT";
+
     /**
      * Parameter name for the refspec.
      */
@@ -113,6 +114,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
     private boolean silentMode;
+    private String buildStartMessage;
+    private String buildFailureMessage;
+    private String buildSuccessfulMessage;
+    private String buildUnstableMessage;
 
     /**
      * Default DataBound Constructor.
@@ -142,6 +147,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       Job specific Gerrit code review vote when a build is unstable,
      *                                       null means that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
+     * @param buildStartMessage              Message to write to Gerrit when a build begins
+     * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
+     * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
+     * @param buildFailureMessage            Message to write to Gerrit when a build fails
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -154,7 +163,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildFailedCodeReviewValue,
             Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue,
-            boolean silentMode) {
+            boolean silentMode,
+            String buildStartMessage,
+            String buildSuccessfulMessage,
+            String buildUnstableMessage,
+            String buildFailureMessage) {
 
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -166,6 +179,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.silentMode = silentMode;
+        this.buildStartMessage = buildStartMessage;
+        this.buildSuccessfulMessage = buildSuccessfulMessage;
+        this.buildUnstableMessage = buildUnstableMessage;
+        this.buildFailureMessage = buildFailureMessage;
     }
 
     @Override
@@ -640,6 +657,42 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public boolean isSilentMode() {
         return silentMode;
+    }
+
+    /**
+     * The message to show users when a build starts, if custom messages are enabled.
+     *
+     * @return The build start message
+     */
+    public String getBuildStartMessage() {
+        return buildStartMessage;
+    }
+
+    /**
+     * The message to show users when a build succeeds, if custom messages are enabled.
+     *
+     * @return The build successful message
+     */
+    public String getBuildSuccessfulMessage() {
+        return buildSuccessfulMessage;
+    }
+
+    /**
+     * The message to show users when a build is unstable, if custom messages are enabled.
+     *
+     * @return The build unstable message
+     */
+    public String getBuildUnstableMessage() {
+        return buildUnstableMessage;
+    }
+
+    /**
+     * The message to show users when a build finishes, if custom messages are enabled.
+     *
+     * @return The build failure message
+     */
+    public String getBuildFailureMessage() {
+        return buildFailureMessage;
     }
 
     /**

@@ -71,6 +71,24 @@
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
             </f:section>
+            <f:section title="${%Custom Build Messages}">
+                <f:entry title="${%Build Start Message}"
+                         field="buildStartMessage">
+                   <f:textbox/>
+                </f:entry>
+                <f:entry title="${%Build Successful Message}"
+                         field="buildSuccessfulMessage">
+                   <f:textbox/>
+                </f:entry>
+                <f:entry title="${%Build Unstable Message}"
+                         field="buildUnstableMessage">
+                   <f:textbox/>
+                </f:entry>
+                <f:entry title="${%Build Failure Message}"
+                         field="buildFailureMessage">
+                   <f:textbox/>
+                </f:entry>
+            </f:section>
         </f:advanced>
         <f:entry title="${%Silent Mode}"
                  field="silentMode"
