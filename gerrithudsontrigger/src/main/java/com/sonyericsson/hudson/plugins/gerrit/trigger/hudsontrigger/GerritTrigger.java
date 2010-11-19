@@ -382,7 +382,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void retriggerThisBuild(TriggerContext context) {
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                                                                 context.getEvent())) {
+                context.getEvent())) {
 
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
@@ -643,7 +643,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * The message to show users when a build starts, if custom messages are enabled
+     * The message to show users when a build starts, if custom messages are enabled.
+     *
      * @return The build start message
      */
     public String getBuildStartMessage() {
@@ -651,7 +652,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * The message to show users when a build succeeds, if custom messages are enabled
+     * The message to show users when a build succeeds, if custom messages are enabled.
+     *
      * @return The build successful message
      */
     public String getBuildSuccessfulMessage() {
@@ -659,7 +661,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * The message to show users when a build is unstable, if custom messages are enabled
+     * The message to show users when a build is unstable, if custom messages are enabled.
+     *
      * @return The build unstable message
      */
     public String getBuildUnstableMessage() {
@@ -667,7 +670,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * The message to show users when a build finishes, if custom messages are enabled
+     * The message to show users when a build finishes, if custom messages are enabled.
+     *
      * @return The build failure message
      */
     public String getBuildFailureMessage() {

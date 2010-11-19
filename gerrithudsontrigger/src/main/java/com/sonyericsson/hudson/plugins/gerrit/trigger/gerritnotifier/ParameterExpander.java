@@ -52,7 +52,7 @@ public class ParameterExpander {
     public static final int DEFAULT_PARAMETERS_COUNT = 11;
 
     /**
-     * The delimiter used to separate build URLs from their messages
+     * The delimiter used to separate build URLs from their messages.
      */
     public static final String MESSAGE_DELIMITER = " : ";
 
