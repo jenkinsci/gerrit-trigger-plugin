@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import java.io.File;
 import org.apache.tools.ant.types.selectors.SelectorUtils;
 
 /**
@@ -53,7 +54,12 @@ public interface CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
-            return SelectorUtils.matchPath(pattern, str);
+            // Replace the Git directory separator character (always '/')
+            // with the platform specific directory separator before
+            // invoking Ant's platform specific path matching.
+            String safePattern = pattern.replace('/', File.separatorChar);
+            String safeStr = str.replace('/', File.separatorChar);
+            return SelectorUtils.matchPath(safePattern, safeStr);
         }
 
         @Override
