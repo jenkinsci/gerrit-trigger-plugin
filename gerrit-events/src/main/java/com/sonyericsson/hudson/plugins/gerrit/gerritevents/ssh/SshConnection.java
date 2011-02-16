@@ -45,6 +45,10 @@ import org.slf4j.LoggerFactory;
 public class SshConnection {
 
     private static final Logger logger = LoggerFactory.getLogger(SshConnection.class);
+	/**
+	 * Keep-alive interval [msec]
+	 */
+	private static final int ALIVE_INTERVAL = 30 * 1000;
     private final JSch client;
     private Session connectSession;
     private Channel currentSession;
@@ -68,6 +72,7 @@ public class SshConnection {
             connectSession = client.getSession(authentication.getUsername(), host, port);
             connectSession.connect();
             logger.debug("Connected: {}", connectSession.isConnected());
+            connectSession.setServerAliveInterval(ALIVE_INTERVAL);
         } catch (JSchException ex) {
             throw new SshException(ex);
         }
