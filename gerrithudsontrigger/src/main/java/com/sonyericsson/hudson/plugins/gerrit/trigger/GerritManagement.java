@@ -101,6 +101,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return ok or error.
          */
         public FormValidation doStartConnection() {
+            logger.debug("check permisson of doStartConnection().");
+            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
             try {
                 PluginImpl.getInstance().startConnection();
                 //TODO wait for the connection to actually be established.
@@ -116,6 +118,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return ok or error.
          */
         public FormValidation doStopConnection() {
+            logger.debug("check permisson of doStopConnection().");
+            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
             try {
                 PluginImpl.getInstance().stopConnection();
                 //TODO wait for the connection to actually be shut down.
@@ -131,6 +135,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return ok or error.
          */
         public FormValidation doRestartConnection() {
+            logger.debug("check permisson of doRestartConnection().");
+            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
             try {
                 PluginImpl.getInstance().restartConnection();
                 //TODO wait for the connection to actually be shut down and connected again.
@@ -167,7 +173,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                             gerritSshPort,
                             gerritUserName,
                             gerritAuthKeyFile,
-                            gerritAuthKeyFilePassword, });
+                            gerritAuthKeyFilePassword,  });
             }
 
             File file = new File(gerritAuthKeyFile);
