@@ -1,5 +1,5 @@
 <p>
-    Command that will be run when the build is finished.<br/>
+    Command that will be run when the build is unstable.<br/>
     Use parameters on the form &lt;PARAMETER&gt; where PARAMETER is a parameter to the build.
     The variables &lt;VERIFIED&gt; and &lt;CODE_REVIEW&gt; will have the values defined above.
     The variable &lt;BUILDURL&gt; will have the URL to the build result.
@@ -9,11 +9,11 @@
 </p>
 <ul>
     <li><strong>GERRIT_NAME</strong>: The Gerrit project name.</li>
-    <li><strong>CHANGE_ID</strong>: the Gerrit change-id (SHA-1)</li>
+    <li><strong>CHANGE_ID</strong>: The Gerrit change-id (SHA-1)</li>
     <li><strong>BRANCH</strong>: The branch of the project.</li>
     <li><strong>CHANGE</strong>: The change number.</li>
     <li><strong>PATCHSET</strong>: The patchset number.</li>
-    <li><strong>REFSPEC</strong>: the ref-spec. (refs/changes/xx/xxxx/z</li>
+    <li><strong>REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z</li>
     <li><strong>BUILDURL</strong>: The URL to the build.</li>
     <li><strong>VERIFIED</strong>: The verified vote.</li>
     <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
