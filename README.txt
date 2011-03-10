@@ -23,10 +23,10 @@ THE SOFTWARE.
 ==============
 
 This plugin triggers builds on events from the Gerrit code review system
-by retreiving events from the Gerrit command "stream-events",
+by retrieving events from the Gerrit command "stream-events",
 so the triggering is pushed from Gerrit to Hudson.
 Multiple builds can be triggered by one change-event, and one
-consollidated report is sent back to Gerrit.
+consolidated report is sent back to Gerrit.
 
 =============
 Maintainers
