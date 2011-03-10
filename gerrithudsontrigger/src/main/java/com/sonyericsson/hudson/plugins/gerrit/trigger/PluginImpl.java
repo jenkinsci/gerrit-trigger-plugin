@@ -35,6 +35,8 @@ import hudson.Plugin;
 import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
+import hudson.security.Permission;
+import hudson.security.PermissionGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,21 @@ public class PluginImpl extends Plugin {
      * What to call this plug-in to humans.
      */
     public static final String DISPLAY_NAME = "Gerrit Hudson Trigger";
+
+    /**
+     * Any special permissions needed by this plugin is grouped into this.
+     */
+    public static final PermissionGroup PERMISSION_GROUP =
+            new PermissionGroup(PluginImpl.class, Messages._GerritPermissionGroup());
+    /**
+     * The permission that allows users to perform the
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.ManualTriggerAction}.
+     */
+    public static final Permission MANUAL_TRIGGER = new Permission(PERMISSION_GROUP,
+            "ManualTrigger",
+            Messages._ManualTriggerPermissionDescription(),
+            Hudson.ADMINISTER);
+
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private transient GerritHandler gerritEventManager;
     private transient GerritProjectListUpdater projectListUpdater;

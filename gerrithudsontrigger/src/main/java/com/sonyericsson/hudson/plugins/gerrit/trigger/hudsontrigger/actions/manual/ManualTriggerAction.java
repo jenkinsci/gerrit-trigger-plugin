@@ -34,6 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.Extension;
 import hudson.model.Hudson;
 import hudson.model.RootAction;
+import hudson.security.Permission;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
@@ -63,6 +64,7 @@ public class ManualTriggerAction implements RootAction {
      * @see #generateTheId(net.sf.json.JSONObject, net.sf.json.JSONObject)
      */
     public static final int EXPECTED_NR_OF_PARTS_IN_A_GENERATED_ID = 3;
+
     private static final String SESSION_RESULT = "result";
     private static final String SESSION_SEARCH_ERROR = "error_search";
     private static final String SESSION_BUILD_ERROR = "error_build";
@@ -80,7 +82,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getIconFileName() {
-        if (isEnabled()) {
+        if (isEnabled() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return getPluginImageUrl("icon_retrigger24.png");
         } else {
             return null;
@@ -89,7 +91,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getDisplayName() {
-        if (isEnabled()) {
+        if (isEnabled() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return Messages.ManualGerritTrigger();
         } else {
             return null;
@@ -116,12 +118,24 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
+     * Serves the permission required to perform this action.
+     * Used by index.jelly
+     *
+     * @return the permission.
+     */
+    @SuppressWarnings("unused")
+    public Permission getRequiredPermission() {
+        return PluginImpl.MANUAL_TRIGGER;
+    }
+
+    /**
      * Gets the full patch to the provided javascript file.
      *
      * @param jsName the javascript filename.
      * @return the full patch from hudson's context root.
      */
-    @SuppressWarnings("unused")   //called from jelly
+    @SuppressWarnings("unused")
+    //called from jelly
     public String getJsUrl(String jsName) {
         return StringUtil.getPluginJsUrl(jsName);
     }
@@ -148,11 +162,13 @@ public class ManualTriggerAction implements RootAction {
 
     /**
      * Cuts the string to a max length of {@link #MAX_SUBJECT_STR_LENGTH} and escapes unsafe HTML characters.
+     *
      * @param subject the string to fix if needed.
      * @return the fixed string.
      * @see hudson.Util#escape(String)
      */
-    @SuppressWarnings("unused")  //Called from jelly
+    @SuppressWarnings("unused")
+    //Called from jelly
     public String toReadableHtml(String subject) {
         if (subject != null && subject.length() > MAX_SUBJECT_STR_LENGTH) {
             subject = subject.substring(0, MAX_SUBJECT_STR_LENGTH);
@@ -172,13 +188,15 @@ public class ManualTriggerAction implements RootAction {
      * @param response    the response.
      * @throws IOException if the unfortunate happens.
      */
-    @SuppressWarnings("unused")  //Called from jelly
+    @SuppressWarnings("unused")
+    //Called from jelly
     public void doGerritSearch(@QueryParameter("queryString") final String queryString, StaplerRequest request,
                                StaplerResponse response) throws IOException {
         if (!isEnabled()) {
             response.sendRedirect2(".");
             return;
         }
+        Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
         IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
         GerritQueryHandler handler = new GerritQueryHandler(config);
         clearSessionData(request);
@@ -207,13 +225,15 @@ public class ManualTriggerAction implements RootAction {
      * @param response    the response.
      * @throws IOException if the unfortunate happens.
      */
-    @SuppressWarnings("unused")  //Called from jelly
+    @SuppressWarnings("unused")
+    //Called from jelly
     public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
                         StaplerResponse response) throws IOException {
         if (!isEnabled()) {
             response.sendRedirect2(".");
             return;
         }
+        Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
         request.getSession(true).removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
         if (selectedIds != null && selectedIds.length() > 0) {

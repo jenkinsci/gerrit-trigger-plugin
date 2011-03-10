@@ -53,7 +53,7 @@ public final class StringUtil {
     public static final String PLUGIN_JS_URL = PLUGIN_URL + "js/";
 
     /**
-     * Provate Constructor for Utility Class.
+     * Private Constructor for Utility Class.
      */
     private StringUtil() {
     }
