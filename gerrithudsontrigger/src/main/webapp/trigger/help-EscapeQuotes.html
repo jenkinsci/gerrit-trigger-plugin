@@ -1,0 +1,14 @@
+<p>
+  If quotes in the values of the Gerrit change parameters sent to the build should be escaped or not.
+</p>
+<p>
+    E.g.<br/>
+    &nbsp;&nbsp;GERRIT_CHANGE_SUBJECT=Fixed "the thing"<br/>
+    &nbsp;will be processed to :<br/>
+    &nbsp;&nbsp;GERRIT_CHANGE_SUBJECT=Fixed \"the thing\"
+</p>
+<p>
+ <i>Triggers configured before this setting was introduced
+  (gerrit-trigger  &lt; v. 2.2.1) will have this unchecked,
+  giving the same behavior as before by leaving the quotes as is.</i>
+<p>

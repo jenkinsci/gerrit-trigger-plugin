@@ -1,8 +1,12 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <f:section title="${%Gerrit Trigger}">
         <f:advanced>
+            <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
+                 help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
+                <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
+            </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
                 <f:entry title="${%Started}"

@@ -21,10 +21,10 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import java.util.regex.Pattern;
 
 /**
  * Various string making utility methods.
@@ -41,6 +41,11 @@ public final class StringUtil {
      * The base URL of this plugin.
      */
     public static final String PLUGIN_URL = "/plugin/gerrit-trigger/";
+
+    /**
+     * the field will be used as quote "\""
+     */
+    private static final Pattern QUOTES_PATTERN = Pattern.compile("\"");;
 
     /**
      * The base URL of the plugin images.
@@ -106,5 +111,14 @@ public final class StringUtil {
      */
     public static String getPluginJsUrl(String jsName) {
         return PLUGIN_JS_URL + jsName;
+    }
+
+    /**
+     * Escape quotes in String value.
+     * @param value the name of String object having quotes.
+     * @return String object as the result of escape quotes in input.
+     */
+    public static String escapeQuotes(String value) {
+        return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
     }
 }

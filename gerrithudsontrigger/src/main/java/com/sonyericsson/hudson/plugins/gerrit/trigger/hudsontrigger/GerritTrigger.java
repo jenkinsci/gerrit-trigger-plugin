@@ -97,7 +97,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Parameter name for the gerrit project name.
      */
     public static final String GERRIT_PROJECT = "GERRIT_PROJECT";
-
     /**
      * Parameter name for the refspec.
      */
@@ -114,6 +113,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
     private boolean silentMode;
+    private boolean escapeQuotes;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -147,6 +147,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       Job specific Gerrit code review vote when a build is unstable,
      *                                       null means that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
+     * @param escapeQuotes                   EscapeQuotes on or off.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
@@ -164,6 +165,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue,
             boolean silentMode,
+            boolean escapeQuotes,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
@@ -179,6 +181,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.silentMode = silentMode;
+        this.escapeQuotes = escapeQuotes;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -277,7 +280,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
                 new Object[]{project.getName(), ok,
-                event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
     }
 
     /**
@@ -350,6 +353,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
             parameters.remove(parameter);
         }
+        if (this.isEscapeQuotes()) {
+            value = StringUtil.escapeQuotes(value);
+        }
+
         parameter = new StringParameterValue(name, value, description);
         parameters.add(parameter);
     }
@@ -660,6 +667,29 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     *  if escapeQuotes is on or off.
+     *  When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter string
+     *  Default is true
+     *
+     *  @return true if escapeQuotes is on.
+     */
+    public boolean isEscapeQuotes() {
+
+        return escapeQuotes;
+    }
+
+    /**
+     * Sets escapeQuotes to on or off.
+     * When escapeQuotes is on plugin will escape quotes in Gerrit event parameter string.
+     * Default is false.
+     *
+     * @param escapeQuotes is true if escapeQuotes should be on.
+     */
+    public void setEscapeQuotes(boolean escapeQuotes) {
+        this.escapeQuotes = escapeQuotes;
+    }
+
+    /**
      * The message to show users when a build starts, if custom messages are enabled.
      *
      * @return The build start message
@@ -733,27 +763,26 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Extension
     public static final class DescriptorImpl extends TriggerDescriptor {
 
-
-   /**
-     * Checks that the provided parameter is an empty string or an integer.
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doEmptyOrIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        if (value == null || value.length() <= 0) {
-            return FormValidation.ok();
-        } else {
-            try {
-                Integer.parseInt(value);
+        /**
+         * Checks that the provided parameter is an empty string or an integer.
+         * @param value the value.
+         * @return {@link FormValidation#validatePositiveInteger(String)}
+         */
+        public FormValidation doEmptyOrIntegerCheck(
+                @QueryParameter("value")
+                final String value) {
+            if (value == null || value.length() <= 0) {
                 return FormValidation.ok();
-            } catch (NumberFormatException e) {
-                return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+            } else {
+                try {
+                    Integer.parseInt(value);
+                    return FormValidation.ok();
+                } catch (NumberFormatException e) {
+                    return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+                }
             }
         }
-    }
+
         /**
          * Default Constructor.
          */

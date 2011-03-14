@@ -22,6 +22,9 @@
  *  THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import net.sf.json.JSONObject;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -57,6 +60,7 @@ import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.*;
 //CS IGNORE MagicNumber FOR NEXT 720 LINES. REASON: testdata.
 
 /**
@@ -154,7 +158,7 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
          when(config.getBuildScheduleDelay()).thenReturn(20);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -187,7 +191,7 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
          when(config.getBuildScheduleDelay()).thenReturn(-20);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -221,7 +225,7 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
          when(config.getBuildScheduleDelay()).thenReturn(10000);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -254,7 +258,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -292,7 +296,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -340,7 +344,7 @@ public class GerritTriggerTest {
         when(listener.isBuilding(project, event)).thenReturn(false);
 
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -379,7 +383,8 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -422,11 +427,11 @@ public class GerritTriggerTest {
         when(listener.isBuilding(event)).thenReturn(false);
 
         GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
 
         GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
         when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
         when(otherProject.isBuildable()).thenReturn(true);
@@ -480,7 +485,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -512,7 +517,7 @@ public class GerritTriggerTest {
         when(project.isBuildable()).thenReturn(false);
 
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -541,7 +546,7 @@ public class GerritTriggerTest {
         doReturn(false).when(gP).isInteresting(any(String.class), any(String.class));
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -571,7 +576,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -606,7 +611,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -642,7 +647,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, true, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -660,10 +665,184 @@ public class GerritTriggerTest {
                 isA(Action.class));
     }
 
+   /**
+    * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
+    * GerritCause cause, AbstractProject project)} with a normal scenario.
+    * this is a test case that checks that
+    * the Trigger is creating parameters having escaped quotes or not
+    * when the escapeQuotes setting is on.
+    */
+    @Test
+    public void testCreateParametersWhenTriggerWithEscapeQuotesOn() {
+
+        String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
+        String stringWithQuotesEscaped = "Fixed \\\" the thing to make \\\" some thing fun";
+        String stringWithoutQuotes  = "Fixed  the thing to make  some thing fun";
+
+        //prepare AbstractProject object
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+       //prepare  PatchsetCreated object
+        JSONObject patch = new JSONObject();
+        patch.put(NUMBER, "2");
+        patch.put(REVISION, "ad123456789");
+        patch.put(REF, "refs/changes/00/100/2");
+
+        JSONObject jsonAccount = new JSONObject();
+        jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
+        jsonAccount.put(NAME, "Bobby");
+
+        Change  changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
+        Change  changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
+
+        PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+        PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+        //prepare GerritCause object
+        GerritCause gerritCause =  mock(GerritCause.class);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+
+        //prepare GerritTrigger object with the escapeQuotes setting is on.
+        GerritTrigger triggerWithEscapeQuotesOn =
+                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+
+        //the Trigger is creating parameters with escaped quote in "subject".
+        ParametersAction  paremetersAction =
+                triggerWithEscapeQuotesOn.createParameters(eventWithQuotes, gerritCause, project);
+        ParameterValue  strPara  =
+                new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithQuotesEscaped);
+        verify(changeWithQuotes, times(1)).getSubject();
+        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+
+        //the Trigger is creating parameters without escaped quote in "subject".
+        paremetersAction = triggerWithEscapeQuotesOn.createParameters(eventWithoutQuotes, gerritCause, project);
+        strPara = new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithoutQuotes);
+        verify(changeWithoutQuotes, times(1)).getSubject();
+        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+
+  }
+
     /**
-     * Does a static mock of {@link PluginImpl}.
-     * And specifically the retrieval of Config and the frontendUrl.
+    * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
+    * GerritCause cause, AbstractProject project)} with a normal scenario.
+    * this is a test case that checks that
+    * the Trigger is creating parameters having escaped quotes or not
+    * when the escapeQuotes setting is off.
+    */
+    @Test
+    public void testCreateParametersWhenTriggerWithEscapeQuotesOff() {
+
+        String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
+        String stringWithoutQuotes  = "Fixed  the thing to make  some thing fun";
+
+        //prepare AbstractProject object
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+       //prepare  PatchsetCreated object
+        JSONObject patch = new JSONObject();
+        patch.put(NUMBER, "2");
+        patch.put(REVISION, "ad123456789");
+        patch.put(REF, "refs/changes/00/100/2");
+
+        JSONObject jsonAccount = new JSONObject();
+        jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
+        jsonAccount.put(NAME, "Bobby");
+
+        Change  changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
+        Change  changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
+
+        PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+        PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+        //prepare GerritCause object
+        GerritCause gerritCause =  mock(GerritCause.class);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+
+        //prepare GerritTrigger object with the escapeQuotes setting is off.
+        GerritTrigger triggerWithEscapeQuotesOff =
+                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+
+        //the Trigger is creating parameters with escaped quote in "subject"
+        ParametersAction  paremetersAction =
+                triggerWithEscapeQuotesOff.createParameters(eventWithQuotes, gerritCause, project);
+        ParameterValue  strPara  =
+                new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithQuotes);
+        verify(changeWithQuotes, times(1)).getSubject();
+        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+
+        //the Trigger is creating parameters without escaped quote in "subject"
+        paremetersAction = triggerWithEscapeQuotesOff.createParameters(eventWithoutQuotes, gerritCause, project);
+        strPara = new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithoutQuotes);
+        verify(changeWithoutQuotes, times(1)).getSubject();
+        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+  }
+
+    /**
+     * Prepare a new Mock Object of Change for utility test
+     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change}.
+     * @param project the result of calling getProject() on this mocked Object.
+     * @param branch the result of calling getBranch() on this mocked Object.
+     * @param id the result of calling getId() on this mocked Object.
+     * @param number the result of calling getNumber() on this mocked Object.
+     * @param subject the result of calling getSubject() on this mocked Object.
+     * @param jsonAccount used for creating a Account object as the result of
+     *        calling getOwner() on this mocked Object.
+     * @param url the result of calling getUrl() on this mocked Object.
+     * @return a new Change Object.
      */
+  private Change prepareChangeObjForMockTest(
+          String project,
+          String branch,
+          String id,
+          String number,
+          String subject,
+          JSONObject jsonAccount,
+          String url) {
+        Change  change  = PowerMockito.mock(Change.class);
+        doReturn(project).when(change).getProject();
+        doReturn(branch).when(change).getBranch();
+        doReturn(id).when(change).getId();
+        doReturn(number).when(change).getNumber();
+        when(change.getSubject()).thenReturn(subject);
+        doReturn(new Account(jsonAccount)).when(change).getOwner();
+        doReturn(url).when(change).getUrl();
+        return change;
+    }
+
+  /**
+   * Prepare a new Mock Object of PatchsetCreated for utility test
+   * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated}.
+   * @param change mock the result of calling getChange() on this mock Object.
+   * @param patchSet mock the result of calling getCPatchSet() on this mock Object.
+   * @param enentType mock the result of calling getEventType() on this mock Object.
+   * @return a new PatchsetCreated Object.
+   */
+  private PatchsetCreated  preparePatchsetCreatedObjForMockTest(
+          Change change,
+          PatchSet patchSet,
+          GerritEventType enentType) {
+        PatchsetCreated  patchsetCretedObj = PowerMockito.mock(PatchsetCreated.class);
+        doReturn(change).when(patchsetCretedObj).getChange();
+        doReturn(patchSet).when(patchsetCretedObj).getPatchSet();
+        doReturn(enentType).when(patchsetCretedObj).getEventType();
+        return patchsetCretedObj;
+    }
+/**
+* Does a static mock of {@link PluginImpl}.
+* And specifically the retrieval of Config and the frontendUrl.
+*/
     private static void mockPluginConfig() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
