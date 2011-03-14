@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hudson>
+  <version>1.369</version>
+  <numExecutors>2</numExecutors>
+  <mode>NORMAL</mode>
+  <useSecurity>true</useSecurity>
+  <authorizationStrategy class="hudson.security.GlobalMatrixAuthorizationStrategy">
+    <permission>hudson.model.View.Delete:bobby</permission>
+    <permission>hudson.model.Item.Build:bobby</permission>
+    <permission>hudson.model.Run.Update:bobby</permission>
+    <permission>hudson.model.Hudson.Read:anonymous</permission>
+    <permission>hudson.model.Hudson.Read:bobby</permission>
+    <permission>hudson.model.Item.Configure:bobby</permission>
+    <permission>hudson.model.Item.Delete:bobby</permission>
+    <permission>hudson.scm.SCM.Tag:bobby</permission>
+    <permission>hudson.model.Run.Delete:bobby</permission>
+    <permission>hudson.model.Item.Read:bobby</permission>
+    <permission>hudson.model.Hudson.Administer:admin</permission>
+    <permission>hudson.model.Item.Create:bobby</permission>
+    <permission>com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.ManualTrigger:bobby</permission>
+    <permission>hudson.model.Item.Workspace:bobby</permission>
+    <permission>hudson.model.View.Create:bobby</permission>
+    <permission>hudson.model.View.Configure:bobby</permission>
+  </authorizationStrategy>
+  <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+    <disableSignup>true</disableSignup>
+  </securityRealm>
+  <jdks/>
+  <clouds/>
+  <slaves/>
+  <quietPeriod>5</quietPeriod>
+  <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+  <views>
+    <hudson.model.AllView>
+      <owner class="hudson" reference="../../.."/>
+      <name>All</name>
+      <filterExecutors>false</filterExecutors>
+      <filterQueue>false</filterQueue>
+    </hudson.model.AllView>
+  </views>
+  <primaryView>All</primaryView>
+  <slaveAgentPort>0</slaveAgentPort>
+  <label></label>
+  <nodeProperties/>
+  <globalNodeProperties/>
+  <disabledAdministrativeMonitors/>
+</hudson>
