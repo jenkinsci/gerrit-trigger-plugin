@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -75,7 +76,7 @@ public class PluginImpl extends Plugin {
     private transient GerritProjectListUpdater projectListUpdater;
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
-    private transient List<GerritEventListener> savedEventListeners;
+    private transient HashMap<Integer, GerritEventListener> savedEventListeners;
     private transient List<ConnectionListener> savedConnectionListeners;
 
     /**
@@ -222,7 +223,7 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager == null) {
             createManager();
             if (savedEventListeners != null) {
-                gerritEventManager.addEventListeners(savedEventListeners);
+                gerritEventManager.addEventListeners(savedEventListeners.values());
                 savedEventListeners = null;
             }
             if (savedConnectionListeners != null) {
@@ -246,7 +247,7 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager != null) {
             gerritEventManager.shutdown(true);
 
-            savedEventListeners = gerritEventManager.removeAllEventListeners();
+           savedEventListeners = gerritEventManager.removeAllEventListeners();
             savedConnectionListeners = gerritEventManager.removeAllConnectionListeners();
             gerritEventManager = null;
         } else {

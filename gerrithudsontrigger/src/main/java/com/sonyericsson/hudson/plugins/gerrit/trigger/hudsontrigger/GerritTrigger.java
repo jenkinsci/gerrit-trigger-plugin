@@ -66,6 +66,10 @@ import org.kohsuke.stapler.QueryParameter;
 public class GerritTrigger extends Trigger<AbstractProject> implements GerritEventListener {
 
     /**
+     * This parameter is used to create hasCode value.
+     */
+    private static final int HASH_NUMBER = 53;
+    /**
      * Parameter name for the commit subject (commit message's 1st. line).
      */
     public static final String GERRIT_CHANGE_SUBJECT = "GERRIT_CHANGE_SUBJECT";
@@ -457,6 +461,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             schedule(cause, event, project);
         }
     }
+
+    @Override
+    public int hashCode() {
+        if (myProject == null) {
+            return super.hashCode();
+        } else {
+         return (HASH_NUMBER + myProject.getFullName().hashCode());
+        }
+     }
+
+
 
     /**
      * Called when a ChangeAbandoned event arrives.

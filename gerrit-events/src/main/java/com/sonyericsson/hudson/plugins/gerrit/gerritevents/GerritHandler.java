@@ -40,6 +40,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -68,7 +70,7 @@ public class GerritHandler extends Thread implements Coordinator {
     private int gerritSshPort;
     private Authentication authentication;
     private int numberOfWorkerThreads;
-    private final List<GerritEventListener> gerritEventListeners;
+    private HashMap<Integer, GerritEventListener> gerritEventListeners;
     private final List<ConnectionListener> connectionListeners;
     private final List<EventThread> workers;
     private SshConnection sshConnection;
@@ -137,7 +139,7 @@ public class GerritHandler extends Thread implements Coordinator {
         this.numberOfWorkerThreads = numberOfWorkerThreads;
 
         workQueue = new LinkedBlockingQueue<Work>();
-        gerritEventListeners = new LinkedList<GerritEventListener>();
+        gerritEventListeners = new HashMap<Integer, GerritEventListener>();
         connectionListeners = new LinkedList<ConnectionListener>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
         for (int i = 0; i < numberOfWorkerThreads; i++) {
@@ -293,7 +295,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void addListener(GerritEventListener listener) {
         synchronized (gerritEventListeners) {
-            gerritEventListeners.add(listener);
+           gerritEventListeners.put(new Integer(listener.hashCode()), listener);
         }
     }
 
@@ -303,7 +305,11 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void addEventListeners(Collection<GerritEventListener> listeners) {
         synchronized (gerritEventListeners) {
-            gerritEventListeners.addAll(listeners);
+            Iterator listenersItr = listeners.iterator();
+            while (listenersItr.hasNext()) {
+             GerritEventListener listener = (GerritEventListener)listenersItr.next();
+             gerritEventListeners.put(new Integer(listener.hashCode()), listener);
+            }
         }
     }
 
@@ -313,7 +319,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void removeListener(GerritEventListener listener) {
         synchronized (gerritEventListeners) {
-            gerritEventListeners.remove(listener);
+            gerritEventListeners.remove(listener.hashCode());
         }
     }
 
@@ -321,9 +327,10 @@ public class GerritHandler extends Thread implements Coordinator {
      * Removes all event listeners and returns those that where removed.
      * @return the former list of listeners.
      */
-    public List<GerritEventListener> removeAllEventListeners() {
+    public HashMap<Integer, GerritEventListener> removeAllEventListeners() {
         synchronized (gerritEventListeners) {
-            List<GerritEventListener> listeners = new LinkedList<GerritEventListener>(gerritEventListeners);
+            HashMap<Integer, GerritEventListener> listeners =
+                    new HashMap<Integer, GerritEventListener>(gerritEventListeners);
             gerritEventListeners.clear();
             return listeners;
         }
@@ -463,7 +470,7 @@ public class GerritHandler extends Thread implements Coordinator {
             }
 
             //The real deed.
-            for (GerritEventListener listener : gerritEventListeners) {
+            for (GerritEventListener listener : gerritEventListeners.values()) {
                 try {
                     notifyListener(listener, event);
                 } catch (Exception ex) {
