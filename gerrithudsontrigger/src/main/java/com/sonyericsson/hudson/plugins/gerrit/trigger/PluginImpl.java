@@ -54,7 +54,7 @@ public class PluginImpl extends Plugin {
     /**
      * What to call this plug-in to humans.
      */
-    public static final String DISPLAY_NAME = "Gerrit Hudson Trigger";
+    public static final String DISPLAY_NAME = "Gerrit Trigger";
 
     /**
      * Any special permissions needed by this plugin is grouped into this.

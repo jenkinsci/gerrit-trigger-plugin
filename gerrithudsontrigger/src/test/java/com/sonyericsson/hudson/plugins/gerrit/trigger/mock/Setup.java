@@ -46,25 +46,6 @@ public final class Setup {
 
     }
 
-
-    /**
-     * Utility method.
-     * @param verifiedValue verifiedValue
-     * @return comment.
-     */
-    private static String getCommentFormVerifiedValue(int verifiedValue) {
-        switch (verifiedValue) {
-            case 0:
-                return "Hudson started build.";
-            case 1:
-                return "Hudson says ok.http://buildresultURL";
-            case -1:
-                return "Hudson says not ok.http://buildresultURL";
-            default:
-                return null;
-        }
-    }
-
     /**
      * Gives you a Config mock.
      * @return MockGerritHudsonTriggerConfig mock.

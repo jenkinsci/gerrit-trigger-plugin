@@ -29,18 +29,19 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Keeps track of what builds has been triggered and if all builds are done for specific events.
+ * Keeps track of what builds have been triggered and if all builds are done for specific events.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildMemory {
@@ -50,6 +51,7 @@ public class BuildMemory {
 
     /**
      * Gets the memory of a specific key.
+     *
      * @param key the key
      * @return the memory.
      */
@@ -58,10 +60,11 @@ public class BuildMemory {
     }
 
     /**
-     * Tells if all triggered builds has started for a specific event.
+     * Tells if all triggered builds have started for a specific event.
      * This is a bit slower than
      * {@link #isAllBuildsCompleted(PatchSetKey)}
      * since an internal key needs to be created.
+     *
      * @param event the event.
      * @return true if it is so.
      */
@@ -71,7 +74,8 @@ public class BuildMemory {
     }
 
     /**
-     * Tells if all triggered builds has started for a specific memory imprint.
+     * Tells if all triggered builds have started for a specific memory imprint.
+     *
      * @param key the key to the memory.
      * @return true if it is so.
      */
@@ -86,6 +90,7 @@ public class BuildMemory {
 
     /**
      * Gets the statistics of started builds for a specific memory imprint.
+     *
      * @param key the memory key.
      * @return the statistics.
      */
@@ -100,6 +105,7 @@ public class BuildMemory {
 
     /**
      * Returns the status report for the given MemoryImprint.
+     *
      * @param key the key to the memory.
      * @return the status as it is now.
      * @see MemoryImprint#getStatusReport()
@@ -114,10 +120,11 @@ public class BuildMemory {
     }
 
     /**
-     * Tells if all triggered builds has started for a specific event.
+     * Tells if all triggered builds have started for a specific event.
      * This is a bit slower than
      * {@link #isAllBuildsStarted(PatchSetKey)}
      * since an internal key needs to be created.
+     *
      * @param event the event.
      * @return true if it is so.
      */
@@ -127,7 +134,8 @@ public class BuildMemory {
     }
 
     /**
-     * Tells if all triggered builds has started for a specific memory imprint.
+     * Tells if all triggered builds have started for a specific memory imprint.
+     *
      * @param key the key to the memory.
      * @return true if it is so.
      */
@@ -142,6 +150,7 @@ public class BuildMemory {
 
     /**
      * Sets the memory that a build is completed for an event.
+     *
      * @param event the event
      * @param build the build.
      * @return the key to the memory.
@@ -160,6 +169,7 @@ public class BuildMemory {
 
     /**
      * Sets the memory that a build has started for an event.
+     *
      * @param event the event.
      * @param build the build.
      * @return the key to the memory.
@@ -178,7 +188,8 @@ public class BuildMemory {
 
     /**
      * Adds a new memory about a build that has been/will be triggered.
-     * @param event the event that triggered it.
+     *
+     * @param event   the event that triggered it.
      * @param project the project that was triggered.
      * @return the key to the memory.
      */
@@ -197,8 +208,9 @@ public class BuildMemory {
      * Adds a new memory about a build that has been retriggered.
      * If there is an active memory about the provided event, then the project is reset with no build info.
      * Otherwise the memory is recreated from the list of other builds and their result.
-     * @param event the event to be retriggered.
-     * @param project the project that has been retriggered.
+     *
+     * @param event       the event to be retriggered.
+     * @param project     the project that has been retriggered.
      * @param otherBuilds the list of other builds that was in the "old" memory.
      * @return the key to the memory.
      */
@@ -225,6 +237,7 @@ public class BuildMemory {
 
     /**
      * Creates a key out of an event to use for storing memory imprints.
+     *
      * @param event the event.
      * @return the key.
      */
@@ -233,7 +246,8 @@ public class BuildMemory {
     }
 
     /**
-     * Remooves the memory for the provided key.
+     * Removes the memory for the provided key.
+     *
      * @param key the key to the memory.
      */
     public synchronized void forget(PatchSetKey key) {
@@ -244,9 +258,10 @@ public class BuildMemory {
      * Updates the {@link TriggerContext} for the provided key.
      * The cause and build is the "focal point" for the update, but all memory entities will be updated,
      * but only the current context will be get {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
-     * @param key the key to have as "focus" for the update.
+     *
+     * @param key   the key to have as "focus" for the update.
      * @param cause the cause.
-     * @param r the build the cause is in.
+     * @param r     the build the cause is in.
      */
     public synchronized void updateTriggerContext(PatchSetKey key, GerritCause cause, AbstractBuild r) {
         MemoryImprint imprint = getMemoryImprint(key);
@@ -271,20 +286,13 @@ public class BuildMemory {
 
     /**
      * Updates the {@link TriggerContext} for the provided entry.
+     *
      * @param entryToUpdate the entry to update.
-     * @param imprint the information for the update.
+     * @param imprint       the information for the update.
      */
     private synchronized void updateTriggerContext(Entry entryToUpdate, MemoryImprint imprint) {
         if (entryToUpdate.getBuild() != null) {
-            GerritCause cause = null;
-            //TODO: Uppgrade to Hudson 1.362 and use getCause(GerritCause.class)
-            List<Cause> causes = entryToUpdate.getBuild().getCauses();
-            for (Cause c : causes) {
-                if (c instanceof GerritCause) {
-                    cause = (GerritCause)c;
-                    break;
-                }
-            }
+            GerritCause cause = (GerritCause)entryToUpdate.getBuild().getCause(GerritCause.class);
             if (cause != null) {
                 TriggerContext context = cause.getContext();
                 for (MemoryImprint.Entry ent : imprint.getEntries()) {
@@ -307,7 +315,8 @@ public class BuildMemory {
 
     /**
      * Checks in memory if the project is building the event.
-     * @param event the event.
+     *
+     * @param event   the event.
      * @param project the project.
      * @return true if so.
      */
@@ -332,6 +341,7 @@ public class BuildMemory {
 
     /**
      * Checks if the provided event exists in this memory.
+     *
      * @param event the event to look for.
      * @return true if so.
      */
@@ -343,6 +353,7 @@ public class BuildMemory {
 
     /**
      * Returns all started builds in memory for the given key.
+     *
      * @param key the key for the memory.
      * @return the list of builds, or null if there is no memory.
      */
@@ -371,6 +382,7 @@ public class BuildMemory {
 
         /**
          * Constructor.
+         *
          * @param event the event.
          */
         public MemoryImprint(PatchsetCreated event) {
@@ -379,7 +391,8 @@ public class BuildMemory {
 
         /**
          * Constructor.
-         * @param event the event.
+         *
+         * @param event   the event.
          * @param project the first project.
          */
         public MemoryImprint(PatchsetCreated event, AbstractProject project) {
@@ -389,6 +402,7 @@ public class BuildMemory {
 
         /**
          * The event.
+         *
          * @return the event.
          */
         public PatchsetCreated getEvent() {
@@ -397,6 +411,7 @@ public class BuildMemory {
 
         /**
          * A list of Project-Build tuple entries.
+         *
          * @return the memory entries.
          */
         public synchronized Entry[] getEntries() {
@@ -405,8 +420,9 @@ public class BuildMemory {
 
         /**
          * Sets the build to a project or adds the project to the list.
+         *
          * @param project the project.
-         * @param build the build.
+         * @param build   the build.
          */
         protected synchronized void set(AbstractProject project, AbstractBuild build) {
             Entry entry = getEntry(project);
@@ -420,6 +436,7 @@ public class BuildMemory {
 
         /**
          * Adds the project to the list.
+         *
          * @param project the project.
          */
         protected synchronized void set(AbstractProject project) {
@@ -433,6 +450,7 @@ public class BuildMemory {
         /**
          * Resets the build info for the project.
          * If the project doesn't exist it would be as if calling {@link #set(hudson.model.AbstractProject)}.
+         *
          * @param project the project to reset.
          */
         protected synchronized void reset(AbstractProject project) {
@@ -447,9 +465,10 @@ public class BuildMemory {
         }
 
         /**
-         * Sets all the values of an entry annd adds it if the project has not been added before.
-         * @param project the project
-         * @param build the build
+         * Sets all the values of an entry and adds it if the project has not been added before.
+         *
+         * @param project        the project
+         * @param build          the build
          * @param buildCompleted if the build is finished.
          */
         private synchronized void set(AbstractProject project, AbstractBuild build, boolean buildCompleted) {
@@ -467,7 +486,8 @@ public class BuildMemory {
         }
 
         /**
-         * Tells if all builds has a value (not null).
+         * Tells if all builds have a value (not null).
+         *
          * @return true if it is so.
          */
         public synchronized boolean isAllBuildsSet() {
@@ -480,7 +500,8 @@ public class BuildMemory {
         }
 
         /**
-         * Tells if all builds has Completed.
+         * Tells if all builds have Completed.
+         *
          * @return true if it is so.
          */
         public synchronized boolean isAllBuildsCompleted() {
@@ -495,6 +516,7 @@ public class BuildMemory {
         /**
          * Returns a string describing the projects and builds status in this memory.
          * Good for logging.
+         *
          * @return a report.
          */
         public synchronized String getStatusReport() {
@@ -520,6 +542,7 @@ public class BuildMemory {
 
         /**
          * Searches the internal list for an entry with the specified project.
+         *
          * @param project the project.
          * @return the entry or null if nothis is found.
          */
@@ -534,6 +557,7 @@ public class BuildMemory {
 
         /**
          * Gets the statistics about builds started.
+         *
          * @return the stats.
          */
         public synchronized BuildsStartedStats getBuildsStartedStats() {
@@ -547,9 +571,10 @@ public class BuildMemory {
         }
 
         /**
-         * Tells if all builds in the memory where successful.
-         * @return true if it is so, false if not all builds has started or not completed or has any different
-         *          result than {@link Result#SUCCESS}.
+         * Tells if all builds in the memory were successful.
+         *
+         * @return true if it is so, false if not all builds have started or not completed or have any different
+         *         result than {@link Result#SUCCESS}.
          */
         public synchronized boolean whereAllBuildsSuccessful() {
             for (Entry entry : list) {
@@ -567,6 +592,7 @@ public class BuildMemory {
 
         /**
          * Returns if any started and completed build has the result {@link Result#FAILURE}.
+         *
          * @return true if it is so.
          */
         public synchronized boolean whereAnyBuildsFailed() {
@@ -581,6 +607,7 @@ public class BuildMemory {
 
         /**
          * Returns if any started and completed build has the result {@link Result#UNSTABLE}.
+         *
          * @return true if it is so.
          */
         public synchronized boolean whereAnyBuildsUnstable() {
@@ -594,6 +621,7 @@ public class BuildMemory {
         }
 
         //CS IGNORE FinalClass FOR NEXT 5 LINES. REASON: Testability.
+
         /**
          * A project-build entry in the list of a MemoryImprint.
          */
@@ -605,8 +633,9 @@ public class BuildMemory {
 
             /**
              * Constructor.
+             *
              * @param project the project
-             * @param build the build.
+             * @param build   the build.
              */
             private Entry(AbstractProject project, AbstractBuild build) {
                 this.project = project;
@@ -616,6 +645,7 @@ public class BuildMemory {
 
             /**
              * Constructor.
+             *
              * @param project the project.
              */
             private Entry(AbstractProject project) {
@@ -625,6 +655,7 @@ public class BuildMemory {
 
             /**
              * The Project.
+             *
              * @return the project.
              */
             public AbstractProject getProject() {
@@ -633,6 +664,7 @@ public class BuildMemory {
 
             /**
              * The build of a project.
+             *
              * @return the build.
              */
             public AbstractBuild getBuild() {
@@ -641,6 +673,7 @@ public class BuildMemory {
 
             /**
              * The build of a project.
+             *
              * @param build the build.
              */
             private void setBuild(AbstractBuild build) {
@@ -649,6 +682,7 @@ public class BuildMemory {
 
             /**
              * If the build is completed.
+             *
              * @return true if the build is completed.
              */
             public boolean isBuildCompleted() {
@@ -657,6 +691,7 @@ public class BuildMemory {
 
             /**
              * If the build is completed.
+             *
              * @param buildCompleted true if the build is completed.
              */
             private void setBuildCompleted(boolean buildCompleted) {
@@ -675,7 +710,8 @@ public class BuildMemory {
 
         /**
          * Constructs a Key.
-         * @param changeNumber the Gerrit changeNumber
+         *
+         * @param changeNumber   the Gerrit changeNumber
          * @param patchSetNumber the Gerrit patch-set number.
          */
         public PatchSetKey(Integer changeNumber, Integer patchSetNumber) {
@@ -684,9 +720,11 @@ public class BuildMemory {
         }
 
         //CS IGNORE RedundantThrows FOR NEXT 10 LINES. REASON: Informative.
+
         /**
          * Constructs a Key.
-         * @param changeNumber the Gerrit changeNumber
+         *
+         * @param changeNumber   the Gerrit changeNumber
          * @param patchSetNumber the Gerrit patch-set number.
          * @throws NumberFormatException if one of the parameters is not parseable to an {@link java.lang.Integer}.
          */
@@ -697,6 +735,7 @@ public class BuildMemory {
 
         /**
          * Quick Constructor.
+         *
          * @param event the event to get chencge and revision from.
          * @see #PatchSetKey(java.lang.String, java.lang.String)
          */
@@ -706,6 +745,7 @@ public class BuildMemory {
 
         /**
          * The Gerrit change number.
+         *
          * @return the Gerrit change number.
          */
         public Integer getChangeNumber() {
@@ -714,6 +754,7 @@ public class BuildMemory {
 
         /**
          * The Gerrit patch-set number.
+         *
          * @return the Gerrit patch-set number.
          */
         public Integer getPatchSetNumber() {
@@ -731,13 +772,13 @@ public class BuildMemory {
             }
             final PatchSetKey other = (PatchSetKey)obj;
 
-            if (( this.changeNumber != null && !this.changeNumber.equals(other.changeNumber) )
-                    || ( this.changeNumber == null && other.changeNumber != null )) {
+            if ((this.changeNumber != null && !this.changeNumber.equals(other.changeNumber))
+                    || (this.changeNumber == null && other.changeNumber != null)) {
                 return false;
             }
 
-            if (( this.patchSetNumber != null && !this.patchSetNumber.equals(other.patchSetNumber) )
-                    || ( this.patchSetNumber == null && other.patchSetNumber != null )) {
+            if ((this.patchSetNumber != null && !this.patchSetNumber.equals(other.patchSetNumber))
+                    || (this.patchSetNumber == null && other.patchSetNumber != null)) {
                 return false;
             }
 
@@ -750,8 +791,8 @@ public class BuildMemory {
             //CS IGNORE AvoidInlineConditionals FOR NEXT 5 LINES. REASON: Autogenerated Code.
             //CS IGNORE ParenPad FOR NEXT 5 LINES. REASON: Autogenerated Code.
             int hash = 3;
-            hash = 37 * hash + ( this.changeNumber != null ? this.changeNumber.hashCode() : 0 );
-            hash = 37 * hash + ( this.patchSetNumber != null ? this.patchSetNumber.hashCode() : 0 );
+            hash = 37 * hash + (this.changeNumber != null ? this.changeNumber.hashCode() : 0);
+            hash = 37 * hash + (this.patchSetNumber != null ? this.patchSetNumber.hashCode() : 0);
             return hash;
         }
 

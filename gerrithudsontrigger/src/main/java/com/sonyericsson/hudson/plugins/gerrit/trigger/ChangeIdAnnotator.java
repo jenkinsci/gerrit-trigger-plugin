@@ -30,7 +30,7 @@ public class ChangeIdAnnotator extends ChangeLogAnnotator {
      * Annotates Gerrit change IDs in changelogs.
      * @param project The project
      * @param text The initial text
-     * @param config The Gerrit Hudson trigger config
+     * @param config The Gerrit trigger config
      */
     public void annotate(AbstractProject<?, ?> project, MarkupText text, IGerritHudsonTriggerConfig config) {
         for (SubText token : text.findTokens(CHANGE_ID)) {

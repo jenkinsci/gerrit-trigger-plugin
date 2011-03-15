@@ -64,7 +64,7 @@ public interface GerritConnectionConfig {
     String getGerritUserName();
 
     /**
-     * The number of threads to send events into hudson with.
+     * The number of threads to handle incoming events with.
      * @return the number of worker threads.
      */
     int getNumberOfReceivingWorkerThreads();

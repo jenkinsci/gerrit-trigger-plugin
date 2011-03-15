@@ -218,7 +218,7 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
-     * Connects to the Gerrit server and authenticates as a "Hudson user".
+     * Connects to the Gerrit server and authenticates as the specified user.
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {

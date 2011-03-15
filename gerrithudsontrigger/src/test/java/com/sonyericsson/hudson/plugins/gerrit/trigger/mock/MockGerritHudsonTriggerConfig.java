@@ -42,7 +42,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " PATCHSET=<PATCHSET>"
                 + " VERIFIED=<VERIFIED>"
                 + " CODEREVIEW=<CODE_REVIEW>"
-                + " REFSPEC=<REFSPEC> MSG=Hudson started build."
+                + " REFSPEC=<REFSPEC> MSG=I started a build."
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
                 + " ENV_BRANCH=$BRANCH"
@@ -59,7 +59,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " PATCHSET=<PATCHSET>"
                 + " VERIFIED=<VERIFIED>"
                 + " CODEREVIEW=<CODE_REVIEW>"
-                + " REFSPEC=<REFSPEC> MSG='Hudson says ok. BS=<BUILDS_STATS>'"
+                + " REFSPEC=<REFSPEC> MSG='Your friendly butler says OK. BS=<BUILDS_STATS>'"
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
                 + " ENV_BRANCH=$BRANCH"
@@ -71,13 +71,13 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public String getGerritCmdBuildFailed() {
-        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=-1 MSG=Hudson says not ok.<BUILDURL>";
+        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=-1 MSG=A disappointed butler says not OK.<BUILDURL>";
     }
 
     @Override
     public String getGerritCmdBuildUnstable() {
         // TODO Auto-generated method stub
-        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=0 MSG=Hudson build Unstable";
+        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=0 MSG=The build is Unstable";
     }
 
     @Override

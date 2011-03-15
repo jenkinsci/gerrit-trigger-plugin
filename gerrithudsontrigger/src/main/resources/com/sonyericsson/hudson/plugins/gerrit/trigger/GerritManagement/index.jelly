@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <l:layout title="${%Gerrit Hudson plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
+    <l:layout title="${%Gerrit Trigger plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
                 <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>

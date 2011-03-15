@@ -19,6 +19,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class ManualTriggerActionPermissionTest extends HudsonTestCase {
+    //TODO One test fails with a 404 on gerrit-trigger.js when executed from Parent Pom, but not from this module.
 
     /**
      * Tests if the html-link to {@link ManualTriggerAction#getUrlName()} is visible from the main-page.

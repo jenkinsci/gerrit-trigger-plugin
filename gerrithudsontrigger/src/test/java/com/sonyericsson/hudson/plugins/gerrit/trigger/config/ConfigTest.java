@@ -50,7 +50,7 @@ public class ConfigTest {
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritAuthKeyFile\":\"/home/local/hudsongerrit/.ssh/id_rsa\","
+                + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
                 + "\"gerritBuildFailedCodeReviewValue\":\"1\","
                 + "\"gerritBuildFailedVerifiedValue\":\"-1\","
@@ -63,7 +63,7 @@ public class ConfigTest {
                 + "\"gerritFrontEndUrl\":\"http://gerrit:8088\","
                 + "\"gerritHostName\":\"gerrit\","
                 + "\"gerritSshPort\":\"1337\","
-                + "\"gerritUserName\":\"hudsongerrit\","
+                + "\"gerritUserName\":\"gerrit\","
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
@@ -80,7 +80,7 @@ public class ConfigTest {
         assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildUnstable());
-        assertEquals(new File("/home/local/hudsongerrit/.ssh/id_rsa").getPath(),
+        assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),
                      config.getGerritAuthKeyFile().getPath());
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
         assertEquals(1, config.getGerritBuildFailedCodeReviewValue());
@@ -94,7 +94,7 @@ public class ConfigTest {
         assertEquals("http://gerrit:8088/", config.getGerritFrontEndUrl());
         assertEquals("gerrit", config.getGerritHostName());
         assertEquals(1337, config.getGerritSshPort());
-        assertEquals("hudsongerrit", config.getGerritUserName());
+        assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }

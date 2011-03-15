@@ -25,7 +25,7 @@ import java.util.Collections;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 
 /**
- * Used by Hudson git plugin to determine the revision to build.
+ * Used by the git plugin to determine the revision to build.
  * @author Andrew Bayer
  */
 public class GerritTriggerBuildChooser extends BuildChooser {

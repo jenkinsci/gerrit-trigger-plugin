@@ -129,10 +129,11 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Gets the full patch to the provided javascript file.
+     * Gets the full path to the provided javascript file.
+     * For use by jelly files to give to the client browser.
      *
      * @param jsName the javascript filename.
-     * @return the full patch from hudson's context root.
+     * @return the full path from the web-context root.
      */
     @SuppressWarnings("unused")
     //called from jelly

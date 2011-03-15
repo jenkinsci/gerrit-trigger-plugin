@@ -57,7 +57,7 @@ public final class GerritDefaultValues {
     /**
      * The default username to use when authenticating to the gerrit server.
      */
-    public static final String DEFAULT_GERRIT_USERNAME = "hudson";
+    public static final String DEFAULT_GERRIT_USERNAME = "jenkins";
     /**
      * The default nr of event worker threads.
      */

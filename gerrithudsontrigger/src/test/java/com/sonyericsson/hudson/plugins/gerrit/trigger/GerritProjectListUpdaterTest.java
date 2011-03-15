@@ -50,14 +50,14 @@ public class GerritProjectListUpdaterTest {
     public void testReadProjects() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("tools/somepath/someproject\n");
-        stringBuilder.append("tools/hello/hudson\n");
+        stringBuilder.append("tools/hello/jenkins\n");
         stringBuilder.append("tools/gerrit\n");
 
         List<String> projects = GerritProjectListUpdater.readProjects(new StringReader(stringBuilder.toString()));
 
         assertArrayEquals(projects.toArray(), new String[] {
             "tools/somepath/someproject",
-            "tools/hello/hudson",
+            "tools/hello/jenkins",
             "tools/gerrit",
         });
     }

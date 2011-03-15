@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Displays a warning message in Manage Hudson if the Gerrit connection is down or some other warning.
+ * Displays a warning message in /manage if the Gerrit connection is down or some other warning.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
