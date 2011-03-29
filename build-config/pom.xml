@@ -18,8 +18,8 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git://github.com/hudson/gerrit-trigger-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:hudson/gerrit-trigger-plugin.git</developerConnection>
-        <url>http://github.com/hudson/gerrit-trigger-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/gerrit-trigger-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/gerrit-trigger-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/gerrit-trigger-plugin</url>
     </scm>
 </project>

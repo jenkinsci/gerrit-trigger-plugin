@@ -149,16 +149,16 @@
         </plugins>
     </build>
 
-    <distributionManagement>
+   <distributionManagement>
         <repository>
-            <id>java.net-m2-repository</id>
-            <url>java-net:/maven2-repository/trunk/repository/</url>
+            <id>maven.jenkins-ci.org</id>
+            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
         </repository>
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git://github.com/hudson/gerrit-trigger-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:hudson/gerrit-trigger-plugin.git</developerConnection>
-        <url>http://github.com/hudson/gerrit-trigger-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/gerrit-trigger-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/gerrit-trigger-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/gerrit-trigger-plugin</url>
     </scm>
 </project>

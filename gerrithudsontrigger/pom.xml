@@ -12,8 +12,8 @@
     <version>2.2.1-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Gerrit Trigger</name>
-    <description>Integrates Hudson to Gerrit code review.</description>
-    <url>http://wiki.hudson-ci.org/display/HUDSON/Gerrit+Trigger</url>
+    <description>Integrates with Gerrit code review.</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger</url>
 
     <licenses>
         <license>
@@ -49,10 +49,8 @@
         </developer>
     </developers>
 
-    <!--<properties>
-        <test>AllTests</test>
-    </properties>-->
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.net.id>rsandell</java.net.id>
     </properties>
 
@@ -162,6 +160,13 @@
                 </executions>
             </plugin>
         </plugins>
+        <extensions>
+            <extension>
+                <groupId>org.jvnet.wagon-svn</groupId>
+                <artifactId>wagon-svn</artifactId>
+                <version>1.9</version>
+            </extension>
+        </extensions>
     </build>
     <reporting>
         <plugins>
@@ -175,14 +180,14 @@
 
     <distributionManagement>
         <repository>
-            <id>java.net-m2-repository</id>
-            <url>java-net:/maven2-repository/trunk/repository/</url>
+            <id>maven.jenkins-ci.org</id>
+            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
         </repository>
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git://github.com/hudson/gerrit-trigger-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:hudson/gerrit-trigger-plugin.git</developerConnection>
-        <url>http://github.com/hudson/gerrit-trigger-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/gerrit-trigger-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/gerrit-trigger-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/gerrit-trigger-plugin</url>
     </scm>
 </project>
