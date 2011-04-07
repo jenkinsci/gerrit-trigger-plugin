@@ -58,7 +58,7 @@ public class PluginImpl extends Plugin {
     public static final String DISPLAY_NAME = "Gerrit Trigger";
 
     /**
-     * Any special permissions needed by this plugin is grouped into this.
+     * Any special permissions needed by this plugin are grouped into this.
      */
     public static final PermissionGroup PERMISSION_GROUP =
             new PermissionGroup(PluginImpl.class, Messages._GerritPermissionGroup());
@@ -174,7 +174,7 @@ public class PluginImpl extends Plugin {
     }
 
     /**
-     * Adds a listener to the EventManager the listener will receive all events from Gerrit.
+     * Adds a listener to the EventManager.  The listener will receive all events from Gerrit.
      *
      * @param listener the listener.
      * @see GerritHandler#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)

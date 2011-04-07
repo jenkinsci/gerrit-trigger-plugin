@@ -38,8 +38,8 @@ public class BuildsStartedStats {
     /**
      * The Constructor.
      * @param event the event that started the build(s).
-     * @param totalBuildsToStart the total ammount of builds that has been triggered.
-     * @param startedBuilds the ammount of builds that has been started so far.
+     * @param totalBuildsToStart the total amount of builds that have been triggered.
+     * @param startedBuilds the amount of builds that have been started so far.
      */
     public BuildsStartedStats(PatchsetCreated event, int totalBuildsToStart, int startedBuilds) {
         this.event = event;
@@ -64,32 +64,32 @@ public class BuildsStartedStats {
     }
 
     /**
-     * The ammount of builds that has been started so far.
-     * @return the ammount of builds that has been started so far.
+     * The amount of builds that have been started so far.
+     * @return the amount of builds that have been started so far.
      */
     public int getStartedBuilds() {
         return startedBuilds;
     }
 
     /**
-     * The ammount of builds that has been started so far.
-     * @param startedBuilds the ammount of builds that has been started so far.
+     * The amount of builds that have been started so far.
+     * @param startedBuilds the amount of builds that have been started so far.
      */
     void setStartedBuilds(int startedBuilds) {
         this.startedBuilds = startedBuilds;
     }
 
     /**
-     * The total ammount of builds that has been triggered.
-     * @return the total ammount of builds that has been triggered.
+     * The total amount of builds that have been triggered.
+     * @return the total amount of builds that have been triggered.
      */
     public int getTotalBuildsToStart() {
         return totalBuildsToStart;
     }
 
     /**
-     * The total ammount of builds that has been triggered.
-     * @param totalBuildsToStart the total ammount of builds that has been triggered.
+     * The total amount of builds that have been triggered.
+     * @param totalBuildsToStart the total amount of builds that have been triggered.
      */
     void setTotalBuildsToStart(int totalBuildsToStart) {
         this.totalBuildsToStart = totalBuildsToStart;

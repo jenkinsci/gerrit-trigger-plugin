@@ -125,7 +125,7 @@ public class SshConnection {
 
             // Seems like Gerrit does not like when you disconnect directly after the command has been sent.
             // For instance, we have seen effects of mails not being sent out. This is the reason for
-            // receiving all incoming the data.
+            // receiving all the incoming data.
             String incomingLine = null;
             StringBuilder commandOutput = new StringBuilder();
             while ((incomingLine = bufferedReader.readLine()) != null) {

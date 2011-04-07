@@ -25,7 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
 /**
- * Base work wor an {@link EventThread} worker.
+ * Base work for an {@link EventThread} worker.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public interface Work {

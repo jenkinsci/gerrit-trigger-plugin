@@ -31,7 +31,7 @@ import hudson.model.AbstractBuild;
 
 /**
  * Disables the rebuild button for Gerrit triggered builds.
- * This plugin provides it's own "rebuild" functionality.
+ * This plugin provides its own "rebuild" functionality.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction
  */

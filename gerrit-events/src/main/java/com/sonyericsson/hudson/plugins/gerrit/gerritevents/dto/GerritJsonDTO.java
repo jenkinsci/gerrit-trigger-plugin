@@ -31,7 +31,7 @@ import net.sf.json.JSONObject;
  */
 public interface GerritJsonDTO {
     /**
-     * Takes a JSON object and fills it's internal data-structure.
+     * Takes a JSON object and fills its internal data-structure.
      * @param json the JSON Object.
      */
     void fromJson(JSONObject json);

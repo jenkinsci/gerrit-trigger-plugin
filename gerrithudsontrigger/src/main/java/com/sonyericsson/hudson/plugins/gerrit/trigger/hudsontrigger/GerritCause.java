@@ -87,7 +87,7 @@ public class GerritCause extends Cause {
     /**
      * Gets the indication if silent mode was on or off when the build was triggered.
      * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/sucessfull approve messages etc.
+     * i.e. no build started/failed/successful approve messages etc.
      * Default is false.
      * @return true if silent mode was on.
      * @see GerritTrigger#isSilentMode()
@@ -99,7 +99,7 @@ public class GerritCause extends Cause {
     /**
      * Sets the indication if silent mode was on or off when the build was triggered.
      * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/sucessfull approve messages etc.
+     * i.e. no build started/failed/successful approve messages etc.
      * Default is false.
      * @param silentMode true if silent mode was on.
      * @see GerritTrigger#setSilentMode(boolean)

@@ -41,7 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Expands a parameterized string to it's full potential.
+ * Expands a parameterized string to its full potential.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class ParameterExpander {
@@ -63,7 +63,7 @@ public class ParameterExpander {
     /**
      * Constructor.
      * @param config the global config.
-     * @param hudson the hudson instance.
+     * @param hudson the Hudson instance.
      */
     public ParameterExpander(IGerritHudsonTriggerConfig config, Hudson hudson) {
         this.config = config;
@@ -232,7 +232,7 @@ public class ParameterExpander {
     }
 
     /**
-     * Finds the codereview value for the specified build result on the configured trigger.
+     * Finds the code review value for the specified build result on the configured trigger.
      * @param res the build result.
      * @param trigger the trigger that might have overridden values.
      * @return the value.
@@ -367,7 +367,7 @@ public class ParameterExpander {
 
     /**
      * Creates the BUILD_STATS string to send in a message,
-     * it contails the status of every build with it's URL.
+     * it contains the status of every build with its URL.
      * @param memoryImprint the memory of all the builds.
      * @return the string.
      */
@@ -377,7 +377,7 @@ public class ParameterExpander {
 
         Entry[] entries = memoryImprint.getEntries();
 
-        // In Gerrit, all lines before the first empty line is used as the summary.
+        // In Gerrit, all lines before the first empty line are used as the summary.
         // For the summary all single linefeeds will be removed (only in Gerrit, not sent mails).
         // Hence, for the multi-builds, we will add a double linefeed before actually listing
         // the build results.
@@ -390,7 +390,7 @@ public class ParameterExpander {
                     Result res = build.getResult();
                     String customMessage = null;
 
-                    // For some reason, Gerrit wont accept command linefeeds with out a space.
+                    // For some reason, Gerrit won't accept command linefeeds without a space.
                     str.append(" \n");
                     str.append(rootUrl).append(entry.getBuild().getUrl());
                     str.append(MESSAGE_DELIMITER);
@@ -405,7 +405,7 @@ public class ParameterExpander {
                         customMessage = trigger.getBuildFailureMessage();
                     }
 
-                    // if the user has specified a message, use it
+                    // If the user has specified a message, use it
                     // otherwise use a generic indicator
                     if (customMessage == null || customMessage.equals("")) {
                         str.append(res.toString());

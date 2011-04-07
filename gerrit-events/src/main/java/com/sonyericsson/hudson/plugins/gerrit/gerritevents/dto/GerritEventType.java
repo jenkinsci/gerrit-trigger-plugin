@@ -59,7 +59,7 @@ public enum GerritEventType {
      * Constructs an instance of the enum.
      * @param typeValue The value of the type property in the JSON object.
      * @param interesting If this event type is interesting from a functionality perspective.
-     * @param eventRepresentative the DTO class that represents theise kind of event.
+     * @param eventRepresentative the DTO class that represents this kind of event.
      */
     private GerritEventType(String typeValue, boolean interesting,
                             Class<? extends GerritJsonEvent> eventRepresentative) {
@@ -85,7 +85,7 @@ public enum GerritEventType {
     }
 
     /**
-     * Gets the DTO class that represents theise kind of event.
+     * Gets the DTO class that represents this kind of event.
      * @return the class object.
      */
     public Class<? extends GerritJsonEvent> getEventRepresentative() {
@@ -94,7 +94,7 @@ public enum GerritEventType {
 
     /**
      * Finds the event type for the specified type-value.
-     * @param typeValue the value of the json object's type property.
+     * @param typeValue the value of the JSON object's type property.
      * @return the event type or null if nothing was found.
      */
     public static GerritEventType findByTypeValue(String typeValue) {

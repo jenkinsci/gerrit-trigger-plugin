@@ -245,7 +245,7 @@ public class GerritHandler extends Thread implements Coordinator {
                 logger.error("ConnectionException: ", sshConEx);
                 notifyConnectionDown();
             } catch (SshAuthenticationException sshAuthEx) {
-                logger.error("Could not authenticate to gerrit server!"
+                logger.error("Could not authenticate to Gerrit server!"
                         + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
                              new Object[]{authentication.getUsername(),
                             authentication.getPrivateKeyFile(),

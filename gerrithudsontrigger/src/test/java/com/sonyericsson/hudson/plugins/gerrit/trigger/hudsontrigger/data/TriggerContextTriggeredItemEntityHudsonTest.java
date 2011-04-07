@@ -39,7 +39,7 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
 
 
     /**
-     * Tests that {@link TriggeredItemEntity#getProject()} can find a project from it's name.
+     * Tests that {@link TriggeredItemEntity#getProject()} can find a project from its name.
      * @throws IOException if so.
      */
     public void testGetProject() throws IOException {

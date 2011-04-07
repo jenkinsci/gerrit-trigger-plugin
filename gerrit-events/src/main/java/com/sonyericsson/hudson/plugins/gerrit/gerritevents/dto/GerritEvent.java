@@ -24,7 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto;
 
 /**
- * Base interface for all events streamed from gerrit.
+ * Base interface for all events streamed from Gerrit.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public interface GerritEvent {

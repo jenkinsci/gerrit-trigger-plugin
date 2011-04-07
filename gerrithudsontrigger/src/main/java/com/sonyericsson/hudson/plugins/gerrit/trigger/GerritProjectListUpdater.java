@@ -47,6 +47,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * The command for fetching projects.
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
+
     /**
      * Time to wait between refresh attempts
      */
@@ -102,7 +103,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             } catch (SshException ex) {
                  logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);
             } catch (IOException ex) {
-                logger.error("Could not read stream with gerrit projects: ", ex);
+                logger.error("Could not read stream with Gerrit projects: ", ex);
             }
 
             try {

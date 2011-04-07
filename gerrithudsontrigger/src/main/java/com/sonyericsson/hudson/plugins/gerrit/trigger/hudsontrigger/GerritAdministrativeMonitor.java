@@ -62,7 +62,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
         if (PluginImpl.getInstance() != null) {
             PluginImpl.getInstance().addListener(this);
         } else {
-            //We where created first... let's wait without disrupting the flow.
+            //We were created first... let's wait without disrupting the flow.
             Runnable runner = new Runnable() {
 
                 private static final int SLEEP_INTERVAL = 500;
@@ -92,7 +92,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     /**
      * Tells if there is a warning with the send-commands-queue.
-     * Utility method for the jelly page,
+     * Utility method for the jelly page.
      *
      * @return true if so.
      */
@@ -102,7 +102,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     /**
      * Gets the current send-command queue size.
-     * Utility method for the jelly page,
+     * Utility method for the jelly page.
      *
      * @return the amount of jobs in the queue.
      */
@@ -112,7 +112,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     /**
      * Tells if there is a connection warning.
-     * Utility method for the jelly page,
+     * Utility method for the jelly page.
      *
      * @return true if so.
      */

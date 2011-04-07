@@ -46,7 +46,7 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
     private BuildsStartedStats stats;
 
     /**
-     * Standard constructor with all the needful data for the job perform well.
+     * Standard constructor with all the required data for the job.
      *
      * @param config       the config.
      * @param build        a build.

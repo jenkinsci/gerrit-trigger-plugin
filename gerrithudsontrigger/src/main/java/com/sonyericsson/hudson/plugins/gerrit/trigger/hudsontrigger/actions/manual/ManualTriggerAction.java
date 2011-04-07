@@ -365,7 +365,7 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Finds the patch-set in the indexed search result and creates a {@link ManualPatchsetCreated} from it's data.
+     * Finds the patch-set in the indexed search result and creates a {@link ManualPatchsetCreated} from its data.
      *
      * @param rowId   the generated rowId in the search result.
      * @param indexed the indexed search result.

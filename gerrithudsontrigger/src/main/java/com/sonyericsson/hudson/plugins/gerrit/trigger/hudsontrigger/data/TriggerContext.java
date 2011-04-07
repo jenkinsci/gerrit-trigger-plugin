@@ -33,11 +33,11 @@ import java.util.List;
 /**
  * This bean contains information to the
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause}
- * about what other builds was involved in the same event.
+ * about what other builds were involved in the same event.
  *
  * For backwards compatibility reasons this class is serialized by the help of the
  * XStream converter {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter}
- * so any future additions to this class needs to be handled in that class as well or it won't be serialized correctly.
+ * so any future additions to this class need to be handled in that class as well or it won't be serialized correctly.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
@@ -78,7 +78,7 @@ public class TriggerContext {
     }
 
     /**
-     * A list of builds that was triggered by the same event as "this" build.
+     * A list of builds that were triggered by the same event as "this" build.
      *
      * @return the builds.
      */
@@ -87,8 +87,8 @@ public class TriggerContext {
     }
 
     /**
-     * A list of builds that was triggered by the same event as "this" build.
-     * Could contain non triggered builds represented by
+     * A list of builds that were triggered by the same event as "this" build.
+     * Could contain non-triggered builds represented by
      * {@link TriggeredItemEntity#getBuild()} == null.
      * <strong>
      * Do not use this method unless you are a serializer,
@@ -196,10 +196,10 @@ public class TriggerContext {
     }
 
     /**
-     * finds the orther object for the specified build, or null if the build does not exist.
+     * Finds the other object for the specified build, or null if the build does not exist.
      *
      * @param build a build.
-     * @return the other object if there is some, null if there is none.
+     * @return the other object if there is one, null if there is none.
      */
     private synchronized TriggeredItemEntity findOtherBuild(AbstractBuild build) {
         for (TriggeredItemEntity other : others) {
@@ -211,7 +211,7 @@ public class TriggerContext {
     }
 
     /**
-     * Finds the object for the specified project, or null if the project does not exists in the list.
+     * Finds the object for the specified project, or null if the project does not exist in the list.
      *
      * @param project the project.
      * @return the other object, or null if none.

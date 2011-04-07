@@ -107,7 +107,7 @@ public class PatchSet implements GerritJsonDTO {
     /**
      * Gets the refspec, if it exists.
      * This value in the JSON stream-events data was introduced some version after the stream-events command was,
-     * so it might not be existing for all stream-events versions of Gerrit.
+     * so it might not exist for all stream-events versions of Gerrit.
      * @return the refspec.
      */
     public String getRef() {

@@ -120,7 +120,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     /**
-     * Called just before a build is beeing scheduled by the trigger.
+     * Called just before a build is scheduled by the trigger.
      * @param project the project that will be built.
      * @param event the event that caused the build to be scheduled.
      */
@@ -137,7 +137,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     /**
-     * Called just before a build is beeing scheduled by the user to retrigger.
+     * Called just before a build is scheduled by the user to retrigger.
      * @param project the project.
      * @param event the event.
      * @param otherBuilds the list of other builds in the previous context.

@@ -98,7 +98,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public static final String GERRIT_PATCHSET_REVISION = "GERRIT_PATCHSET_REVISION";
     /**
-     * Parameter name for the gerrit project name.
+     * Parameter name for the Gerrit project name.
      */
     public static final String GERRIT_PROJECT = "GERRIT_PROJECT";
     /**
@@ -334,7 +334,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Creates a {@link StringParameterValue} and adds it to the provided list.
-     * If the parameter with the same name already exists in the list it will be replaces by the new parameter,
+     * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
      * but its description will be used, unless the parameter type is something else than a StringParameterValue.
      *
      * @param parameters the list of existing parameters.
@@ -379,13 +379,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         List<ParameterValue> defValues = new ArrayList<ParameterValue>();
 
         /*
-         * This check is made ONLY if someone will call this method even if isParametrized() is false.
+         * This check is made ONLY if someone calls this method even if isParametrized() is false.
          */
         if (paramDefProp == null) {
             return defValues;
         }
 
-        /* Scan for all parameter with an associated default values */
+        /* Scan for all parameters with an associated default value */
         for (ParameterDefinition paramDefinition : paramDefProp.getParameterDefinitions()) {
             ParameterValue defaultValue = paramDefinition.getDefaultParameterValue();
 
@@ -404,7 +404,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * checks.
      * If more than one build was triggered by the event the results from those builds will be counted again,
      * but they won't be re-triggered.
-     * If any builds for the event are still running, this new scheduled build will replace it's predesessor.
+     * If any builds for the event are still running, this new scheduled build will replace its predesessor.
      * If the project is currently building the event, no scheduling will be done.
      *
      * @param context the previous context.
@@ -672,7 +672,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     /**
      * If silent mode is on or off.
      * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/sucessfull approve messages etc.
+     * i.e. no build started/failed/successful approve messages etc.
      * Default is false.
      *
      * @return true if silent mode is on.
@@ -743,7 +743,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     /**
      * Sets silent mode to on or off.
      * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/sucessfull approve messages etc.
+     * i.e. no build started/failed/successful approve messages etc.
      * Default is false.
      *
      * @param silentMode true if silent mode should be on.

@@ -32,7 +32,7 @@ import java.io.File;
 public final class GerritDefaultValues {
 
     /**
-     * Default private constructor to hinder instansiation.
+     * Default private constructor to hinder instantiation.
      */
     private GerritDefaultValues() {
 

@@ -64,7 +64,7 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * Wich algorithm-type to use with the pattern.
+     * Which algorithm-type to use with the pattern.
      * @return the compareType
      */
     public CompareType getCompareType() {
@@ -72,7 +72,7 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * Wich algorithm-type to use with the pattern.
+     * Which algorithm-type to use with the pattern.
      * @param compareType the compareType
      */
     public void setCompareType(CompareType compareType) {

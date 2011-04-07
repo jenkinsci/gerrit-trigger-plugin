@@ -196,7 +196,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
         }
 
         /**
-         * Returns the appropriate ball color for the current status of this event and it's builds.
+         * Returns the appropriate ball color for the current status of this event and its builds.
          * @return the path to the image of the ball.
          * @see hudson.model.Result#color
          * @see hudson.model.BallColor#getImage()

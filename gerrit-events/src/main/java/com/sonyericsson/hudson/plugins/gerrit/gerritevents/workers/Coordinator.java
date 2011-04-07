@@ -27,7 +27,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Representation interface of a EventThread workers coordinator.
+ * Representation interface of an EventThread workers coordinator.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public interface Coordinator {

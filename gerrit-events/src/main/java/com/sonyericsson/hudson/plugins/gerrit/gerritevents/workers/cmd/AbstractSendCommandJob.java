@@ -64,7 +64,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     /**
      * Sends a command to the Gerrit server.
      * @param command the command.
-     * @return true if there where no exceptions when sending.
+     * @return true if there were no exceptions when sending.
      */
     @Override
     public boolean sendCommand(String command) {

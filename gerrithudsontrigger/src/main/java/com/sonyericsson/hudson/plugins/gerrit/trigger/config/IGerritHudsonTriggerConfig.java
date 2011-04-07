@@ -39,25 +39,25 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
     String getGerritFrontEndUrl();
 
     /**
-     * The command template to use when sending build-started messages to gerrit.
+     * The command template to use when sending build-started messages to Gerrit.
      * @return the command template.
      */
     String getGerritCmdBuildStarted();
 
     /**
-     * The command template to use when sending build-successful messages to gerrit.
+     * The command template to use when sending build-successful messages to Gerrit.
      * @return the command template.
      */
     String getGerritCmdBuildSuccessful();
 
     /**
-     * The command template to use when sending build-failed messages to gerrit.
+     * The command template to use when sending build-failed messages to Gerrit.
      * @return the command template.
      */
     String getGerritCmdBuildFailed();
 
     /**
-     * The command template to use when sending build-unstable messages to gerrit.
+     * The command template to use when sending build-unstable messages to Gerrit.
      * @return the command template.
      */
     String getGerritCmdBuildUnstable();

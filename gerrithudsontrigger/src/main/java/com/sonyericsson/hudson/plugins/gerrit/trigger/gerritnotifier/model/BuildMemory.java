@@ -224,7 +224,7 @@ public class BuildMemory {
             pb = new MemoryImprint(event);
             memory.put(key, pb);
             if (otherBuilds != null) {
-                //It is a new memory so it wasn't building, lets populate with old build info
+                //It is a new memory so it wasn't building, let's populate with old build info
                 for (AbstractBuild build : otherBuilds) {
                     pb.set(build.getProject(), build, !build.isBuilding());
                 }
@@ -257,7 +257,7 @@ public class BuildMemory {
     /**
      * Updates the {@link TriggerContext} for the provided key.
      * The cause and build is the "focal point" for the update, but all memory entities will be updated,
-     * but only the current context will be get {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
+     * but only the current context will be {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
      *
      * @param key   the key to have as "focus" for the update.
      * @param cause the cause.
@@ -736,7 +736,7 @@ public class BuildMemory {
         /**
          * Quick Constructor.
          *
-         * @param event the event to get chencge and revision from.
+         * @param event the event to get change and revision from.
          * @see #PatchSetKey(java.lang.String, java.lang.String)
          */
         PatchSetKey(PatchsetCreated event) {

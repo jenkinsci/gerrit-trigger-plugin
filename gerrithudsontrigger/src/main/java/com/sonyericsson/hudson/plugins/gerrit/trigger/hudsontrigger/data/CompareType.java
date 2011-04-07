@@ -49,7 +49,7 @@ public enum CompareType {
     REG_EXP(new RegExpCompareUtil());
 
     /**
-     * Gets a list of all CopareType's displayNames.
+     * Gets a list of all CompareType's displayNames.
      * @return a list of available displaynames.
      */
     public static List<String> getDisplayNames() {
@@ -63,7 +63,7 @@ public enum CompareType {
     /**
      * Finds a CompareType based on displayName.
      * @param displayName the displayName
-     * @return the CompareType that matches the displayName or null if non is found.
+     * @return the CompareType that matches the displayName or null if none is found.
      */
     public static CompareType findByDisplayName(String displayName) {
         for (CompareType t : values()) {
@@ -108,7 +108,7 @@ public enum CompareType {
     }
 
     /*
-     * Keep for now for debuging purposes.
+     * Keep for now for debugging purposes.
      */
 //    static class TypeConverter implements Converter {
 //

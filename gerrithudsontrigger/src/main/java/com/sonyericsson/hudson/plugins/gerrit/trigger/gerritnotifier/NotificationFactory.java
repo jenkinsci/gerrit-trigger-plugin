@@ -74,7 +74,7 @@ public class NotificationFactory {
     /**
      * Factory method for creating a GerritNotifier.
      *
-     * @param cmdRunner - something capable of sending commands to gerrit.
+     * @param cmdRunner - something capable of sending commands to Gerrit.
      * @return a GerritNotifier
      */
     public GerritNotifier createGerritNotifier(GerritCmdRunner cmdRunner) {
@@ -86,7 +86,7 @@ public class NotificationFactory {
      * Factory method for creating a GerritNotifier.
      *
      * @param config    - a configuration to use for parameter expansion.
-     * @param cmdRunner - something capable of sending commands to gerrit.
+     * @param cmdRunner - something capable of sending commands to Gerrit.
      * @return a GerritNotifier
      */
     public GerritNotifier createGerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner) {

@@ -45,6 +45,7 @@ public final class GerritJsonEventFactory {
     private GerritJsonEventFactory() {
         //Empty
     }
+
     /**
      * Creates a GerritJsonEvent DTO out of the provided JSONObject.
      * The jsonObject is assumed to be interesting and usable
@@ -56,7 +57,7 @@ public final class GerritJsonEventFactory {
 
         GerritEventType type = GerritEventType.findByTypeValue(jsonObject.getString("type"));
         //the type has already been verified by the method that gets the JSONObject,
-        //so any NullPointerExceptions or similar problems is the caller's own fault.
+        //so any NullPointerExceptions or similar problems are the caller's own fault.
         Class<? extends GerritJsonEvent> clazz = type.getEventRepresentative();
         GerritJsonEvent event = null;
         try {
@@ -89,7 +90,7 @@ public final class GerritJsonEventFactory {
 
     /**
      * Tells if the provided string is a valid JSON string
-     * and represents a interesting and usable {@link GerritJsonEvent}
+     * and represents an interesting and usable {@link GerritJsonEvent}
      * as defined by {@link #getJsonObjectIfInterestingAndUsable(java.lang.String) }.
      * This is the same as doing {@code (getJsonObjectIfInterestingAndUsable(jsonString) != null)}
      * @param jsonString the JSON formatted String.
@@ -136,7 +137,7 @@ public final class GerritJsonEventFactory {
     }
 
     /**
-     *  Tries to parse the provided string into a GerritJsonEvent DTO if it is interesting and usable.
+     * Tries to parse the provided string into a GerritJsonEvent DTO if it is interesting and usable.
      * @param jsonString the JSON formatted string.
      * @return the Event.
      * @see #getJsonObjectIfInterestingAndUsable(String)
@@ -156,7 +157,7 @@ public final class GerritJsonEventFactory {
     }
 
     /**
-     * Returns the value of a json property as a String if it exists otherwise returns the defaultValue.
+     * Returns the value of a JSON property as a String if it exists otherwise returns the defaultValue.
      * @param json the JSONObject to check.
      * @param key the key
      * @param defaultValue the value to return if the key is missing
@@ -171,7 +172,7 @@ public final class GerritJsonEventFactory {
     }
 
     /**
-     * Returns the value of a json property as a String if it exists otherwise returns null.
+     * Returns the value of a JSON property as a String if it exists otherwise returns null.
      * Same as calling {@link #getString(net.sf.json.JSONObject, java.lang.String, java.lang.String) }
      * with null as defaultValue.
      * @param json the JSONObject to check.
