@@ -186,4 +186,9 @@ public class MockGerritHudsonTriggerConfig implements
     public int getBuildScheduleDelay() {
         return 3;
     }
+
+    @Override
+    public boolean hasDefaultValues() {
+        return false;
+    }
 }

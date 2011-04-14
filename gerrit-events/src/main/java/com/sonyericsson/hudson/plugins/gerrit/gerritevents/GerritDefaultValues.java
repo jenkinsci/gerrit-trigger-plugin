@@ -40,7 +40,7 @@ public final class GerritDefaultValues {
     /**
      * The default gerrit hostname.
      */
-    public static final String DEFAULT_GERRIT_HOSTNAME = "localhost";
+    public static final String DEFAULT_GERRIT_HOSTNAME = "";
     /**
      * The default ssh port for the gerrit server.
      */
@@ -57,7 +57,7 @@ public final class GerritDefaultValues {
     /**
      * The default username to use when authenticating to the gerrit server.
      */
-    public static final String DEFAULT_GERRIT_USERNAME = "jenkins";
+    public static final String DEFAULT_GERRIT_USERNAME = "";
     /**
      * The default nr of event worker threads.
      */

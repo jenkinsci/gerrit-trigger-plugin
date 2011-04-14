@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Main Plugin entrance.
@@ -76,8 +77,8 @@ public class PluginImpl extends Plugin {
     private transient GerritProjectListUpdater projectListUpdater;
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
-    private transient HashMap<Integer, GerritEventListener> savedEventListeners;
-    private transient List<ConnectionListener> savedConnectionListeners;
+    private transient Map<Integer, GerritEventListener> savedEventListeners;
+    private transient Map<Integer, ConnectionListener> savedConnectionListeners;
 
     /**
      * Constructor.
@@ -109,12 +110,15 @@ public class PluginImpl extends Plugin {
         logger.info("Starting");
         doXStreamRegistrations();
         loadConfig();
-        startManager();
         projectListUpdater = new GerritProjectListUpdater();
         projectListUpdater.start();
         //Starts the send-command-queue
         GerritSendCommandQueue.getInstance(config);
-        logger.info("Started");
+        //do not try to connect to gerrit unless there is an url or a hostname in the text fields
+        if (!config.hasDefaultValues()) {
+            startManager();
+            logger.info("Started");
+        }
     }
 
     /**
@@ -171,6 +175,15 @@ public class PluginImpl extends Plugin {
      */
     private void createManager() {
         gerritEventManager = new GerritHandler(config);
+        //Add any event/connectionlisteners that were created while the connection was down.
+        if (savedConnectionListeners != null) {
+            gerritEventManager.addConnectionListeners(savedConnectionListeners);
+            savedConnectionListeners = null;
+        }
+        if (savedEventListeners != null) {
+            gerritEventManager.addEventListeners(savedEventListeners);
+            savedEventListeners = null;
+        }
     }
 
     /**
@@ -183,7 +196,12 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager != null) {
             gerritEventManager.addListener(listener);
         } else {
-            throw new IllegalStateException("Manager not started!");
+            //If the eventmanager isn't created yet, save the eventlistener so it can be added once
+            //the eventmanager is created.
+            if (savedEventListeners == null) {
+                savedEventListeners = new HashMap<Integer, GerritEventListener>();
+            }
+            savedEventListeners.put(listener.hashCode(), listener);
         }
     }
 
@@ -197,7 +215,9 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager != null) {
             gerritEventManager.removeListener(listener);
         } else {
-            throw new IllegalStateException("Manager not started!");
+            if (savedEventListeners != null) {
+                savedEventListeners.remove(listener);
+            }
         }
     }
 
@@ -210,7 +230,9 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager != null) {
             gerritEventManager.removeListener(listener);
         } else {
-            throw new IllegalStateException("Manager not started!");
+            if (savedConnectionListeners != null) {
+                savedConnectionListeners.remove(listener);
+            }
         }
     }
 
@@ -223,7 +245,7 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager == null) {
             createManager();
             if (savedEventListeners != null) {
-                gerritEventManager.addEventListeners(savedEventListeners.values());
+                gerritEventManager.addEventListeners(savedEventListeners);
                 savedEventListeners = null;
             }
             if (savedConnectionListeners != null) {
@@ -247,7 +269,7 @@ public class PluginImpl extends Plugin {
         if (gerritEventManager != null) {
             gerritEventManager.shutdown(true);
 
-           savedEventListeners = gerritEventManager.removeAllEventListeners();
+            savedEventListeners = gerritEventManager.removeAllEventListeners();
             savedConnectionListeners = gerritEventManager.removeAllConnectionListeners();
             gerritEventManager = null;
         } else {
@@ -267,15 +289,26 @@ public class PluginImpl extends Plugin {
 
     /**
      * Adds a Connection Listener to the manager.
+     * Return the current connection status so that listeners that
+     * are added later than a connectionestablished/ connectiondown
+     * will get the current connection status.
      *
      * @param listener the listener.
+     * @return the connection status.
      */
-    public void addListener(ConnectionListener listener) {
+    public boolean addListener(ConnectionListener listener) {
+        boolean connected = false;
         if (gerritEventManager != null) {
-            gerritEventManager.addListener(listener);
+            connected = gerritEventManager.addListener(listener);
         } else {
-            throw new IllegalStateException("Manager not started!");
+            //If the eventmanager isn't created yet, save the connectionlistener so it can be added once
+            //the eventmanager is created.
+            if (savedConnectionListeners == null) {
+                savedConnectionListeners = new HashMap<Integer, ConnectionListener>();
+            }
+            savedConnectionListeners.put(listener.hashCode(), listener);
         }
+        return connected;
     }
 
     /**

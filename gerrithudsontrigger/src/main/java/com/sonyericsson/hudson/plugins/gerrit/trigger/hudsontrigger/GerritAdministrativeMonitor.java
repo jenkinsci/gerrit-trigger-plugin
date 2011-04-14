@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 public class GerritAdministrativeMonitor extends AdministrativeMonitor implements ConnectionListener {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritAdministrativeMonitor.class);
-    private boolean connected = true;
+    private boolean connected = false;
 
     /**
      * Default constructor.
@@ -60,7 +60,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
      */
     protected void addThisAsConnectionListener() {
         if (PluginImpl.getInstance() != null) {
-            PluginImpl.getInstance().addListener(this);
+            connected = PluginImpl.getInstance().addListener(this);
         } else {
             //We were created first... let's wait without disrupting the flow.
             Runnable runner = new Runnable() {
@@ -119,12 +119,30 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     @SuppressWarnings("unused")
     //called from jelly
     public boolean isConnectionWarning() {
-        return !connected;
+        //if the frontend url does not have a value, don't try to connect and show a warning
+        //reminding the user to add a frontend url.
+        return !connected
+                && PluginImpl.getInstance().getConfig().hasDefaultValues();
+    }
+
+    /**
+     * Tells if there is a connection error.
+     * Utility method for the jelly page,
+     *
+     * @return true if so.
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public boolean isConnectionError() {
+        //if the frontend url has a value, try to connect to it and if it is not possible,
+        //show an error to the user
+        return !connected
+                && !PluginImpl.getInstance().getConfig().hasDefaultValues();
     }
 
     @Override
     public boolean isActivated() {
-        return !connected || isSendQueueWarning();
+        return isConnectionWarning() || isConnectionError() || isSendQueueWarning();
     }
 
     @Override
@@ -136,4 +154,5 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     public void connectionDown() {
         connected = false;
     }
+
 }

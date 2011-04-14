@@ -2,6 +2,11 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--class=error or warning-->
     <j:if test="${it.isConnectionWarning()}">
+        <div class="warning">
+            ${%The connection to Gerrit is not started yet.} ${%Check the gerrit url in the settings.}
+        </div>
+    </j:if>
+    <j:if test="${it.isConnectionError()}">
         <div class="error">
             ${%The connection to Gerrit is down!} ${%Check your settings and the Gerrit server.}
         </div>

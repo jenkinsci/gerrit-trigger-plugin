@@ -52,7 +52,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * Time to wait between refresh attempts
      */
     private static final int UPDATE_DELAY = 3600 * 1000;
-    private boolean connected = true;
+    private boolean connected = false;
     private boolean shutdown = false;
     private static final Logger logger = LoggerFactory.getLogger(GerritProjectListUpdater.class);
     private List<String> gerritProjects;
@@ -64,7 +64,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         this.setName(this.getClass().getName() + " Thread");
         this.setDaemon(true);
 
-        PluginImpl.getInstance().addListener(this);
+        connected = PluginImpl.getInstance().addListener(this);
     }
 
     @Override

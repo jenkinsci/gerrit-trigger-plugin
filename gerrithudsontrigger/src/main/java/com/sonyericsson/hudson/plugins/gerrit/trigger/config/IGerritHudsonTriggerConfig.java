@@ -137,4 +137,10 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
      */
    int getBuildScheduleDelay();
 
+    /**
+     * If the plugin still has default values for hostname and frontendurl.
+     * @return true if so.
+     */
+    boolean hasDefaultValues();
+
  }

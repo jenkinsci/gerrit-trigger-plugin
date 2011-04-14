@@ -26,7 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
+
 import java.io.File;
+
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.*;
 
 /**
@@ -164,22 +166,22 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildFailed = formData.optString(
                 "gerritVerifiedCmdBuildFailed",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildSuccessful = formData.optString(
                 "gerritVerifiedCmdBuildSuccessful",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
-                + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
-                "http://" + DEFAULT_GERRIT_HOSTNAME);
+                DEFAULT_GERRIT_HOSTNAME);
         enableManualTrigger = formData.optBoolean(
                 "enableManualTrigger",
                 DEFAULT_ENABLE_MANUAL_TRIGGER);
@@ -241,7 +243,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
-        if (!url.endsWith("/")) {
+        if (url != null && !url.equals("") && !url.endsWith("/")) {
             url += '/';
         }
         return url;
@@ -293,7 +295,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     *Setting buildScheduleDelay.
+     * Setting buildScheduleDelay.
+     *
      * @param buildScheduleDelay the delay time
      * @see #getBuildScheduleDelay()
      */
@@ -467,5 +470,15 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Authentication getGerritAuthentication() {
         return new Authentication(gerritAuthKeyFile, gerritUserName, gerritAuthKeyFilePassword);
+    }
+
+    @Override
+    public boolean hasDefaultValues() {
+        //both hostname and frontendurl should be null or "" for this to be true
+        return (gerritHostName == null
+                || (DEFAULT_GERRIT_HOSTNAME).equals(gerritHostName))
+
+                && (gerritFrontEndUrl == null
+                || (DEFAULT_GERRIT_HOSTNAME).equals(gerritFrontEndUrl));
     }
 }

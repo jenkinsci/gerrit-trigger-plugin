@@ -30,24 +30,24 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsStringWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Work;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.*;
 
@@ -70,15 +70,17 @@ public class GerritHandler extends Thread implements Coordinator {
     private int gerritSshPort;
     private Authentication authentication;
     private int numberOfWorkerThreads;
-    private HashMap<Integer, GerritEventListener> gerritEventListeners;
-    private final List<ConnectionListener> connectionListeners;
+    private Map<Integer, GerritEventListener> gerritEventListeners;
+    private Map<Integer, ConnectionListener> connectionListeners;
     private final List<EventThread> workers;
     private SshConnection sshConnection;
     private boolean shutdownInProgress = false;
     private boolean connecting = false;
+    private boolean connected = false;
 
     /**
      * Creates a GerritHandler with all the default values set.
+     *
      * @see GerritDefaultValues#DEFAULT_GERRIT_HOSTNAME
      * @see GerritDefaultValues#DEFAULT_GERRIT_SSH_PORT
      * @see GerritDefaultValues#DEFAULT_GERRIT_USERNAME
@@ -88,44 +90,47 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public GerritHandler() {
         this(DEFAULT_GERRIT_HOSTNAME,
-             DEFAULT_GERRIT_SSH_PORT,
-             new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
-                                DEFAULT_GERRIT_USERNAME,
-                                DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD),
-             DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
+                DEFAULT_GERRIT_SSH_PORT,
+                new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
+                        DEFAULT_GERRIT_USERNAME,
+                        DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD),
+                DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
      * Creates a GerritHandler with the specified values and default number of worker threads.
+     *
      * @param gerritHostName the hostName
-     * @param gerritSshPort the ssh port that the gerrit server listens to.
+     * @param gerritSshPort  the ssh port that the gerrit server listens to.
      * @param authentication the authentication credentials.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
                          Authentication authentication) {
         this(gerritHostName,
-             gerritSshPort,
-             authentication,
-             DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
+                gerritSshPort,
+                authentication,
+                DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
      * Creates a GerritHandler with the specified values.
+     *
      * @param config the configuration containing the connection values.
      */
     public GerritHandler(GerritConnectionConfig config) {
         this(config.getGerritHostName(),
-             config.getGerritSshPort(),
-             config.getGerritAuthentication(),
-             config.getNumberOfReceivingWorkerThreads());
+                config.getGerritSshPort(),
+                config.getGerritAuthentication(),
+                config.getNumberOfReceivingWorkerThreads());
     }
 
     /**
      * Creates a GerritHandler with the specified values.
-     * @param gerritHostName the hostName for gerrit.
-     * @param gerritSshPort the ssh port that the gerrit server listens to.
-     * @param authentication the authentication credentials.
+     *
+     * @param gerritHostName        the hostName for gerrit.
+     * @param gerritSshPort         the ssh port that the gerrit server listens to.
+     * @param authentication        the authentication credentials.
      * @param numberOfWorkerThreads the number of eventthreads.
      */
     public GerritHandler(String gerritHostName,
@@ -140,7 +145,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
         workQueue = new LinkedBlockingQueue<Work>();
         gerritEventListeners = new HashMap<Integer, GerritEventListener>();
-        connectionListeners = new LinkedList<ConnectionListener>();
+        connectionListeners = new HashMap<Integer, ConnectionListener>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
         for (int i = 0; i < numberOfWorkerThreads; i++) {
             workers.add(new EventThread(this, "Gerrit Worker EventThread_" + i));
@@ -221,6 +226,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Connects to the Gerrit server and authenticates as the specified user.
+     *
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {
@@ -247,9 +253,9 @@ public class GerritHandler extends Thread implements Coordinator {
             } catch (SshAuthenticationException sshAuthEx) {
                 logger.error("Could not authenticate to Gerrit server!"
                         + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
-                             new Object[]{authentication.getUsername(),
-                            authentication.getPrivateKeyFile(),
-                            authentication.getPrivateKeyFilePassword(), });
+                        new Object[]{authentication.getUsername(),
+                                authentication.getPrivateKeyFile(),
+                                authentication.getPrivateKeyFilePassword(), });
                 logger.error("AuthenticationException: ", sshAuthEx);
                 notifyConnectionDown();
             } catch (IOException ex) {
@@ -291,30 +297,29 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Add a GerritEventListener to the list of listeners.
+     *
      * @param listener the listener to add.
      */
     public void addListener(GerritEventListener listener) {
         synchronized (gerritEventListeners) {
-           gerritEventListeners.put(new Integer(listener.hashCode()), listener);
+            gerritEventListeners.put(listener.hashCode(), listener);
         }
     }
 
     /**
      * Adds all the provided listeners to the internal list of listeners.
+     *
      * @param listeners the listeners to add.
      */
-    public void addEventListeners(Collection<GerritEventListener> listeners) {
+    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
         synchronized (gerritEventListeners) {
-            Iterator listenersItr = listeners.iterator();
-            while (listenersItr.hasNext()) {
-             GerritEventListener listener = (GerritEventListener)listenersItr.next();
-             gerritEventListeners.put(new Integer(listener.hashCode()), listener);
-            }
+            gerritEventListeners.putAll(listeners);
         }
     }
 
     /**
      * Removes a GerritEventListener from the list of listeners.
+     *
      * @param listener the listener to remove.
      */
     public void removeListener(GerritEventListener listener) {
@@ -325,6 +330,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Removes all event listeners and returns those that where removed.
+     *
      * @return the former list of listeners.
      */
     public HashMap<Integer, GerritEventListener> removeAllEventListeners() {
@@ -338,26 +344,34 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Add a ConnectionListener to the list of listeners.
+     * Return the current connection status so that listeners that
+     * are added later than a connectionestablished/ connectiondown
+     * will get the current connection status.
+     *
      * @param listener the listener to add.
+     * @return the connection status
      */
-    public void addListener(ConnectionListener listener) {
+    public boolean addListener(ConnectionListener listener) {
         synchronized (connectionListeners) {
-            connectionListeners.add(listener);
+            connectionListeners.put(listener.hashCode(), listener);
+            return connected;
         }
     }
 
     /**
      * Add all ConnectionListeners to the list of listeners.
+     *
      * @param listeners the listeners to add.
      */
-    public void addConnectionListeners(Collection<ConnectionListener> listeners) {
+    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
         synchronized (connectionListeners) {
-            connectionListeners.addAll(listeners);
+            connectionListeners.putAll(listeners);
         }
     }
 
     /**
      * Removes a ConnectionListener from the list of listeners.
+     *
      * @param listener the listener to remove.
      */
     public void removeListener(ConnectionListener listener) {
@@ -368,11 +382,13 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Removes all connection listeners and returns those who where remooved.
+     *
      * @return the list of former listeners.
      */
-    public List<ConnectionListener> removeAllConnectionListeners() {
+    public Map<Integer, ConnectionListener> removeAllConnectionListeners() {
         synchronized (connectionListeners) {
-            List<ConnectionListener> listeners = new LinkedList<ConnectionListener>(connectionListeners);
+            Map<Integer, ConnectionListener> listeners =
+                    new HashMap<Integer, ConnectionListener>(connectionListeners);
             connectionListeners.clear();
             return listeners;
         }
@@ -380,6 +396,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * The authentication credentials for ssh connection.
+     *
      * @return the credentials.
      */
     public Authentication getAuthentication() {
@@ -388,6 +405,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * The authentication credentials for ssh connection.
+     *
      * @param authentication the credentials.
      */
     public void setAuthentication(Authentication authentication) {
@@ -396,6 +414,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * gets the hostname where Gerrit is running.
+     *
      * @return the hostname.
      */
     public String getGerritHostName() {
@@ -404,6 +423,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Sets the hostname where Gerrit is running.
+     *
      * @param gerritHostName the hostname.
      */
     public void setGerritHostName(String gerritHostName) {
@@ -412,6 +432,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Gets the port for gerrit ssh commands.
+     *
      * @return the port nr.
      */
     public int getGerritSshPort() {
@@ -420,6 +441,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Sets the port for gerrit ssh commands.
+     *
      * @param gerritSshPort the port nr.
      */
     public void setGerritSshPort(int gerritSshPort) {
@@ -428,6 +450,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Gets the number of event worker threads.
+     *
      * @return the number of threads.
      */
     public int getNumberOfWorkerThreads() {
@@ -436,6 +459,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Sets the number of worker event threads.
+     *
      * @param numberOfWorkerThreads the number of threads
      */
     public void setNumberOfWorkerThreads(int numberOfWorkerThreads) {
@@ -453,6 +477,7 @@ public class GerritHandler extends Thread implements Coordinator {
      * This method is meant to be called by one of the Worker Threads
      * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread}
      * and not on this Thread which would defeat the purpous of having workers.
+     *
      * @param event the event.
      */
     @Override
@@ -493,8 +518,9 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Sub method of {@link #notifyListeners(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) }.
      * This is where most of the reflection magic in the event notification is done.
+     *
      * @param listener the listener to notify
-     * @param event the event.
+     * @param event    the event.
      */
     private void notifyListener(GerritEventListener listener, GerritEvent event) {
         logger.debug("Notifying listener {} of event {}", listener, event);
@@ -516,8 +542,9 @@ public class GerritHandler extends Thread implements Coordinator {
      * {@link #notifyListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener,
      * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) .
      * It is a convenience method so there is no need to try catch for every occurence.
+     *
      * @param listener the listener to notify
-     * @param event the event to fire.
+     * @param event    the event to fire.
      */
     private void notifyListenerDefaultMethod(GerritEventListener listener, GerritEvent event) {
         try {
@@ -529,6 +556,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Closes the connection.
+     *
      * @param join if the method should wait for the thread to finish before returning.
      */
     public void shutdown(boolean join) {
@@ -562,7 +590,8 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     protected void notifyConnectionDown() {
         synchronized (connectionListeners) {
-            for (ConnectionListener listener : connectionListeners) {
+            connected = false;
+            for (ConnectionListener listener : connectionListeners.values()) {
                 try {
                     listener.connectionDown();
                 } catch (Exception ex) {
@@ -577,7 +606,8 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     protected void notifyConnectionEstablished() {
         synchronized (connectionListeners) {
-            for (ConnectionListener listener : connectionListeners) {
+            connected = true;
+            for (ConnectionListener listener : connectionListeners.values()) {
                 try {
                     listener.connectionEstablished();
                 } catch (Exception ex) {
@@ -590,6 +620,7 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * "Triggers" an event by adding it to the internal queue and be taken by one of the worker threads.
      * This way it will be put into the normal flow of events as if it was coming from the stream-events command.
+     *
      * @param event the event to trigger.
      */
     public void triggerEvent(GerritEvent event) {
