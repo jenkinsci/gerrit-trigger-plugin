@@ -23,9 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -46,17 +46,19 @@ import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
-import hudson.model.StringParameterValue;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.kohsuke.stapler.QueryParameter;
+
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.*;
 
 /**
  * Triggers a build based on Gerrit events.
@@ -69,42 +71,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * This parameter is used to create hasCode value.
      */
     private static final int HASH_NUMBER = 53;
-    /**
-     * Parameter name for the commit subject (commit message's 1st. line).
-     */
-    public static final String GERRIT_CHANGE_SUBJECT = "GERRIT_CHANGE_SUBJECT";
-    /**
-     * Parameter name for the branch.
-     */
-    public static final String GERRIT_BRANCH = "GERRIT_BRANCH";
-    /**
-     * Parameter name for the change-id.
-     */
-    public static final String GERRIT_CHANGE_ID = "GERRIT_CHANGE_ID";
-    /**
-     * Parameter name for the change number.
-     */
-    public static final String GERRIT_CHANGE_NUMBER = "GERRIT_CHANGE_NUMBER";
-    /**
-     * Parameter name for the url to the change.
-     */
-    public static final String GERRIT_CHANGE_URL = "GERRIT_CHANGE_URL";
-    /**
-     * Parameter name for the patch set number.
-     */
-    public static final String GERRIT_PATCHSET_NUMBER = "GERRIT_PATCHSET_NUMBER";
-    /**
-     * Parameter name for the patch set revision.
-     */
-    public static final String GERRIT_PATCHSET_REVISION = "GERRIT_PATCHSET_REVISION";
-    /**
-     * Parameter name for the Gerrit project name.
-     */
-    public static final String GERRIT_PROJECT = "GERRIT_PROJECT";
-    /**
-     * Parameter name for the refspec.
-     */
-    public static final String GERRIT_REFSPEC = "GERRIT_REFSPEC";
+
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
@@ -284,7 +251,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
                 new Object[]{project.getName(), ok,
-                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+                        event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
     }
 
     /**
@@ -292,7 +259,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * buildScheduledelay value.
      * If the value is missing or invalid it the method
      * will return default schedule delay or
-     * {@link GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
+     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
+     *
      * @return buildScheduleDelay.
      */
     public int getBuildScheduleDelay() {
@@ -319,51 +287,99 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     protected ParametersAction createParameters(PatchsetCreated event, GerritCause cause, AbstractProject project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
-        setOrCreateStringParameterValue(parameters, GERRIT_BRANCH, event.getChange().getBranch());
-        setOrCreateStringParameterValue(parameters, GERRIT_BRANCH, event.getChange().getBranch());
-        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_NUMBER, event.getChange().getNumber());
-        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_ID, event.getChange().getId());
-        setOrCreateStringParameterValue(parameters, GERRIT_PATCHSET_NUMBER, event.getPatchSet().getNumber());
-        setOrCreateStringParameterValue(parameters, GERRIT_PATCHSET_REVISION, event.getPatchSet().getRevision());
-        setOrCreateStringParameterValue(parameters, GERRIT_REFSPEC, StringUtil.makeRefSpec(event));
-        setOrCreateStringParameterValue(parameters, GERRIT_PROJECT, event.getChange().getProject());
-        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_SUBJECT, event.getChange().getSubject());
-        setOrCreateStringParameterValue(parameters, GERRIT_CHANGE_URL, cause.getUrl());
+        GERRIT_BRANCH.setOrCreateStringParameterValue(
+                parameters, event.getChange().getBranch(), isEscapeQuotes());
+        GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
+                parameters, event.getChange().getNumber(), isEscapeQuotes());
+        GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
+                parameters, event.getChange().getId(), isEscapeQuotes());
+        GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
+                parameters, event.getPatchSet().getNumber(), isEscapeQuotes());
+        GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
+                parameters, event.getPatchSet().getRevision(), isEscapeQuotes());
+        GERRIT_REFSPEC.setOrCreateStringParameterValue(
+                parameters, StringUtil.makeRefSpec(event), isEscapeQuotes());
+        GERRIT_PROJECT.setOrCreateStringParameterValue(
+                parameters, event.getChange().getProject(), isEscapeQuotes());
+        GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
+                parameters, event.getChange().getSubject(), isEscapeQuotes());
+        GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
+                parameters, cause.getUrl(), isEscapeQuotes());
+        GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
+                parameters, getNameAndEmail(event.getChange().getOwner()), isEscapeQuotes());
+        GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
+                parameters, getName(event.getChange().getOwner()), isEscapeQuotes());
+        GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
+                parameters, getEmail(event.getChange().getOwner()), isEscapeQuotes());
+        Account uploader = findUploader(event);
+        GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
+                parameters, getNameAndEmail(uploader), isEscapeQuotes());
+        GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
+                parameters, getName(uploader), isEscapeQuotes());
+        GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
+                parameters, getEmail(uploader), isEscapeQuotes());
         return new ParametersAction(parameters);
     }
 
     /**
-     * Creates a {@link StringParameterValue} and adds it to the provided list.
-     * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
-     * but its description will be used, unless the parameter type is something else than a StringParameterValue.
+     * There are two uploader fields in the event, this method gets one of them if one is null.
      *
-     * @param parameters the list of existing parameters.
-     * @param name       the name of the parameter.
-     * @param value      the value.
+     * @param event the event to search.
+     * @return the uploader if any.
      */
-    private void setOrCreateStringParameterValue(List<ParameterValue> parameters, String name, String value) {
-        ParameterValue parameter = null;
-        for (ParameterValue p : parameters) {
-            if (p.getName().toUpperCase().equals(name)) {
-                parameter = p;
-                break;
-            }
+    private Account findUploader(PatchsetCreated event) {
+        if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
+            return event.getPatchSet().getUploader();
+        } else {
+            return event.getUploader();
         }
-        String description = null;
-        if (parameter != null) {
-            if (parameter instanceof StringParameterValue) {
-                //Perhaps it is manually added to remind the user of what it is for.
-                description = parameter.getDescription();
-            }
-            parameters.remove(parameter);
-        }
-        if (this.isEscapeQuotes()) {
-            value = StringUtil.escapeQuotes(value);
-        }
-
-        parameter = new StringParameterValue(name, value, description);
-        parameters.add(parameter);
     }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the name in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getName()
+     */
+    private String getName(Account account) {
+        if (account == null) {
+            return null;
+        } else {
+            return account.getName();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the name and email in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getNameAndEmail()
+     */
+    private String getNameAndEmail(Account account) {
+        if (account == null) {
+            return null;
+        } else {
+            return account.getNameAndEmail();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the email in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getEmail()
+     */
+    private String getEmail(Account account) {
+        if (account == null) {
+            return null;
+        } else {
+            return account.getEmail();
+        }
+    }
+
 
     /**
      * Retrieves all default parameter values for a project.
@@ -426,6 +442,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: Javadoc see syntax.
+
     /**
      * Retriggers all builds in the given context.
      * The builds will only be triggered if no builds for the event are building.
@@ -467,10 +484,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (myProject == null) {
             return super.hashCode();
         } else {
-         return (HASH_NUMBER + myProject.getFullName().hashCode());
+            return (HASH_NUMBER + myProject.getFullName().hashCode());
         }
-     }
-
+    }
 
 
     /**
@@ -682,11 +698,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     *  if escapeQuotes is on or off.
-     *  When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter string
-     *  Default is true
+     * if escapeQuotes is on or off.
+     * When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter string
+     * Default is true
      *
-     *  @return true if escapeQuotes is on.
+     * @return true if escapeQuotes is on.
      */
     public boolean isEscapeQuotes() {
 
@@ -780,6 +796,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         /**
          * Checks that the provided parameter is an empty string or an integer.
+         *
          * @param value the value.
          * @return {@link FormValidation#validatePositiveInteger(String)}
          */

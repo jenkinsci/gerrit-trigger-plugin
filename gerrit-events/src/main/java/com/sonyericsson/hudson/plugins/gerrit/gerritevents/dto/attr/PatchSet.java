@@ -30,6 +30,7 @@ import net.sf.json.JSONObject;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REF;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
 
 /**
  * Represents a Gerrit JSON Patchset DTO.
@@ -50,6 +51,10 @@ public class PatchSet implements GerritJsonDTO {
      * The refspec
      */
     private String ref;
+    /**
+     * The one who uploaded the patch-set.
+     */
+    private Account uploader;
 
     /**
      * Default constructor.
@@ -70,6 +75,9 @@ public class PatchSet implements GerritJsonDTO {
         number = getString(json, NUMBER);
         revision = getString(json, REVISION);
         ref = getString(json, REF);
+        if (json.containsKey(UPLOADER)) {
+            uploader = new Account(json.getJSONObject(UPLOADER));
+        }
     }
 
     /**
@@ -120,6 +128,22 @@ public class PatchSet implements GerritJsonDTO {
      */
     public void setRef(String ref) {
         this.ref = ref;
+    }
+
+    /**
+     * The one who uploaded the patch-set.
+     * @return the account of the uploader.
+     */
+    public Account getUploader() {
+        return uploader;
+    }
+
+    /**
+     * The one who uploaded the patch-set.
+     * @param uploader the account of the uploader.
+     */
+    public void setUploader(Account uploader) {
+        this.uploader = uploader;
     }
 
     @Override

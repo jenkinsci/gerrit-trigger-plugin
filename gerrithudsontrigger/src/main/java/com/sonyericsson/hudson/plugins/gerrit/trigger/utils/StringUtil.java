@@ -119,6 +119,10 @@ public final class StringUtil {
      * @return String object as the result of escape quotes in input.
      */
     public static String escapeQuotes(String value) {
-        return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
+        if (value == null) {
+            return null;
+        } else {
+            return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
+        }
     }
 }

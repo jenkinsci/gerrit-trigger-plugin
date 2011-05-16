@@ -89,6 +89,10 @@ public abstract class GerritEventKeys {
      * ref.
      */
     public static final String REF = "ref";
+    /**
+     * uploader.
+     */
+    public static final String UPLOADER = "uploader";
 
     /**
      * Empty default constructor to hinder instantiation.

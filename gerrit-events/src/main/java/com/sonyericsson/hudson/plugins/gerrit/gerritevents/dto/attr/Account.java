@@ -24,15 +24,16 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory.getString;
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory.getString;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 
 /**
  * Represents a Gerrit JSON Account DTO.
  * An account that is related to an event or attribute.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class Account implements GerritJsonDTO {
@@ -54,11 +55,22 @@ public class Account implements GerritJsonDTO {
 
     /**
      * Constructor that fills with data directly.
-     * @see #fromJson(net.sf.json.JSONObject)
+     *
      * @param json the JSON Object with data.
+     * @see #fromJson(net.sf.json.JSONObject)
      */
     public Account(JSONObject json) {
         this.fromJson(json);
+    }
+
+    /**
+     * For easier testing.
+     * @param name the name.
+     * @param email the email.
+     */
+    public Account(String name, String email) {
+        this.name = name;
+        this.email = email;
     }
 
     @Override
@@ -69,6 +81,7 @@ public class Account implements GerritJsonDTO {
 
     /**
      * Account user's preferred email.
+     *
      * @return the email.
      */
     public String getEmail() {
@@ -77,6 +90,7 @@ public class Account implements GerritJsonDTO {
 
     /**
      * Account user's preferred email.
+     *
      * @param email the email
      */
     public void setEmail(String email) {
@@ -85,6 +99,7 @@ public class Account implements GerritJsonDTO {
 
     /**
      * Account user's full name.
+     *
      * @return the name.
      */
     public String getName() {
@@ -93,10 +108,30 @@ public class Account implements GerritJsonDTO {
 
     /**
      * Account user's full name.
+     *
      * @param name the full name
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Gives the full name an email in the format <code>"name" &lt;email@somewhere.com&gt;</code>.
+     * If either the name or the email is null then null is returned.
+     * If any is the empty string then an empty string is returned.
+     *
+     * @return the name and email in one string.
+     */
+    public String getNameAndEmail() {
+        if (name == null || email == null) {
+            return null;
+        } else if ("".equals(email) || "".equals(name)) {
+            return "";
+        } else {
+            StringBuffer str = new StringBuffer("\"");
+            str.append(name).append("\" <").append(email).append(">");
+            return str.toString();
+        }
     }
 
     //CS IGNORE NeedBraces FOR NEXT 22 LINES. REASON: Auto generated code.

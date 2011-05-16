@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
@@ -32,6 +33,7 @@ import net.sf.json.JSONObject;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
 
 /**
  * A DTO representation of the patchset-created Gerrit Event.
@@ -49,6 +51,11 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
      */
     private PatchSet patchSet;
 
+    /**
+     * The uploader of the patch-set.
+     */
+    private Account uploader;
+
     @Override
     public GerritEventType getEventType() {
         return GerritEventType.PATCHSET_CREATED;
@@ -61,6 +68,9 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
         }
         if (json.containsKey(PATCH_SET)) {
             this.patchSet = new PatchSet(json.getJSONObject(PATCH_SET));
+        }
+        if (json.containsKey(UPLOADER)) {
+            this.uploader = new Account(json.getJSONObject(UPLOADER));
         }
     }
 
@@ -94,6 +104,22 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
      */
     public void setPatchset(PatchSet patchset) {
         this.patchSet = patchset;
+    }
+
+    /**
+     * The uploader of the patch-set.
+     * @return the uploader.
+     */
+    public Account getUploader() {
+        return uploader;
+    }
+
+    /**
+     * The uploader of the patch-set.
+     * @param uploader the uploader.
+     */
+    public void setUploader(Account uploader) {
+        this.uploader = uploader;
     }
 
     @Override

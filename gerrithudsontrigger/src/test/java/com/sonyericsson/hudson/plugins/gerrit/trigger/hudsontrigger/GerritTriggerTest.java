@@ -22,22 +22,22 @@
  *  THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import net.sf.json.JSONObject;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -47,9 +47,7 @@ import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import net.sf.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -58,14 +56,20 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.*;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 //CS IGNORE MagicNumber FOR NEXT 720 LINES. REASON: testdata.
 
 /**
  * Tests make ref spec.
  * TODO move testMakeRefSpec* to StringUtilTest
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
@@ -146,7 +150,7 @@ public class GerritTriggerTest {
      * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an average buildScheduleDelay 20.
      */
-     @Test
+    @Test
     public void testScheduleWithAverageBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
@@ -157,7 +161,7 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-         when(config.getBuildScheduleDelay()).thenReturn(20);
+        when(config.getBuildScheduleDelay()).thenReturn(20);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -179,7 +183,7 @@ public class GerritTriggerTest {
      * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay -20.
      */
-     @Test
+    @Test
     public void testScheduleWithNegativeBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
@@ -190,7 +194,7 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-         when(config.getBuildScheduleDelay()).thenReturn(-20);
+        when(config.getBuildScheduleDelay()).thenReturn(-20);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -208,12 +212,12 @@ public class GerritTriggerTest {
                 isA(Action.class));
     }
 
-     /**
+    /**
      * Tests the schedule method of GerritTrigger.
      * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay 10000.
      */
-     @Test
+    @Test
     public void testScheduleWithMaximumBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
@@ -224,7 +228,7 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-         when(config.getBuildScheduleDelay()).thenReturn(10000);
+        when(config.getBuildScheduleDelay()).thenReturn(10000);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -280,7 +284,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isA(Action.class),
                 isA(Action.class),
-                isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_URL, "http://mock.url"));
+                isParameterActionWithStringParameterValue(GERRIT_CHANGE_URL.name(), "http://mock.url"));
     }
 
     /**
@@ -310,7 +314,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isA(Action.class),
                 isA(Action.class),
-                isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_ID, event.getChange().getId()));
+                isParameterActionWithStringParameterValue(GERRIT_CHANGE_ID.name(), event.getChange().getId()));
         //Just to make sure one more normal arguments is there as well.
         verify(project).scheduleBuild(
                 anyInt(),
@@ -318,7 +322,135 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isA(Action.class),
                 isA(Action.class),
-                isParameterActionWithStringParameterValue(GerritTrigger.GERRIT_CHANGE_URL, "http://mock.url"));
+                isParameterActionWithStringParameterValue(GERRIT_CHANGE_URL.name(), "http://mock.url"));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with correct change owner and uploader parameters when there are no default parameters present.
+     */
+    @Test
+    public void testScheduleWithOwnerAndUploader() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        Account owner = new Account("Bobby", "bobby@somewhere.com");
+        Account uploader = new Account("Nisse", "nisse@acme.org");
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(uploader);
+        event.setUploader(uploader);
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isParameterActionWithStringParameterValues(
+                        nameVal(GERRIT_CHANGE_OWNER.name(), owner.getNameAndEmail()),
+                        nameVal(GERRIT_CHANGE_OWNER_NAME.name(), owner.getName()),
+                        nameVal(GERRIT_CHANGE_OWNER_EMAIL.name(), owner.getEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER.name(), uploader.getNameAndEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_NAME.name(), uploader.getName()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_EMAIL.name(), uploader.getEmail())));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with correct change owner and uploader parameters when there are no default parameters present.
+     * And sets the event.uploader to null keeping event.patchSet.uploader.
+     */
+    @Test
+    public void testScheduleWithOwnerAndOneUploaderNull() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        Account owner = new Account("Bobby", "bobby@somewhere.com");
+        Account uploader = new Account("Nisse", "nisse@acme.org");
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(uploader);
+        event.setUploader(null);
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isParameterActionWithStringParameterValues(
+                        nameVal(GERRIT_CHANGE_OWNER.name(), owner.getNameAndEmail()),
+                        nameVal(GERRIT_CHANGE_OWNER_NAME.name(), owner.getName()),
+                        nameVal(GERRIT_CHANGE_OWNER_EMAIL.name(), owner.getEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER.name(), uploader.getNameAndEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_NAME.name(), uploader.getName()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_EMAIL.name(), uploader.getEmail())));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with correct change owner and uploader parameters when there are no default parameters present.
+     * And sets the event.patchSet.uploader to null keeping event.uploader set.
+     */
+    @Test
+    public void testScheduleWithOwnerAndOtherUploaderNull() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        Account owner = new Account("Bobby", "bobby@somewhere.com");
+        Account uploader = new Account("Nisse", "nisse@acme.org");
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(null);
+        event.setUploader(uploader);
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isParameterActionWithStringParameterValues(
+                        nameVal(GERRIT_CHANGE_OWNER.name(), owner.getNameAndEmail()),
+                        nameVal(GERRIT_CHANGE_OWNER_NAME.name(), owner.getName()),
+                        nameVal(GERRIT_CHANGE_OWNER_EMAIL.name(), owner.getEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER.name(), uploader.getNameAndEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_NAME.name(), uploader.getName()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_EMAIL.name(), uploader.getEmail())));
     }
 
     /**
@@ -665,19 +797,19 @@ public class GerritTriggerTest {
                 isA(Action.class));
     }
 
-   /**
-    * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
-    * GerritCause cause, AbstractProject project)} with a normal scenario.
-    * this is a test case that checks that
-    * the Trigger is creating parameters having escaped quotes or not
-    * when the escapeQuotes setting is on.
-    */
+    /**
+     * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
+     * GerritCause cause, AbstractProject project)} with a normal scenario.
+     * this is a test case that checks that
+     * the Trigger is creating parameters having escaped quotes or not
+     * when the escapeQuotes setting is on.
+     */
     @Test
     public void testCreateParametersWhenTriggerWithEscapeQuotesOn() {
 
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
         String stringWithQuotesEscaped = "Fixed \\\" the thing to make \\\" some thing fun";
-        String stringWithoutQuotes  = "Fixed  the thing to make  some thing fun";
+        String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -685,7 +817,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-       //prepare  PatchsetCreated object
+        //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
         patch.put(NUMBER, "2");
         patch.put(REVISION, "ad123456789");
@@ -695,9 +827,9 @@ public class GerritTriggerTest {
         jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
         jsonAccount.put(NAME, "Bobby");
 
-        Change  changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+        Change changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
                 "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
-        Change  changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+        Change changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
                 "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
 
         PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
@@ -705,7 +837,7 @@ public class GerritTriggerTest {
         PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         //prepare GerritCause object
-        GerritCause gerritCause =  mock(GerritCause.class);
+        GerritCause gerritCause = mock(GerritCause.class);
         doReturn("http://mock.url").when(gerritCause).getUrl();
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
@@ -713,33 +845,33 @@ public class GerritTriggerTest {
                 new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
 
         //the Trigger is creating parameters with escaped quote in "subject".
-        ParametersAction  paremetersAction =
+        ParametersAction paremetersAction =
                 triggerWithEscapeQuotesOn.createParameters(eventWithQuotes, gerritCause, project);
-        ParameterValue  strPara  =
-                new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithQuotesEscaped);
+        ParameterValue strPara =
+                new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithQuotesEscaped);
         verify(changeWithQuotes, times(1)).getSubject();
-        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
 
         //the Trigger is creating parameters without escaped quote in "subject".
         paremetersAction = triggerWithEscapeQuotesOn.createParameters(eventWithoutQuotes, gerritCause, project);
-        strPara = new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithoutQuotes);
+        strPara = new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithoutQuotes);
         verify(changeWithoutQuotes, times(1)).getSubject();
-        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
 
-  }
+    }
 
     /**
-    * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
-    * GerritCause cause, AbstractProject project)} with a normal scenario.
-    * this is a test case that checks that
-    * the Trigger is creating parameters having escaped quotes or not
-    * when the escapeQuotes setting is off.
-    */
+     * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
+     * GerritCause cause, AbstractProject project)} with a normal scenario.
+     * this is a test case that checks that
+     * the Trigger is creating parameters having escaped quotes or not
+     * when the escapeQuotes setting is off.
+     */
     @Test
     public void testCreateParametersWhenTriggerWithEscapeQuotesOff() {
 
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
-        String stringWithoutQuotes  = "Fixed  the thing to make  some thing fun";
+        String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -747,7 +879,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-       //prepare  PatchsetCreated object
+        //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
         patch.put(NUMBER, "2");
         patch.put(REVISION, "ad123456789");
@@ -757,9 +889,9 @@ public class GerritTriggerTest {
         jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
         jsonAccount.put(NAME, "Bobby");
 
-        Change  changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+        Change changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
                 "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
-        Change  changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+        Change changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
                 "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
 
         PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
@@ -767,7 +899,7 @@ public class GerritTriggerTest {
         PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         //prepare GerritCause object
-        GerritCause gerritCause =  mock(GerritCause.class);
+        GerritCause gerritCause = mock(GerritCause.class);
         doReturn("http://mock.url").when(gerritCause).getUrl();
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
@@ -775,42 +907,43 @@ public class GerritTriggerTest {
                 new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
 
         //the Trigger is creating parameters with escaped quote in "subject"
-        ParametersAction  paremetersAction =
+        ParametersAction paremetersAction =
                 triggerWithEscapeQuotesOff.createParameters(eventWithQuotes, gerritCause, project);
-        ParameterValue  strPara  =
-                new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithQuotes);
+        ParameterValue strPara =
+                new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithQuotes);
         verify(changeWithQuotes, times(1)).getSubject();
-        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
 
         //the Trigger is creating parameters without escaped quote in "subject"
         paremetersAction = triggerWithEscapeQuotesOff.createParameters(eventWithoutQuotes, gerritCause, project);
-        strPara = new StringParameterValue(GerritTrigger.GERRIT_CHANGE_SUBJECT, stringWithoutQuotes);
+        strPara = new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithoutQuotes);
         verify(changeWithoutQuotes, times(1)).getSubject();
-        assertEquals(strPara, paremetersAction.getParameter(GerritTrigger.GERRIT_CHANGE_SUBJECT));
-  }
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
+    }
 
     /**
      * Prepare a new Mock Object of Change for utility test
      * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change}.
-     * @param project the result of calling getProject() on this mocked Object.
-     * @param branch the result of calling getBranch() on this mocked Object.
-     * @param id the result of calling getId() on this mocked Object.
-     * @param number the result of calling getNumber() on this mocked Object.
-     * @param subject the result of calling getSubject() on this mocked Object.
+     *
+     * @param project     the result of calling getProject() on this mocked Object.
+     * @param branch      the result of calling getBranch() on this mocked Object.
+     * @param id          the result of calling getId() on this mocked Object.
+     * @param number      the result of calling getNumber() on this mocked Object.
+     * @param subject     the result of calling getSubject() on this mocked Object.
      * @param jsonAccount used for creating a Account object as the result of
-     *        calling getOwner() on this mocked Object.
-     * @param url the result of calling getUrl() on this mocked Object.
+     *                    calling getOwner() on this mocked Object.
+     * @param url         the result of calling getUrl() on this mocked Object.
      * @return a new Change Object.
      */
-  private Change prepareChangeObjForMockTest(
-          String project,
-          String branch,
-          String id,
-          String number,
-          String subject,
-          JSONObject jsonAccount,
-          String url) {
-        Change  change  = PowerMockito.mock(Change.class);
+    private Change prepareChangeObjForMockTest(
+            String project,
+            String branch,
+            String id,
+            String number,
+            String subject,
+            JSONObject jsonAccount,
+            String url) {
+        Change change = PowerMockito.mock(Change.class);
         doReturn(project).when(change).getProject();
         doReturn(branch).when(change).getBranch();
         doReturn(id).when(change).getId();
@@ -821,28 +954,30 @@ public class GerritTriggerTest {
         return change;
     }
 
-  /**
-   * Prepare a new Mock Object of PatchsetCreated for utility test
-   * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated}.
-   * @param change mock the result of calling getChange() on this mock Object.
-   * @param patchSet mock the result of calling getCPatchSet() on this mock Object.
-   * @param enentType mock the result of calling getEventType() on this mock Object.
-   * @return a new PatchsetCreated Object.
-   */
-  private PatchsetCreated  preparePatchsetCreatedObjForMockTest(
-          Change change,
-          PatchSet patchSet,
-          GerritEventType enentType) {
-        PatchsetCreated  patchsetCretedObj = PowerMockito.mock(PatchsetCreated.class);
+    /**
+     * Prepare a new Mock Object of PatchsetCreated for utility test
+     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated}.
+     *
+     * @param change    mock the result of calling getChange() on this mock Object.
+     * @param patchSet  mock the result of calling getCPatchSet() on this mock Object.
+     * @param enentType mock the result of calling getEventType() on this mock Object.
+     * @return a new PatchsetCreated Object.
+     */
+    private PatchsetCreated preparePatchsetCreatedObjForMockTest(
+            Change change,
+            PatchSet patchSet,
+            GerritEventType enentType) {
+        PatchsetCreated patchsetCretedObj = PowerMockito.mock(PatchsetCreated.class);
         doReturn(change).when(patchsetCretedObj).getChange();
         doReturn(patchSet).when(patchsetCretedObj).getPatchSet();
         doReturn(enentType).when(patchsetCretedObj).getEventType();
         return patchsetCretedObj;
     }
-/**
-* Does a static mock of {@link PluginImpl}.
-* And specifically the retrieval of Config and the frontendUrl.
-*/
+
+    /**
+     * Does a static mock of {@link PluginImpl}.
+     * And specifically the retrieval of Config and the frontendUrl.
+     */
     private static void mockPluginConfig() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
@@ -855,7 +990,8 @@ public class GerritTriggerTest {
 
     /**
      * Convenience method for creating a {@link IsParameterActionWithStringParameterValue}. So it is easier to read.
-     * @param name the name of the parameter to check.
+     *
+     * @param name  the name of the parameter to check.
      * @param value the value of the parameter to check.
      * @return an argThat IsParameterActionWithStringParameterValue
      */
@@ -864,37 +1000,100 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Convenience method for creating a {@link IsParameterActionWithStringParameterValue}. So it is easier to read.
+     *
+     * @param nameValues the names and values of the parameters to check.
+     * @return an argThat IsParameterActionWithStringParameterValue
+     */
+    static Action isParameterActionWithStringParameterValues(
+            IsParameterActionWithStringParameterValue.NameAndValue... nameValues) {
+        return argThat(new IsParameterActionWithStringParameterValue(nameValues));
+    }
+
+    /**
+     * Convenience method for creating a {@link IsParameterActionWithStringParameterValue}. So it is easier to read.
+     *
+     * @param name the name and values of the parameters to check.
+     * @param val  the value of the parameters to check.
+     * @return an argThat IsParameterActionWithStringParameterValue
+     */
+    static IsParameterActionWithStringParameterValue.NameAndValue nameVal(String name, String val) {
+        return new IsParameterActionWithStringParameterValue.NameAndValue(name, val);
+    }
+
+    /**
      * An ArgumentMatcher that checks if the argument is a {@link ParametersAction}.
      * And if it contains a specific ParameterValue.
      */
     static class IsParameterActionWithStringParameterValue extends ArgumentMatcher<Action> {
 
-        private String name;
-        private String value;
+        NameAndValue[] nameAndValues;
 
         /**
          * Standard Constructor.
-         * @param name the name of the parameter to check.
+         *
+         * @param name  the name of the parameter to check.
          * @param value the value of the parameter to check.
          */
         public IsParameterActionWithStringParameterValue(String name, String value) {
-            this.name = name;
-            this.value = value;
+            nameAndValues = new NameAndValue[]{new NameAndValue(name, value)};
         }
+
+        /**
+         * Standard Constructor.
+         *
+         * @param nameVal the name and values of the parameters to check.
+         */
+        public IsParameterActionWithStringParameterValue(NameAndValue... nameVal) {
+            nameAndValues = nameVal;
+        }
+
 
         @Override
         public boolean matches(Object argument) {
             Action action = (Action)argument;
             if (action instanceof ParametersAction) {
+                for (NameAndValue nv : nameAndValues) {
+                    ParameterValue parameterValue = ((ParametersAction)action).getParameter(nv.name);
 
-                ParameterValue parameterValue = ((ParametersAction)action).getParameter(name);
-
-                if (parameterValue != null && parameterValue instanceof StringParameterValue) {
-                    StringParameterValue param = (StringParameterValue)parameterValue;
-                    return name.equals(param.getName()) && value.equals(param.value);
+                    if (parameterValue != null && parameterValue instanceof StringParameterValue) {
+                        StringParameterValue param = (StringParameterValue)parameterValue;
+                        if (!nv.name.equals(param.getName()) || !nv.value.equals(param.value)) {
+                            System.err.println("Required parameter is [" + param.getName() + "=" + param.value
+                                    + "] should be [" + nv.toString() + "]");
+                            return false;
+                        }
+                    } else {
+                        System.err.println("Missing required parameter " + nv.name);
+                        return false;
+                    }
                 }
             }
-            return false;
+            return true;
+        }
+
+        /**
+         * Data structure for a name and a value.
+         */
+        static class NameAndValue {
+            private String name;
+            private String value;
+
+            /**
+             * Standard constructor.
+             *
+             * @param name  the name.
+             * @param value the value.
+             */
+            NameAndValue(String name, String value) {
+                this.name = name;
+                this.value = value;
+            }
+
+            @Override
+            public String toString() {
+                return name + "=" + value;
+            }
         }
     }
 }
