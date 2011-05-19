@@ -344,7 +344,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private String getName(Account account) {
         if (account == null) {
-            return null;
+            return "";
         } else {
             return account.getName();
         }
@@ -359,7 +359,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private String getNameAndEmail(Account account) {
         if (account == null) {
-            return null;
+            return "";
         } else {
             return account.getNameAndEmail();
         }
@@ -374,7 +374,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private String getEmail(Account account) {
         if (account == null) {
-            return null;
+            return "";
         } else {
             return account.getEmail();
         }

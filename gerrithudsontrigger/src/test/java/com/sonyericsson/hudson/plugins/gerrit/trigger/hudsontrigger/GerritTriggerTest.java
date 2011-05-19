@@ -454,6 +454,91 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with correct change owner and uploader parameters when there are no default parameters present.
+     * And sets the event.patchSet.uploader and event.uploader to null.
+     */
+    @Test
+    public void testScheduleWithOwnerAndBothUploadersNull() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        Account owner = new Account("Bobby", "bobby@somewhere.com");
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(null);
+        event.setUploader(null);
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isParameterActionWithStringParameterValues(
+                        nameVal(GERRIT_CHANGE_OWNER.name(), owner.getNameAndEmail()),
+                        nameVal(GERRIT_CHANGE_OWNER_NAME.name(), owner.getName()),
+                        nameVal(GERRIT_CHANGE_OWNER_EMAIL.name(), owner.getEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER.name(), ""),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_NAME.name(), ""),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_EMAIL.name(), "")));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with correct change owner and uploader parameters when there are no default parameters present.
+     * And sets the event.patchSet.uploader and event.uploader to null.
+     */
+    @Test
+    public void testScheduleWithOwnerAndPartOfUploadersNull() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        Account owner = new Account("Bobby", "bobby@somewhere.com");
+        Account uploader = new Account("Bobby", null);
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        trigger.start(project, true);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(uploader);
+        event.setUploader(uploader);
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+
+        verify(project).scheduleBuild(
+                anyInt(),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isParameterActionWithStringParameterValues(
+                        nameVal(GERRIT_CHANGE_OWNER.name(), owner.getNameAndEmail()),
+                        nameVal(GERRIT_CHANGE_OWNER_NAME.name(), owner.getName()),
+                        nameVal(GERRIT_CHANGE_OWNER_EMAIL.name(), owner.getEmail()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER.name(), ""),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_NAME.name(), uploader.getName()),
+                        nameVal(GERRIT_PATCHSET_UPLOADER_EMAIL.name(), "")));
+    }
+
+    /**
      * Tests GerritTrigger.retriggerThisBuild.
      */
     @Test

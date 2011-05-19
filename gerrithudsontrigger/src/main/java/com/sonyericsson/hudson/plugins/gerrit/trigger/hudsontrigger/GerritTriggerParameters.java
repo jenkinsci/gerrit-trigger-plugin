@@ -127,6 +127,9 @@ public enum GerritTriggerParameters {
         } else {
             stringValue = value;
         }
+        if (stringValue == null) {
+            stringValue = "";
+        }
         parameter = new StringParameterValue(this.name(), stringValue, description);
         parameters.add(parameter);
     }
