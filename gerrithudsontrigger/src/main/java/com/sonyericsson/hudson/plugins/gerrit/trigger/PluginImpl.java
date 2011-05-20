@@ -114,7 +114,7 @@ public class PluginImpl extends Plugin {
         projectListUpdater.start();
         //Starts the send-command-queue
         GerritSendCommandQueue.getInstance(config);
-        //do not try to connect to gerrit unless there is an url or a hostname in the text fields
+        //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
         if (!config.hasDefaultValues()) {
             startManager();
             logger.info("Started");

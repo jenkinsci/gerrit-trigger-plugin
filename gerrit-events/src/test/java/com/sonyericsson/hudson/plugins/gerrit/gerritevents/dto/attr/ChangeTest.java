@@ -90,7 +90,7 @@ public class ChangeTest {
 
     /**
      * Tests {@link Change#fromJson(net.sf.json.JSONObject)}.
-     * Without any JSON url data.
+     * Without any JSON URL data.
      * @throws Exception if so.
      */
     @Test

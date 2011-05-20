@@ -329,8 +329,8 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Generates the url to the provided change in Gerrit.
-     * If the change already has a url provided that URL will be used.
+     * Generates the URL to the provided change in Gerrit.
+     * If the change already has a URL provided, that URL will be used.
      *
      * @param event the event who's change to link to.
      * @return the URL to the event's change.
@@ -346,8 +346,8 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Generates the url to the provided change in Gerrit.
-     * If the change already has a url provided that URL will be used.
+     * Generates the URL to the provided change in Gerrit.
+     * If the change already has a URL provided, that URL will be used.
      *
      * @param change the change to link to.
      * @return the URL to the change.
@@ -369,7 +369,7 @@ public class ManualTriggerAction implements RootAction {
      *
      * @param rowId   the generated rowId in the search result.
      * @param indexed the indexed search result.
-     * @return the event. Or null if there is no patch-set in the search result.
+     * @return the event, or null if there is no patch-set in the search result.
      */
     private ManualPatchsetCreated findAndCreatePatchSetEvent(String rowId,
                                                              HashMap<String, JSONObject> indexed) {

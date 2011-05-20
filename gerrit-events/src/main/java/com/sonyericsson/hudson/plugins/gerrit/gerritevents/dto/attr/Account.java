@@ -116,9 +116,9 @@ public class Account implements GerritJsonDTO {
     }
 
     /**
-     * Gives the full name an email in the format <code>"name" &lt;email@somewhere.com&gt;</code>.
+     * Gives the full name and email in the format <code>"name" &lt;email@somewhere.com&gt;</code>.
      * If either the name or the email is null then null is returned.
-     * If any is the empty string then an empty string is returned.
+     * If either is an empty string then an empty string is returned.
      *
      * @return the name and email in one string.
      */

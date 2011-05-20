@@ -119,8 +119,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     @SuppressWarnings("unused")
     //called from jelly
     public boolean isConnectionWarning() {
-        //if the frontend url does not have a value, don't try to connect and show a warning
-        //reminding the user to add a frontend url.
+        //If the frontend URL does not have a value, don't try to connect and show a warning
+        //reminding the user to add a frontend URL.
         return !connected
                 && PluginImpl.getInstance().getConfig().hasDefaultValues();
     }
@@ -134,7 +134,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     @SuppressWarnings("unused")
     //called from jelly
     public boolean isConnectionError() {
-        //if the frontend url has a value, try to connect to it and if it is not possible,
+        //If the frontend URL has a value, try to connect to it and if it is not possible,
         //show an error to the user
         return !connected
                 && !PluginImpl.getInstance().getConfig().hasDefaultValues();

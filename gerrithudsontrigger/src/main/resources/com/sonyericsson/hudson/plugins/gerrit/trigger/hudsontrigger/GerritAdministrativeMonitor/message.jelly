@@ -3,7 +3,7 @@
     <!--class=error or warning-->
     <j:if test="${it.isConnectionWarning()}">
         <div class="warning">
-            ${%The connection to Gerrit is not started yet.} ${%Check the gerrit url in the settings.}
+            ${%The connection to Gerrit is not started yet.} ${%Check the Gerrit URL in the settings.}
         </div>
     </j:if>
     <j:if test="${it.isConnectionError()}">

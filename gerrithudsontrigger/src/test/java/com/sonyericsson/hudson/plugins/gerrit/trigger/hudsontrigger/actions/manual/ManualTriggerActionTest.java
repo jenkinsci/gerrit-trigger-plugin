@@ -240,7 +240,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} with an url in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} with a URL in the event info.
      */
     @Test
     public void testGetGerritUrlJson() {
@@ -253,7 +253,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} without an url in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} without a URL in the event info.
      */
     @Test
     public void testGetGerritUrlJsonNoUrl() {
@@ -271,7 +271,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} with an url in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} with a URL in the event info.
      */
     @Test
     public void testGetGerritUrl() {
@@ -284,7 +284,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} without an url in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} without a URL in the event info.
      */
     @Test
     public void testGetGerritUrlNoUrl() {

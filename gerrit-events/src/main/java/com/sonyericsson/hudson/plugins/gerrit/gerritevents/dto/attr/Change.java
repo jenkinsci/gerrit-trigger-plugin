@@ -199,7 +199,7 @@ public class Change implements GerritJsonDTO {
 
     /**
      * Canonical URL to reach this change.
-     * @return the url.
+     * @return the URL.
      */
     public String getUrl() {
         return url;
@@ -207,7 +207,7 @@ public class Change implements GerritJsonDTO {
 
     /**
      * Canonical URL to reach this change.
-     * @param url the url.
+     * @param url the URL.
      */
     public void setUrl(String url) {
         this.url = url;

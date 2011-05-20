@@ -36,7 +36,7 @@ import java.util.List;
  */
 public enum GerritTriggerParameters {
     /**
-     * Parameter name for the commit subject (commit message's 1st. line).
+     * Parameter name for the commit subject (commit message's 1st line).
      */
     GERRIT_CHANGE_SUBJECT,
     /**
@@ -52,7 +52,7 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_NUMBER,
     /**
-     * Parameter name for the url to the change.
+     * Parameter name for the URL to the change.
      */
     GERRIT_CHANGE_URL,
     /**

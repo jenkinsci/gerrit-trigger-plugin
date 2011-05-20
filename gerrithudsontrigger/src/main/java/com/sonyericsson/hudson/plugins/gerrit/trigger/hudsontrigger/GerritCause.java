@@ -157,7 +157,7 @@ public class GerritCause extends Cause {
 
     /**
      * Gets the URL to the Gerrit patchSet.
-     * @return the url.
+     * @return the URL.
      */
     public String getUrl() {
         return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
