@@ -25,14 +25,18 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.man
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.Extension;
 import hudson.model.Hudson;
+import hudson.model.ParameterValue;
 import hudson.model.RootAction;
 import hudson.security.Permission;
 import net.sf.json.JSONArray;
@@ -45,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
@@ -343,6 +348,38 @@ public class ManualTriggerAction implements RootAction {
                     event.getChange().getNumber(),
                     event.getPatchSet().getNumber());
         }
+    }
+
+    /**
+     * Creates a list of the parameters as they would be in a scheduled build.
+     * Without escaped quotes.
+     *
+     * @param jsonChange   the JSON data for the change.
+     * @param jsonPatchSet the JSON data for the patch-set.
+     * @return a list of the parameters.
+     */
+    @SuppressWarnings("unused") //called from jelly.
+    public List<ParameterValue> getParametersForPatchSet(JSONObject jsonChange, JSONObject jsonPatchSet) {
+        List<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        Change change = new Change(jsonChange);
+        PatchSet patchSet = new PatchSet(jsonPatchSet);
+        PatchsetCreated event = new PatchsetCreated();
+        event.setChange(change);
+        event.setPatchset(patchSet);
+        GerritTriggerParameters.setOrCreateParameters(event, parameters, false);
+        return parameters;
+    }
+
+    /**
+     * Tells if the given parameter should have a URL or not.
+     * i.e. if the parameter represents {@link GerritTriggerParameters#GERRIT_CHANGE_URL}.
+     *
+     * @param parameterValue the parameter.
+     * @return true if so.
+     */
+    @SuppressWarnings("unused") //called from jelly.
+    public boolean hasUrl(ParameterValue parameterValue) {
+        return GerritTriggerParameters.GERRIT_CHANGE_URL.name().equals(parameterValue.getName());
     }
 
     /**

@@ -197,87 +197,23 @@
                                                                         ${%Patch Set Details}
                                                                     </td>
                                                                 </tr>
-                                                                <tr>
-                                                                    <td width="15%">GERRIT_BRANCH</td>
-                                                                    <td width="85%">
-                                                                        <input type="text" name="GERRIT_BRANCH"
+                                                                <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch)}">
+                                                                    <tr>
+                                                                        <td width="15%">
+                                                                            ${parameter.getName()}
+                                                                            <j:if test="${it.hasUrl(parameter)}">
+                                                                                <span style="font-size: smaller; font-style: italic;">
+                                                                                    <a href="${parameter.value}" target="_blank">(link)</a>
+                                                                                </span>
+                                                                            </j:if>
+                                                                        </td>
+                                                                        <td width="85%">
+                                                                            <input type="text" name="${parameter.getName()}"
                                                                                style="width: 100%" readonly="true"
-                                                                               value="${res.getString('branch')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_CHANGE_NUMBER</td>
-                                                                    <td>
-                                                                        <input type="text"
-                                                                               name="GERRIT_CHANGE_NUMBER"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${res.getString('number')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_CHANGE_ID</td>
-                                                                    <td>
-                                                                        <input type="text" name="GERRIT_CHANGE_ID"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${res.getString('id')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_PATCHSET_NUMBER</td>
-                                                                    <td>
-                                                                        <input type="text"
-                                                                               name="GERRIT_PATCHSET_NUMBER"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${patch.getString('number')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_PATCHSET_REVISION</td>
-                                                                    <td>
-                                                                        <input type="text"
-                                                                               name="GERRIT_PATCHSET_REVISION"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${patch.getString('revision')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_REFSPEC</td>
-                                                                    <td>
-                                                                        <input type="text" name="GERRIT_REFSPEC"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${patch.optString('ref', '')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_PROJECT</td>
-                                                                    <td>
-                                                                        <input type="text" name="GERRIT_PROJECT"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${res.getString('project')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>GERRIT_CHANGE_SUBJECT</td>
-                                                                    <td>
-                                                                        <input type="text"
-                                                                               name="GERRIT_CHANGE_SUBJECT"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${res.getString('subject')}"/>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td>
-                                                                        GERRIT_CHANGE_URL
-                                                                        <span style="font-size: smaller; font-style: italic;">
-                                                                            <a href="${it.getGerritUrl(res)}" target="_blank">(link)</a>
-                                                                        </span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="text" name="GERRIT_CHANGE_URL"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${it.getGerritUrl(res)}"/>
-                                                                    </td>
-                                                                </tr>
+                                                                               value="${parameter.value}"/>
+                                                                        </td>
+                                                                    </tr>
+                                                                </j:forEach>
                                                             </table>
                                                         </td>
                                                     </tr>

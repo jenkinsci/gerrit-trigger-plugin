@@ -268,6 +268,13 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -306,6 +313,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -350,6 +365,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -393,6 +416,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -436,6 +467,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -478,6 +517,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -521,6 +568,14 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild(
@@ -884,7 +939,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
-     * GerritCause cause, AbstractProject project)} with a normal scenario.
+     * AbstractProject project)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
      * when the escapeQuotes setting is on.
@@ -921,9 +976,14 @@ public class GerritTriggerTest {
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
-        //prepare GerritCause object
-        GerritCause gerritCause = mock(GerritCause.class);
-        doReturn("http://mock.url").when(gerritCause).getUrl();
+        //mock the returned url
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
         GerritTrigger triggerWithEscapeQuotesOn =
@@ -931,14 +991,14 @@ public class GerritTriggerTest {
 
         //the Trigger is creating parameters with escaped quote in "subject".
         ParametersAction paremetersAction =
-                triggerWithEscapeQuotesOn.createParameters(eventWithQuotes, gerritCause, project);
+                triggerWithEscapeQuotesOn.createParameters(eventWithQuotes, project);
         ParameterValue strPara =
                 new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithQuotesEscaped);
         verify(changeWithQuotes, times(1)).getSubject();
         assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
 
         //the Trigger is creating parameters without escaped quote in "subject".
-        paremetersAction = triggerWithEscapeQuotesOn.createParameters(eventWithoutQuotes, gerritCause, project);
+        paremetersAction = triggerWithEscapeQuotesOn.createParameters(eventWithoutQuotes, project);
         strPara = new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithoutQuotes);
         verify(changeWithoutQuotes, times(1)).getSubject();
         assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
@@ -947,7 +1007,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests {@link GerritTrigger#createParameters(PatchsetCreated event,
-     * GerritCause cause, AbstractProject project)} with a normal scenario.
+     * AbstractProject project)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
      * when the escapeQuotes setting is off.
@@ -983,9 +1043,15 @@ public class GerritTriggerTest {
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
-        //prepare GerritCause object
-        GerritCause gerritCause = mock(GerritCause.class);
-        doReturn("http://mock.url").when(gerritCause).getUrl();
+
+        //mock the returned url
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(plugin.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
         GerritTrigger triggerWithEscapeQuotesOff =
@@ -993,14 +1059,14 @@ public class GerritTriggerTest {
 
         //the Trigger is creating parameters with escaped quote in "subject"
         ParametersAction paremetersAction =
-                triggerWithEscapeQuotesOff.createParameters(eventWithQuotes, gerritCause, project);
+                triggerWithEscapeQuotesOff.createParameters(eventWithQuotes, project);
         ParameterValue strPara =
                 new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithQuotes);
         verify(changeWithQuotes, times(1)).getSubject();
         assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));
 
         //the Trigger is creating parameters without escaped quote in "subject"
-        paremetersAction = triggerWithEscapeQuotesOff.createParameters(eventWithoutQuotes, gerritCause, project);
+        paremetersAction = triggerWithEscapeQuotesOff.createParameters(eventWithoutQuotes, project);
         strPara = new StringParameterValue(GERRIT_CHANGE_SUBJECT.name(), stringWithoutQuotes);
         verify(changeWithoutQuotes, times(1)).getSubject();
         assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_SUBJECT.name()));

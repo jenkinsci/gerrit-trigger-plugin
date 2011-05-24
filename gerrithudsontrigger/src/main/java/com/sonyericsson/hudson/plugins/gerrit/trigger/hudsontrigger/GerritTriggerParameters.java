@@ -23,6 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -132,5 +135,108 @@ public enum GerritTriggerParameters {
         }
         parameter = new StringParameterValue(this.name(), stringValue, description);
         parameters.add(parameter);
+    }
+
+    /**
+     * Adds or sets all the Gerrit-parameter values to the provided list.
+     * @param event the event.
+     * @param parameters the default parameters
+     * @param escapeQuotes if quotes should be escaped or not.
+     * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
+     */
+    public static void setOrCreateParameters(PatchsetCreated event, List<ParameterValue> parameters,
+                                             boolean escapeQuotes) {
+        GERRIT_BRANCH.setOrCreateStringParameterValue(
+                parameters, event.getChange().getBranch(), escapeQuotes);
+        GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
+                parameters, event.getChange().getNumber(), escapeQuotes);
+        GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
+                parameters, event.getChange().getId(), escapeQuotes);
+        GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
+                parameters, event.getPatchSet().getNumber(), escapeQuotes);
+        GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
+                parameters, event.getPatchSet().getRevision(), escapeQuotes);
+        GERRIT_REFSPEC.setOrCreateStringParameterValue(
+                parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+        GERRIT_PROJECT.setOrCreateStringParameterValue(
+                parameters, event.getChange().getProject(), escapeQuotes);
+        GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
+                parameters, event.getChange().getSubject(), escapeQuotes);
+        String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
+                                                                                  event.getPatchSet().getNumber());
+        GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
+                parameters, url, escapeQuotes);
+        GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
+                parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
+        GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
+                parameters, getName(event.getChange().getOwner()), escapeQuotes);
+        GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
+                parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
+        Account uploader = findUploader(event);
+        GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
+                parameters, getNameAndEmail(uploader), escapeQuotes);
+        GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
+                parameters, getName(uploader), escapeQuotes);
+        GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
+                parameters, getEmail(uploader), escapeQuotes);
+    }
+
+    /**
+     * There are two uploader fields in the event, this method gets one of them if one is null.
+     *
+     * @param event the event to search.
+     * @return the uploader if any.
+     */
+    private static Account findUploader(PatchsetCreated event) {
+        if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
+            return event.getPatchSet().getUploader();
+        } else {
+            return event.getUploader();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the name in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getName()
+     */
+    private static String getName(Account account) {
+        if (account == null) {
+            return "";
+        } else {
+            return account.getName();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the name and email in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getNameAndEmail()
+     */
+    private static String getNameAndEmail(Account account) {
+        if (account == null) {
+            return "";
+        } else {
+            return account.getNameAndEmail();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the email in the account or null if Account is null.
+     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getEmail()
+     */
+    private static String getEmail(Account account) {
+        if (account == null) {
+            return "";
+        } else {
+            return account.getEmail();
+        }
     }
 }
