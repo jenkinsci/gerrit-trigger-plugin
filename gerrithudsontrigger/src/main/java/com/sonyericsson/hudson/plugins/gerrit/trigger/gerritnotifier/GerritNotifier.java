@@ -24,7 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -73,7 +73,7 @@ public class GerritNotifier {
      * @param stats the stats.
      */
     public void buildStarted(AbstractBuild build, TaskListener taskListener,
-            PatchsetCreated event, BuildsStartedStats stats) {
+            GerritTriggeredEvent event, BuildsStartedStats stats) {
 
         try {
             String command = parameterExpander.getBuildStartedCommand(build, taskListener, event, stats);

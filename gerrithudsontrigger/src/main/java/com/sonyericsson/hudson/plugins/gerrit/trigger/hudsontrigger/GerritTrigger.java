@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -83,6 +85,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildUnstableCodeReviewValue;
     private boolean silentMode;
     private boolean escapeQuotes;
+    private boolean triggerOnPatchsetUploadedEvent;
+    private boolean triggerOnChangeMergedEvent;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -117,6 +121,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       null means that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
+     * @param triggerOnPatchsetUploadedEvent Trigger event on patchset uploaded on or off.
+     * @param triggerOnChangeMergedEvent     Trigger event on change merged on or off.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
@@ -135,6 +141,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildUnstableCodeReviewValue,
             boolean silentMode,
             boolean escapeQuotes,
+            boolean triggerOnPatchsetUploadedEvent,
+            boolean triggerOnChangeMergedEvent,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
@@ -151,6 +159,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.silentMode = silentMode;
         this.escapeQuotes = escapeQuotes;
+        this.triggerOnPatchsetUploadedEvent = triggerOnPatchsetUploadedEvent;
+        this.triggerOnChangeMergedEvent = triggerOnChangeMergedEvent;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -204,7 +214,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
-        if (isInteresting(event)) {
+        if (triggerOnPatchsetUploadedEvent && isInteresting(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
@@ -226,7 +236,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param cause the cause of the build.
      * @param event the event.
      */
-    protected void schedule(GerritCause cause, PatchsetCreated event) {
+    protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
         schedule(cause, event, myProject);
     }
 
@@ -237,7 +247,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event   the event.
      * @param project the project to build.
      */
-    protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
+    protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         boolean ok = project.scheduleBuild(
                 getBuildScheduleDelay(),
@@ -282,7 +292,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param project the project.
      * @return the ParameterAction.
      */
-    protected ParametersAction createParameters(PatchsetCreated event, AbstractProject project) {
+    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
         setOrCreateParameters(event, parameters, isEscapeQuotes());
         return new ParametersAction(parameters);
@@ -376,7 +386,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event   the event.
      * @see #retriggerAllBuilds(com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext)
      */
-    private void retrigger(AbstractProject project, PatchsetCreated event) {
+    private void retrigger(AbstractProject project, GerritTriggeredEvent event) {
         if (project.isBuildable()) {
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(project, event, null);
@@ -395,7 +405,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
-
     /**
      * Called when a ChangeAbandoned event arrives.
      * Should probably not be listening on this here.
@@ -405,6 +414,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Override
     public void gerritEvent(ChangeAbandoned event) {
         //TODO Implement
+    }
+
+    /**
+     * Called when a ChangeMerged event arrives.
+     *
+     * @param event the event.
+     */
+    @Override
+    public void gerritEvent(ChangeMerged event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (triggerOnChangeMergedEvent && isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
     }
 
     /**
@@ -681,7 +712,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event the event
      * @return true if we should.
      */
-    private boolean isInteresting(PatchsetCreated event) {
+    private boolean isInteresting(GerritTriggeredEvent event) {
         if (gerritProjects != null) {
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {

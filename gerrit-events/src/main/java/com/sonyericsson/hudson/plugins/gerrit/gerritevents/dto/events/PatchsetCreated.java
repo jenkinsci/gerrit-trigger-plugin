@@ -26,35 +26,15 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
 
 /**
  * A DTO representation of the patchset-created Gerrit Event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonEvent {
-
-    /**
-     * The Gerrit change the event is related to.
-     */
-    private Change change;
-
-    /**
-     * Refers to a specific patchset within a change.
-     */
-    private PatchSet patchSet;
-
-    /**
-     * The uploader of the patch-set.
-     */
-    private Account uploader;
+public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
 
     @Override
     public GerritEventType getEventType() {
@@ -62,64 +42,16 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
     }
 
     @Override
+    public boolean isScorable() {
+        return true;
+    }
+
+    @Override
     public void fromJson(JSONObject json) {
-        if (json.containsKey(CHANGE)) {
-            change = new Change(json.getJSONObject(CHANGE));
-        }
-        if (json.containsKey(PATCH_SET)) {
-            this.patchSet = new PatchSet(json.getJSONObject(PATCH_SET));
-        }
+        super.fromJson(json);
         if (json.containsKey(UPLOADER)) {
-            this.uploader = new Account(json.getJSONObject(UPLOADER));
+            this.account = new Account(json.getJSONObject(UPLOADER));
         }
-    }
-
-    /**
-     * The Gerrit change the event is related to.
-     * @return the change.
-     */
-    public Change getChange() {
-        return change;
-    }
-
-    /**
-     * The Gerrit change the event is related to.
-     * @param change the change.
-     */
-    public void setChange(Change change) {
-        this.change = change;
-    }
-
-    /**
-     * Refers to a specific patchset within a change.
-     * @return the patchSet.
-     */
-    public PatchSet getPatchSet() {
-        return patchSet;
-    }
-
-    /**
-     * Refers to a specific patchset within a change.
-     * @param patchset the patchSet.
-     */
-    public void setPatchset(PatchSet patchset) {
-        this.patchSet = patchset;
-    }
-
-    /**
-     * The uploader of the patch-set.
-     * @return the uploader.
-     */
-    public Account getUploader() {
-        return uploader;
-    }
-
-    /**
-     * The uploader of the patch-set.
-     * @param uploader the uploader.
-     */
-    public void setUploader(Account uploader) {
-        this.uploader = uploader;
     }
 
     @Override

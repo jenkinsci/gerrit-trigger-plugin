@@ -24,7 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
@@ -42,7 +42,7 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
 
     private AbstractBuild build;
     private TaskListener taskListener;
-    private PatchsetCreated event;
+    private GerritTriggeredEvent event;
     private BuildsStartedStats stats;
 
     /**
@@ -56,7 +56,7 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
      * @see GerritNotifier#buildStarted(AbstractBuild, TaskListener, PatchsetCreated, BuildsStartedStats)
      */
     public BuildStartedCommandJob(IGerritHudsonTriggerConfig config, AbstractBuild build,
-                                  TaskListener taskListener, PatchsetCreated event,
+                                  TaskListener taskListener, GerritTriggeredEvent event,
                                   BuildsStartedStats stats) {
         super(config);
         this.build = build;

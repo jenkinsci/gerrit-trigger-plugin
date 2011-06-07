@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -83,7 +83,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
-            PatchsetCreated event = cause.getEvent();
+            GerritTriggeredEvent event = cause.getEvent();
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
                 PatchSetKey key = memory.completed(event, r);
@@ -188,7 +188,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param project the project that will be built.
      * @param event   the event that caused the build to be scheduled.
      */
-    public synchronized void onTriggered(AbstractProject project, PatchsetCreated event) {
+    public synchronized void onTriggered(AbstractProject project, GerritTriggeredEvent event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
         event.fireProjectTriggered(project);
@@ -208,7 +208,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param otherBuilds the list of other builds in the previous context.
      */
     public synchronized void onRetriggered(AbstractProject project,
-                                           PatchsetCreated event,
+                                           GerritTriggeredEvent event,
                                            List<AbstractBuild> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
         event.fireProjectTriggered(project);
@@ -227,9 +227,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event   the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(PatchsetCreated, hudson.model.AbstractProject)
+     * @see BuildMemory#isBuilding(GerritTriggeredEvent, hudson.model.AbstractProject)
      */
-    public boolean isBuilding(AbstractProject project, PatchsetCreated event) {
+    public boolean isBuilding(AbstractProject project, GerritTriggeredEvent event) {
         if (project == null || event == null) {
             return false;
         } else {
@@ -243,9 +243,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
+     * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)
      */
-    public boolean isBuilding(PatchsetCreated event) {
+    public boolean isBuilding(GerritTriggeredEvent event) {
         if (event == null) {
             return false;
         } else {
