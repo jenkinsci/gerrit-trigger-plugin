@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
@@ -122,7 +122,7 @@ public class NotificationFactory {
      * @see BuildStartedCommandJob
      */
     public void queueBuildStarted(AbstractBuild build, TaskListener listener,
-                                  PatchsetCreated event, BuildsStartedStats stats) {
+                                  GerritTriggeredEvent event, BuildsStartedStats stats) {
         BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(),
                 build, listener, event, stats);
         GerritSendCommandQueue.queue(job);

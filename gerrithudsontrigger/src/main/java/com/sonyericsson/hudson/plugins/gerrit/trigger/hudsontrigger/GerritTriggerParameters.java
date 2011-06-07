@@ -24,7 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.ParameterValue;
@@ -144,7 +144,7 @@ public enum GerritTriggerParameters {
      * @param escapeQuotes if quotes should be escaped or not.
      * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
      */
-    public static void setOrCreateParameters(PatchsetCreated event, List<ParameterValue> parameters,
+    public static void setOrCreateParameters(GerritTriggeredEvent event, List<ParameterValue> parameters,
                                              boolean escapeQuotes) {
         GERRIT_BRANCH.setOrCreateStringParameterValue(
                 parameters, event.getChange().getBranch(), escapeQuotes);
@@ -187,11 +187,11 @@ public enum GerritTriggerParameters {
      * @param event the event to search.
      * @return the uploader if any.
      */
-    private static Account findUploader(PatchsetCreated event) {
+    private static Account findUploader(GerritTriggeredEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
             return event.getPatchSet().getUploader();
         } else {
-            return event.getUploader();
+            return event.getAccount();
         }
     }
 

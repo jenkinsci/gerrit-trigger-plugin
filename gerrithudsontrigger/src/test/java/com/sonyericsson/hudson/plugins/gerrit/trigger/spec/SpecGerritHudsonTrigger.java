@@ -125,7 +125,7 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
         ManualPatchsetCreated mpc = new ManualPatchsetCreated();
         mpc.setChange(patchsetCreated.getChange());
         mpc.setPatchset(patchsetCreated.getPatchSet());
-        mpc.setUploader(patchsetCreated.getUploader());
+        mpc.setAccount(patchsetCreated.getAccount());
         mpc.setUserName("bobby");
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
         PluginImpl.getInstance().triggerEvent(mpc);

@@ -93,6 +93,10 @@ public abstract class GerritEventKeys {
      * uploader.
      */
     public static final String UPLOADER = "uploader";
+    /**
+     * submitter.
+     */
+    public static final String SUBMITTER = "submitter";
 
     /**
      * Empty default constructor to hinder instantiation.

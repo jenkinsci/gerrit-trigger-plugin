@@ -105,6 +105,16 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
+        <f:entry title="${%Gerrit Event Type}" 
+                 field="eventType"
+                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">
+            <f:checkbox name="eventPatchsetUploaded"
+                        default="true"
+                        checked="${it.eventPatchsetUploaded}"/>
+            <f:checkbox name="eventChangeMerged"
+                        default="false"
+                        checked="${it.eventChangeMerged}"/>
+        </f:entry>
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
                 <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">

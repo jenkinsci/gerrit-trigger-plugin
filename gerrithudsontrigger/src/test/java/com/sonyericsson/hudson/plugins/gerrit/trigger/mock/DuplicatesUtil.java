@@ -62,7 +62,7 @@ public abstract class DuplicatesUtil {
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**"))));
         p.addTrigger(new GerritTrigger(projects,
-                null, null, null, null, null, null, null, null, false, true, null, null, null, null, null));
+	    null, null, null, null, null, null, null, null, false, true, true, false, null, null, null, null, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
