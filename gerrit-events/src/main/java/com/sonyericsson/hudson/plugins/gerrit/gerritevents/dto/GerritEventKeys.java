@@ -90,6 +90,10 @@ public abstract class GerritEventKeys {
      */
     public static final String REF = "ref";
     /**
+     * submitter
+     */
+    public static final String SUBMITTER = "submitter";
+    /**
      * uploader.
      */
     public static final String UPLOADER = "uploader";
