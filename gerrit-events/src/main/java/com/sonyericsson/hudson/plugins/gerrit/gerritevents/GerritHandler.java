@@ -30,7 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
@@ -52,8 +52,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.*;
 
 /**
- * Main class for this module.
- * Contains the main loop for connecting and reading streamed events from Gerrit.
+ * Main class for this module. Contains the main loop for connecting and reading streamed events from Gerrit.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
@@ -64,6 +63,19 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public static final int CONNECT_SLEEP = 2000;
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
+    /**
+     * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
+     */
+    protected static final int PAUSE_SECOND = 1000;
+    /**
+     * How many times to try and set the shutdown flag to true. Noticed during unit tests there seems to be a timing
+     * issue or something so sometimes the {@shutdownInProgress} flag is not set properly. Setting it a number of times
+     * with some delay helped.
+     *
+     * @see #shutdown(boolean)
+     * @see #PAUSE_SECOND
+     */
+    protected static final int BRUTE_FORCE_TRIES = 10;
     private static final Logger logger = LoggerFactory.getLogger(GerritHandler.class);
     private BlockingQueue<Work> workQueue;
     private String gerritHostName;
@@ -75,6 +87,7 @@ public class GerritHandler extends Thread implements Coordinator {
     private final List<EventThread> workers;
     private SshConnection sshConnection;
     private boolean shutdownInProgress = false;
+    private final Object shutdownInProgressSync = new Object();
     private boolean connecting = false;
     private boolean connected = false;
 
@@ -216,7 +229,7 @@ public class GerritHandler extends Thread implements Coordinator {
                     }
                 }
             }
-        } while (!shutdownInProgress);
+        } while (!isShutdownInProgress());
 
         for (EventThread worker : workers) {
             worker.shutdown();
@@ -232,14 +245,14 @@ public class GerritHandler extends Thread implements Coordinator {
     private SshConnection connect() {
         connecting = true;
         while (true) { //TODO do not go on forever.
-            if (shutdownInProgress) {
+            if (isShutdownInProgress()) {
                 connecting = false;
                 return null;
             }
             SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
-                ssh = new SshConnection(gerritHostName, gerritSshPort, authentication);
+                ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, authentication);
                 notifyConnectionEstablished();
                 connecting = false;
                 logger.debug("connection seems ok, returning it.");
@@ -280,7 +293,7 @@ public class GerritHandler extends Thread implements Coordinator {
                 }
             }
 
-            if (shutdownInProgress) {
+            if (isShutdownInProgress()) {
                 connecting = false;
                 return null;
             }
@@ -300,9 +313,10 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to add.
      */
-    public void addListener(GerritEventListener listener) {
-        synchronized (gerritEventListeners) {
-            gerritEventListeners.put(listener.hashCode(), listener);
+    public synchronized void addListener(GerritEventListener listener) {
+        GerritEventListener old = gerritEventListeners.put(listener.hashCode(), listener);
+        if (old != null) {
+            logger.warn("The listener was replaced by a previous old value: {}", old);
         }
     }
 
@@ -311,10 +325,8 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listeners the listeners to add.
      */
-    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
-        synchronized (gerritEventListeners) {
-            gerritEventListeners.putAll(listeners);
-        }
+    public synchronized void addEventListeners(Map<Integer, GerritEventListener> listeners) {
+        gerritEventListeners.putAll(listeners);
     }
 
     /**
@@ -322,10 +334,8 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to remove.
      */
-    public void removeListener(GerritEventListener listener) {
-        synchronized (gerritEventListeners) {
-            gerritEventListeners.remove(listener.hashCode());
-        }
+    public synchronized void removeListener(GerritEventListener listener) {
+        gerritEventListeners.remove(listener.hashCode());
     }
 
     /**
@@ -333,29 +343,31 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @return the former list of listeners.
      */
-    public HashMap<Integer, GerritEventListener> removeAllEventListeners() {
-        synchronized (gerritEventListeners) {
-            HashMap<Integer, GerritEventListener> listeners =
-                    new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-            gerritEventListeners.clear();
-            return listeners;
-        }
+    public synchronized HashMap<Integer, GerritEventListener> removeAllEventListeners() {
+        HashMap<Integer, GerritEventListener> listeners =
+                new HashMap<Integer, GerritEventListener>(gerritEventListeners);
+        gerritEventListeners.clear();
+        return listeners;
     }
 
     /**
-     * Add a ConnectionListener to the list of listeners.
-     * Return the current connection status so that listeners that
-     * are added later than a connectionestablished/ connectiondown
-     * will get the current connection status.
+     * The number of added e{@link GerritEventListener}s.
+     * @return the size.
+     */
+    public synchronized int getEventListenersCount() {
+        return gerritEventListeners.size();
+    }
+
+    /**
+     * Add a ConnectionListener to the list of listeners. Return the current connection status so that listeners that
+     * are added later than a connectionestablished/ connectiondown will get the current connection status.
      *
      * @param listener the listener to add.
      * @return the connection status
      */
-    public boolean addListener(ConnectionListener listener) {
-        synchronized (connectionListeners) {
-            connectionListeners.put(listener.hashCode(), listener);
-            return connected;
-        }
+    public synchronized boolean addListener(ConnectionListener listener) {
+        connectionListeners.put(listener.hashCode(), listener);
+        return connected;
     }
 
     /**
@@ -363,10 +375,8 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listeners the listeners to add.
      */
-    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
-        synchronized (connectionListeners) {
-            connectionListeners.putAll(listeners);
-        }
+    public synchronized void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
+        connectionListeners.putAll(listeners);
     }
 
     /**
@@ -374,10 +384,8 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to remove.
      */
-    public void removeListener(ConnectionListener listener) {
-        synchronized (connectionListeners) {
-            connectionListeners.remove(listener);
-        }
+    public synchronized void removeListener(ConnectionListener listener) {
+        connectionListeners.remove(listener);
     }
 
     /**
@@ -385,13 +393,11 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @return the list of former listeners.
      */
-    public Map<Integer, ConnectionListener> removeAllConnectionListeners() {
-        synchronized (connectionListeners) {
-            Map<Integer, ConnectionListener> listeners =
-                    new HashMap<Integer, ConnectionListener>(connectionListeners);
-            connectionListeners.clear();
-            return listeners;
-        }
+    public synchronized Map<Integer, ConnectionListener> removeAllConnectionListeners() {
+        Map<Integer, ConnectionListener> listeners =
+                new HashMap<Integer, ConnectionListener>(connectionListeners);
+        connectionListeners.clear();
+        return listeners;
     }
 
     /**
@@ -473,44 +479,41 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
-     * Notifies all listeners of a Gerrit event.
-     * This method is meant to be called by one of the Worker Threads
-     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread}
-     * and not on this Thread which would defeat the purpous of having workers.
+     * Notifies all listeners of a Gerrit event. This method is meant to be called by one of the Worker Threads {@link
+     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread} and not on this Thread which would
+     * defeat the purpose of having workers.
      *
      * @param event the event.
      */
     @Override
-    public void notifyListeners(GerritEvent event) {
-        synchronized (gerritEventListeners) {
-            //Take the performance penalty for synchronization security.
+    public synchronized void notifyListeners(GerritEvent event) {
+        //Take the performance penalty for synchronization security.
 
-            //Notify lifecycle listeners.
-            if (event instanceof PatchsetCreated) {
-                try {
-                    ((PatchsetCreated)event).fireTriggerScanStarting();
-                } catch (Exception ex) {
-                    logger.error("Error when notifying LifecycleListeners. ", ex);
-                }
+        //Notify lifecycle listeners.
+        if (event instanceof PatchsetCreated) {
+            try {
+                ((PatchsetCreated)event).fireTriggerScanStarting();
+            } catch (Exception ex) {
+                logger.error("Error when notifying LifecycleListeners. ", ex);
             }
+        }
 
-            //The real deed.
-            for (GerritEventListener listener : gerritEventListeners.values()) {
-                try {
-                    notifyListener(listener, event);
-                } catch (Exception ex) {
-                    logger.error("When notifying listener: {} about event: {}", listener, event);
-                    logger.error("Notify-error: ", ex);
-                }
+        //The real deed.
+        for (GerritEventListener listener : gerritEventListeners.values()) {
+            try {
+                notifyListener(listener, event);
+            } catch (Exception ex) {
+                logger.error("When notifying listener: {} about event: {}", listener, event);
+                logger.error("Notify-error: ", ex);
             }
+        }
 
-            ////Notify lifecycle listeners.
-            if (event instanceof PatchsetCreated) {
-                try {
-                    ((PatchsetCreated)event).fireTriggerScanDone();
-                } catch (Exception ex) {
-                    logger.error("Error when notifying LifecycleListeners. ", ex);
-                }
+        ////Notify lifecycle listeners.
+        if (event instanceof PatchsetCreated) {
+            try {
+                ((PatchsetCreated)event).fireTriggerScanDone();
+            } catch (Exception ex) {
+                logger.error("Error when notifying LifecycleListeners. ", ex);
             }
         }
     }
@@ -538,10 +541,9 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
-     * Sub-method of
-     * {@link #notifyListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener,
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) .
-     * It is a convenience method so there is no need to try catch for every occurence.
+     * Sub-method of {@link #notifyListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener,
+     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) . It is a convenience method so there is no
+     * need to try catch for every occurence.
      *
      * @param listener the listener to notify
      * @param event    the event to fire.
@@ -555,6 +557,29 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
+     * Sets the shutdown flag.
+     *
+     * @param isIt true if shutdown is in progress.
+     */
+    private void setShutdownInProgress(boolean isIt) {
+        synchronized (shutdownInProgressSync) {
+            this.shutdownInProgress = isIt;
+        }
+    }
+
+    /**
+     * If the system is shutting down. I.e. the shutdown method has been called.
+     *
+     * @return true if so.
+     */
+    public boolean isShutdownInProgress() {
+        synchronized (shutdownInProgressSync) {
+            return this.shutdownInProgress;
+        }
+    }
+
+
+    /**
      * Closes the connection.
      *
      * @param join if the method should wait for the thread to finish before returning.
@@ -562,7 +587,24 @@ public class GerritHandler extends Thread implements Coordinator {
     public void shutdown(boolean join) {
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
-            this.shutdownInProgress = true;
+            //For some reason the shutdown flag is not correctly set.
+            //So we'll try the brute force way.... and it actually works.
+            for (int i = 0; i < BRUTE_FORCE_TRIES; i++) {
+                setShutdownInProgress(true);
+                if (!isShutdownInProgress()) {
+                    try {
+                        Thread.sleep(PAUSE_SECOND);
+                    } catch (InterruptedException e) {
+                        logger.debug("Interrupted while pausing in the shutdown flag set.");
+                    }
+                } else {
+                    break;
+                }
+            }
+            //Fail terribly if we still couldn't
+            if (!isShutdownInProgress()) {
+                throw new RuntimeException("Failed to set the shutdown flag!");
+            }
             sshConnection.disconnect();
             if (join) {
                 try {
@@ -572,7 +614,7 @@ public class GerritHandler extends Thread implements Coordinator {
                 }
             }
         } else if (connecting) {
-            this.shutdownInProgress = true;
+            setShutdownInProgress(true);
             if (join) {
                 try {
                     this.join();
@@ -588,15 +630,13 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Notifies all ConnectionListeners that the connection is down.
      */
-    protected void notifyConnectionDown() {
-        synchronized (connectionListeners) {
-            connected = false;
-            for (ConnectionListener listener : connectionListeners.values()) {
-                try {
-                    listener.connectionDown();
-                } catch (Exception ex) {
-                    logger.error("ConnectionListener threw Exception. ", ex);
-                }
+    protected synchronized void notifyConnectionDown() {
+        connected = false;
+        for (ConnectionListener listener : connectionListeners.values()) {
+            try {
+                listener.connectionDown();
+            } catch (Exception ex) {
+                logger.error("ConnectionListener threw Exception. ", ex);
             }
         }
     }
@@ -604,22 +644,20 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Notifies all ConnectionListeners that the connection is established.
      */
-    protected void notifyConnectionEstablished() {
-        synchronized (connectionListeners) {
-            connected = true;
-            for (ConnectionListener listener : connectionListeners.values()) {
-                try {
-                    listener.connectionEstablished();
-                } catch (Exception ex) {
-                    logger.error("ConnectionListener threw Exception. ", ex);
-                }
+    protected synchronized void notifyConnectionEstablished() {
+        connected = true;
+        for (ConnectionListener listener : connectionListeners.values()) {
+            try {
+                listener.connectionEstablished();
+            } catch (Exception ex) {
+                logger.error("ConnectionListener threw Exception. ", ex);
             }
         }
     }
 
     /**
-     * "Triggers" an event by adding it to the internal queue and be taken by one of the worker threads.
-     * This way it will be put into the normal flow of events as if it was coming from the stream-events command.
+     * "Triggers" an event by adding it to the internal queue and be taken by one of the worker threads. This way it
+     * will be put into the normal flow of events as if it was coming from the stream-events command.
      *
      * @param event the event to trigger.
      */

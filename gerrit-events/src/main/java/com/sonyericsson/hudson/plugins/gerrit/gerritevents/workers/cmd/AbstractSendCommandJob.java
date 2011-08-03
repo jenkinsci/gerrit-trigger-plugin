@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     @Override
     public boolean sendCommand(String command) {
         try {
-            SshConnection ssh = new SshConnection(config.getGerritHostName(),
+            SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
                     config.getGerritSshPort(), config.getGerritAuthentication());
             ssh.executeCommand(command);
             ssh.disconnect();
@@ -88,7 +89,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     @Override
     public String sendCommandStr(String command) {
         try {
-            SshConnection ssh = new SshConnection(config.getGerritHostName(),
+            SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
                     config.getGerritSshPort(), config.getGerritAuthentication());
             String str = ssh.executeCommand(command);
             ssh.disconnect();

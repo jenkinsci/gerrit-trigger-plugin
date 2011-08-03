@@ -266,9 +266,9 @@ public class PluginImpl extends Plugin {
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void stopConnection() throws Exception {
-        savedEventListeners = null;
-        savedConnectionListeners = null;
         if (gerritEventManager != null) {
+            savedEventListeners = null;
+            savedConnectionListeners = null;
             gerritEventManager.shutdown(true);
 
             savedEventListeners = gerritEventManager.removeAllEventListeners();

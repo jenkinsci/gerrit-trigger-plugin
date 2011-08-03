@@ -122,11 +122,27 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+            <version>0.5.1-r1095809</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>2.0.2</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
             <id>powermock-repo</id>
             <url>http://powermock.googlecode.com/svn/repo/</url>
+        </repository>
+        <repository>
+            <id>gerrit-maven-repository</id>
+            <url>http://gerrit.googlecode.com/svn/mavenrepo/</url>
         </repository>
     </repositories>
     <build>

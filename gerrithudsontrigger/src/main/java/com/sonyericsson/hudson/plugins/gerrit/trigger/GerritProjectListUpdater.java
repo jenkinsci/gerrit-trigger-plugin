@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import java.io.BufferedReader;
@@ -92,11 +93,11 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             try {
                 if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null && isConnected()) {
                     IGerritHudsonTriggerConfig activeConfig = PluginImpl.getInstance().getConfig();
-                    SshConnection sshConnection = new SshConnection(
+                    SshConnection sshConnection = SshConnectionFactory.getConnection(
                             activeConfig.getGerritHostName(),
                             activeConfig.getGerritSshPort(),
                             activeConfig.getGerritAuthentication()
-                            );
+                    );
                     setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
                     sshConnection.disconnect();
                 }

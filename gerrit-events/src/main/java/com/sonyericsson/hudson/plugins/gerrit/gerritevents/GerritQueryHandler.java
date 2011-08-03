@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -198,7 +199,7 @@ public class GerritQueryHandler {
 
         SshConnection ssh = null;
         try {
-            ssh = new SshConnection(gerritHostName, gerritSshPort, authentication);
+            ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, authentication);
             BufferedReader reader = new BufferedReader(ssh.executeCommandReader(str.toString()));
             String incomingLine = null;
             while ((incomingLine = reader.readLine()) != null) {
