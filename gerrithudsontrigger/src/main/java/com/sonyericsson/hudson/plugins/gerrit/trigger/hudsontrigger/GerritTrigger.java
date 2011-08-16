@@ -424,6 +424,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     @Override
     public void gerritEvent(ChangeMerged event) {
+        if (!isInteresting(event))
+            return;
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append("project:");
         queryBuilder.append(event.getChange().getProject());
@@ -733,6 +735,22 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
         }
         logger.trace("Nothing interesting here, move along folks!");
+        return false;
+    }
+
+    /**
+     * Should branch be rebuild or not?
+     *
+     * @param event the event
+     * @return true if open changes on this branch should be rebuild.
+     */
+    private boolean isInteresting(ChangeMerged event) {
+        if (gerritProjects == null)
+            return false;
+        for (GerritProject project : gerritProjects) {
+            if (project.isAutoRebuildEnabled(event.getChange().getProject(), event.getChange().getBranch()))
+                return true;
+        }
         return false;
     }
 
