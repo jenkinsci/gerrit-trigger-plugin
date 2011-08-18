@@ -155,9 +155,11 @@ public class PluginImpl extends Plugin {
         logger.info("Shutting down...");
         projectListUpdater.shutdown();
         projectListUpdater.join();
-        gerritEventManager.shutdown(false);
-        //TODO save to register listeners?
-        gerritEventManager = null;
+        if (gerritEventManager != null) {
+            gerritEventManager.shutdown(false);
+            //TODO save to register listeners?
+            gerritEventManager = null;
+        }
         GerritSendCommandQueue.shutdown();
     }
 
