@@ -14,7 +14,7 @@ import hudson.plugins.git.util.BuildData;
 import hudson.plugins.git.util.BuildChooser;
 import hudson.plugins.git.util.BuildChooserDescriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.spearce.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectId;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
