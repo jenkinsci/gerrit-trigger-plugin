@@ -22,18 +22,24 @@ public class TriggerContextConverter implements Converter {
     @Override
     public void marshal(Object source, HierarchicalStreamWriter writer, MarshallingContext context) {
         TriggerContext tc = (TriggerContext)source;
-        writer.startNode("event");
-        context.convertAnother(tc.getEvent());
-        writer.endNode();
-        writer.startNode("thisBuild");
-        marshalItemEntity(tc.getThisBuild(), writer);
-        writer.endNode();
+        if (tc.getEvent() != null) {
+            writer.startNode("event");
+            context.convertAnother(tc.getEvent());
+            writer.endNode();
+        }
+        if (tc.getThisBuild() != null) {
+            writer.startNode("thisBuild");
+            marshalItemEntity(tc.getThisBuild(), writer);
+            writer.endNode();
+        }
         if (tc.getOthers() != null && tc.getOthers().size() > 0) {
             writer.startNode("others");
             for (TriggeredItemEntity entity : tc.getOthers()) {
-                writer.startNode("triggeredItemEntity");
-                marshalItemEntity(entity, writer);
-                writer.endNode();
+                if (entity != null) {
+                    writer.startNode("triggeredItemEntity");
+                    marshalItemEntity(entity, writer);
+                    writer.endNode();
+                }
             }
             writer.endNode();
         }

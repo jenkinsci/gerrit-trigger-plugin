@@ -27,8 +27,8 @@ public class TriggerContextConverterTest {
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
-     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter, com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With an empty list of "others".
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With an empty list of "others".
      *
      * @throws Exception if so.
      */
@@ -60,11 +60,83 @@ public class TriggerContextConverterTest {
         assertSame(readT.getEntity(), readT.getTestClass().getEntity());
     }
 
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@link TriggerContext#thisBuild} set to null.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalNoThisBuild() throws Exception {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        TriggerContext context = new TriggerContext(event);
+        context.setOthers(new LinkedList<TriggeredItemEntity>());
+
+        TestMarshalClass t = new TestMarshalClass(context, "Me", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = null;
+        String xml = null;
+        try {
+            xStream = new XStream2();
+            xStream.registerConverter(new TriggerContextConverter());
+            xml = xStream.toXML(t);
+        } catch (Exception e) {
+            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
+            error.initCause(e);
+            throw error;
+        }
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+    }
+
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@link TriggerContext#event} set to null.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalNoEvent() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+        TriggerContext context = new TriggerContext(null);
+        context.setThisBuild(entity);
+        context.setOthers(new LinkedList<TriggeredItemEntity>());
+
+        TestMarshalClass t = new TestMarshalClass(context, "Me", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = null;
+        String xml = null;
+        try {
+            xStream = new XStream2();
+            xStream.registerConverter(new TriggerContextConverter());
+            xml = xStream.toXML(t);
+        } catch (Exception e) {
+            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
+            error.initCause(e);
+            throw error;
+        }
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNull(readT.getEntity().getEvent());
+
+        assertNotNull(readT.getEntity().getThisBuild());
+
+        assertEquals(100, readT.getEntity().getThisBuild().getBuildNumber().intValue());
+        assertEquals("projectX", readT.getEntity().getThisBuild().getProjectId());
+
+        assertSame(readT.getEntity(), readT.getTestClass().getEntity());
+    }
+
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
-     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter, com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With list of "others" containing two items.
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With list of "others" containing two items.
      *
      * @throws Exception if so.
      */
@@ -104,11 +176,63 @@ public class TriggerContextConverterTest {
         assertEquals("projectZ", other.getProjectId());
     }
 
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With list of "others" containing two items and a null
+     * item between them.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalWithOthersOneNull() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(entity);
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
+        otherBuilds.add(null);
+        otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
+        context.setOthers(otherBuilds);
+
+        TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = null;
+        String xml = null;
+        try {
+            xStream = new XStream2();
+            xStream.registerConverter(new TriggerContextConverter());
+            xml = xStream.toXML(t);
+        } catch (Exception e) {
+            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
+            error.initCause(e);
+            throw error;
+        }
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+        assertNotNull(readT.getEntity().getThisBuild());
+        assertNotNull(readT.getEntity().getOthers());
+
+        assertEquals(2, readT.getEntity().getOthers().size());
+
+        TriggeredItemEntity other = readT.getEntity().getOthers().get(0);
+        assertEquals(1, other.getBuildNumber().intValue());
+        assertEquals("projectY", other.getProjectId());
+
+        other = readT.getEntity().getOthers().get(1);
+        assertEquals(12, other.getBuildNumber().intValue());
+        assertEquals("projectZ", other.getProjectId());
+    }
+
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
-     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader, com.thoughtworks.xstream.converters.UnmarshallingContext)}.
-     * With "retriggerAction_oldData.xml" as input.
+     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
+     * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "retriggerAction_oldData.xml" as input.
      *
      * @throws Exception if so.
      */
@@ -138,8 +262,8 @@ public class TriggerContextConverterTest {
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
-     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader, com.thoughtworks.xstream.converters.UnmarshallingContext)}.
-     * With "retriggerAction_oldData2.xml" as input.
+     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
+     * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "retriggerAction_oldData2.xml" as input.
      *
      * @throws Exception if so.
      */
@@ -172,8 +296,8 @@ public class TriggerContextConverterTest {
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
-     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader, com.thoughtworks.xstream.converters.UnmarshallingContext)}.
-     * With "matrix_build.xml" as input.
+     * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
+     * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "matrix_build.xml" as input.
      *
      * @throws Exception if so.
      */
@@ -206,8 +330,7 @@ public class TriggerContextConverterTest {
     }
 
     /**
-     * Tests {@link TriggerContextConverter#canConvert(Class)}.
-     * With {@link TriggerContext}.class as input.
+     * Tests {@link TriggerContextConverter#canConvert(Class)}. With {@link TriggerContext}.class as input.
      *
      * @throws Exception if so.
      */
@@ -218,8 +341,7 @@ public class TriggerContextConverterTest {
     }
 
     /**
-     * Tests {@link TriggerContextConverter#canConvert(Class)}.
-     * With {@link String}.class as input.
+     * Tests {@link TriggerContextConverter#canConvert(Class)}. With {@link String}.class as input.
      *
      * @throws Exception if so.
      */
@@ -230,8 +352,7 @@ public class TriggerContextConverterTest {
     }
 
     /**
-     * Tests {@link TriggerContextConverter#canConvert(Class)}.
-     * With a subclass of {@link TriggerContext} as input.
+     * Tests {@link TriggerContextConverter#canConvert(Class)}. With a subclass of {@link TriggerContext} as input.
      *
      * @throws Exception if so.
      */
@@ -242,8 +363,8 @@ public class TriggerContextConverterTest {
     }
 
     /**
-     * A qnd subclass of {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext}.
-     * As input to the {@link #testCanConvertSub} test.
+     * A qnd subclass of {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext}. As
+     * input to the {@link #testCanConvertSub} test.
      */
     static class TriggerContextSub extends TriggerContext {
 
@@ -251,8 +372,7 @@ public class TriggerContextConverterTest {
 
 
     /**
-     * A simple POJO class that contains a {@link TriggerContext}.
-     * To aid in the marshal testing.
+     * A simple POJO class that contains a {@link TriggerContext}. To aid in the marshal testing.
      */
     static class TestMarshalClass {
         private TriggerContext entity;
@@ -263,7 +383,7 @@ public class TriggerContextConverterTest {
          * Default Constructor.
          */
         @SuppressWarnings("unused")
-            //called by XStream
+        //called by XStream
         TestMarshalClass() {
         }
 
