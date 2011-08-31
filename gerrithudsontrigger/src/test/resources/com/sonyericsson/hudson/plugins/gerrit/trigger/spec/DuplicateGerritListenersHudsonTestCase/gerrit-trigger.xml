@@ -22,6 +22,6 @@
     <gerritBuildUnstableCodeReviewValue>-1</gerritBuildUnstableCodeReviewValue>
     <enableManualTrigger>true</enableManualTrigger>
     <numberOfSendingWorkerThreads>1</numberOfSendingWorkerThreads>
-    <buildScheduleDelay>20</buildScheduleDelay>
+    <buildScheduleDelay>1</buildScheduleDelay>
   </config>
 </com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl>

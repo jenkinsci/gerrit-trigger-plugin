@@ -1,25 +1,25 @@
 /*
- *  The MIT License
+ * The MIT License
  *
- *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a copy
- *  of this software and associated documentation files (the "Software"), to deal
- *  in the Software without restriction, including without limitation the rights
- *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- *  copies of the Software, and to permit persons to whom the Software is
- *  furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *  The above copyright notice and this permission notice shall be included in
- *  all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
- *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- *  THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
@@ -33,15 +33,24 @@ import org.apache.sshd.server.PublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.security.PublicKey;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * The beginning of a mock of a sshd server. When it is done the idea is to use this to send in stream-events over the
- * ssh connection, and make connection related tests without running Gerrit on the local machine.
+ * ssh connection, and make connection related tests without running Gerrit on the local machine. There is some progress
+ * but most of the predefined command types has issues.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
@@ -56,6 +65,149 @@ public class SshdServerMock implements CommandFactory {
      * How long to sleep to let the ssh-keygen error output appear on stderr.
      */
     protected static final int WAIT_FOR_ERROR_OUTPUT = 1000;
+
+    private static SshdServerMock instance;
+    /**
+     * One second in ms.
+     */
+    protected static final int ONE_SECOND = 1000;
+    /**
+     * Minimum time a thread can sleep.
+     */
+    protected static final int MIN_SLEEP = 200;
+    private volatile CommandMock currentCommand;
+    private List<CommandMock> commandHistory;
+    private List<CommandLookup> commandLookups;
+
+    @Override
+    public Command createCommand(String s) {
+        CommandMock command = findAndCreateCommand(s);
+        return setCurrentCommand(command);
+    }
+
+    /**
+     * Finds a command that matches the given line or a new {@link CommandMock} if nothing is found.
+     *
+     * @param s the command line to match.
+     * @return a command.
+     *
+     * @see #createCommand(String)
+     * @see CommandLookup
+     */
+    private CommandMock findAndCreateCommand(String s) {
+        for (CommandLookup lookup : commandLookups) {
+            if (lookup.isCommand(s)) {
+                return lookup.newInstance(s);
+            }
+        }
+        return new CommandMock(s);
+    }
+
+    /**
+     * Sets the current command being executed and adds it to the commandHistory.
+     *
+     * @param command the command.
+     * @return the command.
+     */
+    protected synchronized CommandMock setCurrentCommand(CommandMock command) {
+        currentCommand = command;
+        if (commandHistory == null) {
+            commandHistory = new LinkedList<CommandMock>();
+        }
+        commandHistory.add(0, command);
+        return currentCommand;
+    }
+
+    /**
+     * The last started command. There could be other commands running in parallel.
+     *
+     * @return the current command.
+     */
+    public CommandMock getCurrentCommand() {
+        return currentCommand;
+    }
+
+    /**
+     * Gets the first running command that matches the given regular expression.
+     *
+     * @param commandSearch the regular expression to match.
+     * @return the found command or null.
+     */
+    public synchronized CommandMock getRunningCommand(String commandSearch) {
+        Pattern p = Pattern.compile(commandSearch);
+        for (CommandMock command : commandHistory) {
+            if (!command.isDestroyed() && p.matcher(command.getCommand()).find()) {
+                return command;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
+     * wanted.
+     *
+     * @param commandPattern the regular expression
+     * @param cmd            the class to create the command from. The class must have a constructor taking a single
+     *                       String argument which is the command requested.
+     * @throws NoSuchMethodException if there is no matching constructor.
+     */
+    public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd)
+            throws NoSuchMethodException {
+        returnCommandFor(commandPattern, cmd, new Object[0], new Class<?>[0]);
+    }
+
+    /**
+     * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
+     * wanted.
+     *
+     * @param commandPattern the regular expression
+     * @param cmd            the class to create the command from. The class must have a constructor where the first
+     *                       argument is a String followed by the class types provided by the types parameter.
+     * @param arguments      the other arguments to the constructor besides the command.
+     * @param types          the other class types to match the constructor against.
+     * @throws NoSuchMethodException if there is no matching constructor.
+     */
+    public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd,
+                                              Object[] arguments, Class<?>[] types) throws NoSuchMethodException {
+        Class<?>[] argumentTypes = new Class<?>[types.length + 1];
+        argumentTypes[0] = String.class;
+        System.arraycopy(types, 0, argumentTypes, 1, types.length);
+        Constructor<? extends CommandMock> constructor = cmd.getConstructor(argumentTypes);
+        if (constructor != null) {
+            if (commandLookups == null) {
+                commandLookups = new LinkedList<CommandLookup>();
+            }
+            commandLookups.add(new CommandLookup(cmd, commandPattern, constructor, arguments));
+        }
+    }
+
+    /**
+     * Waits for a running command matching the provided regular expression to appear in the command history.
+     *
+     * @param commandSearch a regular expression.
+     * @param timeout       the maximum time to wait for the command in ms.
+     * @return the command.
+     */
+    public CommandMock waitForCommand(String commandSearch, int timeout) {
+        long startTime = System.currentTimeMillis();
+        SshdServerMock.CommandMock command = null;
+        do {
+            if (System.currentTimeMillis() - startTime >= timeout) {
+                throw new RuntimeException("Timeout!");
+            }
+            command = getRunningCommand(commandSearch);
+            if (command == null) {
+                try {
+                    Thread.sleep(MIN_SLEEP);
+                    //CS IGNORE EmptyBlock FOR NEXT 2 LINES. REASON: not needed.
+                } catch (InterruptedException e) {
+                }
+            }
+        } while (command == null);
+        System.out.println("Found it!!! " + command.getCommand());
+        return command;
+    }
 
     /**
      * Starts a ssh server on the provided port.
@@ -75,9 +227,21 @@ public class SshdServerMock implements CommandFactory {
                 return true;
             }
         });
-        sshd.setCommandFactory(new SshdServerMock());
+        sshd.setCommandFactory(getInstance());
         sshd.start();
         return sshd;
+    }
+
+    /**
+     * The singleton instance of the Server controller.
+     *
+     * @return the singleton
+     */
+    public static synchronized SshdServerMock getInstance() {
+        if (instance == null) {
+            instance = new SshdServerMock();
+        }
+        return instance;
     }
 
     /**
@@ -136,11 +300,6 @@ public class SshdServerMock implements CommandFactory {
         }
     }
 
-    @Override
-    public Command createCommand(String s) {
-        //TODO implement.
-        return null;
-    }
 
     /**
      * A mocked ssh command.
@@ -158,6 +317,16 @@ public class SshdServerMock implements CommandFactory {
         private OutputStream errorStream;
         private ExitCallback exitCallback;
         private boolean destroyed = false;
+        private String command;
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command to "execute".
+         */
+        public CommandMock(String command) {
+            this.command = command;
+        }
 
         @Override
         public void setInputStream(InputStream inputStream) {
@@ -187,10 +356,13 @@ public class SshdServerMock implements CommandFactory {
          */
         @Override
         public void start(Environment environment) throws IOException {
+            System.out.println("Starting command: " + command);
             //Default implementation just waits for a disconnect
             while (!isDestroyed()) {
                 try {
-                    this.wait(WAIT_FOR_DESTROYED);
+                    synchronized (this) {
+                        this.wait(WAIT_FOR_DESTROYED);
+                    }
                 } catch (InterruptedException e) {
                     System.err.println("[SSHD-CommandMock] Awake.");
                 }
@@ -250,6 +422,175 @@ public class SshdServerMock implements CommandFactory {
          */
         public OutputStream getErrorStream() {
             return errorStream;
+        }
+
+        /**
+         * The command from the client.
+         *
+         * @return the command.
+         */
+        public String getCommand() {
+            return command;
+        }
+    }
+
+    /**
+     * A command that immediately returns 0. There can be some timing issues with this command.
+     */
+    public static class EofCommandMock extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command.
+         */
+        public EofCommandMock(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(Environment environment) throws IOException {
+            System.out.println("Starting EOF-command: " + getCommand());
+            this.stop(0);
+        }
+    }
+
+    /**
+     * A Command that prints a given list of lines when the {@link #now()} method is called and then exits with 0. This
+     * command is not working as expected yet.
+     */
+    public static class PrintLinesCommand extends CommandMock {
+
+        private List<String> lines;
+        private boolean doItNow = false;
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         * @param lines   the lines to print.
+         */
+        public PrintLinesCommand(String command, List<String> lines) {
+            super(command);
+            this.lines = lines;
+        }
+
+        /**
+         * call this to make the command print its lines to the output.
+         */
+        public synchronized void now() {
+            doItNow = true;
+            this.notifyAll();
+        }
+
+        /**
+         * If it is time to start printing. Used for synchronous reading.
+         *
+         * @return true if so.
+         */
+        private synchronized boolean isNow() {
+            return doItNow;
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            System.out.println("Starting PL-command: " + getCommand());
+            while (!isNow()) {
+                synchronized (this) {
+                    try {
+                        this.wait(ONE_SECOND);
+                    } catch (InterruptedException e) {
+                        System.err.println("Interrupted while waiting.");
+                    }
+                }
+            }
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                for (String line : lines) {
+                    System.out.println("Sending: " + line);
+                    out.println(line);
+                    out.flush();
+                }
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Utility class for looking up and creating commands.
+     *
+     * @see SshdServerMock#findAndCreateCommand(String)
+     */
+    public static class CommandLookup {
+        private Class<? extends CommandMock> cmdClass;
+        private Pattern commandPattern;
+        private Constructor<? extends CommandMock> constructor;
+        private Object[] arguments;
+
+        /**
+         * Standard constructor.
+         *
+         * @param cmdClass       the class of the command to create.
+         * @param commandPattern a regular expression matching a command the creation should be performed on.
+         * @param constructor    the constructor of the command to call.
+         * @param arguments      the arguments to the constructor except for the first actual command.
+         * @see SshdServerMock#returnCommandFor(String, Class)
+         * @see SshdServerMock#returnCommandFor(String, Class, Object[], Class[])
+         */
+        public CommandLookup(Class<? extends CommandMock> cmdClass, Pattern commandPattern,
+                             Constructor<? extends CommandMock> constructor, Object... arguments) {
+            this.cmdClass = cmdClass;
+            this.commandPattern = commandPattern;
+            this.constructor = constructor;
+            this.arguments = arguments;
+        }
+
+        /**
+         * Standard constructor.
+         *
+         * @param cmdClass       the class of the command to create.
+         * @param commandPattern a regular expression matching a command the creation should be performed on.
+         * @param constructor    the constructor of the command to call.
+         * @param arguments      the arguments to the constructor except for the first actual command.
+         * @see SshdServerMock#returnCommandFor(String, Class)
+         * @see SshdServerMock#returnCommandFor(String, Class, Object[], Class[])
+         */
+        public CommandLookup(Class<? extends CommandMock> cmdClass, String commandPattern,
+                             Constructor<? extends CommandMock> constructor, Object... arguments) {
+            this(cmdClass, Pattern.compile(commandPattern), constructor, arguments);
+        }
+
+        /**
+         * If the given command matches the pattern.
+         *
+         * @param command the command
+         * @return true if so.
+         */
+        public boolean isCommand(String command) {
+            return commandPattern.matcher(command).find();
+        }
+
+        /**
+         * Creates a new instance of the command with all it's parameters.
+         *
+         * @param command the first parameter to the constructor.
+         * @return a new instance of the command.
+         */
+        public CommandMock newInstance(String command) {
+            try {
+                if (arguments == null || arguments.length <= 0) {
+                    return constructor.newInstance(command);
+                } else {
+                    Object[] args = new Object[arguments.length + 1];
+                    args[0] = command;
+                    System.arraycopy(arguments, 0, args, 1, arguments.length);
+                    return constructor.newInstance(args);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Unpredicted reflection error. ", e);
+            }
         }
     }
 }

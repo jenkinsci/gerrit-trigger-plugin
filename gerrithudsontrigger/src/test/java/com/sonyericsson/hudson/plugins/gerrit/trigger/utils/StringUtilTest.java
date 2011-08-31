@@ -11,7 +11,7 @@ public class StringUtilTest {
 
     /**
      * test escapeQuotes() of StringUtil
-     * {@link ccom.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil}.
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil}.
      */
     @Test
     public void escapeQuotesTests() {

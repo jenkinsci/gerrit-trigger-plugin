@@ -29,9 +29,12 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.TaskListener;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +44,11 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
+import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.*;
@@ -51,7 +59,7 @@ import static org.mockito.Mockito.*;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = {
         "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory"
-        }, value = AbstractProject.class)
+}, value = AbstractProject.class)
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
@@ -59,6 +67,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
+     *
      * @throws Exception if so.
      */
     @Before
@@ -72,6 +81,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Returns a mocked version of an AbstractProject, where getFullName() returns the provided name.
+     *
      * @param fullName - the name of the project.
      * @return a mock.
      */
@@ -82,11 +92,11 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Returns a mocked AbstractBuild.
-     * The build will contain a mocked AbstractProject with the provided name
-     * and have the provided buildNumber.
+     * Returns a mocked AbstractBuild. The build will contain a mocked AbstractProject with the provided name and have
+     * the provided buildNumber.
+     *
      * @param projectFullName the project's name
-     * @param buildNumber the buildNumber.
+     * @param buildNumber     the buildNumber.
      * @return a mock.
      */
     private AbstractBuild mockBuild(String projectFullName, int buildNumber) {
@@ -99,8 +109,9 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onCompleted(hudson.model.AbstractBuild, hudson.model.TaskListener)}.
-     * With a trigger in normal/non-silent mode.
+     * Tests {@link ToGerritRunListener#onCompleted(hudson.model.AbstractBuild, hudson.model.TaskListener)}. With a
+     * trigger in normal/non-silent mode.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -110,6 +121,9 @@ public class ToGerritRunListenerTest {
         event = spy(event);
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
         BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
@@ -125,8 +139,9 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onCompleted(hudson.model.AbstractBuild, hudson.model.TaskListener)}.
-     * With a trigger in silent mode.
+     * Tests {@link ToGerritRunListener#onCompleted(hudson.model.AbstractBuild, hudson.model.TaskListener)}. With a
+     * trigger in silent mode.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -136,6 +151,9 @@ public class ToGerritRunListenerTest {
         event = spy(event);
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
@@ -146,8 +164,9 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onStarted(hudson.model.AbstractBuild, hudson.model.TaskListener)}.
-     * With a trigger in normal/non-silent mode.
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.AbstractBuild, hudson.model.TaskListener)}. With a
+     * trigger in normal/non-silent mode.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -157,6 +176,9 @@ public class ToGerritRunListenerTest {
         event = spy(event);
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
@@ -164,14 +186,15 @@ public class ToGerritRunListenerTest {
 
         verify(event).fireBuildStarted(same(build));
         verify(mockNotificationFactory).queueBuildStarted(same(build),
-                                          any(TaskListener.class),
-                                          same(event),
-                                          any(BuildsStartedStats.class));
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onStarted(hudson.model.AbstractBuild, hudson.model.TaskListener)}.
-     * With a trigger in silent mode.
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.AbstractBuild, hudson.model.TaskListener)}. With a
+     * trigger in silent mode.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -181,6 +204,9 @@ public class ToGerritRunListenerTest {
         event = spy(event);
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
@@ -192,6 +218,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Tests {@link ToGerritRunListener#onTriggered(hudson.model.AbstractProject, PatchsetCreated)}.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -209,6 +236,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Tests {@link ToGerritRunListener#onRetriggered(hudson.model.AbstractProject, PatchsetCreated, java.util.List)}.
+     *
      * @throws Exception if so.
      */
     @Test
@@ -222,5 +250,114 @@ public class ToGerritRunListenerTest {
         toGerritRunListener.onRetriggered(project, event, null);
 
         verify(event).fireProjectTriggered(same(project));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#cleanUpGerritCauses(GerritCause, hudson.model.AbstractBuild)}. With only one
+     * cause in the list.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testCleanUpGerritCausesOne() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause cause = new GerritCause(event, true);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        List<Cause> causes = new LinkedList<Cause>();
+        causes.add(cause);
+        when(causeAction.getCauses()).thenReturn(causes);
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        toGerritRunListener.cleanUpGerritCauses(cause, build);
+
+        assertEquals(1, causes.size());
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#cleanUpGerritCauses(GerritCause, hudson.model.AbstractBuild)}. With three
+     * duplicated causes in the list.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testCleanUpGerritCausesThree() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause cause = new GerritCause(event, true);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        List<Cause> causes = new LinkedList<Cause>();
+        causes.add(cause);
+        causes.add(cause);
+        causes.add(cause);
+        when(causeAction.getCauses()).thenReturn(causes);
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        toGerritRunListener.cleanUpGerritCauses(cause, build);
+
+        assertEquals(1, causes.size());
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#cleanUpGerritCauses(GerritCause, hudson.model.AbstractBuild)}. With three
+     * duplicated causes of different instances in the list.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testCleanUpGerritCausesThreeInstances() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause cause = new GerritCause(event, true);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        List<Cause> causes = new LinkedList<Cause>();
+        causes.add(cause);
+        causes.add(new GerritCause(event, true));
+        causes.add(new GerritCause(event, true));
+        when(causeAction.getCauses()).thenReturn(causes);
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        toGerritRunListener.cleanUpGerritCauses(cause, build);
+
+        assertEquals(1, causes.size());
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#cleanUpGerritCauses(GerritCause, hudson.model.AbstractBuild)}. With two
+     * duplicated causes and one manual cause in the list.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testCleanUpGerritCausesOneManual() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause cause = new GerritCause(event, true);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        GerritManualCause manualCause = new GerritManualCause();
+        manualCause.setEvent(event);
+        manualCause.setSilentMode(true);
+        CauseAction causeAction = mock(CauseAction.class);
+        List<Cause> causes = new LinkedList<Cause>();
+        causes.add(cause);
+        causes.add(manualCause);
+        causes.add(cause);
+        when(causeAction.getCauses()).thenReturn(causes);
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        toGerritRunListener.cleanUpGerritCauses(cause, build);
+
+        assertEquals(2, causes.size());
     }
 }

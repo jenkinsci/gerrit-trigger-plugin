@@ -169,4 +169,35 @@ public class GerritCause extends Cause {
     public String toString() {
         return "GerritCause: " + event + " silent: " + silentMode;
     }
+
+    //CS IGNORE InlineConditionals FOR NEXT 40 LINES. REASON: Auto generated code
+    //CS IGNORE MagicNumber FOR NEXT 40 LINES. REASON: Auto generated code
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GerritCause that = (GerritCause)o;
+
+        if (silentMode != that.silentMode) {
+            return false;
+        }
+        if (!event.equals(that.event)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = event.hashCode();
+        result = 31 * result + (silentMode ? 1 : 0);
+        return result;
+    }
 }

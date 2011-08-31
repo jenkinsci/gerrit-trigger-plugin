@@ -31,6 +31,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import org.slf4j.Logger;
@@ -40,6 +42,7 @@ import java.util.List;
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
@@ -59,6 +62,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * Returns the registered instance of this class from the list of all listeners.
+     *
      * @return the instance.
      */
     public static ToGerritRunListener getInstance() {
@@ -78,19 +82,23 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         GerritCause cause = getCause(r);
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
+            cleanUpGerritCauses(cause, r);
             PatchsetCreated event = cause.getEvent();
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
                 PatchSetKey key = memory.completed(event, r);
-                memory.updateTriggerContext(key, cause, r);
+                updateTriggerContexts(r, key);
                 if (memory.isAllBuildsCompleted(key)) {
-                    logger.info("All Builds are completed for cause: {}", cause);
-                    event.fireAllBuildsCompleted();
-                    NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(key), listener);
-                    memory.forget(key);
+                    try {
+                        logger.info("All Builds are completed for cause: {}", cause);
+                        event.fireAllBuildsCompleted();
+                        NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(key), listener);
+                    } finally {
+                        memory.forget(key);
+                    }
                 } else {
                     logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
-                                cause, memory.getStatusReport(key));
+                            cause, memory.getStatusReport(key));
                 }
             }
         }
@@ -101,14 +109,15 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         GerritCause cause = getCause(r);
         logger.debug("Started. Build: {} Cause: {}", r, cause);
         if (cause != null) {
-            cause.getContext().setThisBuild(r);
+            cleanUpGerritCauses(cause, r);
+            setThisBuild(r);
             PatchSetKey key = null;
             if (cause.getEvent() != null) {
                 cause.getEvent().fireBuildStarted(r);
             }
             if (!cause.isSilentMode()) {
                 key = memory.started(cause.getEvent(), r);
-                memory.updateTriggerContext(key, cause, r);
+                updateTriggerContexts(r, key);
                 BuildsStartedStats stats = memory.getBuildsStartedStats(key);
                 NotificationFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
             }
@@ -120,9 +129,64 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     /**
+     * Updates the {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext}s for all the
+     * {@link GerritCause}s in the build.
+     *
+     * @param r   the build.
+     * @param key the memory key to update.
+     * @see BuildMemory#updateTriggerContext(
+     *      com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey,
+     *      com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause, hudson.model.AbstractBuild)
+     */
+    protected void updateTriggerContexts(AbstractBuild r, PatchSetKey key) {
+        List<Cause> causes = r.getCauses();
+        for (Cause cause : causes) {
+            if (cause instanceof GerritCause) {
+                memory.updateTriggerContext(key, (GerritCause)cause, r);
+            }
+        }
+    }
+
+    /**
+     * Updates all {@link GerritCause}s
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext#thisBuild}
+     * in the build.
+     *
+     * @param r the build to update.
+     */
+    protected void setThisBuild(AbstractBuild r) {
+        List<Cause> causes = r.getCauses();
+        for (Cause cause : causes) {
+            if (cause instanceof GerritCause) {
+                ((GerritCause)cause).getContext().setThisBuild(r);
+            }
+        }
+    }
+
+    /**
+     * Workaround for builds that are triggered by the same Gerrit cause but multiple times in the same quiet period.
+     *
+     * @param firstFound the cause first returned by {@link AbstractBuild#getCause(Class)}.
+     * @param build      the build to clean up.
+     */
+    protected void cleanUpGerritCauses(GerritCause firstFound, AbstractBuild build) {
+        List<Cause> causes = build.getAction(CauseAction.class).getCauses();
+        int pos = causes.indexOf(firstFound) + 1;
+        while (pos < causes.size()) {
+            Cause c = causes.get(pos);
+            if (c.equals(firstFound)) {
+                causes.remove(pos);
+            } else {
+                pos++;
+            }
+        }
+    }
+
+    /**
      * Called just before a build is scheduled by the trigger.
+     *
      * @param project the project that will be built.
-     * @param event the event that caused the build to be scheduled.
+     * @param event   the event that caused the build to be scheduled.
      */
     public synchronized void onTriggered(AbstractProject project, PatchsetCreated event) {
         //TODO stop builds for earlier patch-sets on same change.
@@ -138,8 +202,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * Called just before a build is scheduled by the user to retrigger.
-     * @param project the project.
-     * @param event the event.
+     *
+     * @param project     the project.
+     * @param event       the event.
      * @param otherBuilds the list of other builds in the previous context.
      */
     public synchronized void onRetriggered(AbstractProject project,
@@ -157,9 +222,11 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * Checks the memory if the project is currently building the event.
+     *
      * @param project the project.
-     * @param event the event.
+     * @param event   the event.
      * @return true if so.
+     *
      * @see BuildMemory#isBuilding(PatchsetCreated, hudson.model.AbstractProject)
      */
     public boolean isBuilding(AbstractProject project, PatchsetCreated event) {
@@ -172,8 +239,10 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * Checks the memory if the event is building.
+     *
      * @param event the event.
      * @return true if so.
+     *
      * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
      */
     public boolean isBuilding(PatchsetCreated event) {
@@ -186,6 +255,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * Finds the GerritCause for a build if there is one.
+     *
      * @param build the build to look in.
      * @return the GerritCause or null if there is none.
      */

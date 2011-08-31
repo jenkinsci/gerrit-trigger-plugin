@@ -31,6 +31,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.EnvVars;
+import net.sf.json.JSONObject;
+
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.*;
 
 
 /**
@@ -76,6 +79,39 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Gives you a PatchsetCreated mock as a JSON object.
+     * @return PatchsetCreated mock.
+     * @see #createPatchsetCreated()
+     */
+    public static JSONObject createPatchsetCreatedJson() {
+        JSONObject event = new JSONObject();
+        JSONObject change = new JSONObject();
+        JSONObject account = new JSONObject();
+        account.put(NAME, "Name");
+        account.put(EMAIL, "email@domain.com");
+
+        change.put(PROJECT, "project");
+        change.put(BRANCH, "branch");
+        change.put(ID, "Iddaaddaa123456789");
+        change.put(NUMBER, "1000");
+        change.put(SUBJECT, "subject");
+        change.put(URL, "http://gerrit/1000");
+        change.put(OWNER, account);
+
+        event.put(CHANGE, change);
+
+        JSONObject patchSet = new JSONObject();
+        patchSet.put(NUMBER, "1");
+        patchSet.put(REVISION, "9999");
+        patchSet.put(REF, "refs/changes/1000/1");
+        patchSet.put(UPLOADER, account);
+
+        event.put(PATCH_SET, patchSet);
+        event.put(UPLOADER, account);
         return event;
     }
 
