@@ -89,7 +89,7 @@ public class ParameterExpander {
     public String getBuildStartedCommand(AbstractBuild r, TaskListener taskListener,
             PatchsetCreated event, BuildsStartedStats stats) {
 
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         String gerritCmd = config.getGerritCmdBuildStarted();
         Map<String, String> parameters = createStandardParameters(r, event,
                 getBuildStartedCodeReviewValue(r),
@@ -115,7 +115,7 @@ public class ParameterExpander {
      * @return the value.
      */
     private int getBuildStartedVerifiedValue(AbstractBuild r) {
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedVerifiedValue();
@@ -139,7 +139,7 @@ public class ParameterExpander {
      * @return the value.
      */
     private int getBuildStartedCodeReviewValue(AbstractBuild r) {
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedCodeReviewValue();
@@ -192,15 +192,6 @@ public class ParameterExpander {
         map.put("CODE_REVIEW", String.valueOf(codeReview));
 
         return map;
-    }
-
-    /**
-     * Finds the GerritTrigger in a project.
-     * @param project the project.
-     * @return the trigger if there is one, null otherwise.
-     */
-    private GerritTrigger getTrigger(AbstractProject project) {
-        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
     /**
@@ -311,7 +302,7 @@ public class ParameterExpander {
         for (Entry entry : memoryImprint.getEntries()) {
             verified = Math.min(verified, getVerifiedValue(
                     entry.getBuild().getResult(),
-                    getTrigger(entry.getProject())));
+                    GerritTrigger.getTrigger(entry.getProject())));
         }
         return verified;
     }
@@ -326,7 +317,7 @@ public class ParameterExpander {
         for (Entry entry : memoryImprint.getEntries()) {
             codeReview = Math.min(codeReview, getCodeReviewValue(
                     entry.getBuild().getResult(),
-                    getTrigger(entry.getProject())));
+                    GerritTrigger.getTrigger(entry.getProject())));
         }
         return codeReview;
     }
@@ -386,7 +377,7 @@ public class ParameterExpander {
             for (Entry entry : entries) {
                 AbstractBuild build = entry.getBuild();
                 if (build != null) {
-                    GerritTrigger trigger = getTrigger(build.getProject());
+                    GerritTrigger trigger = GerritTrigger.getTrigger(build.getProject());
                     Result res = build.getResult();
                     String customMessage = null;
 

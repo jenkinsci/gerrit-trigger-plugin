@@ -50,6 +50,12 @@
                                     value="${it.config.gerritAuthKeyFilePassword}"
                                     default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
                     </f:entry>
+                    <f:entry title="${%Build Current Patches Only}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html">
+                        <f:checkbox name="gerritBuildCurrentPatchesOnly"
+                                    checked="${it.config.gerritBuildCurrentPatchesOnly}"
+                                    default="true" />
+                    </f:entry>
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"
