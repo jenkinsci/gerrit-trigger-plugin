@@ -218,7 +218,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             GerritCause cause;
             if (event instanceof ManualPatchsetCreated) {
                 cause = new GerritManualCause((ManualPatchsetCreated)event, silentMode);
-            } if (event instanceof AutoRebuildPatchset) {
+            } else if (event instanceof AutoRebuildPatchset) {
                 cause = new GerritAutoRebuildCause(
                         ((AutoRebuildPatchset)event).getMergedEvent(), event,
                         silentMode);
