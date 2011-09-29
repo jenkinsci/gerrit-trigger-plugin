@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,7 +46,7 @@ public enum GerritEventType {
      /**
       * A change-merged event.
       */
-     CHANGE_MERGED("change-merged", false, null),
+     CHANGE_MERGED("change-merged", true, ChangeMerged.class),
      /**
       * A comment-added event.
       */

@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class TriggerContext {
 
-    private PatchsetCreated event;
+    private GerritTriggeredEvent event;
     private TriggeredItemEntity thisBuild;
     private List<TriggeredItemEntity> others;
 
@@ -55,7 +55,7 @@ public class TriggerContext {
      * @param others    the other building and untriggered builds.
      */
     public TriggerContext(AbstractBuild thisBuild,
-                          PatchsetCreated event,
+                          GerritTriggeredEvent event,
                           List<TriggeredItemEntity> others) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
         this.event = event;
@@ -67,7 +67,7 @@ public class TriggerContext {
      *
      * @param event the event for this context.
      */
-    public TriggerContext(PatchsetCreated event) {
+    public TriggerContext(GerritTriggeredEvent event) {
         this.event = event;
     }
 
@@ -133,7 +133,7 @@ public class TriggerContext {
      *
      * @return the event.
      */
-    public PatchsetCreated getEvent() {
+    public GerritTriggeredEvent getEvent() {
         return event;
     }
 
@@ -142,7 +142,7 @@ public class TriggerContext {
      *
      * @param event the event.
      */
-    void setEvent(PatchsetCreated event) {
+    void setEvent(GerritTriggeredEvent event) {
         this.event = event;
     }
 
