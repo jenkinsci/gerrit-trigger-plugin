@@ -71,7 +71,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE = 1;
     /**
-     * Default verified vote to Gerrit when a build is successful.
+     * Default manual trigger enabled.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
     private String gerritHostName;

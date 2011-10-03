@@ -292,7 +292,7 @@ public class ParameterExpander {
                 return config.getGerritBuildUnstableVerifiedValue();
             }
         } else {
-            //As bad as failue, for now
+            //As bad as failure, for now
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
                 return trigger.getGerritBuildFailedVerifiedValue();
             } else {
