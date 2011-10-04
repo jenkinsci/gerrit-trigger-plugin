@@ -206,7 +206,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            } else {
+                event.fireProjectTriggered(myProject);
+            }
             GerritCause cause;
             if (event instanceof ManualPatchsetCreated) {
                 cause = new GerritManualCause((ManualPatchsetCreated)event, silentMode);
