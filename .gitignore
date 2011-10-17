@@ -11,3 +11,4 @@ nb-configuration.xml
 *.ipr
 *.iws
 bin
+generated-sources
