@@ -119,7 +119,7 @@ public class ParameterExpanderTest {
 
         ParameterExpander instance = new ParameterExpander(config);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(3);
@@ -133,10 +133,20 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(-1);
         entries[2] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
 
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildNotBuiltVerifiedValue()).thenReturn(-4);
+        entries[3] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.NOT_BUILT);
+
         when(memoryImprint.getEntries()).thenReturn(entries);
 
+        // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
         int expResult = -1;
-        int result = instance.getMinimumVerifiedValue(memoryImprint);
+        int result = instance.getMinimumVerifiedValue(memoryImprint, true);
+        assertEquals(expResult, result);
+
+        // Otherwise, we should use NOT_BUILT.
+        expResult = -4;
+        result = instance.getMinimumVerifiedValue(memoryImprint, false);
         assertEquals(expResult, result);
     }
 
@@ -150,7 +160,7 @@ public class ParameterExpanderTest {
 
         ParameterExpander instance = new ParameterExpander(config);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(3);
@@ -164,10 +174,20 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-1);
         entries[2] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
 
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildNotBuiltCodeReviewValue()).thenReturn(-4);
+        entries[3] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.NOT_BUILT);
+
         when(memoryImprint.getEntries()).thenReturn(entries);
 
+        // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
         int expResult = -1;
-        int result = instance.getMinimumCodeReviewValue(memoryImprint);
+        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(expResult, result);
+
+        // Otherwise, we should use NOT_BUILT.
+        expResult = -4;
+        result = instance.getMinimumCodeReviewValue(memoryImprint, false);
         assertEquals(expResult, result);
     }
 

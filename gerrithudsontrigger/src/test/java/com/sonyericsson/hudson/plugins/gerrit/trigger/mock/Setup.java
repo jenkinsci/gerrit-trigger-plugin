@@ -329,8 +329,8 @@ public final class Setup {
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, "", "", "", "", null, null, triggerOnEvents);
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, true, "", "", "", "", "", null, null, triggerOnEvents);
 
         if (project != null)
           trigger.start(project, true);
