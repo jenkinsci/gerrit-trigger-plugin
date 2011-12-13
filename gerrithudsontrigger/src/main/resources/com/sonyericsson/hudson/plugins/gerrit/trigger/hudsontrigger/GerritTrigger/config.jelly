@@ -105,15 +105,33 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Gerrit Event Type}" 
-                 field="eventType"
+        <f:entry title="${%Trigger on Patchset Uploaded}" 
+                 field="triggerOnPatchsetUploadedEvent"
                  help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">
-            <f:checkbox name="eventPatchsetUploaded"
-                        default="true"
-                        checked="${it.eventPatchsetUploaded}"/>
-            <f:checkbox name="eventChangeMerged"
-                        default="false"
-                        checked="${it.eventChangeMerged}"/>
+                <f:checkbox name="triggerOnPatchsetUploadedEvent"
+							default="true"
+                        	checked="${it.triggerOnPatchsetUploadedEvent}"/>
+        </f:entry>
+        <f:entry title="${%Trigger on Change Merged}" 
+                 field="triggerOnChangeMergedEvent">
+                <f:checkbox name="triggerOnChangeMergedEvent"
+                        	checked="${it.triggerOnChangeMergedEvent}"/>
+        </f:entry>
+        <f:entry title="${%Trigger on Comment Added}" 
+                 field="triggerOnCommentAddedEvent">
+        	<table>
+            	    <f:optionalBlock title="" inline="true" name="triggerOnCommentAddedEvent"
+	                        checked="${it.triggerOnCommentAddedEvent}">
+				    	<f:entry title="${%Approval Category}"
+                                 field="commentAddedTriggerApprovalCategory">
+					    	<f:textbox name="commentAddedTriggerApprovalCategory"/>
+					    </f:entry>
+				    	<f:entry title="${%Approval Value}"
+                                 field="commentAddedTriggerApprovalValue">
+					    	<f:textbox name="commentAddedTriggerApprovalValue"/>
+					    </f:entry>
+    	        	</f:optionalBlock>
+		  		</table>
         </f:entry>
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
