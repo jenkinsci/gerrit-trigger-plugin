@@ -8,6 +8,11 @@
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
+                <f:entry title="${%URL to post}"
+                         field="customUrl"
+                         help="/plugin/gerrit-trigger/trigger/help-CustomUrl.html">
+                    <f:textbox/>
+                </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedVerifiedValue"
