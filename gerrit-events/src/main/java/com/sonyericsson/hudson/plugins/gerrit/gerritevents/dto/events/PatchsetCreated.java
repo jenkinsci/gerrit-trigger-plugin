@@ -23,13 +23,22 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
@@ -41,6 +50,8 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  */
 public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonEvent {
 
+
+   private static final Logger logger = LoggerFactory.getLogger(PatchsetCreated.class);
     /**
      * The Gerrit change the event is related to.
      */
@@ -55,6 +66,11 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
      * The uploader of the patch-set.
      */
     private Account uploader;
+
+    /**
+     * The changed files in this patchset.
+     */
+    private List<String> files;
 
     @Override
     public GerritEventType getEventType() {
@@ -120,6 +136,40 @@ public class PatchsetCreated extends GerritEventLifecycle implements GerritJsonE
      */
     public void setUploader(Account uploader) {
         this.uploader = uploader;
+    }
+
+    /**
+     * Queries gerrit for the files included in this patch set.
+     * @param gerritQueryHandler the query handler, responsible for the queries to gerrit.
+     * @return a list of files that are part of this patch set.
+     */
+    public List<String> getFiles(GerritQueryHandler gerritQueryHandler) {
+        if (files == null) {
+            files = new LinkedList<String>();
+            try {
+                List<JSONObject> jsonList = gerritQueryHandler.queryFiles("change:" + getChange().getId());
+                for (JSONObject json : jsonList) {
+                    if (json.has("type") && "stats".equalsIgnoreCase(json.getString("type"))) {
+                        continue;
+                    }
+                    if (json.has("currentPatchSet")) {
+                        JSONObject currentPatchSet = json.getJSONObject("currentPatchSet");
+                        if (currentPatchSet.has("files")) {
+                            JSONArray changedFiles = currentPatchSet.optJSONArray("files");
+                            for (int i = 0; i < changedFiles.size(); i++) {
+                                JSONObject file = changedFiles.getJSONObject(i);
+                                files.add(file.getString("file"));
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("IOException occured. ", e);
+            } catch (GerritQueryException e) {
+                logger.error("Bad query. ", e);
+            }
+        }
+        return files;
     }
 
     @Override

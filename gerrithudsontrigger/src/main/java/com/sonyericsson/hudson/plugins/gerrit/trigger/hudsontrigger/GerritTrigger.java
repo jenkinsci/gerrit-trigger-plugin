@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
@@ -686,8 +687,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {
                 if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch())) {
-                    logger.trace("According to {} the event is interesting.", p);
-                    return true;
+                    if (p.getFilePaths() != null && p.getFilePaths().size() > 0) {
+                        if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch(),
+                        event.getFiles(new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                            logger.trace("According to {} the event is interesting.", p);
+                            return true;
+                        }
+                    } else {
+                        logger.trace("According to {} the event is interesting.", p);
+                        return true;
+                    }
                 }
             }
         }

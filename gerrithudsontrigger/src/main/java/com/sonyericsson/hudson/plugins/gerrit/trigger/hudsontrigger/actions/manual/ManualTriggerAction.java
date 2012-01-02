@@ -209,7 +209,7 @@ public class ManualTriggerAction implements RootAction {
         request.getSession(true).setAttribute("queryString", queryString);
 
         try {
-            List<JSONObject> json = handler.queryJava(queryString, true, true);
+            List<JSONObject> json = handler.queryJava(queryString, true, true, false);
             request.getSession(true).setAttribute(SESSION_RESULT, json);
             //TODO Implement some smart default selection.
             //That can notice that a specific revision is searched or that there is only one result etc.

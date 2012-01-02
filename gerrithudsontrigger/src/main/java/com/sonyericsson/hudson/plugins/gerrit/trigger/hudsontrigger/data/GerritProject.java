@@ -41,6 +41,8 @@ public class GerritProject implements Describable<GerritProject> {
     private CompareType compareType;
     private String pattern;
     private List<Branch> branches;
+    private List<FilePath> filePaths;
+
 
     /**
      * Default empty constructor.
@@ -54,13 +56,15 @@ public class GerritProject implements Describable<GerritProject> {
      * @param compareType the compareType
      * @param pattern the project-name pattern
      * @param branches the branch-rules
+     * @param filePaths the file-path rules.
      */
     @DataBoundConstructor
-    public GerritProject(CompareType compareType, String pattern, List<Branch> branches) {
+    public GerritProject(CompareType compareType, String pattern, List<Branch> branches, List<FilePath> filePaths) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
+        this.filePaths = filePaths;
     }
 
     /**
@@ -96,7 +100,7 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * The list of Branch-rules.
+     * The list of FilePath-rules.
      * @return the branch-rules
      */
     public List<Branch> getBranches() {
@@ -104,11 +108,51 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * The list of Branch-rules.
+     * The list of FilePath-rules.
      * @param branches the branch-rules
      */
     public void setBranches(List<Branch> branches) {
         this.branches = branches;
+    }
+
+    /**
+     * The list of filepath-rules.
+     * @return the filepath-rules
+     */
+    public List<FilePath> getFilePaths() {
+        return filePaths;
+    }
+
+    /**
+     * The list of filepath-rules.
+     * @param filePaths the filepath-rules
+     */
+    public void setFilePaths(List<FilePath> filePaths) {
+        this.filePaths = filePaths;
+    }
+
+    /**
+     * Compares the project, branch and files to see if the rules specified is a match.
+     * @param project the gerrit project
+     * @param branch the branch.
+     * @param files the files.
+     * @return true is the rules match.
+     */
+    public boolean isInteresting(String project, String branch, List<String> files) {
+        if (compareType.matches(pattern, project)) {
+            for (Branch b : branches) {
+                if (b.isInteresting(branch)) {
+                    for (FilePath f : filePaths) {
+                        if (f.isInteresting(files)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        } else {
+            return false;
+        }
     }
 
     /**

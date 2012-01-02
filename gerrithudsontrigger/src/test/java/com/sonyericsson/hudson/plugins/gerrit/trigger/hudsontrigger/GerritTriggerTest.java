@@ -755,6 +755,7 @@ public class GerritTriggerTest {
 
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
                 0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
@@ -816,6 +817,7 @@ public class GerritTriggerTest {
 
         GerritProject gP = mock(GerritProject.class);
         doReturn(false).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
                 0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
@@ -846,6 +848,7 @@ public class GerritTriggerTest {
 
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
                 0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
@@ -881,6 +884,7 @@ public class GerritTriggerTest {
 
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
                 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
@@ -917,6 +921,7 @@ public class GerritTriggerTest {
 
         GerritProject gP = mock(GerritProject.class);
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
                 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");

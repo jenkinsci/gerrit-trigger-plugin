@@ -104,7 +104,7 @@
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
                 <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">
                     <tr>
-                        <th width="50" style="border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid grey;">
+                        <th width="60" style="border-left: 1px solid black; border-top: 1px solid black; border-bottom: 1px solid grey;">
                             <f:repeatableDeleteButton/>
                         </th>
                         <th width="80" style="border-top: 1px solid black; border-bottom: 1px solid grey;">
@@ -182,6 +182,39 @@
                                     </tr>
                                 </table>
                             </f:repeatable>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
+                            <f:repeatable var="f" field="filePaths" add="${%Add Filepath}" minimum="0" header="">
+                            <table width="100%">
+                                <tr>
+                                    <td width="60">
+                                    File
+                                    </td>
+                                    <td width="80">
+                                        <select class="setting-input" name="_.compareType">
+                                            <j:forEach items="${types}" var="me">
+                                                <j:choose>
+                                                    <j:when test="${loop.getCompareType().name()==me.name()}">
+                                                       <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                                    </j:when>
+                                                    <j:otherwise>
+                                                        <option value="${me.name()}">${me.getDisplayName()}</option>
+                                                    </j:otherwise>
+                                              </j:choose>
+                                            </j:forEach>
+                                            </select>
+                                    </td>
+                                    <td minwidth="150">
+                                        <f:textbox field="pattern" value="${b.pattern}" default=""/>
+                                    </td>
+                                    <td width="65">
+                                        <f:repeatableDeleteButton/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </f:repeatable>
                         </td>
                     </tr>
                 </table>
