@@ -354,7 +354,7 @@ public class ParameterExpander {
         int codeReview = getMinimumCodeReviewValue(memoryImprint);
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
-        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint));
+        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
 
 
         AbstractBuild build = null;
@@ -369,9 +369,11 @@ public class ParameterExpander {
      * Creates the BUILD_STATS string to send in a message,
      * it contains the status of every build with its URL.
      * @param memoryImprint the memory of all the builds.
+     * @param listener the taskListener
+     * @param parameters the &lt;parameters&gt; from the trigger.
      * @return the string.
      */
-    private String createBuildsStats(MemoryImprint memoryImprint) {
+    private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener, Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 
@@ -392,7 +394,11 @@ public class ParameterExpander {
 
                     // For some reason, Gerrit won't accept command linefeeds without a space.
                     str.append(" \n");
-                    str.append(rootUrl).append(entry.getBuild().getUrl());
+                    if (trigger.getCustomUrl() == null || trigger.getCustomUrl().isEmpty()) {
+                        str.append(rootUrl).append(entry.getBuild().getUrl());
+                    } else {
+                        str.append(expandParameters(trigger.getCustomUrl(), build, listener, parameters));
+                    }
                     str.append(MESSAGE_DELIMITER);
 
                     if (res == Result.SUCCESS) {

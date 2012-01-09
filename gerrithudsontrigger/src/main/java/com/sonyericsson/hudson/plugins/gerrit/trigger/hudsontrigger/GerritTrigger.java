@@ -87,6 +87,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
+    private String customUrl;
 
     /**
      * Default DataBound Constructor.
@@ -121,6 +122,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
+     * @param customUrl                      Custom URL to sen to gerrit instead of build URL
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -138,8 +140,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
-            String buildFailureMessage) {
-
+            String buildFailureMessage,
+            String customUrl) {
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
@@ -155,6 +157,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
+        this.customUrl = customUrl;
     }
 
     @Override
@@ -675,6 +678,23 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * URL to send in comment to gerrit.
+     * @return custom URL to post back to gerrit
+     */
+    public String getCustomUrl() {
+        return customUrl;
+    }
+
+    /**
+     * Set custom URL to post back to gerrit
+     *
+     * @param customUrl url to set
+     */
+    public void setCustomUrl(String customUrl) {
+        this.customUrl = customUrl;
     }
 
     /**
