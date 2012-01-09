@@ -147,7 +147,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an average buildScheduleDelay 20.
      */
     @Test
@@ -169,7 +169,7 @@ public class GerritTriggerTest {
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 eq(20),
                 same(gerritCause),
                 isA(Action.class),
@@ -180,7 +180,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay -20.
      */
     @Test
@@ -202,7 +202,7 @@ public class GerritTriggerTest {
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 //negative value will be reset into default value 3
                 eq(3),
                 same(gerritCause),
@@ -214,7 +214,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay 10000.
      */
     @Test
@@ -236,7 +236,7 @@ public class GerritTriggerTest {
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 eq(10000),
                 same(gerritCause),
                 isA(Action.class),
@@ -248,7 +248,7 @@ public class GerritTriggerTest {
     /**
      * Tests the schedule method of GerritTrigger.
      * It verifies that
-     * {@link hudson.model.AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * {@link hudson.model.AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct parameters when there are some default parameters present.
      */
     @Test
@@ -277,7 +277,7 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -285,7 +285,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isParameterActionWithStringParameterValue("MOCK_PARAM", "mock_value"));
         //Just to make sure the normal arguments are there as well.
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -296,7 +296,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct parameters when there are no default parameters present.
      */
     @Test
@@ -323,7 +323,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -331,7 +331,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isParameterActionWithStringParameterValue(GERRIT_CHANGE_ID.name(), event.getChange().getId()));
         //Just to make sure one more normal arguments is there as well.
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -342,7 +342,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      */
     @Test
@@ -375,7 +375,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -392,7 +392,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.uploader to null keeping event.patchSet.uploader.
      */
@@ -426,7 +426,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -443,7 +443,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader to null keeping event.uploader set.
      */
@@ -477,7 +477,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -494,7 +494,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
@@ -527,7 +527,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -544,7 +544,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
@@ -578,7 +578,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -624,7 +624,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(same(project), same(event), anyListOf(AbstractBuild.class));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -666,7 +666,7 @@ public class GerritTriggerTest {
                 isA(PatchsetCreated.class),
                 anyListOf(AbstractBuild.class));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -721,7 +721,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(thisProject, event, null);
 
-        verify(thisProject).scheduleBuild(
+        verify(thisProject).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -731,7 +731,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(otherProject, event, null);
 
-        verify(otherProject).scheduleBuild(
+        verify(otherProject).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -766,7 +766,7 @@ public class GerritTriggerTest {
 
         verify(listener).onTriggered(same(project), same(event));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritCause.class),
                 isA(BadgeAction.class),
@@ -857,7 +857,7 @@ public class GerritTriggerTest {
 
         verify(listener).onTriggered(same(project), same(event));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritManualCause.class),
                 isA(BadgeAction.class),
@@ -892,7 +892,7 @@ public class GerritTriggerTest {
 
         verifyNoMoreInteractions(listener);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritCause.class),
                 isA(BadgeAction.class),
@@ -928,7 +928,7 @@ public class GerritTriggerTest {
 
         verifyNoMoreInteractions(listener);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritManualCause.class),
                 isA(BadgeAction.class),

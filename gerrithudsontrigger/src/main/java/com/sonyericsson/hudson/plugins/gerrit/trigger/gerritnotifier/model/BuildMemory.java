@@ -178,8 +178,9 @@ public class BuildMemory {
         PatchSetKey key = createKey(event);
         MemoryImprint pb = memory.get(key);
         if (pb == null) {
-            //Shoudn't happen but just in case, keep the memory.
+            //A build should not start for a job that hasn't been registered. Keep the memory anyway.
             pb = new MemoryImprint(event);
+            logger.warn("Build started without being registered first.");
             memory.put(key, pb);
         }
         pb.set(build.getProject(), build);

@@ -33,6 +33,12 @@ import net.sf.json.JSONObject;
 public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
 
     /**
+     * If enabled, then old patch revision builds will be canceled
+     * @return true if so.
+     */
+    boolean isGerritBuildCurrentPatchesOnly();
+
+    /**
      * Base URL for the Gerrit UI.
      * @return the gerrit front end URL. Always ends with '/'
      */

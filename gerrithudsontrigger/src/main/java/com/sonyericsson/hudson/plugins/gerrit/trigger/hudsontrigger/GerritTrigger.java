@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -54,6 +56,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.kohsuke.stapler.QueryParameter;
+import java.util.HashMap;
+import java.util.concurrent.Future;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
@@ -71,6 +76,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private static final int HASH_NUMBER = 53;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
+    //! Association between patches and the jobs that we're running for them
+    private transient HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
     private Integer gerritBuildStartedVerifiedValue;
@@ -160,6 +167,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.customUrl = customUrl;
     }
 
+    /**
+     * Finds the GerritTrigger in a project.
+     * @param project the project.
+     * @return the trigger if there is one, null otherwise.
+     */
+    public static GerritTrigger getTrigger(AbstractProject project) {
+        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
+    }
+
     @Override
     public void start(AbstractProject project, boolean newInstance) {
         logger.debug("Start project: {}", project);
@@ -207,6 +223,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
+
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
@@ -220,6 +237,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             } else {
                 cause = new GerritCause(event, silentMode);
             }
+
             schedule(cause, event);
         }
     }
@@ -244,7 +262,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
-        boolean ok = project.scheduleBuild(
+        Future build = project.scheduleBuild2(
                 getBuildScheduleDelay(),
                 cause,
                 new BadgeAction(event),
@@ -252,9 +270,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAllAction(cause.getContext()),
                 createParameters(event, project));
 
+        // check if we're running any jobs for this event
+        if (runningJobs.containsKey(event.getChange())) {
+            // if we were, let's cancel them
+            Future oldBuild = runningJobs.remove(event.getChange());
+            if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                oldBuild.cancel(true);
+            }
+        }
+        // add our new job
+        runningJobs.put(event.getChange(), build);
+
         logger.info("Project {} Build Scheduled: {} By event: {}",
-                new Object[]{project.getName(), ok,
+                new Object[]{project.getName(), (build != null),
                         event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+    }
+
+    /**
+     * Used to inform the plugin that the builds for a job have ended
+     * This allows us to clean up our list of what jobs we're running
+     */
+    public void notifyBuildEnded(PatchsetCreated patchset) {
+        runningJobs.remove(patchset.getChange());
     }
 
     /**
