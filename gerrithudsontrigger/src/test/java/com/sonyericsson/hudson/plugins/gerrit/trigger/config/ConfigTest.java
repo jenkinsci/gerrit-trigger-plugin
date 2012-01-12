@@ -23,11 +23,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import java.io.File;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *

@@ -121,6 +121,34 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.8</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
+                        <artifactId>build-config</artifactId>
+                        <version>1.2.3-SNAPSHOT</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <configLocation>swe_checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                    <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <!-- Optional derectory to put findbugs xdoc xml report -->
+                    <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
+                </configuration>
+            </plugin>
         </plugins>
         <extensions>
             <extension>
@@ -135,7 +163,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.8</version>
                 <configuration>
                     <configLocation>swe_checkstyle.xml</configLocation>
                     <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
@@ -147,7 +175,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>2.0.1</version>
+                <version>2.3.2</version>
                 <configuration>
                     <xmlOutput>true</xmlOutput>
                     <!-- Optional derectory to put findbugs xdoc xml report -->

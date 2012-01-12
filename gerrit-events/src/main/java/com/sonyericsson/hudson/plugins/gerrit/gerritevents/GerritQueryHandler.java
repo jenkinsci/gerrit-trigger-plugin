@@ -243,7 +243,7 @@ public class GerritQueryHandler {
      * Internal visitor for handling a line of text.
      * Used by {@link #runQuery(java.lang.String, boolean, boolean, boolean, LineVisitor)}.
      */
-    static interface LineVisitor {
+    interface LineVisitor {
         /**
          * Visits a line of query result.
          * @param line the line.

@@ -174,7 +174,7 @@ public abstract class GerritEventLifecycle {
     /**
      * Internal Visitor for different events.
      */
-    private static interface ListenerVisitor {
+    private interface ListenerVisitor {
         /**
          * Visits the listener.
          * @param listener the listener to visit.

@@ -24,19 +24,21 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Collection;
-import org.junit.runners.Parameterized.Parameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
-import org.junit.runners.Parameterized;
-import org.junit.runner.RunWith;
 import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 //CS IGNORE LineLength FOR NEXT 200 LINES. REASON: Readability for the parameters.
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock tests.

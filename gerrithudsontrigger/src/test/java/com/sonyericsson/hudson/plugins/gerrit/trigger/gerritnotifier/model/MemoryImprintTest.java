@@ -28,7 +28,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import org.junit.Test;
-import static junit.framework.Assert.*;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
