@@ -186,7 +186,7 @@
                     </tr>
                     <tr>
                         <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
-                            <f:repeatable var="f" field="filePaths" add="${%Add Filepath}" minimum="0" header="">
+                            <f:repeatable var="f" field="filePaths" add="${%Add File path}" minimum="0" header="">
                             <table width="100%">
                                 <tr>
                                     <td width="60">
