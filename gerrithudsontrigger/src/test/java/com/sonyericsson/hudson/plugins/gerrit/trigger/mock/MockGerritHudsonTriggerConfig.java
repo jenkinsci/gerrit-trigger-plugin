@@ -23,10 +23,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import java.io.File;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import net.sf.json.JSONObject;
+
+import java.io.File;
 
 /**
  * Mock class of a Config.

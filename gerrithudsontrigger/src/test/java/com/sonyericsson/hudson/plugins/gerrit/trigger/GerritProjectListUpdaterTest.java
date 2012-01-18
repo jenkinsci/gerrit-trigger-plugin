@@ -23,11 +23,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import java.util.List;
-import java.io.StringReader;
-import java.io.IOException;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
+
+import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Test class for the GerritProjectListUpdater.

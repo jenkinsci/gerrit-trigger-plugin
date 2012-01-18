@@ -23,14 +23,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
 /**

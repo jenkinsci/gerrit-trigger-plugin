@@ -40,12 +40,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static java import.
+//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static import
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.ManualTriggerAction.ID_SEPARATOR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static java import.
 
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
