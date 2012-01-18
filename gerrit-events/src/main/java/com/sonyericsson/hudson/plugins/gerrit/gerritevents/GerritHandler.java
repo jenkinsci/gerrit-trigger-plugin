@@ -69,6 +69,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public static final int CONNECT_SLEEP = 2000;
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
+    private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
     /**
      * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
      */
@@ -96,6 +97,7 @@ public class GerritHandler extends Thread implements Coordinator {
     private final Object shutdownInProgressSync = new Object();
     private boolean connecting = false;
     private boolean connected = false;
+    private String gerritVersion = null;
 
     /**
      * Creates a GerritHandler with all the default values set.
@@ -169,6 +171,14 @@ public class GerritHandler extends Thread implements Coordinator {
         for (int i = 0; i < numberOfWorkerThreads; i++) {
             workers.add(new EventThread(this, "Gerrit Worker EventThread_" + i));
         }
+    }
+
+    /**
+     * The gerrit version we are connected to.
+     * @return the gerrit version.
+     */
+    public String getGerritVersion() {
+        return gerritVersion;
     }
 
     /**
@@ -261,6 +271,7 @@ public class GerritHandler extends Thread implements Coordinator {
                 ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, authentication);
                 notifyConnectionEstablished();
                 connecting = false;
+                gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
                 logger.debug("connection seems ok, returning it.");
                 return ssh;
             } catch (SshConnectException sshConEx) {
@@ -312,6 +323,22 @@ public class GerritHandler extends Thread implements Coordinator {
                 logger.warn("Got interrupted while sleeping.", ex);
             }
         }
+    }
+
+    /**
+     * Removes the "gerrit version " from the start of the response from gerrit.
+     * @param version the response from gerrit.
+     * @return the input string with "gerrit version " removed.
+     */
+    private String formatVersion(String version) {
+        if (version == null) {
+            return version;
+        }
+        String[] split = version.split(GERRIT_VERSION_PREFIX);
+        if (split.length < 2) {
+            return version;
+        }
+        return split[1];
     }
 
     /**

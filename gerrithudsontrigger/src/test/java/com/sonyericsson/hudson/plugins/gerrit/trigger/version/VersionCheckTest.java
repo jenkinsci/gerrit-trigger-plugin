@@ -1,0 +1,93 @@
+/*
+ *  The MIT License
+ *
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+
+package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
+
+
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+import static org.powermock.api.mockito.PowerMockito.when;
+
+/**
+ * Tests for the version checking of gerrit.
+ */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ PluginImpl.class })
+public class VersionCheckTest {
+    /**
+     * Tests that the gerrit version is high enough to run the file trigger feature.
+     */
+    @Test
+    public void testHighEnoughVersion() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getVersion()).thenReturn("2.2.3-456-g3fc6036");
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+    }
+
+    /**
+     * Tests that the gerrit version is not high enough to run the file trigger feature.
+     */
+    @Test
+    public void testNotHighEnoughVersion() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getVersion()).thenReturn("2.2.2-456-g3fc6036");
+        assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+    }
+
+    /**
+     * Tests that the gerrit version is not high enough to run the file trigger feature.
+     */
+    @Test
+    public void testUnknownVersionEmpty() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getVersion()).thenReturn("");
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+    }
+
+    /**
+     * Tests that the gerrit version is not high enough to run the file trigger feature.
+     */
+    @Test
+    public void testUnknownVersionNull() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getVersion()).thenReturn(null);
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+    }
+}

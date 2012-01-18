@@ -1,0 +1,98 @@
+/*
+ *  The MIT License
+ *
+ *  Copyright 2012 Sony Ericsson Mobile Communications. All rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
+package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import hudson.util.VersionNumber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.StringTokenizer;
+
+/**
+ * Util class used to determine if the current gerrit version is high enough to run a specific feature..
+ *
+ * @author Tomas Westling &lt;thomas.westling@sonyericsson.com&gt;
+ */
+public final class GerritVersionChecker {
+
+    private static final Logger logger = LoggerFactory.getLogger(GerritVersionChecker.class);
+
+    /**
+     * The feature version we want to compare the current gerrit version with.
+     */
+    public enum Feature {
+        /**
+         * Triggering on files, added in Gerrit 2.2.3.
+         */
+        fileTrigger("2.2.3");
+
+        private final String version;
+        private final VersionNumber versionNumber;
+
+        /**
+         * Standard constructor.
+         * @param version the version number.
+         */
+        Feature(String version) {
+            this.version = version;
+            versionNumber = new VersionNumber(version);
+        }
+
+    };
+
+    /**
+     * Private constructor to prevent instantiation of the util class.
+     */
+    private GerritVersionChecker() {
+    }
+
+    /**
+     *
+     * @param feature the gerrit feature we want to use.
+     * @return true if the gerrit version is high enough for us to use this feature.
+     */
+    public static boolean isCorrectVersion(Feature feature) {
+        VersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getVersion());
+        return (!feature.versionNumber.isNewerThan(gerritVersion));
+    }
+
+    /**
+     * Creates a new VersionNumber from the response of the gerrit server.
+     * @param version the version as a String.
+     * @return the version as a versionNumber.
+     */
+    private static VersionNumber createVersionNumber(String version) {
+        if (version == null || version.equals("")) {
+            logger.error("Gerrit version number is null or the empty string.");
+            return new HighestVersionNumber();
+        }
+        StringTokenizer tokens = new StringTokenizer(version, "-");
+        if (tokens.countTokens() < 2) {
+            logger.error("Could not parse gerrit version number: " + version);
+            return new HighestVersionNumber();
+        }
+        return new VersionNumber(tokens.nextToken());
+    }
+}

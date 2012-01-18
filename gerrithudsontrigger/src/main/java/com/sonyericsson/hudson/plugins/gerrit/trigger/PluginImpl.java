@@ -340,4 +340,12 @@ public class PluginImpl extends Plugin {
             throw new IllegalStateException("Manager not started!");
         }
     }
+
+    /**
+     * Returns the current gerrit version.
+     * @return the current gerrit version as a String.
+     */
+    public String getVersion() {
+        return gerritEventManager.getGerritVersion();
+    }
 }
