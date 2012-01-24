@@ -240,8 +240,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
+        int projectbuildDelay = getBuildScheduleDelay();
+        if (project.getHasCustomQuietPeriod()
+                && project.getQuietPeriod() > projectbuildDelay) {
+            projectbuildDelay = project.getQuietPeriod();
+        }
         boolean ok = project.scheduleBuild(
-                getBuildScheduleDelay(),
+                projectbuildDelay,
                 cause,
                 new BadgeAction(event),
                 new RetriggerAction(cause.getContext()),
