@@ -270,11 +270,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         // check if we're running any jobs for this event
         if (runningJobs.containsKey(event.getChange())) {
+            logger.debug("A previous build of {} is running for event {}",
+                    project.getName(), event.getChange().getId());
             // if we were, let's cancel them
             Future oldBuild = runningJobs.remove(event.getChange());
             if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                logger.debug("Cancelling old build {} of {}", oldBuild.toString(), project.getName());
                 oldBuild.cancel(true);
             }
+        } else {
+            logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
+                    project.getName(), event.getChange().getId());
         }
         // add our new job
         runningJobs.put(event.getChange(), build);
