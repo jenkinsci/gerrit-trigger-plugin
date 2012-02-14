@@ -74,7 +74,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default verified vote to Gerrit when a build is successful.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
+    /**
+     * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
+     */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = true;
+
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritUserName;
@@ -246,7 +250,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritBuildCurrentPatchesOnly
+     * GerritBuildCurrentPatchesOnly.
      *
      * @param gerritBuildCurrentPatchesOnly whether to only build the current patch set
      * @see #isGerritBuildCurrentPatchesOnly()

@@ -31,7 +31,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Expands a parameterized string to its full potential.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class ParameterExpander {
@@ -364,7 +364,8 @@ public class ParameterExpander {
      * @param parameters the &lt;parameters&gt; from the trigger.
      * @return the string.
      */
-    private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener, Map<String, String> parameters) {
+    private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
+                                     Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 

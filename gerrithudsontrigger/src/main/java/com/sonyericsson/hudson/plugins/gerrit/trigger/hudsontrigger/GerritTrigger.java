@@ -23,7 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
@@ -56,7 +55,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.kohsuke.stapler.QueryParameter;
 import java.util.HashMap;
 import java.util.concurrent.Future;
 
@@ -287,8 +285,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Used to inform the plugin that the builds for a job have ended
-     * This allows us to clean up our list of what jobs we're running
+     * Used to inform the plugin that the builds for a job have ended.
+     * This allows us to clean up our list of what jobs we're running.
+     *
+     * @param patchset the patchset.
      */
     public void notifyBuildEnded(PatchsetCreated patchset) {
         runningJobs.remove(patchset.getChange());
@@ -726,7 +726,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Set custom URL to post back to gerrit
+     * Set custom URL to post back to gerrit.
      *
      * @param customUrl url to set
      */

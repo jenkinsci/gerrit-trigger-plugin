@@ -209,12 +209,24 @@ public class ParameterExpanderTest {
      */
     @Test
     public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessful("", "\n \nhttp://localhost/test/ : SUCCESS");
-        tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>", "\n \nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
-        tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console", "\n \nhttp://localhost/test/console : SUCCESS");
+        tryGetBuildCompletedCommandSuccessful("",
+                "\n \nhttp://localhost/test/ : SUCCESS");
+        tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
+                "\n \nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+        tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console",
+                "\n \nhttp://localhost/test/console : SUCCESS");
     }
 
-    public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats) throws IOException, InterruptedException {
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessful()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats)
+            throws IOException, InterruptedException {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         Hudson hudson = PowerMockito.mock(Hudson.class);

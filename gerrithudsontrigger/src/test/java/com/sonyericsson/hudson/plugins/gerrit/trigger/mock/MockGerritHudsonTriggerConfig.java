@@ -192,6 +192,7 @@ public class MockGerritHudsonTriggerConfig implements
         return false;
     }
 
+    @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return true;
     }
