@@ -74,11 +74,13 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default verified vote to Gerrit when a build is successful.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
+    public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = true;
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritUserName;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
+    private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
     private String gerritVerifiedCmdBuildUnstable;
@@ -124,6 +126,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() <= 0) {
             gerritAuthKeyFilePassword = null;
         }
+        gerritBuildCurrentPatchesOnly = formData.optBoolean(
+                "gerritBuildCurrentPatchesOnly",
+                DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
 
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -240,6 +245,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.gerritAuthKeyFilePassword = gerritAuthKeyFilePassword;
     }
 
+    /**
+     * GerritBuildCurrentPatchesOnly
+     *
+     * @param gerritBuildCurrentPatchesOnly whether to only build the current patch set
+     * @see #isGerritBuildCurrentPatchesOnly()
+     */
+    public void setGerritBuildCurrentPatchesOnly(boolean gerritBuildCurrentPatchesOnly) {
+        this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
+    }
+
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -343,6 +358,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setNumberOfReceivingWorkerThreads(int numberOfReceivingWorkerThreads) {
         this.numberOfWorkerThreads = numberOfReceivingWorkerThreads;
+    }
+
+    @Override
+    public boolean isGerritBuildCurrentPatchesOnly() {
+        return gerritBuildCurrentPatchesOnly;
     }
 
     @Override

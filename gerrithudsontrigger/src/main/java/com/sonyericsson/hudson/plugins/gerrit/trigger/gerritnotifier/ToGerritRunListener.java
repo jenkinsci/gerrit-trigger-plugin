@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -84,6 +85,10 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
             PatchsetCreated event = cause.getEvent();
+            if (GerritTrigger.getTrigger(r.getProject()) != null) {
+                // There won't be a trigger if this job was run through a unit test
+                GerritTrigger.getTrigger(r.getProject()).notifyBuildEnded(event);
+            }
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
                 PatchSetKey key = memory.completed(event, r);
