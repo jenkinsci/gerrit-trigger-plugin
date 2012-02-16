@@ -26,8 +26,10 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.GerritEventLifeCycleAdaptor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
 import hudson.model.AbstractBuild;
@@ -38,9 +40,11 @@ import hudson.model.Result;
 import hudson.util.RunList;
 import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
+import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 //CS IGNORE MagicNumber FOR NEXT 300 LINES. REASON: Testdata.
 
@@ -178,6 +182,84 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
             }
         }
         assertEquals(1, count);
+    }
+
+    /**
+     * Tests that a build for a patch set of the gets canceled when a new patch set of the same change arrives.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testBuildLatestPatchsetOnly() throws Exception {
+        ((Config)PluginImpl.getInstance().getConfig()).setGerritBuildCurrentPatchesOnly(true);
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        project.getBuildersList().add(new SleepBuilder(2000));
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        PluginImpl.getInstance().triggerEvent(firstEvent);
+        AbstractBuild firstBuild = waitForBuildToStart(firstEvent, 2000);
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        PluginImpl.getInstance().triggerEvent(secondEvent);
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 2, 5000);
+        assertEquals(2, builds.size());
+        assertSame(Result.ABORTED, firstBuild.getResult());
+        assertSame(Result.ABORTED, builds.getFirstBuild().getResult());
+        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+    }
+
+    /**
+     * Same test logic as {@link #testBuildLatestPatchsetOnly()}
+     * except the trigger is configured to not cancel the previous build.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testNotBuildLatestPatchsetOnly() throws Exception {
+        ((Config)PluginImpl.getInstance().getConfig()).setGerritBuildCurrentPatchesOnly(false);
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        project.getBuildersList().add(new SleepBuilder(2000));
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        PluginImpl.getInstance().triggerEvent(firstEvent);
+        AbstractBuild firstBuild = waitForBuildToStart(firstEvent, 2000);
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        PluginImpl.getInstance().triggerEvent(secondEvent);
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 2, 5000);
+        assertEquals(2, builds.size());
+        assertSame(Result.SUCCESS, firstBuild.getResult());
+        assertSame(Result.SUCCESS, builds.getFirstBuild().getResult());
+        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+    }
+
+    /**
+     * Waits for a build to start for the specified event.
+     *
+     * @param event     the event to monitor.
+     * @param timeoutMs the maximum time in ms to wait for the build to start.
+     * @return the build that started.
+     */
+    private AbstractBuild waitForBuildToStart(PatchsetCreated event, int timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        final AtomicReference<AbstractBuild> ref = new AtomicReference<AbstractBuild>();
+        event.addListener(new GerritEventLifeCycleAdaptor() {
+            @Override
+            public void buildStarted(PatchsetCreated event, AbstractBuild build) {
+                ref.getAndSet(build);
+            }
+        });
+        while (ref.get() == null) {
+            if (startTime - System.currentTimeMillis() >= timeoutMs) {
+                throw new RuntimeException("Timeout!");
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                System.err.println("Interrupted while waiting!");
+            }
+        }
+        return ref.get();
     }
 
     /**

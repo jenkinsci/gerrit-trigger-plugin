@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
@@ -55,6 +56,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.concurrent.Future;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
@@ -72,6 +75,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private static final int HASH_NUMBER = 53;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
+    //! Association between patches and the jobs that we're running for them
+    private transient HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
     private Integer gerritBuildStartedVerifiedValue;
@@ -88,6 +93,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
+    private String customUrl;
 
     /**
      * Default DataBound Constructor.
@@ -122,6 +128,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
+     * @param customUrl                      Custom URL to sen to gerrit instead of build URL
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -139,8 +146,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
-            String buildFailureMessage) {
-
+            String buildFailureMessage,
+            String customUrl) {
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
@@ -156,6 +163,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
+        this.customUrl = customUrl;
+    }
+
+    /**
+     * Finds the GerritTrigger in a project.
+     * @param project the project.
+     * @return the trigger if there is one, null otherwise.
+     */
+    public static GerritTrigger getTrigger(AbstractProject project) {
+        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
     @Override
@@ -205,10 +222,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
+
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            } else {
+                event.fireProjectTriggered(myProject);
             }
             GerritCause cause;
             if (event instanceof ManualPatchsetCreated) {
@@ -216,6 +236,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             } else {
                 cause = new GerritCause(event, silentMode);
             }
+
             schedule(cause, event);
         }
     }
@@ -245,7 +266,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 && project.getQuietPeriod() > projectbuildDelay) {
             projectbuildDelay = project.getQuietPeriod();
         }
-        boolean ok = project.scheduleBuild(
+        Future build = project.scheduleBuild2(
                 projectbuildDelay,
                 cause,
                 new BadgeAction(event),
@@ -253,9 +274,36 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAllAction(cause.getContext()),
                 createParameters(event, project));
 
+        // check if we're running any jobs for this event
+        if (runningJobs.containsKey(event.getChange())) {
+            logger.debug("A previous build of {} is running for event {}",
+                    project.getName(), event.getChange().getId());
+            // if we were, let's cancel them
+            Future oldBuild = runningJobs.remove(event.getChange());
+            if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                logger.debug("Cancelling old build {} of {}", oldBuild.toString(), project.getName());
+                oldBuild.cancel(true);
+            }
+        } else {
+            logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
+                    project.getName(), event.getChange().getId());
+        }
+        // add our new job
+        runningJobs.put(event.getChange(), build);
+
         logger.info("Project {} Build Scheduled: {} By event: {}",
-                new Object[]{project.getName(), ok,
+                new Object[]{project.getName(), (build != null),
                         event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+    }
+
+    /**
+     * Used to inform the plugin that the builds for a job have ended.
+     * This allows us to clean up our list of what jobs we're running.
+     *
+     * @param patchset the patchset.
+     */
+    public void notifyBuildEnded(PatchsetCreated patchset) {
+        runningJobs.remove(patchset.getChange());
     }
 
     /**
@@ -679,6 +727,23 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * URL to send in comment to gerrit.
+     * @return custom URL to post back to gerrit
+     */
+    public String getCustomUrl() {
+        return customUrl;
+    }
+
+    /**
+     * Set custom URL to post back to gerrit.
+     *
+     * @param customUrl url to set
+     */
+    public void setCustomUrl(String customUrl) {
+        this.customUrl = customUrl;
     }
 
     /**

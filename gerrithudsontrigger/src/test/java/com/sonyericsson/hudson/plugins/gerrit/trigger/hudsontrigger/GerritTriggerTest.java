@@ -177,7 +177,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an average buildScheduleDelay 20.
      */
     @Test
@@ -192,14 +192,14 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(20);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 eq(20),
                 same(gerritCause),
                 isA(Action.class),
@@ -210,7 +210,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay -20.
      */
     @Test
@@ -225,14 +225,14 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(-20);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 //negative value will be reset into default value 3
                 eq(3),
                 same(gerritCause),
@@ -244,7 +244,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay 10000.
      */
     @Test
@@ -259,14 +259,14 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(10000);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 eq(10000),
                 same(gerritCause),
                 isA(Action.class),
@@ -278,7 +278,7 @@ public class GerritTriggerTest {
     /**
      * Tests the schedule method of GerritTrigger.
      * It verifies that
-     * {@link hudson.model.AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * {@link hudson.model.AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct parameters when there are some default parameters present.
      */
     @Test
@@ -292,7 +292,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -307,7 +307,7 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -315,7 +315,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isParameterActionWithStringParameterValue("MOCK_PARAM", "mock_value"));
         //Just to make sure the normal arguments are there as well.
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -326,7 +326,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct parameters when there are no default parameters present.
      */
     @Test
@@ -337,7 +337,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -353,7 +353,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -361,7 +361,7 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isParameterActionWithStringParameterValue(GERRIT_CHANGE_ID.name(), event.getChange().getId()));
         //Just to make sure one more normal arguments is there as well.
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -372,7 +372,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      */
     @Test
@@ -386,7 +386,7 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -405,7 +405,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -422,7 +422,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.uploader to null keeping event.patchSet.uploader.
      */
@@ -437,7 +437,7 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -456,7 +456,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -473,7 +473,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader to null keeping event.uploader set.
      */
@@ -488,7 +488,7 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -507,7 +507,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -524,7 +524,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
@@ -538,7 +538,7 @@ public class GerritTriggerTest {
 
         Account owner = new Account("Bobby", "bobby@somewhere.com");
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -557,7 +557,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -574,7 +574,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests the schedule method of GerritTrigger.
-     * It verifies that {@link AbstractProject#scheduleBuild(int, hudson.model.Cause, hudson.model.Action...)}
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
@@ -589,7 +589,7 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Bobby", null);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -608,7 +608,7 @@ public class GerritTriggerTest {
 
         trigger.schedule(gerritCause, event);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 same(gerritCause),
                 isA(Action.class),
@@ -646,7 +646,7 @@ public class GerritTriggerTest {
         when(listener.isBuilding(project, event)).thenReturn(false);
 
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -654,7 +654,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(same(project), same(event), anyListOf(AbstractBuild.class));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -686,7 +686,7 @@ public class GerritTriggerTest {
         when(listener.isBuilding(project, event)).thenReturn(false);
 
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -696,7 +696,7 @@ public class GerritTriggerTest {
                 isA(PatchsetCreated.class),
                 anyListOf(AbstractBuild.class));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -729,11 +729,11 @@ public class GerritTriggerTest {
         when(listener.isBuilding(event)).thenReturn(false);
 
         GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
 
         GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
         when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
         when(otherProject.isBuildable()).thenReturn(true);
@@ -751,7 +751,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(thisProject, event, null);
 
-        verify(thisProject).scheduleBuild(
+        verify(thisProject).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -761,7 +761,7 @@ public class GerritTriggerTest {
 
         verify(listener).onRetriggered(otherProject, event, null);
 
-        verify(otherProject).scheduleBuild(
+        verify(otherProject).scheduleBuild2(
                 anyInt(),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
@@ -788,7 +788,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -797,7 +797,7 @@ public class GerritTriggerTest {
 
         verify(listener).onTriggered(same(project), same(event));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritCause.class),
                 isA(BadgeAction.class),
@@ -820,7 +820,7 @@ public class GerritTriggerTest {
         when(project.isBuildable()).thenReturn(false);
 
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST,
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -850,7 +850,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -881,7 +881,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, false, false, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -890,7 +890,7 @@ public class GerritTriggerTest {
 
         verify(listener).onTriggered(same(project), same(event));
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritManualCause.class),
                 isA(BadgeAction.class),
@@ -917,7 +917,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -926,7 +926,7 @@ public class GerritTriggerTest {
 
         verifyNoMoreInteractions(listener);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritCause.class),
                 isA(BadgeAction.class),
@@ -954,7 +954,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP),
-                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+                0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -963,7 +963,7 @@ public class GerritTriggerTest {
 
         verifyNoMoreInteractions(listener);
 
-        verify(project).scheduleBuild(
+        verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritManualCause.class),
                 isA(BadgeAction.class),
@@ -1022,7 +1022,7 @@ public class GerritTriggerTest {
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
         GerritTrigger triggerWithEscapeQuotesOn =
-                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "");
+                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true, "", "", "", "", null);
 
         //the Trigger is creating parameters with escaped quote in "subject".
         ParametersAction paremetersAction =
@@ -1090,7 +1090,7 @@ public class GerritTriggerTest {
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
         GerritTrigger triggerWithEscapeQuotesOff =
-                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "");
+                new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false, "", "", "", "", null);
 
         //the Trigger is creating parameters with escaped quote in "subject"
         ParametersAction paremetersAction =

@@ -31,7 +31,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
@@ -42,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Expands a parameterized string to its full potential.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class ParameterExpander {
@@ -89,7 +89,7 @@ public class ParameterExpander {
     public String getBuildStartedCommand(AbstractBuild r, TaskListener taskListener,
             PatchsetCreated event, BuildsStartedStats stats) {
 
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         String gerritCmd = config.getGerritCmdBuildStarted();
         Map<String, String> parameters = createStandardParameters(r, event,
                 getBuildStartedCodeReviewValue(r),
@@ -115,7 +115,7 @@ public class ParameterExpander {
      * @return the value.
      */
     private int getBuildStartedVerifiedValue(AbstractBuild r) {
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedVerifiedValue();
@@ -139,7 +139,7 @@ public class ParameterExpander {
      * @return the value.
      */
     private int getBuildStartedCodeReviewValue(AbstractBuild r) {
-        GerritTrigger trigger = getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedCodeReviewValue();
@@ -192,15 +192,6 @@ public class ParameterExpander {
         map.put("CODE_REVIEW", String.valueOf(codeReview));
 
         return map;
-    }
-
-    /**
-     * Finds the GerritTrigger in a project.
-     * @param project the project.
-     * @return the trigger if there is one, null otherwise.
-     */
-    private GerritTrigger getTrigger(AbstractProject project) {
-        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
     /**
@@ -311,7 +302,7 @@ public class ParameterExpander {
         for (Entry entry : memoryImprint.getEntries()) {
             verified = Math.min(verified, getVerifiedValue(
                     entry.getBuild().getResult(),
-                    getTrigger(entry.getProject())));
+                    GerritTrigger.getTrigger(entry.getProject())));
         }
         return verified;
     }
@@ -326,7 +317,7 @@ public class ParameterExpander {
         for (Entry entry : memoryImprint.getEntries()) {
             codeReview = Math.min(codeReview, getCodeReviewValue(
                     entry.getBuild().getResult(),
-                    getTrigger(entry.getProject())));
+                    GerritTrigger.getTrigger(entry.getProject())));
         }
         return codeReview;
     }
@@ -354,7 +345,7 @@ public class ParameterExpander {
         int codeReview = getMinimumCodeReviewValue(memoryImprint);
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
-        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint));
+        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
 
 
         AbstractBuild build = null;
@@ -369,9 +360,12 @@ public class ParameterExpander {
      * Creates the BUILD_STATS string to send in a message,
      * it contains the status of every build with its URL.
      * @param memoryImprint the memory of all the builds.
+     * @param listener the taskListener
+     * @param parameters the &lt;parameters&gt; from the trigger.
      * @return the string.
      */
-    private String createBuildsStats(MemoryImprint memoryImprint) {
+    private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
+                                     Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 
@@ -386,13 +380,17 @@ public class ParameterExpander {
             for (Entry entry : entries) {
                 AbstractBuild build = entry.getBuild();
                 if (build != null) {
-                    GerritTrigger trigger = getTrigger(build.getProject());
+                    GerritTrigger trigger = GerritTrigger.getTrigger(build.getProject());
                     Result res = build.getResult();
                     String customMessage = null;
 
                     // For some reason, Gerrit won't accept command linefeeds without a space.
                     str.append(" \n");
-                    str.append(rootUrl).append(entry.getBuild().getUrl());
+                    if (trigger.getCustomUrl() == null || trigger.getCustomUrl().isEmpty()) {
+                        str.append(rootUrl).append(entry.getBuild().getUrl());
+                    } else {
+                        str.append(expandParameters(trigger.getCustomUrl(), build, listener, parameters));
+                    }
                     str.append(MESSAGE_DELIMITER);
 
                     if (res == Result.SUCCESS) {

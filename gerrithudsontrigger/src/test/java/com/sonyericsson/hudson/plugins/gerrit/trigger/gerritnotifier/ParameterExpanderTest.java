@@ -213,7 +213,24 @@ public class ParameterExpanderTest {
      */
     @Test
     public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
-        System.out.println("getBuildCompletedCommand");
+        tryGetBuildCompletedCommandSuccessful("",
+                "\n \nhttp://localhost/test/ : SUCCESS");
+        tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
+                "\n \nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+        tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console",
+                "\n \nhttp://localhost/test/console : SUCCESS");
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessful()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats)
+            throws IOException, InterruptedException {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         Hudson hudson = PowerMockito.mock(Hudson.class);
@@ -224,6 +241,7 @@ public class ParameterExpanderTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
+        when(trigger.getCustomUrl()).thenReturn(customUrl);
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
@@ -231,6 +249,7 @@ public class ParameterExpanderTest {
         when(r.getUrl()).thenReturn("test/");
         when(r.getProject()).thenReturn(project);
         EnvVars env = Setup.createEnvVars();
+        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
         when(r.getEnvironment(taskListener)).thenReturn(env);
 
         when(r.getResult()).thenReturn(Result.SUCCESS);
@@ -259,7 +278,7 @@ public class ParameterExpanderTest {
         System.out.println("Result: " + result);
 
         assertTrue("Missing OK message", result.indexOf(" MSG='Your friendly butler says OK.") >= 0);
-        assertTrue("Missing BS", result.indexOf(" BS=\n \nhttp://localhost/test/ : SUCCESS'") >= 0);
+        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildsStats + "'") >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=3") >= 0);

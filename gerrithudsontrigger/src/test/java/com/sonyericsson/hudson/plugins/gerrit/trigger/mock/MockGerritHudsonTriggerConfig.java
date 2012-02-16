@@ -192,4 +192,9 @@ public class MockGerritHudsonTriggerConfig implements
     public boolean hasDefaultValues() {
         return false;
     }
+
+    @Override
+    public boolean isGerritBuildCurrentPatchesOnly() {
+        return true;
+    }
 }
