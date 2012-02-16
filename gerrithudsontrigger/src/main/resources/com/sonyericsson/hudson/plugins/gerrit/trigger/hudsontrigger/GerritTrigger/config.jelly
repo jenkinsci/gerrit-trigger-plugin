@@ -117,6 +117,11 @@
                 <f:checkbox name="triggerOnChangeMergedEvent"
                         	checked="${it.triggerOnChangeMergedEvent}"/>
         </f:entry>
+        <f:entry title="${%Trigger on Reference Updated}" 
+                 field="triggerOnRefUpdatedEvent">
+                <f:checkbox name="triggerOnRefUpdatedEvent"
+                        	checked="${it.triggerOnRefUpdatedEvent}"/>
+        </f:entry>
         <f:entry title="${%Trigger on Comment Added}" 
                  field="triggerOnCommentAddedEvent">
         	<table>

@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAban
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
@@ -537,7 +538,9 @@ public class GerritHandler extends Thread implements Coordinator {
             } else if (event instanceof ChangeMerged) {
               listener.gerritEvent((ChangeMerged)event);
             } else if (event instanceof CommentAdded) {
-              listener.gerritEvent((CommentAdded)event);
+                listener.gerritEvent((CommentAdded)event);
+            } else if (event instanceof RefUpdated) {
+                listener.gerritEvent((RefUpdated)event);
             } else {
                 listener.gerritEvent(event);
             }

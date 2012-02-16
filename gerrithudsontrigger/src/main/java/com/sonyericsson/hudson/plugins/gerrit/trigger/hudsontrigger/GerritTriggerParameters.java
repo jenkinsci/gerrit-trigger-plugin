@@ -97,7 +97,31 @@ public enum GerritTriggerParameters {
     /**
      * The email of the uploader of the patch-set.
      */
-    GERRIT_PATCHSET_UPLOADER_EMAIL;
+    GERRIT_PATCHSET_UPLOADER_EMAIL, 
+    /**
+     * The refname in a ref-updated event.
+     */
+    GERRIT_REFNAME, 
+    /**
+     * The old revision in a ref-updated event.
+     */
+    GERRIT_OLDREV, 
+    /**
+     * The new revision in a ref-updated event.
+     */
+    GERRIT_NEWREV, 
+    /**
+     * The submitter in a ref-updated event.
+     */
+    GERRIT_SUBMITTER, 
+    /**
+     * The name of the submitter in a ref-updated event.
+     */
+    GERRIT_SUBMITTER_NAME, 
+    /**
+     * The email of the submitter in a ref-updated event.
+     */
+    GERRIT_SUBMITTER_EMAIL;
 
     /**
      * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
@@ -146,39 +170,58 @@ public enum GerritTriggerParameters {
      */
     public static void setOrCreateParameters(GerritTriggeredEvent event, List<ParameterValue> parameters,
                                              boolean escapeQuotes) {
-        GERRIT_BRANCH.setOrCreateStringParameterValue(
-                parameters, event.getChange().getBranch(), escapeQuotes);
-        GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
-                parameters, event.getChange().getNumber(), escapeQuotes);
-        GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
-                parameters, event.getChange().getId(), escapeQuotes);
-        GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
-                parameters, event.getPatchSet().getNumber(), escapeQuotes);
-        GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
-                parameters, event.getPatchSet().getRevision(), escapeQuotes);
-        GERRIT_REFSPEC.setOrCreateStringParameterValue(
-                parameters, StringUtil.makeRefSpec(event), escapeQuotes);
-        GERRIT_PROJECT.setOrCreateStringParameterValue(
-                parameters, event.getChange().getProject(), escapeQuotes);
-        GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
-                parameters, event.getChange().getSubject(), escapeQuotes);
-        String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
-                                                                                  event.getPatchSet().getNumber());
-        GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
-                parameters, url, escapeQuotes);
-        GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
-                parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
-        GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
-                parameters, getName(event.getChange().getOwner()), escapeQuotes);
-        GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
-                parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
-        Account uploader = findUploader(event);
-        GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
-                parameters, getNameAndEmail(uploader), escapeQuotes);
-        GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
-                parameters, getName(uploader), escapeQuotes);
-        GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
-                parameters, getEmail(uploader), escapeQuotes);
+    	if (event.getChange() != null) {
+    		GERRIT_BRANCH.setOrCreateStringParameterValue(
+    				parameters, event.getChange().getBranch(), escapeQuotes);
+    		GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
+    				parameters, event.getChange().getNumber(), escapeQuotes);
+    		GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
+    				parameters, event.getChange().getId(), escapeQuotes);
+    		GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
+    				parameters, event.getPatchSet().getNumber(), escapeQuotes);
+    		GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
+    				parameters, event.getPatchSet().getRevision(), escapeQuotes);
+    		GERRIT_REFSPEC.setOrCreateStringParameterValue(
+    				parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+    		GERRIT_PROJECT.setOrCreateStringParameterValue(
+    				parameters, event.getChange().getProject(), escapeQuotes);
+    		GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
+    				parameters, event.getChange().getSubject(), escapeQuotes);
+            String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
+                    event.getPatchSet().getNumber());
+            GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
+            		parameters, url, escapeQuotes);
+            GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
+            		parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
+            GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
+            		parameters, getName(event.getChange().getOwner()), escapeQuotes);
+            GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
+            		parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
+            Account uploader = findUploader(event);
+            GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
+                    parameters, getNameAndEmail(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
+                    parameters, getName(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
+                    parameters, getEmail(uploader), escapeQuotes);
+    	}
+    	if (event.getRefUpdate() != null) {
+    		GERRIT_REFNAME.setOrCreateStringParameterValue(
+    				parameters, event.getRefUpdate().getRefName(), escapeQuotes);    	
+    		GERRIT_PROJECT.setOrCreateStringParameterValue(
+    				parameters, event.getRefUpdate().getProject(), escapeQuotes);    	
+    		GERRIT_OLDREV.setOrCreateStringParameterValue(
+    				parameters, event.getRefUpdate().getOldRev(), escapeQuotes);    	
+    		GERRIT_NEWREV.setOrCreateStringParameterValue(
+    				parameters, event.getRefUpdate().getNewRev(), escapeQuotes);    	
+            Account submitter = findUploader(event);
+            GERRIT_SUBMITTER.setOrCreateStringParameterValue(
+                    parameters, getNameAndEmail(submitter), escapeQuotes);
+            GERRIT_SUBMITTER_NAME.setOrCreateStringParameterValue(
+                    parameters, getName(submitter), escapeQuotes);
+            GERRIT_SUBMITTER_EMAIL.setOrCreateStringParameterValue(
+                    parameters, getEmail(submitter), escapeQuotes);
+    	}
     }
 
     /**

@@ -243,7 +243,7 @@ public class BuildMemory {
      * @return the key.
      */
     private PatchSetKey createKey(GerritTriggeredEvent event) {
-        return new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
+    	return new PatchSetKey(event);
     }
 
     /**
@@ -706,8 +706,14 @@ public class BuildMemory {
      */
     public static final class PatchSetKey implements Comparable<PatchSetKey> {
 
+    	/* for changes */
         private final Integer changeNumber;
         private final Integer patchSetNumber;
+        
+        /* for ref-updates */
+        private final String projectName;
+        private final String refName;
+        private final String revision;
 
         /**
          * Constructs a Key.
@@ -718,6 +724,24 @@ public class BuildMemory {
         public PatchSetKey(Integer changeNumber, Integer patchSetNumber) {
             this.changeNumber = changeNumber;
             this.patchSetNumber = patchSetNumber;
+            this.projectName = null;
+            this.refName = null;
+            this.revision = null;
+        }
+
+        /**
+         * Constructs a Key.
+         *
+         * @param projectName   the Gerrit project name
+         * @param refName       the Gerrit ref name
+         * @param revision      the SHA1 of the revision.
+         */
+        public PatchSetKey(String projectName, String refName, String revision) {
+            this.changeNumber = null;
+            this.patchSetNumber = null;
+            this.projectName = projectName;
+            this.refName = refName;
+            this.revision = revision;
         }
 
         //CS IGNORE RedundantThrows FOR NEXT 10 LINES. REASON: Informative.
@@ -732,6 +756,9 @@ public class BuildMemory {
         public PatchSetKey(String changeNumber, String patchSetNumber) throws NumberFormatException {
             this.changeNumber = new Integer(changeNumber);
             this.patchSetNumber = new Integer(patchSetNumber);
+            this.projectName = null;
+            this.refName = null;
+            this.revision = null;
         }
 
         /**
@@ -741,25 +768,19 @@ public class BuildMemory {
          * @see #PatchSetKey(java.lang.String, java.lang.String)
          */
         PatchSetKey(GerritTriggeredEvent event) {
-            this(event.getChange().getNumber(), event.getPatchSet().getNumber());
-        }
-
-        /**
-         * The Gerrit change number.
-         *
-         * @return the Gerrit change number.
-         */
-        public Integer getChangeNumber() {
-            return changeNumber;
-        }
-
-        /**
-         * The Gerrit patch-set number.
-         *
-         * @return the Gerrit patch-set number.
-         */
-        public Integer getPatchSetNumber() {
-            return patchSetNumber;
+        	if (event.getChange() != null) {
+                this.changeNumber = new Integer(event.getChange().getNumber());
+                this.patchSetNumber = new Integer(event.getPatchSet().getNumber());
+                this.projectName = null;
+                this.refName = null;
+                this.revision = null;
+        	} else {
+                this.changeNumber = null;
+                this.patchSetNumber = null;
+                this.projectName = event.getRefUpdate().getProject();
+                this.refName = event.getRefUpdate().getRefName();
+                this.revision = event.getRefUpdate().getNewRev();
+        	}
         }
 
         @Override
@@ -783,6 +804,21 @@ public class BuildMemory {
                 return false;
             }
 
+            if ((this.projectName != null && !this.projectName.equals(other.projectName))
+                    || (this.projectName == null && other.projectName != null)) {
+                return false;
+            }
+            
+            if ((this.refName != null && !this.refName.equals(other.refName))
+                    || (this.refName == null && other.refName != null)) {
+                return false;
+            }
+            
+            if ((this.revision != null && !this.revision.equals(other.revision))
+                    || (this.revision == null && other.revision != null)) {
+                return false;
+            }
+
             return true;
         }
 
@@ -794,6 +830,9 @@ public class BuildMemory {
             int hash = 3;
             hash = 37 * hash + (this.changeNumber != null ? this.changeNumber.hashCode() : 0);
             hash = 37 * hash + (this.patchSetNumber != null ? this.patchSetNumber.hashCode() : 0);
+            hash = 37 * hash + (this.projectName != null ? this.projectName.hashCode() : 0);
+            hash = 37 * hash + (this.refName != null ? this.refName.hashCode() : 0);
+            hash = 37 * hash + (this.revision != null ? this.revision.hashCode() : 0);
             return hash;
         }
 
@@ -801,9 +840,24 @@ public class BuildMemory {
         public int compareTo(PatchSetKey o) {
             int changeComp = 0;
 
+            if (this.changeNumber == null && o.changeNumber == null) {
+            	if (this.projectName.compareTo(o.projectName) != 0) {
+                	return this.projectName.compareTo(o.projectName);
+            	}
+            	if (this.refName.compareTo(o.refName) != 0) {
+                	return this.refName.compareTo(o.refName);
+            	}
+            	return this.revision.compareTo(o.revision);
+            }
+            
             if (this.changeNumber != null) {
-                changeComp = this.changeNumber.compareTo(o.changeNumber);
+                // this change isn't null but the other one may be
+            	if (o.changeNumber == null) {
+            		return 1;
+            	}
+            	changeComp = this.changeNumber.compareTo(o.changeNumber);
             } else if (o.changeNumber != null) {
+            	// the other change is null but this one isn't
                 return -1;
             }
 

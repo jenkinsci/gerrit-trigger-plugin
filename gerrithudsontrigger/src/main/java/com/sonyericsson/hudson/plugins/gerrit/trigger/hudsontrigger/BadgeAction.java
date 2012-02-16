@@ -90,12 +90,16 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
-        if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
-            return event.getChange().getUrl();
+        if (event.getChange() != null) {
+            if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
+            	return event.getChange().getUrl();
+            } else {
+            	return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+            			event.getChange().getNumber(),
+            			event.getPatchSet().getNumber());
+            }
         } else {
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    event.getChange().getNumber(),
-                    event.getPatchSet().getNumber());
+        	return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
         }
     }
 }

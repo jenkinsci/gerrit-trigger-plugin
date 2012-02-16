@@ -160,9 +160,12 @@ public class GerritCause extends Cause {
      * @return the URL.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                event.getChange().getNumber(),
-                event.getPatchSet().getNumber());
+    	if (event.getChange() != null) {
+    		return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+    				event.getChange().getNumber(),
+    				event.getPatchSet().getNumber());
+    	}
+		return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
     }
 
     @Override

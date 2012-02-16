@@ -179,12 +179,14 @@ public class ParameterExpander {
             int codeReview, int verified) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
-        map.put("GERRIT_NAME", event.getChange().getProject());
-        map.put("CHANGE_ID", event.getChange().getId());
-        map.put("BRANCH", event.getChange().getProject());
-        map.put("CHANGE", event.getChange().getNumber());
-        map.put("PATCHSET", event.getPatchSet().getNumber());
-        map.put("REFSPEC", StringUtil.makeRefSpec(event));
+        if (event.getChange() != null) {
+        	map.put("GERRIT_NAME", event.getChange().getProject());
+        	map.put("CHANGE_ID", event.getChange().getId());
+        	map.put("BRANCH", event.getChange().getProject());
+        	map.put("CHANGE", event.getChange().getNumber());
+        	map.put("PATCHSET", event.getPatchSet().getNumber());
+        	map.put("REFSPEC", StringUtil.makeRefSpec(event));
+        }
         if (r != null) {
             map.put("BUILDURL", hudson.getRootUrl() + r.getUrl());
         }

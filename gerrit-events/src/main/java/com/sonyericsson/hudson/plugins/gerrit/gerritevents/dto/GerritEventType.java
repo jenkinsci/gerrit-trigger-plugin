@@ -27,6 +27,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAban
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,7 +53,11 @@ public enum GerritEventType {
      /**
       * A comment-added event.
       */
-     COMMENT_ADDED("comment-added", true, CommentAdded.class);
+     COMMENT_ADDED("comment-added", true, CommentAdded.class),
+     /**
+      * A ref-updated event.
+      */
+     REF_UPDATED("ref-updated", true, RefUpdated.class);
 
     private String typeValue;
     private boolean interesting;
