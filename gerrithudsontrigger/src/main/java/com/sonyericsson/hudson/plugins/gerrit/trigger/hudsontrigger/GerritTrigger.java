@@ -23,9 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -54,8 +54,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.Future;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -75,7 +75,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     //! Association between patches and the jobs that we're running for them
-    private transient HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
+    private transient RunningJobs runningJobs = new RunningJobs();
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
     private Integer gerritBuildStartedVerifiedValue;
@@ -99,28 +99,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @param gerritProjects                 the set of triggering rules.
      * @param gerritBuildStartedVerifiedValue
-     *                                       Job specific Gerrit verified vote when a build is started,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit verified vote when a build is started, null means that
+     *                                       the global value should be used.
      * @param gerritBuildStartedCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is started,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit code review vote when a build is started, null means
+     *                                       that the global value should be used.
      * @param gerritBuildSuccessfulVerifiedValue
-     *                                       Job specific Gerrit verified vote when a build is successful,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit verified vote when a build is successful, null means
+     *                                       that the global value should be used.
      * @param gerritBuildSuccessfulCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is successful,
-     *                                       null means that the global value should be used.
-     * @param gerritBuildFailedVerifiedValue Job specific Gerrit verified vote when a build is failed,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit code review vote when a build is successful, null means
+     *                                       that the global value should be used.
+     * @param gerritBuildFailedVerifiedValue Job specific Gerrit verified vote when a build is failed, null means that
+     *                                       the global value should be used.
      * @param gerritBuildFailedCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is failed,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit code review vote when a build is failed, null means
+     *                                       that the global value should be used.
      * @param gerritBuildUnstableVerifiedValue
-     *                                       Job specific Gerrit verified vote when a build is unstable,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit verified vote when a build is unstable, null means that
+     *                                       the global value should be used.
      * @param gerritBuildUnstableCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is unstable,
-     *                                       null means that the global value should be used.
+     *                                       Job specific Gerrit code review vote when a build is unstable, null means
+     *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
@@ -167,6 +167,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Finds the GerritTrigger in a project.
+     *
      * @param project the project.
      * @return the trigger if there is one, null otherwise.
      */
@@ -241,8 +242,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Schedules a build with parameters from the event.
-     * With {@link #myProject} as the project to build.
+     * Schedules a build with parameters from the event. With {@link #myProject} as the project to build.
      *
      * @param cause the cause of the build.
      * @param event the event.
@@ -267,23 +267,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
                 createParameters(event, project));
-
-        // check if we're running any jobs for this event
-        if (runningJobs.containsKey(event.getChange())) {
-            logger.debug("A previous build of {} is running for event {}",
-                    project.getName(), event.getChange().getId());
-            // if we were, let's cancel them
-            Future oldBuild = runningJobs.remove(event.getChange());
-            if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-                logger.debug("Cancelling old build {} of {}", oldBuild.toString(), project.getName());
-                oldBuild.cancel(true);
-            }
-        } else {
-            logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
-                    project.getName(), event.getChange().getId());
+        //Experimental feature!
+        if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            getRunningJobs().scheduled(event.getChange(), build, project.getName());
         }
-        // add our new job
-        runningJobs.put(event.getChange(), build);
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
                 new Object[]{project.getName(), (build != null),
@@ -291,20 +278,33 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Used to inform the plugin that the builds for a job have ended.
-     * This allows us to clean up our list of what jobs we're running.
+     * Gives you {@link #runningJobs}. It makes sure that the reference is not null.
+     *
+     * @return the store of running jobs.
+     */
+    private synchronized RunningJobs getRunningJobs() {
+        if (runningJobs == null) {
+            runningJobs = new RunningJobs();
+        }
+        return runningJobs;
+    }
+
+    /**
+     * Used to inform the plugin that the builds for a job have ended. This allows us to clean up our list of what jobs
+     * we're running.
      *
      * @param patchset the patchset.
      */
     public void notifyBuildEnded(PatchsetCreated patchset) {
-        runningJobs.remove(patchset.getChange());
+        //Experimental feature!
+        if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            getRunningJobs().remove(patchset.getChange());
+        }
     }
 
     /**
-     * getBuildScheduleDelay method will return configured
-     * buildScheduledelay value.
-     * If the value is missing or invalid it the method
-     * will return default schedule delay or
+     * getBuildScheduleDelay method will return configured buildScheduledelay value. If the value is missing or invalid
+     * it the method will return default schedule delay or
      * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
      *
      * @return buildScheduleDelay.
@@ -338,8 +338,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Retrieves all default parameter values for a project.
-     * Copied from {@link AbstractProject#getDefaultParametersValues()} version 1.362.
-     * TODO: This is not a good way to solve the problem.
+     * Copied from {@link AbstractProject#getDefaultParametersValues()}
+     * version 1.362. TODO: This is not a good way to solve the problem.
      *
      * @param project the project.
      * @return the default parameter values.
@@ -369,14 +369,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Re-triggers the build in {@link TriggerContext#getThisBuild()} for the context's event.
-     * Will not do any
-     * {@link #isInteresting(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)}
-     * checks.
-     * If more than one build was triggered by the event the results from those builds will be counted again,
-     * but they won't be re-triggered.
-     * If any builds for the event are still running, this new scheduled build will replace its predesessor.
-     * If the project is currently building the event, no scheduling will be done.
+     * Re-triggers the build in {@link TriggerContext#getThisBuild()} for the context's event. Will not do any {@link
+     * #isInteresting(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)} checks. If more
+     * than one build was triggered by the event the results from those builds will be counted again, but they won't be
+     * re-triggered. If any builds for the event are still running, this new scheduled build will replace its
+     * predesessor. If the project is currently building the event, no scheduling will be done.
      *
      * @param context the previous context.
      */
@@ -399,8 +396,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: Javadoc see syntax.
 
     /**
-     * Retriggers all builds in the given context.
-     * The builds will only be triggered if no builds for the event are building.
+     * Retriggers all builds in the given context. The builds will only be triggered if no builds for the event are
+     * building.
      *
      * @param context the context to rebuild.
      * @see ToGerritRunListener#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
@@ -445,8 +442,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
 
     /**
-     * Called when a ChangeAbandoned event arrives.
-     * Should probably not be listening on this here.
+     * Called when a ChangeAbandoned event arrives. Should probably not be listening on this here.
      *
      * @param event the event.
      */
@@ -474,8 +470,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is failed,
-     * null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is failed, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -484,8 +479,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is failed,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is failed, providing null means that the global value should be
+     * used.
      *
      * @param gerritBuildFailedCodeReviewValue
      *         the vote value.
@@ -495,8 +490,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is failed,
-     * null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is failed, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -505,8 +499,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is failed,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is failed, providing null means that the global value should be
+     * used.
      *
      * @param gerritBuildFailedVerifiedValue the vote value.
      */
@@ -515,8 +509,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is started,
-     * null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is started, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -525,8 +518,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is started,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is started, providing null means that the global value should
+     * be used.
      *
      * @param gerritBuildStartedCodeReviewValue
      *         the vote value.
@@ -536,8 +529,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is started,
-     * null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is started, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -546,8 +538,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is started,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is started, providing null means that the global value should be
+     * used.
      *
      * @param gerritBuildStartedVerifiedValue
      *         the vote value.
@@ -557,8 +549,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is successful,
-     * null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is successful, null means that the global value should be
+     * used.
      *
      * @return the vote value.
      */
@@ -567,8 +559,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is successful,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is successful, providing null means that the global value
+     * should be used.
      *
      * @param gerritBuildSuccessfulCodeReviewValue
      *         the vote value.
@@ -578,8 +570,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is successful,
-     * null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is successful, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -588,8 +579,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is successful,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is successful, providing null means that the global value should
+     * be used.
      *
      * @param gerritBuildSuccessfulVerifiedValue
      *         the vote value.
@@ -599,8 +590,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is unstable,
-     * null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is unstable, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -609,8 +599,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is unstable,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit code review vote when a build is unstable, providing null means that the global value should
+     * be used.
      *
      * @param gerritBuildUnstableCodeReviewValue
      *         the vote value.
@@ -620,8 +610,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is unstable,
-     * null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is unstable, null means that the global value should be used.
      *
      * @return the vote value.
      */
@@ -630,8 +619,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Job specific Gerrit verified vote when a build is unstable,
-     * providing null means that the global value should be used.
+     * Job specific Gerrit verified vote when a build is unstable, providing null means that the global value should be
+     * used.
      *
      * @param gerritBuildUnstableVerifiedValue
      *         the vote value.
@@ -641,10 +630,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * If silent mode is on or off.
-     * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/successful approve messages etc.
-     * Default is false.
+     * If silent mode is on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no build
+     * started/failed/successful approve messages etc. Default is false.
      *
      * @return true if silent mode is on.
      */
@@ -653,9 +640,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * if escapeQuotes is on or off.
-     * When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter string
-     * Default is true
+     * if escapeQuotes is on or off. When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter
+     * string Default is true
      *
      * @return true if escapeQuotes is on.
      */
@@ -665,9 +651,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Sets escapeQuotes to on or off.
-     * When escapeQuotes is on plugin will escape quotes in Gerrit event parameter string.
-     * Default is false.
+     * Sets escapeQuotes to on or off. When escapeQuotes is on plugin will escape quotes in Gerrit event parameter
+     * string. Default is false.
      *
      * @param escapeQuotes is true if escapeQuotes should be on.
      */
@@ -712,10 +697,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Sets silent mode to on or off.
-     * When silent mode is on there will be no communication back to Gerrit,
-     * i.e. no build started/failed/successful approve messages etc.
-     * Default is false.
+     * Sets silent mode to on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no
+     * build started/failed/successful approve messages etc. Default is false.
      *
      * @param silentMode true if silent mode should be on.
      */
@@ -725,6 +708,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * URL to send in comment to gerrit.
+     *
      * @return custom URL to post back to gerrit
      */
     public String getCustomUrl() {
@@ -816,6 +800,51 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          */
         public CompareType[] getCompareTypes() {
             return CompareType.values();
+        }
+    }
+
+    /**
+     * Class for maintaining and synchronizing the runningJobs info.
+     * Association between patches and the jobs that we're running for them.
+     */
+    public static class RunningJobs {
+        private final HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
+
+        /**
+         * Does the needful after a build has been scheduled.
+         * I.e. cancelling the old build if configured to do so and removing and storing any references.
+         *
+         * @param change the change.
+         * @param build the build that has been scheduled.
+         * @param projectName the name of the current project for better logging.
+         */
+        public synchronized void scheduled(Change change, Future build, String projectName) {
+            // check if we're running any jobs for this event
+            if (runningJobs.containsKey(change)) {
+                logger.debug("A previous build of {} is running for event {}",
+                        projectName, change.getId());
+                // if we were, let's cancel them
+                Future oldBuild = runningJobs.remove(change);
+                if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                    logger.debug("Cancelling old build {} of {}", oldBuild.toString(), projectName);
+                    oldBuild.cancel(true);
+                }
+            } else {
+                logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
+                        projectName, change.getId());
+            }
+            // add our new job
+            runningJobs.put(change, build);
+        }
+
+        /**
+         * Removes any reference to the current build for this change.
+         *
+         * @param change the change.
+         * @return the build that was removed.
+         */
+        public synchronized Future remove(Change change) {
+            return runningJobs.remove(change);
         }
     }
 }
