@@ -35,4 +35,4 @@ Maintainers
 Robert Sandell - robert.sandell@sonyericsson.com
                  sandell.robert@gmail.com
 
-Gustaf Lundh   - gustaf.lundh@sonyericsson.com
+Tomas Westling - thomas.westling@sonyericsson.com
