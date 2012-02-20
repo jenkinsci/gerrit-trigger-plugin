@@ -3,13 +3,13 @@
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-events</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.4-SNAPSHOT</version>
+    <version>1.2.5-SNAPSHOT</version>
     <name>Gerrit Events</name>
 
     <parent>
         <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
         <artifactId>gerrit-trigger-parent</artifactId>
-        <version>1.6-SNAPSHOT</version>
+        <version>1.6.1-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -40,9 +40,9 @@
             <timezone>+1</timezone>
         </developer>
         <developer>
-            <id>glundh</id>
-            <name>Gustaf Lundh</name>
-            <email>gustaf.lundh@sonyericsson.com</email>
+            <id>twestling</id>
+            <name>Tomas Westling</name>
+            <email>thomas.westling@sonyericsson.com</email>
             <organization>Sony Ericsson</organization>
             <roles>
                 <role>maintainer</role>
@@ -148,7 +148,7 @@
                     <dependency>
                         <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
                         <artifactId>build-config</artifactId>
-                        <version>1.2.4-SNAPSHOT</version>
+                        <version>1.2.5-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
                 <executions>
