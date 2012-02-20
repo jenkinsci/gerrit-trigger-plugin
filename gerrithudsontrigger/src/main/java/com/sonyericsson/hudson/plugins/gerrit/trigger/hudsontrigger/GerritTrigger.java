@@ -269,7 +269,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 createParameters(event, project));
         //Experimental feature!
         if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().scheduled(event.getChange(), build, project.getName());
+            getRunningJobs().scheduled(event, build, project.getName());
         }
 
         logger.info("Project {} Build Scheduled: {} By event: {}",
@@ -298,7 +298,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void notifyBuildEnded(PatchsetCreated patchset) {
         //Experimental feature!
         if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().remove(patchset.getChange());
+            getRunningJobs().remove(patchset);
         }
     }
 
@@ -808,33 +808,43 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Association between patches and the jobs that we're running for them.
      */
     public static class RunningJobs {
-        private final HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
+        private HashMap<String, Future> runningJobs = null;
+
+        //! Builds that we have forced to cancel. This allows us to distinguish
+        //! between builds that we canceled and builds that the user stopped
+        private ArrayList<String> canceledBuilds = new ArrayList<String>();
+
+        public RunningJobs() {
+            runningJobs = new HashMap<String, Future>();
+        }
 
         /**
          * Does the needful after a build has been scheduled.
-         * I.e. cancelling the old build if configured to do so and removing and storing any references.
+         * I.e. canceling the old build if configured to do so and removing and storing any references.
          *
          * @param change the change.
          * @param build the build that has been scheduled.
          * @param projectName the name of the current project for better logging.
          */
-        public synchronized void scheduled(Change change, Future build, String projectName) {
+        public synchronized void scheduled(PatchsetCreated patchset, Future build, String projectName) {
+            Change change = patchset.getChange();
             // check if we're running any jobs for this event
-            if (runningJobs.containsKey(change)) {
+            if (runningJobs.containsKey(change.getId())) {
                 logger.debug("A previous build of {} is running for event {}",
                         projectName, change.getId());
                 // if we were, let's cancel them
-                Future oldBuild = runningJobs.remove(change);
+                Future oldBuild = runningJobs.remove(change.getId());
                 if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
                     logger.debug("Cancelling old build {} of {}", oldBuild.toString(), projectName);
+                    String changeId = change.getId() + patchset.getPatchSet().getNumber();
+                    canceledBuilds.add(changeId);
                     oldBuild.cancel(true);
                 }
             } else {
                 logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
                         projectName, change.getId());
             }
-            // add our new job
-            runningJobs.put(change, build);
+            runningJobs.put(change.getId(), build);
         }
 
         /**
@@ -843,8 +853,25 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          * @param change the change.
          * @return the build that was removed.
          */
-        public synchronized Future remove(Change change) {
-            return runningJobs.remove(change);
+        public synchronized boolean remove(PatchsetCreated patchset) {
+            Change change = patchset.getChange();
+            Future toRemove = runningJobs.get(change.getId());
+            if (null != toRemove) {
+                // we must check that this remove() was not triggered by the scheduled()
+                // above when it was removing an old job from the queue, otherwise
+                // we will remove our newly added job
+                String patchId = change.getId() + patchset.getPatchSet().getNumber();
+                if (canceledBuilds.contains(patchId)) {
+                    canceledBuilds.remove(patchId);
+                    return false;
+                } else {
+                    runningJobs.remove(change.getId());
+                    return true;
+                }
+            } else {
+                // we don't know about this build
+                return false;
+            }
         }
     }
 }
