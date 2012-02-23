@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
 
 /**
  * A DTO representation of the comment-added Gerrit Event.
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
 public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEvent {
     private static final Logger logger = LoggerFactory.getLogger(CommentAdded.class);
