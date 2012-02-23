@@ -26,10 +26,15 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import hudson.model.TaskListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -697,6 +702,35 @@ public class BuildMemory {
              */
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
+            }
+
+            /**
+             * Returns the message read from the configured file.
+             *
+             * @param trigger
+             * @param listener
+             * @return The Environment-expanded string, or null
+             * @throws IOException
+             * @throws InterruptedException
+             */
+            public String getUnsuccessfulMessage(GerritTrigger trigger, TaskListener listener)
+                    throws IOException, InterruptedException {
+                String filename = trigger.getBuildUnsuccessfulFilepath();
+                String content = null;
+
+                if (filename == null || filename.isEmpty()) {
+                    return null;
+                }
+
+                FilePath path = build.getWorkspace().child(filename);
+
+                if (path.exists()) {
+                    content = path.readToString();
+                }
+
+                content = build.getEnvironment(listener).expand(content);
+
+                return content;
             }
         }
     }
