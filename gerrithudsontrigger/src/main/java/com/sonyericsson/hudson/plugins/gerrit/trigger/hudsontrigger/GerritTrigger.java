@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
@@ -495,6 +496,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
+    private boolean matchesApproval(CommentAdded event) {
+    	for (Approval approval : event.getApprovals()) {
+        	if (approval.getType() == this.commentAddedTriggerApprovalCategory &&
+        		approval.getType() == this.commentAddedTriggerApprovalValue) {
+        		return true;
+        	}
+    	}
+    	return false;
+    }
+    
     /**
      * Called when a CommentAdded event arrives.
      *
@@ -507,10 +518,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
-        if (triggerOnCommentAddedEvent 
-                && event.matchesApproval(this.commentAddedTriggerApprovalCategory, 
-                                         this.commentAddedTriggerApprovalValue) 
-                && isInteresting(event)) {
+        if (triggerOnCommentAddedEvent && isInteresting(event)
+        	&& matchesApproval(event)) { 
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);

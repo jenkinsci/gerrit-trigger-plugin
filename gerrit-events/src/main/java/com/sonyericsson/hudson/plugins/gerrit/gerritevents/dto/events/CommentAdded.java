@@ -23,60 +23,54 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import java.util.List;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.AUTHOR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.APPROVALS;
 
 /**
  * A DTO representation of the comment-added Gerrit Event.
  * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
 public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEvent {
-    private static final Logger logger = LoggerFactory.getLogger(CommentAdded.class);
-    private JSONArray approvals;
+    private List<Approval> approvals;
 
     @Override
     public GerritEventType getEventType() {
         return GerritEventType.COMMENT_ADDED;
     }
 
-    @Override
+    public List<Approval> getApprovals() {
+		return approvals;
+	}
+
+	public void setApprovals(List<Approval> approvals) {
+		this.approvals = approvals;
+	}
+
+	@Override
     public boolean isScorable() {
         return true;
-    }
-
-    public boolean matchesApproval(String category, String value) {
-        for (int i=0; i<approvals.size(); i++) {
-            logger.debug("approval");
-            JSONObject approval = approvals.getJSONObject(i);
-            if (approval.containsKey("type") && approval.containsKey("value")) {
-                String app_type = approval.getString("type");
-                String app_value = approval.getString("value");
-                logger.debug(app_type);
-                logger.debug(app_value);
-                if (app_type.equals(category) && app_value.equals(value)) {
-                    logger.debug("approved");
-                    return true;
-                }
-            }
-        }
-        return false;
     }
     
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        logger.debug("from json");
-        if (json.containsKey("approvals")) {  ///TODO: constant
-            logger.debug("approvals");
-            JSONArray approvals = json.getJSONArray("approvals");
-            this.approvals = approvals;
+        if (json.containsKey(AUTHOR)) {
+            account = new Account(json.getJSONObject(AUTHOR));
+        }
+        if (json.containsKey(APPROVALS)) {
+        	JSONArray eventApprovals = json.getJSONArray(APPROVALS);
+            for (int i=0; i<eventApprovals.size(); i++) {
+            	approvals.add(new Approval(eventApprovals.getJSONObject(i)));
+            }
         }
     }
 }
