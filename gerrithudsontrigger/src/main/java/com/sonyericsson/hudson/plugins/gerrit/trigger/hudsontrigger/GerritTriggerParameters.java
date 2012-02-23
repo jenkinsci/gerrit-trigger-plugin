@@ -97,7 +97,12 @@ public enum GerritTriggerParameters {
     /**
      * The email of the uploader of the patch-set.
      */
-    GERRIT_PATCHSET_UPLOADER_EMAIL;
+    GERRIT_PATCHSET_UPLOADER_EMAIL,
+    /**
+     * A hashcode of the gerrit event object, to make sure every set of parameters 
+     * is unique (allowing jenkins to queue duplicate builds).
+     */
+    GERRIT_EVENT_HASH;
 
     /**
      * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
@@ -146,6 +151,8 @@ public enum GerritTriggerParameters {
      */
     public static void setOrCreateParameters(GerritTriggeredEvent event, List<ParameterValue> parameters,
                                              boolean escapeQuotes) {
+        GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
+                parameters, String.valueOf(((java.lang.Object)event).hashCode()), escapeQuotes);
         GERRIT_BRANCH.setOrCreateStringParameterValue(
                 parameters, event.getChange().getBranch(), escapeQuotes);
         GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(

@@ -79,5 +79,4 @@ public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEven
             this.approvals = approvals;
         }
     }
-
 }

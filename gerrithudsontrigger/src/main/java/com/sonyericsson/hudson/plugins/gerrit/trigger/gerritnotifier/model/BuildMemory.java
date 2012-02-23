@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
@@ -45,8 +46,14 @@ import java.util.TreeMap;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildMemory {
-
-    private TreeMap<PatchSetKey, MemoryImprint> memory = new TreeMap<PatchSetKey, MemoryImprint>();
+	private class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
+		@Override
+		public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
+			return new Integer(((java.lang.Object)o1).hashCode()).compareTo(new Integer(((java.lang.Object)o2).hashCode()));
+		}
+	}
+	
+    private TreeMap<GerritTriggeredEvent, MemoryImprint> memory = new TreeMap<GerritTriggeredEvent, MemoryImprint>(new GerritTriggeredEventComparator());
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
 
     /**
@@ -55,32 +62,18 @@ public class BuildMemory {
      * @param key the key
      * @return the memory.
      */
-    public synchronized MemoryImprint getMemoryImprint(PatchSetKey key) {
-        return memory.get(key);
+    public synchronized MemoryImprint getMemoryImprint(GerritTriggeredEvent event) {
+        return memory.get(event);
     }
-
-    /**
-     * Tells if all triggered builds have started for a specific event.
-     * This is a bit slower than
-     * {@link #isAllBuildsCompleted(PatchSetKey)}
-     * since an internal key needs to be created.
-     *
-     * @param event the event.
-     * @return true if it is so.
-     */
-    public synchronized boolean isAllBuildsCompleted(GerritTriggeredEvent event) {
-        PatchSetKey key = createKey(event);
-        return isAllBuildsCompleted(key);
-    }
-
+    
     /**
      * Tells if all triggered builds have started for a specific memory imprint.
      *
      * @param key the key to the memory.
      * @return true if it is so.
      */
-    public synchronized boolean isAllBuildsCompleted(PatchSetKey key) {
-        MemoryImprint pb = memory.get(key);
+    public synchronized boolean isAllBuildsCompleted(GerritTriggeredEvent event) {
+        MemoryImprint pb = memory.get(event);
         if (pb != null) {
             return pb.isAllBuildsCompleted();
         } else {
@@ -94,8 +87,8 @@ public class BuildMemory {
      * @param key the memory key.
      * @return the statistics.
      */
-    public synchronized BuildsStartedStats getBuildsStartedStats(PatchSetKey key) {
-        MemoryImprint pb = memory.get(key);
+    public synchronized BuildsStartedStats getBuildsStartedStats(GerritTriggeredEvent event) {
+        MemoryImprint pb = memory.get(event);
         if (pb != null) {
             return pb.getBuildsStartedStats();
         } else {
@@ -110,8 +103,8 @@ public class BuildMemory {
      * @return the status as it is now.
      * @see MemoryImprint#getStatusReport()
      */
-    public synchronized String getStatusReport(PatchSetKey key) {
-        MemoryImprint pb = memory.get(key);
+    public synchronized String getStatusReport(GerritTriggeredEvent event) {
+        MemoryImprint pb = memory.get(event);
         if (pb != null) {
             return pb.getStatusReport();
         } else {
@@ -120,27 +113,13 @@ public class BuildMemory {
     }
 
     /**
-     * Tells if all triggered builds have started for a specific event.
-     * This is a bit slower than
-     * {@link #isAllBuildsStarted(PatchSetKey)}
-     * since an internal key needs to be created.
-     *
-     * @param event the event.
-     * @return true if it is so.
-     */
-    public synchronized boolean isAllBuildsStarted(GerritTriggeredEvent event) {
-        PatchSetKey key = createKey(event);
-        return isAllBuildsStarted(key);
-    }
-
-    /**
      * Tells if all triggered builds have started for a specific memory imprint.
      *
      * @param key the key to the memory.
      * @return true if it is so.
      */
-    public synchronized boolean isAllBuildsStarted(PatchSetKey key) {
-        MemoryImprint pb = memory.get(key);
+	public synchronized boolean isAllBuildsStarted(GerritTriggeredEvent event) {
+        MemoryImprint pb = memory.get(event);
         if (pb != null) {
             return pb.isAllBuildsSet();
         } else {
@@ -155,16 +134,14 @@ public class BuildMemory {
      * @param build the build.
      * @return the key to the memory.
      */
-    public synchronized PatchSetKey completed(GerritTriggeredEvent event, AbstractBuild build) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+    public synchronized void completed(GerritTriggeredEvent event, AbstractBuild build) {
+        MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //Shoudn't happen but just in case, keep the memory.
             pb = new MemoryImprint(event);
-            memory.put(key, pb);
+            memory.put(event, pb);
         }
         pb.set(build.getProject(), build, true);
-        return key;
     }
 
     /**
@@ -174,17 +151,15 @@ public class BuildMemory {
      * @param build the build.
      * @return the key to the memory.
      */
-    public synchronized PatchSetKey started(GerritTriggeredEvent event, AbstractBuild build) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+    public synchronized void started(GerritTriggeredEvent event, AbstractBuild build) {
+        MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //A build should not start for a job that hasn't been registered. Keep the memory anyway.
             pb = new MemoryImprint(event);
             logger.warn("Build started without being registered first.");
-            memory.put(key, pb);
+            memory.put(event, pb);
         }
         pb.set(build.getProject(), build);
-        return key;
     }
 
     /**
@@ -194,15 +169,13 @@ public class BuildMemory {
      * @param project the project that was triggered.
      * @return the key to the memory.
      */
-    public synchronized PatchSetKey triggered(GerritTriggeredEvent event, AbstractProject project) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+    public synchronized void triggered(GerritTriggeredEvent event, AbstractProject project) {
+        MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
-            memory.put(key, pb);
+            memory.put(event, pb);
         }
         pb.set(project);
-        return key;
     }
 
     /**
@@ -215,15 +188,14 @@ public class BuildMemory {
      * @param otherBuilds the list of other builds that was in the "old" memory.
      * @return the key to the memory.
      */
-    public synchronized PatchSetKey retriggered(
+    public synchronized void retriggered(
             GerritTriggeredEvent event,
             AbstractProject project,
             List<AbstractBuild> otherBuilds) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+        MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
-            memory.put(key, pb);
+            memory.put(event, pb);
             if (otherBuilds != null) {
                 //It is a new memory so it wasn't building, let's populate with old build info
                 for (AbstractBuild build : otherBuilds) {
@@ -232,18 +204,6 @@ public class BuildMemory {
             }
         }
         pb.reset(project);
-
-        return key;
-    }
-
-    /**
-     * Creates a key out of an event to use for storing memory imprints.
-     *
-     * @param event the event.
-     * @return the key.
-     */
-    private PatchSetKey createKey(GerritTriggeredEvent event) {
-        return new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
     }
 
     /**
@@ -251,8 +211,8 @@ public class BuildMemory {
      *
      * @param key the key to the memory.
      */
-    public synchronized void forget(PatchSetKey key) {
-        memory.remove(key);
+    public synchronized void forget(GerritTriggeredEvent event) {
+        memory.remove(event);
     }
 
     /**
@@ -264,8 +224,8 @@ public class BuildMemory {
      * @param cause the cause.
      * @param r     the build the cause is in.
      */
-    public synchronized void updateTriggerContext(PatchSetKey key, GerritCause cause, AbstractBuild r) {
-        MemoryImprint imprint = getMemoryImprint(key);
+    public synchronized void updateTriggerContext(GerritCause cause, AbstractBuild r) {
+        MemoryImprint imprint = getMemoryImprint(cause.getEvent());
         TriggerContext context = cause.getContext();
         context.setThisBuild(r);
         for (MemoryImprint.Entry entry : imprint.getEntries()) {
@@ -322,8 +282,7 @@ public class BuildMemory {
      * @return true if so.
      */
     public synchronized boolean isBuilding(GerritTriggeredEvent event, AbstractProject project) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+        MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
         } else {
@@ -347,8 +306,7 @@ public class BuildMemory {
      * @return true if so.
      */
     public synchronized boolean isBuilding(GerritTriggeredEvent event) {
-        PatchSetKey key = createKey(event);
-        MemoryImprint pb = memory.get(key);
+        MemoryImprint pb = memory.get(event);
         return pb != null;
     }
 
@@ -358,8 +316,8 @@ public class BuildMemory {
      * @param key the key for the memory.
      * @return the list of builds, or null if there is no memory.
      */
-    public synchronized List<AbstractBuild> getBuilds(PatchSetKey key) {
-        MemoryImprint pb = memory.get(key);
+    public synchronized List<AbstractBuild> getBuilds(GerritTriggeredEvent event) {
+        MemoryImprint pb = memory.get(event);
         if (pb != null) {
             List<AbstractBuild> list = new LinkedList<AbstractBuild>();
             for (Entry entry : pb.getEntries()) {
@@ -697,126 +655,6 @@ public class BuildMemory {
              */
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
-            }
-        }
-    }
-
-    /**
-     * The Key to use to map events and builds.
-     */
-    public static final class PatchSetKey implements Comparable<PatchSetKey> {
-
-        private final Integer changeNumber;
-        private final Integer patchSetNumber;
-
-        /**
-         * Constructs a Key.
-         *
-         * @param changeNumber   the Gerrit changeNumber
-         * @param patchSetNumber the Gerrit patch-set number.
-         */
-        public PatchSetKey(Integer changeNumber, Integer patchSetNumber) {
-            this.changeNumber = changeNumber;
-            this.patchSetNumber = patchSetNumber;
-        }
-
-        //CS IGNORE RedundantThrows FOR NEXT 10 LINES. REASON: Informative.
-
-        /**
-         * Constructs a Key.
-         *
-         * @param changeNumber   the Gerrit changeNumber
-         * @param patchSetNumber the Gerrit patch-set number.
-         * @throws NumberFormatException if one of the parameters is not parseable to an {@link java.lang.Integer}.
-         */
-        public PatchSetKey(String changeNumber, String patchSetNumber) throws NumberFormatException {
-            this.changeNumber = new Integer(changeNumber);
-            this.patchSetNumber = new Integer(patchSetNumber);
-        }
-
-        /**
-         * Quick Constructor.
-         *
-         * @param event the event to get change and revision from.
-         * @see #PatchSetKey(java.lang.String, java.lang.String)
-         */
-        PatchSetKey(GerritTriggeredEvent event) {
-            this(event.getChange().getNumber(), event.getPatchSet().getNumber());
-        }
-
-        /**
-         * The Gerrit change number.
-         *
-         * @return the Gerrit change number.
-         */
-        public Integer getChangeNumber() {
-            return changeNumber;
-        }
-
-        /**
-         * The Gerrit patch-set number.
-         *
-         * @return the Gerrit patch-set number.
-         */
-        public Integer getPatchSetNumber() {
-            return patchSetNumber;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            //CS IGNORE ParenPad FOR NEXT 20 LINES. REASON: Autogenerated Code.
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final PatchSetKey other = (PatchSetKey)obj;
-
-            if ((this.changeNumber != null && !this.changeNumber.equals(other.changeNumber))
-                    || (this.changeNumber == null && other.changeNumber != null)) {
-                return false;
-            }
-
-            if ((this.patchSetNumber != null && !this.patchSetNumber.equals(other.patchSetNumber))
-                    || (this.patchSetNumber == null && other.patchSetNumber != null)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            //CS IGNORE MagicNumber FOR NEXT 5 LINES. REASON: Autogenerated Code.
-            //CS IGNORE AvoidInlineConditionals FOR NEXT 5 LINES. REASON: Autogenerated Code.
-            //CS IGNORE ParenPad FOR NEXT 5 LINES. REASON: Autogenerated Code.
-            int hash = 3;
-            hash = 37 * hash + (this.changeNumber != null ? this.changeNumber.hashCode() : 0);
-            hash = 37 * hash + (this.patchSetNumber != null ? this.patchSetNumber.hashCode() : 0);
-            return hash;
-        }
-
-        @Override
-        public int compareTo(PatchSetKey o) {
-            int changeComp = 0;
-
-            if (this.changeNumber != null) {
-                changeComp = this.changeNumber.compareTo(o.changeNumber);
-            } else if (o.changeNumber != null) {
-                return -1;
-            }
-
-            if (changeComp != 0) {
-                return changeComp;
-            }
-
-            if (this.patchSetNumber != null) {
-                return this.patchSetNumber.compareTo(o.patchSetNumber);
-            } else if (o.patchSetNumber != null) {
-                return -1;
-            } else {
-                return 0;
             }
         }
     }
