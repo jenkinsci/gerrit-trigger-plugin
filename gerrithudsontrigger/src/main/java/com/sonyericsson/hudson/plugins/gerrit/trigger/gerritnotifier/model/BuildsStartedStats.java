@@ -24,14 +24,14 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 /**
  * Bean for holding statistics of started builds for a specific event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildsStartedStats {
-    private PatchsetCreated event;
+    private GerritTriggeredEvent event;
     private int totalBuildsToStart;
     private int startedBuilds;
 
@@ -41,7 +41,7 @@ public class BuildsStartedStats {
      * @param totalBuildsToStart the total amount of builds that have been triggered.
      * @param startedBuilds the amount of builds that have been started so far.
      */
-    public BuildsStartedStats(PatchsetCreated event, int totalBuildsToStart, int startedBuilds) {
+    public BuildsStartedStats(GerritTriggeredEvent event, int totalBuildsToStart, int startedBuilds) {
         this.event = event;
         this.totalBuildsToStart = totalBuildsToStart;
         this.startedBuilds = startedBuilds;
@@ -51,7 +51,7 @@ public class BuildsStartedStats {
      * The event that started the build(s).
      * @return the event that started the build(s)
      */
-    public PatchsetCreated getEvent() {
+    public GerritTriggeredEvent getEvent() {
         return event;
     }
 
@@ -59,7 +59,7 @@ public class BuildsStartedStats {
      * The event that started the build(s).
      * @param event the event that started the build(s).
      */
-    public void setEvent(PatchsetCreated event) {
+    public void setEvent(GerritTriggeredEvent event) {
         this.event = event;
     }
 

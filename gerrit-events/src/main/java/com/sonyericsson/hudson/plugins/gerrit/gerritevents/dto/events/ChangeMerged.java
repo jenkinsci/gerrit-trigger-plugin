@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +26,21 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ABANDONER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBMITTER;
 
 /**
- * A DTO representation of the change-abandoned Gerrit Event.
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * A DTO representation of the change-merged Gerrit Event.
+ * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public class ChangeAbandoned extends GerritTriggeredEvent implements GerritJsonEvent {
+public class ChangeMerged extends GerritTriggeredEvent implements GerritJsonEvent {
 
     /**
      * Default constructor.
      */
-    public ChangeAbandoned() {
+    public ChangeMerged() {
     }
 
     /**
@@ -47,13 +48,13 @@ public class ChangeAbandoned extends GerritTriggeredEvent implements GerritJsonE
      * @param json the JSON Object
      * @see #fromJson(String)
      */
-    public ChangeAbandoned(JSONObject json) {
+    public ChangeMerged(JSONObject json) {
         fromJson(json);
     }
 
     @Override
     public GerritEventType getEventType() {
-        return GerritEventType.CHANGE_ABANDONED;
+        return GerritEventType.CHANGE_MERGED;
     }
 
     @Override
@@ -64,8 +65,8 @@ public class ChangeAbandoned extends GerritTriggeredEvent implements GerritJsonE
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        if (json.containsKey(ABANDONER)) {
-            account = new Account(json.getJSONObject(ABANDONER));
+        if (json.containsKey(SUBMITTER)) {
+            account = new Account(json.getJSONObject(SUBMITTER));
         }
     }
 }

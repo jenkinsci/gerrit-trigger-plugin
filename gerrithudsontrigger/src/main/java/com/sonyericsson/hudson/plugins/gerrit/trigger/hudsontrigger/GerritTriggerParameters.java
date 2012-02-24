@@ -24,7 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.ParameterValue;
@@ -97,7 +97,24 @@ public enum GerritTriggerParameters {
     /**
      * The email of the uploader of the patch-set.
      */
-    GERRIT_PATCHSET_UPLOADER_EMAIL;
+    GERRIT_PATCHSET_UPLOADER_EMAIL,
+    /**
+     * The name and email of the person who triggered the event.
+     */
+    GERRIT_EVENT_ACCOUNT,
+    /**
+     * The name of the person who triggered the event.
+     */
+    GERRIT_EVENT_ACCOUNT_NAME,
+    /**
+     * The email of the person who triggered the event.
+     */
+    GERRIT_EVENT_ACCOUNT_EMAIL,
+    /**
+     * A hashcode of the gerrit event object, to make sure every set of parameters
+     * is unique (allowing jenkins to queue duplicate builds).
+     */
+    GERRIT_EVENT_HASH;
 
     /**
      * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
@@ -144,26 +161,46 @@ public enum GerritTriggerParameters {
      * @param escapeQuotes if quotes should be escaped or not.
      * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
      */
-    public static void setOrCreateParameters(PatchsetCreated event, List<ParameterValue> parameters,
-                                             boolean escapeQuotes) {
+    public static void setOrCreateParameters(GerritTriggeredEvent event, List<ParameterValue> parameters,
+            boolean escapeQuotes) {
+        GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
+                parameters, String.valueOf(((java.lang.Object)event).hashCode()), escapeQuotes);
         GERRIT_BRANCH.setOrCreateStringParameterValue(
                 parameters, event.getChange().getBranch(), escapeQuotes);
         GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
                 parameters, event.getChange().getNumber(), escapeQuotes);
         GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
                 parameters, event.getChange().getId(), escapeQuotes);
-        GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
-                parameters, event.getPatchSet().getNumber(), escapeQuotes);
-        GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
-                parameters, event.getPatchSet().getRevision(), escapeQuotes);
-        GERRIT_REFSPEC.setOrCreateStringParameterValue(
-                parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+        if (event.getPatchSet() != null) {
+            GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
+                    parameters, event.getPatchSet().getNumber(), escapeQuotes);
+            GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
+                    parameters, event.getPatchSet().getRevision(), escapeQuotes);
+            GERRIT_REFSPEC.setOrCreateStringParameterValue(
+                    parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+            Account uploader = findUploader(event);
+            GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
+                    parameters, getNameAndEmail(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
+                    parameters, getName(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
+                    parameters, getEmail(uploader), escapeQuotes);
+        }
+        Account account = event.getAccount();
+        if (account != null) {
+            GERRIT_EVENT_ACCOUNT.setOrCreateStringParameterValue(
+                    parameters, getNameAndEmail(account), escapeQuotes);
+            GERRIT_EVENT_ACCOUNT_NAME.setOrCreateStringParameterValue(
+                    parameters, getName(account), escapeQuotes);
+            GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
+                    parameters, getEmail(account), escapeQuotes);
+        }
         GERRIT_PROJECT.setOrCreateStringParameterValue(
                 parameters, event.getChange().getProject(), escapeQuotes);
         GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                 parameters, event.getChange().getSubject(), escapeQuotes);
         String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
-                                                                                  event.getPatchSet().getNumber());
+                event.getPatchSet().getNumber());
         GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                 parameters, url, escapeQuotes);
         GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
@@ -172,13 +209,6 @@ public enum GerritTriggerParameters {
                 parameters, getName(event.getChange().getOwner()), escapeQuotes);
         GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
                 parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
-        Account uploader = findUploader(event);
-        GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
-                parameters, getNameAndEmail(uploader), escapeQuotes);
-        GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
-                parameters, getName(uploader), escapeQuotes);
-        GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
-                parameters, getEmail(uploader), escapeQuotes);
     }
 
     /**
@@ -187,11 +217,11 @@ public enum GerritTriggerParameters {
      * @param event the event to search.
      * @return the uploader if any.
      */
-    private static Account findUploader(PatchsetCreated event) {
+    private static Account findUploader(GerritTriggeredEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
             return event.getPatchSet().getUploader();
         } else {
-            return event.getUploader();
+            return event.getAccount();
         }
     }
 

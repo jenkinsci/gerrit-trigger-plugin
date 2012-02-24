@@ -23,9 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -84,26 +83,26 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
-            PatchsetCreated event = cause.getEvent();
+            GerritTriggeredEvent event = cause.getEvent();
             if (GerritTrigger.getTrigger(r.getProject()) != null) {
                 // There won't be a trigger if this job was run through a unit test
                 GerritTrigger.getTrigger(r.getProject()).notifyBuildEnded(event);
             }
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
-                PatchSetKey key = memory.completed(event, r);
-                updateTriggerContexts(r, key);
-                if (memory.isAllBuildsCompleted(key)) {
+                memory.completed(event, r);
+                updateTriggerContexts(r);
+                if (memory.isAllBuildsCompleted(cause.getEvent())) {
                     try {
                         logger.info("All Builds are completed for cause: {}", cause);
                         event.fireAllBuildsCompleted();
-                        NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(key), listener);
+                        NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
                     } finally {
-                        memory.forget(key);
+                        memory.forget(cause.getEvent());
                     }
                 } else {
                     logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
-                            cause, memory.getStatusReport(key));
+                            cause, memory.getStatusReport(event));
                 }
             }
         }
@@ -116,20 +115,17 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
             setThisBuild(r);
-            PatchSetKey key = null;
             if (cause.getEvent() != null) {
                 cause.getEvent().fireBuildStarted(r);
             }
             if (!cause.isSilentMode()) {
-                key = memory.started(cause.getEvent(), r);
-                updateTriggerContexts(r, key);
-                BuildsStartedStats stats = memory.getBuildsStartedStats(key);
+                memory.started(cause.getEvent(), r);
+                updateTriggerContexts(r);
+                BuildsStartedStats stats = memory.getBuildsStartedStats(cause.getEvent());
                 NotificationFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
             }
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
-            if (key != null) {
-                logger.info("MemoryStatus:\n{}", memory.getStatusReport(key));
-            }
+            logger.info("MemoryStatus:\n{}", memory.getStatusReport(cause.getEvent()));
         }
     }
 
@@ -138,16 +134,15 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * {@link GerritCause}s in the build.
      *
      * @param r   the build.
-     * @param key the memory key to update.
      * @see BuildMemory#updateTriggerContext(
      *      com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey,
      *      com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause, hudson.model.AbstractBuild)
      */
-    protected void updateTriggerContexts(AbstractBuild r, PatchSetKey key) {
+    protected void updateTriggerContexts(AbstractBuild r) {
         List<Cause> causes = r.getCauses();
         for (Cause cause : causes) {
             if (cause instanceof GerritCause) {
-                memory.updateTriggerContext(key, (GerritCause)cause, r);
+                memory.updateTriggerContext((GerritCause)cause, r);
             }
         }
     }
@@ -193,7 +188,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param project the project that will be built.
      * @param event   the event that caused the build to be scheduled.
      */
-    public synchronized void onTriggered(AbstractProject project, PatchsetCreated event) {
+    public synchronized void onTriggered(AbstractProject project, GerritTriggeredEvent event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
         event.fireProjectTriggered(project);
@@ -213,7 +208,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param otherBuilds the list of other builds in the previous context.
      */
     public synchronized void onRetriggered(AbstractProject project,
-                                           PatchsetCreated event,
+                                           GerritTriggeredEvent event,
                                            List<AbstractBuild> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
         event.fireProjectTriggered(project);
@@ -232,9 +227,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event   the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(PatchsetCreated, hudson.model.AbstractProject)
+     * @see BuildMemory#isBuilding(GerritTriggeredEvent, hudson.model.AbstractProject)
      */
-    public boolean isBuilding(AbstractProject project, PatchsetCreated event) {
+    public boolean isBuilding(AbstractProject project, GerritTriggeredEvent event) {
         if (project == null || event == null) {
             return false;
         } else {
@@ -248,9 +243,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
+     * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)
      */
-    public boolean isBuilding(PatchsetCreated event) {
+    public boolean isBuilding(GerritTriggeredEvent event) {
         if (event == null) {
             return false;
         } else {

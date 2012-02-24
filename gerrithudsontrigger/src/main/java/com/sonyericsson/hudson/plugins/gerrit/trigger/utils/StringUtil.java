@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import java.util.regex.Pattern;
 
 /**
@@ -72,7 +72,7 @@ public final class StringUtil {
      * @see PatchsetCreated#getPatchSet()
      * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet#getRef()
      */
-    public static String makeRefSpec(PatchsetCreated event) {
+    public static String makeRefSpec(GerritTriggeredEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {
             if (event.getPatchSet().getRef().length() > 0) {
                 return event.getPatchSet().getRef();

@@ -25,7 +25,9 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 
 /**
  * Base Listener interface for those that are interested in Gerrit events.
@@ -56,4 +58,16 @@ public interface GerritEventListener {
      * @param event the event.
      */
     void gerritEvent(ChangeAbandoned event);
+
+    /**
+     * Called when a change merged event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(ChangeMerged event);
+
+    /**
+     * Called when a comment added event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(CommentAdded event);
 }

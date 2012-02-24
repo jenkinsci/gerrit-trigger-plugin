@@ -292,7 +292,7 @@ public class SshdServerMock implements CommandFactory {
                 return priv;
             } else {
                 Thread.sleep(WAIT_FOR_ERROR_OUTPUT);
-                throw new IOException("ssk-keygen failed!");
+                throw new IOException("ssh-keygen failed!");
             }
         } else {
             System.out.println("Test key-pair seems to already exist.");
