@@ -505,8 +505,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private boolean matchesApproval(CommentAdded event) {
         for (Approval approval : event.getApprovals()) {
-            if (approval.getType() == this.commentAddedTriggerApprovalCategory
-                    && approval.getType() == this.commentAddedTriggerApprovalValue) {
+            if (approval.getType().equals(this.commentAddedTriggerApprovalCategory)
+                    && approval.getValue().equals(this.commentAddedTriggerApprovalValue)) {
                 return true;
             }
         }

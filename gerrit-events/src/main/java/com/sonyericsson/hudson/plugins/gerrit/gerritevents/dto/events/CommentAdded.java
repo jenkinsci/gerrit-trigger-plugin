@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
@@ -40,7 +41,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
 public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEvent {
-    private List<Approval> approvals;
+    private List<Approval> approvals = new ArrayList<Approval>();
 
     @Override
     public GerritEventType getEventType() {
