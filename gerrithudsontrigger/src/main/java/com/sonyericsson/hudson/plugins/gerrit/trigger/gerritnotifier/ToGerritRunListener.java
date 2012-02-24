@@ -30,7 +30,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+
+import hudson.EnvVars;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
@@ -41,6 +44,7 @@ import hudson.model.listeners.RunListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -93,7 +97,21 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             }
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
-                PatchSetKey key = memory.completed(event, r, listener);
+                PatchSetKey key = memory.completed(event, r);
+
+                if (r.getResult() != Result.SUCCESS)
+                {
+                    try {
+                        // Attempt to record the failure message, if applicable
+                        String failureMessage = this.obtainFailureMessage(event, r, listener);
+                        memory.setEntryFailureMessage(key, r, failureMessage);
+                    } catch (IOException e) {
+                        e.printStackTrace(listener.getLogger());
+                    } catch (InterruptedException e) {
+                        e.printStackTrace(listener.getLogger());
+                    }
+                }
+
                 updateTriggerContexts(r, key);
                 if (memory.isAllBuildsCompleted(key)) {
                     try {
@@ -109,6 +127,41 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
             }
         }
+    }
+
+    /**
+     * Attempt to obtain the failure message for a build.
+     *
+     * @param event
+     * @param build
+     * @param listener
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private String obtainFailureMessage(PatchsetCreated event, AbstractBuild build, TaskListener listener)
+            throws IOException, InterruptedException {
+        AbstractProject project = build.getProject();
+        String content = null;
+
+        // This is an unsuccessful build
+        GerritTrigger trigger = GerritTrigger.getTrigger(project);
+
+        String filename = trigger.getBuildUnsuccessfulFilepath();
+
+        if (filename != null && !filename.isEmpty()) {
+            FilePath path = build.getWorkspace().child(filename);
+
+            if (path.exists()) {
+                content = path.readToString();
+            }
+
+            EnvVars envVars = (listener == null) ? build.getEnvironment()
+                                                 : build.getEnvironment(listener);
+            content = envVars.expand(content);
+        }
+
+        return content;
     }
 
     @Override

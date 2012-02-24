@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
@@ -156,28 +157,14 @@ public class BuildMemory {
         }
     }
 
-
     /**
      * Sets the memory that a build is completed for an event.
      *
      * @param event the event
      * @param build the build.
      * @return the key to the memory.
-     * @deprecated Use {@link #completed(PatchsetCreated, AbstractBuild, TaskListener)}
      */
-    @Deprecated
     public synchronized PatchSetKey completed(PatchsetCreated event, AbstractBuild build) {
-        return this.completed(event, build, null);
-    }
-    /**
-     * Sets the memory that a build is completed for an event.
-     *
-     * @param event the event
-     * @param build the build.
-     * @param listener the listener.
-     * @return the key to the memory.
-     */
-    public synchronized PatchSetKey completed(PatchsetCreated event, AbstractBuild build, TaskListener listener) {
         PatchSetKey key = createKey(event);
         MemoryImprint pb = memory.get(key);
         if (pb == null) {
@@ -186,7 +173,6 @@ public class BuildMemory {
             memory.put(key, pb);
         }
         pb.set(build.getProject(), build, true);
-        pb.updateFailureReason(build.getProject(), build, listener);
         return key;
     }
 
@@ -509,60 +495,6 @@ public class BuildMemory {
             }
         }
 
-        public void updateFailureReason(AbstractProject project, AbstractBuild build,
-                TaskListener listener) {
-
-            if (build.getResult() != Result.SUCCESS) {
-                // This is an unsuccessful build
-                GerritTrigger trigger = GerritTrigger.getTrigger(project);
-
-                Entry entry = getEntry(project);
-                // This was already checked in set()
-                assert entry != null;
-
-                try {
-                    entry.setUnsuccessfulMessage(this.getUnsuccessfulMessage(trigger, build,
-                            listener));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        /**
-         * Returns the message read from the configured file.
-         *
-         * @param trigger
-         * @param listener
-         * @param listener
-         * @return The Environment-expanded string, or null
-         * @throws IOException
-         * @throws InterruptedException
-         */
-        public String getUnsuccessfulMessage(GerritTrigger trigger, AbstractBuild build,
-                TaskListener listener) throws IOException, InterruptedException {
-            String filename = trigger.getBuildUnsuccessfulFilepath();
-            String content = null;
-
-            if (filename == null || filename.isEmpty()) {
-                return null;
-            }
-
-            FilePath path = build.getWorkspace().child(filename);
-
-            if (path.exists()) {
-                content = path.readToString();
-            }
-
-            EnvVars envVars = (listener == null) ? build.getEnvironment() : build
-                    .getEnvironment(listener);
-            content = envVars.expand(content);
-
-            return content;
-        }
-
         /**
          * Tells if all builds have a value (not null).
          *
@@ -764,7 +696,7 @@ public class BuildMemory {
              *
              * @param unsuccessfulMessage
              */
-            public void setUnsuccessfulMessage(String unsuccessfulMessage) {
+            private void setUnsuccessfulMessage(String unsuccessfulMessage) {
                 this.unsuccessfulMessage = unsuccessfulMessage;
             }
 
@@ -914,6 +846,25 @@ public class BuildMemory {
                 return -1;
             } else {
                 return 0;
+            }
+        }
+    }
+
+    /**
+     * Records the failure message for the given build.
+     *
+     * @param key
+     * @param r
+     * @param failureMessage
+     */
+    public void setEntryFailureMessage(PatchSetKey key, AbstractBuild r, String failureMessage) {
+        MemoryImprint pb = getMemoryImprint(key);
+
+        if (pb != null) {
+            Entry entry = pb.getEntry(r.getProject());
+
+            if (entry != null) {
+                entry.setUnsuccessfulMessage(failureMessage);
             }
         }
     }
