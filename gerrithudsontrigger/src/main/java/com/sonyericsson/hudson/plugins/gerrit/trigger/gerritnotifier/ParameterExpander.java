@@ -423,13 +423,7 @@ public class ParameterExpander {
                     }
 
                     if (res != Result.SUCCESS) {
-                        try {
-                            unsuccessfulMessage = entry.getUnsuccessfulMessage(trigger, listener);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                        unsuccessfulMessage = entry.getUnsuccessfulMessage();
 
                         if (null != unsuccessfulMessage && !unsuccessfulMessage.isEmpty()) {
                             logger.trace("Using unsuccessful message from file.");

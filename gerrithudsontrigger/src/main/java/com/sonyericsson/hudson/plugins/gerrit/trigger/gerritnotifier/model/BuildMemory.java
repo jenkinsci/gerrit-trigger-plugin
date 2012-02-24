@@ -29,11 +29,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import hudson.util.LogTaskListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.logging.Level;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
@@ -153,14 +156,28 @@ public class BuildMemory {
         }
     }
 
+
     /**
      * Sets the memory that a build is completed for an event.
      *
      * @param event the event
      * @param build the build.
      * @return the key to the memory.
+     * @deprecated Use {@link #completed(PatchsetCreated, AbstractBuild, TaskListener)}
      */
+    @Deprecated
     public synchronized PatchSetKey completed(PatchsetCreated event, AbstractBuild build) {
+        return this.completed(event, build, null);
+    }
+    /**
+     * Sets the memory that a build is completed for an event.
+     *
+     * @param event the event
+     * @param build the build.
+     * @param listener the listener.
+     * @return the key to the memory.
+     */
+    public synchronized PatchSetKey completed(PatchsetCreated event, AbstractBuild build, TaskListener listener) {
         PatchSetKey key = createKey(event);
         MemoryImprint pb = memory.get(key);
         if (pb == null) {
@@ -169,6 +186,7 @@ public class BuildMemory {
             memory.put(key, pb);
         }
         pb.set(build.getProject(), build, true);
+        pb.updateFailureReason(build.getProject(), build, listener);
         return key;
     }
 
@@ -491,6 +509,60 @@ public class BuildMemory {
             }
         }
 
+        public void updateFailureReason(AbstractProject project, AbstractBuild build,
+                TaskListener listener) {
+
+            if (build.getResult() != Result.SUCCESS) {
+                // This is an unsuccessful build
+                GerritTrigger trigger = GerritTrigger.getTrigger(project);
+
+                Entry entry = getEntry(project);
+                // This was already checked in set()
+                assert entry != null;
+
+                try {
+                    entry.setUnsuccessfulMessage(this.getUnsuccessfulMessage(trigger, build,
+                            listener));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        /**
+         * Returns the message read from the configured file.
+         *
+         * @param trigger
+         * @param listener
+         * @param listener
+         * @return The Environment-expanded string, or null
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        public String getUnsuccessfulMessage(GerritTrigger trigger, AbstractBuild build,
+                TaskListener listener) throws IOException, InterruptedException {
+            String filename = trigger.getBuildUnsuccessfulFilepath();
+            String content = null;
+
+            if (filename == null || filename.isEmpty()) {
+                return null;
+            }
+
+            FilePath path = build.getWorkspace().child(filename);
+
+            if (path.exists()) {
+                content = path.readToString();
+            }
+
+            EnvVars envVars = (listener == null) ? build.getEnvironment() : build
+                    .getEnvironment(listener);
+            content = envVars.expand(content);
+
+            return content;
+        }
+
         /**
          * Tells if all builds have a value (not null).
          *
@@ -636,6 +708,7 @@ public class BuildMemory {
             private AbstractProject project;
             private AbstractBuild build;
             private boolean buildCompleted;
+            private String unsuccessfulMessage;
 
             /**
              * Constructor.
@@ -687,6 +760,24 @@ public class BuildMemory {
             }
 
             /**
+             * Sets the unsuccessful message for an entry.
+             *
+             * @param unsuccessfulMessage
+             */
+            public void setUnsuccessfulMessage(String unsuccessfulMessage) {
+                this.unsuccessfulMessage = unsuccessfulMessage;
+            }
+
+            /**
+             * Gets the unsuccessful message for an entry.
+             *
+             * @return
+             */
+            public String getUnsuccessfulMessage() {
+                return this.unsuccessfulMessage;
+            }
+
+            /**
              * If the build is completed.
              *
              * @return true if the build is completed.
@@ -704,34 +795,6 @@ public class BuildMemory {
                 this.buildCompleted = buildCompleted;
             }
 
-            /**
-             * Returns the message read from the configured file.
-             *
-             * @param trigger
-             * @param listener
-             * @return The Environment-expanded string, or null
-             * @throws IOException
-             * @throws InterruptedException
-             */
-            public String getUnsuccessfulMessage(GerritTrigger trigger, TaskListener listener)
-                    throws IOException, InterruptedException {
-                String filename = trigger.getBuildUnsuccessfulFilepath();
-                String content = null;
-
-                if (filename == null || filename.isEmpty()) {
-                    return null;
-                }
-
-                FilePath path = build.getWorkspace().child(filename);
-
-                if (path.exists()) {
-                    content = path.readToString();
-                }
-
-                content = build.getEnvironment(listener).expand(content);
-
-                return content;
-            }
         }
     }
 

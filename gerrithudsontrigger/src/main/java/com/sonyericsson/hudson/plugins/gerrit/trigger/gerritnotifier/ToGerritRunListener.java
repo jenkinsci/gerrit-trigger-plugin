@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -34,6 +35,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import org.slf4j.Logger;
@@ -91,7 +93,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             }
             event.fireBuildCompleted(r);
             if (!cause.isSilentMode()) {
-                PatchSetKey key = memory.completed(event, r);
+                PatchSetKey key = memory.completed(event, r, listener);
                 updateTriggerContexts(r, key);
                 if (memory.isAllBuildsCompleted(key)) {
                     try {
