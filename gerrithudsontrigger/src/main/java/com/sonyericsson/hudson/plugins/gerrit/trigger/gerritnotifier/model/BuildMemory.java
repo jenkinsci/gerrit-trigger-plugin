@@ -46,30 +46,41 @@ import java.util.TreeMap;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildMemory {
-	private class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
-		@Override
-		public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
-			return new Integer(((java.lang.Object)o1).hashCode()).compareTo(new Integer(((java.lang.Object)o2).hashCode()));
-		}
-	}
-	
-    private TreeMap<GerritTriggeredEvent, MemoryImprint> memory = new TreeMap<GerritTriggeredEvent, MemoryImprint>(new GerritTriggeredEventComparator());
+
+    /**
+     * Compares GerritTriggeredEvents using the Object.hashCode() method.
+     * This ensures that every event received from Gerrit is kept track of individually.
+     *
+     * @author James E. Blair &lt;jeblair@hp.com&gt;
+     *
+     */
+    private class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
+        @Override
+        public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
+            return new Integer(((java.lang.Object)o1).hashCode()).compareTo(
+                    new Integer(((java.lang.Object)o2).hashCode()));
+        }
+    }
+
+    private TreeMap<GerritTriggeredEvent, MemoryImprint> memory =
+            new TreeMap<GerritTriggeredEvent, MemoryImprint>(
+                    new GerritTriggeredEventComparator());
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
 
     /**
-     * Gets the memory of a specific key.
+     * Gets the memory of a specific event.
      *
-     * @param key the key
+     * @param event the event.
      * @return the memory.
      */
     public synchronized MemoryImprint getMemoryImprint(GerritTriggeredEvent event) {
         return memory.get(event);
     }
-    
+
     /**
      * Tells if all triggered builds have started for a specific memory imprint.
      *
-     * @param key the key to the memory.
+     * @param event the event.
      * @return true if it is so.
      */
     public synchronized boolean isAllBuildsCompleted(GerritTriggeredEvent event) {
@@ -84,7 +95,7 @@ public class BuildMemory {
     /**
      * Gets the statistics of started builds for a specific memory imprint.
      *
-     * @param key the memory key.
+     * @param event the event.
      * @return the statistics.
      */
     public synchronized BuildsStartedStats getBuildsStartedStats(GerritTriggeredEvent event) {
@@ -99,7 +110,7 @@ public class BuildMemory {
     /**
      * Returns the status report for the given MemoryImprint.
      *
-     * @param key the key to the memory.
+     * @param event the event.
      * @return the status as it is now.
      * @see MemoryImprint#getStatusReport()
      */
@@ -115,10 +126,10 @@ public class BuildMemory {
     /**
      * Tells if all triggered builds have started for a specific memory imprint.
      *
-     * @param key the key to the memory.
+     * @param event the event.
      * @return true if it is so.
      */
-	public synchronized boolean isAllBuildsStarted(GerritTriggeredEvent event) {
+    public synchronized boolean isAllBuildsStarted(GerritTriggeredEvent event) {
         MemoryImprint pb = memory.get(event);
         if (pb != null) {
             return pb.isAllBuildsSet();
@@ -132,7 +143,6 @@ public class BuildMemory {
      *
      * @param event the event
      * @param build the build.
-     * @return the key to the memory.
      */
     public synchronized void completed(GerritTriggeredEvent event, AbstractBuild build) {
         MemoryImprint pb = memory.get(event);
@@ -149,7 +159,6 @@ public class BuildMemory {
      *
      * @param event the event.
      * @param build the build.
-     * @return the key to the memory.
      */
     public synchronized void started(GerritTriggeredEvent event, AbstractBuild build) {
         MemoryImprint pb = memory.get(event);
@@ -167,7 +176,6 @@ public class BuildMemory {
      *
      * @param event   the event that triggered it.
      * @param project the project that was triggered.
-     * @return the key to the memory.
      */
     public synchronized void triggered(GerritTriggeredEvent event, AbstractProject project) {
         MemoryImprint pb = memory.get(event);
@@ -186,7 +194,6 @@ public class BuildMemory {
      * @param event       the event to be retriggered.
      * @param project     the project that has been retriggered.
      * @param otherBuilds the list of other builds that was in the "old" memory.
-     * @return the key to the memory.
      */
     public synchronized void retriggered(
             GerritTriggeredEvent event,
@@ -207,20 +214,19 @@ public class BuildMemory {
     }
 
     /**
-     * Removes the memory for the provided key.
+     * Removes the memory for the event.
      *
-     * @param key the key to the memory.
+     * @param event the event.
      */
     public synchronized void forget(GerritTriggeredEvent event) {
         memory.remove(event);
     }
 
     /**
-     * Updates the {@link TriggerContext} for the provided key.
+     * Updates the {@link TriggerContext} for the event.
      * The cause and build is the "focal point" for the update, but all memory entities will be updated,
      * but only the current context will be {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
      *
-     * @param key   the key to have as "focus" for the update.
      * @param cause the cause.
      * @param r     the build the cause is in.
      */
@@ -311,9 +317,9 @@ public class BuildMemory {
     }
 
     /**
-     * Returns all started builds in memory for the given key.
+     * Returns all started builds in memory for the event.
      *
-     * @param key the key for the memory.
+     * @param event the event.
      * @return the list of builds, or null if there is no memory.
      */
     public synchronized List<AbstractBuild> getBuilds(GerritTriggeredEvent event) {

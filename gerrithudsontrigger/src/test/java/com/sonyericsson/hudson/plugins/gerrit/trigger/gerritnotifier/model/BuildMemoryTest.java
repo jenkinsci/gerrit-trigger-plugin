@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;

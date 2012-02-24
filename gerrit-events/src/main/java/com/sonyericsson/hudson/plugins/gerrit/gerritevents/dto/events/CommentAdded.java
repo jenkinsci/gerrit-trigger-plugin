@@ -47,19 +47,27 @@ public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEven
         return GerritEventType.COMMENT_ADDED;
     }
 
+    /**
+     * Get the code review approvals associated with this Gerrit comment.
+     * @return a list of code review approvals.
+     */
     public List<Approval> getApprovals() {
-		return approvals;
-	}
+        return approvals;
+    }
 
-	public void setApprovals(List<Approval> approvals) {
-		this.approvals = approvals;
-	}
+    /**
+     * Set the code review approvals for this event.
+     * @param approvals the list of Approvals.
+     */
+    public void setApprovals(List<Approval> approvals) {
+        this.approvals = approvals;
+    }
 
-	@Override
+    @Override
     public boolean isScorable() {
         return true;
     }
-    
+
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
@@ -67,9 +75,9 @@ public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEven
             account = new Account(json.getJSONObject(AUTHOR));
         }
         if (json.containsKey(APPROVALS)) {
-        	JSONArray eventApprovals = json.getJSONArray(APPROVALS);
-            for (int i=0; i<eventApprovals.size(); i++) {
-            	approvals.add(new Approval(eventApprovals.getJSONObject(i)));
+            JSONArray eventApprovals = json.getJSONArray(APPROVALS);
+            for (int i = 0; i < eventApprovals.size(); i++) {
+                approvals.add(new Approval(eventApprovals.getJSONObject(i)));
             }
         }
     }

@@ -37,22 +37,28 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
-	/* To allow old builds to deserialize without warnings. */
-	private Account uploader;
-	
-	private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-		in.defaultReadObject();
-		/* If we're loading an old build with only one of these parameters, set
-		 * the other to it.
-		 */
-		if (uploader == null && account != null) {
-			uploader = account;
-		}
-		if (account == null && uploader != null) {
-			account = uploader;
-		}
-	}
-	
+    /* To allow old builds to deserialize without warnings. */
+    private Account uploader;
+
+    /**
+     * Fix up object attributes on deserialization.
+     * @param in deserialization stream
+     * @throws IOException if input stream can't be read
+     * @throws ClassNotFoundException in the unlikely event it can't find a class
+     */
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        /* If we're loading an old build with only one of these parameters, set
+         * the other to it.
+         */
+        if (uploader == null && account != null) {
+            uploader = account;
+        }
+        if (account == null && uploader != null) {
+            account = uploader;
+        }
+    }
+
     @Override
     public GerritEventType getEventType() {
         return GerritEventType.PATCHSET_CREATED;

@@ -134,7 +134,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * {@link GerritCause}s in the build.
      *
      * @param r   the build.
-     * @param key the memory key to update.
      * @see BuildMemory#updateTriggerContext(
      *      com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey,
      *      com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause, hudson.model.AbstractBuild)
