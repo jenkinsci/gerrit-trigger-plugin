@@ -72,15 +72,6 @@ public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonE
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof PatchsetCreated) {
-            return equals((PatchsetCreated)obj);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
     public String toString() {
         return "PatchsetCreated: " + change + " " + patchSet;
     }

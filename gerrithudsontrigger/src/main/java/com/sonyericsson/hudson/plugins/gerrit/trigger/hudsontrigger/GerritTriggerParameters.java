@@ -179,15 +179,13 @@ public enum GerritTriggerParameters {
         			parameters, event.getPatchSet().getRevision(), escapeQuotes);
         	GERRIT_REFSPEC.setOrCreateStringParameterValue(
         			parameters, StringUtil.makeRefSpec(event), escapeQuotes);
-            Account uploader = event.getPatchSet().getUploader();
-        	if (uploader != null) {
-        		GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
-        				parameters, getNameAndEmail(uploader), escapeQuotes);
-        		GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
-        				parameters, getName(uploader), escapeQuotes);
-        		GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
-        				parameters, getEmail(uploader), escapeQuotes);
-        	}
+            Account uploader = findUploader(event);
+            GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
+            		parameters, getNameAndEmail(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
+            		parameters, getName(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
+            		parameters, getEmail(uploader), escapeQuotes);
         }
         Account account = event.getAccount();
         if (account != null){
@@ -212,6 +210,20 @@ public enum GerritTriggerParameters {
                 parameters, getName(event.getChange().getOwner()), escapeQuotes);
         GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
                 parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
+    }
+
+    /**
+     * There are two uploader fields in the event, this method gets one of them if one is null.
+     *
+     * @param event the event to search.
+     * @return the uploader if any.
+     */
+    private static Account findUploader(GerritTriggeredEvent event) {
+        if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
+            return event.getPatchSet().getUploader();
+        } else {
+            return event.getAccount();
+        }
     }
 
     /**
@@ -257,5 +269,5 @@ public enum GerritTriggerParameters {
         } else {
             return account.getEmail();
         }
-    }
+    }    
 }
