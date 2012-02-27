@@ -67,7 +67,7 @@ public class GerritTriggeredEvent extends GerritEventLifecycle {
      * @param json the JSON Object.
      */
     public void fromJson(JSONObject json) {
-    	if (json.containsKey(CHANGE)) {
+        if (json.containsKey(CHANGE)) {
             change = new Change(json.getJSONObject(CHANGE));
         }
         if (json.containsKey(REFUPDATE)) {
@@ -122,7 +122,7 @@ public class GerritTriggeredEvent extends GerritEventLifecycle {
 
     /**
      * The ref update.
-     * @param change the refupdate.
+     * @param refUpdate the refupdate.
      */
     public void setRefUpdate(RefUpdate refUpdate) {
         this.refUpdate = refUpdate;

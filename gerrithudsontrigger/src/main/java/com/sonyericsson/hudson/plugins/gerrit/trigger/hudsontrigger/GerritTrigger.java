@@ -288,12 +288,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param project the project to build.
      */
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
-    	BadgeAction badgeAction = null;
-    	if (event.getChange() != null) {
-    		badgeAction = new BadgeAction(event);
-    	}
-    	//during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
-    	Future build = project.scheduleBuild2(
+        BadgeAction badgeAction = null;
+        if (event.getChange() != null) {
+            badgeAction = new BadgeAction(event);
+        }
+        //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
+        Future build = project.scheduleBuild2(
                 getBuildScheduleDelay(),
                 cause,
                 badgeAction,
@@ -305,13 +305,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             getRunningJobs().scheduled(event.getChange(), build, project.getName());
         }
         if (event.getChange() != null) {
-        	logger.info("Project {} Build Scheduled: {} By event: {}",
-        			new Object[]{project.getName(), (build != null),
-        			event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+            logger.info("Project {} Build Scheduled: {} By event: {}",
+                    new Object[]{project.getName(), (build != null),
+                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
         } else if (event.getRefUpdate() != null) {
-        	logger.info("Project {} Build Scheduled: {} By event: {}",
-        			new Object[]{project.getName(), (build != null),
-        			event.getRefUpdate().getRefName() + " " + event.getRefUpdate().getNewRev(), });
+            logger.info("Project {} Build Scheduled: {} By event: {}",
+                    new Object[]{project.getName(), (build != null),
+                    event.getRefUpdate().getRefName() + " " + event.getRefUpdate().getNewRev(), });
         }
     }
 
@@ -562,7 +562,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
-        if (triggerOnRefUpdatedEvent && isInteresting(event)) { 
+        if (triggerOnRefUpdatedEvent && isInteresting(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
@@ -933,7 +933,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void setTriggerOnCommentAddedEvent(boolean triggerOnCommentAddedEvent) {
         this.triggerOnCommentAddedEvent = triggerOnCommentAddedEvent;
     }
-    
+
     /**
      * Sets triggering on ref-updated events.
      * Default is false.
@@ -943,7 +943,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void setTriggerOnRefUpdatedEvent(boolean triggerOnRefUpdatedEvent) {
         this.triggerOnRefUpdatedEvent = triggerOnRefUpdatedEvent;
     }
-    
+
     /**
      * Should we trigger on this event?
      *
@@ -954,18 +954,18 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (gerritProjects != null) {
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {
-            	if (event.getChange() != null) {
-            		if (p.isInteresting(event.getChange().getProject(), 
-            				event.getChange().getBranch())) {
-            			logger.trace("According to {} the event is interesting.", p);
-            			return true;
-            		}
+                if (event.getChange() != null) {
+                    if (p.isInteresting(event.getChange().getProject(),
+                            event.getChange().getBranch())) {
+                        logger.trace("According to {} the event is interesting.", p);
+                        return true;
+                    }
                 } else if (event.getRefUpdate() != null) {
-            		if (p.isInteresting(event.getRefUpdate().getProject(), 
-            				event.getRefUpdate().getRefName())) {
-            			logger.trace("According to {} the event is interesting.", p);
-            			return true;
-            		}	
+                    if (p.isInteresting(event.getRefUpdate().getProject(),
+                            event.getRefUpdate().getRefName())) {
+                        logger.trace("According to {} the event is interesting.", p);
+                        return true;
+                    }
                 }
             }
         }

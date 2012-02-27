@@ -27,11 +27,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
-import net.sf.json.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REFUPDATE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBMITTER;
 
 /**
@@ -39,7 +35,6 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class RefUpdated extends GerritTriggeredEvent implements GerritJsonEvent {
-    private static final Logger logger = LoggerFactory.getLogger(RefUpdated.class);
 
     @Override
     public GerritEventType getEventType() {
@@ -50,11 +45,10 @@ public class RefUpdated extends GerritTriggeredEvent implements GerritJsonEvent 
     public boolean isScorable() {
         return false;
     }
-    
+
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        logger.debug("from json");
         if (json.containsKey(SUBMITTER)) {
             this.account = new Account(json.getJSONObject(SUBMITTER));
         }

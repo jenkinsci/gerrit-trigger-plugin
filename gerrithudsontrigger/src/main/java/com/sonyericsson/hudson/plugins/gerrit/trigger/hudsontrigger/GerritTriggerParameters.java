@@ -97,7 +97,7 @@ public enum GerritTriggerParameters {
     /**
      * The email of the uploader of the patch-set.
      */
-    GERRIT_PATCHSET_UPLOADER_EMAIL, 
+    GERRIT_PATCHSET_UPLOADER_EMAIL,
     /**
      * The name and email of the person who triggered the event.
      */
@@ -113,23 +113,23 @@ public enum GerritTriggerParameters {
     /**
      * The refname in a ref-updated event.
      */
-    GERRIT_REFNAME, 
+    GERRIT_REFNAME,
     /**
      * The old revision in a ref-updated event.
      */
-    GERRIT_OLDREV, 
+    GERRIT_OLDREV,
     /**
      * The new revision in a ref-updated event.
      */
-    GERRIT_NEWREV, 
+    GERRIT_NEWREV,
     /**
      * The submitter in a ref-updated event.
      */
-    GERRIT_SUBMITTER, 
+    GERRIT_SUBMITTER,
     /**
      * The name of the submitter in a ref-updated event.
      */
-    GERRIT_SUBMITTER_NAME, 
+    GERRIT_SUBMITTER_NAME,
     /**
      * The email of the submitter in a ref-updated event.
      */
@@ -226,13 +226,13 @@ public enum GerritTriggerParameters {
         }
         if (event.getRefUpdate() != null) {
             GERRIT_REFNAME.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getRefName(), escapeQuotes);    	
+                    parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_PROJECT.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getProject(), escapeQuotes);    	
+                    parameters, event.getRefUpdate().getProject(), escapeQuotes);
             GERRIT_OLDREV.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getOldRev(), escapeQuotes);    	
+                    parameters, event.getRefUpdate().getOldRev(), escapeQuotes);
             GERRIT_NEWREV.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getNewRev(), escapeQuotes);    	
+                    parameters, event.getRefUpdate().getNewRev(), escapeQuotes);
         }
         Account account = event.getAccount();
         if (account != null) {

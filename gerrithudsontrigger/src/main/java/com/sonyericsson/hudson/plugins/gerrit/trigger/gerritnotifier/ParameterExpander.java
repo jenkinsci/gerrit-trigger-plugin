@@ -180,12 +180,12 @@ public class ParameterExpander {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
         if (event.getChange() != null) {
-        	map.put("GERRIT_NAME", event.getChange().getProject());
-        	map.put("CHANGE_ID", event.getChange().getId());
-        	map.put("BRANCH", event.getChange().getProject());
-        	map.put("CHANGE", event.getChange().getNumber());
-        	map.put("PATCHSET", event.getPatchSet().getNumber());
-        	map.put("REFSPEC", StringUtil.makeRefSpec(event));
+            map.put("GERRIT_NAME", event.getChange().getProject());
+            map.put("CHANGE_ID", event.getChange().getId());
+            map.put("BRANCH", event.getChange().getProject());
+            map.put("CHANGE", event.getChange().getNumber());
+            map.put("PATCHSET", event.getPatchSet().getNumber());
+            map.put("REFSPEC", StringUtil.makeRefSpec(event));
         }
         if (r != null) {
             map.put("BUILDURL", hudson.getRootUrl() + r.getUrl());
@@ -367,7 +367,7 @@ public class ParameterExpander {
      * @return the string.
      */
     private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
-                                     Map<String, String> parameters) {
+            Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 

@@ -92,14 +92,14 @@ public class BadgeAction implements BuildBadgeAction {
     public String getUrl() {
         if (event.getChange() != null) {
             if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
-            	return event.getChange().getUrl();
+                return event.getChange().getUrl();
             } else {
-            	return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-            			event.getChange().getNumber(),
-            			event.getPatchSet().getNumber());
+                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                        event.getChange().getNumber(),
+                        event.getPatchSet().getNumber());
             }
         } else {
-        	return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
+            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
         }
     }
 }
