@@ -343,7 +343,7 @@ public class GerritHandlerTest {
         public void gerritEvent(ChangeMerged event) {
 
         }
-        
+
         @Override
         public void gerritEvent(CommentAdded event) {
 

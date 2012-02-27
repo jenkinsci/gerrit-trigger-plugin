@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
@@ -205,7 +206,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     @Override
     public void start(AbstractProject project, boolean newInstance) {
-      logger.debug("Start project: {}", project);
+        logger.debug("Start project: {}", project);
         super.start(project, newInstance);
         this.myProject = project;
         try {
@@ -330,7 +331,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Used to inform the plugin that the builds for a job have ended. This allows us to clean up our list of what jobs
      * we're running.
      *
-     * @param patchset the patchset.
+     * @param event the event.
      */
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         //Experimental feature!
@@ -417,7 +418,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void retriggerThisBuild(TriggerContext context) {
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                context.getEvent())) {
+                        context.getEvent())) {
 
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
@@ -510,6 +511,23 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Checks if the approvals associated with this comment-added event match what
+     * this trigger is configured to look for.
+     *
+     * @param event the event.
+     * @return true if the event matches the approval category and value configured.
+     */
+    private boolean matchesApproval(CommentAdded event) {
+        for (Approval approval : event.getApprovals()) {
+            if (approval.getType().equals(this.commentAddedTriggerApprovalCategory)
+                    && approval.getValue().equals(this.commentAddedTriggerApprovalValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Called when a CommentAdded event arrives.
      *
      * @param event the event.
@@ -521,10 +539,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
-        if (triggerOnCommentAddedEvent 
-                && event.matchesApproval(this.commentAddedTriggerApprovalCategory, 
-                                         this.commentAddedTriggerApprovalValue) 
-                && isInteresting(event)) {
+        if (triggerOnCommentAddedEvent && isInteresting(event)
+                && matchesApproval(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
@@ -762,8 +778,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if trigger on patchset-uploaded events.
      */
     public boolean isTriggerOnPatchsetUploadedEvent() {
-      return triggerOnPatchsetUploadedEvent;
-  }
+        return triggerOnPatchsetUploadedEvent;
+    }
 
     /**
      * Trigger on change-merged events
@@ -927,7 +943,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void setTriggerOnRefUpdatedEvent(boolean triggerOnRefUpdatedEvent) {
         this.triggerOnRefUpdatedEvent = triggerOnRefUpdatedEvent;
     }
-    
     
     /**
      * Should we trigger on this event?

@@ -24,7 +24,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
@@ -55,9 +54,7 @@ public class BuildMemoryTest {
         final AbstractProject project = mock(AbstractProject.class);
         instance.triggered(event, project);
 
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
-
-        MemoryImprint result = instance.getMemoryImprint(key);
+        MemoryImprint result = instance.getMemoryImprint(event);
         assertNotNull(result);
         assertEquals(project, result.getEntries()[0].getProject());
         assertEquals(event, result.getEvent());
@@ -131,8 +128,7 @@ public class BuildMemoryTest {
         instance.completed(event, build);
 
         boolean expResult = true;
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
-        boolean result = instance.isAllBuildsCompleted(key);
+        boolean result = instance.isAllBuildsCompleted(event);
         assertEquals(expResult, result);
     }
 
@@ -154,8 +150,7 @@ public class BuildMemoryTest {
         instance.completed(event, build);
 
         boolean expResult = false;
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
-        boolean result = instance.isAllBuildsCompleted(key);
+        boolean result = instance.isAllBuildsCompleted(event);
         assertEquals(expResult, result);
     }
 
@@ -183,8 +178,7 @@ public class BuildMemoryTest {
         when(mock.getProject()).thenReturn(project);
         instance.started(event, mock);
 
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
-        BuildsStartedStats result = instance.getBuildsStartedStats(key);
+        BuildsStartedStats result = instance.getBuildsStartedStats(event);
         assertEquals(event, result.getEvent());
         //CS IGNORE MagicNumber FOR NEXT 3 LINES. REASON: mock.
         assertEquals(4, result.getTotalBuildsToStart());
@@ -262,8 +256,7 @@ public class BuildMemoryTest {
         instance.started(event, mock);
 
         boolean expResult = true;
-        boolean result = instance.isAllBuildsStarted(
-                new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber()));
+        boolean result = instance.isAllBuildsStarted(event);
         assertEquals(expResult, result);
     }
 
@@ -280,10 +273,8 @@ public class BuildMemoryTest {
         when(build.getProject()).thenReturn(project);
 
         BuildMemory instance = new BuildMemory();
-        PatchSetKey expResult = new PatchSetKey(event);
-        PatchSetKey result = instance.completed(event, build);
-        assertEquals(expResult, result);
-        assertTrue(instance.isAllBuildsCompleted(result));
+        instance.completed(event, build);
+        assertTrue(instance.isAllBuildsCompleted(event));
     }
 
     /**
@@ -299,11 +290,9 @@ public class BuildMemoryTest {
         when(build.getProject()).thenReturn(project);
 
         BuildMemory instance = new BuildMemory();
-        PatchSetKey expResult = new PatchSetKey(event);
-        PatchSetKey result = instance.started(event, build);
-        assertEquals(expResult, result);
-        assertTrue(instance.isAllBuildsStarted(result));
-        assertFalse(instance.isAllBuildsCompleted(result));
+        instance.started(event, build);
+        assertTrue(instance.isAllBuildsStarted(event));
+        assertFalse(instance.isAllBuildsCompleted(event));
     }
 
     /**
@@ -317,12 +306,10 @@ public class BuildMemoryTest {
         AbstractProject project = mock(AbstractProject.class);
 
         BuildMemory instance = new BuildMemory();
-        PatchSetKey expResult = new PatchSetKey(event);
-        PatchSetKey result = instance.triggered(event, project);
-        assertEquals(expResult, result);
-        assertNotNull(instance.getMemoryImprint(result));
-        assertFalse(instance.isAllBuildsStarted(result));
-        assertFalse(instance.isAllBuildsCompleted(result));
+        instance.triggered(event, project);
+        assertNotNull(instance.getMemoryImprint(event));
+        assertFalse(instance.isAllBuildsStarted(event));
+        assertFalse(instance.isAllBuildsCompleted(event));
     }
 
     /**
@@ -338,12 +325,10 @@ public class BuildMemoryTest {
         when(build.getProject()).thenReturn(project);
 
         BuildMemory instance = new BuildMemory();
-        PatchSetKey expResult = new PatchSetKey(event);
-        PatchSetKey result = instance.completed(event, build);
-        assertEquals(expResult, result);
+        instance.completed(event, build);
 
-        instance.forget(result);
-        assertNull(instance.getMemoryImprint(result));
+        instance.forget(event);
+        assertNull(instance.getMemoryImprint(event));
     }
 
     /**
@@ -430,8 +415,8 @@ public class BuildMemoryTest {
         AbstractProject project = mock(AbstractProject.class);
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
-        PatchSetKey key = instance.started(event, build);
-        instance.forget(key);
+        instance.started(event, build);
+        instance.forget(event);
         assertFalse(instance.isBuilding(event));
     }
 
@@ -534,8 +519,8 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         AbstractProject project = mock(AbstractProject.class);
-        PatchSetKey key = instance.retriggered(event, project, Collections.EMPTY_LIST);
-        MemoryImprint memory = instance.getMemoryImprint(key);
+        instance.retriggered(event, project, Collections.EMPTY_LIST);
+        MemoryImprint memory = instance.getMemoryImprint(event);
         assertNotNull(memory);
         assertEquals(1, memory.getEntries().length);
         assertEquals(project, memory.getEntries()[0].getProject());
@@ -551,8 +536,8 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         AbstractProject project = mock(AbstractProject.class);
-        PatchSetKey key = instance.retriggered(event, project, null);
-        MemoryImprint memory = instance.getMemoryImprint(key);
+        instance.retriggered(event, project, null);
+        MemoryImprint memory = instance.getMemoryImprint(event);
         assertNotNull(memory);
         assertEquals(1, memory.getEntries().length);
         assertEquals(project, memory.getEntries()[0].getProject());
@@ -582,8 +567,8 @@ public class BuildMemoryTest {
         instance.completed(event, build2);
         instance.started(event, build3);
 
-        PatchSetKey key = instance.retriggered(event, project2, null);
-        MemoryImprint memory = instance.getMemoryImprint(key);
+        instance.retriggered(event, project2, null);
+        MemoryImprint memory = instance.getMemoryImprint(event);
         assertNotNull(memory);
         assertEquals(3, memory.getEntries().length);
 

@@ -113,6 +113,22 @@ public abstract class GerritEventKeys {
      * newrev.
      */
     public static final String NEWREV = "newRev";
+    /**
+     * submitter.
+     */
+    public static final String AUTHOR = "author";
+    /**
+     * review approvals.
+     */
+    public static final String APPROVALS = "approvals";
+    /**
+     * approval category.
+     */
+    public static final String TYPE = "type";
+    /**
+     * approval value.
+     */
+    public static final String VALUE = "value";
 
     /**
      * Empty default constructor to hinder instantiation.
