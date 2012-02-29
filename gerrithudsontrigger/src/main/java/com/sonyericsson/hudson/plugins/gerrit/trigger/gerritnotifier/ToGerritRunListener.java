@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -99,16 +98,19 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             if (!cause.isSilentMode()) {
                 PatchSetKey key = memory.completed(event, r);
 
-                if (r.getResult() != Result.SUCCESS)
-                {
+                if (r.getResult().isWorseThan(Result.SUCCESS)) {
                     try {
                         // Attempt to record the failure message, if applicable
                         String failureMessage = this.obtainFailureMessage(event, r, listener);
                         memory.setEntryFailureMessage(key, r, failureMessage);
                     } catch (IOException e) {
-                        e.printStackTrace(listener.getLogger());
+                        listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
+                        logger.warn("IOException while obtaining failure message for build: "
+                                + r.getDisplayName(), e);
                     } catch (InterruptedException e) {
-                        e.printStackTrace(listener.getLogger());
+                        listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
+                        logger.warn("InterruptedException while obtaining failure message for build: "
+                                + r.getDisplayName(), e);
                     }
                 }
 
@@ -132,12 +134,12 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     /**
      * Attempt to obtain the failure message for a build.
      *
-     * @param event
-     * @param build
-     * @param listener
-     * @return
-     * @throws IOException
-     * @throws InterruptedException
+     * @param event The event that triggered this build
+     * @param build The build being executed
+     * @param listener The build listener
+     * @return Message content from the configured unsuccessful message file
+     * @throws IOException In case of an error communicating with the {@link FilePath} or {@link EnvVars Environment}
+     * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
      */
     private String obtainFailureMessage(PatchsetCreated event, AbstractBuild build, TaskListener listener)
             throws IOException, InterruptedException {
@@ -150,15 +152,28 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         String filename = trigger.getBuildUnsuccessfulFilepath();
 
         if (filename != null && !filename.isEmpty()) {
-            FilePath path = build.getWorkspace().child(filename);
+            EnvVars envVars;
 
-            if (path.exists()) {
-                content = path.readToString();
+            if (listener == null) {
+                envVars = build.getEnvironment();
+            } else {
+                envVars = build.getEnvironment(listener);
             }
 
-            EnvVars envVars = (listener == null) ? build.getEnvironment()
-                                                 : build.getEnvironment(listener);
-            content = envVars.expand(content);
+            // The filename may contain environment variables
+            filename = envVars.expand(filename);
+
+            // Check for ANT-style file path
+            FilePath[] matches = build.getWorkspace().list(filename);
+
+            if (matches.length > 0) {
+                // Use the first match
+                FilePath path = matches[0];
+
+                if (path.exists()) {
+                    content = envVars.expand(path.readToString());
+                }
+            }
         }
 
         return content;

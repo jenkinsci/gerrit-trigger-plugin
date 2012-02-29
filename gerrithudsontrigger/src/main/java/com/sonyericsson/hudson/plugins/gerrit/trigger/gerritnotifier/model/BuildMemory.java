@@ -25,18 +25,12 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 
-import hudson.EnvVars;
-import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
-import hudson.model.TaskListener;
-import hudson.util.LogTaskListener;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +40,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.logging.Level;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
@@ -383,6 +376,25 @@ public class BuildMemory {
     }
 
     /**
+     * Records the failure message for the given build.
+     *
+     * @param key the key for the memory.
+     * @param r the build that caused the failure.
+     * @param failureMessage the failure message
+     */
+    public void setEntryFailureMessage(PatchSetKey key, AbstractBuild r, String failureMessage) {
+        MemoryImprint pb = getMemoryImprint(key);
+
+        if (pb != null) {
+            Entry entry = pb.getEntry(r.getProject());
+
+            if (entry != null) {
+                entry.setUnsuccessfulMessage(failureMessage);
+            }
+        }
+    }
+
+    /**
      * A holder for all builds triggered by one event.
      */
     public static class MemoryImprint {
@@ -694,7 +706,7 @@ public class BuildMemory {
             /**
              * Sets the unsuccessful message for an entry.
              *
-             * @param unsuccessfulMessage
+             * @param unsuccessfulMessage the message.
              */
             private void setUnsuccessfulMessage(String unsuccessfulMessage) {
                 this.unsuccessfulMessage = unsuccessfulMessage;
@@ -703,7 +715,7 @@ public class BuildMemory {
             /**
              * Gets the unsuccessful message for an entry.
              *
-             * @return
+             * @return the message.
              */
             public String getUnsuccessfulMessage() {
                 return this.unsuccessfulMessage;
@@ -846,25 +858,6 @@ public class BuildMemory {
                 return -1;
             } else {
                 return 0;
-            }
-        }
-    }
-
-    /**
-     * Records the failure message for the given build.
-     *
-     * @param key
-     * @param r
-     * @param failureMessage
-     */
-    public void setEntryFailureMessage(PatchSetKey key, AbstractBuild r, String failureMessage) {
-        MemoryImprint pb = getMemoryImprint(key);
-
-        if (pb != null) {
-            Entry entry = pb.getEntry(r.getProject());
-
-            if (entry != null) {
-                entry.setUnsuccessfulMessage(failureMessage);
             }
         }
     }

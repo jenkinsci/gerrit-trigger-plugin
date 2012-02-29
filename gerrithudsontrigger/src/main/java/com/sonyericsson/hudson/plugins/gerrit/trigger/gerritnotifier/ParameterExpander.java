@@ -31,13 +31,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 
-import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -422,7 +420,7 @@ public class ParameterExpander {
                         str.append(customMessage);
                     }
 
-                    if (res != Result.SUCCESS) {
+                    if (res.isWorseThan(Result.SUCCESS)) {
                         unsuccessfulMessage = entry.getUnsuccessfulMessage();
 
                         if (null != unsuccessfulMessage && !unsuccessfulMessage.isEmpty()) {
