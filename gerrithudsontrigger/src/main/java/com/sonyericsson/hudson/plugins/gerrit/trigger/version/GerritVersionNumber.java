@@ -1,7 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright 2012 Sony Ericsson Mobile Communications. All rights reserved.
  *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,43 +23,43 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
 
-
 import hudson.util.VersionNumber;
 
 /**
- * Subclass of GerritVersionNumber which represents the highest possible version number.
+ * Subclass of VersionNumber which can account for gerrit snapshot versions.
  *
  * @author Tomas Westling &lt;thomas.westling@sonyericsson.com&gt;
  */
-
-public class HighestVersionNumber extends GerritVersionNumber {
-
-    private static final String HIGHEST_VERSION_NUMBER = "9.9.9";
+public class GerritVersionNumber extends VersionNumber {
+    private boolean snapshot = false;
 
     /**
-     * Default constructor, creates a highest version number.
+     * Parses a string like "1.0.2" into the version number.
+     * @param num the version string.
      */
-    public HighestVersionNumber() {
-        super(HIGHEST_VERSION_NUMBER);
+    public GerritVersionNumber(String num) {
+        super(num);
     }
 
-    @Override
-    public boolean isOlderThan(VersionNumber rhs) {
-        return false;
+    /**
+     * Returns a new GerritVersionNumber from a String.
+     * Sets the snapshot field to true if it finds a -g in the version String.
+     * @param num the version String.
+     * @return the GerritVersionNumber.
+     */
+    public static GerritVersionNumber getGerritVersionNumber(String num) {
+        GerritVersionNumber versionNumber;
+        String[] split = num.split("-");
+        versionNumber = new GerritVersionNumber(split[0]);
+        versionNumber.snapshot = num.contains("-g");
+        return versionNumber;
     }
 
-    @Override
-    public boolean isNewerThan(VersionNumber rhs) {
-        return true;
-    }
-
-    @Override
-    public int compareTo(VersionNumber rhs) {
-        return 1;
-    }
-
-    @Override
-    public String toString() {
-        return "NaN";
+    /**
+     * Getter for if the version number is a snapshot.
+     * @return if it is a snapshot.
+     */
+    public boolean isSnapshot() {
+        return snapshot;
     }
 }

@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2012 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +28,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.util.VersionNumber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.StringTokenizer;
 
 /**
  * Util class used to determine if the current gerrit version is high enough to run a specific feature..
@@ -69,13 +68,23 @@ public final class GerritVersionChecker {
     }
 
     /**
-     *
-     * @param feature the gerrit feature we want to use.
-     * @return true if the gerrit version is high enough for us to use this feature.
+     * Tells us if we are running the correct version for a particular feature.
+     * @param feature the feature we want to check.
+     * @return true if the Gerrit version is high enough for us to use this feature.
      */
     public static boolean isCorrectVersion(Feature feature) {
-        VersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getVersion());
-        return (!feature.versionNumber.isNewerThan(gerritVersion));
+        GerritVersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getVersion());
+        return isCorrectVersion(gerritVersion, feature);
+    }
+
+    /**
+     * Tells us if we are running the correct version for a particular feature.
+     * @param gerritVersion the version of Gerrit we are running.
+     * @param feature the feature we want to check.
+     * @return true if the Gerrit version is high enough for us to use this feature.
+     */
+    public static boolean isCorrectVersion(GerritVersionNumber gerritVersion, Feature feature) {
+        return (gerritVersion.isSnapshot() || !feature.versionNumber.isNewerThan(gerritVersion));
     }
 
     /**
@@ -83,16 +92,11 @@ public final class GerritVersionChecker {
      * @param version the version as a String.
      * @return the version as a versionNumber.
      */
-    private static VersionNumber createVersionNumber(String version) {
+    private static GerritVersionNumber createVersionNumber(String version) {
         if (version == null || version.equals("")) {
             logger.error("Gerrit version number is null or the empty string.");
             return new HighestVersionNumber();
         }
-        StringTokenizer tokens = new StringTokenizer(version, "-");
-        if (tokens.countTokens() < 2) {
-            logger.error("Could not parse gerrit version number: " + version);
-            return new HighestVersionNumber();
-        }
-        return new VersionNumber(tokens.nextToken());
+        return GerritVersionNumber.getGerritVersionNumber(version);
     }
 }

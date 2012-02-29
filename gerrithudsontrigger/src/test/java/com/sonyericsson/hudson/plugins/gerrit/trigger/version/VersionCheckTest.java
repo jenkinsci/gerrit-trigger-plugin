@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +52,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn("2.2.3-456-g3fc6036");
+        when(plugin.getVersion()).thenReturn("2.2.3.1-450");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -63,7 +64,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn("2.2.2-456-g3fc6036");
+        when(plugin.getVersion()).thenReturn("2.2.2.1-150");
         assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -89,5 +90,19 @@ public class VersionCheckTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(plugin.getVersion()).thenReturn(null);
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+    }
+
+    /**
+     * Tests that the gerrit version is a snapshot and therefore high enough to run the file trigger feature..
+     */
+    @Test
+    public void testSnapshotVersion() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        String version = "2.2.2.1-340-g47084d4";
+        when(plugin.getVersion()).thenReturn(version);
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        assertTrue(GerritVersionNumber.getGerritVersionNumber(version).isSnapshot());
     }
 }

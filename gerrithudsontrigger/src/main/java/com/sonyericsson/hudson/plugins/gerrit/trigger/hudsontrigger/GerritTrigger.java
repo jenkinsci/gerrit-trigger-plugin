@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +39,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.Retr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -860,5 +862,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         public synchronized Future remove(Change change) {
             return runningJobs.remove(change);
         }
+    }
+
+    /**
+     * Convenience method for the jelly file.
+     * @return true if file triggering is enabled in the gerrit version.
+     */
+    public boolean isFileTriggerEnabled() {
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
     }
 }
