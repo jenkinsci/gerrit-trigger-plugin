@@ -743,7 +743,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {
                 if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch())) {
-                    if (p.getFilePaths() != null && p.getFilePaths().size() > 0) {
+                    if (isFileTriggerEnabled() && p.getFilePaths() != null && p.getFilePaths().size() > 0) {
                         if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch(),
                         event.getFiles(new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
                             logger.trace("According to {} the event is interesting.", p);
@@ -758,6 +758,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         logger.trace("Nothing interesting here, move along folks!");
         return false;
+    }
+
+    /**
+     * Convenience method for finding it out if file triggering is enabled in the gerrit version.
+     * @return true if file triggering is enabled in the gerrit version.
+     */
+    public boolean isFileTriggerEnabled() {
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
     }
 
     /**
@@ -862,13 +870,5 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         public synchronized Future remove(Change change) {
             return runningJobs.remove(change);
         }
-    }
-
-    /**
-     * Convenience method for the jelly file.
-     * @return true if file triggering is enabled in the gerrit version.
-     */
-    public boolean isFileTriggerEnabled() {
-        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
     }
 }

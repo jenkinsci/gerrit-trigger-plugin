@@ -1,6 +1,7 @@
  <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
+    <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
     <f:section title="${%Gerrit Trigger}">
         <f:advanced>
             <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
@@ -189,39 +190,41 @@
                             </f:repeatable>
                         </td>
                     </tr>
-                    <tr>
-                        <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
-                            <f:repeatable var="f" field="filePaths" add="${%Add File path}" minimum="0" header="">
-                            <table width="100%">
-                                <tr>
-                                    <td width="60">
-                                    File
-                                    </td>
-                                    <td width="80">
-                                        <select class="setting-input" name="_.compareType">
-                                            <j:forEach items="${types}" var="me">
-                                                <j:choose>
-                                                    <j:when test="${loop.getCompareType().name()==me.name()}">
-                                                       <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
-                                                    </j:when>
-                                                    <j:otherwise>
-                                                        <option value="${me.name()}">${me.getDisplayName()}</option>
-                                                    </j:otherwise>
-                                              </j:choose>
-                                            </j:forEach>
-                                            </select>
-                                    </td>
-                                    <td minwidth="150">
-                                        <f:textbox field="pattern" value="${b.pattern}" default=""/>
-                                    </td>
-                                    <td width="65">
-                                        <f:repeatableDeleteButton/>
-                                    </td>
-                                </tr>
-                            </table>
-                        </f:repeatable>
-                        </td>
-                    </tr>
+                    <j:if test="${fileTriggerEnabled}">
+                        <tr>
+                            <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
+                                <f:repeatable var="f" field="filePaths" add="${%Add File path}" minimum="0" header="">
+                                <table width="100%">
+                                    <tr>
+                                        <td width="60">
+                                        File
+                                        </td>
+                                        <td width="80">
+                                            <select class="setting-input" name="_.compareType">
+                                                <j:forEach items="${types}" var="me">
+                                                    <j:choose>
+                                                        <j:when test="${loop.getCompareType().name()==me.name()}">
+                                                            <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                                        </j:when>
+                                                        <j:otherwise>
+                                                            <option value="${me.name()}">${me.getDisplayName()}</option>
+                                                        </j:otherwise>
+                                                    </j:choose>
+                                                </j:forEach>
+                                                </select>
+                                        </td>
+                                        <td minwidth="150">
+                                            <f:textbox field="pattern" value="${b.pattern}" default=""/>
+                                        </td>
+                                        <td width="65">
+                                            <f:repeatableDeleteButton/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </f:repeatable>
+                            </td>
+                        </tr>
+                    </j:if>
                 </table>
             </f:repeatable>
         </f:entry>
