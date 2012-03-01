@@ -27,14 +27,19 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
+import hudson.EnvVars;
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Result;
 import hudson.model.TaskListener;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +49,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -98,13 +105,20 @@ public class ToGerritRunListenerTest {
      * @param projectFullName the project's name
      * @param buildNumber     the buildNumber.
      * @return a mock.
+     * @throws InterruptedException Bogus exception from mock
+     * @throws IOException Bogus exception from mock
      */
-    private AbstractBuild mockBuild(String projectFullName, int buildNumber) {
+    private AbstractBuild mockBuild(String projectFullName, int buildNumber) throws IOException, InterruptedException {
         System.out.println("mockBuild");
         AbstractProject project = mockProject(projectFullName);
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
         when(build.getNumber()).thenReturn(buildNumber);
+        EnvVars envVars = Setup.createEnvVars();
+
+        doReturn(envVars).when(build).getEnvironment();
+        doReturn(envVars).when(build).getEnvironment(any(TaskListener.class));
+
         return build;
     }
 
@@ -124,6 +138,7 @@ public class ToGerritRunListenerTest {
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
         BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
@@ -154,6 +169,7 @@ public class ToGerritRunListenerTest {
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
@@ -161,6 +177,83 @@ public class ToGerritRunListenerTest {
 
         verify(event).fireBuildCompleted(same(build));
         verifyZeroInteractions(mockNotifier);
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#obtainFailureMessage}.
+     * File path is not configured.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testObtainFailureMessageNoFilepathConfigured() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        PatchsetCreated event = spy(Setup.createPatchsetCreated());
+        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
+
+        ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, null);
+
+        BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
+        memory.started(event, build);
+        toGerritRunListener.onCompleted(build, mock(TaskListener.class));
+
+        verify(toGerritRunListener, never()).getMatchingWorkspaceFiles(any(FilePath.class), any(String.class));
+        verify(toGerritRunListener, never()).getExpandedContent(any(FilePath.class), any(EnvVars.class));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#obtainFailureMessage}.
+     * File path is configured, but not files match the glob.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testObtainFailureMessageNoMatchingFiles() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        FilePath[] fileList = {};
+        String filepath = "error-file*.txt";
+        PatchsetCreated event = spy(Setup.createPatchsetCreated());
+        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
+
+        ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, filepath);
+
+        doReturn(fileList).when(toGerritRunListener).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
+
+        BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
+        memory.started(event, build);
+        toGerritRunListener.onCompleted(build, mock(TaskListener.class));
+
+        verify(toGerritRunListener, times(1)).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
+        verify(toGerritRunListener, never()).getExpandedContent(any(FilePath.class), any(EnvVars.class));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#obtainFailureMessage}. Results in a failure message being retrieved.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testObtainFailureMessageWithMatchingFiles() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        String filepath = "error-file*.txt";
+        String message = "This is the failure";
+
+        FilePath[] fileList = {new FilePath(File.createTempFile("error-file", ".txt"))};
+
+        PatchsetCreated event = spy(Setup.createPatchsetCreated());
+        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
+
+        ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, filepath);
+
+        doReturn(fileList).when(toGerritRunListener).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
+        doReturn(message).when(toGerritRunListener).getExpandedContent(eq(fileList[0]), any(EnvVars.class));
+
+        BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
+        memory.started(event, build);
+        toGerritRunListener.onCompleted(build, mock(TaskListener.class));
+
+        verify(toGerritRunListener, times(1)).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
+        verify(toGerritRunListener, times(1)).getExpandedContent(any(FilePath.class), any(EnvVars.class));
     }
 
     /**

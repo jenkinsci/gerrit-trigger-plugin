@@ -30,10 +30,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -369,6 +371,8 @@ public class ParameterExpander {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 
+        String unsuccessfulMessage = null;
+
         Entry[] entries = memoryImprint.getEntries();
 
         // In Gerrit, all lines before the first empty line are used as the summary.
@@ -376,7 +380,6 @@ public class ParameterExpander {
         // Hence, for the multi-builds, we will add a double linefeed before actually listing
         // the build results.
         if (entries.length > 0) {
-            str.append("\n");
             for (Entry entry : entries) {
                 AbstractBuild build = entry.getBuild();
                 if (build != null) {
@@ -384,8 +387,13 @@ public class ParameterExpander {
                     Result res = build.getResult();
                     String customMessage = null;
 
-                    // For some reason, Gerrit won't accept command linefeeds without a space.
-                    str.append(" \n");
+                    /* Gerrit comments cannot contain single-newlines, as they will be joined
+                     * together. Double newlines are interpreted as paragraph breaks. Lines that
+                     * begin with a space (even if the space occurs somewhere in the middle of
+                     * a multi-line paragraph) are interpreted as code blocks.
+                     */
+                    str.append("\n\n");
+
                     if (trigger.getCustomUrl() == null || trigger.getCustomUrl().isEmpty()) {
                         str.append(rootUrl).append(entry.getBuild().getUrl());
                     } else {
@@ -409,6 +417,17 @@ public class ParameterExpander {
                         str.append(res.toString());
                     } else {
                         str.append(customMessage);
+                    }
+
+                    if (res.isWorseThan(Result.SUCCESS)) {
+                        unsuccessfulMessage = entry.getUnsuccessfulMessage();
+
+                        if (null != unsuccessfulMessage && !unsuccessfulMessage.isEmpty()) {
+                            logger.trace("Using unsuccessful message from file.");
+                            str.append(" <<<\n");
+                            str.append(unsuccessfulMessage.trim());
+                            str.append("\n>>>");
+                        }
                     }
                 }
             }
