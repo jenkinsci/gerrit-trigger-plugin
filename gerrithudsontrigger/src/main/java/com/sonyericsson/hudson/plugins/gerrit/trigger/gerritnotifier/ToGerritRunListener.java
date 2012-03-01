@@ -102,6 +102,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                     try {
                         // Attempt to record the failure message, if applicable
                         String failureMessage = this.obtainFailureMessage(event, r, listener);
+                        logger.info("Obtained failure message: {}", failureMessage);
                         memory.setEntryFailureMessage(key, r, failureMessage);
                     } catch (IOException e) {
                         listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
@@ -129,54 +130,6 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
             }
         }
-    }
-
-    /**
-     * Attempt to obtain the failure message for a build.
-     *
-     * @param event The event that triggered this build
-     * @param build The build being executed
-     * @param listener The build listener
-     * @return Message content from the configured unsuccessful message file
-     * @throws IOException In case of an error communicating with the {@link FilePath} or {@link EnvVars Environment}
-     * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
-     */
-    private String obtainFailureMessage(PatchsetCreated event, AbstractBuild build, TaskListener listener)
-            throws IOException, InterruptedException {
-        AbstractProject project = build.getProject();
-        String content = null;
-
-        // This is an unsuccessful build
-        GerritTrigger trigger = GerritTrigger.getTrigger(project);
-
-        String filename = trigger.getBuildUnsuccessfulFilepath();
-
-        if (filename != null && !filename.isEmpty()) {
-            EnvVars envVars;
-
-            if (listener == null) {
-                envVars = build.getEnvironment();
-            } else {
-                envVars = build.getEnvironment(listener);
-            }
-
-            // The filename may contain environment variables
-            filename = envVars.expand(filename);
-
-            // Check for ANT-style file path
-            FilePath[] matches = build.getWorkspace().list(filename);
-
-            if (matches.length > 0) {
-                // Use the first match
-                FilePath path = matches[0];
-
-                if (path.exists()) {
-                    content = envVars.expand(path.readToString());
-                }
-            }
-        }
-
-        return content;
     }
 
     @Override
@@ -336,5 +289,88 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      */
     private GerritCause getCause(AbstractBuild build) {
         return (GerritCause)build.getCause(GerritCause.class);
+    }
+
+    /**
+     * Searches the <code>workspace</code> for files matching the <code>filepath</code> glob.
+     *
+     * @param ws The workspace
+     * @param filepath The filepath glob pattern
+     * @return List of matching {@link FilePath}s. Guaranteed to be non-null.
+     * @throws IOException if an error occurs while reading the workspace
+     * @throws InterruptedException if an error occurs while reading the workspace
+     */
+    protected FilePath[] getMatchingWorkspaceFiles(FilePath ws, String filepath)
+            throws IOException, InterruptedException {
+        return ws.list(filepath);
+    }
+
+    /**
+     * Returns the expanded file contents using the provided environment variables.
+     * <code>null</code> will be returned if the path does not exist.
+     *
+     * @param path The file path being read.
+     * @param envVars The environment variables to use during expansion.
+     * @return The string file contents, or <code>null</code> if it does not exist.
+     * @throws IOException if an error occurs while reading the file
+     * @throws InterruptedException if an error occurs while checking the status of the file
+     */
+    protected String getExpandedContent(FilePath path, EnvVars envVars) throws IOException, InterruptedException {
+        if (path.exists()) {
+            return envVars.expand(path.readToString());
+        }
+
+        return null;
+    }
+
+    /**
+     * Attempt to obtain the failure message for a build.
+     *
+     * @param event The event that triggered this build
+     * @param build The build being executed
+     * @param listener The build listener
+     * @return Message content from the configured unsuccessful message file
+     * @throws IOException In case of an error communicating with the {@link FilePath} or {@link EnvVars Environment}
+     * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
+     */
+    private String obtainFailureMessage(PatchsetCreated event, AbstractBuild build, TaskListener listener)
+            throws IOException, InterruptedException {
+        AbstractProject project = build.getProject();
+        String content = null;
+
+        GerritTrigger trigger = GerritTrigger.getTrigger(project);
+
+        // trigger will be null in unit tests
+        if (trigger != null) {
+            String filepath = trigger.getBuildUnsuccessfulFilepath();
+            logger.debug("Looking for failure message in file glob: {}", filepath);
+
+
+            if (filepath != null && !filepath.isEmpty()) {
+                EnvVars envVars;
+
+                if (listener == null) {
+                    envVars = build.getEnvironment();
+                } else {
+                    envVars = build.getEnvironment(listener);
+                }
+
+                // The filename may contain environment variables
+                filepath = envVars.expand(filepath);
+
+                // Check for ANT-style file path
+                FilePath[] matches = this.getMatchingWorkspaceFiles(build.getWorkspace(), filepath);
+                logger.debug("Found matching workspace files: {}", matches);
+
+                if (matches.length > 0) {
+                    // Use the first match
+                    FilePath path = matches[0];
+                    content = this.getExpandedContent(path, envVars);
+                    logger.info("Obtained failure message from file: {}", content);
+                }
+            }
+        }
+
+        return content;
     }
 }

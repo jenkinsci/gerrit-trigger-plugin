@@ -380,7 +380,6 @@ public class ParameterExpander {
         // Hence, for the multi-builds, we will add a double linefeed before actually listing
         // the build results.
         if (entries.length > 0) {
-            str.append("\n");
             for (Entry entry : entries) {
                 AbstractBuild build = entry.getBuild();
                 if (build != null) {
@@ -427,7 +426,7 @@ public class ParameterExpander {
                             logger.trace("Using unsuccessful message from file.");
                             str.append(" <<<\n");
                             str.append(unsuccessfulMessage.trim());
-                            str.append("\n>>> ");
+                            str.append("\n>>>");
                         }
                     }
                 }

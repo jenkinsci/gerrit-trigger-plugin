@@ -389,6 +389,7 @@ public class BuildMemory {
             Entry entry = pb.getEntry(r.getProject());
 
             if (entry != null) {
+                logger.info("Recording unsuccessful message for {}: {}", key, failureMessage);
                 entry.setUnsuccessfulMessage(failureMessage);
             }
         }
@@ -825,6 +826,11 @@ public class BuildMemory {
             }
 
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("[PatchSetKey(%d,%d)]", this.changeNumber, this.patchSetNumber);
         }
 
         @Override
