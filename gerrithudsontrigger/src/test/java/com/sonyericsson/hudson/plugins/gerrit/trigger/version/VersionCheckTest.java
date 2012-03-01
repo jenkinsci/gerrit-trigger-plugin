@@ -52,7 +52,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn("2.2.3.1-450");
+        when(plugin.getGerritVersion()).thenReturn("2.2.3.1-450");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -64,7 +64,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn("2.2.2.1-150");
+        when(plugin.getGerritVersion()).thenReturn("2.2.2.1-150");
         assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -76,7 +76,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn("");
+        when(plugin.getGerritVersion()).thenReturn("");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -88,7 +88,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getVersion()).thenReturn(null);
+        when(plugin.getGerritVersion()).thenReturn(null);
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 
@@ -101,7 +101,7 @@ public class VersionCheckTest {
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         String version = "2.2.2.1-340-g47084d4";
-        when(plugin.getVersion()).thenReturn(version);
+        when(plugin.getGerritVersion()).thenReturn(version);
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
         assertTrue(GerritVersionNumber.getGerritVersionNumber(version).isSnapshot());
     }

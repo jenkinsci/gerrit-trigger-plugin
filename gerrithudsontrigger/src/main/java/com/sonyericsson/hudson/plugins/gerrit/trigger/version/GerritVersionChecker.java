@@ -41,25 +41,48 @@ public final class GerritVersionChecker {
     /**
      * The feature version we want to compare the current gerrit version with.
      */
-    public enum Feature {
+    public static enum Feature {
         /**
          * Triggering on files, added in Gerrit 2.2.3.
          */
-        fileTrigger("2.2.3");
+        fileTrigger("Trigger on files", "2.2.3");
 
+        private final String displayName;
         private final String version;
         private final VersionNumber versionNumber;
 
         /**
          * Standard constructor.
-         * @param version the version number.
+         *
+         * @param displayName human readable name.
+         * @param version     the version number.
          */
-        Feature(String version) {
+        Feature(String displayName, String version) {
+            this.displayName = displayName;
             this.version = version;
             versionNumber = new VersionNumber(version);
         }
 
-    };
+        /**
+         * Human readable name.
+         *
+         * @return the display name.
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * The required version string.
+         *
+         * @return the version.
+         */
+        public String getVersion() {
+            return version;
+        }
+    }
+
+    ;
 
     /**
      * Private constructor to prevent instantiation of the util class.
@@ -69,18 +92,20 @@ public final class GerritVersionChecker {
 
     /**
      * Tells us if we are running the correct version for a particular feature.
+     *
      * @param feature the feature we want to check.
      * @return true if the Gerrit version is high enough for us to use this feature.
      */
     public static boolean isCorrectVersion(Feature feature) {
-        GerritVersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getVersion());
+        GerritVersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getGerritVersion());
         return isCorrectVersion(gerritVersion, feature);
     }
 
     /**
      * Tells us if we are running the correct version for a particular feature.
+     *
      * @param gerritVersion the version of Gerrit we are running.
-     * @param feature the feature we want to check.
+     * @param feature       the feature we want to check.
      * @return true if the Gerrit version is high enough for us to use this feature.
      */
     public static boolean isCorrectVersion(GerritVersionNumber gerritVersion, Feature feature) {
@@ -89,10 +114,11 @@ public final class GerritVersionChecker {
 
     /**
      * Creates a new VersionNumber from the response of the gerrit server.
+     *
      * @param version the version as a String.
      * @return the version as a versionNumber.
      */
-    private static GerritVersionNumber createVersionNumber(String version) {
+    public static GerritVersionNumber createVersionNumber(String version) {
         if (version == null || version.equals("")) {
             logger.error("Gerrit version number is null or the empty string.");
             return new HighestVersionNumber();

@@ -5,15 +5,36 @@
         <div class="warning">
             ${%The connection to Gerrit is not started yet.} ${%Check the Gerrit URL in the settings.}
         </div>
+        <div class="warning">
+            ${%VersionConnectionWarning}
+        </div>
     </j:if>
     <j:if test="${it.isConnectionError()}">
         <div class="error">
             ${%The connection to Gerrit is down!} ${%Check your settings and the Gerrit server.}
         </div>
+        <div class="warning">
+            ${%VersionConnectionWarning}
+        </div>
     </j:if>
     <j:if test="${it.isSendQueueWarning()}">
         <div class="warning">
             ${%GerritSendQueueWarning(it.sendQueueSize)}
+        </div>
+    </j:if>
+    <j:if test="${it.isGerritSnapshotVersion()}">
+        <div class="warning">
+            ${%SnapshotVersionWarning}
+        </div>
+    </j:if>
+    <j:if test="${it.hasDisabledFeatures()}">
+        <div class="warning">
+            ${%DisabledFeaturesWarning}
+            <ul>
+                <j:forEach items="${it.getDisabledFeatures()}" var="feature">
+                    <li>${feature.getDisplayName()} ${%requires} ${feature.getVersion()}</li>
+                </j:forEach>
+            </ul>
         </div>
     </j:if>
 </j:jelly>

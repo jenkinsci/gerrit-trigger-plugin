@@ -9,6 +9,10 @@
         <l:main-panel>
             <j:set var="instance" value="${it}"/>
             <j:set var="descriptor" value="${it.descriptor}"/>
+            <j:set var="aMonitor" value="${it.getAdministrativeMonitor()}"/>
+            <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
+                <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
+            </j:if>
             <f:form method="post" action="configSubmit" name="config">
                 <f:section title="${%Gerrit Server}">
                     <f:entry title="${%Hostname}"

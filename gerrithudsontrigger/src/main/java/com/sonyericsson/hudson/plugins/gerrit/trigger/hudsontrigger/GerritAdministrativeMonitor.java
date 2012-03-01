@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +27,15 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionNumber;
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Displays a warning message in /manage if the Gerrit connection is down or some other warning.
@@ -41,10 +47,12 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     private static final Logger logger = LoggerFactory.getLogger(GerritAdministrativeMonitor.class);
     private boolean connected = false;
+    private boolean gerritSnapshotVersion;
+    private List<GerritVersionChecker.Feature> disabledFeatures;
 
     /**
-     * Default constructor.
-     * Adds this as a ConnectionListener to PluginImpl by calling {@link #addThisAsConnectionListener()}.
+     * Default constructor. Adds this as a ConnectionListener to PluginImpl by calling {@link
+     * #addThisAsConnectionListener()}.
      *
      * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
      */
@@ -53,14 +61,15 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Adds this monitor as a connection listener to PluginImpl.
-     * If PluginImpl hasn't started yet, a separate Thread will be started that tries again in a little while.
+     * Adds this monitor as a connection listener to PluginImpl. If PluginImpl hasn't started yet, a separate Thread
+     * will be started that tries again in a little while.
      *
      * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
      */
     protected void addThisAsConnectionListener() {
         if (PluginImpl.getInstance() != null) {
             connected = PluginImpl.getInstance().addListener(this);
+            checkGerritVersionFeatures();
         } else {
             //We were created first... let's wait without disrupting the flow.
             Runnable runner = new Runnable() {
@@ -78,7 +87,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
                     }
                     PluginImpl plugin = PluginImpl.getInstance();
                     if (plugin != null) {
-                        plugin.addListener(GerritAdministrativeMonitor.this);
+                        connected = plugin.addListener(GerritAdministrativeMonitor.this);
+                        checkGerritVersionFeatures();
                     } else {
                         logger.error("Unable to register GerritAdministrativeMonitor");
                     }
@@ -91,8 +101,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Tells if there is a warning with the send-commands-queue.
-     * Utility method for the jelly page.
+     * Tells if there is a warning with the send-commands-queue. Utility method for the jelly page.
      *
      * @return true if so.
      */
@@ -101,8 +110,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Gets the current send-command queue size.
-     * Utility method for the jelly page.
+     * Gets the current send-command queue size. Utility method for the jelly page.
      *
      * @return the amount of jobs in the queue.
      */
@@ -111,8 +119,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Tells if there is a connection warning.
-     * Utility method for the jelly page.
+     * Tells if there is a connection warning. Utility method for the jelly page.
      *
      * @return true if so.
      */
@@ -126,8 +133,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Tells if there is a connection error.
-     * Utility method for the jelly page,
+     * Tells if there is a connection error. Utility method for the jelly page,
      *
      * @return true if so.
      */
@@ -142,17 +148,78 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
 
     @Override
     public boolean isActivated() {
-        return isConnectionWarning() || isConnectionError() || isSendQueueWarning();
+        return isConnectionWarning() || isConnectionError() || isSendQueueWarning()
+                || isGerritSnapshotVersion() || hasDisabledFeatures();
+    }
+
+    /**
+     * If the connected Gerrit is a snapshot version.
+     *
+     * @return true if so.
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public boolean isGerritSnapshotVersion() {
+        return gerritSnapshotVersion;
+    }
+
+    /**
+     * A list of the features that has been disabled due to old Gerrit version.
+     *
+     * @return the list.
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public List<GerritVersionChecker.Feature> getDisabledFeatures() {
+        return disabledFeatures;
+    }
+
+    /**
+     * If there are features disabled due to old Gerrit version.
+     *
+     * @return true if so.
+     */
+    public boolean hasDisabledFeatures() {
+        return disabledFeatures != null && !disabledFeatures.isEmpty();
     }
 
     @Override
     public void connectionEstablished() {
         connected = true;
+        checkGerritVersionFeatures();
     }
 
     @Override
     public void connectionDown() {
         connected = false;
+        checkGerritVersionFeatures();
+    }
+
+    /**
+     * Checks the Gerrit version that we are connected to.
+     * If it is a snapshot or if any features will be disabled because of this.
+     * It should be called whenever we got some new connection status.
+     */
+    private void checkGerritVersionFeatures() {
+        try {
+            if (connected) {
+                GerritVersionNumber version =
+                        GerritVersionChecker.createVersionNumber(PluginImpl.getInstance().getGerritVersion());
+                List<GerritVersionChecker.Feature> list = new LinkedList<GerritVersionChecker.Feature>();
+                for (GerritVersionChecker.Feature f : GerritVersionChecker.Feature.values()) {
+                    if (!GerritVersionChecker.isCorrectVersion(version, f)) {
+                        list.add(f);
+                    }
+                }
+                this.disabledFeatures = list;
+                this.gerritSnapshotVersion = version.isSnapshot();
+            } else {
+                this.disabledFeatures = null;
+                this.gerritSnapshotVersion = false;
+            }
+        } catch (Exception ex) {
+            logger.warn("Failed to calculate version info! ", ex);
+        }
     }
 
 }

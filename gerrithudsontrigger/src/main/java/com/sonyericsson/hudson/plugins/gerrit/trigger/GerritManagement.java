@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +31,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthentication
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshUtil;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 import hudson.Extension;
+import hudson.model.AdministrativeMonitor;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -356,6 +359,22 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     public static IGerritHudsonTriggerConfig getConfig() {
         if (PluginImpl.getInstance() != null) {
             return PluginImpl.getInstance().getConfig();
+        }
+        return null;
+    }
+
+    /**
+     * The AdministrativeMonitor related to Gerrit.
+     * convenience method for the jelly page.
+     *
+     * @return the monitor if it could be found.
+     */
+    @SuppressWarnings("unused") //Called from Jelly
+    public GerritAdministrativeMonitor getAdministrativeMonitor() {
+        for (AdministrativeMonitor monitor : AdministrativeMonitor.all()) {
+            if (monitor instanceof GerritAdministrativeMonitor) {
+                return (GerritAdministrativeMonitor)monitor;
+            }
         }
         return null;
     }

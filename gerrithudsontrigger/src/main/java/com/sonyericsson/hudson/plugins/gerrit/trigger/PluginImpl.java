@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -342,10 +343,16 @@ public class PluginImpl extends Plugin {
     }
 
     /**
-     * Returns the current gerrit version.
+     * Returns the current Gerrit version.
+     * If we are connected to Gerrit, otherwise null is returned.
+     *
      * @return the current gerrit version as a String.
      */
-    public String getVersion() {
-        return gerritEventManager.getGerritVersion();
+    public String getGerritVersion() {
+        if (gerritEventManager != null) {
+            return gerritEventManager.getGerritVersion();
+        } else {
+            return null;
+        }
     }
 }
