@@ -825,6 +825,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         public CompareType[] getCompareTypes() {
             return CompareType.values();
         }
+        /**
+        * Convenience method for the jelly file, accessing the instance proved to be hard.
+        * @return true if file triggering is enabled in the gerrit version.
+        */
+        public boolean isFileTriggerEnabled() {
+            return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
+        }
     }
 
     /**
