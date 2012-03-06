@@ -23,13 +23,16 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Represents a rule for triggering on a branch of a GerritProject.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class Branch {
+public class Branch extends AbstractDescribableImpl<Branch> {
 
     private CompareType compareType;
     private String pattern;
@@ -91,5 +94,16 @@ public class Branch {
      */
     public boolean isInteresting(String branch) {
         return compareType.matches(pattern, branch);
+    }
+
+    /**
+     * The Descriptor for the Branch.
+     */
+    @Extension
+    public static class DescriptorImpl extends Descriptor<Branch> {
+        @Override
+        public String getDisplayName() {
+            return "";
+        }
     }
 }
