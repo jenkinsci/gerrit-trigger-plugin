@@ -27,9 +27,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -374,6 +376,26 @@ public class BuildMemory {
     }
 
     /**
+     * Records the failure message for the given build.
+     *
+     * @param key the key for the memory.
+     * @param r the build that caused the failure.
+     * @param failureMessage the failure message
+     */
+    public void setEntryFailureMessage(PatchSetKey key, AbstractBuild r, String failureMessage) {
+        MemoryImprint pb = getMemoryImprint(key);
+
+        if (pb != null) {
+            Entry entry = pb.getEntry(r.getProject());
+
+            if (entry != null) {
+                logger.info("Recording unsuccessful message for {}: {}", key, failureMessage);
+                entry.setUnsuccessfulMessage(failureMessage);
+            }
+        }
+    }
+
+    /**
      * A holder for all builds triggered by one event.
      */
     public static class MemoryImprint {
@@ -631,6 +653,7 @@ public class BuildMemory {
             private AbstractProject project;
             private AbstractBuild build;
             private boolean buildCompleted;
+            private String unsuccessfulMessage;
 
             /**
              * Constructor.
@@ -682,6 +705,24 @@ public class BuildMemory {
             }
 
             /**
+             * Sets the unsuccessful message for an entry.
+             *
+             * @param unsuccessfulMessage the message.
+             */
+            private void setUnsuccessfulMessage(String unsuccessfulMessage) {
+                this.unsuccessfulMessage = unsuccessfulMessage;
+            }
+
+            /**
+             * Gets the unsuccessful message for an entry.
+             *
+             * @return the message.
+             */
+            public String getUnsuccessfulMessage() {
+                return this.unsuccessfulMessage;
+            }
+
+            /**
              * If the build is completed.
              *
              * @return true if the build is completed.
@@ -698,6 +739,7 @@ public class BuildMemory {
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
             }
+
         }
     }
 
@@ -784,6 +826,11 @@ public class BuildMemory {
             }
 
             return true;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("[PatchSetKey(%d,%d)]", this.changeNumber, this.patchSetNumber);
         }
 
         @Override

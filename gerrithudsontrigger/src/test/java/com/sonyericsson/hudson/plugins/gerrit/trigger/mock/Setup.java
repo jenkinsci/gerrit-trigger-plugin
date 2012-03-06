@@ -28,12 +28,24 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.EnvVars;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
+import hudson.model.Result;
+
 import net.sf.json.JSONObject;
 
+import java.util.Collections;
+
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.*;
+import static org.mockito.Mockito.*;
 
 
 /**
@@ -163,5 +175,41 @@ public final class Setup {
         env.put("REFSPEC", StringUtil.REFSPEC_PREFIX + "00/1000/1");
         env.put("CHANGE_URL", "http://gerrit/1000");
         return env;
+    }
+
+    /**
+     * GerritTrigger mock for build.
+     * @param build The build
+     * @return GerritTrigger mock
+     */
+    public static GerritTrigger createGerritTrigger(AbstractBuild build) {
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        AbstractProject project = build.getProject();
+        doReturn(trigger).when(project).getTrigger(GerritTrigger.class);
+        return trigger;
+    }
+
+    /**
+     * ToGerritRunListener mock for failure-message tests.
+     *
+     * @param build The build
+     * @param event The event
+     * @param filepath The filepath glob string
+     * @return ToGerritRunListener mock (spy)
+     */
+    public static ToGerritRunListener createFailureMessageRunListener(final AbstractBuild build,
+            final PatchsetCreated event, final String filepath) {
+        GerritCause cause = new GerritCause(event, false);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause> singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        when(build.getResult()).thenReturn(Result.FAILURE);
+
+        GerritTrigger trigger = Setup.createGerritTrigger(build);
+        when(trigger.getBuildUnsuccessfulFilepath()).thenReturn(filepath);
+
+        ToGerritRunListener toGerritRunListener = spy(new ToGerritRunListener());
+        return toGerritRunListener;
     }
 }
