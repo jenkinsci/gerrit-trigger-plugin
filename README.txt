@@ -1,6 +1,7 @@
 The MIT License
 
 Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+Copyright 2012 Sony Mobile Communications AB. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +33,7 @@ consolidated report is sent back to Gerrit.
 =============
 Maintainers
 
-Robert Sandell - robert.sandell@sonyericsson.com
+Robert Sandell - robert.sandell@sonymobile.com
                  sandell.robert@gmail.com
 
-Tomas Westling - thomas.westling@sonyericsson.com
+Tomas Westling - tomas.westling@sonymobile.com

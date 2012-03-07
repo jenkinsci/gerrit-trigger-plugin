@@ -36,8 +36,8 @@
         <developer>
             <id>rsandell</id>
             <name>Robert Sandell</name>
-            <email>robert.sandell@sonyericsson.com</email>
-            <organization>Sony Ericsson</organization>
+            <email>robert.sandell@sonymobile.com</email>
+            <organization>Sony Mobile Communications</organization>
             <url>http://www.linkedin.com/in/robertsandell</url>
             <roles>
                 <role>architect</role>
@@ -49,8 +49,8 @@
         <developer>
             <id>twestling</id>
             <name>Tomas Westling</name>
-            <email>thomas.westling@sonyericsson.com</email>
-            <organization>Sony Ericsson</organization>
+            <email>tomas.westling@sonyericsson.com</email>
+            <organization>Sony Mobile Communications</organization>
             <roles>
                 <role>maintainer</role>
             </roles>
