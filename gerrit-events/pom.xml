@@ -21,7 +21,10 @@
         <license>
             <name>MIT</name>
             <url>http://www.opensource.org/licenses/mit-license.php</url>
-            <comments>Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.</comments>
+            <comments>
+                Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+                Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+            </comments>
         </license>
     </licenses>
 

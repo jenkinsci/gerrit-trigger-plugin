@@ -95,6 +95,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
+    private String buildUnsuccessfulFilepath;
     private String customUrl;
 
     /**
@@ -130,6 +131,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
+     * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
+     *                                       unsuccessful build.
      * @param customUrl                      Custom URL to sen to gerrit instead of build URL
      */
     @DataBoundConstructor
@@ -149,6 +152,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildSuccessfulMessage,
             String buildUnstableMessage,
             String buildFailureMessage,
+            String buildUnsuccessfulFilepath,
             String customUrl) {
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -165,6 +169,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
+        this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
     }
 
@@ -638,6 +643,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Sets the path to a file that contains the unsuccessful Gerrit comment message.
+     *
+     * @param path The unsuccessful message comment file path
+     */
+    public void setBuildUnsuccessfulFilepath(String path) {
+        buildUnsuccessfulFilepath = path;
+    }
+
+    /**
      * If silent mode is on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no build
      * started/failed/successful approve messages etc. Default is false.
      *
@@ -702,6 +716,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public String getBuildFailureMessage() {
         return buildFailureMessage;
+    }
+
+    /**
+     * The path to a file that contains the unsuccessful Gerrit comment message.
+     *
+     * @return The unsuccessful message comment file path
+     */
+    public String getBuildUnsuccessfulFilepath() {
+        return buildUnsuccessfulFilepath;
     }
 
     /**

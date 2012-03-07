@@ -1,0 +1,28 @@
+<p>Sets the filename within the workspace from which to retrieve the unsuccessful review message.</p>
+
+<p>This can be useful if you have various build steps, each of which may have its own reason for failing a build.
+In cases like this, you can cause the failing build step to describe the reason for the failure in full detail, and
+place that failure reason into a text file, prior to marking the build as failed.  Then when reporting back to Gerrit,
+the plugin will read the contents of that file and use that as the build failure message that gets posted to the review.</p>
+
+<p>
+   Can use wildcards like 'module/dist/**/*.zip'.
+   See <a href='http://ant.apache.org/manual/Types/fileset.html'>the @includes of Ant fileset</a> for the exact format.
+   The base directory is <a href='ws/'>the workspace</a>.
+</p>
+
+<p>
+  Build variables in the message text will be expanded.
+  Jenkins supplies some <a href="../../env-vars.html" target="_blank">environment variables</a> that can be used in the file's contents.
+</p>
+
+<p>For example:<br />
+<quote>
+  <b>Build Step: Execute Shell</b>
+  <pre>
+    ${WORKSPACE}/bin/run-unit-tests.sh 2>build-error_${BUILD_NUMBER}.txt
+  </pre>
+</quote>
+If the <tt>run-unit-tests.sh</tt> script fails (returns a non-0 exit code), and also outputs an error message to STDERR,
+the build will be marked as failed, and the STDERR output will be sent to <tt>build-error_&lt;BUILD_NUMBER&gt;.txt</tt>.
+That error content then becomes the failure message that is added in the gerrit review comment.</p>

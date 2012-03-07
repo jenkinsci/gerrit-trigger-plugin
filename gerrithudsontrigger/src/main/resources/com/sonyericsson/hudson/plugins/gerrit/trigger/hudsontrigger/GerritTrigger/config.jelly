@@ -98,6 +98,11 @@
                          field="buildFailureMessage">
                    <f:textbox/>
                 </f:entry>
+                <f:entry title="${%Unsuccessful Message File}"
+                         field="buildUnsuccessfulFilepath"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildUnsuccessfulFilepath.html">
+                   <f:textbox/>
+                </f:entry>
             </f:section>
         </f:advanced>
         <f:entry title="${%Silent Mode}"

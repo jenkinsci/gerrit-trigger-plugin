@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -49,7 +50,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-//CS IGNORE MagicNumber FOR NEXT 250 LINES. REASON: Mocks tests.
+//CS IGNORE MagicNumber FOR NEXT 320 LINES. REASON: Mocks tests.
 
 /**
  *
@@ -214,11 +215,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessful("",
-                "\n \nhttp://localhost/test/ : SUCCESS");
+                "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
-                "\n \nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console",
-                "\n \nhttp://localhost/test/console : SUCCESS");
+                "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -288,5 +289,77 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
+    }
+
+    /**
+     * Test.
+     * @throws Exception if so
+     */
+    @Test
+    public void testBuildStatsWithFailureMessage() throws Exception {
+        tryBuildStatsFailureCommand("This was a failure message. ",
+                "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was a failure message.\n>>>");
+        tryBuildStatsFailureCommand(null, "\n\nhttp://localhost/test/ : FAILURE");
+        tryBuildStatsFailureCommand("", "\n\nhttp://localhost/test/ : FAILURE");
+    }
+
+    /**
+     * Sub test for {@link #testBuildStatsWithFailureMessage()}.
+     *
+     * @param failureMessage Build failure message
+     * @param expectedBuildStats Expected build stats string
+     * @throws Exception if so
+     */
+    public void tryBuildStatsFailureCommand(String failureMessage, String expectedBuildStats) throws Exception {
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+
+        Hudson hudson = PowerMockito.mock(Hudson.class);
+        when(hudson.getRootUrl()).thenReturn("http://localhost/");
+
+        TaskListener taskListener = mock(TaskListener.class);
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
+        AbstractProject project = mock(AbstractProject.class);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+
+        AbstractBuild r = mock(AbstractBuild.class);
+        when(r.getUrl()).thenReturn("test/");
+        when(r.getProject()).thenReturn(project);
+        EnvVars env = Setup.createEnvVars();
+        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+        when(r.getEnvironment(taskListener)).thenReturn(env);
+
+        when(r.getResult()).thenReturn(Result.FAILURE);
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        when(memoryImprint.getEvent()).thenReturn(event);
+
+        when(memoryImprint.whereAllBuildsSuccessful()).thenReturn(true);
+        when(memoryImprint.whereAnyBuildsFailed()).thenReturn(false);
+        when(memoryImprint.whereAnyBuildsUnstable()).thenReturn(false);
+
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[1];
+        entries[0] = mock(MemoryImprint.Entry.class);
+        when(entries[0].getBuild()).thenReturn(r);
+        when(entries[0].getProject()).thenReturn(project);
+
+        if (failureMessage != null && !failureMessage.isEmpty()) {
+            when(entries[0].getUnsuccessfulMessage()).thenReturn(failureMessage.trim());
+        } else {
+            when(entries[0].getUnsuccessfulMessage()).thenReturn(null);
+        }
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        ParameterExpander instance = new ParameterExpander(config, hudson);
+
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
+        System.out.println("Result: " + result);
+
+        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildStats + "'") >= 0);
     }
 }
