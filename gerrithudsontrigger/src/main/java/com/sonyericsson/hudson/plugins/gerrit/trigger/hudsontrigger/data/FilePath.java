@@ -23,6 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -31,7 +34,7 @@ import java.util.List;
  * Represents a rule for triggering on a filepath of a GerritProject.
  * @author Tomas Westling &lt;thomas.westling@sonyericsson.com&gt;
  */
-public class FilePath {
+public class FilePath extends AbstractDescribableImpl<FilePath> {
 
     private CompareType compareType;
     private String pattern;
@@ -98,5 +101,16 @@ public class FilePath {
             }
         }
         return false;
+    }
+
+    /**
+     * The Descriptor for the FilePath.
+     */
+    @Extension
+    public static class DescriptorImpl extends Descriptor<FilePath> {
+        @Override
+        public String getDisplayName() {
+            return "";
+        }
     }
 }
