@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-trigger-parent</artifactId>
-    <version>1.6.2</version>
+    <version>1.6.3-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Gerrit Trigger Pom</name>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger</url>
@@ -194,12 +194,12 @@
             <dependency>
                 <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
                 <artifactId>gerrit-events</artifactId>
-                <version>1.2.6</version>
+                <version>1.2.7-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
                 <artifactId>build-config</artifactId>
-                <version>1.2.6</version>
+                <version>1.2.7-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
