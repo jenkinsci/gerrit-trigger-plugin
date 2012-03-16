@@ -32,7 +32,7 @@
             ${%DisabledFeaturesWarning}
             <ul>
                 <j:forEach items="${it.getDisabledFeatures()}" var="feature">
-                    <li>${feature.getDisplayName()} ${%requires} ${feature.getVersion()}</li>
+                    <li>${%SpecificVersionRequiredWarning(feature.getDisplayName(), feature.getVersion())}</li>
                 </j:forEach>
             </ul>
         </div>
