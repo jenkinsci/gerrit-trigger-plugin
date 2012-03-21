@@ -1,0 +1,13 @@
+<p>
+  Gerrit changeパラメータ中に引用符が含まれている場合、これをエスケープするかどうかを指定します。
+</p>
+<p>
+    この設定を有効にした場合、<br/>
+    &nbsp;&nbsp;GERRIT_CHANGE_SUBJECT=Fixed "the thing"<br/>
+    &nbsp;は以下のように扱われます :<br/>
+    &nbsp;&nbsp;GERRIT_CHANGE_SUBJECT=Fixed \"the thing\"
+</p>
+<p>
+ <i>この設定が導入される前(gerrit-trigger &lt; v. 2.2.1)に設定されたトリガーでは
+ 互換性維持のため、この設定は無効になっています。</i>
+<p>
