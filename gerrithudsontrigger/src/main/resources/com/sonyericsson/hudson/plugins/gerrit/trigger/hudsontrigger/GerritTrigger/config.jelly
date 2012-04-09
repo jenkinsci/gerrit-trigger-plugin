@@ -202,7 +202,7 @@
                                 <table width="100%">
                                     <tr>
                                         <td width="60">
-                                        File
+                                        ${%File}
                                         </td>
                                         <td width="80">
                                             <select class="setting-input" name="_.compareType">
