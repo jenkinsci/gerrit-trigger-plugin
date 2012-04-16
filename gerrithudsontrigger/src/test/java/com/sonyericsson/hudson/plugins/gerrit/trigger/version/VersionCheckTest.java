@@ -52,7 +52,7 @@ public class VersionCheckTest {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getGerritVersion()).thenReturn("2.2.3.1-450");
+        when(plugin.getGerritVersion()).thenReturn("2.3.1-450");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
     }
 

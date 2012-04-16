@@ -43,9 +43,9 @@ public final class GerritVersionChecker {
      */
     public static enum Feature {
         /**
-         * Triggering on files, added in Gerrit 2.2.3.
+         * Triggering on files, added in Gerrit 2.3.
          */
-        fileTrigger("Trigger on files", "2.2.3");
+        fileTrigger("Trigger on files", "2.3");
 
         private final String displayName;
         private final String version;
