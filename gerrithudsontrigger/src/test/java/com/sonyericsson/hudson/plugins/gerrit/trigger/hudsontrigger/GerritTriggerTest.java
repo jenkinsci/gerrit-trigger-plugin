@@ -656,7 +656,7 @@ public class GerritTriggerTest {
         verify(listener).onRetriggered(same(project), same(event), anyListOf(AbstractBuild.class));
 
         verify(project).scheduleBuild2(
-                anyInt(),
+                eq(0),
                 isA(GerritUserCause.class),
                 isA(BadgeAction.class),
                 isA(RetriggerAction.class),
@@ -892,7 +892,7 @@ public class GerritTriggerTest {
         verify(listener).onTriggered(same(project), same(event));
 
         verify(project).scheduleBuild2(
-                anyInt(),
+                eq(0),
                 isA(GerritManualCause.class),
                 isA(BadgeAction.class),
                 isA(RetriggerAction.class),

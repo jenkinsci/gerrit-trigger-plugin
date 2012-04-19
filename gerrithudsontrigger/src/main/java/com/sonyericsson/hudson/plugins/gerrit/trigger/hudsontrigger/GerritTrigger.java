@@ -269,7 +269,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = getBuildScheduleDelay();
-        if (project.getHasCustomQuietPeriod()
+        if (cause instanceof GerritUserCause) {
+            // it's a manual trigger, no need for a quiet period
+            projectbuildDelay = 0;
+        } else if (project.getHasCustomQuietPeriod()
                 && project.getQuietPeriod() > projectbuildDelay) {
             projectbuildDelay = project.getQuietPeriod();
         }
