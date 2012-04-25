@@ -90,8 +90,8 @@ public class GerritHandler extends Thread implements Coordinator {
     private int gerritSshPort;
     private Authentication authentication;
     private int numberOfWorkerThreads;
-    private Map<Integer, GerritEventListener> gerritEventListeners;
-    private Map<Integer, ConnectionListener> connectionListeners;
+    private volatile Map<Integer, GerritEventListener> gerritEventListeners;
+    private volatile Map<Integer, ConnectionListener> connectionListeners;
     private final List<EventThread> workers;
     private SshConnection sshConnection;
     private boolean shutdownInProgress = false;
@@ -347,10 +347,14 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to add.
      */
-    public synchronized void addListener(GerritEventListener listener) {
-        GerritEventListener old = gerritEventListeners.put(listener.hashCode(), listener);
-        if (old != null) {
-            logger.warn("The listener was replaced by a previous old value: {}", old);
+    public void addListener(GerritEventListener listener) {
+        synchronized (this) {
+            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
+            GerritEventListener old = map.put(listener.hashCode(), listener);
+            if (old != null) {
+                logger.warn("The listener was replaced by a previous old value: {}", old);
+            }
+            gerritEventListeners = map;
         }
     }
 
@@ -359,8 +363,12 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listeners the listeners to add.
      */
-    public synchronized void addEventListeners(Map<Integer, GerritEventListener> listeners) {
-        gerritEventListeners.putAll(listeners);
+    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
+        synchronized (this) {
+            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
+            map.putAll(listeners);
+            gerritEventListeners = map;
+        }
     }
 
     /**
@@ -368,8 +376,12 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to remove.
      */
-    public synchronized void removeListener(GerritEventListener listener) {
-        gerritEventListeners.remove(listener.hashCode());
+    public void removeListener(GerritEventListener listener) {
+        synchronized (this) {
+            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
+            map.remove(listener.hashCode());
+            gerritEventListeners = map;
+        }
     }
 
     /**
@@ -377,18 +389,20 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @return the former list of listeners.
      */
-    public synchronized HashMap<Integer, GerritEventListener> removeAllEventListeners() {
-        HashMap<Integer, GerritEventListener> listeners =
-                new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-        gerritEventListeners.clear();
-        return listeners;
+    public HashMap<Integer, GerritEventListener> removeAllEventListeners() {
+        synchronized (this) {
+            HashMap<Integer, GerritEventListener> listeners =
+                    new HashMap<Integer, GerritEventListener>(gerritEventListeners);
+            gerritEventListeners = new HashMap<Integer, GerritEventListener>();
+            return listeners;
+        }
     }
 
     /**
      * The number of added e{@link GerritEventListener}s.
      * @return the size.
      */
-    public synchronized int getEventListenersCount() {
+    public int getEventListenersCount() {
         return gerritEventListeners.size();
     }
 
@@ -399,9 +413,13 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param listener the listener to add.
      * @return the connection status
      */
-    public synchronized boolean addListener(ConnectionListener listener) {
-        connectionListeners.put(listener.hashCode(), listener);
-        return connected;
+    public boolean addListener(ConnectionListener listener) {
+        synchronized (this) {
+            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
+            map.put(listener.hashCode(), listener);
+            connectionListeners = map;
+            return connected;
+        }
     }
 
     /**
@@ -409,8 +427,12 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listeners the listeners to add.
      */
-    public synchronized void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
-        connectionListeners.putAll(listeners);
+    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
+        synchronized (this) {
+            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
+            map.putAll(listeners);
+            connectionListeners = map;
+        }
     }
 
     /**
@@ -418,20 +440,26 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listener the listener to remove.
      */
-    public synchronized void removeListener(ConnectionListener listener) {
-        connectionListeners.remove(listener);
+    public void removeListener(ConnectionListener listener) {
+        synchronized (this) {
+            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
+            map.remove(listener);
+            connectionListeners = map;
+        }
     }
 
     /**
-     * Removes all connection listeners and returns those who where remooved.
+     * Removes all connection listeners and returns those who where removed.
      *
      * @return the list of former listeners.
      */
-    public synchronized Map<Integer, ConnectionListener> removeAllConnectionListeners() {
-        Map<Integer, ConnectionListener> listeners =
+    public Map<Integer, ConnectionListener> removeAllConnectionListeners() {
+        synchronized (this) {
+            Map<Integer, ConnectionListener> listeners =
                 new HashMap<Integer, ConnectionListener>(connectionListeners);
-        connectionListeners.clear();
-        return listeners;
+            connectionListeners = new HashMap<Integer, ConnectionListener>();
+            return listeners;
+        }
     }
 
     /**
@@ -520,9 +548,7 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param event the event.
      */
     @Override
-    public synchronized void notifyListeners(GerritEvent event) {
-        //Take the performance penalty for synchronization security.
-
+    public void notifyListeners(GerritEvent event) {
         //Notify lifecycle listeners.
         if (event instanceof PatchsetCreated) {
             try {
@@ -664,7 +690,7 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Notifies all ConnectionListeners that the connection is down.
      */
-    protected synchronized void notifyConnectionDown() {
+    protected void notifyConnectionDown() {
         connected = false;
         for (ConnectionListener listener : connectionListeners.values()) {
             try {
@@ -678,7 +704,7 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Notifies all ConnectionListeners that the connection is established.
      */
-    protected synchronized void notifyConnectionEstablished() {
+    protected void notifyConnectionEstablished() {
         connected = true;
         for (ConnectionListener listener : connectionListeners.values()) {
             try {
