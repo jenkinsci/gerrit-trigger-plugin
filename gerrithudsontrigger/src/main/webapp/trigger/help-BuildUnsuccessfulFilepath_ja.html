@@ -1,0 +1,27 @@
+<p>ビルド失敗/不安定時のGerritメッセージを、指定されたファイルパスから取得します。</p>
+
+<p>これはビルドがいくつかのステップを持っていて、それぞれがビルド失敗に関する情報を持っている場合に有用です。
+この時、それぞれのビルドステップでビルド失敗をマークする前に、失敗に関するの詳細な情報を１つのテキストファイルに格納してください。
+プラグインはGerritにレポートを戻す際に、このファイルの内容を読み込んでレビューメッセージとして使用します。
+
+<p>
+   ファイルパスは<a href="ws/">ワークスペース</a>からの相対パスで指定してください。
+   'module/dist/**/*.zip'のようなワイルドカードを使用することができます。詳細は
+   <a href='http://ant.apache.org/manual/Types/fileset.html'>the @includes of Ant fileset</a>
+   を見てください。
+</p>
+
+<p>
+  テキスト内のビルド変数は展開されます。Jenkinsが提供する<a href="../../env-vars.html" target="_blank">環境変数</a>も同様です。
+</p>
+
+<p>例:<br />
+<quote>
+  <b>Build Step: Execute Shell</b>
+  <pre>
+    ${WORKSPACE}/bin/run-unit-tests.sh 2>build-error_${BUILD_NUMBER}.txt
+  </pre>
+</quote>
+<tt>run-unit-tests.sh</tt>が失敗(０以外の終了コードを返す)し、STDERRにエラーメッセージを出力した時、
+ビルドは失敗としてマークされ、STDERRへの出力は<tt>build-error_&lt;BUILD_NUMBER&gt;.txt</tt>に送られます。
+結果、エラーメッセージの内容はGerritにレビューコメントとして追加されます。
