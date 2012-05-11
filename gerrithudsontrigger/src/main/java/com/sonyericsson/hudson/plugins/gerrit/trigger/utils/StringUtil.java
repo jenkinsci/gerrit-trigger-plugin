@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import java.util.regex.Pattern;
 
 /**
@@ -69,10 +70,10 @@ public final class StringUtil {
      * For a change with number 3456 and patchset 1 the refspec would be refs/changes/56/3456/1
      * @param event the event.
      * @return the refspec.
-     * @see PatchsetCreated#getPatchSet()
+     * @see GerritTriggeredEvent#getPatchSet()
      * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet#getRef()
      */
-    public static String makeRefSpec(PatchsetCreated event) {
+    public static String makeRefSpec(GerritTriggeredEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {
             if (event.getPatchSet().getRef().length() > 0) {
                 return event.getPatchSet().getRef();

@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2012 Hewlett-Packard Development Company, L.P.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,28 +23,45 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import net.sf.json.JSONObject;
+import net.sf.json.JSONArray;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.AUTHOR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.APPROVALS;
 
 /**
- * A DTO representation of the patchset-created Gerrit Event.
- *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * A DTO representation of the comment-added Gerrit Event.
+ * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
-public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
-
-    /* Uploader has been replaced by GerritTriggeredEvent.acconut.
-     * This allows old builds to deserialize without warnings. */
-    @SuppressWarnings("unused")
-    private transient Account uploader;
+public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEvent {
+    private List<Approval> approvals = new ArrayList<Approval>();
 
     @Override
     public GerritEventType getEventType() {
-        return GerritEventType.PATCHSET_CREATED;
+        return GerritEventType.COMMENT_ADDED;
+    }
+
+    /**
+     * Get the code review approvals associated with this Gerrit comment.
+     * @return a list of code review approvals.
+     */
+    public List<Approval> getApprovals() {
+        return approvals;
+    }
+
+    /**
+     * Set the code review approvals for this event.
+     * @param approvals the list of Approvals.
+     */
+    public void setApprovals(List<Approval> approvals) {
+        this.approvals = approvals;
     }
 
     @Override
@@ -56,13 +72,14 @@ public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonE
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        if (json.containsKey(UPLOADER)) {
-            this.account = new Account(json.getJSONObject(UPLOADER));
+        if (json.containsKey(AUTHOR)) {
+            account = new Account(json.getJSONObject(AUTHOR));
         }
-    }
-
-    @Override
-    public String toString() {
-        return "PatchsetCreated: " + change + " " + patchSet;
+        if (json.containsKey(APPROVALS)) {
+            JSONArray eventApprovals = json.getJSONArray(APPROVALS);
+            for (int i = 0; i < eventApprovals.size(); i++) {
+                approvals.add(new Approval(eventApprovals.getJSONObject(i)));
+            }
+        }
     }
 }

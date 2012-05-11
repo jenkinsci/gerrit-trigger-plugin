@@ -1,7 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,40 +28,29 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBMITTER;
 
 /**
- * A DTO representation of the patchset-created Gerrit Event.
- *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * A DTO representation of the ref-updated Gerrit Event.
+ * @author jeblair
  */
-public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
-
-    /* Uploader has been replaced by GerritTriggeredEvent.acconut.
-     * This allows old builds to deserialize without warnings. */
-    @SuppressWarnings("unused")
-    private transient Account uploader;
+public class RefUpdated extends GerritTriggeredEvent implements GerritJsonEvent {
 
     @Override
     public GerritEventType getEventType() {
-        return GerritEventType.PATCHSET_CREATED;
+        return GerritEventType.REF_UPDATED;
     }
 
     @Override
     public boolean isScorable() {
-        return true;
+        return false;
     }
 
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        if (json.containsKey(UPLOADER)) {
-            this.account = new Account(json.getJSONObject(UPLOADER));
+        if (json.containsKey(SUBMITTER)) {
+            this.account = new Account(json.getJSONObject(SUBMITTER));
         }
-    }
-
-    @Override
-    public String toString() {
-        return "PatchsetCreated: " + change + " " + patchSet;
     }
 }

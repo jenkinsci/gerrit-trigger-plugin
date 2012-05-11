@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
+
+import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -83,7 +86,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
     @LocalData
     public void testNewProjectCreationWithReSave() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(this, "testJob2");
-        configRoundtrip(p);
+        configRoundtrip((Item)p);
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
         Map<Integer, GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");

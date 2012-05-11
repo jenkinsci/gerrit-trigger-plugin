@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +28,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+
+import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -84,7 +87,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
         Map<Integer, GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(2, gerritEventListeners.size());
-        configRoundtrip(p);
+        configRoundtrip((Item)p);
         assertEquals(2, gerritEventListeners.size());
     }
 }

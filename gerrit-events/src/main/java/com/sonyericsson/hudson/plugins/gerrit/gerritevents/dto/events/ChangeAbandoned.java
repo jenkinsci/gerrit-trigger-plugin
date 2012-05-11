@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -26,23 +27,15 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import net.sf.json.JSONObject;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ABANDONER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCHSET;
 
 /**
  * A DTO representation of the change-abandoned Gerrit Event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ChangeAbandoned implements GerritJsonEvent {
-
-    private Change change;
-    private PatchSet patchset;
-    private Account abandoner;
+public class ChangeAbandoned extends GerritTriggeredEvent implements GerritJsonEvent {
 
     /**
      * Default constructor.
@@ -53,7 +46,7 @@ public class ChangeAbandoned implements GerritJsonEvent {
     /**
      * Constructor that fills data directly.
      * @param json the JSON Object
-     * @see #fromJson(String)
+     * @see #fromJson(net.sf.json.JSONObject)
      */
     public ChangeAbandoned(JSONObject json) {
         fromJson(json);
@@ -65,63 +58,15 @@ public class ChangeAbandoned implements GerritJsonEvent {
     }
 
     @Override
+    public boolean isScorable() {
+        return false;
+    }
+
+    @Override
     public void fromJson(JSONObject json) {
-        if (json.containsKey(CHANGE)) {
-            change = new Change(json.getJSONObject(CHANGE));
-        }
-        if (json.containsKey(PATCHSET)) {
-            patchset = new PatchSet(json.getJSONObject(PATCHSET));
-        }
+        super.fromJson(json);
         if (json.containsKey(ABANDONER)) {
-            abandoner = new Account(json.getJSONObject(ABANDONER));
+            account = new Account(json.getJSONObject(ABANDONER));
         }
-    }
-
-    /**
-     * The Account that abandoned the change.
-     * @return the abandoner.
-     */
-    public Account getAbandoner() {
-        return abandoner;
-    }
-
-    /**
-     * The Account that abandoned the change.
-     * @param abandoner the abandoner
-     */
-    public void setAbandoner(Account abandoner) {
-        this.abandoner = abandoner;
-    }
-
-    /**
-     * The Change.
-     * @return the change.
-     */
-    public Change getChange() {
-        return change;
-    }
-
-    /**
-     * The Change.
-     * @param change the change.
-     */
-    public void setChange(Change change) {
-        this.change = change;
-    }
-
-    /**
-     * The patchSet.
-     * @return The patchSet.
-     */
-    public PatchSet getPatchset() {
-        return patchset;
-    }
-
-    /**
-     * The patchSet.
-     * @param patchset the patchSet.
-     */
-    public void setPatchset(PatchSet patchset) {
-        this.patchset = patchset;
     }
 }

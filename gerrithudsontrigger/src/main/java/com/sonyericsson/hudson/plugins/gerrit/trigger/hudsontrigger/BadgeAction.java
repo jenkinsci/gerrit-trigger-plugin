@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.model.BuildBadgeAction;
 
@@ -34,14 +35,14 @@ import hudson.model.BuildBadgeAction;
  */
 public class BadgeAction implements BuildBadgeAction {
 
-    private PatchsetCreated event;
+    private GerritTriggeredEvent event;
 
     /**
      * Constructor.
      *
      * @param event the event to show.
      */
-    public BadgeAction(PatchsetCreated event) {
+    public BadgeAction(GerritTriggeredEvent event) {
         this.event = event;
     }
 
@@ -71,7 +72,7 @@ public class BadgeAction implements BuildBadgeAction {
      *
      * @return the event.
      */
-    public PatchsetCreated getEvent() {
+    public GerritTriggeredEvent getEvent() {
         return event;
     }
 
@@ -80,7 +81,7 @@ public class BadgeAction implements BuildBadgeAction {
      *
      * @param event the event.
      */
-    public void setEvent(PatchsetCreated event) {
+    public void setEvent(GerritTriggeredEvent event) {
         this.event = event;
     }
 
@@ -90,12 +91,16 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
-        if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
-            return event.getChange().getUrl();
+        if (event.getChange() != null) {
+            if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
+                return event.getChange().getUrl();
+            } else {
+                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                        event.getChange().getNumber(),
+                        event.getPatchSet().getNumber());
+            }
         } else {
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    event.getChange().getNumber(),
-                    event.getPatchSet().getNumber());
+            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
         }
     }
 }

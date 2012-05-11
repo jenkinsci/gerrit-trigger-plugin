@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -125,7 +126,7 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
         ManualPatchsetCreated mpc = new ManualPatchsetCreated();
         mpc.setChange(patchsetCreated.getChange());
         mpc.setPatchset(patchsetCreated.getPatchSet());
-        mpc.setUploader(patchsetCreated.getUploader());
+        mpc.setAccount(patchsetCreated.getAccount());
         mpc.setUserName("bobby");
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
         PluginImpl.getInstance().triggerEvent(mpc);

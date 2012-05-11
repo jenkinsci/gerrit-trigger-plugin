@@ -28,7 +28,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.PatchSetKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
@@ -200,7 +199,6 @@ public class ToGerritRunListenerTest {
     public void testObtainFailureMessageNoFilepathConfigured() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = spy(Setup.createPatchsetCreated());
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
 
         ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, null);
 
@@ -224,7 +222,6 @@ public class ToGerritRunListenerTest {
         FilePath[] fileList = {};
         String filepath = "error-file*.txt";
         PatchsetCreated event = spy(Setup.createPatchsetCreated());
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
 
         ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, filepath);
 
@@ -252,7 +249,6 @@ public class ToGerritRunListenerTest {
         FilePath[] fileList = {new FilePath(File.createTempFile("error-file", ".txt"))};
 
         PatchsetCreated event = spy(Setup.createPatchsetCreated());
-        PatchSetKey key = new PatchSetKey(event.getChange().getNumber(), event.getPatchSet().getNumber());
 
         ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, filepath);
 
@@ -321,7 +317,8 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onTriggered(hudson.model.AbstractProject, PatchsetCreated)}.
+     * Tests {@link ToGerritRunListener#onTriggered(hudson.model.AbstractProject,
+     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
      *
      * @throws Exception if so.
      */
@@ -339,7 +336,8 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#onRetriggered(hudson.model.AbstractProject, PatchsetCreated, java.util.List)}.
+     * Tests {@link ToGerritRunListener#onRetriggered(hudson.model.AbstractProject,
+     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent, java.util.List)}.
      *
      * @throws Exception if so.
      */

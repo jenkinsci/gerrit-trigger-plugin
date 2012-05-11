@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +25,11 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -45,11 +50,15 @@ public enum GerritEventType {
      /**
       * A change-merged event.
       */
-     CHANGE_MERGED("change-merged", false, null),
+     CHANGE_MERGED("change-merged", true, ChangeMerged.class),
      /**
       * A comment-added event.
       */
-     COMMENT_ADDED("comment-added", false, null);
+     COMMENT_ADDED("comment-added", true, CommentAdded.class),
+     /**
+      * A ref-updated event.
+      */
+     REF_UPDATED("ref-updated", true, RefUpdated.class);
 
     private String typeValue;
     private boolean interesting;

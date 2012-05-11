@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Cause;
 
@@ -35,7 +36,7 @@ import hudson.model.Cause;
  */
 public class GerritCause extends Cause {
 
-    private PatchsetCreated event;
+    private GerritTriggeredEvent event;
     private boolean silentMode;
     private TriggerContext context;
 
@@ -44,7 +45,7 @@ public class GerritCause extends Cause {
      * @param event the event that triggered the build.
      * @param silentMode Silent Mode on or off.
      */
-    public GerritCause(PatchsetCreated event, boolean silentMode) {
+    public GerritCause(GerritTriggeredEvent event, boolean silentMode) {
         this.event = event;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
@@ -56,7 +57,7 @@ public class GerritCause extends Cause {
      * @param silentMode Silent Mode on or off.
      * @param context The context with information about other builds triggered for the same event as this one.
      */
-    public GerritCause(PatchsetCreated event, boolean silentMode, TriggerContext context) {
+    public GerritCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
         this.event = event;
         this.silentMode = silentMode;
         this.context = context;
@@ -72,7 +73,7 @@ public class GerritCause extends Cause {
      * The event.
      * @return the event.
      */
-    public PatchsetCreated getEvent() {
+    public GerritTriggeredEvent getEvent() {
         return event;
     }
 
@@ -80,7 +81,7 @@ public class GerritCause extends Cause {
      * The event.
      * @param event the event.
      */
-    public void setEvent(PatchsetCreated event) {
+    public void setEvent(GerritTriggeredEvent event) {
         this.event = event;
     }
 
@@ -160,9 +161,12 @@ public class GerritCause extends Cause {
      * @return the URL.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                event.getChange().getNumber(),
-                event.getPatchSet().getNumber());
+        if (event.getChange() != null) {
+            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                    event.getChange().getNumber(),
+                    event.getPatchSet().getNumber());
+        }
+        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
     }
 
     @Override

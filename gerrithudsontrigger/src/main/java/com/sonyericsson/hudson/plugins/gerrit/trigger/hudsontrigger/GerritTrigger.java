@@ -27,10 +27,15 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -91,6 +96,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildUnstableCodeReviewValue;
     private boolean silentMode;
     private boolean escapeQuotes;
+    private boolean triggerOnPatchsetUploadedEvent;
+    private boolean triggerOnChangeMergedEvent;
+    private boolean triggerOnCommentAddedEvent;
+    private boolean triggerOnRefUpdatedEvent;
+    private String commentAddedTriggerApprovalCategory;
+    private String commentAddedTriggerApprovalValue;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -127,6 +138,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
+     * @param triggerOnPatchsetUploadedEvent Trigger event on patchset uploaded on or off.
+     * @param triggerOnChangeMergedEvent     Trigger event on change merged on or off.
+     * @param triggerOnCommentAddedEvent     Trigger event on comment added on or off.
+     * @param triggerOnRefUpdatedEvent       Trigger event on ref updated on or off.
+     * @param commentAddedTriggerApprovalCategory     Approval category for comment added trigger.
+     * @param commentAddedTriggerApprovalValue        Approval value for comment added trigger.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
@@ -148,6 +165,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildUnstableCodeReviewValue,
             boolean silentMode,
             boolean escapeQuotes,
+            boolean triggerOnPatchsetUploadedEvent,
+            boolean triggerOnChangeMergedEvent,
+            boolean triggerOnCommentAddedEvent,
+            boolean triggerOnRefUpdatedEvent,
+            String commentAddedTriggerApprovalCategory,
+            String commentAddedTriggerApprovalValue,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
@@ -165,6 +188,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.silentMode = silentMode;
         this.escapeQuotes = escapeQuotes;
+        this.triggerOnPatchsetUploadedEvent = triggerOnPatchsetUploadedEvent;
+        this.triggerOnChangeMergedEvent = triggerOnChangeMergedEvent;
+        this.triggerOnCommentAddedEvent = triggerOnCommentAddedEvent;
+        this.triggerOnRefUpdatedEvent = triggerOnRefUpdatedEvent;
+        this.commentAddedTriggerApprovalCategory = commentAddedTriggerApprovalCategory;
+        this.commentAddedTriggerApprovalValue = commentAddedTriggerApprovalValue;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -231,7 +260,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             return;
         }
 
-        if (isInteresting(event)) {
+        if (triggerOnPatchsetUploadedEvent && isInteresting(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
@@ -255,7 +284,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param cause the cause of the build.
      * @param event the event.
      */
-    protected void schedule(GerritCause cause, PatchsetCreated event) {
+    protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
         schedule(cause, event, myProject);
     }
 
@@ -266,7 +295,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event   the event.
      * @param project the project to build.
      */
-    protected void schedule(GerritCause cause, PatchsetCreated event, AbstractProject project) {
+    protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
+        BadgeAction badgeAction = null;
+        if (event.getChange() != null) {
+            badgeAction = new BadgeAction(event);
+        }
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = getBuildScheduleDelay();
         if (cause instanceof GerritUserCause) {
@@ -279,18 +312,23 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         Future build = project.scheduleBuild2(
                 projectbuildDelay,
                 cause,
-                new BadgeAction(event),
+                badgeAction,
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
                 createParameters(event, project));
         //Experimental feature!
-        if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+        if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
             getRunningJobs().scheduled(event.getChange(), build, project.getName());
         }
-
-        logger.info("Project {} Build Scheduled: {} By event: {}",
-                new Object[]{project.getName(), (build != null),
-                        event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+        if (event.getChange() != null) {
+            logger.info("Project {} Build Scheduled: {} By event: {}",
+                    new Object[]{project.getName(), (build != null),
+                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
+        } else if (event.getRefUpdate() != null) {
+            logger.info("Project {} Build Scheduled: {} By event: {}",
+                    new Object[]{project.getName(), (build != null),
+                    event.getRefUpdate().getRefName() + " " + event.getRefUpdate().getNewRev(), });
+        }
     }
 
     /**
@@ -309,12 +347,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Used to inform the plugin that the builds for a job have ended. This allows us to clean up our list of what jobs
      * we're running.
      *
-     * @param patchset the patchset.
+     * @param event the event.
      */
-    public void notifyBuildEnded(PatchsetCreated patchset) {
+    public void notifyBuildEnded(GerritTriggeredEvent event) {
         //Experimental feature!
-        if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().remove(patchset.getChange());
+        if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            getRunningJobs().remove(event.getChange());
         }
     }
 
@@ -346,7 +384,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param project the project.
      * @return the ParameterAction.
      */
-    protected ParametersAction createParameters(PatchsetCreated event, AbstractProject project) {
+    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
         setOrCreateParameters(event, parameters, isEscapeQuotes());
         return new ParametersAction(parameters);
@@ -396,7 +434,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void retriggerThisBuild(TriggerContext context) {
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                context.getEvent())) {
+                        context.getEvent())) {
 
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
@@ -437,7 +475,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event   the event.
      * @see #retriggerAllBuilds(com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext)
      */
-    private void retrigger(AbstractProject project, PatchsetCreated event) {
+    private void retrigger(AbstractProject project, GerritTriggeredEvent event) {
         if (project.isBuildable()) {
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(project, event, null);
@@ -456,6 +494,41 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
+    /**
+     * Should we trigger on this event?
+     *
+     * @param event the event
+     * @return true if we should.
+     */
+    private boolean isInteresting(GerritTriggeredEvent event) {
+        if (gerritProjects != null) {
+            logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
+            for (GerritProject p : gerritProjects) {
+                if (event.getChange() != null) {
+                    if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch())) {
+                        if (isFileTriggerEnabled() && p.getFilePaths() != null && p.getFilePaths().size() > 0) {
+                            if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch(),
+                                    event.getFiles(new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                                logger.trace("According to {} the event is interesting.", p);
+                                return true;
+                            }
+                        } else {
+                            logger.trace("According to {} the event is interesting.", p);
+                            return true;
+                        }
+                    }
+                } else if (event.getRefUpdate() != null) {
+                    if (p.isInteresting(event.getRefUpdate().getProject(),
+                            event.getRefUpdate().getRefName())) {
+                        logger.trace("According to {} the event is interesting.", p);
+                        return true;
+                    }
+                }
+            }
+        }
+        logger.trace("Nothing interesting here, move along folks!");
+        return false;
+    }
 
     /**
      * Called when a ChangeAbandoned event arrives. Should probably not be listening on this here.
@@ -465,6 +538,90 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Override
     public void gerritEvent(ChangeAbandoned event) {
         //TODO Implement
+    }
+
+    /**
+     * Called when a ChangeMerged event arrives.
+     *
+     * @param event the event.
+     */
+    @Override
+    public void gerritEvent(ChangeMerged event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (triggerOnChangeMergedEvent && isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
+    }
+
+    /**
+     * Checks if the approvals associated with this comment-added event match what
+     * this trigger is configured to look for.
+     *
+     * @param event the event.
+     * @return true if the event matches the approval category and value configured.
+     */
+    private boolean matchesApproval(CommentAdded event) {
+        for (Approval approval : event.getApprovals()) {
+            if (approval.getType().equals(this.commentAddedTriggerApprovalCategory)
+                    && approval.getValue().equals(this.commentAddedTriggerApprovalValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Called when a CommentAdded event arrives.
+     *
+     * @param event the event.
+     */
+    @Override
+    public void gerritEvent(CommentAdded event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (triggerOnCommentAddedEvent && isInteresting(event)
+                && matchesApproval(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
+    }
+
+    /**
+     * Called when a RefUpdated event arrives.
+     *
+     * @param event the event.
+     */
+    @Override
+    public void gerritEvent(RefUpdated event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (triggerOnRefUpdatedEvent && isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
     }
 
     /**
@@ -676,6 +833,65 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Trigger on patchset-uploaded events
+     * Default is true.
+     *
+     * @return true if trigger on patchset-uploaded events.
+     */
+    public boolean isTriggerOnPatchsetUploadedEvent() {
+        return triggerOnPatchsetUploadedEvent;
+    }
+
+    /**
+     * Trigger on change-merged events
+     * Default is false.
+     *
+     * @return true if trigger on change-merged events.
+     */
+
+    public boolean isTriggerOnChangeMergedEvent() {
+        return triggerOnChangeMergedEvent;
+    }
+
+    /**
+     * Trigger on comment-added events
+     * Default is false.
+     *
+     * @return true if trigger on comment-added events.
+     */
+    public boolean isTriggerOnCommentAddedEvent() {
+        return triggerOnCommentAddedEvent;
+    }
+
+    /**
+     * Trigger on ref-updated events
+     * Default is false.
+     *
+     * @return true if trigger on ref-updated events.
+     */
+    public boolean isTriggerOnRefUpdatedEvent() {
+        return triggerOnRefUpdatedEvent;
+    }
+
+    /**
+     * The approval category for the comment added trigger.
+     *
+     * @return The approval category for the comment added trigger.
+     */
+    public String getCommentAddedTriggerApprovalCategory() {
+        return commentAddedTriggerApprovalCategory;
+    }
+
+    /**
+     * The approval value for the comment added trigger.
+     *
+     * @return The approval value for the comment added trigger.
+     */
+    public String getCommentAddedTriggerApprovalValue() {
+        return commentAddedTriggerApprovalValue;
+    }
+
+    /**
      * Sets escapeQuotes to on or off. When escapeQuotes is on plugin will escape quotes in Gerrit event parameter
      * string. Default is false.
      *
@@ -759,31 +975,43 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Should we trigger on this event?
+     * Sets triggering on patchset-uploaded events.
+     * Default is true.
      *
-     * @param event the event
-     * @return true if we should.
+     * @param triggerOnPatchsetUploadedEvent true if should trigger on patchset-uploaded.
      */
-    private boolean isInteresting(PatchsetCreated event) {
-        if (gerritProjects != null) {
-            logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
-            for (GerritProject p : gerritProjects) {
-                if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch())) {
-                    if (isFileTriggerEnabled() && p.getFilePaths() != null && p.getFilePaths().size() > 0) {
-                        if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch(),
-                        event.getFiles(new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
-                            logger.trace("According to {} the event is interesting.", p);
-                            return true;
-                        }
-                    } else {
-                        logger.trace("According to {} the event is interesting.", p);
-                        return true;
-                    }
-                }
-            }
-        }
-        logger.trace("Nothing interesting here, move along folks!");
-        return false;
+    public void setTriggerOnPatchsetUploadedEvent(boolean triggerOnPatchsetUploadedEvent) {
+        this.triggerOnPatchsetUploadedEvent = triggerOnPatchsetUploadedEvent;
+    }
+
+    /**
+     * Sets triggering on change-merged events.
+     * Default is false.
+     *
+     * @param triggerOnChangeMergedEvent true if should trigger on change-merged.
+     */
+    public void setTriggerOnChangeMergedEvent(boolean triggerOnChangeMergedEvent) {
+        this.triggerOnChangeMergedEvent = triggerOnChangeMergedEvent;
+    }
+
+    /**
+     * Sets triggering on comment-added events.
+     * Default is false.
+     *
+     * @param triggerOnCommentAddedEvent true if should trigger on comment-added.
+     */
+    public void setTriggerOnCommentAddedEvent(boolean triggerOnCommentAddedEvent) {
+        this.triggerOnCommentAddedEvent = triggerOnCommentAddedEvent;
+    }
+
+    /**
+     * Sets triggering on ref-updated events.
+     * Default is false.
+     *
+     * @param triggerOnRefUpdatedEvent true if should trigger on ref-updated.
+     */
+    public void setTriggerOnRefUpdatedEvent(boolean triggerOnRefUpdatedEvent) {
+        this.triggerOnRefUpdatedEvent = triggerOnRefUpdatedEvent;
     }
 
     /**

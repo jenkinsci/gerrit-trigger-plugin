@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,42 +26,47 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBMITTER;
 
 /**
- * A DTO representation of the patchset-created Gerrit Event.
- *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * A DTO representation of the change-merged Gerrit Event.
+ * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
+public class ChangeMerged extends GerritTriggeredEvent implements GerritJsonEvent {
 
-    /* Uploader has been replaced by GerritTriggeredEvent.acconut.
-     * This allows old builds to deserialize without warnings. */
-    @SuppressWarnings("unused")
-    private transient Account uploader;
+    /**
+     * Default constructor.
+     */
+    public ChangeMerged() {
+    }
+
+    /**
+     * Constructor that fills data directly.
+     * @param json the JSON Object
+     * @see #fromJson(String)
+     */
+    public ChangeMerged(JSONObject json) {
+        fromJson(json);
+    }
 
     @Override
     public GerritEventType getEventType() {
-        return GerritEventType.PATCHSET_CREATED;
+        return GerritEventType.CHANGE_MERGED;
     }
 
     @Override
     public boolean isScorable() {
-        return true;
+        return false;
     }
 
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
-        if (json.containsKey(UPLOADER)) {
-            this.account = new Account(json.getJSONObject(UPLOADER));
+        if (json.containsKey(SUBMITTER)) {
+            account = new Account(json.getJSONObject(SUBMITTER));
         }
-    }
-
-    @Override
-    public String toString() {
-        return "PatchsetCreated: " + change + " " + patchSet;
     }
 }

@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Hudson;
@@ -51,7 +52,7 @@ public class GerritUserCause extends GerritCause {
      * @param silentMode if silentMode.
      * @param context the context.
      */
-    public GerritUserCause(PatchsetCreated event, boolean silentMode, TriggerContext context) {
+    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
         super(event, silentMode, context);
         this.authenticationName = Hudson.getAuthentication().getName();
     }
@@ -63,7 +64,7 @@ public class GerritUserCause extends GerritCause {
      * @param context the context.
      * @param authenticationName the username.
      */
-    public GerritUserCause(PatchsetCreated event, boolean silentMode,
+    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode,
             TriggerContext context, String authenticationName) {
         super(event, silentMode, context);
         this.authenticationName = authenticationName;
@@ -75,7 +76,7 @@ public class GerritUserCause extends GerritCause {
      * @param silentMode if silentMode.
      * @param authenticationName the username.
      */
-    public GerritUserCause(PatchsetCreated event, boolean silentMode,
+    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode,
             String authenticationName) {
         super(event, silentMode);
         this.authenticationName = authenticationName;
@@ -87,7 +88,7 @@ public class GerritUserCause extends GerritCause {
      * @param event the event.
      * @param silentMode if silentMode.
      */
-    public GerritUserCause(PatchsetCreated event, boolean silentMode) {
+    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode) {
         super(event, silentMode);
         this.authenticationName = Hudson.getAuthentication().getName();
     }

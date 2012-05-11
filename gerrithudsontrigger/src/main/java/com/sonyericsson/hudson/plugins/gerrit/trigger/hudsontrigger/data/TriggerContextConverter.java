@@ -1,6 +1,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.thoughtworks.xstream.converters.ConversionException;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.converters.MarshallingContext;
@@ -99,8 +99,8 @@ public class TriggerContextConverter implements Converter {
         while (reader.hasMoreChildren()) {
             reader.moveDown();
             if ("event".equalsIgnoreCase(reader.getNodeName())) {
-                PatchsetCreated event = (PatchsetCreated)context.convertAnother(tc, PatchsetCreated.class);
-                tc.setEvent(event);
+              GerritTriggeredEvent event = (GerritTriggeredEvent)context.convertAnother(tc, GerritTriggeredEvent.class);
+              tc.setEvent(event);
             } else if ("thisBuild".equalsIgnoreCase(reader.getNodeName())) {
                 TriggeredItemEntity entity = unmarshalItemEntity(reader, context);
                 tc.setThisBuild(entity);

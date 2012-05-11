@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -33,4 +34,10 @@ public interface GerritEvent {
      * @return the event type.
      */
     GerritEventType getEventType();
+
+    /**
+     * Returns if a score (code review or verify) can be submitted to Gerrit.
+     * @return true if so, otherwise false
+     */
+    boolean isScorable();
 }

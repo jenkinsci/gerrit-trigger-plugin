@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +26,10 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 
 /**
  * Base Listener interface for those that are interested in Gerrit events.
@@ -56,4 +60,22 @@ public interface GerritEventListener {
      * @param event the event.
      */
     void gerritEvent(ChangeAbandoned event);
+
+    /**
+     * Called when a change merged event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(ChangeMerged event);
+
+    /**
+     * Called when a comment added event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(CommentAdded event);
+
+    /**
+     * Called when a ref updated event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(RefUpdated event);
 }
