@@ -61,6 +61,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -200,6 +201,23 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildFailureMessage = buildFailureMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
+    }
+
+    /**
+     * Converts old trigger configs when only patchset created was available as event.
+     * If no event selection is set to true {@link #triggerOnPatchsetUploadedEvent} will be.
+     *
+     * @return the resolved instance.
+     * @throws ObjectStreamException if something beneath goes wrong.
+     */
+    public Object readResolve() throws ObjectStreamException {
+        if (!triggerOnPatchsetUploadedEvent
+                && !triggerOnChangeMergedEvent
+                && !triggerOnCommentAddedEvent
+                && !triggerOnRefUpdatedEvent) {
+            triggerOnPatchsetUploadedEvent = true;
+        }
+        return super.readResolve();
     }
 
     /**
@@ -423,8 +441,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Re-triggers the build in {@link TriggerContext#getThisBuild()} for the context's event. Will not do any {@link
-     * #isInteresting(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)} checks. If more
+     * Re-triggers the build in {@link TriggerContext#getThisBuild()} for the context's event.
+     * Will not do any {@link #isInteresting(GerritTriggeredEvent)} checks. If more
      * than one build was triggered by the event the results from those builds will be counted again, but they won't be
      * re-triggered. If any builds for the event are still running, this new scheduled build will replace its
      * predesessor. If the project is currently building the event, no scheduling will be done.
@@ -454,7 +472,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * building.
      *
      * @param context the context to rebuild.
-     * @see ToGerritRunListener#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)
+     * @see ToGerritRunListener#isBuilding(GerritTriggeredEvent)
      */
     public void retriggerAllBuilds(TriggerContext context) {
         if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {

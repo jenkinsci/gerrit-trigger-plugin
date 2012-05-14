@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.model.BuildBadgeAction;
 
@@ -35,7 +36,9 @@ import hudson.model.BuildBadgeAction;
  */
 public class BadgeAction implements BuildBadgeAction {
 
-    private GerritTriggeredEvent event;
+    @Deprecated //Kept for backwards compatibility
+    private transient PatchsetCreated event;
+    private GerritTriggeredEvent tEvent;
 
     /**
      * Constructor.
@@ -43,7 +46,7 @@ public class BadgeAction implements BuildBadgeAction {
      * @param event the event to show.
      */
     public BadgeAction(GerritTriggeredEvent event) {
-        this.event = event;
+        this.tEvent = event;
     }
 
     /**
@@ -73,7 +76,7 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the event.
      */
     public GerritTriggeredEvent getEvent() {
-        return event;
+        return tEvent;
     }
 
     /**
@@ -82,7 +85,7 @@ public class BadgeAction implements BuildBadgeAction {
      * @param event the event.
      */
     public void setEvent(GerritTriggeredEvent event) {
-        this.event = event;
+        this.tEvent = event;
     }
 
     /**
@@ -91,16 +94,29 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
-        if (event.getChange() != null) {
-            if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
-                return event.getChange().getUrl();
+        if (tEvent.getChange() != null) {
+            if (tEvent.getChange().getUrl() != null && tEvent.getChange().getUrl().length() > 0) {
+                return tEvent.getChange().getUrl();
             } else {
                 return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                        event.getChange().getNumber(),
-                        event.getPatchSet().getNumber());
+                        tEvent.getChange().getNumber(),
+                        tEvent.getPatchSet().getNumber());
             }
         } else {
             return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
         }
+    }
+
+    /**
+     * For backwards compatibility {@link #event} is kept to be able to deserialize old builds, here event gets resolved
+     * to the more abstract version.
+     * @return the resolved instance.
+     */
+    Object readResolve() {
+        if (this.event != null) {
+            this.tEvent = this.event;
+            this.event = null;
+        }
+        return this;
     }
 }
