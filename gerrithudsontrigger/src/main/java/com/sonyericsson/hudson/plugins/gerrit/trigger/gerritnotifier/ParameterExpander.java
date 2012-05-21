@@ -162,11 +162,12 @@ public class ParameterExpander {
      * The parameters are:
      * <ul>
      *  <li><strong>GERRIT_NAME</strong>: The Gerrit project name.</li>
-     *  <li><strong>CHANGE_ID</strong>: the Gerrit change-id (SHA-1)</li>
+     *  <li><strong>CHANGE_ID</strong>: The Gerrit change-id (SHA-1).</li>
      *  <li><strong>BRANCH</strong>: The branch of the project.</li>
      *  <li><strong>CHANGE</strong>: The change number.</li>
      *  <li><strong>PATCHSET</strong>: The patchset number.</li>
-     *  <li><strong>REFSPEC</strong>: the ref-spec. (refs/changes/xx/xxxx/z</li>
+     *  <li><strong>PATCHSET_REVISION</strong>: The patchset revision.</li>
+     *  <li><strong>REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z).</li>
      *  <li><strong>BUILDURL</strong>: The URL to the build.</li>
      *  <li><strong>VERIFIED</strong>: The verified vote.</li>
      *  <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
@@ -179,7 +180,7 @@ public class ParameterExpander {
      */
     private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent event,
             int codeReview, int verified) {
-        //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
+        //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
         if (event.getChange() != null) {
             map.put("GERRIT_NAME", event.getChange().getProject());
@@ -187,6 +188,7 @@ public class ParameterExpander {
             map.put("BRANCH", event.getChange().getProject());
             map.put("CHANGE", event.getChange().getNumber());
             map.put("PATCHSET", event.getPatchSet().getNumber());
+            map.put("PATCHSET_REVISION", event.getPatchSet().getRevision());
             map.put("REFSPEC", StringUtil.makeRefSpec(event));
         }
         if (r != null) {
