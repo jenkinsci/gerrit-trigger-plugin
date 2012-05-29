@@ -28,7 +28,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -48,11 +47,16 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Actionable;
+import hudson.model.Computer;
+import hudson.model.Executor;
+import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Queue;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
@@ -64,7 +68,9 @@ import org.slf4j.LoggerFactory;
 import java.io.ObjectStreamException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Future;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -327,16 +333,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 && project.getQuietPeriod() > projectbuildDelay) {
             projectbuildDelay = project.getQuietPeriod();
         }
+        ParametersAction parameters = createParameters(event, project);
         Future build = project.scheduleBuild2(
                 projectbuildDelay,
                 cause,
                 badgeAction,
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
-                createParameters(event, project));
+                parameters);
         //Experimental feature!
         if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().scheduled(event.getChange(), build, project.getName());
+            getRunningJobs().scheduled(event, parameters, project.getName());
         }
         if (event.getChange() != null) {
             logger.info("Project {} Build Scheduled: {} By event: {}",
@@ -370,7 +377,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         //Experimental feature!
         if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().remove(event.getChange());
+            getRunningJobs().remove(event);
         }
     }
 
@@ -1110,44 +1117,87 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Class for maintaining and synchronizing the runningJobs info.
      * Association between patches and the jobs that we're running for them.
      */
-    public static class RunningJobs {
-        private final HashMap<Change, Future> runningJobs = new HashMap<Change, Future>();
+    public class RunningJobs {
+        private final HashMap<GerritTriggeredEvent, ParametersAction> runningJobs =
+                new HashMap<GerritTriggeredEvent, ParametersAction>();
 
         /**
          * Does the needful after a build has been scheduled.
          * I.e. cancelling the old build if configured to do so and removing and storing any references.
          *
-         * @param change the change.
-         * @param build the build that has been scheduled.
+         * @param event the event triggering a new build.
+         * @param parameters the parameters for the new build, used to find it later.
          * @param projectName the name of the current project for better logging.
          */
-        public synchronized void scheduled(Change change, Future build, String projectName) {
-            // check if we're running any jobs for this event
-            if (runningJobs.containsKey(change)) {
-                logger.debug("A previous build of {} is running for event {}",
-                        projectName, change.getId());
-                // if we were, let's cancel them
-                Future oldBuild = runningJobs.remove(change);
-                if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-                    logger.debug("Cancelling old build {} of {}", oldBuild.toString(), projectName);
-                    oldBuild.cancel(true);
+        public synchronized void scheduled(GerritTriggeredEvent event, ParametersAction parameters, String projectName) {
+            if (!PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                return;
+            }
+            Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
+            while (it.hasNext()) {
+                Entry<GerritTriggeredEvent, ParametersAction> pairs = it.next();
+                // Find all entries in runningJobs with the same Change #.
+                if (pairs.getKey().getChange().equals(event.getChange())) {
+                    logger.debug("Cancelling build for " + pairs.getKey());
+                    try {
+                        cancelJob(pairs.getValue());
+                    } catch (Exception e) {
+                        // Ignore any problems with canceling the job.
+                        logger.error("Error canceling job", e);
+                    }
+                    it.remove();
                 }
-            } else {
-                logger.debug("No previous build of {} is running for event {}, so no cancellation request.",
-                        projectName, change.getId());
             }
             // add our new job
-            runningJobs.put(change, build);
+            runningJobs.put(event, parameters);
+        }
+
+        /**
+         * Tries to cancel any jobs with the specified parameters. We look in
+         * both the build queue and currently executing jobs. This extra work is
+         * required due to race conditions when calling Future.cancel() - see
+         * https://issues.jenkins-ci.org/browse/JENKINS-13829
+         *
+         * @param parameters
+         *            The parameters to match against.
+         */
+        private void cancelJob(ParametersAction parameters) {
+            // Remove any jobs in the build queue.
+            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(myProject);
+            for (hudson.model.Queue.Item item  : itemsInQueue) {
+                List<ParametersAction> params = item.getActions(ParametersAction.class);
+                for (ParametersAction param : params) {
+                    if (param.equals(parameters)) {
+                        Queue.getInstance().cancel(item);
+                    }
+                }
+            }
+
+            // Interrupt any currently running jobs.
+            for (Computer c : Hudson.getInstance().getComputers()) {
+                for (Executor e : c.getExecutors()) {
+                    if (e.getCurrentExecutable() instanceof Actionable) {
+                        Actionable a = (Actionable)e.getCurrentExecutable();
+                        List<ParametersAction> params = a.getActions(ParametersAction.class);
+                        for (ParametersAction param : params) {
+                            if (param.equals(parameters)) {
+                                e.interrupt();
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /**
          * Removes any reference to the current build for this change.
          *
-         * @param change the change.
+         * @param event the event which started the build we want to remove.
          * @return the build that was removed.
          */
-        public synchronized Future remove(Change change) {
-            return runningJobs.remove(change);
+        public synchronized ParametersAction remove(GerritTriggeredEvent event) {
+            logger.debug("Removing future job " + event.getPatchSet().getNumber());
+            return runningJobs.remove(event);
         }
     }
 }
