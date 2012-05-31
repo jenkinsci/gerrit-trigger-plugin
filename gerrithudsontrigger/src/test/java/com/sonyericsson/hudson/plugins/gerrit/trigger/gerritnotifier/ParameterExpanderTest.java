@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -223,6 +224,22 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeMerged event instead.
+     *
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
+    @Test
+    public void testGetBuildCompletedCommandSuccessfulChangeMerged() throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulChangeMerged("",
+                "\n\nhttp://localhost/test/ : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeMerged("http://example.org/<CHANGE_ID>",
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeMerged("${BUILD_URL}console",
+                "\n\nhttp://localhost/test/console : SUCCESS");
+    }
+
+    /**
      * Sub test for {@link #testGetBuildCompletedCommandSuccessful()}.
      *
      * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
@@ -232,6 +249,39 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createPatchsetCreated(), 3, 32);
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessfulChangeMerged()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
+            throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeMerged(), 0, 0);
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessful()} and
+     * {@link #testGetBuildCompletedCommandSuccessfulChangeMerged()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @param event the event.
+     * @param expectedVerifiedVote what to expect in the final verified vote even if 1 is calculated
+     * @param expectedCodeReviewVote what to expect in the final code review vote even if 32 is calculated
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessfulEvent(String customUrl, String expectedBuildsStats,
+                                                           GerritTriggeredEvent event, int expectedVerifiedVote,
+                                                           int expectedCodeReviewVote)
+            throws IOException, InterruptedException {
+
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         Hudson hudson = PowerMockito.mock(Hudson.class);
@@ -254,8 +304,6 @@ public class ParameterExpanderTest {
         when(r.getEnvironment(taskListener)).thenReturn(env);
 
         when(r.getResult()).thenReturn(Result.SUCCESS);
-
-        PatchsetCreated event = Setup.createPatchsetCreated();
 
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         when(memoryImprint.getEvent()).thenReturn(event);
@@ -282,14 +330,15 @@ public class ParameterExpanderTest {
         assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildsStats + "'") >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
-        assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=3") >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
+        assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=" + expectedVerifiedVote) >= 0);
+        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=" + expectedCodeReviewVote) >= 0);
         assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
     }
+
 
     /**
      * Test.

@@ -347,8 +347,12 @@ public class ParameterExpander {
             command = config.getGerritCmdBuildFailed();
         }
 
-        int verified = getMinimumVerifiedValue(memoryImprint);
-        int codeReview = getMinimumCodeReviewValue(memoryImprint);
+        int verified = 0;
+        int codeReview = 0;
+        if (memoryImprint.getEvent().isScorable()) {
+            verified = getMinimumVerifiedValue(memoryImprint);
+            codeReview = getMinimumCodeReviewValue(memoryImprint);
+        }
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));

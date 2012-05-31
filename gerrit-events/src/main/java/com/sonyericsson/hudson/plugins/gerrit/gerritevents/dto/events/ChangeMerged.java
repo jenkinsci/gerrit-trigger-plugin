@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +34,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
 
 /**
  * A DTO representation of the change-merged Gerrit Event.
+ *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
 public class ChangeMerged extends GerritTriggeredEvent implements GerritJsonEvent {
@@ -45,8 +47,9 @@ public class ChangeMerged extends GerritTriggeredEvent implements GerritJsonEven
 
     /**
      * Constructor that fills data directly.
+     *
      * @param json the JSON Object
-     * @see #fromJson(String)
+     * @see #fromJson(net.sf.json.JSONObject)
      */
     public ChangeMerged(JSONObject json) {
         fromJson(json);

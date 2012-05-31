@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -32,11 +33,12 @@ import hudson.model.Cause;
 
 /**
  * A Cause why a build was scheduled.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritCause extends Cause {
 
-    private GerritTriggeredEvent event;
+    private GerritTriggeredEvent tEvent;
     private boolean silentMode;
     private TriggerContext context;
 
@@ -46,7 +48,7 @@ public class GerritCause extends Cause {
      * @param silentMode Silent Mode on or off.
      */
     public GerritCause(GerritTriggeredEvent event, boolean silentMode) {
-        this.event = event;
+        this.tEvent = event;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
     }
@@ -58,7 +60,7 @@ public class GerritCause extends Cause {
      * @param context The context with information about other builds triggered for the same event as this one.
      */
     public GerritCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
-        this.event = event;
+        this.tEvent = event;
         this.silentMode = silentMode;
         this.context = context;
     }
@@ -74,7 +76,7 @@ public class GerritCause extends Cause {
      * @return the event.
      */
     public GerritTriggeredEvent getEvent() {
-        return event;
+        return tEvent;
     }
 
     /**
@@ -82,7 +84,7 @@ public class GerritCause extends Cause {
      * @param event the event.
      */
     public void setEvent(GerritTriggeredEvent event) {
-        this.event = event;
+        this.tEvent = event;
     }
 
     /**
@@ -161,17 +163,17 @@ public class GerritCause extends Cause {
      * @return the URL.
      */
     public String getUrl() {
-        if (event.getChange() != null) {
+        if (tEvent.getChange() != null) {
             return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    event.getChange().getNumber(),
-                    event.getPatchSet().getNumber());
+                    tEvent.getChange().getNumber(),
+                    tEvent.getPatchSet().getNumber());
         }
         return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
     }
 
     @Override
     public String toString() {
-        return "GerritCause: " + event + " silent: " + silentMode;
+        return "GerritCause: " + tEvent + " silent: " + silentMode;
     }
 
     //CS IGNORE InlineConditionals FOR NEXT 40 LINES. REASON: Auto generated code
@@ -191,7 +193,7 @@ public class GerritCause extends Cause {
         if (silentMode != that.silentMode) {
             return false;
         }
-        if (!event.equals(that.event)) {
+        if (!tEvent.equals(that.tEvent)) {
             return false;
         }
 
@@ -200,8 +202,24 @@ public class GerritCause extends Cause {
 
     @Override
     public int hashCode() {
-        int result = event.hashCode();
+        int result = tEvent.hashCode();
         result = 31 * result + (silentMode ? 1 : 0);
         return result;
+    }
+
+    @Deprecated //Kept for backwards compatibility
+    private transient PatchsetCreated event;
+
+    /**
+     * For backwards compatibility {@link #event} is kept to be able to deserialize old builds, here event gets resolved
+     * to the more abstract version.
+     * @return the resolved instance.
+     */
+    Object readResolve() {
+        if (this.event != null) {
+            this.tEvent = this.event;
+            this.event = null;
+        }
+        return this;
     }
 }

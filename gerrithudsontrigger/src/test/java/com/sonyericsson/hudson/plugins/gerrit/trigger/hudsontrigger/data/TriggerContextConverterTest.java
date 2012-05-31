@@ -1,5 +1,30 @@
+/*
+ *  The MIT License
+ *
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
@@ -28,7 +53,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TriggerContextConverterTest {
 
-    //CS IGNORE MagicNumber FOR NEXT 300 LINES. REASON: test data.
+    //CS IGNORE MagicNumber FOR NEXT 500 LINES. REASON: test data.
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
@@ -167,6 +192,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
+        assertTrue(readT.getEntity().getEvent() instanceof PatchsetCreated);
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -219,6 +245,52 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
+        assertNotNull(readT.getEntity().getThisBuild());
+        assertNotNull(readT.getEntity().getOthers());
+
+        assertEquals(2, readT.getEntity().getOthers().size());
+
+        TriggeredItemEntity other = readT.getEntity().getOthers().get(0);
+        assertEquals(1, other.getBuildNumber().intValue());
+        assertEquals("projectY", other.getProjectId());
+
+        other = readT.getEntity().getOthers().get(1);
+        assertEquals(12, other.getBuildNumber().intValue());
+        assertEquals("projectZ", other.getProjectId());
+    }
+
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}.
+     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged} event and
+     * list of "others" containing two items.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalWithOthersChangeMerged() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+
+        ChangeMerged event = Setup.createChangeMerged();
+
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(entity);
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
+        otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
+        context.setOthers(otherBuilds);
+
+        TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = new XStream2();
+        xStream.registerConverter(new TriggerContextConverter());
+        String xml = xStream.toXML(t);
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+        assertTrue(readT.getEntity().getEvent() instanceof ChangeMerged);
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 

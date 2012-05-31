@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
@@ -50,7 +51,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public class GerritTriggeredEvent extends GerritEventLifecycle {
+public abstract class GerritTriggeredEvent extends GerritEventLifecycle implements GerritEvent {
 
     private static final Logger logger = LoggerFactory.getLogger(PatchsetCreated.class);
 
