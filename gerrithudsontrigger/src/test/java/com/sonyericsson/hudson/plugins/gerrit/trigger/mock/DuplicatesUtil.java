@@ -70,6 +70,28 @@ public abstract class DuplicatesUtil {
     }
 
     /**
+     * Creates a {@link FreeStyleProject} with a gerrit-trigger configured for Code Review +1.
+     *
+     * @param base the test case that is doing the current testing.
+     * @param name the name of the new job.
+     * @return the project.
+     *
+     * @throws Exception if so.
+     */
+    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(HudsonTestCase base, String name)
+            throws Exception {
+        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
+        List<GerritProject> projects = new LinkedList<GerritProject>();
+        projects.add(new GerritProject(CompareType.ANT, "**",
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
+        p.addTrigger(new GerritTrigger(projects,
+                null, null, null, null, null, null, null, null, false, true, true, false, true, false,
+                "CRVW", "1", null, null, null, null, null, null));
+        base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
+        return p;
+    }
+
+    /**
      * Finds the form in the html document that performs the provided action.
      *
      * @param action the action to search for.

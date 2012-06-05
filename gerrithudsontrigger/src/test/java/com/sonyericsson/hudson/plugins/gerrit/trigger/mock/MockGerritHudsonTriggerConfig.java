@@ -24,10 +24,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import net.sf.json.JSONObject;
 
 import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Mock class of a Config.
@@ -170,6 +173,15 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public String getGerritFrontEndUrlFor(String number, String revision) {
         return "http://gerrit/" + number;
+    }
+
+    @Override
+    public List<VerdictCategory> getCategories() {
+        return new LinkedList<VerdictCategory>();
+    }
+
+    @Override
+    public void setCategories(List<VerdictCategory> categories) {
     }
 
     @Override

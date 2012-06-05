@@ -24,9 +24,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
@@ -43,8 +44,9 @@ import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
-
 import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 //CS IGNORE MagicNumber FOR NEXT 300 LINES. REASON: Testdata.
@@ -54,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class SpecGerritHudsonTrigger extends HudsonTestCase {
+public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
     //TODO Fix the SshdServerMock so that asserts can be done on approve commands.
 
@@ -74,6 +76,7 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
+        server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         super.setUp();
     }
 
@@ -112,12 +115,14 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
         assertEquals(1, count);
     }
 
+    //Tests functionality that has changed. Now two builds are triggered instead of one, since the events are unique.
+    //Commented out until a decision has been made on how to go forward with the "uniqueness" of events.
     /**
      * Tests to trigger a build with the same patch set twice, one is a manual event and the other a normal. Expecting
      * one build to be scheduled with two causes of different type..
      *
      * @throws Exception if so.
-     */
+     *//*
     @LocalData
     public void testDoubleTriggeredBuildOfDifferentType() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
@@ -146,7 +151,7 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
             }
         }
         assertEquals(2, count);
-    }
+    }*/
 
     /**
      * Tests to trigger builds with two diffetent patch sets. Expecting two build to be scheduled with one cause each.
@@ -231,6 +236,27 @@ public class SpecGerritHudsonTrigger extends HudsonTestCase {
         assertEquals(2, builds.size());
         assertSame(Result.SUCCESS, firstBuild.getResult());
         assertSame(Result.SUCCESS, builds.getFirstBuild().getResult());
+        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+    }
+
+    /**
+     * Tests that a comment added triggers a build correctly.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggerOnCommentAdded() throws Exception {
+        VerdictCategory cat = new VerdictCategory("CRVW", "Code review");
+        List<VerdictCategory> list = new LinkedList<VerdictCategory>();
+        list.add(cat);
+        PluginImpl.getInstance().getConfig().setCategories(list);
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "projectX");
+        project.getBuildersList().add(new SleepBuilder(2000));
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        CommentAdded firstEvent = Setup.createCommentAdded();
+        PluginImpl.getInstance().triggerEvent(firstEvent);
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 2000);
+        assertEquals(1, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
     }
 

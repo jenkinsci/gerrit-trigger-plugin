@@ -25,9 +25,11 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -45,6 +47,8 @@ import hudson.model.Result;
 import net.sf.json.JSONObject;
 
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
@@ -114,8 +118,8 @@ public final class Setup {
     }
 
     /**
-     * Gives you a PatchsetCreated mock.
-     * @return PatchsetCreated mock.
+     * Gives you a ChangeMerged mock.
+     * @return ChangeMerged mock.
      */
     public static ChangeMerged createChangeMerged() {
         ChangeMerged event = new ChangeMerged();
@@ -135,6 +139,37 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Gives you a CommentAdded mock.
+     * @return CommentAdded mock.
+     */
+    public static CommentAdded createCommentAdded() {
+        CommentAdded event = new CommentAdded();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        List<Approval> approvals = new LinkedList<Approval>();
+        Approval approval = new Approval();
+        approval.setType("CRVW");
+        approval.setValue("1");
+        approvals.add(approval);
+        event.setApprovals(approvals);
         return event;
     }
 

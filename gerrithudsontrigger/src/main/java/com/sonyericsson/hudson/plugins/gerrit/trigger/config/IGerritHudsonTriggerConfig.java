@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +25,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONObject;
+
+import java.util.List;
 
 /**
  * Interface for the Global configuration.
@@ -130,6 +134,18 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
      * @see #getGerritFrontEndUrl()
      */
     String getGerritFrontEndUrlFor(String number, String revision);
+
+    /**
+     * Get the list of available VerdictCategories.
+     * @return the list.
+     */
+    List<VerdictCategory> getCategories();
+
+    /**
+     * Set the list of available VerdictCategories.
+     * @param categories the list.
+     */
+    void setCategories(List<VerdictCategory> categories);
 
     /**
      * If the manual trigger is enabled (shown to users) or not.

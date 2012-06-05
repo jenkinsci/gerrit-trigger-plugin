@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +25,14 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
 
 //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -110,6 +115,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean enableManualTrigger;
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
+    private List<VerdictCategory> categories;
 
     /**
      * Constructor.
@@ -208,7 +214,20 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (buildScheduleDelay <= DEFAULT_BUILD_SCHEDULE_DELAY) {
             buildScheduleDelay = DEFAULT_BUILD_SCHEDULE_DELAY;
         }
+        categories = new LinkedList<VerdictCategory>();
+        if (formData.has("verdictCategories")) {
+            Object cat = formData.get("verdictCategories");
+            if (cat instanceof JSONArray) {
+                for (Object jsonObject : (JSONArray)cat) {
+                    categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)jsonObject));
+                }
+            } else if (cat instanceof JSONObject) {
+                categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)cat));
+            }
+        }
     }
+
+
 
     /**
      * Constructs a config with default data.
@@ -482,6 +501,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
         str.append(changeSetNumber);
         return str.toString();
+    }
+
+    @Override
+    public List<VerdictCategory> getCategories() {
+        return categories;
+    }
+
+    @Override
+    public void setCategories(List<VerdictCategory> categories) {
+        this.categories = categories;
     }
 
     @Override

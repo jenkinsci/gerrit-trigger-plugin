@@ -192,6 +192,33 @@
                                         checked="${it.config.enableManualTrigger}"
                                         default="${true}"/>
                         </f:entry>
+                        <f:entry title="Verdict categories">
+                            <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories" add="${%Add Verdict Category}" minimum="0" header="">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            ${%Verdict value:}
+                                        </td>
+                                        <td>
+                                            <f:textbox name="verdictValue" value="${v.verdictValue}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            ${%Verdict description:}
+                                        </td>
+                                        <td>
+                                            <f:textbox name="verdictDescription" value="${v.verdictDescription}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <f:repeatableDeleteButton/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </f:repeatable>
+                        </f:entry>
                     </f:section>
                 </f:advanced>
                 <f:block>

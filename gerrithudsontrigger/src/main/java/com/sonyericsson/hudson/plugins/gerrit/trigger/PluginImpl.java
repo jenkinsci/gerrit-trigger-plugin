@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -116,6 +117,15 @@ public class PluginImpl extends Plugin {
         //Starts the send-command-queue
         GerritSendCommandQueue.getInstance(config);
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
+        List<VerdictCategory> categories = config.getCategories();
+        if (categories == null) {
+            categories = new LinkedList<VerdictCategory>();
+
+        }
+        if (categories.isEmpty()) {
+            categories.add(new VerdictCategory("CRVW", "Code Review"));
+            categories.add(new VerdictCategory("VRIF", "Verified"));
+        }
         if (!config.hasDefaultValues()) {
             startManager();
             logger.info("Started");

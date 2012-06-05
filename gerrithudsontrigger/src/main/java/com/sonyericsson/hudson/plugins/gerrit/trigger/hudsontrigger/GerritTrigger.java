@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdd
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
@@ -60,6 +61,7 @@ import hudson.model.Queue;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -107,7 +109,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private boolean triggerOnChangeMergedEvent;
     private boolean triggerOnCommentAddedEvent;
     private boolean triggerOnRefUpdatedEvent;
-    private String commentAddedTriggerApprovalCategory;
+    private String verdictCategory;
     private String commentAddedTriggerApprovalValue;
     private String buildStartMessage;
     private String buildFailureMessage;
@@ -115,6 +117,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildUnstableMessage;
     private String buildUnsuccessfulFilepath;
     private String customUrl;
+
+
 
     /**
      * Default DataBound Constructor.
@@ -149,7 +153,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param triggerOnChangeMergedEvent     Trigger event on change merged on or off.
      * @param triggerOnCommentAddedEvent     Trigger event on comment added on or off.
      * @param triggerOnRefUpdatedEvent       Trigger event on ref updated on or off.
-     * @param commentAddedTriggerApprovalCategory     Approval category for comment added trigger.
+     * @param verdictCategory                Verdict category for comment added trigger.
      * @param commentAddedTriggerApprovalValue        Approval value for comment added trigger.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
@@ -176,7 +180,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             boolean triggerOnChangeMergedEvent,
             boolean triggerOnCommentAddedEvent,
             boolean triggerOnRefUpdatedEvent,
-            String commentAddedTriggerApprovalCategory,
+            String verdictCategory,
             String commentAddedTriggerApprovalValue,
             String buildStartMessage,
             String buildSuccessfulMessage,
@@ -199,7 +203,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.triggerOnChangeMergedEvent = triggerOnChangeMergedEvent;
         this.triggerOnCommentAddedEvent = triggerOnCommentAddedEvent;
         this.triggerOnRefUpdatedEvent = triggerOnRefUpdatedEvent;
-        this.commentAddedTriggerApprovalCategory = commentAddedTriggerApprovalCategory;
+        this.verdictCategory = verdictCategory;
         this.commentAddedTriggerApprovalValue = commentAddedTriggerApprovalValue;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -596,7 +600,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private boolean matchesApproval(CommentAdded event) {
         for (Approval approval : event.getApprovals()) {
-            if (approval.getType().equals(this.commentAddedTriggerApprovalCategory)
+            if (approval.getType().equals(this.verdictCategory)
                     && approval.getValue().equals(this.commentAddedTriggerApprovalValue)) {
                 return true;
             }
@@ -837,6 +841,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Return the chosen VerdictCategory.
+     * @return the chosen VerdictCategory.
+     */
+    public String getVerdictCategory() {
+        return verdictCategory;
+    }
+
+    /**
      * If silent mode is on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no build
      * started/failed/successful approve messages etc. Default is false.
      *
@@ -896,15 +908,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public boolean isTriggerOnRefUpdatedEvent() {
         return triggerOnRefUpdatedEvent;
-    }
-
-    /**
-     * The approval category for the comment added trigger.
-     *
-     * @return The approval category for the comment added trigger.
-     */
-    public String getCommentAddedTriggerApprovalCategory() {
-        return commentAddedTriggerApprovalCategory;
     }
 
     /**
@@ -1094,6 +1097,21 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         @Override
         public String getHelpFile() {
             return "/plugin/gerrit-trigger/help-whatIsGerritTrigger.html";
+        }
+
+        /**
+         * Fills the verdict category drop-down list.
+         * @return a ListBoxModel for the drop-down list.
+         */
+        public ListBoxModel doFillVerdictCategoryItems() {
+            ListBoxModel m = new ListBoxModel();
+            List<VerdictCategory> list = PluginImpl.getInstance().getConfig().getCategories();
+            if (list != null && !list.isEmpty()) {
+                for (VerdictCategory v : list) {
+                    m.add(v.getVerdictDescription(), v.getVerdictValue());
+                }
+            }
+            return m;
         }
 
         /**
