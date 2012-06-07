@@ -508,11 +508,19 @@ public class Config implements IGerritHudsonTriggerConfig {
         return categories;
     }
 
+    /**
+     * Setter for the list of VerdictCategories, used to make testing easier.
+     * @param categories the list.
+     */
     @Override
     public void setCategories(List<VerdictCategory> categories) {
         this.categories = categories;
     }
 
+    /**
+     * Getter for the enableManualTrigger value.
+     * @return true if manual triggering is enabled.
+     */
     @Override
     public boolean isEnableManualTrigger() {
         return enableManualTrigger;

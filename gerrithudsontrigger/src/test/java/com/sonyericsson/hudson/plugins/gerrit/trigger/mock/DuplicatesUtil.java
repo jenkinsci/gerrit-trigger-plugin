@@ -29,6 +29,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 
@@ -63,8 +65,8 @@ public abstract class DuplicatesUtil {
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
         p.addTrigger(new GerritTrigger(projects,
-                null, null, null, null, null, null, null, null, false, true, true, false, false, false,
-                null, null, null, null, null, null, null, null));
+                null, null, null, null, null, null, null, null, false, true,
+                null, null, null, null, null, null, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
@@ -84,9 +86,12 @@ public abstract class DuplicatesUtil {
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
+        PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
+        List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
+        list.add(event);
         p.addTrigger(new GerritTrigger(projects,
-                null, null, null, null, null, null, null, null, false, true, true, false, true, false,
-                "CRVW", "1", null, null, null, null, null, null));
+                null, null, null, null, null, null, null, null, false, true,
+                null, null, null, null, null, null, list));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
