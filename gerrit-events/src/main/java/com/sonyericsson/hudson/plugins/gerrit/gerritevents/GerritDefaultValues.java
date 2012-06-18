@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -70,4 +71,8 @@ public final class GerritDefaultValues {
      * The default build schedule delay.
      */
     public static final int DEFAULT_BUILD_SCHEDULE_DELAY = 3;
+    /**
+     * The default refresh interval for the Dynamic Trigger Configuration.
+     */
+    public static final int DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL = 30;
 }

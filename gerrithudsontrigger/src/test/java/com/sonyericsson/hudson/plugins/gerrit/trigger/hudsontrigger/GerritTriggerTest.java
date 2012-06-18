@@ -201,7 +201,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -237,7 +237,7 @@ public class GerritTriggerTest {
 
         name[0] = "OriginalName";
         GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", "", "", null));
+                "", "", "", "", "", "", null, false, ""));
         trigger.start(project, true);
         project.addTrigger(trigger);
 
@@ -274,7 +274,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -312,7 +312,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -349,7 +349,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -398,7 +398,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
@@ -451,7 +451,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -506,7 +506,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -561,7 +561,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -615,7 +615,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -670,7 +670,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         trigger.start(project, true);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setOwner(owner);
@@ -729,7 +729,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -772,7 +772,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -818,9 +818,9 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
         AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
         when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
@@ -879,7 +879,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -914,7 +914,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -947,7 +947,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -981,7 +981,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -1020,7 +1020,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -1060,7 +1060,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -1132,7 +1132,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger triggerWithEscapeQuotesOn = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
 
         //the Trigger is creating parameters with escaped quote in "subject".
         ParametersAction paremetersAction =
@@ -1204,7 +1204,7 @@ public class GerritTriggerTest {
         List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
         pluginEvents.add(pluginEvent);
         GerritTrigger triggerWithEscapeQuotesOff = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents);
+                "", "", "", "", null, null, pluginEvents, false, "");
 
         //the Trigger is creating parameters with escaped quote in "subject"
         ParametersAction paremetersAction =

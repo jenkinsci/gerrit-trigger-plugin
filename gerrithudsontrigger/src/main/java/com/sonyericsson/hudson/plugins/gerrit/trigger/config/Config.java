@@ -36,6 +36,7 @@ import java.util.List;
 
 //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
@@ -115,6 +116,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean enableManualTrigger;
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
+    private int dynamicConfigRefreshInterval;
     private List<VerdictCategory> categories;
 
     /**
@@ -214,6 +216,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (buildScheduleDelay <= DEFAULT_BUILD_SCHEDULE_DELAY) {
             buildScheduleDelay = DEFAULT_BUILD_SCHEDULE_DELAY;
         }
+        dynamicConfigRefreshInterval = formData.optInt(
+                "dynamicConfigRefreshInterval",
+                DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL);
         categories = new LinkedList<VerdictCategory>();
         if (formData.has("verdictCategories")) {
             Object cat = formData.get("verdictCategories");
@@ -348,6 +353,21 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setBuildScheduleDelay(int buildScheduleDelay) {
         this.buildScheduleDelay = buildScheduleDelay;
+    }
+
+    @Override
+    public int getDynamicConfigRefreshInterval() {
+        return dynamicConfigRefreshInterval;
+    }
+
+    /**
+     * Setting dynamicConfigRefreshInterval.
+     *
+     * @param dynamicConfigRefreshInterval the interval between the fetches.
+     * @see #getDynamicConfigRefreshInterval()
+     */
+    public void setDynamicConfigRefreshInterval(int dynamicConfigRefreshInterval) {
+        this.dynamicConfigRefreshInterval = dynamicConfigRefreshInterval;
     }
 
     @Override

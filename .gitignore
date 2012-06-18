@@ -13,3 +13,4 @@ nb-configuration.xml
 bin
 generated-sources
 .checkstyle
+.idea

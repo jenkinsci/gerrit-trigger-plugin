@@ -118,6 +118,20 @@
         <f:entry title="Trigger on:">
             <f:hetero-list descriptors="${descriptor.getGerritEventDescriptors()}" items="${instance.triggerOnEvents}" name="triggerOnEvents"/>
         </f:entry>
+        <f:entry title="${%Dynamic Trigger Configuration}"
+                 field="dynamicTriggerConfiguration"
+                 help="/plugin/gerrit-trigger/trigger/help-DynamicTriggerConfiguration.html">
+            <table width="100%">
+                <f:optionalBlock title="" inline="true" name="dynamicTriggerConfiguration"
+                                 checked="${it.dynamicTriggerConfiguration}">
+                    <f:entry title="${%Trigger Configuration URL}"
+                             field="triggerConfigURL">
+                    <f:textbox name="triggerConfigURL"
+                            checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/urlCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                </f:optionalBlock>
+            </table>
+        </f:entry>
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
                 <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">

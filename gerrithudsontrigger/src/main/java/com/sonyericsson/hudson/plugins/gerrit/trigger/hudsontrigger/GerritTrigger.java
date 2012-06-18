@@ -80,6 +80,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.net.URL;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 
@@ -115,8 +116,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildUnsuccessfulFilepath;
     private String customUrl;
     private List<PluginGerritEvent> triggerOnEvents;
+    private boolean dynamicTriggerConfiguration;
+    private String triggerConfigURL;
 
-
+    private GerritTriggerTimerTask gerritTriggerTimerTask;
 
     /**
      * Default DataBound Constructor.
@@ -155,6 +158,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       unsuccessful build.
      * @param customUrl                      Custom URL to sen to gerrit instead of build URL
      * @param triggerOnEvents                The list of event types to trigger on.
+     * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
+     * @param triggerConfigURL               Where to fetch the configuration file from
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -175,7 +180,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildFailureMessage,
             String buildUnsuccessfulFilepath,
             String customUrl,
-            List<PluginGerritEvent> triggerOnEvents) {
+            List<PluginGerritEvent> triggerOnEvents,
+            boolean dynamicTriggerConfiguration,
+            String triggerConfigURL) {
         this.gerritProjects = gerritProjects;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
@@ -194,6 +201,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
         this.triggerOnEvents = triggerOnEvents;
+        this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
+        this.triggerConfigURL = triggerConfigURL;
+        this.gerritTriggerTimerTask = null;
     }
 
     /**
@@ -218,6 +228,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
+    /**
+     * Cancels the timerTask, if it exists.
+     */
+    public void cancelTimer() {
+        if (gerritTriggerTimerTask != null) {
+            logger.info("GerritTrigger.cancelTimer(): " + myProject.getName());
+            gerritTriggerTimerTask.cancel();
+            gerritTriggerTimerTask = null;
+        }
+    }
+
     @Override
     public void start(AbstractProject project, boolean newInstance) {
         logger.debug("Start project: {}", project);
@@ -233,6 +254,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (IllegalStateException e) {
             logger.error("I am too early!", e);
         }
+
+        // Create a new timer task if there is a URL
+        if (dynamicTriggerConfiguration) {
+            gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
+        }
     }
 
     @Override
@@ -246,6 +272,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
+
+        cancelTimer();
     }
 
     @Override
@@ -918,6 +946,44 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * If trigger configuration should be fetched from a URL or not.
+     *
+     * @return true if trigger configuration should be fetched from a URL.
+     */
+    public boolean isDynamicTriggerConfiguration() {
+        return dynamicTriggerConfiguration;
+    }
+
+    /**
+     * Set if dynamic trigger configuration should be enabled or not.
+     *
+     * @param dynamicTriggerConfiguration
+     *         true if dynamic trigger configuration should be enabled.
+     */
+    public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
+        this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
+    }
+
+    /**
+     * The URL where the trigger configuration should be fetched from.
+     *
+     * @return the URL, or null if this feature is not used.
+     */
+    public String getTriggerConfigURL() {
+        return triggerConfigURL;
+    }
+
+    /**
+     * Set the URL where the trigger configuration should be fetched from.
+     *
+     * @param triggerConfigURL
+     *         the URL where the trigger configuration should be fetched from.
+     */
+    public void setTriggerConfigURL(String triggerConfigURL) {
+        this.triggerConfigURL = triggerConfigURL;
+    }
+
+    /**
      * If silent mode is on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no build
      * started/failed/successful approve messages etc. Default is false.
      *
@@ -1030,6 +1096,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * This method is called by the timer thread at regular intervals. It fetches the URL,
+     * determines if the result is different than from the last fetch, and if so, replaces
+     * the current URL trigger configuration with the fetched one.
+     * NOTE: for now, this is just a stub that prints out the URL to fetch, but nothing is
+     * actually fetched. The fetching will be implemented in the next version.
+     */
+    public void updateTriggerConfigURL() {
+        logger.info("URL: " + triggerConfigURL);
+    }
+
+    /**
      * Convenience method for finding it out if triggering on draft published is enabled in the Gerrit version.
      * @return true if triggering on draft published is enabled in the Gerrit version.
      */
@@ -1061,6 +1138,30 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 } catch (NumberFormatException e) {
                     return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
                 }
+            }
+        }
+
+        /**
+         * Checks that the provided parameter is nonempty and a valid URL.
+         *
+         * @param value the value.
+         * @return {@link hudson.util.FormValidation#ok()}
+         */
+        public FormValidation doUrlCheck(
+                @QueryParameter("value")
+                final String value) {
+            if (value == null || value.isEmpty()) {
+                return FormValidation.error(Messages.EmptyError());
+            }
+
+            try {
+                URL url = new URL(value); // Check for protocol errors
+                url.toURI(); // Perform some extra checking
+                return FormValidation.ok();
+            } catch (java.net.MalformedURLException e) {
+                return FormValidation.error(Messages.BadUrlError());
+            } catch (java.net.URISyntaxException e) {
+                return FormValidation.error(Messages.BadUrlError());
             }
         }
 

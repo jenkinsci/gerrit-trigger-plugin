@@ -186,6 +186,13 @@
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
                                    checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
+                        <f:entry title="${%Dynamic Config Refresh Interval}"
+                                 help="/plugin/gerrit-trigger/help-DynamicTriggerConfigRefreshInterval.html">
+                            <f:textbox name="dynamicConfigRefreshInterval"
+                                       value="${it.config.dynamicConfigRefreshInterval}"
+                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL}"
+                                       checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
                         <f:entry title="${%Enable Manual Trigger}"
                                  help="/plugin/gerrit-trigger/help-EnableManualTrigger.html">
                             <f:checkbox name="enableManualTrigger"

@@ -66,7 +66,7 @@ public abstract class DuplicatesUtil {
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
         p.addTrigger(new GerritTrigger(projects,
                 null, null, null, null, null, null, null, null, false, true,
-                null, null, null, null, null, null, null));
+                null, null, null, null, null, null, null, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
@@ -91,7 +91,7 @@ public abstract class DuplicatesUtil {
         list.add(event);
         p.addTrigger(new GerritTrigger(projects,
                 null, null, null, null, null, null, null, null, false, true,
-                null, null, null, null, null, null, list));
+                null, null, null, null, null, null, list, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }

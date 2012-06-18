@@ -160,6 +160,12 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
    int getBuildScheduleDelay();
 
     /**
+     * Returns the dynamicConfigRefreshInterval.
+     * @return the value.
+     */
+    int getDynamicConfigRefreshInterval();
+
+    /**
      * If the plugin still has default values for hostname and frontendurl.
      * @return true if so.
      */
