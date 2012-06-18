@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
@@ -593,6 +594,8 @@ public class GerritHandler extends Thread implements Coordinator {
         try {
             if (event instanceof PatchsetCreated) {
                 listener.gerritEvent((PatchsetCreated)event);
+            } else if (event instanceof DraftPublished) {
+                listener.gerritEvent((DraftPublished)event);
             } else if (event instanceof ChangeAbandoned) {
                 listener.gerritEvent((ChangeAbandoned)event);
             } else if (event instanceof ChangeMerged) {

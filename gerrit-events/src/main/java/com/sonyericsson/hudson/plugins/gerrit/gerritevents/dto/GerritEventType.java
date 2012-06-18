@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
@@ -40,11 +41,15 @@ import java.util.List;
 public enum GerritEventType {
 
     /**
-     * A patchset-created event. Intersting and usable.
+     * A patchset-created event.
      */
      PATCHSET_CREATED("patchset-created", true, PatchsetCreated.class),
+    /**
+     * A draft-published event.
+     */
+     DRAFT_PUBLISHED("draft-published", true, DraftPublished.class),
      /**
-      * A change-abandoned event. Interesting and usable.
+      * A change-abandoned event.
       */
      CHANGE_ABANDONED("change-abandoned", true, ChangeAbandoned.class),
      /**

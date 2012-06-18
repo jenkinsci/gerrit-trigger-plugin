@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -98,6 +99,31 @@ public final class Setup {
      */
     public static PatchsetCreated createPatchsetCreated() {
         PatchsetCreated event = new PatchsetCreated();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Gives you a DraftPublished mock.
+     * @return DraftPublished mock.
+     */
+    public static DraftPublished createDraftPublished() {
+        DraftPublished event = new DraftPublished();
         Change change = new Change();
         change.setBranch("branch");
         change.setId("Iddaaddaa123456789");

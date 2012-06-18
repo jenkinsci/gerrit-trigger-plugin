@@ -1,7 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,11 +31,11 @@ import net.sf.json.JSONObject;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
 
 /**
- * A DTO representation of the patchset-created Gerrit Event.
+ * A DTO representation of the draft-published Gerrit Event.
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * @author David Pursehouse &lt;david.pursehouse@sonymobile.com&gt;
  */
-public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
+public class DraftPublished extends GerritTriggeredEvent implements GerritJsonEvent {
 
     /* Uploader has been replaced by GerritTriggeredEvent.account.
      * This allows old builds to deserialize without warnings. */
@@ -45,7 +44,7 @@ public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonE
 
     @Override
     public GerritEventType getEventType() {
-        return GerritEventType.PATCHSET_CREATED;
+        return GerritEventType.DRAFT_PUBLISHED;
     }
 
     @Override
@@ -63,6 +62,6 @@ public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonE
 
     @Override
     public String toString() {
-        return "PatchsetCreated: " + change + " " + patchSet;
+        return "DraftPublished: " + change + " " + patchSet;
     }
 }

@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -283,6 +284,31 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
 
             schedule(cause, event);
+        }
+    }
+
+    /**
+     * Called when a DraftPublished event arrives.
+     *
+     * @param event the event
+     */
+    @Override
+    public void gerritEvent(DraftPublished event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+
+        if (isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            } else {
+                event.fireProjectTriggered(myProject);
+            }
+
+            schedule(new GerritCause(event, silentMode), event);
         }
     }
 

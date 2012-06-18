@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
@@ -334,6 +335,52 @@ public class TriggerContextConverterTest {
         TriggeredItemEntity entity = context.getOthers().get(0);
         assertEquals(16, entity.getBuildNumber().intValue());
         assertEquals("EXPERIMENTAL_Gerrit_Trigger_2", entity.getProjectId());
+    }
+
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}.
+     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished} event and
+     * list of "others" containing two items.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalWithOthersDraftPublished() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+
+        DraftPublished event = Setup.createDraftPublished();
+
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(entity);
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
+        otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
+        context.setOthers(otherBuilds);
+
+        TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = new XStream2();
+        xStream.registerConverter(new TriggerContextConverter());
+        String xml = xStream.toXML(t);
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+        assertTrue(readT.getEntity().getEvent() instanceof DraftPublished);
+        assertNotNull(readT.getEntity().getThisBuild());
+        assertNotNull(readT.getEntity().getOthers());
+
+        assertEquals(2, readT.getEntity().getOthers().size());
+
+        TriggeredItemEntity other = readT.getEntity().getOthers().get(0);
+        assertEquals(1, other.getBuildNumber().intValue());
+        assertEquals("projectY", other.getProjectId());
+
+        other = readT.getEntity().getOthers().get(1);
+        assertEquals(12, other.getBuildNumber().intValue());
+        assertEquals("projectZ", other.getProjectId());
     }
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
