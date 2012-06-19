@@ -46,14 +46,18 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.collection.IsMapContaining.hasValue;
+import static org.hamcrest.collection.IsIn.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -146,9 +150,9 @@ public class GerritHandlerTest {
     public void testAddListener() throws Exception {
         GerritEventListener listenerMock = mock(GerritEventListener.class);
         handler.addListener(listenerMock);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertThat(gerritEventListeners, hasValue(listenerMock));
+        assertThat(listenerMock, isIn(gerritEventListeners));
         assertEquals(1, gerritEventListeners.size());
     }
 
@@ -195,21 +199,21 @@ public class GerritHandlerTest {
      */
     @Test
     public void testAddEventListeners() throws Exception {
-        Map<Integer, GerritEventListener> listeners = new HashMap<Integer, GerritEventListener>();
+        Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
         GerritEventListener listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         handler.addEventListeners(listeners);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertThat(gerritEventListeners, hasValue(listenerMock));
+        assertThat(listenerMock, isIn(gerritEventListeners));
         assertEquals(5, gerritEventListeners.size());
     }
 
@@ -223,7 +227,7 @@ public class GerritHandlerTest {
         GerritEventListener listenerMock = mock(GerritEventListener.class);
         handler.addListener(listenerMock);
         handler.removeListener(listenerMock);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertTrue(gerritEventListeners.isEmpty());
     }
@@ -235,24 +239,23 @@ public class GerritHandlerTest {
      */
     @Test
     public void testRemoveAllEventListeners() throws Exception {
-        Map<Integer, GerritEventListener> listeners = new HashMap<Integer, GerritEventListener>();
+        Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
         GerritEventListener listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = mock(GerritEventListener.class);
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         handler.addEventListeners(listeners);
-        HashMap<Integer, GerritEventListener> listenerHashMap = handler.removeAllEventListeners();
-        assertThat(listenerHashMap, hasValue(listenerMock));
-        assertEquals(5, listenerHashMap.size());
-        Map<Integer, GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertTrue(gerritEventListeners.isEmpty());
+        listeners = handler.removeAllEventListeners();
+        assertThat(listenerMock, isIn(listeners));
+        assertEquals(5, listeners.size());
+        listeners = Whitebox.getInternalState(handler, "gerritEventListeners");
+        assertTrue(listeners.isEmpty());
     }
 
     /**
@@ -263,25 +266,24 @@ public class GerritHandlerTest {
      */
     @Test
     public void testRemoveAllEventListenersOneChanged() throws Exception {
-        Map<Integer, GerritEventListener> listeners = new HashMap<Integer, GerritEventListener>();
+        Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
         ListenerMock listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         handler.addEventListeners(listeners);
         listenerMock.code = (10000);
-        HashMap<Integer, GerritEventListener> listenerHashMap = handler.removeAllEventListeners();
-        assertThat(listenerHashMap, hasValue((GerritEventListener)listenerMock));
-        assertEquals(5, listenerHashMap.size());
-        Map<Integer, GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertTrue(gerritEventListeners.isEmpty());
+        listeners = handler.removeAllEventListeners();
+        assertThat(listenerMock, isIn(listeners));
+        assertEquals(5, listeners.size());
+        listeners = Whitebox.getInternalState(handler, "gerritEventListeners");
+        assertTrue(listeners.isEmpty());
     }
 
     /**
@@ -291,28 +293,28 @@ public class GerritHandlerTest {
      */
     @Test
     public void testReAddAllEventListenersOneChanged() throws Exception {
-        Map<Integer, GerritEventListener> listeners = new HashMap<Integer, GerritEventListener>();
+        Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
         ListenerMock listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         listenerMock = new ListenerMock();
-        listeners.put(listenerMock.hashCode(), listenerMock);
+        listeners.add(listenerMock);
         handler.addEventListeners(listeners);
         listenerMock.code = (10000);
-        HashMap<Integer, GerritEventListener> listenerHashMap = handler.removeAllEventListeners();
-        assertThat(listenerHashMap, hasValue((GerritEventListener)listenerMock));
-        assertEquals(5, listenerHashMap.size());
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        listeners = handler.removeAllEventListeners();
+        assertThat(listenerMock, isIn(listeners));
+        assertEquals(5, listeners.size());
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertTrue(gerritEventListeners.isEmpty());
-        handler.addEventListeners(listenerHashMap);
+        handler.addEventListeners(listeners);
         gerritEventListeners = Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertThat(gerritEventListeners, hasValue((GerritEventListener)listenerMock));
+        assertThat(listenerMock, isIn(gerritEventListeners));
         assertEquals(5, gerritEventListeners.size());
     }
 

@@ -43,9 +43,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Main Plugin entrance.
@@ -78,8 +82,8 @@ public class PluginImpl extends Plugin {
     private transient GerritProjectListUpdater projectListUpdater;
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
-    private transient Map<Integer, GerritEventListener> savedEventListeners;
-    private transient Map<Integer, ConnectionListener> savedConnectionListeners;
+    private transient Collection<GerritEventListener> savedEventListeners;
+    private transient Collection<ConnectionListener> savedConnectionListeners;
 
     /**
      * Constructor.
@@ -202,9 +206,9 @@ public class PluginImpl extends Plugin {
             //If the eventmanager isn't created yet, save the eventlistener so it can be added once
             //the eventmanager is created.
             if (savedEventListeners == null) {
-                savedEventListeners = new HashMap<Integer, GerritEventListener>();
+                savedEventListeners = Collections.synchronizedSet(new HashSet<GerritEventListener>());
             }
-            savedEventListeners.put(listener.hashCode(), listener);
+            savedEventListeners.add(listener);
         }
     }
 
@@ -307,9 +311,9 @@ public class PluginImpl extends Plugin {
             //If the eventmanager isn't created yet, save the connectionlistener so it can be added once
             //the eventmanager is created.
             if (savedConnectionListeners == null) {
-                savedConnectionListeners = new HashMap<Integer, ConnectionListener>();
+                savedConnectionListeners = Collections.synchronizedSet(new HashSet<ConnectionListener>());
             }
-            savedConnectionListeners.put(listener.hashCode(), listener);
+            savedConnectionListeners.add(listener);
         }
         return connected;
     }
