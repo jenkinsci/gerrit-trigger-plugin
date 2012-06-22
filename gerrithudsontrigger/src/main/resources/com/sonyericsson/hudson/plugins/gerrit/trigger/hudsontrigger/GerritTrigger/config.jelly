@@ -83,19 +83,23 @@
             </f:section>
             <f:section title="${%Custom Build Messages}">
                 <f:entry title="${%Build Start Message}"
-                         field="buildStartMessage">
+                         field="buildStartMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildStartMessage.html">
                    <f:textbox/>
                 </f:entry>
                 <f:entry title="${%Build Successful Message}"
-                         field="buildSuccessfulMessage">
+                         field="buildSuccessfulMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildSuccessfulMessage.html">
                    <f:textbox/>
                 </f:entry>
                 <f:entry title="${%Build Unstable Message}"
-                         field="buildUnstableMessage">
+                         field="buildUnstableMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildUnstableMessage.html">
                    <f:textbox/>
                 </f:entry>
                 <f:entry title="${%Build Failure Message}"
-                         field="buildFailureMessage">
+                         field="buildFailureMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildFailureMessage.html">
                    <f:textbox/>
                 </f:entry>
                 <f:entry title="${%Unsuccessful Message File}"
