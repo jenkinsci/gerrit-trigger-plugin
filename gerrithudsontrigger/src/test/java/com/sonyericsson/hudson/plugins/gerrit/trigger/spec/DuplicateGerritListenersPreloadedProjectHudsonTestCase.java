@@ -35,7 +35,7 @@ import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
-import java.util.Map;
+import java.util.Collection;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 
@@ -56,7 +56,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     @LocalData
     public void testProject() throws Exception {
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
     }
@@ -70,7 +70,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     public void testCreateNewProject() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(2, gerritEventListeners.size());
     }
@@ -84,7 +84,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     public void testReconfigureNewProject() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(2, gerritEventListeners.size());
         configRoundtrip((Item)p);

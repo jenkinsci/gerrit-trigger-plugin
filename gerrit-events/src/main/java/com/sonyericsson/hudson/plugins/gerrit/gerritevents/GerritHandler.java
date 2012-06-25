@@ -47,10 +47,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 //CS IGNORE LineLength FOR NEXT 7 LINES. REASON: static import.
@@ -93,8 +96,8 @@ public class GerritHandler extends Thread implements Coordinator {
     private int gerritSshPort;
     private Authentication authentication;
     private int numberOfWorkerThreads;
-    private volatile Map<Integer, GerritEventListener> gerritEventListeners;
-    private volatile Map<Integer, ConnectionListener> connectionListeners;
+    private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
+    private final Set<ConnectionListener> connectionListeners = new CopyOnWriteArraySet<ConnectionListener>();
     private final List<EventThread> workers;
     private SshConnection sshConnection;
     private boolean shutdownInProgress = false;
@@ -169,8 +172,6 @@ public class GerritHandler extends Thread implements Coordinator {
         this.numberOfWorkerThreads = numberOfWorkerThreads;
 
         workQueue = new LinkedBlockingQueue<Work>();
-        gerritEventListeners = new HashMap<Integer, GerritEventListener>();
-        connectionListeners = new HashMap<Integer, ConnectionListener>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
         for (int i = 0; i < numberOfWorkerThreads; i++) {
             workers.add(new EventThread(this, "Gerrit Worker EventThread_" + i));
@@ -352,13 +353,14 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void addListener(GerritEventListener listener) {
         synchronized (this) {
-            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-            GerritEventListener old = map.put(listener.hashCode(), listener);
-            if (old != null) {
-                logger.warn("The listener was replaced by a previous old value: {}", old);
+            if (!gerritEventListeners.add(listener)) {
+                logger.warn("The listener was doubly-added: {}", listener);
             }
-            gerritEventListeners = map;
         }
+    }
+
+    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
+        addEventListeners(listeners.values());
     }
 
     /**
@@ -366,11 +368,9 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param listeners the listeners to add.
      */
-    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
+    public void addEventListeners(Collection<? extends GerritEventListener> listeners) {
         synchronized (this) {
-            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-            map.putAll(listeners);
-            gerritEventListeners = map;
+            gerritEventListeners.addAll(listeners);
         }
     }
 
@@ -381,9 +381,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void removeListener(GerritEventListener listener) {
         synchronized (this) {
-            Map<Integer, GerritEventListener> map = new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-            map.remove(listener.hashCode());
-            gerritEventListeners = map;
+            gerritEventListeners.remove(listener);
         }
     }
 
@@ -392,11 +390,10 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @return the former list of listeners.
      */
-    public HashMap<Integer, GerritEventListener> removeAllEventListeners() {
+    public Collection<GerritEventListener> removeAllEventListeners() {
         synchronized (this) {
-            HashMap<Integer, GerritEventListener> listeners =
-                    new HashMap<Integer, GerritEventListener>(gerritEventListeners);
-            gerritEventListeners = new HashMap<Integer, GerritEventListener>();
+            HashSet<GerritEventListener> listeners = new HashSet<GerritEventListener>(gerritEventListeners);
+            gerritEventListeners.clear();
             return listeners;
         }
     }
@@ -418,23 +415,25 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public boolean addListener(ConnectionListener listener) {
         synchronized (this) {
-            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
-            map.put(listener.hashCode(), listener);
-            connectionListeners = map;
+            connectionListeners.add(listener);
             return connected;
         }
     }
 
     /**
+     * @deprecated
+     */
+    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
+        addConnectionListeners(listeners.values());
+    }
+    /**
      * Add all ConnectionListeners to the list of listeners.
      *
      * @param listeners the listeners to add.
      */
-    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
+    public void addConnectionListeners(Collection<? extends ConnectionListener> listeners) {
         synchronized (this) {
-            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
-            map.putAll(listeners);
-            connectionListeners = map;
+            connectionListeners.addAll(listeners);
         }
     }
 
@@ -445,9 +444,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void removeListener(ConnectionListener listener) {
         synchronized (this) {
-            Map<Integer, ConnectionListener> map = new HashMap<Integer, ConnectionListener>(connectionListeners);
-            map.remove(listener);
-            connectionListeners = map;
+            connectionListeners.remove(listener);
         }
     }
 
@@ -456,11 +453,10 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @return the list of former listeners.
      */
-    public Map<Integer, ConnectionListener> removeAllConnectionListeners() {
+    public Collection<ConnectionListener> removeAllConnectionListeners() {
         synchronized (this) {
-            Map<Integer, ConnectionListener> listeners =
-                new HashMap<Integer, ConnectionListener>(connectionListeners);
-            connectionListeners = new HashMap<Integer, ConnectionListener>();
+            Set<ConnectionListener> listeners = new HashSet<ConnectionListener>(connectionListeners);
+            connectionListeners.clear();
             return listeners;
         }
     }
@@ -562,7 +558,7 @@ public class GerritHandler extends Thread implements Coordinator {
         }
 
         //The real deed.
-        for (GerritEventListener listener : gerritEventListeners.values()) {
+        for (GerritEventListener listener : gerritEventListeners) {
             try {
                 notifyListener(listener, event);
             } catch (Exception ex) {
@@ -701,7 +697,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     protected void notifyConnectionDown() {
         connected = false;
-        for (ConnectionListener listener : connectionListeners.values()) {
+        for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionDown();
             } catch (Exception ex) {
@@ -715,7 +711,7 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     protected void notifyConnectionEstablished() {
         connected = true;
-        for (ConnectionListener listener : connectionListeners.values()) {
+        for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionEstablished();
             } catch (Exception ex) {
