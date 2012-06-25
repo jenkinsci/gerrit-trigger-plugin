@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh;
 
+import com.jcraft.jsch.ChannelExec;
+
 import java.io.IOException;
 import java.io.Reader;
 
@@ -76,6 +78,18 @@ public interface SshConnection {
      * @throws SshException if there are any ssh problems.
      */
     Reader executeCommandReader(String command) throws SshException, IOException;
+
+    /**
+     * Execute an ssh command on the server, without closing the session
+     * so that the caller can get access to all the Channel attributes from
+     * the server.
+     *
+     * @param command the command to execute.
+     * @return a Channel with access to all streams and the exit code.
+     * @throws IOException  if it is so.
+     * @throws SshException if there are any ssh problems.
+     */
+    ChannelExec executeCommandChannel(String command) throws SshException, IOException;
 
     /**
      * Disconnects the connection.
