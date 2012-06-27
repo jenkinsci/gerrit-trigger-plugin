@@ -191,6 +191,25 @@ public class SshConnectionImpl implements SshConnection {
     }
 
     /**
+     * This version takes a command to run, and then returns a wrapper instance
+     * that exposes all the standard state of the channel (stdin, stdout,
+     * stderr, exit status, etc).
+     */
+    public synchronized ChannelExec executeCommandChannel(String command) throws SshException, IOException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected!");
+        }
+        try {
+            ChannelExec channel = (ChannelExec) connectSession.openChannel("exec");
+            channel.setCommand(command);
+            channel.connect();
+            return channel;
+        } catch (JSchException ex) {
+            throw new SshException(ex);
+        }
+    }
+
+    /**
         * Disconnects the connection.
         */
     @Override

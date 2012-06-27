@@ -12,3 +12,4 @@ nb-configuration.xml
 *.iws
 bin
 generated-sources
+.checkstyle
