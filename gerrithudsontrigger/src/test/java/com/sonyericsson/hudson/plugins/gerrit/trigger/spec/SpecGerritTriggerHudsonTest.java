@@ -35,21 +35,25 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.GerritEventLifeCycleA
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
 import hudson.model.AbstractBuild;
+import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Queue.QueueDecisionHandler;
+import hudson.model.Queue.Task;
 import hudson.model.Result;
 import hudson.util.RunList;
 import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.SleepBuilder;
+import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-//CS IGNORE MagicNumber FOR NEXT 300 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -332,4 +336,43 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         } while (!allDone);
         return project.getBuilds();
     }
+
+    /**
+     * Tests that there are no duplicated listeners when a project is renamed.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testProjectRename() throws Exception {
+        QueueDecisionHandlerImpl h = QueueDecisionHandlerImpl.all().get(QueueDecisionHandlerImpl.class);
+
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+
+        project.renameTo("anotherName");
+        configRoundtrip(project);
+
+        assertEquals(0, h.countTrigger);
+
+        PluginImpl p = PluginImpl.getInstance();
+        p.triggerEvent(Setup.createPatchsetCreated());
+
+        Thread.sleep(3000); // TODO: is there a better way to wait for the completion of asynchronous event processing?
+
+        assertEquals(1, h.countTrigger);
+    }
+
+    /**
+     * {@link QueueDecisionHandler} for aid in {@link #testProjectRename}.
+     */
+    @TestExtension("testProjectRename")
+    public static class QueueDecisionHandlerImpl extends QueueDecisionHandler {
+        private int countTrigger = 0;
+
+        @Override
+        public boolean shouldSchedule(Task p, List<Action> actions) {
+            countTrigger++;
+            return false;
+        }
+    }
+
 }

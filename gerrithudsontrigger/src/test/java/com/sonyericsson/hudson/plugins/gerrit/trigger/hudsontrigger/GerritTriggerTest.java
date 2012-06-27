@@ -54,6 +54,8 @@ import net.sf.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -213,6 +215,42 @@ public class GerritTriggerTest {
                 isA(Action.class),
                 isA(Action.class),
                 isA(Action.class));
+    }
+
+    /**
+     * Tests a project rename.
+     * TODO complete.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testProjectRename() throws Exception {
+        // we'll make AbstractProject return different names over time
+        final String[] name = new String[1];
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                return name[0];
+            }
+        });
+
+        name[0] = "OriginalName";
+        GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
+                "", "", "", "", "", "", null));
+        trigger.start(project, true);
+        project.addTrigger(trigger);
+
+        // simulate a rename
+        name[0] = "NewName";
+
+        // and a reconfiguration
+        trigger.stop();
+        trigger.start(project, true);
+
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause gerritCause = new GerritCause(event, true);
     }
 
     /**

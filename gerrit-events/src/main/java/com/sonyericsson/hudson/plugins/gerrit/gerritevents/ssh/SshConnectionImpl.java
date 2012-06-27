@@ -163,17 +163,17 @@ public class SshConnectionImpl implements SshConnection {
         }
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 13 LINES. REASON: Informative.
+    //CS IGNORE RedundantThrows FOR NEXT 14 LINES. REASON: Informative.
 
     /**
-        * Execute an ssh command on the server, without closing the session
-        * so that a Reader can be returned with streaming data from the server.
-        *
-        * @param command the command to execute.
-        * @return a Reader with streaming data from the server.
-        * @throws IOException  if it is so.
-        * @throws SshException if there are any ssh problems.
-        */
+     * Execute an ssh command on the server, without closing the session
+     * so that a Reader can be returned with streaming data from the server.
+     *
+     * @param command the command to execute.
+     * @return a Reader with streaming data from the server.
+     * @throws IOException  if it is so.
+     * @throws SshException if there are any ssh problems.
+     */
     @Override
     public synchronized Reader executeCommandReader(String command) throws SshException, IOException {
         if (!isConnected()) {
@@ -185,6 +185,34 @@ public class SshConnectionImpl implements SshConnection {
             InputStreamReader reader = new InputStreamReader(channel.getInputStream());
             channel.connect();
             return reader;
+        } catch (JSchException ex) {
+            throw new SshException(ex);
+        }
+    }
+
+    //CS IGNORE RedundantThrows FOR NEXT 15 LINES. REASON: Informative.
+
+    /**
+     * This version takes a command to run, and then returns a wrapper instance
+     * that exposes all the standard state of the channel (stdin, stdout,
+     * stderr, exit status, etc).
+     *
+     * @param command the command to execute.
+     * @return a Channel with access to all streams and the exit code.
+     * @throws IOException  if it is so.
+     * @throws SshException if there are any ssh problems.
+     * @see #executeCommandReader(String)
+     */
+    @Override
+    public synchronized ChannelExec executeCommandChannel(String command) throws SshException, IOException {
+        if (!isConnected()) {
+            throw new IllegalStateException("Not connected!");
+        }
+        try {
+            ChannelExec channel = (ChannelExec)connectSession.openChannel("exec");
+            channel.setCommand(command);
+            channel.connect();
+            return channel;
         } catch (JSchException ex) {
             throw new SshException(ex);
         }

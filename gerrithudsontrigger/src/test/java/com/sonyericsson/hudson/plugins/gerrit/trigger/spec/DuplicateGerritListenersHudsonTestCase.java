@@ -40,7 +40,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
 import java.io.File;
-import java.util.Map;
+import java.util.Collection;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.getFormWithAction;
@@ -73,7 +73,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
     public void testNewProjectCreation() throws Exception {
         createGerritTriggeredJob(this, "testJob1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
     }
@@ -88,7 +88,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         FreeStyleProject p = createGerritTriggeredJob(this, "testJob2");
         configRoundtrip((Item)p);
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
     }
@@ -109,7 +109,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         //configRoundtrip(p);
         assertEquals("testJob33", p.getName());
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
     }
@@ -124,7 +124,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         FreeStyleProject p = createGerritTriggeredJob(this, "testJob4");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
         assertNull(handler);
-        Map<Integer, GerritEventListener> savedEventListeners =
+        Collection<GerritEventListener> savedEventListeners =
                 Whitebox.getInternalState(PluginImpl.getInstance(), "savedEventListeners");
         assertEquals(1, savedEventListeners.size());
         ((Config)PluginImpl.getInstance().getConfig()).setGerritAuthKeyFile(keyFile);
@@ -134,7 +134,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         PluginImpl.getInstance().restartConnection();
 
         handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
-        Map<Integer, GerritEventListener> gerritEventListeners =
+        Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
     }

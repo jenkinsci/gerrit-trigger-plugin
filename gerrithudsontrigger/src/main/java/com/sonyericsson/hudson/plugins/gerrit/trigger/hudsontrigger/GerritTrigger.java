@@ -91,11 +91,6 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
  */
 public class GerritTrigger extends Trigger<AbstractProject> implements GerritEventListener {
 
-    /**
-     * This parameter is used to create hasCode value.
-     */
-    private static final int HASH_NUMBER = 53;
-
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
@@ -542,8 +537,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (myProject == null) {
             return super.hashCode();
         } else {
-            return (HASH_NUMBER + myProject.getFullName().hashCode());
+            return myProject.hashCode();
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof GerritTrigger) {
+            GerritTrigger that = (GerritTrigger)obj;
+            return this.myProject == that.myProject;
+        }
+        return false;
     }
 
     /**
