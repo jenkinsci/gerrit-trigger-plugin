@@ -46,6 +46,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
@@ -890,15 +891,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Initializes the triggerOnEvents list, adds a patchset created if it is empty or null.
+     * Initializes the triggerOnEvents list.  If it is empty or null, adds patch set created
+     * and draft published events.
      */
     private void initializeTriggerOnEvents() {
         if (triggerOnEvents == null) {
             triggerOnEvents = new LinkedList<PluginGerritEvent>();
         }
         if (triggerOnEvents.isEmpty()) {
-            PluginGerritEvent event = new PluginPatchsetCreatedEvent();
-            triggerOnEvents.add(event);
+            triggerOnEvents.add(new PluginPatchsetCreatedEvent());
+            triggerOnEvents.add(new PluginDraftPublishedEvent());
         }
     }
 
