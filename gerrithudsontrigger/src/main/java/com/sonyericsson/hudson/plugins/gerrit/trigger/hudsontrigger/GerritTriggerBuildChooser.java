@@ -94,17 +94,27 @@ public class GerritTriggerBuildChooser extends BuildChooser {
         return newLastBuild;
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 20 LINES. REASON: Informative, and could happen.
+    //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative, and could happen.
     /**
      * Gets the top parent of the given revision.
      *
      * @param revName Revision
      * @param git GitAPI object
-     * @return object id for parent
+     * @return object id of Revision's parent, or of Revision itself if there is no parent
      * @throws GitException In case of error in git call
      */
     private ObjectId getFirstParent(String revName, IGitAPI git) throws GitException {
         String result = ((GitAPI)git).launchCommand("log", "-1", "--pretty=format:%P", revName);
+        // If this is the first commit in the git, there is no parent and the
+        // git log command returns an empty string, which will cause NPE later.
+        if (result.isEmpty()) {
+            // Get the revision of this commit instead.  If git log still returns
+            // an empty string, raise an exception.
+            result = ((GitAPI)git).launchCommand("log", "-1", "--pretty=format:%H");
+            if (result.isEmpty()) {
+                throw new GitException("git log returned an empty string");
+            }
+        }
         String parents = firstLine(result).trim();
         String firstParent = parents.split(" ")[0];
         return ObjectId.fromString(firstParent);
