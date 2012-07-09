@@ -125,14 +125,14 @@ public class GerritAdministrativeMonitorTest {
     }
 
     /**
-     * Tests {@link GerritAdministrativeMonitor#getDisabledFeatures()} is empty for version 2.3. TODO update this test's
+     * Tests {@link GerritAdministrativeMonitor#getDisabledFeatures()} is empty for version 2.5. TODO update this test's
      * version check whenever we get a new feature requiring a newer version.
      *
      * @throws Exception if so.
      */
     @Test
     public void testGetDisabledFeaturesNone() throws Exception {
-        String version = "2.3";
+        String version = "2.5";
         when(plugin.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         List<GerritVersionChecker.Feature> disabledFeatures = monitor.getDisabledFeatures();
@@ -160,7 +160,7 @@ public class GerritAdministrativeMonitorTest {
      */
     @Test
     public void testHasDisabledFeaturesNot() throws Exception {
-        String version = "2.3";
+        String version = "2.5";
         when(plugin.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         assertFalse(monitor.hasDisabledFeatures());

@@ -892,7 +892,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Initializes the triggerOnEvents list.  If it is empty or null, adds patch set created
-     * and draft published events.
+     * and draft published events (the latter only if supported by the current Gerrit version).
      */
     private void initializeTriggerOnEvents() {
         if (triggerOnEvents == null) {
@@ -900,7 +900,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (triggerOnEvents.isEmpty()) {
             triggerOnEvents.add(new PluginPatchsetCreatedEvent());
-            triggerOnEvents.add(new PluginDraftPublishedEvent());
+            if (isTriggerOnDraftPublishedEnabled()) {
+                triggerOnEvents.add(new PluginDraftPublishedEvent());
+            }
         }
     }
 
@@ -1014,6 +1016,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public boolean isFileTriggerEnabled() {
         return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
+    }
+
+    /**
+     * Convenience method for finding it out if triggering on draft published is enabled in the Gerrit version.
+     * @return true if triggering on draft published is enabled in the Gerrit version.
+     */
+    public boolean isTriggerOnDraftPublishedEnabled() {
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished);
     }
 
     /**

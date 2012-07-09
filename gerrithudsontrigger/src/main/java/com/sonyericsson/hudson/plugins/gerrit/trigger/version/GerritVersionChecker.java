@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Util class used to determine if the current gerrit version is high enough to run a specific feature..
+ * Util class used to determine if the current Gerrit version is high enough to run a specific feature..
  *
  * @author Tomas Westling &lt;thomas.westling@sonyericsson.com&gt;
  */
@@ -39,13 +39,18 @@ public final class GerritVersionChecker {
     private static final Logger logger = LoggerFactory.getLogger(GerritVersionChecker.class);
 
     /**
-     * The feature version we want to compare the current gerrit version with.
+     * The feature version we want to compare the current Gerrit version with.
      */
     public static enum Feature {
         /**
          * Triggering on files, added in Gerrit 2.3.
          */
-        fileTrigger("Trigger on files", "2.3");
+        fileTrigger("Trigger on files", "2.3"),
+
+        /**
+         * Triggering on draft change published, added in Gerrit 2.5.
+         */
+        triggerOnDraftPublished("Trigger on draft published", "2.5");
 
         private final String displayName;
         private final String version;
