@@ -24,27 +24,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.RefUpdate;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCHSET;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REFUPDATE;
 
 /**
  * A DTO representation of a Gerrit triggered Event.
@@ -53,86 +36,13 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  */
 public abstract class GerritTriggeredEvent extends GerritEventLifecycle implements GerritEvent {
 
-    private static final Logger logger = LoggerFactory.getLogger(PatchsetCreated.class);
 
-    /**
-     * The Gerrit change the event is related to.
-     */
-    protected Change change;
-
-    /**
-     * The Gerrit ref update the event is related to.
-     */
-    protected RefUpdate refUpdate;
-
-    /**
-     * Refers to a specific patchset within a change.
-     */
-    protected PatchSet patchSet;
 
     /**
      * The account that triggered the event.
      */
     protected Account account;
 
-    /**
-     * The changed files in this patchset.
-     */
-    private List<String> files;
-
-    /**
-     * Takes a JSON object and fills its internal data-structure.
-     *
-     * @param json the JSON Object.
-     */
-    public void fromJson(JSONObject json) {
-        if (json.containsKey(CHANGE)) {
-            change = new Change(json.getJSONObject(CHANGE));
-        }
-        if (json.containsKey(REFUPDATE)) {
-            refUpdate = new RefUpdate(json.getJSONObject(REFUPDATE));
-        }
-        if (json.containsKey(PATCH_SET)) {
-            patchSet = new PatchSet(json.getJSONObject(PATCH_SET));
-        } else if (json.containsKey(PATCHSET)) {
-            patchSet = new PatchSet(json.getJSONObject(PATCHSET));
-        }
-    }
-
-    /**
-     * Queries gerrit for the files included in this patch set.
-     *
-     * @param gerritQueryHandler the query handler, responsible for the queries to gerrit.
-     * @return a list of files that are part of this patch set.
-     */
-    public List<String> getFiles(GerritQueryHandler gerritQueryHandler) {
-        if (files == null) {
-            files = new LinkedList<String>();
-            try {
-                List<JSONObject> jsonList = gerritQueryHandler.queryFiles("change:" + getChange().getId());
-                for (JSONObject json : jsonList) {
-                    if (json.has("type") && "stats".equalsIgnoreCase(json.getString("type"))) {
-                        continue;
-                    }
-                    if (json.has("currentPatchSet")) {
-                        JSONObject currentPatchSet = json.getJSONObject("currentPatchSet");
-                        if (currentPatchSet.has("files")) {
-                            JSONArray changedFiles = currentPatchSet.optJSONArray("files");
-                            for (int i = 0; i < changedFiles.size(); i++) {
-                                JSONObject file = changedFiles.getJSONObject(i);
-                                files.add(file.getString("file"));
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("IOException occured. ", e);
-            } catch (GerritQueryException e) {
-                logger.error("Bad query. ", e);
-            }
-        }
-        return files;
-    }
 
     /**
      * The account that triggered the event.
@@ -152,57 +62,4 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
         this.account = account;
     }
 
-    /**
-     * The Change.
-     *
-     * @return the change.
-     */
-    public Change getChange() {
-        return change;
-    }
-
-    /**
-     * The Change.
-     *
-     * @param change the change.
-     */
-    public void setChange(Change change) {
-        this.change = change;
-    }
-
-    /**
-     * The ref update.
-     *
-     * @return the refupdate.
-     */
-    public RefUpdate getRefUpdate() {
-        return refUpdate;
-    }
-
-    /**
-     * The ref update.
-     *
-     * @param refUpdate the refupdate.
-     */
-    public void setRefUpdate(RefUpdate refUpdate) {
-        this.refUpdate = refUpdate;
-    }
-
-    /**
-     * The patchSet.
-     *
-     * @return The patchSet.
-     */
-    public PatchSet getPatchSet() {
-        return patchSet;
-    }
-
-    /**
-     * The patchSet.
-     *
-     * @param patchset the patchSet.
-     */
-    public void setPatchset(PatchSet patchset) {
-        this.patchSet = patchset;
-    }
 }

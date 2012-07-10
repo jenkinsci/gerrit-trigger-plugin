@@ -25,7 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.ParameterValue;
@@ -181,16 +183,17 @@ public enum GerritTriggerParameters {
 
     /**
      * Adds or sets all the Gerrit-parameter values to the provided list.
-     * @param event the event.
+     * @param gerritEvent the event.
      * @param parameters the default parameters
      * @param escapeQuotes if quotes should be escaped or not.
      * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
      */
-    public static void setOrCreateParameters(GerritTriggeredEvent event, List<ParameterValue> parameters,
+    public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent, List<ParameterValue> parameters,
             boolean escapeQuotes) {
         GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
-                parameters, String.valueOf(((java.lang.Object)event).hashCode()), escapeQuotes);
-        if (event.getChange() != null) {
+                parameters, String.valueOf(((java.lang.Object)gerritEvent).hashCode()), escapeQuotes);
+        if (gerritEvent instanceof ChangeBasedEvent) {
+            ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             GERRIT_BRANCH.setOrCreateStringParameterValue(
                     parameters, event.getChange().getBranch(), escapeQuotes);
             GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
@@ -224,8 +227,8 @@ public enum GerritTriggerParameters {
                     parameters, getName(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(uploader), escapeQuotes);
-        }
-        if (event.getRefUpdate() != null) {
+        } else if (gerritEvent instanceof RefUpdated) {
+            RefUpdated event = (RefUpdated)gerritEvent;
             GERRIT_REFNAME.setOrCreateStringParameterValue(
                     parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_PROJECT.setOrCreateStringParameterValue(
@@ -235,7 +238,7 @@ public enum GerritTriggerParameters {
             GERRIT_NEWREV.setOrCreateStringParameterValue(
                     parameters, event.getRefUpdate().getNewRev(), escapeQuotes);
         }
-        Account account = event.getAccount();
+        Account account = gerritEvent.getAccount();
         if (account != null) {
             GERRIT_EVENT_ACCOUNT.setOrCreateStringParameterValue(
                     parameters, getNameAndEmail(account), escapeQuotes);
@@ -252,7 +255,7 @@ public enum GerritTriggerParameters {
      * @param event the event to search.
      * @return the uploader if any.
      */
-    private static Account findUploader(GerritTriggeredEvent event) {
+    private static Account findUploader(ChangeBasedEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getUploader() != null) {
             return event.getPatchSet().getUploader();
         } else {

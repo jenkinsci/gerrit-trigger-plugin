@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
@@ -89,7 +90,7 @@ public class ParameterExpander {
      * @return the "expanded" command string.
      */
     public String getBuildStartedCommand(AbstractBuild r, TaskListener taskListener,
-            GerritTriggeredEvent event, BuildsStartedStats stats) {
+            ChangeBasedEvent event, BuildsStartedStats stats) {
 
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
         String gerritCmd = config.getGerritCmdBuildStarted();
@@ -173,16 +174,17 @@ public class ParameterExpander {
      *  <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
      * </ul>
      * @param r the build.
-     * @param event the event.
+     * @param gerritEvent the event.
      * @param codeReview the code review vote.
      * @param verified the verified vote.
      * @return the parameters and their values.
      */
-    private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent event,
+    private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent gerritEvent,
             int codeReview, int verified) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
-        if (event.getChange() != null) {
+        if (gerritEvent instanceof ChangeBasedEvent) {
+            ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             map.put("GERRIT_NAME", event.getChange().getProject());
             map.put("CHANGE_ID", event.getChange().getId());
             map.put("BRANCH", event.getChange().getProject());

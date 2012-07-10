@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -77,8 +78,9 @@ public class GerritNotifier {
             GerritTriggeredEvent event, BuildsStartedStats stats) {
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
-            if (event.getChange() != null) {
-                String command = parameterExpander.getBuildStartedCommand(build, taskListener, event, stats);
+            if (event instanceof ChangeBasedEvent) {
+                String command =
+                        parameterExpander.getBuildStartedCommand(build, taskListener, (ChangeBasedEvent)event, stats);
                 if (command != null) {
                     logger.info("Notifying BuildStarted to gerrit: {}", command);
                     cmdRunner.sendCommand(command);
@@ -101,7 +103,7 @@ public class GerritNotifier {
 
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
-            if (memoryImprint.getEvent().getChange() != null) {
+            if (memoryImprint.getEvent() instanceof ChangeBasedEvent) {
                 String command = parameterExpander.getBuildCompletedCommand(memoryImprint, listener);
 
                 if (command != null) {

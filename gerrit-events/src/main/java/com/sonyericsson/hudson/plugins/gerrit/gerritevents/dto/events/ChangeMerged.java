@@ -37,7 +37,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public class ChangeMerged extends GerritTriggeredEvent implements GerritJsonEvent {
+public class ChangeMerged extends ChangeBasedEvent implements GerritJsonEvent {
 
     /**
      * Default constructor.

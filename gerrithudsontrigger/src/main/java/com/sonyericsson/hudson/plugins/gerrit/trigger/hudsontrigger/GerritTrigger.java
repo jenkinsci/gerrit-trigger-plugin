@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -343,11 +344,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param project the project to build.
      */
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
-        BadgeAction badgeAction = null;
-        if (event.getChange() != null) {
-            badgeAction = new BadgeAction(event);
-        }
-        //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
+        BadgeAction badgeAction = new BadgeAction(event);
+            //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = getBuildScheduleDelay();
         if (cause instanceof GerritUserCause) {
             // it's a manual trigger, no need for a quiet period
@@ -365,17 +363,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
         //Experimental feature!
-        if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().scheduled(event, parameters, project.getName());
-        }
-        if (event.getChange() != null) {
+        if (event instanceof ChangeBasedEvent) {
+            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+            if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
+            }
             logger.info("Project {} Build Scheduled: {} By event: {}",
                     new Object[]{project.getName(), (build != null),
-                    event.getChange().getNumber() + "/" + event.getPatchSet().getNumber(), });
-        } else if (event.getRefUpdate() != null) {
+                    changeBasedEvent.getChange().getNumber() + "/" + changeBasedEvent.getPatchSet().getNumber(), });
+        } else if (event instanceof RefUpdated) {
+            RefUpdated refUpdated = (RefUpdated)event;
             logger.info("Project {} Build Scheduled: {} By event: {}",
                     new Object[]{project.getName(), (build != null),
-                    event.getRefUpdate().getRefName() + " " + event.getRefUpdate().getNewRev(), });
+                    refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(), });
         }
     }
 
@@ -399,8 +399,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         //Experimental feature!
-        if (event.getChange() != null && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().remove(event);
+        if (event instanceof ChangeBasedEvent
+                && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            getRunningJobs().remove((ChangeBasedEvent)event);
         }
     }
 
@@ -564,11 +565,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (gerritProjects != null) {
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {
-                if (event.getChange() != null) {
-                    if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch())) {
-                        if (isFileTriggerEnabled() && p.getFilePaths() != null && p.getFilePaths().size() > 0) {
-                            if (p.isInteresting(event.getChange().getProject(), event.getChange().getBranch(),
-                                    event.getFiles(new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                if (event instanceof ChangeBasedEvent) {
+                    ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+                    if (p.isInteresting(changeBasedEvent.getChange().getProject(),
+                            changeBasedEvent.getChange().getBranch())) {
+                        if (isFileTriggerEnabled() && p.getFilePaths() != null
+                                && p.getFilePaths().size() > 0) {
+                            if (p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                    changeBasedEvent.getChange().getBranch(),
+                                    changeBasedEvent.getFiles(
+                                            new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
@@ -577,9 +583,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                             return true;
                         }
                     }
-                } else if (event.getRefUpdate() != null) {
-                    if (p.isInteresting(event.getRefUpdate().getProject(),
-                            event.getRefUpdate().getRefName())) {
+                } else if (event instanceof RefUpdated) {
+                    RefUpdated refUpdated = (RefUpdated)event;
+                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                            refUpdated.getRefUpdate().getRefName())) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }
@@ -662,6 +669,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
+
         if (isInteresting(event) && matchesApproval(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {
@@ -1133,7 +1141,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          * @param parameters the parameters for the new build, used to find it later.
          * @param projectName the name of the current project for better logging.
          */
-        public synchronized void scheduled(GerritTriggeredEvent event, ParametersAction parameters, String projectName) {
+        public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
             if (!PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
                 return;
             }
@@ -1141,15 +1149,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             while (it.hasNext()) {
                 Entry<GerritTriggeredEvent, ParametersAction> pairs = it.next();
                 // Find all entries in runningJobs with the same Change #.
-                if (pairs.getKey().getChange().equals(event.getChange())) {
-                    logger.debug("Cancelling build for " + pairs.getKey());
-                    try {
-                        cancelJob(pairs.getValue());
-                    } catch (Exception e) {
-                        // Ignore any problems with canceling the job.
-                        logger.error("Error canceling job", e);
+                if (pairs.getKey() instanceof ChangeBasedEvent) {
+                    if (((ChangeBasedEvent)pairs.getKey()).getChange().equals(event.getChange())) {
+                        logger.debug("Cancelling build for " + pairs.getKey());
+                        try {
+                            cancelJob(pairs.getValue());
+                        } catch (Exception e) {
+                            // Ignore any problems with canceling the job.
+                            logger.error("Error canceling job", e);
+                        }
+                        it.remove();
                     }
-                    it.remove();
                 }
             }
             // add our new job
@@ -1199,7 +1209,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          * @param event the event which started the build we want to remove.
          * @return the build that was removed.
          */
-        public synchronized ParametersAction remove(GerritTriggeredEvent event) {
+        public synchronized ParametersAction remove(ChangeBasedEvent event) {
             logger.debug("Removing future job " + event.getPatchSet().getNumber());
             return runningJobs.remove(event);
         }

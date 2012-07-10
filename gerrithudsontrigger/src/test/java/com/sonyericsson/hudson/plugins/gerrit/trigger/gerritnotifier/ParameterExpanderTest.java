@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -46,7 +47,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -319,7 +322,8 @@ public class ParameterExpanderTest {
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
-        final String expectedRefSpec = StringUtil.makeRefSpec(event);
+        assertThat("Event should be a ChangeBasedEvent", event, instanceOf(ChangeBasedEvent.class));
+        final String expectedRefSpec = StringUtil.makeRefSpec((ChangeBasedEvent)event);
 
         ParameterExpander instance = new ParameterExpander(config, hudson);
 

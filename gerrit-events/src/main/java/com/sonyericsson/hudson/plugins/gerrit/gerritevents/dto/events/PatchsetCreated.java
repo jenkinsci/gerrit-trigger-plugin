@@ -36,7 +36,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class PatchsetCreated extends GerritTriggeredEvent implements GerritJsonEvent {
+public class PatchsetCreated extends ChangeBasedEvent implements GerritJsonEvent {
 
     /* Uploader has been replaced by GerritTriggeredEvent.account.
      * This allows old builds to deserialize without warnings. */

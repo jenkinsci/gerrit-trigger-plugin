@@ -24,8 +24,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.model.BuildBadgeAction;
 
@@ -94,16 +98,32 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
-        if (tEvent.getChange() != null) {
-            if (tEvent.getChange().getUrl() != null && tEvent.getChange().getUrl().length() > 0) {
-                return tEvent.getChange().getUrl();
+        if (tEvent instanceof ChangeBasedEvent) {
+            Change change = ((ChangeBasedEvent)tEvent).getChange();
+            if (change.getUrl() != null && change.getUrl().length() > 0) {
+                return change.getUrl();
             } else {
                 return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                        tEvent.getChange().getNumber(),
-                        tEvent.getPatchSet().getNumber());
+                        change.getNumber(),
+                        change.getNumber());
             }
         } else {
             return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
+        }
+    }
+
+    /**
+     * Gets the display text for the BadgeAction.
+     * @return the display text.
+     */
+    public String getText() {
+        if (tEvent instanceof ChangeBasedEvent) {
+            return ((ChangeBasedEvent)tEvent).getChange().getNumber()
+                    + "," + ((ChangeBasedEvent)tEvent).getPatchSet().getNumber();
+        } else if (tEvent instanceof RefUpdated) {
+            return Messages.RefUpdatedDisplayName();
+        } else {
+            return "";
         }
     }
 

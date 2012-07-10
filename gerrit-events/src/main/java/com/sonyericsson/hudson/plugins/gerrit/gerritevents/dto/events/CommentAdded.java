@@ -40,7 +40,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * A DTO representation of the comment-added Gerrit Event.
  * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
-public class CommentAdded extends GerritTriggeredEvent implements GerritJsonEvent {
+public class CommentAdded extends ChangeBasedEvent implements GerritJsonEvent {
     private List<Approval> approvals = new ArrayList<Approval>();
 
     @Override

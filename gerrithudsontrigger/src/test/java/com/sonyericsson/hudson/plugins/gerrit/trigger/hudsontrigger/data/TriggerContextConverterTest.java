@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -34,18 +35,23 @@ import com.thoughtworks.xstream.XStream;
 import hudson.matrix.MatrixRun;
 import hudson.model.Cause;
 import hudson.util.XStream2;
+
 import org.junit.Test;
 import org.powermock.reflect.Whitebox;
 
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+
+
 
 /**
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter}.
@@ -83,8 +89,10 @@ public class TriggerContextConverterTest {
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
+        assertThat("Event is not a ChangeBasedEvent", readT.getEntity().getEvent(), instanceOf(ChangeBasedEvent.class));
 
-        assertEquals("project", readT.getEntity().getEvent().getChange().getProject());
+        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)readT.getEntity().getEvent();
+        assertEquals("project", changeBasedEvent.getChange().getProject());
         assertEquals(100, readT.getEntity().getThisBuild().getBuildNumber().intValue());
         assertEquals("projectX", readT.getEntity().getThisBuild().getProjectId());
 
@@ -323,8 +331,11 @@ public class TriggerContextConverterTest {
         RetriggerAction action = (RetriggerAction)obj;
         TriggerContext context = Whitebox.getInternalState(action, "context");
         assertNotNull(context.getEvent());
-        assertEquals("semctools/hudson/plugins/gerrit-trigger-plugin", context.getEvent().getChange().getProject());
-        assertEquals("1", context.getEvent().getPatchSet().getNumber());
+        assertThat("Event is not a ChangeBasedEvent", context.getEvent(), instanceOf(ChangeBasedEvent.class));
+
+        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)context.getEvent();
+        assertEquals("semctools/hudson/plugins/gerrit-trigger-plugin", changeBasedEvent.getChange().getProject());
+        assertEquals("1", changeBasedEvent.getPatchSet().getNumber());
 
         assertNotNull(context.getThisBuild());
         assertEquals(6, context.getThisBuild().getBuildNumber().intValue());
@@ -400,8 +411,10 @@ public class TriggerContextConverterTest {
         RetriggerAction action = (RetriggerAction)obj;
         TriggerContext context = Whitebox.getInternalState(action, "context");
         assertNotNull(context.getEvent());
-        assertEquals("semctools/hudson/plugins/gerrit-trigger-plugin", context.getEvent().getChange().getProject());
-        assertEquals("1", context.getEvent().getPatchSet().getNumber());
+        assertThat("Event is not a ChangeBasedEvent", context.getEvent(), instanceOf(ChangeBasedEvent.class));
+        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)context.getEvent();
+        assertEquals("semctools/hudson/plugins/gerrit-trigger-plugin", changeBasedEvent.getChange().getProject());
+        assertEquals("1", changeBasedEvent.getPatchSet().getNumber());
 
         assertNotNull(context.getThisBuild());
         assertEquals(6, context.getThisBuild().getBuildNumber().intValue());
@@ -438,7 +451,9 @@ public class TriggerContextConverterTest {
         List upstreamCauses = Whitebox.getInternalState(upCause, "upstreamCauses");
         GerritCause cause = (GerritCause)upstreamCauses.get(0);
         assertNotNull(cause.getEvent());
-        assertEquals("platform/project", cause.getEvent().getChange().getProject());
+        assertThat("Event is not a ChangeBasedEvent", cause.getEvent(), instanceOf(ChangeBasedEvent.class));
+        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)cause.getEvent();
+        assertEquals("platform/project", changeBasedEvent.getChange().getProject());
         assertNotNull(cause.getContext());
         assertNotNull(cause.getContext().getThisBuild());
 

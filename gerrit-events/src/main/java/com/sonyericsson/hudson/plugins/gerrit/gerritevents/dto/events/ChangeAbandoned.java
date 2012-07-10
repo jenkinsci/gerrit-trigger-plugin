@@ -35,7 +35,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * A DTO representation of the change-abandoned Gerrit Event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ChangeAbandoned extends GerritTriggeredEvent implements GerritJsonEvent {
+public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent {
 
     /**
      * Default constructor.

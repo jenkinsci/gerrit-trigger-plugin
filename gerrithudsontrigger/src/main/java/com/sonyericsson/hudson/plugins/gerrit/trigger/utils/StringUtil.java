@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import java.util.regex.Pattern;
 
 /**
@@ -70,10 +70,10 @@ public final class StringUtil {
      * For a change with number 3456 and patchset 1 the refspec would be refs/changes/56/3456/1
      * @param event the event.
      * @return the refspec.
-     * @see GerritTriggeredEvent#getPatchSet()
+     * @see ChangeBasedEvent#getPatchSet()
      * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet#getRef()
      */
-    public static String makeRefSpec(GerritTriggeredEvent event) {
+    public static String makeRefSpec(ChangeBasedEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {
             if (event.getPatchSet().getRef().length() > 0) {
                 return event.getPatchSet().getRef();

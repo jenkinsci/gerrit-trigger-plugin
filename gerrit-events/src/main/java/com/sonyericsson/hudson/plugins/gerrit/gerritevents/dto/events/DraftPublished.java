@@ -35,7 +35,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author David Pursehouse &lt;david.pursehouse@sonymobile.com&gt;
  */
-public class DraftPublished extends GerritTriggeredEvent implements GerritJsonEvent {
+public class DraftPublished extends ChangeBasedEvent implements GerritJsonEvent {
 
     /* Uploader has been replaced by GerritTriggeredEvent.account.
      * This allows old builds to deserialize without warnings. */
