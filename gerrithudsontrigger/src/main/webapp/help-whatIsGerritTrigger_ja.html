@@ -12,10 +12,16 @@
     <li><strong>GERRIT_PROJECT</strong>: プロジェクト名</li>
     <li><strong>GERRIT_BRANCH</strong>: ブランチ名</li>
     <li><strong>GERRIT_REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
+    <li><strong>GERRIT_CHANGE_OWNER</strong>: チェンジ・オーナーの名前とメールアドレス <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+    <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: チェンジ・オーナーの名前</li>
+    <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: チェンジ・オーナーのメールアドレス</li>
+    <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセット・アップローダーの名前とメールアドレス <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+    <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップローダーの名前</li>
+    <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップローダーのメールアドレス</li>
 </ul>
 <p>
     <i>
         パラメータはビルド時に環境変数として参照できます。
-        E.g. <strong>$GERRIT_REFSPEC</strong>
+        例: <strong>$GERRIT_REFSPEC</strong>
     </i>
 </p>
