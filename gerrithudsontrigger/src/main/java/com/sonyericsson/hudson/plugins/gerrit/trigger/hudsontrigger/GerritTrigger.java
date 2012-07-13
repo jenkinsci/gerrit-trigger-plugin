@@ -669,7 +669,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Disabled.");
             return;
         }
-
+        if (ToGerritRunListener.getInstance().isBuilding(myProject, event)) {
+            logger.trace("Already building.");
+            return;
+        }
         if (isInteresting(event) && matchesApproval(event)) {
             logger.trace("The event is interesting.");
             if (!silentMode) {

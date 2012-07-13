@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdd
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -316,5 +317,16 @@ public final class Setup {
 
         ToGerritRunListener toGerritRunListener = spy(new ToGerritRunListener());
         return toGerritRunListener;
+    }
+
+    /**
+     * Gives a List of VerdictCategories containing Code Review.
+     * @return the List.
+     */
+    public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
+        VerdictCategory cat = new VerdictCategory("CRVW", "Code review");
+        List<VerdictCategory> list = new LinkedList<VerdictCategory>();
+        list.add(cat);
+        return list;
     }
 }
