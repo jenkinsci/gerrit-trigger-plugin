@@ -33,7 +33,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.GerritEventLifeCycleAdaptor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
 import hudson.model.AbstractBuild;
@@ -52,7 +51,6 @@ import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 import java.io.File;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 
@@ -103,7 +101,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
         FreeStyleBuild build = builds.get(0);
         assertSame(Result.SUCCESS, build.getResult());
     }
@@ -120,7 +118,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
 
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
         FreeStyleBuild build = builds.get(0);
         assertSame(Result.SUCCESS, build.getResult());
         assertEquals(1, project.getBuilds().size());
@@ -155,7 +153,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
         PluginImpl.getInstance().triggerEvent(mpc);
 
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
         FreeStyleBuild build = builds.get(0);
         assertSame(Result.SUCCESS, build.getResult());
         assertEquals(1, builds.size());
@@ -186,7 +184,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         patchsetCreated.getChange().setNumber("2000");
         PluginImpl.getInstance().triggerEvent(patchsetCreated);
 
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 2, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
         assertEquals(2, builds.size());
         assertSame(Result.SUCCESS, builds.get(0).getResult());
         assertSame(Result.SUCCESS, builds.get(1).getResult());
@@ -222,11 +220,11 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
         PluginImpl.getInstance().triggerEvent(firstEvent);
-        AbstractBuild firstBuild = waitForBuildToStart(firstEvent, 2000);
+        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         secondEvent.getPatchSet().setNumber("2");
         PluginImpl.getInstance().triggerEvent(secondEvent);
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 2, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
         assertEquals(2, builds.size());
         assertSame(Result.ABORTED, firstBuild.getResult());
         assertSame(Result.ABORTED, builds.getFirstBuild().getResult());
@@ -247,11 +245,11 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
         PluginImpl.getInstance().triggerEvent(firstEvent);
-        AbstractBuild firstBuild = waitForBuildToStart(firstEvent, 2000);
+        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         secondEvent.getPatchSet().setNumber("2");
         PluginImpl.getInstance().triggerEvent(secondEvent);
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 2, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
         assertEquals(2, builds.size());
         assertSame(Result.SUCCESS, firstBuild.getResult());
         assertSame(Result.SUCCESS, builds.getFirstBuild().getResult());
@@ -271,7 +269,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         PluginImpl.getInstance().triggerEvent(firstEvent);
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 10000);
         assertEquals(1, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
     }
@@ -290,83 +288,12 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
         PluginImpl.getInstance().triggerEvent(Setup.createCommentAdded());
         PluginImpl.getInstance().triggerEvent(Setup.createCommentAdded());
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 10000);
         assertEquals(1, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
     }
 
     /**
-     * Waits for a build to start for the specified event.
-     *
-     * @param event     the event to monitor.
-     * @param timeoutMs the maximum time in ms to wait for the build to start.
-     * @return the build that started.
-     */
-    private AbstractBuild waitForBuildToStart(PatchsetCreated event, int timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        final AtomicReference<AbstractBuild> ref = new AtomicReference<AbstractBuild>();
-        event.addListener(new GerritEventLifeCycleAdaptor() {
-            @Override
-            public void buildStarted(PatchsetCreated event, AbstractBuild build) {
-                ref.getAndSet(build);
-            }
-        });
-        while (ref.get() == null) {
-            if (startTime - System.currentTimeMillis() >= timeoutMs) {
-                throw new RuntimeException("Timeout!");
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                System.err.println("Interrupted while waiting!");
-            }
-        }
-        return ref.get();
-    }
-
-    /**
-     * Utility method that returns when the expected number of builds are done, or the timeout has expired.
-     *
-     * @param project   the project to check
-     * @param number    the number of builds to wait for.
-     * @param timeoutMs the timeout in ms.
-     * @return the builds.
-     */
-    private RunList<FreeStyleBuild> waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        while (project.getBuilds().size() < number) {
-            if (System.currentTimeMillis() - startTime   >= timeoutMs) {
-                throw new RuntimeException("Timeout!");
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                System.err.println("Interrupted while waiting!");
-            }
-        }
-        boolean allDone = false;
-        do {
-            boolean thisTime = true;
-            for (AbstractBuild b : project.getBuilds()) {
-                if (b.isBuilding()) {
-                    thisTime = false;
-                }
-            }
-            if (thisTime) {
-                allDone = true;
-            } else {
-                if (startTime - System.currentTimeMillis() >= timeoutMs) {
-                    throw new RuntimeException("Timeout!");
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    System.err.println("Interrupted while waiting!");
-                }
-            }
-        } while (!allDone);
-        return project.getBuilds();
-    }
 
     /**
      * Waits for the dynamic trigger cache to be updated.

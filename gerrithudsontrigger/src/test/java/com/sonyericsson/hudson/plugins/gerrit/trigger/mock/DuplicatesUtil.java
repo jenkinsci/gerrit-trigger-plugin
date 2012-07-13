@@ -25,13 +25,17 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import hudson.model.AbstractBuild;
+import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.util.RunList;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.io.File;
@@ -40,6 +44,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -142,5 +147,80 @@ public abstract class DuplicatesUtil {
             }
         }
         return null;
+    }
+
+    //CS IGNORE MagicNumber FOR NEXT 50 LINES. REASON: Testdata.
+    /**
+     * Waits for a build to start for the specified event.
+     *
+     * @param event     the event to monitor.
+     * @param timeoutMs the maximum time in ms to wait for the build to start.
+     * @return the build that started.
+     */
+    public static AbstractBuild waitForBuildToStart(PatchsetCreated event, int timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        final AtomicReference<AbstractBuild> ref = new AtomicReference<AbstractBuild>();
+        event.addListener(new GerritEventLifeCycleAdaptor() {
+            @Override
+            public void buildStarted(PatchsetCreated event, AbstractBuild build) {
+                ref.getAndSet(build);
+            }
+        });
+        while (ref.get() == null) {
+            if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                throw new RuntimeException("Timeout!");
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                System.err.println("Interrupted while waiting!");
+            }
+        }
+        return ref.get();
+    }
+
+    //CS IGNORE MagicNumber FOR NEXT 50 LINES. REASON: Testdata.
+    /**
+     * Utility method that returns when the expected number of builds are done, or the timeout has expired.
+     *
+     * @param project   the project to check
+     * @param number    the number of builds to wait for.
+     * @param timeoutMs the timeout in ms.
+     * @return the builds.
+     */
+    public static RunList<FreeStyleBuild> waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        while (project.getBuilds().size() < number) {
+            if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                throw new RuntimeException("Timeout!");
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                System.err.println("Interrupted while waiting!");
+            }
+        }
+        boolean allDone = false;
+        do {
+            boolean thisTime = true;
+            for (AbstractBuild b : project.getBuilds()) {
+                if (b.isBuilding()) {
+                    thisTime = false;
+                }
+            }
+            if (thisTime) {
+                allDone = true;
+            } else {
+                if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                    throw new RuntimeException("Timeout!");
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    System.err.println("Interrupted while waiting!");
+                }
+            }
+        } while (!allDone);
+        return project.getBuilds();
     }
 }
