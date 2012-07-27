@@ -47,6 +47,12 @@ public interface CompareUtil {
     String getName();
 
     /**
+     * Returns the operator name of the util.
+     * @return the operator.
+     */
+    char getOperator();
+
+    /**
      * Compares based on Ant-style paths.
      * like <code>my/&#042;&#042;/something&#042;.git</code>
      */
@@ -66,6 +72,11 @@ public interface CompareUtil {
         public String getName() {
             return "Path";
         }
+
+        @Override
+        public char getOperator() {
+            return '^';
+        }
     }
 
     /**
@@ -81,6 +92,11 @@ public interface CompareUtil {
         @Override
         public String getName() {
             return "Plain";
+        }
+
+        @Override
+        public char getOperator() {
+            return '=';
         }
     }
 
@@ -99,6 +115,11 @@ public interface CompareUtil {
         @Override
         public String getName() {
             return "RegExp";
+        }
+
+        @Override
+        public char getOperator() {
+            return '~';
         }
     }
 }

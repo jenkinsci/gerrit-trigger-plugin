@@ -30,6 +30,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.GerritEventLifeCycleAdaptor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -88,6 +90,22 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         super.tearDown();
         sshd.stop(true);
         sshd = null;
+    }
+
+    /**
+     * Tests to trigger a build with a dynamic configuration.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testDynamicTriggeredBuild() throws Exception {
+        ((Config)PluginImpl.getInstance().getConfig()).setDynamicConfigRefreshInterval(1);
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        waitForDynamicTimer(project, 5000);
+        PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
+        FreeStyleBuild build = builds.get(0);
+        assertSame(Result.SUCCESS, build.getResult());
     }
 
     /**
@@ -253,7 +271,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         PluginImpl.getInstance().triggerEvent(firstEvent);
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 2000);
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
         assertEquals(1, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
     }
@@ -272,7 +290,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
         PluginImpl.getInstance().triggerEvent(Setup.createCommentAdded());
         PluginImpl.getInstance().triggerEvent(Setup.createCommentAdded());
-        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 1000);
+        RunList<FreeStyleBuild> builds = waitForBuilds(project, 1, 5000);
         assertEquals(1, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
     }
@@ -317,7 +335,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     private RunList<FreeStyleBuild> waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         while (project.getBuilds().size() < number) {
-            if (startTime - System.currentTimeMillis() >= timeoutMs) {
+            if (System.currentTimeMillis() - startTime   >= timeoutMs) {
                 throw new RuntimeException("Timeout!");
             }
             try {
@@ -348,6 +366,23 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
             }
         } while (!allDone);
         return project.getBuilds();
+    }
+
+    /**
+     * Waits for the dynamic trigger cache to be updated.
+     * @param project the project to check the dynamic triggering for.
+     * @param timeoutMs th amount of milliseconds to wait.
+     */
+    private void waitForDynamicTimer(FreeStyleProject project, int timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime <= timeoutMs) {
+            GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+            List<GerritProject> dynamicGerritProjects = trigger.getDynamicGerritProjects();
+            if (dynamicGerritProjects != null && !dynamicGerritProjects.isEmpty()) {
+                return;
+            }
+        }
+        throw new RuntimeException("Timeout!");
     }
 
     /**

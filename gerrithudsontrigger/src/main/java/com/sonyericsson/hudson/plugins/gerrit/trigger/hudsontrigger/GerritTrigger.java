@@ -41,6 +41,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -55,6 +56,7 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.model.Computer;
 import hudson.model.Executor;
@@ -74,7 +76,11 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.ObjectStreamException;
+import java.net.MalformedURLException;
+import java.text.MessageFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -83,7 +89,6 @@ import java.util.List;
 import java.net.URL;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
-import java.util.regex.PatternSyntaxException;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
@@ -100,6 +105,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private transient RunningJobs runningJobs = new RunningJobs();
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
+    private List<GerritProject> dynamicGerritProjects;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
     private Integer gerritBuildSuccessfulVerifiedValue;
@@ -121,6 +127,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String triggerConfigURL;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
+    private GerritDynamicUrlProcessor gerritDynamicUrlProcessor;
+    private GerritTriggerInformationAction triggerInformationAction;
 
     /**
      * Default DataBound Constructor.
@@ -205,6 +213,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
+        triggerInformationAction = new GerritTriggerInformationAction();
     }
 
     /**
@@ -234,9 +243,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void cancelTimer() {
         if (gerritTriggerTimerTask != null) {
-            logger.info("GerritTrigger.cancelTimer(): " + myProject.getName());
+            logger.trace("GerritTrigger.cancelTimer(): {0}", myProject.getName());
             gerritTriggerTimerTask.cancel();
             gerritTriggerTimerTask = null;
+            gerritDynamicUrlProcessor = null;
         }
     }
 
@@ -259,6 +269,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
+            gerritDynamicUrlProcessor = new GerritDynamicUrlProcessor();
         }
     }
 
@@ -592,39 +603,39 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (!shouldTriggerOnEventType(event)) {
             return false;
         }
+        List<GerritProject> allGerritProjects = new LinkedList<GerritProject>();
         if (gerritProjects != null) {
-            logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
-            for (GerritProject p : gerritProjects) {
-                try {
-                    if (event instanceof ChangeBasedEvent) {
-                        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+            allGerritProjects.addAll(gerritProjects);
+        }
+        if (dynamicGerritProjects != null) {
+            allGerritProjects.addAll(dynamicGerritProjects);
+        }
+        logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
+        for (GerritProject p : allGerritProjects) {
+            if (event instanceof ChangeBasedEvent) {
+                ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+                if (p.isInteresting(changeBasedEvent.getChange().getProject(),
+                        changeBasedEvent.getChange().getBranch())) {
+                    if (isFileTriggerEnabled() && p.getFilePaths() != null
+                            && p.getFilePaths().size() > 0) {
                         if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                changeBasedEvent.getChange().getBranch())) {
-                            if (isFileTriggerEnabled() && p.getFilePaths() != null
-                                    && p.getFilePaths().size() > 0) {
-                                if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                        changeBasedEvent.getChange().getBranch(),
-                                        changeBasedEvent.getFiles(
-                                                new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
-                                    logger.trace("According to {} the event is interesting.", p);
-                                    return true;
-                                }
-                            } else {
-                                logger.trace("According to {} the event is interesting.", p);
-                                return true;
-                            }
-                        }
-                    } else if (event instanceof RefUpdated) {
-                        RefUpdated refUpdated = (RefUpdated)event;
-                        if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                                refUpdated.getRefUpdate().getRefName())) {
+                                changeBasedEvent.getChange().getBranch(),
+                                changeBasedEvent.getFiles(
+                                        new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
                             logger.trace("According to {} the event is interesting.", p);
                             return true;
                         }
+                    } else {
+                        logger.trace("According to {} the event is interesting.", p);
+                        return true;
                     }
-                } catch (PatternSyntaxException pse) {
-                    logger.error("Exception caught for project {0} and pattern {1}, message: {2}",
-                            new Object[]{myProject.getName(), p.getPattern(), pse.getMessage()});
+                }
+            } else if (event instanceof RefUpdated) {
+                RefUpdated refUpdated = (RefUpdated)event;
+                if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                        refUpdated.getRefUpdate().getRefName())) {
+                    logger.trace("According to {} the event is interesting.", p);
+                    return true;
                 }
             }
         }
@@ -747,6 +758,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public List<GerritProject> getGerritProjects() {
         return gerritProjects;
+    }
+
+    /**
+     * The list of dynamically configured triggering rules.
+     *
+     *  @return the rule-set.
+     */
+    public List<GerritProject> getDynamicGerritProjects() {
+        return dynamicGerritProjects;
     }
 
     /**
@@ -1106,11 +1126,39 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * This method is called by the timer thread at regular intervals. It fetches the URL,
      * determines if the result is different than from the last fetch, and if so, replaces
      * the current URL trigger configuration with the fetched one.
-     * NOTE: for now, this is just a stub that prints out the URL to fetch, but nothing is
-     * actually fetched. The fetching will be implemented in the next version.
      */
     public void updateTriggerConfigURL() {
-        logger.info("URL: " + triggerConfigURL);
+        if (triggerInformationAction == null) {
+            triggerInformationAction = new GerritTriggerInformationAction();
+        }
+        triggerInformationAction.setErrorMessage("");
+        try {
+            dynamicGerritProjects = gerritDynamicUrlProcessor.fetch(triggerConfigURL);
+        } catch (ParseException pe) {
+            String logErrorMessage = MessageFormat.format(
+                    "ParseException for project: {0} and URL: {1} Message: {2}",
+                    new Object[]{myProject.getName(), triggerConfigURL, pe.getMessage()});
+            logger.error(logErrorMessage, pe);
+            String triggerInformationMessage = MessageFormat.format(
+                    "ParseException when fetching dynamic trigger url: {0}", pe.getMessage());
+            triggerInformationAction.setErrorMessage(triggerInformationMessage);
+        } catch (MalformedURLException mue) {
+            String logErrorMessage = MessageFormat.format(
+                    "MalformedURLException for project: {0} and URL: {1} Message: {2}",
+                    new Object[]{myProject.getName(), triggerConfigURL, mue.getMessage()});
+            logger.error(logErrorMessage, mue);
+            String triggerInformationMessage = MessageFormat.format(
+                    "MalformedURLException when fetching dynamic trigger url: {0}", mue.getMessage());
+            triggerInformationAction.setErrorMessage(triggerInformationMessage);
+        } catch (IOException ioe) {
+            String logErrorMessage = MessageFormat.format(
+                    "IOException for project: {0} and URL: {1} Message: {2}",
+                    new Object[]{myProject.getName(), triggerConfigURL, ioe.getMessage()});
+            logger.error(logErrorMessage, ioe);
+            String triggerInformationMessage = MessageFormat.format(
+                    "IOException when fetching dynamic trigger url: {0}", ioe.getMessage());
+            triggerInformationAction.setErrorMessage(triggerInformationMessage);
+        }
     }
 
     /**
@@ -1119,6 +1167,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public boolean isTriggerOnDraftPublishedEnabled() {
         return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished);
+    }
+
+    @Override
+    public List<Action> getProjectActions() {
+        List<Action> list = new LinkedList<Action>();
+        list.add(triggerInformationAction);
+        return list;
     }
 
     /**

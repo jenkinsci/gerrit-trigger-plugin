@@ -34,6 +34,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,6 +70,35 @@ public abstract class DuplicatesUtil {
         p.addTrigger(new GerritTrigger(projects,
                 null, null, null, null, null, null, null, null, false, true,
                 null, null, null, null, null, null, null, false, null));
+        base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
+        return p;
+    }
+
+    /**
+     * Creates a {@link FreeStyleProject} with a gerrit-trigger dynamically configured.
+     *
+     * @param base the test case that is doing the current testing.
+     * @param name the name of the new job.
+     * @return the project.
+     *
+     * @throws Exception if so.
+     */
+    public static FreeStyleProject createGerritDynamicTriggeredJob(HudsonTestCase base, String name) throws Exception {
+        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
+        List<GerritProject> projects = new LinkedList<GerritProject>();
+
+        File file = File.createTempFile("dynamic", "txt");
+        FileWriter fw = new FileWriter(file);
+        fw.write("p=project\n");
+        fw.write("b=branch");
+        fw.close();
+        List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
+        URI uri = file.toURI();
+        String filepath = uri.toURL().toString();
+        GerritTrigger trigger = new GerritTrigger(projects,
+                null, null, null, null, null, null, null, null, false, true,
+                null, null, null, null, null, null, list, true, filepath);
+        p.addTrigger(trigger);
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }

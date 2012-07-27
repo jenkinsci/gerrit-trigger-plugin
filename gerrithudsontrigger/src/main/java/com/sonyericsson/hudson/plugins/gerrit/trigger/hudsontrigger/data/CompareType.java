@@ -63,11 +63,25 @@ public enum CompareType {
     /**
      * Finds a CompareType based on displayName.
      * @param displayName the displayName
-     * @return the CompareType that matches the displayName or null if none is found.
+     * @return the CompareType that matches the displayName or PLAIN if none is found.
      */
     public static CompareType findByDisplayName(String displayName) {
         for (CompareType t : values()) {
             if (t.getDisplayName().equals(displayName)) {
+                return t;
+            }
+        }
+        return PLAIN;
+    }
+
+    /**
+     * Finds a CompareType based on the operator.
+     * @param operator the operator.
+     * @return the CompareType that matches the operator or PLAIN if none is found.
+     */
+    public static CompareType findByOperator(char operator) {
+        for (CompareType t : values()) {
+            if (t.getOperator() == operator) {
                 return t;
             }
         }
@@ -100,6 +114,14 @@ public enum CompareType {
      */
     public String getDisplayName() {
         return util.getName();
+    }
+
+    /**
+     * Returns the operator, the one-char identifier for the CompareType.
+     * @return the operator.
+     */
+    public char getOperator() {
+        return util.getOperator();
     }
 
     @Override
