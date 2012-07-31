@@ -253,6 +253,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void start(AbstractProject project, boolean newInstance) {
         logger.debug("Start project: {}", project);
         super.start(project, newInstance);
+        initializeTriggerOnEvents();
         this.myProject = project;
         try {
             if (PluginImpl.getInstance() != null) {

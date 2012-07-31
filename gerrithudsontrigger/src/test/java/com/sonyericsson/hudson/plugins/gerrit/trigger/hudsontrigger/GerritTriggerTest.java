@@ -81,6 +81,8 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_PATCHSET_UPLOADER_EMAIL;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_PATCHSET_UPLOADER_NAME;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyListOf;
@@ -238,6 +240,7 @@ public class GerritTriggerTest {
         name[0] = "OriginalName";
         GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
                 "", "", "", "", "", "", null, false, ""));
+        doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
         trigger.start(project, true);
         project.addTrigger(trigger);
 
@@ -251,6 +254,24 @@ public class GerritTriggerTest {
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
+    }
+
+    /**
+     * Tests that initalizeTriggerOnEvents is run correctly by the start method.
+     */
+    @Test
+    public void testInitializeTriggerOnEvents() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true,
+                true, "", "", "", "", "", "", null, false, ""));
+        Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
+        assertNull(triggerOnEvents);
+        doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
+        trigger.start(project, true);
+        triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
+        assertNotNull(triggerOnEvents);
+        List<PluginGerritEvent> events = (List<PluginGerritEvent>)triggerOnEvents;
+        assertEquals(events.size(), 2);
     }
 
     /**
