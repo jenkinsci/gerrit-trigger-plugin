@@ -83,6 +83,7 @@ import java.util.List;
 import java.net.URL;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
+import java.util.regex.PatternSyntaxException;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
@@ -398,7 +399,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
             logger.info("Project {} Build Scheduled: {} By event: {}",
                     new Object[]{project.getName(), (build != null),
-                    changeBasedEvent.getChange().getNumber() + "/" + changeBasedEvent.getPatchSet().getNumber(), });
+                            changeBasedEvent.getChange().getNumber() + "/"
+                                    + changeBasedEvent.getPatchSet().getNumber(), });
         } else if (event instanceof RefUpdated) {
             RefUpdated refUpdated = (RefUpdated)event;
             logger.info("Project {} Build Scheduled: {} By event: {}",
@@ -593,31 +595,36 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (gerritProjects != null) {
             logger.trace("entering isInteresting projects configured: {} the event: {}", gerritProjects.size(), event);
             for (GerritProject p : gerritProjects) {
-                if (event instanceof ChangeBasedEvent) {
-                    ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                    if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                            changeBasedEvent.getChange().getBranch())) {
-                        if (isFileTriggerEnabled() && p.getFilePaths() != null
-                                && p.getFilePaths().size() > 0) {
-                            if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                    changeBasedEvent.getChange().getBranch(),
-                                    changeBasedEvent.getFiles(
-                                            new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                try {
+                    if (event instanceof ChangeBasedEvent) {
+                        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+                        if (p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                changeBasedEvent.getChange().getBranch())) {
+                            if (isFileTriggerEnabled() && p.getFilePaths() != null
+                                    && p.getFilePaths().size() > 0) {
+                                if (p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                        changeBasedEvent.getChange().getBranch(),
+                                        changeBasedEvent.getFiles(
+                                                new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                                    logger.trace("According to {} the event is interesting.", p);
+                                    return true;
+                                }
+                            } else {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
-                        } else {
+                        }
+                    } else if (event instanceof RefUpdated) {
+                        RefUpdated refUpdated = (RefUpdated)event;
+                        if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                                refUpdated.getRefUpdate().getRefName())) {
                             logger.trace("According to {} the event is interesting.", p);
                             return true;
                         }
                     }
-                } else if (event instanceof RefUpdated) {
-                    RefUpdated refUpdated = (RefUpdated)event;
-                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                            refUpdated.getRefUpdate().getRefName())) {
-                        logger.trace("According to {} the event is interesting.", p);
-                        return true;
-                    }
+                } catch (PatternSyntaxException pse) {
+                    logger.error("Exception caught for project {0} and pattern {1}, message: {2}",
+                            new Object[]{myProject.getName(), p.getPattern(), pse.getMessage()});
                 }
             }
         }
