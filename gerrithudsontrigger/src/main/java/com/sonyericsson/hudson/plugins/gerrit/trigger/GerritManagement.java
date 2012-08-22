@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
@@ -248,6 +249,31 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         return FormValidation.validatePositiveInteger(value);
     }
+
+    /**
+     * Checks that the provided parameter is an integer, not negative, that is larger
+     * than the minimum value.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doDynamicConfigRefreshCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        FormValidation validatePositive = FormValidation.validatePositiveInteger(value);
+        if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
+            return validatePositive;
+        } else {
+            int intValue = Integer.parseInt(value);
+            if (intValue < GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL) {
+                return FormValidation.error(Messages.DynamicConfRefreshTooLowError(
+                        GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL));
+            }
+        }
+        return FormValidation.ok();
+    }
+
+
 
     /**
      * Checks that the provided parameter is an integer.

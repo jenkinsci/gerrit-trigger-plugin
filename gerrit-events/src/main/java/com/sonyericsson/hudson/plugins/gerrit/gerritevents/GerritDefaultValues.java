@@ -75,4 +75,9 @@ public final class GerritDefaultValues {
      * The default refresh interval for the Dynamic Trigger Configuration.
      */
     public static final int DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL = 30;
+
+    /**
+     * The minimum refresh interval for dynamic configuration.
+     */
+    public static final int MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL = 5;
 }

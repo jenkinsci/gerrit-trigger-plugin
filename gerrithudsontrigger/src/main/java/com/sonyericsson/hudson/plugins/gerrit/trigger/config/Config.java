@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONArray;
@@ -118,6 +119,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
     private List<VerdictCategory> categories;
+
+
 
     /**
      * Constructor.
@@ -357,6 +360,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public int getDynamicConfigRefreshInterval() {
+        if (dynamicConfigRefreshInterval == 0) {
+            dynamicConfigRefreshInterval = DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
+        } else if (dynamicConfigRefreshInterval < GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL) {
+            dynamicConfigRefreshInterval = GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL;
+        }
         return dynamicConfigRefreshInterval;
     }
 

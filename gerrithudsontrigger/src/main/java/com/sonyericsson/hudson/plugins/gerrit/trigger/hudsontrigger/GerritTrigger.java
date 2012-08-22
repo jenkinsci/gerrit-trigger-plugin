@@ -127,7 +127,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String triggerConfigURL;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
-    private GerritDynamicUrlProcessor gerritDynamicUrlProcessor;
+
     private GerritTriggerInformationAction triggerInformationAction;
 
     /**
@@ -246,7 +246,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("GerritTrigger.cancelTimer(): {0}", myProject.getName());
             gerritTriggerTimerTask.cancel();
             gerritTriggerTimerTask = null;
-            gerritDynamicUrlProcessor = null;
         }
     }
 
@@ -269,7 +268,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
-            gerritDynamicUrlProcessor = new GerritDynamicUrlProcessor();
         }
     }
 
@@ -1133,7 +1131,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         triggerInformationAction.setErrorMessage("");
         try {
-            dynamicGerritProjects = gerritDynamicUrlProcessor.fetch(triggerConfigURL);
+            dynamicGerritProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL);
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",

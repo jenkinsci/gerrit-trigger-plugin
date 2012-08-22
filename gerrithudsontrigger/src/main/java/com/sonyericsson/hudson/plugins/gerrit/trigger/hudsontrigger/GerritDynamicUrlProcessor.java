@@ -50,21 +50,19 @@ import java.util.regex.Pattern;
  *
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
-public class GerritDynamicUrlProcessor {
+public final class GerritDynamicUrlProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritDynamicUrlProcessor.class);
-
 
     private static final String SHORTNAME_PROJECT = "p";
     private static final String SHORTNAME_BRANCH = "b";
     private static final String SHORTNAME_FILE = "f";
 
     /**
-     * Constructor
+     * Private constructor.
      */
-    GerritDynamicUrlProcessor() {
+    private GerritDynamicUrlProcessor() {
     }
-
     /**
      * This is where the actual fetching is done. If everything goes well,
      * it returns a list of GerritProjects. If the fetched content hasn't changed
@@ -75,7 +73,7 @@ public class GerritDynamicUrlProcessor {
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    public List<GerritProject> fetch(String gerritTriggerConfigUrl)
+    public static List<GerritProject> fetch(String gerritTriggerConfigUrl)
             throws IOException, ParseException {
 
         if (gerritTriggerConfigUrl == null) {
