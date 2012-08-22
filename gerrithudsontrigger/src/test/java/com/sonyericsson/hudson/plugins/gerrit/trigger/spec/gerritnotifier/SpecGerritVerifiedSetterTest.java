@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -55,7 +56,7 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Hudson.class })
+@PrepareForTest({ Hudson.class, GerritMessageProvider.class })
 public class SpecGerritVerifiedSetterTest {
 
     /**
@@ -70,6 +71,9 @@ public class SpecGerritVerifiedSetterTest {
 
         Hudson hudson = PowerMockito.mock(Hudson.class);
         when(hudson.getRootUrl()).thenReturn("http://localhost/");
+
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        when(GerritMessageProvider.all()).thenReturn(null);
 
         TaskListener taskListener = mock(TaskListener.class);
 
@@ -119,6 +123,9 @@ public class SpecGerritVerifiedSetterTest {
         Hudson hudson = PowerMockito.mock(Hudson.class);
         when(hudson.getRootUrl()).thenReturn("http://localhost/");
 
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        when(GerritMessageProvider.all()).thenReturn(null);
+
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
@@ -165,6 +172,9 @@ public class SpecGerritVerifiedSetterTest {
             throws IOException, InterruptedException {
         Hudson hudson = PowerMockito.mock(Hudson.class);
         when(hudson.getRootUrl()).thenReturn("http://localhost/");
+
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        when(GerritMessageProvider.all()).thenReturn(null);
 
         TaskListener taskListener = mock(TaskListener.class);
 
