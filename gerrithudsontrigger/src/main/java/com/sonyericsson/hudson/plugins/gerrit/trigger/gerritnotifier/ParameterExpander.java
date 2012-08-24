@@ -37,6 +37,7 @@ import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -106,7 +107,31 @@ public class ParameterExpander {
             startedStats.append(" \n ").append(buildStartMessage);
         }
         parameters.put("STARTED_STATS", startedStats.toString());
+        StringBuilder customMessages = new StringBuilder();
+        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+            String customMessage = messageProvider.getBuildStartedMessage(r);
+            if (customMessage != null) {
+                customMessages.append(" \n ").append(customMessage);
+            }
+        }
+        parameters.put("CUSTOM_MESSAGES", customMessages.toString());
+
         return expandParameters(gerritCmd, r, taskListener, parameters);
+    }
+
+    /**
+     * Helper for ensuring no NPEs when iterating iterables.
+     *
+     * @param <T> type
+     * @param iterable the iterable
+     * @return empty if null or the iterable
+     */
+    private static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
+        if (iterable == null) {
+            return Collections.<T>emptyList();
+        } else {
+            return iterable;
+        }
     }
 
     /**
@@ -359,12 +384,21 @@ public class ParameterExpander {
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
 
-
         AbstractBuild build = null;
         Entry[] entries = memoryImprint.getEntries();
         if (entries.length > 0 && entries[0].getBuild() != null) {
             build = entries[0].getBuild();
         }
+
+        StringBuilder customMessages = new StringBuilder();
+        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+            String customMessage = messageProvider.getBuildCompletedMessage(build);
+            if (customMessage != null) {
+                customMessages.append(" \n ").append(customMessage);
+            }
+        }
+        parameters.put("CUSTOM_MESSAGES", customMessages.toString());
+
         return expandParameters(command, build, listener, parameters);
     }
 
