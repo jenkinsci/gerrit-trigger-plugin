@@ -86,6 +86,14 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE = 1;
     /**
+     * Default verified vote to Gerrit when a build is not built.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE = 0;
+    /**
+     * Default code review vote to Gerrit when a build is not built.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE = 0;
+    /**
      * Default manual trigger enabled.
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
@@ -105,6 +113,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritVerifiedCmdBuildUnstable;
     private String gerritVerifiedCmdBuildFailed;
     private String gerritVerifiedCmdBuildStarted;
+    private String gerritVerifiedCmdBuildNotBuilt;
     private String gerritFrontEndUrl;
     private int gerritBuildStartedVerifiedValue;
     private int gerritBuildStartedCodeReviewValue;
@@ -114,6 +123,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildFailedCodeReviewValue;
     private int gerritBuildUnstableVerifiedValue;
     private int gerritBuildUnstableCodeReviewValue;
+    private int gerritBuildNotBuiltVerifiedValue;
+    private int gerritBuildNotBuiltCodeReviewValue;
     private boolean enableManualTrigger;
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
@@ -190,6 +201,12 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritBuildUnstableCodeReviewValue = formData.optInt(
                 "gerritBuildUnstableCodeReviewValue",
                 DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE);
+        gerritBuildNotBuiltVerifiedValue = formData.optInt(
+                "gerritBuildNotBuiltVerifiedValue",
+                DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE);
+        gerritBuildNotBuiltCodeReviewValue = formData.optInt(
+                "gerritBuildNotBuiltCodeReviewValue",
+                DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE);
 
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
@@ -206,6 +223,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
                 "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+        gerritVerifiedCmdBuildNotBuilt = formData.optString(
+                "gerritVerifiedCmdBuildNotBuilt",
+                "gerrit approve <CHANGE>,<PATCHSET> --message 'No Builds Executed <BUILDS_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
@@ -485,6 +506,21 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public String getGerritCmdBuildNotBuilt() {
+        return gerritVerifiedCmdBuildNotBuilt;
+    }
+
+    /**
+     * GerritVerifiedCmdBuildNotBuilt.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildNotBuilt()
+     */
+    public void setGerritVerifiedCmdBuildNotBuilt(String cmd) {
+        gerritVerifiedCmdBuildNotBuilt = cmd;
+    }
+
+    @Override
     public int getGerritBuildStartedVerifiedValue() {
         return gerritBuildStartedVerifiedValue;
     }
@@ -522,6 +558,16 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public int getGerritBuildUnstableCodeReviewValue() {
         return gerritBuildUnstableCodeReviewValue;
+    }
+
+    @Override
+    public int getGerritBuildNotBuiltVerifiedValue() {
+        return gerritBuildNotBuiltVerifiedValue;
+    }
+
+    @Override
+    public int getGerritBuildNotBuiltCodeReviewValue() {
+        return gerritBuildNotBuiltCodeReviewValue;
     }
 
     @Override

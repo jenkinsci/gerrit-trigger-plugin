@@ -571,7 +571,8 @@ public class BuildMemory {
                 } else if (!entry.isBuildCompleted()) {
                     return false;
                 }
-                if (entry.getBuild().getResult() != Result.SUCCESS) {
+                Result buildResult = entry.getBuild().getResult();
+                if (buildResult != Result.SUCCESS) {
                     return false;
                 }
             }
@@ -606,6 +607,27 @@ public class BuildMemory {
                 }
             }
             return false;
+        }
+
+        /**
+         * Tells if all builds in the memory were not built.
+         *
+         * @return true if it is so, false if not all builds have started or not completed or have any different
+         *         result than {@link Result#NOT_BUILT}.
+         */
+        public synchronized boolean wereAllBuildsNotBuilt() {
+            for (Entry entry : list) {
+                if (entry.getBuild() == null) {
+                    return false;
+                } else if (!entry.isBuildCompleted()) {
+                    return false;
+                }
+                Result buildResult = entry.getBuild().getResult();
+                if (buildResult != Result.NOT_BUILT) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         //CS IGNORE FinalClass FOR NEXT 5 LINES. REASON: Testability.

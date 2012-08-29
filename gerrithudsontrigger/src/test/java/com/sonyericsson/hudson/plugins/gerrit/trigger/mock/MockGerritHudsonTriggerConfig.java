@@ -88,6 +88,12 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public String getGerritCmdBuildNotBuilt() {
+        // TODO Copy-pasted from getGerritCmdBuildUnstable.
+        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=0 MSG=The build is NotBuilt";
+    }
+
+    @Override
     public File getGerritAuthKeyFile() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -171,6 +177,16 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public int getGerritBuildUnstableCodeReviewValue() {
         return -4;
+    }
+
+    @Override
+    public int getGerritBuildNotBuiltVerifiedValue() {
+        return -5;
+    }
+
+    @Override
+    public int getGerritBuildNotBuiltCodeReviewValue() {
+        return -6;
     }
 
     @Override

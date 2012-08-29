@@ -114,12 +114,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildFailedCodeReviewValue;
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
+    private Integer gerritBuildNotBuiltVerifiedValue;
+    private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private boolean escapeQuotes;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
+    private String buildNotBuiltMessage;
     private String buildUnsuccessfulFilepath;
     private String customUrl;
     private List<PluginGerritEvent> triggerOnEvents;
@@ -157,12 +160,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param gerritBuildUnstableCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is unstable, null means
      *                                       that the global value should be used.
+     * @param gerritBuildNotBuiltVerifiedValue
+     *                                       Job specific Gerrit verified vote when a build is not built, null means that
+     *                                       the global value should be used.
+     * @param gerritBuildNotBuiltCodeReviewValue
+     *                                       Job specific Gerrit code review vote when a build is not built, null means
+     *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
+     * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
      * @param customUrl                      Custom URL to sen to gerrit instead of build URL
@@ -181,12 +191,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildFailedCodeReviewValue,
             Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue,
+            Integer gerritBuildNotBuiltVerifiedValue,
+            Integer gerritBuildNotBuiltCodeReviewValue,
             boolean silentMode,
             boolean escapeQuotes,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
             String buildFailureMessage,
+            String buildNotBuiltMessage,
             String buildUnsuccessfulFilepath,
             String customUrl,
             List<PluginGerritEvent> triggerOnEvents,
@@ -201,12 +214,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
+        this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
+        this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
         this.silentMode = silentMode;
         this.escapeQuotes = escapeQuotes;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
+        this.buildNotBuiltMessage = buildNotBuiltMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
         this.triggerOnEvents = triggerOnEvents;
@@ -938,6 +954,46 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Job specific Gerrit code review vote when a build is not built, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildNotBuiltCodeReviewValue() {
+        return gerritBuildNotBuiltCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit code review vote when a build is not built, providing null means that the global value should
+     * be used.
+     *
+     * @param gerritBuildNotBuiltCodeReviewValue
+     *         the vote value.
+     */
+    public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
+        this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is not built, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildNotBuiltVerifiedValue() {
+        return gerritBuildNotBuiltVerifiedValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is not built, providing null means that the global value should be
+     * used.
+     *
+     * @param gerritBuildNotBuiltVerifiedValue
+     *         the vote value.
+     */
+    public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
+        this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
+    }
+
+    /**
      * Sets the path to a file that contains the unsuccessful Gerrit comment message.
      *
      * @param path The unsuccessful message comment file path
@@ -1074,6 +1130,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public String getBuildFailureMessage() {
         return buildFailureMessage;
+    }
+
+    /**
+     * The message to show users when all builds are not built, if custom messages are enabled.
+     *
+     * @return The build not built message
+     */
+    public String getBuildNotBuiltMessage() {
+        return buildNotBuiltMessage;
     }
 
     /**

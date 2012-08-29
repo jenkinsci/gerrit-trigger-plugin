@@ -47,6 +47,14 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
+                <f:entry title="${%Not built}"
+                         field="gerritBuildNotBuiltVerifiedValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltVerified.html">
+                    <f:textbox name="gerritBuildNotBuiltVerifiedValue"
+                               value="${it.gerritBuildNotBuiltVerifiedValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedCodeReviewValue"
@@ -80,6 +88,14 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
+                <f:entry title="${%Not built}"
+                         field="gerritBuildNotBuiltCodeReviewValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltCodeReview.html">
+                    <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
+                               value="${it.gerritBuildNotBuiltCodeReviewValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
             </f:section>
             <f:section title="${%Custom Build Messages}">
                 <f:entry title="${%Build Start Message}"
@@ -100,6 +116,11 @@
                 <f:entry title="${%Build Failure Message}"
                          field="buildFailureMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildFailureMessage.html">
+                   <f:textbox/>
+                </f:entry>
+                <f:entry title="${%Build Not Built Message}"
+                         field="buildNotBuiltMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
                    <f:textbox/>
                 </f:entry>
                 <f:entry title="${%Unsuccessful Message File}"

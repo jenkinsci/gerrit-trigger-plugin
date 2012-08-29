@@ -52,6 +52,8 @@ public class ConfigTest {
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
                 + "\"gerritBuildFailedCodeReviewValue\":\"1\","
@@ -62,6 +64,8 @@ public class ConfigTest {
                 + "\"gerritBuildSuccessfulVerifiedValue\":\"-3\","
                 + "\"gerritBuildUnstableCodeReviewValue\":\"4\","
                 + "\"gerritBuildUnstableVerifiedValue\":\"-4\","
+                + "\"gerritBuildNotBuiltCodeReviewValue\":\"5\","
+                + "\"gerritBuildNotBuiltVerifiedValue\":\"-5\","
                 + "\"gerritFrontEndUrl\":\"http://gerrit:8088\","
                 + "\"gerritHostName\":\"gerrit\","
                 + "\"gerritSshPort\":\"1337\","
@@ -82,6 +86,9 @@ public class ConfigTest {
         assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildUnstable());
+        assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildNotBuilt());
         assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),
                      config.getGerritAuthKeyFile().getPath());
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
@@ -93,6 +100,8 @@ public class ConfigTest {
         assertEquals(-3, config.getGerritBuildSuccessfulVerifiedValue());
         assertEquals(4, config.getGerritBuildUnstableCodeReviewValue());
         assertEquals(-4, config.getGerritBuildUnstableVerifiedValue());
+        assertEquals(5, config.getGerritBuildNotBuiltCodeReviewValue());
+        assertEquals(-5, config.getGerritBuildNotBuiltVerifiedValue());
         assertEquals("http://gerrit:8088/", config.getGerritFrontEndUrl());
         assertEquals("gerrit", config.getGerritHostName());
         assertEquals(1337, config.getGerritSshPort());

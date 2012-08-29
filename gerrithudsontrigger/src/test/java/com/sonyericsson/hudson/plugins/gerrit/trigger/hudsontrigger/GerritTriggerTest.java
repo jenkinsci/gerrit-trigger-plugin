@@ -38,7 +38,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.Retr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.AbstractBuild;
@@ -199,12 +198,8 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(20);
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -238,10 +233,8 @@ public class GerritTriggerTest {
         });
 
         name[0] = "OriginalName";
-        GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", "", "", null, false, ""));
-        doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
-        trigger.start(project, true);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        //doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
         project.addTrigger(trigger);
 
         // simulate a rename
@@ -262,8 +255,9 @@ public class GerritTriggerTest {
     @Test
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        GerritTrigger trigger = spy(new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true,
-                true, "", "", "", "", "", "", null, false, ""));
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, true, "", "", "", "", "", null, null, null, false, "");
+        trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNull(triggerOnEvents);
         doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
@@ -291,12 +285,8 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(-20);
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -329,12 +319,8 @@ public class GerritTriggerTest {
         when(plugin.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(10000);
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -366,12 +352,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -415,12 +396,7 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -468,16 +444,9 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        event.getChange().setOwner(owner);
-        event.getPatchSet().setUploader(uploader);
-        event.setAccount(uploader);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setEscapeQuotes(false);
+        PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -523,16 +492,9 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        event.getChange().setOwner(owner);
-        event.getPatchSet().setUploader(uploader);
-        event.setAccount(null);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setEscapeQuotes(false);
+        PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, null);
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -578,16 +540,9 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        event.getChange().setOwner(owner);
-        event.getPatchSet().setUploader(null);
-        event.setAccount(uploader);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setEscapeQuotes(false);
+        PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -632,16 +587,9 @@ public class GerritTriggerTest {
 
         Account owner = new Account("Bobby", "bobby@somewhere.com");
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        event.getChange().setOwner(owner);
-        event.getPatchSet().setUploader(null);
-        event.setAccount(null);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setEscapeQuotes(false);
+        PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, null);
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -687,16 +635,9 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Bobby", null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        trigger.start(project, true);
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        event.getChange().setOwner(owner);
-        event.getPatchSet().setUploader(uploader);
-        event.setAccount(uploader);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setEscapeQuotes(false);
+        PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -746,11 +687,10 @@ public class GerritTriggerTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         when(listener.isBuilding(project, event)).thenReturn(false);
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.EMPTY_LIST);
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -789,11 +729,8 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.EMPTY_LIST);
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
 
@@ -827,6 +764,10 @@ public class GerritTriggerTest {
         when(thisProject.getFullDisplayName()).thenReturn("MockedProject");
         when(thisProject.isBuildable()).thenReturn(true);
 
+        AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
+        when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
+        when(otherProject.isBuildable()).thenReturn(true);
+
         AbstractBuild thisBuild = mock(AbstractBuild.class);
         when(thisBuild.getNumber()).thenReturn(1);
         when(thisBuild.getProject()).thenReturn(thisProject);
@@ -835,17 +776,16 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(event)).thenReturn(false);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger thisTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
-        GerritTrigger otherTrigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger thisTrigger = Setup.createDefaultTrigger(null);
+        thisTrigger.setGerritProjects(Collections.EMPTY_LIST);
+        thisTrigger.setEscapeQuotes(false);
+        thisTrigger.setSilentMode(false);
         doReturn(thisTrigger).when(thisProject).getTrigger(GerritTrigger.class);
-        AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
-        when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
-        when(otherProject.isBuildable()).thenReturn(true);
+
+        GerritTrigger otherTrigger = Setup.createDefaultTrigger(null);
+        otherTrigger.setGerritProjects(Collections.EMPTY_LIST);
+        otherTrigger.setEscapeQuotes(false);
+        otherTrigger.setSilentMode(false);
         doReturn(otherTrigger).when(otherProject).getTrigger(GerritTrigger.class);
 
         AbstractBuild otherBuild = mock(AbstractBuild.class);
@@ -896,11 +836,10 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -931,11 +870,10 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.isBuildable()).thenReturn(false);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.EMPTY_LIST, 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.EMPTY_LIST);
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -964,11 +902,10 @@ public class GerritTriggerTest {
         doReturn(false).when(gP).isInteresting(any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -998,11 +935,10 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, false, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -1037,11 +973,8 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "myProject", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -1077,11 +1010,8 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger trigger = new GerritTrigger(Collections.nCopies(1, gP), 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "myProject", project);
 
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -1149,11 +1079,7 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger triggerWithEscapeQuotesOn = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger triggerWithEscapeQuotesOn = Setup.createDefaultTrigger(null);
 
         //the Trigger is creating parameters with escaped quote in "subject".
         ParametersAction paremetersAction =
@@ -1221,11 +1147,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
-        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> pluginEvents = new LinkedList<PluginGerritEvent>();
-        pluginEvents.add(pluginEvent);
-        GerritTrigger triggerWithEscapeQuotesOff = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, true, false,
-                "", "", "", "", null, null, pluginEvents, false, "");
+        GerritTrigger triggerWithEscapeQuotesOff = Setup.createDefaultTrigger(null);
+        triggerWithEscapeQuotesOff.setEscapeQuotes(false);
 
         //the Trigger is creating parameters with escaped quote in "subject"
         ParametersAction paremetersAction =
