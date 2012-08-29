@@ -35,9 +35,12 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatc
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
@@ -45,9 +48,11 @@ import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Result;
+import hudson.model.TaskListener;
 
 import net.sf.json.JSONObject;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,6 +121,24 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Create a new patchset created event with the given data.
+     *
+     * @param owner owner of the change
+     * @param uploader uploader of the patchset
+     * @param account account that caused event
+     * @return a new PatchsetCreated event.
+     */
+    public static PatchsetCreated createPatchsetCreatedWithAccounts(Account owner, Account uploader, Account account)
+    {
+        PatchsetCreated event = createPatchsetCreated();
+        event.getChange().setOwner(owner);
+        event.getPatchSet().setUploader(uploader);
+        event.setAccount(account);
+
         return event;
     }
 
@@ -296,6 +319,26 @@ public final class Setup {
     }
 
     /**
+     * Create a new default trigger object.
+     *
+     * @param project if not null, start the trigger with the given project.
+     * @return a new GerritTrigger object.
+     */
+    public static GerritTrigger createDefaultTrigger(AbstractProject project) {
+        PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+
+        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, true, "", "", "", "", "", null, null, triggerOnEvents);
+
+        if (project != null)
+          trigger.start(project, true);
+
+        return trigger;
+    }
+
+    /**
      * ToGerritRunListener mock for failure-message tests.
      *
      * @param build The build
@@ -328,5 +371,39 @@ public final class Setup {
         List<VerdictCategory> list = new LinkedList<VerdictCategory>();
         list.add(cat);
         return list;
+    }
+
+    /**
+     * Create an MemoryImprint.Entry for the specific build and project.
+     */
+    public static MemoryImprint.Entry createImprintEntry(AbstractProject project, AbstractBuild build) {
+        MemoryImprint.Entry entry = mock(MemoryImprint.Entry.class);
+        when(entry.getBuild()).thenReturn(build);
+        when(entry.getProject()).thenReturn(project);
+        return entry;
+    }
+
+    /**
+     * Create an MemoryImprint.Entry with a given trigger and a build that
+     * returns the given result.
+     */
+    public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(GerritTrigger trigger, Result result) {
+        AbstractProject project = mock(AbstractProject.class);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getResult()).thenReturn(result);
+        return createImprintEntry(project, build);
+    }
+
+    /**
+     * Create a mocked build that has the url 'test/' and the given project and
+     * envvars. TaskListener is needed to stub out AbstractBuild.getEnvironment.
+     */
+    public static AbstractBuild createBuild(AbstractProject project, TaskListener taskListener, EnvVars env) throws IOException, InterruptedException {
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getUrl()).thenReturn("test/");
+        when(build.getProject()).thenReturn(project);
+        when(build.getEnvironment(taskListener)).thenReturn(env);
+        return build;
     }
 }

@@ -102,6 +102,13 @@
                                    default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE}"
                                    checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Not built}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltVerified.html">
+                        <f:textbox name="gerritBuildNotBuiltVerifiedValue"
+                                   value="${it.config.gerritBuildNotBuiltVerifiedValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
                     <tr>
                         <td></td>
                         <td>
@@ -138,6 +145,13 @@
                                    default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE}"
                                    checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Not built}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltCodeReview.html">
+                        <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
+                                   value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
+                                   default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE}"
+                                   checkUrl="'${rootURL}/gerrit-trigger/integerCheck?value='+escape(this.value)"/>
+                    </f:entry>
                 </f:section>
                 <f:advanced>
                     <f:section title="${%Gerrit Verified Commands}">
@@ -164,6 +178,12 @@
                             <f:textbox name="gerritVerifiedCmdBuildUnstable"
                                        value="${it.config.gerritCmdBuildUnstable}"
                                        default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Not built}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildNotBuilt.html">
+                            <f:textbox name="gerritVerifiedCmdBuildNotBuilt"
+                                       value="${it.config.gerritCmdBuildNotBuilt}"
+                                       default="gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'No Builds Executed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                     </f:section>
                     <f:section title="${%Misc.}">

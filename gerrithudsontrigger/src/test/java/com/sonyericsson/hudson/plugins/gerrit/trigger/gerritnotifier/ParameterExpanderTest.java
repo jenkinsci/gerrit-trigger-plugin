@@ -81,11 +81,7 @@ public class ParameterExpanderTest {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
-        AbstractBuild r = mock(AbstractBuild.class);
-        when(r.getUrl()).thenReturn("test/");
-        when(r.getProject()).thenReturn(project);
-        EnvVars env = Setup.createEnvVars();
-        when(r.getEnvironment(taskListener)).thenReturn(env);
+        AbstractBuild r = Setup.createBuild(project, taskListener, Setup.createEnvVars());
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildsStartedStats stats = Setup.createBuildStartedStats(event);
@@ -123,42 +119,34 @@ public class ParameterExpanderTest {
 
         ParameterExpander instance = new ParameterExpander(config);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(3);
-        AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.SUCCESS);
-        entries[0] = mock(MemoryImprint.Entry.class);
-        when(entries[0].getBuild()).thenReturn(build);
-        when(entries[0].getProject()).thenReturn(project);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(1);
-        project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.UNSTABLE);
-        entries[1] = mock(MemoryImprint.Entry.class);
-        when(entries[1].getBuild()).thenReturn(build);
-        when(entries[1].getProject()).thenReturn(project);
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(-1);
-        project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.UNSTABLE);
-        entries[2] = mock(MemoryImprint.Entry.class);
-        when(entries[2].getBuild()).thenReturn(build);
-        when(entries[2].getProject()).thenReturn(project);
+        entries[2] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildNotBuiltVerifiedValue()).thenReturn(-4);
+        entries[3] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.NOT_BUILT);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
+        // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
         int expResult = -1;
-        int result = instance.getMinimumVerifiedValue(memoryImprint);
+        int result = instance.getMinimumVerifiedValue(memoryImprint, true);
+        assertEquals(expResult, result);
+
+        // Otherwise, we should use NOT_BUILT.
+        expResult = -4;
+        result = instance.getMinimumVerifiedValue(memoryImprint, false);
         assertEquals(expResult, result);
     }
 
@@ -172,42 +160,34 @@ public class ParameterExpanderTest {
 
         ParameterExpander instance = new ParameterExpander(config);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(3);
-        AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.SUCCESS);
-        entries[0] = mock(MemoryImprint.Entry.class);
-        when(entries[0].getBuild()).thenReturn(build);
-        when(entries[0].getProject()).thenReturn(project);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(1);
-        project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.UNSTABLE);
-        entries[1] = mock(MemoryImprint.Entry.class);
-        when(entries[1].getBuild()).thenReturn(build);
-        when(entries[1].getProject()).thenReturn(project);
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-1);
-        project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(Result.UNSTABLE);
-        entries[2] = mock(MemoryImprint.Entry.class);
-        when(entries[2].getBuild()).thenReturn(build);
-        when(entries[2].getProject()).thenReturn(project);
+        entries[2] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildNotBuiltCodeReviewValue()).thenReturn(-4);
+        entries[3] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.NOT_BUILT);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
+        // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
         int expResult = -1;
-        int result = instance.getMinimumCodeReviewValue(memoryImprint);
+        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(expResult, result);
+
+        // Otherwise, we should use NOT_BUILT.
+        expResult = -4;
+        result = instance.getMinimumCodeReviewValue(memoryImprint, false);
         assertEquals(expResult, result);
     }
 
@@ -299,12 +279,9 @@ public class ParameterExpanderTest {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
-        AbstractBuild r = mock(AbstractBuild.class);
-        when(r.getUrl()).thenReturn("test/");
-        when(r.getProject()).thenReturn(project);
         EnvVars env = Setup.createEnvVars();
+        AbstractBuild r = Setup.createBuild(project, taskListener, env);
         env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
-        when(r.getEnvironment(taskListener)).thenReturn(env);
 
         when(r.getResult()).thenReturn(Result.SUCCESS);
 
@@ -315,11 +292,7 @@ public class ParameterExpanderTest {
         when(memoryImprint.whereAnyBuildsFailed()).thenReturn(false);
         when(memoryImprint.whereAnyBuildsUnstable()).thenReturn(false);
 
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[1];
-        entries[0] = mock(MemoryImprint.Entry.class);
-        when(entries[0].getBuild()).thenReturn(r);
-        when(entries[0].getProject()).thenReturn(project);
-
+        MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         assertThat("Event should be a ChangeBasedEvent", event, instanceOf(ChangeBasedEvent.class));
@@ -377,12 +350,9 @@ public class ParameterExpanderTest {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
-        AbstractBuild r = mock(AbstractBuild.class);
-        when(r.getUrl()).thenReturn("test/");
-        when(r.getProject()).thenReturn(project);
         EnvVars env = Setup.createEnvVars();
+        AbstractBuild r = Setup.createBuild(project, taskListener, env);
         env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
-        when(r.getEnvironment(taskListener)).thenReturn(env);
 
         when(r.getResult()).thenReturn(Result.FAILURE);
 
@@ -395,10 +365,7 @@ public class ParameterExpanderTest {
         when(memoryImprint.whereAnyBuildsFailed()).thenReturn(false);
         when(memoryImprint.whereAnyBuildsUnstable()).thenReturn(false);
 
-        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[1];
-        entries[0] = mock(MemoryImprint.Entry.class);
-        when(entries[0].getBuild()).thenReturn(r);
-        when(entries[0].getProject()).thenReturn(project);
+        MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
 
         if (failureMessage != null && !failureMessage.isEmpty()) {
             when(entries[0].getUnsuccessfulMessage()).thenReturn(failureMessage.trim());

@@ -255,6 +255,12 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildUnstableCodeReviewValue();
             }
+        } else if (res == Result.NOT_BUILT) {
+            if (trigger.getGerritBuildNotBuiltCodeReviewValue() != null) {
+                return trigger.getGerritBuildNotBuiltCodeReviewValue();
+            } else {
+                return config.getGerritBuildNotBuiltCodeReviewValue();
+            }
         } else {
             //As bad as failue, for now
             if (trigger.getGerritBuildFailedCodeReviewValue() != null) {
@@ -290,6 +296,12 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildUnstableVerifiedValue();
             }
+        } else if (res == Result.NOT_BUILT) {
+            if (trigger.getGerritBuildNotBuiltVerifiedValue() != null) {
+                return trigger.getGerritBuildNotBuiltVerifiedValue();
+            } else {
+                return config.getGerritBuildNotBuiltVerifiedValue();
+            }
         } else {
             //As bad as failure, for now
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
@@ -303,14 +315,19 @@ public class ParameterExpander {
     /**
      * Returns the minimum verified value for the build results in the memory.
      * @param memoryImprint the memory.
+     * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
-    protected int getMinimumVerifiedValue(MemoryImprint memoryImprint) {
+    protected int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
-            verified = Math.min(verified, getVerifiedValue(
-                    entry.getBuild().getResult(),
-                    GerritTrigger.getTrigger(entry.getProject())));
+            Result result = entry.getBuild().getResult();
+            if (onlyBuilt && result == Result.NOT_BUILT) {
+                continue;
+            }
+
+            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            verified = Math.min(verified, getVerifiedValue(result, trigger));
         }
         return verified;
     }
@@ -318,14 +335,19 @@ public class ParameterExpander {
     /**
      * Returns the minimum code review value for the build results in the memory.
      * @param memoryImprint the memory
+     * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
-    protected int getMinimumCodeReviewValue(MemoryImprint memoryImprint) {
+    protected int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
-            codeReview = Math.min(codeReview, getCodeReviewValue(
-                    entry.getBuild().getResult(),
-                    GerritTrigger.getTrigger(entry.getProject())));
+            Result result = entry.getBuild().getResult();
+            if (onlyBuilt && result == Result.NOT_BUILT) {
+                continue;
+            }
+
+            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            codeReview = Math.min(codeReview, getCodeReviewValue(result, trigger));
         }
         return codeReview;
     }
@@ -338,12 +360,19 @@ public class ParameterExpander {
      */
     public String getBuildCompletedCommand(MemoryImprint memoryImprint, TaskListener listener) {
         String command;
+        // We only count builds without NOT_BUILT status normally. If *no*
+        // builds were successful, unstable or failed, we find the minimum
+        // verified/code review value for the NOT_BUILT ones too.
+        boolean onlyCountBuilt = true;
         if (memoryImprint.whereAllBuildsSuccessful()) {
             command = config.getGerritCmdBuildSuccessful();
         } else if (memoryImprint.whereAnyBuildsFailed()) {
             command = config.getGerritCmdBuildFailed();
         } else if (memoryImprint.whereAnyBuildsUnstable()) {
             command = config.getGerritCmdBuildUnstable();
+        } else if (memoryImprint.wereAllBuildsNotBuilt()) {
+            onlyCountBuilt = false;
+            command = config.getGerritCmdBuildNotBuilt();
         } else {
             //Just as bad as failed for now.
             command = config.getGerritCmdBuildFailed();
@@ -352,8 +381,8 @@ public class ParameterExpander {
         int verified = 0;
         int codeReview = 0;
         if (memoryImprint.getEvent().isScorable()) {
-            verified = getMinimumVerifiedValue(memoryImprint);
-            codeReview = getMinimumCodeReviewValue(memoryImprint);
+            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
+            codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
         }
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
@@ -417,6 +446,8 @@ public class ParameterExpander {
                         customMessage = trigger.getBuildFailureMessage();
                     } else if (res == Result.UNSTABLE) {
                         customMessage = trigger.getBuildUnstableMessage();
+                    } else if (res == Result.NOT_BUILT) {
+                        customMessage = trigger.getBuildNotBuiltMessage();
                     } else {
                         customMessage = trigger.getBuildFailureMessage();
                     }
