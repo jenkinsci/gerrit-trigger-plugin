@@ -53,7 +53,7 @@ public class ConfigTest {
                 + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit approve <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit approve <CHANGE>,<PATCHSET> "
-                + "--message 'You are not built for this <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
                 + "\"gerritBuildFailedCodeReviewValue\":\"1\","
@@ -87,7 +87,7 @@ public class ConfigTest {
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildUnstable());
         assertEquals("gerrit approve <CHANGE>,<PATCHSET> "
-                + "--message 'You are not built for this <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildNotBuilt());
         assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),
                      config.getGerritAuthKeyFile().getPath());

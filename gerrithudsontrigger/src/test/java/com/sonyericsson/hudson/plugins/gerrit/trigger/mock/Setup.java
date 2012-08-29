@@ -332,8 +332,9 @@ public final class Setup {
         GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, true, "", "", "", "", "", null, null, triggerOnEvents);
 
-        if (project != null)
+        if (project != null) {
           trigger.start(project, true);
+        }
 
         return trigger;
     }
@@ -375,6 +376,10 @@ public final class Setup {
 
     /**
      * Create an MemoryImprint.Entry for the specific build and project.
+     *
+     * @param project the project
+     * @param build the build
+     * @return an entry.
      */
     public static MemoryImprint.Entry createImprintEntry(AbstractProject project, AbstractBuild build) {
         MemoryImprint.Entry entry = mock(MemoryImprint.Entry.class);
@@ -386,6 +391,10 @@ public final class Setup {
     /**
      * Create an MemoryImprint.Entry with a given trigger and a build that
      * returns the given result.
+     *
+     * @param trigger the trigger
+     * @param result the result
+     * @return an entry with the parameters.
      */
     public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(GerritTrigger trigger, Result result) {
         AbstractProject project = mock(AbstractProject.class);
@@ -397,9 +406,17 @@ public final class Setup {
 
     /**
      * Create a mocked build that has the url 'test/' and the given project and
-     * envvars. TaskListener is needed to stub out AbstractBuild.getEnvironment.
+     * env-vars. TaskListener is needed to stub out AbstractBuild.getEnvironment.
+     *
+     * @param project the project.
+     * @param taskListener the taskListener to stub out AbstractBuild.getEnvironment.
+     * @param env the env vars.
+     * @return a mocked build.
+     * @throws java.io.IOException if so.
+     * @throws InterruptedException if so.
      */
-    public static AbstractBuild createBuild(AbstractProject project, TaskListener taskListener, EnvVars env) throws IOException, InterruptedException {
+    public static AbstractBuild createBuild(AbstractProject project, TaskListener taskListener, EnvVars env)
+            throws IOException, InterruptedException {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getUrl()).thenReturn("test/");
         when(build.getProject()).thenReturn(project);
