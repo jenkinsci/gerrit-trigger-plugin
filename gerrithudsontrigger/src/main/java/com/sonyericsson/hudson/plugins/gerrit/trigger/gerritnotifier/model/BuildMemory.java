@@ -27,12 +27,11 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
  *
@@ -51,11 +52,10 @@ import java.util.TreeMap;
 public class BuildMemory {
 
     /**
-     * Compares GerritTriggeredEvents using the Object.hashCode() method.
-     * This ensures that every event received from Gerrit is kept track of individually.
+     * Compares GerritTriggeredEvents using the Object.hashCode() method. This ensures that every event received from
+     * Gerrit is kept track of individually.
      *
      * @author James E. Blair &lt;jeblair@hp.com&gt;
-     *
      */
     private class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
         @Override
@@ -115,6 +115,7 @@ public class BuildMemory {
      *
      * @param event the event.
      * @return the status as it is now.
+     *
      * @see MemoryImprint#getStatusReport()
      */
     public synchronized String getStatusReport(GerritTriggeredEvent event) {
@@ -190,9 +191,9 @@ public class BuildMemory {
     }
 
     /**
-     * Adds a new memory about a build that has been retriggered.
-     * If there is an active memory about the provided event, then the project is reset with no build info.
-     * Otherwise the memory is recreated from the list of other builds and their result.
+     * Adds a new memory about a build that has been retriggered. If there is an active memory about the provided event,
+     * then the project is reset with no build info. Otherwise the memory is recreated from the list of other builds and
+     * their result.
      *
      * @param event       the event to be retriggered.
      * @param project     the project that has been retriggered.
@@ -226,9 +227,9 @@ public class BuildMemory {
     }
 
     /**
-     * Updates the {@link TriggerContext} for the event.
-     * The cause and build is the "focal point" for the update, but all memory entities will be updated,
-     * but only the current context will be {@link TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
+     * Updates the {@link TriggerContext} for the event. The cause and build is the "focal point" for the update, but
+     * all memory entities will be updated, but only the current context will be {@link
+     * TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
      *
      * @param cause the cause.
      * @param r     the build the cause is in.
@@ -343,8 +344,8 @@ public class BuildMemory {
     /**
      * Records the failure message for the given build.
      *
-     * @param event the event.
-     * @param r the build that caused the failure.
+     * @param event          the event.
+     * @param r              the build that caused the failure.
      * @param failureMessage the failure message
      */
     public void setEntryFailureMessage(GerritTriggeredEvent event, AbstractBuild r, String failureMessage) {
@@ -436,8 +437,8 @@ public class BuildMemory {
         }
 
         /**
-         * Resets the build info for the project.
-         * If the project doesn't exist it would be as if calling {@link #set(hudson.model.AbstractProject)}.
+         * Resets the build info for the project. If the project doesn't exist it would be as if calling {@link
+         * #set(hudson.model.AbstractProject)}.
          *
          * @param project the project to reset.
          */
@@ -502,8 +503,7 @@ public class BuildMemory {
         }
 
         /**
-         * Returns a string describing the projects and builds status in this memory.
-         * Good for logging.
+         * Returns a string describing the projects and builds status in this memory. Good for logging.
          *
          * @return a report.
          */
@@ -559,12 +559,12 @@ public class BuildMemory {
         }
 
         /**
-         * Tells if all builds in the memory were successful.
+         * If all entry's results are configured to be skipped.
          *
-         * @return true if it is so, false if not all builds have started or not completed or have any different
-         *         result than {@link Result#SUCCESS}.
+         * @return true if so.
+         * @see #wereAllBuildsSuccessful()
          */
-        public synchronized boolean whereAllBuildsSuccessful() {
+        public synchronized boolean areAllBuildResultsSkipped() {
             for (Entry entry : list) {
                 if (entry.getBuild() == null) {
                     return false;
@@ -572,8 +572,47 @@ public class BuildMemory {
                     return false;
                 }
                 Result buildResult = entry.getBuild().getResult();
-                if (buildResult != Result.SUCCESS) {
+                GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+                if (!shouldSkip(trigger.getSkipVote(), buildResult)) {
                     return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Tells if all builds in the memory were successful.
+         *
+         * @return true if it is so, false if not all builds have started or not completed or have any different result
+         *         than {@link Result#SUCCESS}.
+         */
+        public synchronized boolean wereAllBuildsSuccessful() {
+            if (areAllBuildResultsSkipped()) {
+                for (Entry entry : list) {
+                    if (entry.getBuild() == null) {
+                        return false;
+                    } else if (!entry.isBuildCompleted()) {
+                        return false;
+                    }
+                    Result buildResult = entry.getBuild().getResult();
+                    if (buildResult != Result.SUCCESS) {
+                        return false;
+                    }
+                }
+            } else {
+                for (Entry entry : list) {
+                    if (entry.getBuild() == null) {
+                        return false;
+                    } else if (!entry.isBuildCompleted()) {
+                        return false;
+                    }
+                    Result buildResult = entry.getBuild().getResult();
+                    if (buildResult != Result.SUCCESS) {
+                        GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+                        if (!shouldSkip(trigger.getSkipVote(), buildResult)) {
+                            return false;
+                        }
+                    }
                 }
             }
             return true;
@@ -584,7 +623,7 @@ public class BuildMemory {
          *
          * @return true if it is so.
          */
-        public synchronized boolean whereAnyBuildsFailed() {
+        public synchronized boolean wereAnyBuildsFailed() {
             for (Entry entry : list) {
                 if (entry.getBuild() != null && entry.isBuildCompleted()
                         && entry.getBuild().getResult() == Result.FAILURE) {
@@ -599,7 +638,7 @@ public class BuildMemory {
          *
          * @return true if it is so.
          */
-        public synchronized boolean whereAnyBuildsUnstable() {
+        public synchronized boolean wereAnyBuildsUnstable() {
             for (Entry entry : list) {
                 if (entry.getBuild() != null && entry.isBuildCompleted()
                         && entry.getBuild().getResult() == Result.UNSTABLE) {
@@ -612,8 +651,8 @@ public class BuildMemory {
         /**
          * Tells if all builds in the memory were not built.
          *
-         * @return true if it is so, false if not all builds have started or not completed or have any different
-         *         result than {@link Result#NOT_BUILT}.
+         * @return true if it is so, false if not all builds have started or not completed or have any different result
+         *         than {@link Result#NOT_BUILT}.
          */
         public synchronized boolean wereAllBuildsNotBuilt() {
             for (Entry entry : list) {

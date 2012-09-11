@@ -43,6 +43,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+
 /**
  * Expands a parameterized string to its full potential.
  *
@@ -352,7 +354,14 @@ public class ParameterExpander {
             }
 
             GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            if (shouldSkip(trigger.getSkipVote(), result)) {
+                continue;
+            }
             verified = Math.min(verified, getVerifiedValue(result, trigger));
+
+        }
+        if (verified >= Integer.MAX_VALUE) {
+            verified = 0;
         }
         return verified;
     }
@@ -372,15 +381,22 @@ public class ParameterExpander {
             }
 
             GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            if (shouldSkip(trigger.getSkipVote(), result)) {
+                continue;
+            }
             codeReview = Math.min(codeReview, getCodeReviewValue(result, trigger));
+        }
+        if (codeReview >= Integer.MAX_VALUE) {
+            codeReview = 0;
         }
         return codeReview;
     }
 
     /**
      * Gets the "expanded" build completed command to send to gerrit.
+     *
      * @param memoryImprint the memory with all the information
-     * @param listener the taskListener
+     * @param listener      the taskListener
      * @return the command.
      */
     public String getBuildCompletedCommand(MemoryImprint memoryImprint, TaskListener listener) {
@@ -389,11 +405,11 @@ public class ParameterExpander {
         // builds were successful, unstable or failed, we find the minimum
         // verified/code review value for the NOT_BUILT ones too.
         boolean onlyCountBuilt = true;
-        if (memoryImprint.whereAllBuildsSuccessful()) {
+        if (memoryImprint.wereAllBuildsSuccessful()) {
             command = config.getGerritCmdBuildSuccessful();
-        } else if (memoryImprint.whereAnyBuildsFailed()) {
+        } else if (memoryImprint.wereAnyBuildsFailed()) {
             command = config.getGerritCmdBuildFailed();
-        } else if (memoryImprint.whereAnyBuildsUnstable()) {
+        } else if (memoryImprint.wereAnyBuildsUnstable()) {
             command = config.getGerritCmdBuildUnstable();
         } else if (memoryImprint.wereAllBuildsNotBuilt()) {
             onlyCountBuilt = false;
@@ -490,6 +506,9 @@ public class ParameterExpander {
                     // otherwise use a generic indicator
                     if (customMessage == null || customMessage.equals("")) {
                         str.append(res.toString());
+                        if (shouldSkip(trigger.getSkipVote(), res)) {
+                            str.append(" (skipped)");
+                        }
                     } else {
                         str.append(customMessage);
                     }

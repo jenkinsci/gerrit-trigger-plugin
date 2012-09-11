@@ -14,6 +14,20 @@
                          help="/plugin/gerrit-trigger/trigger/help-CustomUrl.html">
                     <f:textbox/>
                 </f:entry>
+                <f:entry title="${%Skip Vote}"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritSkipVote.html">
+                    <div name="skipVote">
+                        <j:set var="skipIt" value="${instance.skipVote}"/>
+                        <input type="checkbox" name="_.onSuccessful" checked="${skipIt.onSuccessful?'true':null}"/>
+                        <label class="attach-previous">${%Successful}</label>
+                        <input type="checkbox" name="_.onFailed" checked="${skipIt.onFailed?'true':null}"/>
+                        <label class="attach-previous">${%Failed}</label>
+                        <input type="checkbox" name="_.onUnstable" checked="${skipIt.onUnstable?'true':null}"/>
+                        <label class="attach-previous">${%Unstable}</label>
+                        <input type="checkbox" name="_.onNotBuilt" checked="${skipIt.onNotBuilt?'true':null}"/>
+                        <label class="attach-previous">${%Not built}</label>
+                    </div>
+                </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedVerifiedValue"

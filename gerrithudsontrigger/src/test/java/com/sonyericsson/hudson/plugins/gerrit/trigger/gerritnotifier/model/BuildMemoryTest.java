@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -39,6 +41,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -589,5 +592,391 @@ public class BuildMemoryTest {
         }
         assertNotNull(entry);
         assertFalse(entry.isBuildCompleted());
+    }
+
+    /**
+     * Tests a scenario when two builds are successful and one is unstable, but the unstable build is
+     * configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulOneUnstableSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(false, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build2);
+
+        AbstractProject project3 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, true, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = mock(AbstractBuild.class);
+        when(build3.getProject()).thenReturn(project3);
+        when(build3.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build3);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+        instance.completed(event, build3);
+
+        assertTrue(instance.getMemoryImprint(event).wereAllBuildsSuccessful());
+
+    }
+
+    /**
+     * Tests a scenario when two builds are successful and one is failed, but the failed build is
+     * configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulOneFailedSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(false, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build2);
+
+        AbstractProject project3 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, true, true, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = mock(AbstractBuild.class);
+        when(build3.getProject()).thenReturn(project3);
+        when(build3.getResult()).thenReturn(Result.FAILURE);
+        instance.started(event, build3);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+        instance.completed(event, build3);
+
+        assertTrue(instance.getMemoryImprint(event).wereAllBuildsSuccessful());
+
+    }
+
+    /**
+     * Tests a scenario when one build is successful, one is failed, and one is unstable,
+     * but the failed and unstable builds are configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulOneUnstableOneFailedBothSkippedOneSuccessful() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(false, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, true, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build2);
+
+        AbstractProject project3 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, true, true, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = mock(AbstractBuild.class);
+        when(build3.getProject()).thenReturn(project3);
+        when(build3.getResult()).thenReturn(Result.FAILURE);
+        instance.started(event, build3);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+        instance.completed(event, build3);
+
+        assertTrue(instance.getMemoryImprint(event).wereAllBuildsSuccessful());
+
+    }
+
+    /**
+     * Tests a scenario when two builds are unstable and one is successful, the successful build is
+     * configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return false and
+     * {@link BuildMemory.MemoryImprint#wereAnyBuildsUnstable()} will return true.
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulUnstableOneSuccessfulSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(false, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build2);
+
+        AbstractProject project3 = mock(AbstractProject.class);
+        skipVote = new SkipVote(true, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = mock(AbstractBuild.class);
+        when(build3.getProject()).thenReturn(project3);
+        when(build3.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build3);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+        instance.completed(event, build3);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertFalse(memoryImprint.wereAllBuildsSuccessful());
+        assertTrue(memoryImprint.wereAnyBuildsUnstable());
+
+    }
+
+    /**
+     * Tests a scenario when two builds are successful and one is unstable, one of the successful builds is
+     * configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return false and
+     * {@link BuildMemory.MemoryImprint#wereAnyBuildsUnstable()} will return true.
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulUnstableTwoSuccessfulOneSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(true, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build2);
+
+        AbstractProject project3 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = mock(AbstractBuild.class);
+        when(build3.getProject()).thenReturn(project3);
+        when(build3.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build3);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+        instance.completed(event, build3);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertFalse(memoryImprint.wereAllBuildsSuccessful());
+        assertTrue(memoryImprint.wereAnyBuildsUnstable());
+    }
+
+    /**
+     * Tests a scenario when one build is successful and configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulOneSuccessfulAndSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(true, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        instance.completed(event, build);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertTrue(memoryImprint.wereAllBuildsSuccessful());
+    }
+
+    /**
+     * Tests a scenario when one build is unstable and configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return false and
+     * {@link BuildMemory.MemoryImprint#wereAnyBuildsUnstable()} will return true.
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulOneUnstableAndSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(false, false, true, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build);
+
+        instance.completed(event, build);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertFalse(memoryImprint.wereAllBuildsSuccessful());
+        assertTrue(memoryImprint.wereAnyBuildsUnstable());
+    }
+
+    /**
+     * Tests a scenario when two builds are unstable and both configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return false and
+     * {@link BuildMemory.MemoryImprint#wereAnyBuildsUnstable()} will return true.
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulTwoUnstableBothSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(true, false, true, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(false, false, true, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.UNSTABLE);
+        instance.started(event, build2);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertFalse(memoryImprint.wereAllBuildsSuccessful());
+        assertTrue(memoryImprint.wereAnyBuildsUnstable());
+    }
+
+    /**
+     * Tests a scenario when two builds are successful and both configured to be skipped.
+     * Expected outcome is that
+     * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
+     * As before the skip vote feature was implemented.
+     */
+    @Test
+    public void testWereAllBuildsSuccessfulTwoSuccessfulBothSkipped() {
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildMemory instance = new BuildMemory();
+
+        AbstractProject project = mock(AbstractProject.class);
+        SkipVote skipVote = new SkipVote(true, false, false, false);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getProject()).thenReturn(project);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build);
+
+        AbstractProject project2 = mock(AbstractProject.class);
+        skipVote = new SkipVote(true, false, false, false);
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = mock(AbstractBuild.class);
+        when(build2.getProject()).thenReturn(project2);
+        when(build2.getResult()).thenReturn(Result.SUCCESS);
+        instance.started(event, build2);
+
+        instance.completed(event, build);
+        instance.completed(event, build2);
+
+        MemoryImprint memoryImprint = instance.getMemoryImprint(event);
+        assertTrue(memoryImprint.wereAllBuildsSuccessful());
     }
 }

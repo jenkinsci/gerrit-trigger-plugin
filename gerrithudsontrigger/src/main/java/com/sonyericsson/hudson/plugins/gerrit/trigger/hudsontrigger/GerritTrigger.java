@@ -46,6 +46,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.Retr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
@@ -107,6 +108,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
+    private SkipVote skipVote;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
     private Integer gerritBuildSuccessfulVerifiedValue;
@@ -138,6 +140,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * Default DataBound Constructor.
      *
      * @param gerritProjects                 the set of triggering rules.
+     * @param skipVote                       what votes if any should be skipped in the final
+     *                                       verified/code review calculation.
      * @param gerritBuildStartedVerifiedValue
      *                                       Job specific Gerrit verified vote when a build is started, null means that
      *                                       the global value should be used.
@@ -184,6 +188,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @DataBoundConstructor
     public GerritTrigger(
             List<GerritProject> gerritProjects,
+            SkipVote skipVote,
             Integer gerritBuildStartedVerifiedValue,
             Integer gerritBuildStartedCodeReviewValue,
             Integer gerritBuildSuccessfulVerifiedValue,
@@ -207,6 +212,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             boolean dynamicTriggerConfiguration,
             String triggerConfigURL) {
         this.gerritProjects = gerritProjects;
+        this.skipVote = skipVote;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
         this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
@@ -1244,6 +1250,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         List<Action> list = new LinkedList<Action>();
         list.add(triggerInformationAction);
         return list;
+    }
+
+    /**
+     * The skip vote selection.
+     * &quot;Skipping&quot; the vote means that if more than one build of this job is triggered by a Gerrit event
+     * the outcome of this build won't be counted when the final vote is sent to Gerrit.
+     *
+     * @return data structure for what build results to skip.
+     */
+    public SkipVote getSkipVote() {
+        return skipVote;
     }
 
     /**

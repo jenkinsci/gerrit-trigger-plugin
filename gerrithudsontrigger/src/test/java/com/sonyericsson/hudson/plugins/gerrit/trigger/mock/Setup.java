@@ -39,6 +39,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -329,7 +330,7 @@ public final class Setup {
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
 
-        GerritTrigger trigger = new GerritTrigger(null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, true, "", "", "", "", "", null, null, triggerOnEvents, false, "");
 
         if (project != null) {
@@ -402,6 +403,58 @@ public final class Setup {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(result);
         return createImprintEntry(project, build);
+    }
+
+    /**
+     * Create an MemoryImprint.Entry with a default trigger and a build that
+     * returns the given result. The trigger will be configured to "skip" the result.
+     *
+     * @param result the build result
+     * @param resultsCodeReviewVote what vote the job should cast for the build result.
+     * @param resultsVerifiedVote what vote the job should cast for the build result.
+     * @param shouldSkip if the result should be configured to be skipped or not.
+     * @return an entry with the parameters.
+     * @see #createAndSetupMemoryImprintEntry(GerritTrigger, hudson.model.Result)
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(Result result,
+                                                                       int resultsCodeReviewVote,
+                                                                       int resultsVerifiedVote,
+                                                                       boolean shouldSkip) {
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        SkipVote skipVote = null;
+        if (result == Result.SUCCESS) {
+            when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(resultsVerifiedVote);
+            if (shouldSkip) {
+                skipVote = new SkipVote(true, false, false, false);
+            }
+        } else if (result == Result.FAILURE) {
+            when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(resultsVerifiedVote);
+            if (shouldSkip) {
+                skipVote = new SkipVote(false, true, false, false);
+            }
+        } else if (result == Result.UNSTABLE) {
+            when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(resultsVerifiedVote);
+            if (shouldSkip) {
+                skipVote = new SkipVote(false, false, true, false);
+            }
+        } else if (result == Result.NOT_BUILT) {
+            when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+            when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+            if (shouldSkip) {
+                skipVote = new SkipVote(false, false, false, true);
+            }
+        } else {
+            throw new IllegalArgumentException("Unsupported build result setup: " + result);
+        }
+        if (!shouldSkip) {
+            skipVote = new SkipVote(false, false, false, false);
+        }
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        return Setup.createAndSetupMemoryImprintEntry(trigger, result);
     }
 
     /**

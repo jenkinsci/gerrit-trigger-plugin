@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.EnvVars;
@@ -59,6 +60,7 @@ import static org.mockito.Mockito.when;
 //CS IGNORE MagicNumber FOR NEXT 450 LINES. REASON: Mocks tests.
 
 /**
+ * Tests for {@link ParameterExpander}.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
@@ -72,9 +74,6 @@ public class ParameterExpanderTest {
      */
     @Test
     public void testGetBuildStartedCommand() throws Exception {
-        System.out.println("getBuildStartedCommand");
-
-
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
@@ -122,8 +121,6 @@ public class ParameterExpanderTest {
      */
     @Test
     public void testGetMinimumVerifiedValue() {
-        System.out.println("getMinimumVerifiedValue");
-
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config);
@@ -164,7 +161,6 @@ public class ParameterExpanderTest {
      */
     @Test
     public void testGetMinimumCodeReviewValue() {
-        System.out.println("getMinimumCodeReviewValue");
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config);
@@ -197,6 +193,69 @@ public class ParameterExpanderTest {
         // Otherwise, we should use NOT_BUILT.
         expResult = -4;
         result = instance.getMinimumCodeReviewValue(memoryImprint, false);
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Tests {@link ParameterExpander#getMinimumCodeReviewValue(MemoryImprint, boolean)} with one
+     * unstable build vote skipped.
+     *
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    @Test
+    public void testGetMinimumCodeReviewValueOneUnstableSkipped() {
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+
+        ParameterExpander instance = new ParameterExpander(config);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-1);
+        SkipVote skipVote = new SkipVote(false, false, true, false);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(2);
+        entries[2] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        int expResult = 1;
+        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(expResult, result);
+    }
+
+    /**
+     * Tests {@link ParameterExpander#getMinimumCodeReviewValue(MemoryImprint, boolean)} with one
+     * successful build vote skipped.
+     *
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    @Test
+    public void testGetMinimumCodeReviewValueOneSuccessfulSkipped() {
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+
+        ParameterExpander instance = new ParameterExpander(config);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[1];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+        SkipVote skipVote = new SkipVote(true, false, false, false);
+        when(trigger.getSkipVote()).thenReturn(skipVote);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        int expResult = 0;
+        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
         assertEquals(expResult, result);
     }
 
@@ -297,9 +356,9 @@ public class ParameterExpanderTest {
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         when(memoryImprint.getEvent()).thenReturn(event);
 
-        when(memoryImprint.whereAllBuildsSuccessful()).thenReturn(true);
-        when(memoryImprint.whereAnyBuildsFailed()).thenReturn(false);
-        when(memoryImprint.whereAnyBuildsUnstable()).thenReturn(false);
+        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(true);
+        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(false);
+        when(memoryImprint.wereAnyBuildsUnstable()).thenReturn(false);
 
         MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -377,9 +436,9 @@ public class ParameterExpanderTest {
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         when(memoryImprint.getEvent()).thenReturn(event);
 
-        when(memoryImprint.whereAllBuildsSuccessful()).thenReturn(true);
-        when(memoryImprint.whereAnyBuildsFailed()).thenReturn(false);
-        when(memoryImprint.whereAnyBuildsUnstable()).thenReturn(false);
+        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(true);
+        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(false);
+        when(memoryImprint.wereAnyBuildsUnstable()).thenReturn(false);
 
         MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
 
