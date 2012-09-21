@@ -114,7 +114,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES= \n CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
+        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES=\n\nCUSTOM_MESSAGE_BUILD_STARTED") >= 0);
     }
 
     /**
@@ -329,7 +329,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES= \n CUSTOM_MESSAGE_BUILD_COMPLETED") >= 0);
+        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES=\n\nCUSTOM_MESSAGE_BUILD_COMPLETED") >= 0);
     }
 
 

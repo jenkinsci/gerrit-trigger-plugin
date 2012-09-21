@@ -111,7 +111,7 @@ public class ParameterExpander {
         for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
             String customMessage = messageProvider.getBuildStartedMessage(r);
             if (customMessage != null) {
-                customMessages.append(" \n ").append(customMessage);
+                customMessages.append("\n\n").append(customMessage);
             }
         }
         parameters.put("CUSTOM_MESSAGES", customMessages.toString());
@@ -423,7 +423,7 @@ public class ParameterExpander {
         for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
             String customMessage = messageProvider.getBuildCompletedMessage(build);
             if (customMessage != null) {
-                customMessages.append(" \n ").append(customMessage);
+                customMessages.append("\n\n").append(customMessage);
             }
         }
         parameters.put("CUSTOM_MESSAGES", customMessages.toString());
