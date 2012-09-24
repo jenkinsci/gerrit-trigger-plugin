@@ -106,17 +106,19 @@ public class ParameterExpander {
         }
         String buildStartMessage = trigger.getBuildStartMessage();
         if (buildStartMessage != null && !buildStartMessage.equals("")) {
-            startedStats.append(" \n ").append(buildStartMessage);
+            startedStats.append("\n\n").append(buildStartMessage);
         }
-        parameters.put("STARTED_STATS", startedStats.toString());
-        StringBuilder customMessages = new StringBuilder();
-        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
-            String customMessage = messageProvider.getBuildStartedMessage(r);
-            if (customMessage != null) {
-                customMessages.append("\n\n").append(customMessage);
+
+        if (config.isEnablePluginMessages()) {
+            for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+                String extensionMessage = messageProvider.getBuildStartedMessage(r);
+                if (extensionMessage != null) {
+                    startedStats.append("\n\n").append(extensionMessage);
+                }
             }
         }
-        parameters.put("CUSTOM_MESSAGES", customMessages.toString());
+
+        parameters.put("STARTED_STATS", startedStats.toString());
 
         return expandParameters(gerritCmd, r, taskListener, parameters);
     }
@@ -435,15 +437,6 @@ public class ParameterExpander {
             build = entries[0].getBuild();
         }
 
-        StringBuilder customMessages = new StringBuilder();
-        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
-            String customMessage = messageProvider.getBuildCompletedMessage(build);
-            if (customMessage != null) {
-                customMessages.append("\n\n").append(customMessage);
-            }
-        }
-        parameters.put("CUSTOM_MESSAGES", customMessages.toString());
-
         return expandParameters(command, build, listener, parameters);
     }
 
@@ -521,6 +514,15 @@ public class ParameterExpander {
                             str.append(" <<<\n");
                             str.append(unsuccessfulMessage.trim());
                             str.append("\n>>>");
+                        }
+                    }
+
+                    if (config.isEnablePluginMessages()) {
+                        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+                            String extensionMessage = messageProvider.getBuildCompletedMessage(build);
+                            if (extensionMessage != null) {
+                                str.append("\n\n").append(extensionMessage);
+                            }
                         }
                     }
                 }

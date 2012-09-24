@@ -54,8 +54,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " ENV_CHANGE=$CHANGE"
                 + " ENV_PATCHSET=$PATCHSET"
                 + " ENV_REFSPEC=$REFSPEC"
-                + " ENV_CHANGEURL=$CHANGE_URL"
-                + " CUSTOM_MESSAGES=<CUSTOM_MESSAGES>";
+                + " ENV_CHANGEURL=$CHANGE_URL";
     }
 
     @Override
@@ -72,8 +71,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " ENV_CHANGE=$CHANGE"
                 + " ENV_PATCHSET=$PATCHSET"
                 + " ENV_REFSPEC=$REFSPEC"
-                + " ENV_CHANGEURL=$CHANGE_URL"
-                + " CUSTOM_MESSAGES=<CUSTOM_MESSAGES>";
+                + " ENV_CHANGEURL=$CHANGE_URL";
     }
 
     @Override
@@ -231,6 +229,11 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnablePluginMessages() {
         return true;
     }
 }

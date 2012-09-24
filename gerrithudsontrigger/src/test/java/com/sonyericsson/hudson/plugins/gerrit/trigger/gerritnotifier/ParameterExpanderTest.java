@@ -113,7 +113,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES=\n\nCUSTOM_MESSAGE_BUILD_STARTED") >= 0);
+        assertTrue("Missing CUSTOM_MESSAGE", result.indexOf("CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
     }
 
     /**
@@ -378,7 +378,7 @@ public class ParameterExpanderTest {
         System.out.println("Result: " + result);
 
         assertTrue("Missing OK message", result.indexOf(" MSG='Your friendly butler says OK.") >= 0);
-        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildsStats + "'") >= 0);
+        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildsStats) >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=" + expectedVerifiedVote) >= 0);
@@ -388,7 +388,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGES=\n\nCUSTOM_MESSAGE_BUILD_COMPLETED") >= 0);
+        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGE_BUILD_COMPLETED") >= 0);
     }
 
 
@@ -461,7 +461,7 @@ public class ParameterExpanderTest {
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildStats + "'") >= 0);
+        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildStats) >= 0);
     }
 
     /**

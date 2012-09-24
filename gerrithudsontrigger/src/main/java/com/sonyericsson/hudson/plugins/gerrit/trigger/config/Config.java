@@ -98,6 +98,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_ENABLE_MANUAL_TRIGGER = true;
     /**
+     * Default plug-in messages enabled.
+     */
+    public static final boolean DEFAULT_ENABLE_PLUGIN_MESSAGES = true;
+    /**
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
@@ -126,6 +130,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildNotBuiltVerifiedValue;
     private int gerritBuildNotBuiltCodeReviewValue;
     private boolean enableManualTrigger;
+    private boolean enablePluginMessages;
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
@@ -234,6 +239,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         enableManualTrigger = formData.optBoolean(
                 "enableManualTrigger",
                 DEFAULT_ENABLE_MANUAL_TRIGGER);
+        enablePluginMessages = formData.optBoolean(
+                "enablePluginMessages",
+                DEFAULT_ENABLE_PLUGIN_MESSAGES);
         buildScheduleDelay = formData.optInt(
                 "buildScheduleDelay",
                 DEFAULT_BUILD_SCHEDULE_DELAY);
@@ -623,5 +631,10 @@ public class Config implements IGerritHudsonTriggerConfig {
 
                 && (gerritFrontEndUrl == null
                 || (DEFAULT_GERRIT_HOSTNAME).equals(gerritFrontEndUrl));
+    }
+
+    @Override
+    public boolean isEnablePluginMessages() {
+        return enablePluginMessages;
     }
 }

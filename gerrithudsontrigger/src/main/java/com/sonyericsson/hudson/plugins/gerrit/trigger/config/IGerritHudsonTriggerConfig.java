@@ -189,4 +189,10 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
      */
     boolean hasDefaultValues();
 
+    /**
+     * If other plugins are allowed to contribute messages to be forwarded
+     * to Gerrit.
+     * @return true if so
+     */
+    boolean isEnablePluginMessages();
  }

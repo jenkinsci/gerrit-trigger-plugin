@@ -248,6 +248,9 @@
                         </f:entry>
                     </f:section>
                 </f:advanced>
+                <f:entry title="${%EnablePluginMessages}">
+                    <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
+                </f:entry>
                 <f:block>
                     <f:submit value="${%Save}"/>
                 </f:block>
