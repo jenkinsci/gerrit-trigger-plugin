@@ -30,11 +30,13 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serializable;
+
 /**
  * An event configuration that causes the build to be triggered when a draft is published.
  * @author David Pursehouse &lt;david.pursehouse@sonymobile.com&gt;
  */
-public class PluginDraftPublishedEvent extends PluginGerritEvent {
+public class PluginDraftPublishedEvent extends PluginGerritEvent implements Serializable {
 
     /**
      * Standard DataBoundConstructor.

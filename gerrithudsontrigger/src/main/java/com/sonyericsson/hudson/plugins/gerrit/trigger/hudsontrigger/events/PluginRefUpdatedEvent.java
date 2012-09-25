@@ -30,11 +30,13 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serializable;
+
 /**
  * An event configuration that causes the build to be triggered when a ref is updated.
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
-public class PluginRefUpdatedEvent extends PluginGerritEvent {
+public class PluginRefUpdatedEvent extends PluginGerritEvent implements Serializable {
     /**
      * Standard DataBoundConstructor.
      */

@@ -22,5 +22,4 @@
   ~ THE SOFTWARE.
   -->
 <j:jelly xmlns:j="jelly:core">
-    <b>${%Patchset Created}</b>
 </j:jelly>

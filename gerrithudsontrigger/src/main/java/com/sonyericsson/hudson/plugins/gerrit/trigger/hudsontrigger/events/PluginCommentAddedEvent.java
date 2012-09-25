@@ -33,13 +33,14 @@ import hudson.model.Hudson;
 import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * An event configuration that causes the build to be triggered when a comment is added.
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
-public class PluginCommentAddedEvent extends PluginGerritEvent {
+public class PluginCommentAddedEvent extends PluginGerritEvent implements Serializable {
     private String verdictCategory;
     private String commentAddedTriggerApprovalValue;
 
@@ -52,6 +53,12 @@ public class PluginCommentAddedEvent extends PluginGerritEvent {
     public PluginCommentAddedEvent(String verdictCategory, String commentAddedTriggerApprovalValue) {
         this.verdictCategory = verdictCategory;
         this.commentAddedTriggerApprovalValue = commentAddedTriggerApprovalValue;
+    }
+
+    /**
+     * Empty constructor for serializer.
+     */
+    public PluginCommentAddedEvent() {
     }
 
     /**

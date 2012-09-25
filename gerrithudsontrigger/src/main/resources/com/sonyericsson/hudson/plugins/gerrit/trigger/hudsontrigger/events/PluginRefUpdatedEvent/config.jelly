@@ -22,5 +22,4 @@
   ~ THE SOFTWARE.
   -->
 <j:jelly xmlns:j="jelly:core">
-    <b>${%Ref Updated}</b>
 </j:jelly>

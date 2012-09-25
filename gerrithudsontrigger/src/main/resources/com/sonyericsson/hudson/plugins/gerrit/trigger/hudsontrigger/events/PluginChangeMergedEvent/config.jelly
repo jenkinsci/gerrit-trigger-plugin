@@ -22,5 +22,4 @@
   ~ THE SOFTWARE.
   -->
 <j:jelly xmlns:j="jelly:core">
-    <b>${%Change Merged}</b>
 </j:jelly>

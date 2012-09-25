@@ -22,7 +22,6 @@
   ~ THE SOFTWARE.
   -->
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <b>Comment Added</b>
     <f:entry title="Verdict Category" >
         <f:select field="verdictCategory"/>
     </f:entry>
