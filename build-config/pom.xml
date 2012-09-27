@@ -3,7 +3,7 @@
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>build-config</artifactId>
     <packaging>jar</packaging>
-    <version>1.2.10-SNAPSHOT</version>
+    <version>${build-config.version}</version>
     <name>Build Config</name>
 
     <parent>
