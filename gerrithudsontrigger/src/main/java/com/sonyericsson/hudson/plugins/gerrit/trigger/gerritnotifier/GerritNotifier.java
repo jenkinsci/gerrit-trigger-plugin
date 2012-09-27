@@ -35,6 +35,7 @@ import hudson.model.Hudson;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.Set;
 
 /**
  * Start position that notifies Gerrit of events.
@@ -124,6 +125,40 @@ public class GerritNotifier {
             }
         } catch (Exception ex) {
             logger.error("Could not complete BuildCompleted notification!", ex);
+        }
+    }
+
+    /**
+     * Generates the add-reviewers command and sends it to Gerrit
+     * @param memoryImprint the memory of all the builds for an event.
+     * @param listener the taskListener
+     * @param reviewers the Set of reviewers to add to the change
+     */
+    public void addReviewers(MemoryImprint memoryImprint, TaskListener listener, Set<String> reviewers) {
+        try {
+            // Without a change, it doesn't make sense to notify gerrit
+            if (memoryImprint.getEvent() instanceof ChangeBasedEvent) {
+
+                if (!reviewers.isEmpty()) {
+                    String command = parameterExpander.getAddReviewersCommand(memoryImprint, reviewers);
+
+                    if (command != null) {
+                        if (!command.isEmpty()) {
+                            logger.info("Notifying AddReviewers to gerrit: {}", command);
+                            cmdRunner.sendCommand(command);
+                        } else {
+                            logger.info("AddReviewers command is empty.  Gerrit will not be notified of AddReviewers");
+                        }
+                    } else {
+                        logger.error("Something wrong during parameter extraction. "
+                                + "Gerrit will not be notified of AddReviewers");
+                    }
+                } else {
+                    logger.warn("The reviewers list is empty");
+                }
+            }
+        } catch (Exception ex) {
+            logger.error("Could not complete AddReviewers notification!", ex);
         }
     }
 }

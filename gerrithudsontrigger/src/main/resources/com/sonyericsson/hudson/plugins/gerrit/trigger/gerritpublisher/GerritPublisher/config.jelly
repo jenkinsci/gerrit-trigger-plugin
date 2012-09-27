@@ -1,0 +1,8 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="${%File Name}" field="ownersFileName" help="/plugin/gerrit-trigger/help-ownersFileName.html">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="${%Reviewers}" field="reviewers" help="/plugin/gerrit-trigger/help-reviewers.html">
+        <f:textbox />
+    </f:entry>
+</j:jelly>

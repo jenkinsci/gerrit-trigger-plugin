@@ -24,24 +24,26 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.google.common.base.Preconditions;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Set;
 
 /**
  * Expands a parameterized string to its full potential.
@@ -511,5 +513,28 @@ public class ParameterExpander {
         }
 
         return str.toString();
+    }
+
+    /**
+     * Build the command string to add a set of reviewers
+     * @param memoryImprint The container of the event
+     * @param reviewers the reviewers to add to the change
+     * @return the command
+     */
+    public String getAddReviewersCommand(MemoryImprint memoryImprint, Set<String> reviewers) {
+        Preconditions.checkNotNull(reviewers);
+        Preconditions.checkState(!reviewers.isEmpty());
+        Preconditions.checkArgument(memoryImprint.getEvent() instanceof ChangeBasedEvent);
+
+        ChangeBasedEvent event = (ChangeBasedEvent) memoryImprint.getEvent();
+
+        StringBuilder command = new StringBuilder();
+        command.append("gerrit set-reviewers");
+        for (String reviewer : reviewers) {
+            command.append(" --add ").append(reviewer);
+        }
+        command.append(" ").append(event.getChange().getId());
+
+        return command.toString();
     }
 }

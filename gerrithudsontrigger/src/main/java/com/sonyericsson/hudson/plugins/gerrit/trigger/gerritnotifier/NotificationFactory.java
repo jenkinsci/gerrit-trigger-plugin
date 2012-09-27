@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueu
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.AddReviewersCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildStartedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
@@ -126,6 +127,21 @@ public class NotificationFactory {
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
         BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(),
                 build, listener, event, stats);
+        GerritSendCommandQueue.queue(job);
+    }
+
+    /**
+     * Queues an add reviewers command on the send-command queue.
+     *
+     * @param memoryImprint the memory of the builds
+     * @param listener a listener
+     */
+    public void queueAddReviewers(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
+        AddReviewersCommandJob job = new AddReviewersCommandJob(
+                getConfig(),
+                memoryImprint,
+                listener
+        );
         GerritSendCommandQueue.queue(job);
     }
 }
