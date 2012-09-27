@@ -95,6 +95,13 @@
         </pluginManagement>
         <plugins>
             <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <configuration>
+                    <tmpDirectory>gerrithudsontrigger/work</tmpDirectory>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
