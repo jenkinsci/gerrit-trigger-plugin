@@ -714,17 +714,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         for (PluginGerritEvent e : triggerOnEvents) {
             if (e instanceof PluginCommentAddedEvent) {
                 commentAdded = (PluginCommentAddedEvent)e;
-                break;
-            }
-        }
-        if (commentAdded == null) {
-            return false;
-        }
-        for (Approval approval : event.getApprovals()) {
-            if (approval.getType().equals(commentAdded.getVerdictCategory())
-                    && (approval.getValue().equals(commentAdded.getCommentAddedTriggerApprovalValue())
-                    || ("+" + approval.getValue()).equals(commentAdded.getCommentAddedTriggerApprovalValue()))) {
-                return true;
+                for (Approval approval : event.getApprovals()) {
+                    if (approval.getType().equals(commentAdded.getVerdictCategory())
+                        && (approval.getValue().equals(commentAdded.getCommentAddedTriggerApprovalValue())
+                        || ("+" + approval.getValue()).equals(commentAdded.getCommentAddedTriggerApprovalValue()))) {
+                    return true;
+                    }
+                }
             }
         }
         return false;

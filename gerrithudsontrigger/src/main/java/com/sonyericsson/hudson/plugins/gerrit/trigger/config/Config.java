@@ -109,6 +109,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritUserName;
+    private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
     private boolean gerritBuildCurrentPatchesOnly;
@@ -152,6 +153,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritHostName = formData.optString("gerritHostName", DEFAULT_GERRIT_HOSTNAME);
         gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
         gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
+        gerritEMail = formData.optString("gerritEMail", "");
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -420,6 +422,21 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritUserName(String gerritUserName) {
         this.gerritUserName = gerritUserName;
+    }
+
+    @Override
+    public String getGerritEMail() {
+        return gerritEMail;
+    }
+
+    /**
+     * The e-mail address for the user in gerrit.
+     * Comments added from this e-mail address will be ignored.
+     * @param gerritEMail the e-mail address.
+     * @see #getGerritEMail()
+     */
+    public void setGerritEMail(String gerritEMail) {
+        this.gerritEMail = gerritEMail;
     }
 
     @Override

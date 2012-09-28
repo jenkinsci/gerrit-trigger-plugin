@@ -41,6 +41,11 @@
                                    value="${it.config.gerritUserName}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}"/>
                     </f:entry>
+                    <f:entry title="${%E-mail}"
+                             help="/plugin/gerrit-trigger/help-GerritEMail.html">
+                        <f:textbox name="gerritEMail"
+                                   value="${it.config.gerritEMail}"/>
+                    </f:entry>
                     <f:entry title="${%SSH Keyfile}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFile.html">
                         <f:textbox name="gerritAuthKeyFile"

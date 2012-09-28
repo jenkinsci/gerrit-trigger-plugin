@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +63,13 @@ public interface GerritConnectionConfig {
      * @return the username.
      */
     String getGerritUserName();
+
+    /**
+     * The e-mail address for the user in gerrit.
+     * Comments added from this e-mail address will be ignored.
+     * @return the e-mail address.
+     */
+    String getGerritEMail();
 
     /**
      * The number of threads to handle incoming events with.

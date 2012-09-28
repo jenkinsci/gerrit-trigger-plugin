@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
@@ -106,6 +107,11 @@ public class GerritHandler extends Thread implements Coordinator {
     private boolean connecting = false;
     private boolean connected = false;
     private String gerritVersion = null;
+    private String ignoreEMail;
+
+
+
+
 
     /**
      * Creates a GerritHandler with all the default values set.
@@ -151,7 +157,8 @@ public class GerritHandler extends Thread implements Coordinator {
         this(config.getGerritHostName(),
                 config.getGerritSshPort(),
                 config.getGerritAuthentication(),
-                config.getNumberOfReceivingWorkerThreads());
+                config.getNumberOfReceivingWorkerThreads(),
+                config.getGerritEMail());
     }
 
     /**
@@ -166,11 +173,29 @@ public class GerritHandler extends Thread implements Coordinator {
                          int gerritSshPort,
                          Authentication authentication,
                          int numberOfWorkerThreads) {
+        this(gerritHostName, gerritSshPort, authentication, numberOfWorkerThreads, null);
+    }
+
+    /**
+     * Creates a GerritHandler with the specified values.
+     *
+     * @param gerritHostName        the hostName for gerrit.
+     * @param gerritSshPort         the ssh port that the gerrit server listens to.
+     * @param authentication        the authentication credentials.
+     * @param numberOfWorkerThreads the number of eventthreads.
+     * @param ignoreEMail the e-mail to ignore events from.
+     */
+    public GerritHandler(String gerritHostName,
+                         int gerritSshPort,
+                         Authentication authentication,
+                         int numberOfWorkerThreads,
+                         String ignoreEMail) {
         super("Gerrit Events Reader");
         this.gerritHostName = gerritHostName;
         this.gerritSshPort = gerritSshPort;
         this.authentication = authentication;
         this.numberOfWorkerThreads = numberOfWorkerThreads;
+        this.ignoreEMail = ignoreEMail;
 
         workQueue = new LinkedBlockingQueue<Work>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
@@ -185,6 +210,22 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public String getGerritVersion() {
         return gerritVersion;
+    }
+
+    /**
+     * Standard getter for the ignoreEMail.
+     * @return the e-mail address to ignore CommentAdded events from.
+     */
+    public String getIgnoreEMail() {
+        return ignoreEMail;
+    }
+
+    /**
+     * Standard setter for the ignoreEMail.
+     * @param ignoreEMail the e-mail address to ignore CommentAdded events from.
+     */
+    public void setIgnoreEMail(String ignoreEMail) {
+        this.ignoreEMail = ignoreEMail;
     }
 
     /**
@@ -569,6 +610,12 @@ public class GerritHandler extends Thread implements Coordinator {
         }
 
         //The real deed.
+        if (event instanceof CommentAdded) {
+            if (ignoreEvent((CommentAdded)event)) {
+                logger.trace("CommentAdded ignored");
+                return;
+            }
+        }
         for (GerritEventListener listener : gerritEventListeners) {
             try {
                 notifyListener(listener, event);
@@ -616,6 +663,23 @@ public class GerritHandler extends Thread implements Coordinator {
         } catch (Exception ex) {
             logger.error("Exception thrown during event handling.", ex);
         }
+    }
+
+    /**
+     * Checks if the event should be ignored, due to a circular CommentAdded.
+     * @param event the event to check.
+     * @return true if it should be ignored, false if not.
+     */
+    private boolean ignoreEvent(CommentAdded event) {
+        Account account = event.getAccount();
+        if (account == null) {
+            return false;
+        }
+        String eMail = account.getEmail();
+        if (ignoreEMail != null && ignoreEMail.equals(eMail)) {
+            return true;
+        }
+        return false;
     }
 
     /**

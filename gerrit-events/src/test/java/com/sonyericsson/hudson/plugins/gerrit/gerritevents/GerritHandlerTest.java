@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
@@ -61,6 +62,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
@@ -314,6 +316,26 @@ public class GerritHandlerTest {
         assertThat(listenerMock, isIn(gerritEventListeners));
         assertEquals(5, gerritEventListeners.size());
     }
+
+    /**
+     * Tests that circular CommentAdded events are ignored correctly.
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIgnoreCommentAdded() throws Exception {
+        String email = "e@mail.com";
+        handler.setIgnoreEMail(email);
+        ListenerMock listenerMock = mock(ListenerMock.class);
+        Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
+        listeners.add(listenerMock);
+        handler.addEventListeners(listeners);
+        Account account = new Account("name", email);
+        CommentAdded ca = new CommentAdded();
+        ca.setAccount(account);
+        handler.notifyListeners(ca);
+        verifyNoMoreInteractions(listenerMock);
+    }
+
 
     /**
      * A GerritListener mock that can change it's hashCode
