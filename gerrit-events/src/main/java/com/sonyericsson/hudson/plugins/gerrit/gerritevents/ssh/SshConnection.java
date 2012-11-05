@@ -50,13 +50,6 @@ public interface SshConnection {
     boolean isAuthenticated();
 
     /**
-     * Returns if there already is an open session on this connection.
-     *
-     * @return true if it is so.
-     */
-    boolean isSessionOpen();
-
-    /**
      * Execute an ssh command on the server.
      * After the command is sent the used channel is disconnected.
      *

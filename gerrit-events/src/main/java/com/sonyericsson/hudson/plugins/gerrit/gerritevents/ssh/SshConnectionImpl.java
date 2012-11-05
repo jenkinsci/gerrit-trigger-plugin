@@ -58,7 +58,6 @@ public class SshConnectionImpl implements SshConnection {
     protected static final String CMD_EXEC = "exec";
     private final JSch client;
     private Session connectSession;
-    private Channel currentSession;
 
     //CS IGNORE RedundantThrows FOR NEXT 12 LINES. REASON: Informative
 
@@ -106,16 +105,6 @@ public class SshConnectionImpl implements SshConnection {
     @Override
     public synchronized boolean isAuthenticated() {
         return client != null && connectSession != null && connectSession.isConnected();
-    }
-
-    /**
-        * Returns if there already is an open session on this connection.
-        *
-        * @return true if it is so.
-        */
-    @Override
-    public synchronized boolean isSessionOpen() {
-        return currentSession != null && currentSession.isConnected() && !currentSession.isEOF();
     }
 
     /**
@@ -223,13 +212,7 @@ public class SshConnectionImpl implements SshConnection {
         */
     @Override
     public synchronized void disconnect() {
-        if (isSessionOpen()) {
-            logger.debug("Closing ssh session.");
-
-            currentSession.disconnect();
-            currentSession = null;
-        }
-        if (isConnected()) {
+        if (connectSession != null) {
             logger.debug("Disconnecting client connection.");
             connectSession.disconnect();
             connectSession = null;

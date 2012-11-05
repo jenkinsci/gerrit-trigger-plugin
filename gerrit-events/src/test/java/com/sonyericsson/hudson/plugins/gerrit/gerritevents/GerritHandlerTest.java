@@ -91,7 +91,6 @@ public class GerritHandlerTest {
         sshConnectionMock = mock(SshConnection.class);
         when(sshConnectionMock.isAuthenticated()).thenReturn(true);
         when(sshConnectionMock.isConnected()).thenReturn(true);
-        when(sshConnectionMock.isSessionOpen()).thenReturn(true);
         PipedWriter piped = new PipedWriter();
         pipedReader = new PipedReader(piped);
         pipedWriter = new BufferedWriter(piped);
