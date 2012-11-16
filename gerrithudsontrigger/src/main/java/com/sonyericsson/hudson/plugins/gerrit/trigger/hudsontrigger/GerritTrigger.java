@@ -80,6 +80,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -1205,7 +1206,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         triggerInformationAction.setErrorMessage("");
         try {
-            dynamicGerritProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL);
+
+            List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL);
+            dynamicGerritProjects = fetchedProjects;
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
@@ -1222,6 +1225,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String triggerInformationMessage = MessageFormat.format(
                     "MalformedURLException when fetching dynamic trigger url: {0}", mue.getMessage());
             triggerInformationAction.setErrorMessage(triggerInformationMessage);
+        } catch (SocketTimeoutException ste) {
+            String logErrorMessage = MessageFormat.format(
+                    "SocketTimeoutException for project: {0} and URL: {1} Message: {2}",
+                    new Object[]{myProject.getName(), triggerConfigURL, ste.getMessage()});
+            logger.error(logErrorMessage, ste);
+            String triggerInformationMessage = MessageFormat.format(
+                    "SocketTimeoutException when fetching dynamic trigger url: {0}", ste.getMessage());
+            triggerInformationAction.setErrorMessage(triggerInformationMessage);
+
         } catch (IOException ioe) {
             String logErrorMessage = MessageFormat.format(
                     "IOException for project: {0} and URL: {1} Message: {2}",

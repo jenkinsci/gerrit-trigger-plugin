@@ -57,6 +57,7 @@ public final class GerritDynamicUrlProcessor {
     private static final String SHORTNAME_PROJECT = "p";
     private static final String SHORTNAME_BRANCH = "b";
     private static final String SHORTNAME_FILE = "f";
+    private static final int SOCKET_READ_TIMEOUT = 10000;
 
     /**
      * Private constructor.
@@ -86,6 +87,7 @@ public final class GerritDynamicUrlProcessor {
         // Prepare for fetching the URL
         URL url = new URL(gerritTriggerConfigUrl);
         URLConnection connection = url.openConnection();
+        connection.setReadTimeout(SOCKET_READ_TIMEOUT);
         connection.setDoInput(true);
         InputStream instream = connection.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
