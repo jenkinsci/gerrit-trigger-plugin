@@ -43,27 +43,27 @@ public enum GerritEventType {
     /**
      * A patchset-created event.
      */
-     PATCHSET_CREATED("patchset-created", true, PatchsetCreated.class),
+    PATCHSET_CREATED("patchset-created", true, PatchsetCreated.class),
     /**
      * A draft-published event.
      */
-     DRAFT_PUBLISHED("draft-published", true, DraftPublished.class),
-     /**
-      * A change-abandoned event.
-      */
-     CHANGE_ABANDONED("change-abandoned", true, ChangeAbandoned.class),
-     /**
-      * A change-merged event.
-      */
-     CHANGE_MERGED("change-merged", true, ChangeMerged.class),
-     /**
-      * A comment-added event.
-      */
-     COMMENT_ADDED("comment-added", true, CommentAdded.class),
-     /**
-      * A ref-updated event.
-      */
-     REF_UPDATED("ref-updated", true, RefUpdated.class);
+    DRAFT_PUBLISHED("draft-published", true, DraftPublished.class),
+    /**
+     * A change-abandoned event.
+     */
+    CHANGE_ABANDONED("change-abandoned", true, ChangeAbandoned.class),
+    /**
+     * A change-merged event.
+     */
+    CHANGE_MERGED("change-merged", true, ChangeMerged.class),
+    /**
+     * A comment-added event.
+     */
+    COMMENT_ADDED("comment-added", true, CommentAdded.class),
+    /**
+     * A ref-updated event.
+     */
+    REF_UPDATED("ref-updated", true, RefUpdated.class);
 
     private String typeValue;
     private boolean interesting;
