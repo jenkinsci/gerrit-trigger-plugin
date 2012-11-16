@@ -31,13 +31,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Cause;
+import hudson.triggers.SCMTrigger.SCMTriggerCause;
 
 /**
  * A Cause why a build was scheduled.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritCause extends Cause {
+public class GerritCause extends SCMTriggerCause {
 
     private GerritTriggeredEvent tEvent;
     private boolean silentMode;
@@ -49,6 +50,7 @@ public class GerritCause extends Cause {
      * @param silentMode Silent Mode on or off.
      */
     public GerritCause(GerritTriggeredEvent event, boolean silentMode) {
+        super("");
         this.tEvent = event;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
@@ -61,6 +63,7 @@ public class GerritCause extends Cause {
      * @param context The context with information about other builds triggered for the same event as this one.
      */
     public GerritCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
+        super("");
         this.tEvent = event;
         this.silentMode = silentMode;
         this.context = context;
@@ -70,6 +73,7 @@ public class GerritCause extends Cause {
      * Default Constructor.
      */
     public GerritCause() {
+        super("");
     }
 
     /**
