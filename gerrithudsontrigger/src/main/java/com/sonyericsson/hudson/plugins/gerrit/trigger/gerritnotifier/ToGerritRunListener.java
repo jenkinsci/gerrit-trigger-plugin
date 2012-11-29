@@ -51,9 +51,13 @@ import java.util.List;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@Extension
+@Extension(ordinal = ToGerritRunListener.ORDINAL)
 public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
+    /**
+     * The ordering of this extension.
+     */
+    public static final int ORDINAL = 10003;
     private static final Logger logger = LoggerFactory.getLogger(ToGerritRunListener.class);
     private static ToGerritRunListener instance;
     private transient BuildMemory memory;
