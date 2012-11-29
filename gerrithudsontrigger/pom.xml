@@ -183,10 +183,21 @@
                 </dependencies>
                 <executions>
                     <execution>
+                        <id>compile-checkstyle</id>
                         <goals>
                             <goal>checkstyle</goal>
                         </goals>
                         <phase>compile</phase>
+                    </execution>
+                    <execution>
+                        <id>test-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <violationSeverity>info</violationSeverity>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
