@@ -3,21 +3,48 @@
     <u>The triggered build will be provided with the following parameters:</u>
 </p>
 <ul>
-    <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id.</li>
-    <li><strong>GERRIT_CHANGE_SUBJECT</strong>: The first line of the commit message.</li>
-    <li><strong>GERRIT_CHANGE_NUMBER</strong>: The change number.</li>
-    <li><strong>GERRIT_CHANGE_URL</strong>: The URL to the change.</li>
-    <li><strong>GERRIT_PATCHSET_NUMBER</strong>: The Patch Set number.</li>
-    <li><strong>GERRIT_PATCHSET_REVISION</strong>: The Patch Set revision id.</li>
-    <li><strong>GERRIT_PROJECT</strong>: The name of the project.</li>
-    <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
-    <li><strong>GERRIT_REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z).</li>
-    <li><strong>GERRIT_CHANGE_OWNER</strong>: The name and email of the owner of the change <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
-    <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: The name of the owner of the change.</li>
-    <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: The email of the owner of the change.</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: The name and email of the uploader of the Patch Set <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: The name of the uploader of the Patch Set.</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: The email of the uploader of the Patch Set.</li>
+    <li>
+        <strong>For all events</strong>
+        <ul>
+            <li><strong>GERRIT_PROJECT</strong>: The name of the project.</li>
+            <li><strong>GERRIT_EVENT_HASH</strong>: A unique hash making all triggered builds unique in the queue.</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT</strong>: The name and email of the account associated with the event, if any.
+                            <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT_NAME</strong>: The name of the account associated with the event, if any.</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT_EMAIL</strong>: The email of the account associated with the event, if any.</li>
+        </ul>
+    </li>
+    <li>
+        <strong>For events on a change</strong> <i>(Patch set created, Draft published, Change merged, Comment added)</i>
+        <ul>
+            <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id.</li>
+            <li><strong>GERRIT_CHANGE_SUBJECT</strong>: The first line of the commit message.</li>
+            <li><strong>GERRIT_CHANGE_NUMBER</strong>: The change number.</li>
+            <li><strong>GERRIT_CHANGE_URL</strong>: The URL to the change.</li>
+            <li><strong>GERRIT_PATCHSET_NUMBER</strong>: The Patch Set number.</li>
+            <li><strong>GERRIT_PATCHSET_REVISION</strong>: The Patch Set revision id.</li>
+            <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
+            <li><strong>GERRIT_REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z).</li>
+            <li><strong>GERRIT_CHANGE_OWNER</strong>: The name and email of the owner of the change
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
+            <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: The name of the owner of the change.</li>
+            <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: The email of the owner of the change.</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: The name and email of the uploader of the Patch Set
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: The name of the uploader of the Patch Set.</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: The email of the uploader of the Patch Set.</li>
+        </ul>
+    </li>
+    <li>
+        <strong>For Reference updated events</strong>
+        <ul>
+            <li><strong>GERRIT_REFNAME</strong>: Ref name within project.</li>
+            <li><strong>GERRIT_OLDREV</strong>: The old value of the ref, prior to the update.</li>
+            <li><strong>GERRIT_NEWREV</strong>: The new value the ref was updated to.</li>
+        </ul>
+    </li>
 </ul>
 <p>
     <i>
