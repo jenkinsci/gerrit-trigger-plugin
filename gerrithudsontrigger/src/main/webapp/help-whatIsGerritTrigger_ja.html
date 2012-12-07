@@ -1,23 +1,50 @@
-<p>Gerritのpatchset-craetedイベントでビルドを開始するトリガです。</p>
+<p>Gerritイベントでビルドを開始するトリガーです。</p>
 <p>
     <u>以下のパラメータが、トリガーされたビルドに提供されます:</u>
 </p>
 <ul>
-    <li><strong>GERRIT_CHANGE_ID</strong>: Gerrit Change-Id (SHA-1)</li>
-    <li><strong>GERRIT_CHANGE_SUBJECT</strong>: コミットメッセージの最初の一行</li>
-    <li><strong>GERRIT_CHANGE_NUMBER</strong>: チェンジ番号</li>
-    <li><strong>GERRIT_CHANGE_URL</strong>: チェンジへのURL</li>
-    <li><strong>GERRIT_PATCHSET_NUMBER</strong>: パッチセット番号</li>
-    <li><strong>GERRIT_PATCHSET_REVISION</strong>: パッチセットリビジョン</li>
-    <li><strong>GERRIT_PROJECT</strong>: プロジェクト名</li>
-    <li><strong>GERRIT_BRANCH</strong>: ブランチ名</li>
-    <li><strong>GERRIT_REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
-    <li><strong>GERRIT_CHANGE_OWNER</strong>: チェンジ・オーナーの名前とメールアドレス <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
-    <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: チェンジ・オーナーの名前</li>
-    <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: チェンジ・オーナーのメールアドレス</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセット・アップローダーの名前とメールアドレス <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップローダーの名前</li>
-    <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップローダーのメールアドレス</li>
+    <li>
+        <strong>すべてのイベント</strong>
+        <ul>
+            <li><strong>GERRIT_PROJECT</strong>: プロジェクト名</li>
+            <li><strong>GERRIT_EVENT_HASH</strong>: イベントハッシュ。イベントキュー内でユニークな値を持つ</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT</strong>: イベントに関連付けられているアカウントの名前とメールアドレス（もしあれば）
+                            <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT_NAME</strong>: イベントに関連付けられているアカウントの名前（もしあれば）</li>
+            <li><strong>GERRIT_EVENT_ACCOUNT_EMAIL</strong>: イベントに関連付けられているアカウントのメールアドレス（もしあれば）</li>
+        </ul>
+    </li>
+    <li>
+	    <strong>Patchset Created, Draft Published, Change Merged, Comment Added</strong>
+        <ul>
+            <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id (SHA-1)</li>
+            <li><strong>GERRIT_CHANGE_SUBJECT</strong>: コミットメッセージの最初の一行</li>
+	        <li><strong>GERRIT_CHANGE_NUMBER</strong>: チェンジ番号</li>
+            <li><strong>GERRIT_CHANGE_URL</strong>: チェンジへのURL</li>
+            <li><strong>GERRIT_PATCHSET_NUMBER</strong>: パッチセット番号</li>
+            <li><strong>GERRIT_PATCHSET_REVISION</strong>: パッチセットリビジョン</li>
+            <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
+            <li><strong>GERRIT_REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
+            <li><strong>GERRIT_CHANGE_OWNER</strong>: チェンジ・オーナーの名前とメールアドレス
+			    <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+			</li>
+            <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: チェンジ・オーナーの名前</li>
+            <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: チェンジ・オーナーのメールアドレス</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセット・アップローダーの名前とメールアドレス
+			    <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+			</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップローダーの名前</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップローダーのメールアドレス</li>
+        </ul>
+    </li>
+    <li>
+        <strong>Ref Updated</strong>
+        <ul>
+            <li><strong>GERRIT_REFNAME</strong>: プロジェクト内での参照名</li>
+            <li><strong>GERRIT_OLDREV</strong>: 更新前の古い参照値</li>
+            <li><strong>GERRIT_NEWREV</strong>: 更新後の新しい参照値</li>
+        </ul>
+    </li>
 </ul>
 <p>
     <i>

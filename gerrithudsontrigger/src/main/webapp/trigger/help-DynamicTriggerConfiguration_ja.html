@@ -1,7 +1,31 @@
-<b>動的トリガー設定</b> - トリガーするGerritプロジェクトの設定を、URLで指定されたGerritトリガー設定ファイルにて行います。この設定ファイルは一定の間隔で自動的に読み込まれ、それに応じてこのジョブのトリガー設定を更新します。<br>
-<br>
-このURLは<b>java.net.URL</b>で処理可能な形式で記述してください。<br>
-<br>
-動的トリガーは、手動で設定された以下のトリガー設定と共存可能です。<br>
-<br>
-Gerritトリガー設定ファイルのフォーマットについては、jenkins-ci.orgにある<a href="https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger">プログラインページ</a>の"Dynamic triggering"を参照してください。
+<p>
+    <strong>動的トリガー設定</strong> - トリガーするGerritプロジェクトの設定を、URLで指定されたGerritトリガー設定ファイルにて行います。この設定ファイルは一定の間隔で自動的に読み込まれ、それに応じてこのジョブのトリガー設定を更新します。
+</p>
+<p>
+    このURLは<b>java.net.URL</b>で処理可能な形式で記述してください。
+</p>
+<p>
+    動的トリガーは、手動で設定する以下の通常のトリガー設定と共存可能です。
+</p>
+<p>
+    設定ファイルのフォーマットは以下の通りです。
+<pre style="border: 1px dashed black; padding: 2px"><code>p=some/project
+b^**/master/*
+f~\.txt$
+p=some/other/project
+b^**</code></pre>
+
+    <dl>
+	    <dt><strong><i>凡例:</i></strong></dt>
+	    <dd>
+            p プロジェクト<br/>
+            b ブランチ<br/>
+            f ファイル<br/>
+            = プレーンな文字列<br/>
+            ^ ANTスタイルの構文<br/>
+            ~ 正規表現<br/>
+	    </dd>
+    </dl>
+
+	ブランチとファイルの行は、直前に現れるプロジェクト行の一部とみなされます。
+</p>
