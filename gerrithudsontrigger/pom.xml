@@ -74,6 +74,12 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>com.sonyericsson.hudson.plugins.metadata</groupId>
+            <artifactId>metadata</artifactId>
+            <version>1.0b</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>2.0</version>
