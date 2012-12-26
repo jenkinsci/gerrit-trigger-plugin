@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
@@ -31,16 +32,18 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
@@ -72,15 +75,11 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -88,13 +87,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.net.URL;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
-
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Triggers a build based on Gerrit events.
@@ -431,10 +430,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
                 getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
             }
-            logger.info("Project {} Build Scheduled: {} By event: {}",
-                    new Object[]{project.getName(), (build != null),
+            if (null != changeBasedEvent.getPatchSet()) {
+                logger.info("Project {} Build Scheduled: {} By event: {}",
+                        new Object[]{project.getName(), (build != null),
                             changeBasedEvent.getChange().getNumber() + "/"
-                                    + changeBasedEvent.getPatchSet().getNumber(), });
+                            + changeBasedEvent.getPatchSet().getNumber(), });
+            } else {
+                logger.info("Project {} Build Scheduled: {} By event: {}",
+                        new Object[]{project.getName(), (build != null),
+                            changeBasedEvent.getChange().getNumber(), });
+            }
         } else if (event instanceof RefUpdated) {
             RefUpdated refUpdated = (RefUpdated)event;
             logger.info("Project {} Build Scheduled: {} By event: {}",
@@ -678,7 +683,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     @Override
     public void gerritEvent(ChangeAbandoned event) {
-        //TODO Implement
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
     }
 
     /**
@@ -688,6 +705,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     @Override
     public void gerritEvent(ChangeMerged event) {
+        logger.trace("event: {}", event);
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return;
+        }
+        if (isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            if (!silentMode) {
+                ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            }
+            GerritCause cause = new GerritCause(event, silentMode);
+            schedule(cause, event);
+        }
+    }
+
+    /**
+     * Called when a ChangeRestored event arrives.
+     *
+     * @param event the event.
+     */
+    @Override
+    public void gerritEvent(ChangeRestored event) {
         logger.trace("event: {}", event);
         if (!myProject.isBuildable()) {
             logger.trace("Disabled.");

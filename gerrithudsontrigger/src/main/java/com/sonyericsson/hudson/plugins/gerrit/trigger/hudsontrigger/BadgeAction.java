@@ -118,6 +118,9 @@ public class BadgeAction implements BuildBadgeAction {
      */
     public String getText() {
         if (tEvent instanceof ChangeBasedEvent) {
+            if (null == ((ChangeBasedEvent)tEvent).getPatchSet()) {
+                return ((ChangeBasedEvent)tEvent).getChange().getNumber();
+            }
             return ((ChangeBasedEvent)tEvent).getChange().getNumber()
                     + "," + ((ChangeBasedEvent)tEvent).getPatchSet().getNumber();
         } else if (tEvent instanceof RefUpdated) {
