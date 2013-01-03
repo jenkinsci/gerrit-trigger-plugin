@@ -25,10 +25,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.triggers.SCMTrigger.SCMTriggerCause;
 
@@ -169,6 +169,10 @@ public class GerritCause extends SCMTriggerCause {
     public String getUrl() {
         if (tEvent instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)tEvent;
+            if (null == changeBasedEvent.getPatchSet()) {
+                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                        changeBasedEvent.getChange().getNumber(), null);
+            }
             return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
                     changeBasedEvent.getChange().getNumber(),
                     changeBasedEvent.getPatchSet().getNumber());

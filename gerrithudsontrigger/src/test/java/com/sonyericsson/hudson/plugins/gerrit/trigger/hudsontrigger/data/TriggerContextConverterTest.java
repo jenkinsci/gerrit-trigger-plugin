@@ -414,7 +414,9 @@ public class TriggerContextConverterTest {
         assertThat("Event is not a ChangeBasedEvent", context.getEvent(), instanceOf(ChangeBasedEvent.class));
         ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)context.getEvent();
         assertEquals("semctools/hudson/plugins/gerrit-trigger-plugin", changeBasedEvent.getChange().getProject());
-        assertEquals("1", changeBasedEvent.getPatchSet().getNumber());
+        if (null != changeBasedEvent.getPatchSet()) {
+            assertEquals("1", changeBasedEvent.getPatchSet().getNumber());
+        }
 
         assertNotNull(context.getThisBuild());
         assertEquals(6, context.getThisBuild().getBuildNumber().intValue());

@@ -75,9 +75,14 @@ public abstract class GerritEventKeys {
      */
     public static final String PROJECT = "project";
     /**
+     * restorer.
+     */
+    public static final String RESTORER = "restorer";
+    /**
      * subject.
      */
     public static final String SUBJECT = "subject";
+
     /**
      * url.
      */
