@@ -224,7 +224,7 @@ public enum GerritTriggerParameters {
                     parameters, event.getChange().getProject(), escapeQuotes);
             if (event instanceof ChangeRestored) {
                 GERRIT_CHANGE_RESTORER.setOrCreateStringParameterValue(
-                        parameters, getNameAndEmail(event.getAccount()), escapeQuotes);
+                        parameters, getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
@@ -234,7 +234,7 @@ public enum GerritTriggerParameters {
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
                 GERRIT_CHANGE_ABANDONER.setOrCreateStringParameterValue(
-                        parameters, getNameAndEmail(event.getAccount()), escapeQuotes);
+                        parameters, getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
             GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
                     parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);

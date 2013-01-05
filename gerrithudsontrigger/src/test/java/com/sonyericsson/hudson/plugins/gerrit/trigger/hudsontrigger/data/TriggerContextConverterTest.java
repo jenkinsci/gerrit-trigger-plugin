@@ -24,8 +24,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -271,6 +273,52 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}.
+     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned} event and
+     * list of "others" containing two items.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalWithOthersChangeAbandoned() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+
+        ChangeAbandoned event = Setup.createChangeAbandoned();
+
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(entity);
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
+        otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
+        context.setOthers(otherBuilds);
+
+        TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = new XStream2();
+        xStream.registerConverter(new TriggerContextConverter());
+        String xml = xStream.toXML(t);
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+        assertTrue(readT.getEntity().getEvent() instanceof ChangeAbandoned);
+        assertNotNull(readT.getEntity().getThisBuild());
+        assertNotNull(readT.getEntity().getOthers());
+
+        assertEquals(2, readT.getEntity().getOthers().size());
+
+        TriggeredItemEntity other = readT.getEntity().getOthers().get(0);
+        assertEquals(1, other.getBuildNumber().intValue());
+        assertEquals("projectY", other.getProjectId());
+
+        other = readT.getEntity().getOthers().get(1);
+        assertEquals(12, other.getBuildNumber().intValue());
+        assertEquals("projectZ", other.getProjectId());
+    }
+
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}.
      * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged} event and
      * list of "others" containing two items.
      *
@@ -300,6 +348,52 @@ public class TriggerContextConverterTest {
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
         assertTrue(readT.getEntity().getEvent() instanceof ChangeMerged);
+        assertNotNull(readT.getEntity().getThisBuild());
+        assertNotNull(readT.getEntity().getOthers());
+
+        assertEquals(2, readT.getEntity().getOthers().size());
+
+        TriggeredItemEntity other = readT.getEntity().getOthers().get(0);
+        assertEquals(1, other.getBuildNumber().intValue());
+        assertEquals("projectY", other.getProjectId());
+
+        other = readT.getEntity().getOthers().get(1);
+        assertEquals(12, other.getBuildNumber().intValue());
+        assertEquals("projectZ", other.getProjectId());
+    }
+
+    /**
+     * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
+     * com.thoughtworks.xstream.converters.MarshallingContext)}.
+     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored} event and
+     * list of "others" containing two items.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testMarshalWithOthersChangeRestored() throws Exception {
+        TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
+
+        ChangeRestored event = Setup.createChangeRestored();
+
+        TriggerContext context = new TriggerContext(event);
+        context.setThisBuild(entity);
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
+        otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
+        context.setOthers(otherBuilds);
+
+        TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
+
+        XStream xStream = new XStream2();
+        xStream.registerConverter(new TriggerContextConverter());
+        String xml = xStream.toXML(t);
+
+        TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
+
+        assertNotNull(readT.getEntity());
+        assertNotNull(readT.getEntity().getEvent());
+        assertTrue(readT.getEntity().getEvent() instanceof ChangeRestored);
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 

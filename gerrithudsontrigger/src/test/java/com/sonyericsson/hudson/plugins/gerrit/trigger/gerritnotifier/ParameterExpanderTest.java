@@ -274,6 +274,21 @@ public class ParameterExpanderTest {
                 "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
+   /**
+     * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeAbandoned event instead.
+     *
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
+    @Test
+    public void testGetBuildCompletedCommandSuccessfulChangeAbandoned() throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulChangeAbandoned("",
+                "\n\nhttp://localhost/test/ : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeAbandoned("http://example.org/<CHANGE_ID>",
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeAbandoned("${BUILD_URL}console",
+                "\n\nhttp://localhost/test/console : SUCCESS");
+    }
     /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeMerged event instead.
      *
@@ -291,6 +306,21 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeRestored event instead.
+     *
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
+    @Test
+    public void testGetBuildCompletedCommandSuccessfulChangeRestored() throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulChangeRestored("",
+                "\n\nhttp://localhost/test/ : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeRestored("http://example.org/<CHANGE_ID>",
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+        tryGetBuildCompletedCommandSuccessfulChangeRestored("${BUILD_URL}console",
+                "\n\nhttp://localhost/test/console : SUCCESS");
+    }
+    /**
      * Sub test for {@link #testGetBuildCompletedCommandSuccessful()}.
      *
      * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
@@ -304,6 +334,19 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessfulChangeAbandoned()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessfulChangeAbandoned(String customUrl, String expectedBuildsStats)
+            throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeAbandoned(), 0, 0);
+    }
+
+    /**
      * Sub test for {@link #testGetBuildCompletedCommandSuccessfulChangeMerged()}.
      *
      * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
@@ -314,6 +357,19 @@ public class ParameterExpanderTest {
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeMerged(), 0, 0);
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessfulChangeRestored()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandSuccessfulChangeRestored(String customUrl, String expectedBuildsStats)
+            throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeRestored(), 0, 0);
     }
 
     /**

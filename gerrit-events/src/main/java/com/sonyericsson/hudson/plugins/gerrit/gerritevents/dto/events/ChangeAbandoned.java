@@ -37,9 +37,30 @@ import net.sf.json.JSONObject;
 public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent {
 
     /**
+     * The person who triggered this event.
+     */
+    private Account abandoner;
+
+    /**
      * Default constructor.
      */
     public ChangeAbandoned() {
+    }
+
+    /**
+     * Get the abandoner who triggered this event.
+     * @return the abandoner
+     */
+    public Account getAbandoner() {
+        return this.abandoner;
+    }
+
+    /**
+     * Set the abandoner for this event.
+     * @param abandoner the abandoner to set
+     */
+    public void setAbandoner(Account abandoner) {
+        this.abandoner = abandoner;
     }
 
     /**
@@ -67,7 +88,7 @@ public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent
         super.fromJson(json);
 
         if (json.containsKey(ABANDONER)) {
-            account = new Account(json.getJSONObject(ABANDONER));
+            abandoner = new Account(json.getJSONObject(ABANDONER));
         }
     }
 }

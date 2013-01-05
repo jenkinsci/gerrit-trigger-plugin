@@ -35,9 +35,30 @@ import net.sf.json.JSONObject;
 public class ChangeRestored extends ChangeBasedEvent implements GerritJsonEvent {
 
     /**
+     * The person who triggered this event.
+     */
+    private Account restorer;
+
+    /**
      * Default constructor.
      */
     public ChangeRestored() {
+    }
+
+    /**
+     * Get the restorer who triggered this event.
+     * @return the restorer
+     */
+    public Account getRestorer() {
+        return this.restorer;
+    }
+
+    /**
+     * Set the restorer for this event.
+     * @param restorer the restorer to set
+     */
+    public void setRestorer(Account restorer) {
+        this.restorer = restorer;
     }
 
     /**
@@ -66,7 +87,7 @@ public class ChangeRestored extends ChangeBasedEvent implements GerritJsonEvent 
         super.fromJson(json);
 
         if (json.containsKey(RESTORER)) {
-            this.account = new Account(json.getJSONObject(RESTORER));
+            this.restorer = new Account(json.getJSONObject(RESTORER));
         }
     }
 }
