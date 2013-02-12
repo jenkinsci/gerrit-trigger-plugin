@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
@@ -372,6 +373,11 @@ public class GerritHandlerTest {
 
         @Override
         public void gerritEvent(ChangeMerged event) {
+
+        }
+
+        @Override
+        public void gerritEvent(ChangeRestored event) {
 
         }
 

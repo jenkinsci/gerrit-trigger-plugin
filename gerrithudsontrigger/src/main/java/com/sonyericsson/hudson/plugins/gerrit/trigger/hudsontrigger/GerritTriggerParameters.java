@@ -25,7 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -78,6 +80,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_REFSPEC,
     /**
+     * The name and email of the abandoner of the change.
+     */
+    GERRIT_CHANGE_ABANDONER,
+    /**
      * The name and email of the owner of the change.
      */
     GERRIT_CHANGE_OWNER,
@@ -89,6 +95,10 @@ public enum GerritTriggerParameters {
      * The email of the owner of the change.
      */
     GERRIT_CHANGE_OWNER_EMAIL,
+    /**
+     * The name and email of the restorer of the change.
+     */
+    GERRIT_CHANGE_RESTORER,
     /**
      * The name and email of the uploader of the patch-set.
      */
@@ -200,20 +210,32 @@ public enum GerritTriggerParameters {
                     parameters, event.getChange().getNumber(), escapeQuotes);
             GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
                     parameters, event.getChange().getId(), escapeQuotes);
-            GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
-                    parameters, event.getPatchSet().getNumber(), escapeQuotes);
-            GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
-                    parameters, event.getPatchSet().getRevision(), escapeQuotes);
-            GERRIT_REFSPEC.setOrCreateStringParameterValue(
-                    parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+            String pNumber = null;
+            if (null != event.getPatchSet()) {
+                pNumber = event.getPatchSet().getNumber();
+                GERRIT_PATCHSET_NUMBER.setOrCreateStringParameterValue(
+                        parameters, pNumber, escapeQuotes);
+                GERRIT_PATCHSET_REVISION.setOrCreateStringParameterValue(
+                        parameters, event.getPatchSet().getRevision(), escapeQuotes);
+                GERRIT_REFSPEC.setOrCreateStringParameterValue(
+                        parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+            }
             GERRIT_PROJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getProject(), escapeQuotes);
+            if (event instanceof ChangeRestored) {
+                GERRIT_CHANGE_RESTORER.setOrCreateStringParameterValue(
+                        parameters, getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
+            }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
             String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
-                    event.getPatchSet().getNumber());
+                    pNumber);
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
+            if (event instanceof ChangeAbandoned) {
+                GERRIT_CHANGE_ABANDONER.setOrCreateStringParameterValue(
+                        parameters, getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+            }
             GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
                     parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
             GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(

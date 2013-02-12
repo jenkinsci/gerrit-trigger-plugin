@@ -24,12 +24,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ABANDONER;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
-
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ABANDONER;
 
 /**
  * A DTO representation of the change-abandoned Gerrit Event.
@@ -38,9 +37,30 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
 public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent {
 
     /**
+     * The person who triggered this event.
+     */
+    private Account abandoner;
+
+    /**
      * Default constructor.
      */
     public ChangeAbandoned() {
+    }
+
+    /**
+     * Get the abandoner who triggered this event.
+     * @return the abandoner
+     */
+    public Account getAbandoner() {
+        return this.abandoner;
+    }
+
+    /**
+     * Set the abandoner for this event.
+     * @param abandoner the abandoner to set
+     */
+    public void setAbandoner(Account abandoner) {
+        this.abandoner = abandoner;
     }
 
     /**
@@ -48,6 +68,7 @@ public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent
      * @param json the JSON Object
      * @see #fromJson(net.sf.json.JSONObject)
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public ChangeAbandoned(JSONObject json) {
         fromJson(json);
     }
@@ -65,8 +86,9 @@ public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
+
         if (json.containsKey(ABANDONER)) {
-            account = new Account(json.getJSONObject(ABANDONER));
+            abandoner = new Account(json.getJSONObject(ABANDONER));
         }
     }
 }

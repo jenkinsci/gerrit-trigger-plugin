@@ -27,9 +27,10 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 
 /**
@@ -73,6 +74,12 @@ public interface GerritEventListener {
      * @param event the event.
      */
     void gerritEvent(ChangeMerged event);
+
+    /**
+     * Called when a change restored event has arrived.
+     * @param event the event.
+     */
+    void gerritEvent(ChangeRestored event);
 
     /**
      * Called when a comment added event has arrived.
