@@ -222,7 +222,9 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
-        secondEvent.getPatchSet().setNumber("2");
+        if (null != secondEvent.getPatchSet()) {
+            secondEvent.getPatchSet().setNumber("2");
+        }
         PluginImpl.getInstance().triggerEvent(secondEvent);
         RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
         assertEquals(2, builds.size());
@@ -247,7 +249,9 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
-        secondEvent.getPatchSet().setNumber("2");
+        if (null != secondEvent.getPatchSet()) {
+            secondEvent.getPatchSet().setNumber("2");
+        }
         PluginImpl.getInstance().triggerEvent(secondEvent);
         RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
         assertEquals(2, builds.size());

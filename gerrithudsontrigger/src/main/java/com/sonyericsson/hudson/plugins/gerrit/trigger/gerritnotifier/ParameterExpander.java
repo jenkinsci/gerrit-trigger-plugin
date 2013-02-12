@@ -218,9 +218,11 @@ public class ParameterExpander {
             map.put("CHANGE_ID", event.getChange().getId());
             map.put("BRANCH", event.getChange().getProject());
             map.put("CHANGE", event.getChange().getNumber());
-            map.put("PATCHSET", event.getPatchSet().getNumber());
-            map.put("PATCHSET_REVISION", event.getPatchSet().getRevision());
-            map.put("REFSPEC", StringUtil.makeRefSpec(event));
+            if (null != event.getPatchSet()) {
+                map.put("PATCHSET", event.getPatchSet().getNumber());
+                map.put("PATCHSET_REVISION", event.getPatchSet().getRevision());
+                map.put("REFSPEC", StringUtil.makeRefSpec(event));
+            }
         }
         if (r != null) {
             map.put("BUILDURL", hudson.getRootUrl() + r.getUrl());

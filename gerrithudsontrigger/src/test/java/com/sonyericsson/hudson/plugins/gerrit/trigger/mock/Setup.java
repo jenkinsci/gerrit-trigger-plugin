@@ -28,7 +28,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
@@ -169,6 +171,31 @@ public final class Setup {
     }
 
     /**
+     * Gives you a ChangeAbandoned mock.
+     * @return ChangeAbandoned mock.
+     */
+    public static ChangeAbandoned createChangeAbandoned() {
+        ChangeAbandoned event = new ChangeAbandoned();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account("Name", "email@domain.com");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        Account abandoner = new Account("Name1", "email@domain1.com");
+        event.setAbandoner(abandoner);
+        return event;
+    }
+
+    /**
      * Gives you a ChangeMerged mock.
      * @return ChangeMerged mock.
      */
@@ -190,6 +217,31 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        return event;
+    }
+
+    /**
+     * Gives you a ChangeRestored mock.
+     * @return ChangeRestored mock.
+     */
+    public static ChangeRestored createChangeRestored() {
+        ChangeRestored event = new ChangeRestored();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account("Name", "email@domain.com");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        Account restorer = new Account("Name1", "email@domain1.com");
+        event.setRestorer(restorer);
         return event;
     }
 
