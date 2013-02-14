@@ -77,8 +77,8 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
     @Override
     protected void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        sshd = SshdServerMock.startServer();
-        server = SshdServerMock.getInstance();
+        server = new SshdServerMock();
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);

@@ -42,4 +42,9 @@ public interface Coordinator {
      * @param event the event to fire.
      */
     void notifyListeners(GerritEvent event);
+
+    /**
+     * Shuts down the stream-events connection so that the auto reconnect goes in effect.
+     */
+    void reconnect();
 }

@@ -53,6 +53,8 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import java.io.File;
 import java.util.List;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
+
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 
 /**
@@ -64,10 +66,6 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
     //TODO Fix the SshdServerMock so that asserts can be done on approve commands.
 
-    /**
-     * The stream-events command.
-     */
-    protected static final String GERRIT_STREAM_EVENTS = "gerrit stream-events";
     private SshServer sshd;
     private File sshKey;
     private SshdServerMock server;
@@ -75,8 +73,8 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     @Override
     protected void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        sshd = SshdServerMock.startServer();
-        server = SshdServerMock.getInstance();
+        server = new SshdServerMock();
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
