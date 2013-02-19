@@ -8,6 +8,10 @@
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
+            <f:entry title="${%Do not pass compound 'name and email' parameters}" field="noNameAndEmailParameters"
+                 help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
+                <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>
+            </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
                 <f:entry title="${%URL to post}"
                          field="customUrl"
