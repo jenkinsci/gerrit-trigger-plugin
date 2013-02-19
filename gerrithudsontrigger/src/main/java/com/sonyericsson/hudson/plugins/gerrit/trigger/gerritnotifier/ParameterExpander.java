@@ -105,7 +105,7 @@ public class ParameterExpander {
             startedStats.append(stats.toString());
         }
         String buildStartMessage = trigger.getBuildStartMessage();
-        if (buildStartMessage != null && !buildStartMessage.equals("")) {
+        if (buildStartMessage != null && !buildStartMessage.isEmpty()) {
             startedStats.append("\n\n").append(buildStartMessage);
         }
 
@@ -499,7 +499,7 @@ public class ParameterExpander {
 
                     // If the user has specified a message, use it
                     // otherwise use a generic indicator
-                    if (customMessage == null || customMessage.equals("")) {
+                    if (customMessage == null || customMessage.isEmpty()) {
                         str.append(res.toString());
                         if (shouldSkip(trigger.getSkipVote(), res)) {
                             str.append(" (skipped)");

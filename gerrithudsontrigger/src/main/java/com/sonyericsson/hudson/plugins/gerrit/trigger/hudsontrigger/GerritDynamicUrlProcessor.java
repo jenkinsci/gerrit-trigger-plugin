@@ -142,7 +142,7 @@ public final class GerritDynamicUrlProcessor {
 
             // Trim leading and trailing whitespace
             line = line.trim();
-            if (line.equals("")) {
+            if (line.isEmpty()) {
                 continue;
             }
 
