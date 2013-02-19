@@ -5,19 +5,16 @@ import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import hudson.plugins.git.IGitAPI;
-import hudson.plugins.git.GitAPI;
 import hudson.plugins.git.GitException;
 import hudson.plugins.git.Revision;
 import hudson.plugins.git.Branch;
-import hudson.plugins.git.util.Build;
-import hudson.plugins.git.util.BuildData;
-import hudson.plugins.git.util.BuildChooser;
-import hudson.plugins.git.util.BuildChooserDescriptor;
+import hudson.plugins.git.util.*;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.eclipse.jgit.lib.ObjectId;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +26,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  * @author Andrew Bayer
  */
 public class GerritTriggerBuildChooser extends BuildChooser {
-    private final String separator = "#";
 
     /**
      * Default constructor.
@@ -54,7 +50,8 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      */
     @Override
     public Collection<Revision> getCandidateRevisions(boolean isPollCall, String singleBranch,
-                                                      IGitAPI git, TaskListener listener, BuildData data)
+                                                      IGitAPI git, TaskListener listener,
+                                                      BuildData data, BuildChooserContext context)
         throws GitException, IOException {
 
         try {
@@ -71,12 +68,12 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     }
 
     @Override
-    public Build prevBuildForChangelog(String singleBranch, BuildData data, IGitAPI git) {
+    public Build prevBuildForChangelog(String singleBranch, BuildData data, IGitAPI git, BuildChooserContext context) {
         ObjectId sha1 = git.revParse("FETCH_HEAD");
 
         // Now we cheat and add the parent as the last build on the branch, so we can
         // get the changelog working properly-ish.
-        ObjectId parentSha1 = getFirstParent(ObjectId.toString(sha1), git);
+        ObjectId parentSha1 = getFirstParent(sha1, git);
         Revision parentRev = new Revision(parentSha1);
         parentRev.getBranches().add(new Branch(singleBranch, parentSha1));
 
@@ -98,50 +95,32 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     /**
      * Gets the top parent of the given revision.
      *
-     * @param revName Revision
+     * @param id Revision
      * @param git GitAPI object
      * @return object id of Revision's parent, or of Revision itself if there is no parent
      * @throws GitException In case of error in git call
      */
-    private ObjectId getFirstParent(String revName, IGitAPI git) throws GitException {
-        String result = ((GitAPI)git).launchCommand("log", "-1", "--pretty=format:%P", revName);
-        // If this is the first commit in the git, there is no parent and the
-        // git log command returns an empty string, which will cause NPE later.
-        if (result.isEmpty()) {
-            // Get the revision of this commit instead.  If git log still returns
-            // an empty string, raise an exception.
-            result = ((GitAPI)git).launchCommand("log", "-1", "--pretty=format:%H");
-            if (result.isEmpty()) {
-                throw new GitException("git log returned an empty string");
-            }
-        }
-        String parents = firstLine(result).trim();
-        String firstParent = parents.split(" ")[0];
-        return ObjectId.fromString(firstParent);
-    }
-
-    /**
-     * Gets the first line of the string.
-     *
-     * @param result String to get first line of
-     * @return first line of string
-     */
-    private String firstLine(String result) {
-        BufferedReader reader = new BufferedReader(new StringReader(result));
-        String line;
+    private ObjectId getFirstParent(ObjectId id, IGitAPI git) throws GitException {
+        RevWalk walk = null;
+        ObjectId result = null;
         try {
-            line = reader.readLine();
-            if (line == null) {
-                return null;
+            Repository repository = git.getRepository();
+            walk = new RevWalk(repository);
+            RevCommit commit = walk.parseCommit(id);
+            if (commit.getParentCount() > 0) {
+                result = commit.getParent(0);
+            } else {
+                // If this is the first commit in the git, there is no parent.
+                result = id;
             }
-            if (reader.readLine() != null) {
-                throw new GitException("Result has multiple lines");
+        } catch (Exception e) {
+            throw new GitException("Failed to find parent id. ", e);
+        } finally {
+            if (walk != null) {
+                walk.dispose();
             }
-        } catch (IOException e) {
-            throw new GitException("Error parsing result", e);
         }
-
-        return line;
+        return result;
     }
 
     /**
