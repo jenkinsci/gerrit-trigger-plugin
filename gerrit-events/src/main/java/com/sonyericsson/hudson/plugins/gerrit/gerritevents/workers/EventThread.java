@@ -52,7 +52,7 @@ public class EventThread extends Thread {
      * @param name the name of the thread.
      */
     public EventThread(Coordinator coordinator, String name) {
-        super("Gerrit Worker EventThread");
+        super(name);
         this.coordinator = coordinator;
     }
 
