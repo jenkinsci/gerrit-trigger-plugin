@@ -43,6 +43,7 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
      * @throws Exception if so.
      */
     public void testPopulateDropDown() throws Exception {
+        @SuppressWarnings("unused")
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "myGerritProject");
         WebClient wc = createWebClient();
         HtmlPage page = wc.goTo("/job/myGerritProject/configure");

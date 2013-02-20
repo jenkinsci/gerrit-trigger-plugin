@@ -777,22 +777,6 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
-     * Sub-method of {@link #notifyListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener,
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent) . It is a convenience method so there is no
-     * need to try catch for every occurence.
-     *
-     * @param listener the listener to notify
-     * @param event    the event to fire.
-     */
-    private void notifyListenerDefaultMethod(GerritEventListener listener, GerritEvent event) {
-        try {
-            listener.gerritEvent(event);
-        } catch (Exception ex) {
-            logger.error("Exception thrown during event handling.", ex);
-        }
-    }
-
-    /**
      * Sets the shutdown flag.
      *
      * @param isIt true if shutdown is in progress.

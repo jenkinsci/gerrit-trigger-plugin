@@ -121,6 +121,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl#restartConnection()
      */
     public void testNewProjectCreationFirstNoConnection() throws Exception {
+        @SuppressWarnings("unused")
         FreeStyleProject p = createGerritTriggeredJob(this, "testJob4");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
         assertNull(handler);

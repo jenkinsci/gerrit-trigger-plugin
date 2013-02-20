@@ -50,6 +50,7 @@ import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
+
 import java.io.File;
 import java.util.List;
 
@@ -67,6 +68,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     //TODO Fix the SshdServerMock so that asserts can be done on approve commands.
 
     private SshServer sshd;
+    @SuppressWarnings("unused")
     private File sshKey;
     private SshdServerMock server;
 
@@ -170,7 +172,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     }
 
     /**
-     * Tests to trigger builds with two diffetent patch sets. Expecting two build to be scheduled with one cause each.
+     * Tests to trigger builds with two different patch sets. Expecting two build to be scheduled with one cause each.
      *
      * @throws Exception if so.
      */
