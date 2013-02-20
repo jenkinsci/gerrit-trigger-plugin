@@ -55,6 +55,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  * @author Andrew Bayer
  */
 public class GerritTriggerBuildChooser extends BuildChooser {
+    private static final long serialVersionUID = 2003462680723330645L;
+
     /**
      * Used by XStream for something.
      */

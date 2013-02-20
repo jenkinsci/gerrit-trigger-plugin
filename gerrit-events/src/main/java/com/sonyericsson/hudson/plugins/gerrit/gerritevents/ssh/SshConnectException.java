@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +30,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class SshConnectException extends SshException {
+    private static final long serialVersionUID = 2318733790919051133L;
 
     /**
      * Default constructor.

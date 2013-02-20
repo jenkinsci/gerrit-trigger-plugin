@@ -524,6 +524,8 @@ public class ParameterExpanderTest {
      * Extension implementing GerritMessageProvider to provide a custom build message.
      */
     public static class GerritMessageProviderExtension extends GerritMessageProvider {
+        private static final long serialVersionUID = -7565217057927807166L;
+
         @Override
         public String getBuildStartedMessage(AbstractBuild build) {
             return "CUSTOM_MESSAGE_BUILD_STARTED";
@@ -539,6 +541,8 @@ public class ParameterExpanderTest {
      * Extension implementing GerritMessageProvider to provide a custom build message (null).
      */
     public static class GerritMessageProviderExtensionReturnNull extends GerritMessageProvider {
+        private static final long serialVersionUID = -3479376646924947609L;
+
         @Override
         public String getBuildStartedMessage(AbstractBuild build) {
             return null;

@@ -35,6 +35,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * An event configuration that causes the build to be triggered when a change is abandoned.
  */
 public class PluginChangeAbandonedEvent extends PluginGerritEvent implements Serializable {
+    private static final long serialVersionUID = -8490721342780735276L;
 
     /**
      * Standard constructor.

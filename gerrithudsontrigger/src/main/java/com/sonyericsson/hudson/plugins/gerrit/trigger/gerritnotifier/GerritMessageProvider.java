@@ -35,6 +35,8 @@ import java.util.List;
  * @author Gustaf Lundh &lt;gustaf.lundh@sonymobile.com&gt;
  */
 public abstract class GerritMessageProvider implements Serializable, ExtensionPoint {
+    private static final long serialVersionUID = -2019176207418719449L;
+
     /**
      * Method allowing plug-ins to provide extra custom messages to Gerrit when a build is started.
      *

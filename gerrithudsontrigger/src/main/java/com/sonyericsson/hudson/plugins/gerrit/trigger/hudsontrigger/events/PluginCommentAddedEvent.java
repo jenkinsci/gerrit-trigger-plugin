@@ -41,6 +41,7 @@ import java.util.List;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginCommentAddedEvent extends PluginGerritEvent implements Serializable {
+    private static final long serialVersionUID = -1190562081236235819L;
     private String verdictCategory;
     private String commentAddedTriggerApprovalValue;
 

@@ -36,6 +36,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * restored.
  */
 public class PluginChangeRestoredEvent extends PluginGerritEvent implements Serializable {
+    private static final long serialVersionUID = -9137390315878224618L;
 
     /**
      * Standard constructor.
