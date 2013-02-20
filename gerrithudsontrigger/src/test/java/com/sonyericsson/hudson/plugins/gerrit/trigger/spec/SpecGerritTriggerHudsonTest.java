@@ -40,6 +40,7 @@ import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Item;
 import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
@@ -328,7 +329,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
 
         project.renameTo("anotherName");
-        configRoundtrip(project);
+        configRoundtrip((Item)project);
 
         assertEquals(0, h.countTrigger);
 
