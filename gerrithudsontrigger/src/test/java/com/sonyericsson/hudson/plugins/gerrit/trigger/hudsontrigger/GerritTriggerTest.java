@@ -200,6 +200,7 @@ public class GerritTriggerTest {
         when(config.getBuildScheduleDelay()).thenReturn(20);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -256,7 +257,7 @@ public class GerritTriggerTest {
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, "", "", "", "", "", null, null, null, false, "");
+                true, true, false, "", "", "", "", "", null, null, null, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNull(triggerOnEvents);
@@ -287,6 +288,7 @@ public class GerritTriggerTest {
         when(config.getBuildScheduleDelay()).thenReturn(-20);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -321,6 +323,7 @@ public class GerritTriggerTest {
         when(config.getBuildScheduleDelay()).thenReturn(10000);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -353,6 +356,7 @@ public class GerritTriggerTest {
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -397,6 +401,7 @@ public class GerritTriggerTest {
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
@@ -445,6 +450,7 @@ public class GerritTriggerTest {
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
         PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
@@ -493,6 +499,7 @@ public class GerritTriggerTest {
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
         PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, null);
         GerritCause gerritCause = new GerritCause(event, true);
@@ -541,6 +548,7 @@ public class GerritTriggerTest {
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
         PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
@@ -588,6 +596,7 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
         PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, null);
         GerritCause gerritCause = new GerritCause(event, true);
@@ -636,6 +645,7 @@ public class GerritTriggerTest {
         Account uploader = new Account("Bobby", null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
         PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         GerritCause gerritCause = new GerritCause(event, true);
@@ -688,6 +698,7 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.EMPTY_LIST);
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
@@ -730,6 +741,7 @@ public class GerritTriggerTest {
         when(listener.isBuilding(project, event)).thenReturn(false);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.EMPTY_LIST);
 
         TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
@@ -837,6 +849,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
@@ -871,6 +884,7 @@ public class GerritTriggerTest {
         when(project.isBuildable()).thenReturn(false);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.EMPTY_LIST);
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
@@ -903,6 +917,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
@@ -936,6 +951,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
@@ -974,6 +990,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "myProject", project);
 
@@ -1011,6 +1028,7 @@ public class GerritTriggerTest {
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "myProject", project);
 
@@ -1080,6 +1098,7 @@ public class GerritTriggerTest {
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
         GerritTrigger triggerWithEscapeQuotesOn = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(triggerWithEscapeQuotesOn);
 
         //the Trigger is creating parameters with escaped quote in "subject".
         ParametersAction paremetersAction =
@@ -1148,6 +1167,7 @@ public class GerritTriggerTest {
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
         GerritTrigger triggerWithEscapeQuotesOff = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(triggerWithEscapeQuotesOff);
         triggerWithEscapeQuotesOff.setEscapeQuotes(false);
 
         //the Trigger is creating parameters with escaped quote in "subject"

@@ -121,6 +121,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private boolean escapeQuotes;
+    private boolean noNameAndEmailParameters;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -173,6 +174,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
+     * @param noNameAndEmailParameters       Whether to create parameters containing name and email
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
@@ -201,6 +203,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildNotBuiltCodeReviewValue,
             boolean silentMode,
             boolean escapeQuotes,
+            boolean noNameAndEmailParameters,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
@@ -225,6 +228,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
         this.silentMode = silentMode;
         this.escapeQuotes = escapeQuotes;
+        this.noNameAndEmailParameters = noNameAndEmailParameters;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -504,7 +508,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
-        setOrCreateParameters(event, parameters, isEscapeQuotes());
+        setOrCreateParameters(event, project, parameters);
         return new ParametersAction(parameters);
     }
 
@@ -1142,6 +1146,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setEscapeQuotes(boolean escapeQuotes) {
         this.escapeQuotes = escapeQuotes;
+    }
+
+    /**
+     * If noNameAndEmailParameters is on or off. When this is set on this plugin will not create parameters
+     * which combine a name with an email (this applies change owner, restorer, etc). These parameters cause
+     * problems with some configurations.
+     *
+     * @return true if noNameAndEmailParameters is on.
+     */
+    public boolean isNoNameAndEmailParameters() {
+        return noNameAndEmailParameters;
+    }
+
+    /**
+     * Sets noNameAndEmailParameters to on or off.  When this is set on this plugin will not create parameters
+     * which combine a name with an email (this applies change owner, restorer, etc). These parameters cause
+     * problems with some configurations.
+     *
+     * @param noNameAndEmailParameters is true if problematic parameters should be omitted.
+     */
+    public void setNoNameAndEmailParameters(boolean noNameAndEmailParameters) {
+        this.noNameAndEmailParameters = noNameAndEmailParameters;
     }
 
     /**

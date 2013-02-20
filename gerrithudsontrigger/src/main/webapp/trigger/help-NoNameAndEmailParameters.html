@@ -1,0 +1,14 @@
+<p>
+  In some configurations parameters containing both a name and an email address can cause problems.
+  It can be difficult to have these escaped to the satisfaction of all tools in a build chain.
+  Turning this setting on allows these parameters to be omitted.
+</p>
+<p>
+    E.g. parameters like this will not be created:<br/>
+    &nbsp;&nbsp;-DGERRIT_PATCHSET_UPLOADER="Joe Coder" &lt;jcoder@some.where&gt;
+</p>
+<p>
+ <i>Triggers configured before this setting was introduced
+     will have this unchecked, giving the same behavior as before by
+     creating those parameters.</i>
+<p>

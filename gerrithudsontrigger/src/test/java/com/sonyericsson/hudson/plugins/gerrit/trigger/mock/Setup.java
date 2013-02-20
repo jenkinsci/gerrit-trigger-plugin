@@ -383,10 +383,16 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, "", "", "", "", "", null, null, triggerOnEvents, false, "");
+                true, true, false, "", "", "", "", "", null, null, triggerOnEvents, false, "");
 
         if (project != null) {
-          trigger.start(project, true);
+            trigger.start(project, true);
+            try {
+                project.addTrigger(trigger);
+            } catch (IOException e) {
+                // for the sake of testing this should be ok
+                throw new RuntimeException(e);
+            }
         }
 
         return trigger;
