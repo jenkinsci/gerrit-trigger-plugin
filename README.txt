@@ -23,12 +23,12 @@ THE SOFTWARE.
 
 ==============
 
-This plugin triggers builds on events from the Gerrit code review system
-by retrieving events from the Gerrit command "stream-events",
-so the trigger is pushed from Gerrit instead of pulled as scm-triggers
-usually are.
-Multiple builds can be triggered by one change-event, and one
-consolidated report is sent back to Gerrit.
+This plugin triggers builds on events from the Gerrit code review system by
+retrieving events from the Gerrit command "stream-events", so the trigger is
+pushed from Gerrit instead of pulled as scm-triggers usually are.
+
+Multiple builds can be triggered by one change-event, and one consolidated
+report is sent back to Gerrit.
 
 =============
 Maintainers
