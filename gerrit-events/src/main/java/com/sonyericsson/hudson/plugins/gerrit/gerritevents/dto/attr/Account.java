@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -125,7 +126,7 @@ public class Account implements GerritJsonDTO {
     public String getNameAndEmail() {
         if (name == null || email == null) {
             return null;
-        } else if ("".equals(email) || "".equals(name)) {
+        } else if (email.isEmpty() || name.isEmpty()) {
             return "";
         } else {
             StringBuffer str = new StringBuffer("\"");

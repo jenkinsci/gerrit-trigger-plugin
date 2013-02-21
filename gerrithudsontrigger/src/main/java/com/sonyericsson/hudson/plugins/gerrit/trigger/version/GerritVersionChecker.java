@@ -124,7 +124,7 @@ public final class GerritVersionChecker {
      * @return the version as a versionNumber.
      */
     public static GerritVersionNumber createVersionNumber(String version) {
-        if (version == null || version.equals("")) {
+        if (version == null || version.isEmpty()) {
             logger.error("Gerrit version number is null or the empty string.");
             return new HighestVersionNumber();
         }

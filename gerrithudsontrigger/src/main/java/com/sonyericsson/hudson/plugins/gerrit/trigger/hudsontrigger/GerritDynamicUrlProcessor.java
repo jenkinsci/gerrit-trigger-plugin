@@ -64,6 +64,130 @@ public final class GerritDynamicUrlProcessor {
      */
     private GerritDynamicUrlProcessor() {
     }
+
+    /**
+     * Build the regex pattern for matching lines in the config.
+     * @return the pattern
+     */
+    private static Pattern buildLinePattern() {
+      // This is what a line in the file should look like, after all comments and
+      // leading and trailing whitespace have been removed:
+      // item: one of the characters p (for Project), b (for Branch) or f (for FilePath)
+      // optional whitespace
+      // operator: one of the characters = (for Plain), ~ (for RegExp), or ^ (for ANT path)
+      // optional whitespace
+      // the pattern: everything else on the line
+      String projectBranchFile = "^("
+              + SHORTNAME_PROJECT
+              + "|" + SHORTNAME_BRANCH
+              + "|" + SHORTNAME_FILE
+              + ")";
+      String operators = "(";
+      boolean firstoperator = true;
+      for (CompareType type : CompareType.values()) {
+        if (!firstoperator) {
+          operators += "|";
+        }
+        operators += type.getOperator();
+        firstoperator = false;
+      }
+      operators += ")";
+
+      return Pattern.compile(projectBranchFile
+              + "\\s*"
+              + operators
+              + "\\s*(.+)$");
+    }
+
+    /**
+     * Read and parse the dynamic trigger configuration
+     * @param reader stream from which to read the config
+     * @return List of Gerrit projects
+     * @throws ParseException when the fetched content couldn't be parsed
+     * @throws IOException for all other kinds of fetch errors
+     */
+    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader)
+            throws IOException, ParseException {
+      Pattern linePattern = buildLinePattern();
+
+      List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
+      List<Branch> branches = null;
+      List<FilePath> filePaths = null;
+      GerritProject dynamicGerritProject = null;
+
+      String line = "";
+      int lineNr = 0;
+      while ((line = reader.readLine()) != null) {
+        ++lineNr;
+        // Remove any comments starting with a #
+        int commentPos = line.indexOf('#');
+        if (commentPos > -1) {
+          line = line.substring(0, commentPos);
+        }
+
+        // Remove any comments starting with a ;
+        commentPos = line.indexOf(';');
+        if (commentPos > -1) {
+          line = line.substring(0, commentPos);
+        }
+
+        // Trim leading and trailing whitespace
+        line = line.trim();
+        if (line.isEmpty()) {
+          continue;
+        }
+
+        Matcher matcher = linePattern.matcher(line);
+        if (!matcher.matches()) {
+          throw new ParseException("Line " + lineNr + ": cannot parse '" + line + "'", lineNr);
+        }
+
+        // CS IGNORE MagicNumber FOR NEXT 3 LINES. REASON: ConstantsNotNeeded
+        String item = matcher.group(1);
+        String oper = matcher.group(2);
+        String text = matcher.group(3);
+        if (item == null || oper == null || text == null) {
+          throw new ParseException("Line " + lineNr + ": cannot parse '" + line + "'", lineNr);
+        }
+        char operChar = oper.charAt(0);
+        CompareType type = CompareType.findByOperator(operChar);
+
+        logger.trace("==> item:({0}) oper:({1}) text:({2})", new Object[]{item, oper, text});
+
+        if (SHORTNAME_PROJECT.equals(item)) { // Project
+          // stash previous project to the list
+          if (dynamicGerritProject != null) {
+            dynamicGerritProjects.add(dynamicGerritProject);
+          }
+
+          branches = new ArrayList<Branch>();
+          filePaths = new ArrayList<FilePath>();
+          dynamicGerritProject = new GerritProject(type, text, branches, filePaths);
+        } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
+          if (branches == null) {
+            throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
+          }
+          Branch branch = new Branch(type, text);
+          branches.add(branch);
+          dynamicGerritProject.setBranches(branches);
+        } else { // FilePath (because it must be an 'f')
+          if (filePaths == null) {
+            throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
+          }
+          FilePath filePath = new FilePath(type, text);
+          filePaths.add(filePath);
+          dynamicGerritProject.setFilePaths(filePaths);
+        }
+      }
+
+      // Finally stash the last project to the list
+      if (dynamicGerritProject != null) {
+        dynamicGerritProjects.add(dynamicGerritProject);
+      }
+
+      return dynamicGerritProjects;
+    }
+
     /**
      * This is where the actual fetching is done. If everything goes well,
      * it returns a list of GerritProjects. If the fetched content hasn't changed
@@ -78,10 +202,10 @@ public final class GerritDynamicUrlProcessor {
             throws IOException, ParseException {
 
         if (gerritTriggerConfigUrl == null) {
-            throw new MalformedURLException("The gerritTriggerConfigUrl is null");
+          throw new MalformedURLException("The gerritTriggerConfigUrl is null");
         }
         if (gerritTriggerConfigUrl.isEmpty()) {
-            throw new MalformedURLException("The gerritTriggerConfigUrl is empty");
+          throw new MalformedURLException("The gerritTriggerConfigUrl is empty");
         }
 
         // Prepare for fetching the URL
@@ -89,111 +213,19 @@ public final class GerritDynamicUrlProcessor {
         URLConnection connection = url.openConnection();
         connection.setReadTimeout(SOCKET_READ_TIMEOUT);
         connection.setDoInput(true);
-        InputStream instream = connection.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(instream));
 
-        // This is what a line in the file should look like, after all comments and
-        // leading and trailing whitespace have been removed:
-        // item: one of the characters p (for Project), b (for Branch) or f (for FilePath)
-        // optional whitespace
-        // operator: one of the characters = (for Plain), ~ (for RegeExp), or ^ (for ANT path)
-        // optional whitespace
-        // the pattern: everything else on the line
-        String projectBranchFile = "^("
-                + SHORTNAME_PROJECT
-                + "|" + SHORTNAME_BRANCH
-                + "|" + SHORTNAME_FILE
-                + ")";
-        String operators = "(";
-        boolean firstoperator = true;
-        for (CompareType type : CompareType.values()) {
-            if (!firstoperator) {
-                operators += "|";
-            }
-            operators += type.getOperator();
-            firstoperator = false;
+        InputStream instream = null;
+        BufferedReader reader = null;
+        try {
+          instream = connection.getInputStream();
+          reader = new BufferedReader(new InputStreamReader(instream));
+          return readAndParseTriggerConfig(reader);
+        } finally {
+          if (reader != null) {
+            reader.close();
+          } else if (instream != null) {
+            instream.close();
+          }
         }
-        operators += ")";
-        Pattern linePattern = Pattern.compile(projectBranchFile
-                + "\\s*"
-                + operators
-                + "\\s*(.+)$");
-
-        List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
-        List<Branch> branches = null;
-        List<FilePath> filePaths = null;
-        GerritProject dynamicGerritProject = null;
-
-        String line = "";
-        int lineNr = 0;
-        while ((line = reader.readLine()) != null) {
-            ++lineNr;
-            // Remove any comments starting with a #
-            int commentPos = line.indexOf('#');
-            if (commentPos > -1) {
-                line = line.substring(0, commentPos);
-            }
-
-            // Remove any comments starting with a ;
-            commentPos = line.indexOf(';');
-            if (commentPos > -1) {
-                line = line.substring(0, commentPos);
-            }
-
-            // Trim leading and trailing whitespace
-            line = line.trim();
-            if (line.equals("")) {
-                continue;
-            }
-
-            Matcher matcher = linePattern.matcher(line);
-            if (!matcher.matches()) {
-                throw new ParseException("Line " + lineNr + ": cannot parse '" + line + "'", lineNr);
-            }
-
-            // CS IGNORE MagicNumber FOR NEXT 3 LINES. REASON: ConstantsNotNeeded
-            String item = matcher.group(1);
-            String oper = matcher.group(2);
-            String text = matcher.group(3);
-            if (item == null || oper == null || text == null) {
-                throw new ParseException("Line " + lineNr + ": cannot parse '" + line + "'", lineNr);
-            }
-            char operChar = oper.charAt(0);
-            CompareType type = CompareType.findByOperator(operChar);
-
-            logger.trace("==> item:({0}) oper:({1}) text:({2})", new Object[]{item, oper, text});
-
-            if (SHORTNAME_PROJECT.equals(item)) { // Project
-                // stash previous project to the list
-                if (dynamicGerritProject != null) {
-                    dynamicGerritProjects.add(dynamicGerritProject);
-                }
-
-                branches = new ArrayList<Branch>();
-                filePaths = new ArrayList<FilePath>();
-                dynamicGerritProject = new GerritProject(type, text, branches, filePaths);
-            } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
-                if (branches == null) {
-                    throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
-                }
-                Branch branch = new Branch(type, text);
-                branches.add(branch);
-                dynamicGerritProject.setBranches(branches);
-            } else { // FilePath (because it must be an 'f')
-                if (filePaths == null) {
-                    throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
-                }
-                FilePath filePath = new FilePath(type, text);
-                filePaths.add(filePath);
-                dynamicGerritProject.setFilePaths(filePaths);
-            }
-        }
-
-        // Finally stash the last project to the list
-        if (dynamicGerritProject != null) {
-            dynamicGerritProjects.add(dynamicGerritProject);
-        }
-
-        return dynamicGerritProjects;
     }
 }
