@@ -63,9 +63,9 @@
             <artifactId>gerrit-events</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.jenkinsci.plugins</groupId>
+            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>1.1.10</version>
+            <version>1.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.sonyericsson.hudson.plugins.rebuild</groupId>
@@ -153,15 +153,16 @@
     </pluginRepositories>
     <build>
         <plugins>
-            <!-- Uncomment to change contextPath -->
+            <!-- Uncomment to change contextPath and jenkinsHome-->
             <!--<plugin>
-                <groupId>org.jvnet.hudson.tools</groupId>
+                <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>1.52</version>
+                <version>1.74</version>
                 <extensions>true</extensions>
                 <configuration>
                     <showDeprecation>true</showDeprecation>
                     <contextPath>/hudson</contextPath>
+                    <hudsonHome>/tmp/ghtJenkinsHome</hudsonHome>
                 </configuration>
             </plugin>-->
             <plugin>
