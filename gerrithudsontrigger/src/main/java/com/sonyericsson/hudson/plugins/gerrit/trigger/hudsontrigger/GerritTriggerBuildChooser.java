@@ -55,6 +55,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  * @author Andrew Bayer
  */
 public class GerritTriggerBuildChooser extends BuildChooser {
+    /**
+     * Used by XStream for something.
+     */
+    private final String separator = "#";
 
     /**
      * Default constructor.
