@@ -47,6 +47,11 @@ public final class GerritDefaultValues {
      */
     public static final int DEFAULT_GERRIT_SSH_PORT = 29418;
     /**
+     * The default gerrit proxy.
+     */
+    public static final String DEFAULT_GERRIT_PROXY = "";
+
+    /**
      * The default key-file to use when authenticating to the gerrit server.
      */
     public static final File DEFAULT_GERRIT_AUTH_KEY_FILE = new File(new File(System.getProperty("user.home"), ".ssh"),

@@ -32,6 +32,8 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+import com.jcraft.jsch.ProxySOCKS5;
+import com.jcraft.jsch.ProxyHTTP;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.MalformedURLException;
 
 /**
  * A simple ssh client connection with private key.
@@ -66,11 +69,12 @@ public class SshConnectionImpl implements SshConnection {
      *
      * @param host           the host to connect to.
      * @param port           the port.
+     * @param proxy          the proxy url.
      * @param authentication the authentication-info
-     * @throws SshException if something happens - usually due to bad config.
-     * @throws IOException  if the unfortunate happens.
+     * @throws IOException   if the unfortunate happens.
      */
-    protected SshConnectionImpl(String host, int port, Authentication authentication) throws SshException, IOException {
+    protected SshConnectionImpl(String host, int port, String proxy,
+                                Authentication authentication) throws IOException {
         logger.debug("connecting...");
         try {
             client = new JSch();
@@ -78,6 +82,21 @@ public class SshConnectionImpl implements SshConnection {
                     authentication.getPrivateKeyFilePassword());
             client.setHostKeyRepository(new BlindHostKeyRepository());
             connectSession = client.getSession(authentication.getUsername(), host, port);
+            if (proxy != null && !proxy.isEmpty()) {
+                String[] splitted = proxy.split(":");
+                String pproto = splitted[0];
+                String phost = splitted[1].substring(2);
+                int pport = Integer.parseInt(splitted[2]);
+                if (pproto.equals("socks5") || pproto.equals("http")) {
+                    if (pproto.equals("socks5")) {
+                         connectSession.setProxy(new ProxySOCKS5(phost, pport));
+                    } else {
+                         connectSession.setProxy(new ProxyHTTP(phost, pport));
+                    }
+                } else {
+                    throw new MalformedURLException("Only http and socks5 protocols are supported");
+                }
+            }
             connectSession.connect();
             logger.debug("Connected: {}", connectSession.isConnected());
             connectSession.setServerAliveInterval(ALIVE_INTERVAL);

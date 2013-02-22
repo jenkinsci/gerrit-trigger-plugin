@@ -44,6 +44,7 @@ public abstract class SshConnectionFactory {
      *
      * @param host           the host name
      * @param port           the port
+     * @param proxy          the proxy url
      * @param authentication the credentials
      * @return a new connection.
      *
@@ -51,7 +52,8 @@ public abstract class SshConnectionFactory {
      * @see SshConnection
      * @see SshConnectionImpl
      */
-    public static SshConnection getConnection(String host, int port, Authentication authentication) throws IOException {
-        return new SshConnectionImpl(host, port, authentication);
+    public static SshConnection getConnection(String host, int port, String proxy,
+                                              Authentication authentication) throws IOException {
+        return new SshConnectionImpl(host, port, proxy, authentication);
     }
 }

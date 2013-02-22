@@ -96,6 +96,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                     SshConnection sshConnection = SshConnectionFactory.getConnection(
                             activeConfig.getGerritHostName(),
                             activeConfig.getGerritSshPort(),
+                            activeConfig.getGerritProxy(),
                             activeConfig.getGerritAuthentication()
                     );
                     setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));

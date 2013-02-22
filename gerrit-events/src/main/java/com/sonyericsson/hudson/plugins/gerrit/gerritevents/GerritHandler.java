@@ -64,6 +64,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 
@@ -97,6 +98,7 @@ public class GerritHandler extends Thread implements Coordinator {
     private BlockingQueue<Work> workQueue;
     private String gerritHostName;
     private int gerritSshPort;
+    private String gerritProxy;
     private Authentication authentication;
     private int numberOfWorkerThreads;
     private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
@@ -119,6 +121,7 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @see GerritDefaultValues#DEFAULT_GERRIT_HOSTNAME
      * @see GerritDefaultValues#DEFAULT_GERRIT_SSH_PORT
+     * @see GerritDefaultValues#DEFAULT_GERRIT_PROXY
      * @see GerritDefaultValues#DEFAULT_GERRIT_USERNAME
      * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE
      * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD
@@ -127,6 +130,7 @@ public class GerritHandler extends Thread implements Coordinator {
     public GerritHandler() {
         this(DEFAULT_GERRIT_HOSTNAME,
                 DEFAULT_GERRIT_SSH_PORT,
+                DEFAULT_GERRIT_PROXY,
                 new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
                         DEFAULT_GERRIT_USERNAME,
                         DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD),
@@ -138,13 +142,16 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param gerritHostName the hostName
      * @param gerritSshPort  the ssh port that the gerrit server listens to.
+     * @param gerritProxy    the proxy url socks5|http://host:port.
      * @param authentication the authentication credentials.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
+                         String gerritProxy,
                          Authentication authentication) {
         this(gerritHostName,
                 gerritSshPort,
+                gerritProxy,
                 authentication,
                 DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
@@ -157,6 +164,7 @@ public class GerritHandler extends Thread implements Coordinator {
     public GerritHandler(GerritConnectionConfig config) {
         this(config.getGerritHostName(),
                 config.getGerritSshPort(),
+                config.getGerritProxy(),
                 config.getGerritAuthentication(),
                 config.getNumberOfReceivingWorkerThreads(),
                 config.getGerritEMail());
@@ -167,14 +175,16 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param gerritHostName        the hostName for gerrit.
      * @param gerritSshPort         the ssh port that the gerrit server listens to.
+     * @param gerritProxy           the proxy url socks5|http://host:port.
      * @param authentication        the authentication credentials.
      * @param numberOfWorkerThreads the number of eventthreads.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
+                         String gerritProxy,
                          Authentication authentication,
                          int numberOfWorkerThreads) {
-        this(gerritHostName, gerritSshPort, authentication, numberOfWorkerThreads, null);
+        this(gerritHostName, gerritSshPort, gerritProxy, authentication, numberOfWorkerThreads, null);
     }
 
     /**
@@ -182,18 +192,21 @@ public class GerritHandler extends Thread implements Coordinator {
      *
      * @param gerritHostName        the hostName for gerrit.
      * @param gerritSshPort         the ssh port that the gerrit server listens to.
+     * @param gerritProxy           the proxy url socks5|http://host:port.
      * @param authentication        the authentication credentials.
      * @param numberOfWorkerThreads the number of eventthreads.
      * @param ignoreEMail the e-mail to ignore events from.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
+                         String gerritProxy,
                          Authentication authentication,
                          int numberOfWorkerThreads,
                          String ignoreEMail) {
         super("Gerrit Events Reader");
         this.gerritHostName = gerritHostName;
         this.gerritSshPort = gerritSshPort;
+        this.gerritProxy = gerritProxy;
         this.authentication = authentication;
         this.numberOfWorkerThreads = numberOfWorkerThreads;
         this.ignoreEMail = ignoreEMail;
@@ -316,7 +329,7 @@ public class GerritHandler extends Thread implements Coordinator {
             SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
-                ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, authentication);
+                ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
                 notifyConnectionEstablished();
                 connecting = false;
                 gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
@@ -325,6 +338,7 @@ public class GerritHandler extends Thread implements Coordinator {
             } catch (SshConnectException sshConEx) {
                 logger.error("Could not connect to Gerrit server! "
                         + "Host: {} Port: {}", gerritHostName, gerritSshPort);
+                logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("ConnectionException: ", sshConEx);
                 notifyConnectionDown();
@@ -339,6 +353,7 @@ public class GerritHandler extends Thread implements Coordinator {
             } catch (IOException ex) {
                 logger.error("Could not connect to Gerrit server! "
                         + "Host: {} Port: {}", gerritHostName, gerritSshPort);
+                logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("IOException: ", ex);
                 notifyConnectionDown();
@@ -566,6 +581,24 @@ public class GerritHandler extends Thread implements Coordinator {
      */
     public void setGerritSshPort(int gerritSshPort) {
         this.gerritSshPort = gerritSshPort;
+    }
+
+    /**
+     * Gets the proxy for gerrit ssh commands.
+     *
+     * @return the proxy url.
+     */
+    public String getGerritProxy() {
+        return gerritProxy;
+    }
+
+    /**
+     * Sets the proxy for gerrit ssh commands.
+     *
+     * @param gerritProxy the port nr.
+     */
+    public void setGerritProxy(String gerritProxy) {
+        this.gerritProxy = gerritProxy;
     }
 
     /**
