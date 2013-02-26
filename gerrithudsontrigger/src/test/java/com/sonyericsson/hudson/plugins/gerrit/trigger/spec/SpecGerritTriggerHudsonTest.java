@@ -35,6 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
+import hudson.model.Item;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Cause;
@@ -328,7 +329,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
 
         project.renameTo("anotherName");
-        configRoundtrip(project);
+        configRoundtrip(((Item)project));
 
         assertEquals(0, h.countTrigger);
 
