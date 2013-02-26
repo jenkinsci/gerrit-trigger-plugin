@@ -24,8 +24,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
+import net.sf.json.JSONObject;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
 
 
@@ -34,7 +39,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.
  *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public abstract class GerritTriggeredEvent extends GerritEventLifecycle implements GerritEvent {
+public abstract class GerritTriggeredEvent extends GerritEventLifecycle implements GerritEvent, GerritJsonEvent {
 
 
 
@@ -42,6 +47,11 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
      * The account that triggered the event.
      */
     protected Account account;
+
+    /**
+     * The provider that provide the event.
+     */
+    protected Provider provider;
 
 
     /**
@@ -62,4 +72,28 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
         this.account = account;
     }
 
+    /**
+     * The provider that provide the event.
+     *
+     * @return the provider.
+     */
+    public Provider getProvider() {
+        return provider;
+    }
+
+    /**
+     * The provider that provide the event.
+     *
+     * @param provider the provider.
+     */
+    public void setProvider(Provider provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public void fromJson(JSONObject json) {
+        if (json.containsKey(PROVIDER)) {
+            provider = new Provider(json.getJSONObject(PROVIDER));
+        }
+    }
 }

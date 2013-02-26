@@ -142,6 +142,7 @@ public abstract class ChangeBasedEvent extends GerritTriggeredEvent {
      * @param json the JSON Object.
      */
     public void fromJson(JSONObject json) {
+        super.fromJson(json);
         if (json.containsKey(CHANGE)) {
             change = new Change(json.getJSONObject(CHANGE));
         }
