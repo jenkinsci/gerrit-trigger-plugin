@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.test;
 
 import hudson.util.StreamCopyThread;
 import org.apache.sshd.SshServer;

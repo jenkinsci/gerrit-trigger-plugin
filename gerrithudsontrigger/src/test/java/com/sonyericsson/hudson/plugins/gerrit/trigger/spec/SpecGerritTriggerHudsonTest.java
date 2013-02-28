@@ -34,7 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Cause;

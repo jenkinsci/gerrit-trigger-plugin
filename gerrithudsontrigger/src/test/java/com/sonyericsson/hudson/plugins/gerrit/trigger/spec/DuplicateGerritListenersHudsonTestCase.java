@@ -31,7 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
 
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
