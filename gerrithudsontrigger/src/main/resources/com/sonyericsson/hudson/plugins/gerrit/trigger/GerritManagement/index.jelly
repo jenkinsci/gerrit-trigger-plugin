@@ -63,7 +63,7 @@
                              help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html">
                         <f:checkbox name="gerritBuildCurrentPatchesOnly"
                                     checked="${it.config.gerritBuildCurrentPatchesOnly}"
-                                    default="true" />
+                                    default="true"/>
                     </f:entry>
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
@@ -207,9 +207,9 @@
                         <f:entry title="${%Build Schedule Delay}"
                                  help="/plugin/gerrit-trigger/help-BuildScheduleDelay.html">
                             <f:textbox name="buildScheduleDelay"
-                                   value="${it.config.buildScheduleDelay}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
-                                   checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
+                                       value="${it.config.buildScheduleDelay}"
+                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
+                                       checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
                         <f:entry title="${%Dynamic Config Refresh Interval}"
                                  help="/plugin/gerrit-trigger/help-DynamicTriggerConfigRefreshInterval.html">
@@ -225,7 +225,8 @@
                                         default="${true}"/>
                         </f:entry>
                         <f:entry title="${%Verdict categories}">
-                            <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories" add="${%Add Verdict Category}" minimum="0" header="">
+                            <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"
+                                          add="${%Add Verdict Category}" minimum="0" header="">
                                 <table>
                                     <tr>
                                         <td>
@@ -251,6 +252,71 @@
                                 </table>
                             </f:repeatable>
                         </f:entry>
+                    </f:section>
+                    <f:section title="${%Watchdog}">
+                        <f:entry title="${%Connection watchdog timeout}"
+                                 help="/plugin/gerrit-trigger/help-ConnectionWatchdogTimeout.html">
+                            <f:textbox name="watchdogTimeoutMinutes"
+                                       value="${it.config.watchdogTimeoutMinutes}"
+                                       checkUrl="'${rootURL}/gerrit-trigger/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:optionalBlock name="watchdogExceptions" title="Connection watchdog exceptions" checked="${it.config.exceptionData.enabled}">
+                            <f:entry title="Exception days"
+                                     help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionDays.html">
+                                <table>
+                                    <j:forEach var="helper" items="${it.generateHelper()}">
+                                        <tr>
+                                            <td>
+                                                ${helper.displayName}
+                                            </td>
+                                            <td>
+                                                <f:checkbox name="${helper.id}"
+                                                            checked="${helper.checked}"
+                                                            default="${false}"/>
+                                            </td>
+                                        </tr>
+                                    </j:forEach>
+                                </table>
+                            </f:entry>
+                            <f:entry title="Exception times"
+                                     help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionTimes.html">
+                                <f:repeatable var="t" items="${it.config.exceptionData.timesOfDay}"
+                                              name="watchdogExceptionTimes" add="${%Add time}" minimum="0"
+                                              header="">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                ${%From}
+                                            </td>
+                                            <td>
+                                                <f:textbox name="from"
+                                                           value="${h.appendIfNotNull(t.from.hourAsString,'','00')}:${h.appendIfNotNull(t.from.minuteAsString,'','00')}"
+                                                           checkUrl="'${rootURL}/gerrit-trigger/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                ${%To}
+                                            </td>
+                                            <td>
+                                                <f:textbox name="to"
+                                                           value="${h.appendIfNotNull(t.to.hourAsString,'','00')}:${h.appendIfNotNull(t.to.minuteAsString,'','01')}"
+                                                           checkUrl="'${rootURL}/gerrit-trigger/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                            </td>
+                                        </tr>
+                                        <!--used to display the form validation error -->
+                                        <tr class="validation-error-area"><td/><td colspan="1" /></tr>
+                                        <tr>
+                                            <td>
+                                                <f:repeatableDeleteButton/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </f:repeatable>
+                            </f:entry>
+                        </f:optionalBlock>
                     </f:section>
                 </f:advanced>
                 <f:entry title="${%EnablePluginMessages}">

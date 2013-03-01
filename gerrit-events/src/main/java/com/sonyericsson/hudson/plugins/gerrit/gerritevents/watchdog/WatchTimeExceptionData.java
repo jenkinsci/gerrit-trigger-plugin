@@ -24,6 +24,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog;
 
+import net.sf.json.JSONObject;
+
 import java.util.Calendar;
 import java.util.List;
 
@@ -130,6 +132,36 @@ public class WatchTimeExceptionData {
     }
 
     /**
+     * Returns true if any exception data has been added, either days or time.
+     *
+     * @return true if any exception data has been added, either days or time.
+     */
+    public boolean isEnabled() {
+        if (daysOfWeek != null && daysOfWeek.length > 0) {
+            return true;
+        }
+        if (timesOfDay != null && timesOfDay.size() > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the selected day is in the list of exceptions.
+     *
+     * @param day the day to check for.
+     * @return true if the day is in the list of exceptions.
+     */
+    public boolean isExceptionDay(int day) {
+        for (int i : daysOfWeek) {
+            if (day == i) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * A time span from a beginning to an end.
      */
     public static class TimeSpan {
@@ -155,6 +187,18 @@ public class WatchTimeExceptionData {
             }
             this.from = from;
             this.to = to;
+        }
+
+        /**
+         * Creates a TimeSpan object from a JSONObject.
+         *
+         * @param jsonObject the JSONObject to create a TimeSpan from.
+         * @return a new TimeSpan object.
+         */
+        public static TimeSpan createTimeSpanFromJSONObject(JSONObject jsonObject) {
+            String from = jsonObject.getString("from");
+            String to = jsonObject.getString("to");
+            return new TimeSpan(Time.createTimeFromString(from), Time.createTimeFromString(to));
         }
 
         /**
@@ -195,19 +239,24 @@ public class WatchTimeExceptionData {
         /**
          * Minimum value an hour can have.
          */
-        protected static final int MIN_HOUR = 0;
+        public static final int MIN_HOUR = 0;
         /**
          * Maximum value an hour can have.
          */
-        protected static final int MAX_HOUR = 23;
+        public static final int MAX_HOUR = 23;
         /**
          * Minimum value an minute can have.
          */
-        protected static final int MIN_MINUTE = 0;
+        public static final int MIN_MINUTE = 0;
         /**
          * Maximum value an minute can have.
          */
-        protected static final int MAX_MINUTE = 59;
+        public static final int MAX_MINUTE = 59;
+
+        /**
+         * Minimum value a number can have that has 2 digits.
+         */
+        protected static final int MINIMUM_TWO_DIGIT_NUMBER = 10;
         private int hour;
         private int minute;
 
@@ -240,6 +289,31 @@ public class WatchTimeExceptionData {
         }
 
         /**
+         * Returns a new Time from a String containing both hours and minutes of from or to.
+         * Will throw an {@link IllegalArgumentException} if the hours and minutes are not in 24h format.
+         *
+         * @param timeString the time in format hh:mm in 24 hour format.
+         * @return a new Time object.
+         */
+        public static Time createTimeFromString(String timeString) {
+            String[] split = timeString.split(":");
+            if (split.length != 2) {
+                throw new IllegalArgumentException("Time should be on the hh:mm format.");
+            }
+            int parsedHour = Integer.parseInt(split[0]);
+            int parsedMinute = Integer.parseInt(split[1]);
+            if (parsedHour < MIN_HOUR || parsedHour > MAX_HOUR) {
+                throw new IllegalArgumentException("Hour should be in 24 hour format.");
+            }
+            if (parsedMinute < MIN_MINUTE || parsedMinute > MAX_MINUTE) {
+                throw new IllegalArgumentException("There are 60 minutes in an hour.");
+            }
+            return new Time(parsedHour, parsedMinute);
+        }
+
+
+
+        /**
          * The hours 0 to 23.
          *
          * @return the hours of the time.
@@ -255,6 +329,32 @@ public class WatchTimeExceptionData {
          */
         public int getMinute() {
             return minute;
+        }
+
+        /**
+         * String representation of hour.
+         *
+         * @return the hour, on the format hh.
+         */
+        public String getHourAsString() {
+            if (hour < MINIMUM_TWO_DIGIT_NUMBER) {
+                return "0" + hour;
+            } else {
+                return String.valueOf(hour);
+            }
+        }
+
+        /**
+         * String representation of minute.
+         *
+         * @return the hour, on the format mm.
+         */
+        public String getMinuteAsString() {
+            if (minute < MINIMUM_TWO_DIGIT_NUMBER) {
+                return "0" + minute;
+            } else {
+                return String.valueOf(minute);
+            }
         }
 
         /**

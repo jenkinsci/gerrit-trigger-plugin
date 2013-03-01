@@ -164,6 +164,15 @@ public class GerritHandler extends Thread implements Coordinator {
     /**
      * Standard Constructor.
      *
+     * @param config the configuration containing the connection values.
+     */
+    public GerritHandler(GerritConnectionConfig2 config) {
+        this(config, config.getWatchdogTimeoutSeconds(), config.getExceptionData());
+    }
+
+    /**
+     * Creates a GerritHandler with the specified values.
+     *
      * @param config                 the configuration containing the connection values.
      * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection set to 0
      *                               or less to disable it.

@@ -24,16 +24,21 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
+import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 //CS IGNORE LineLength FOR NEXT 9 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -93,6 +98,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default code review vote to Gerrit when a build is not built.
      */
     public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE = 0;
+
+    /**
+     * Default timeout value in minutes for the connection watchdog.
+     */
+    public static final int DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES = 0;
     /**
      * Default manual trigger enabled.
      */
@@ -105,6 +115,8 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
+
+    private static final int SECONDS_PER_MINUTE = 60;
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -136,6 +148,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
     private List<VerdictCategory> categories;
+    private int watchdogTimeoutMinutes;
+    private WatchTimeExceptionData watchTimeExceptionData;
 
 
 
@@ -264,8 +278,57 @@ public class Config implements IGerritHudsonTriggerConfig {
                 categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)cat));
             }
         }
+        watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
+        watchTimeExceptionData = addWatchTimeExceptionData(formData);
     }
 
+    /**
+     * Adds the WatchTimeExceptionData from the form.
+     *
+     * @param formData the form.
+     * @return the WatchTimeExceptionData
+     */
+    private WatchTimeExceptionData addWatchTimeExceptionData(JSONObject formData) {
+        List<Integer> days = new LinkedList<Integer>();
+        List<TimeSpan> exceptionTimes = new LinkedList<TimeSpan>();
+        int[] daysAsInt = new int[]{};
+        if (formData.has("watchdogExceptions")) {
+            JSONObject jsonObject = formData.getJSONObject(("watchdogExceptions"));
+            if (jsonObject.getBoolean(String.valueOf(Calendar.MONDAY))) {
+                days.add(Calendar.MONDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.TUESDAY))) {
+                days.add(Calendar.TUESDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.WEDNESDAY))) {
+                days.add(Calendar.WEDNESDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.THURSDAY))) {
+                days.add(Calendar.THURSDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.FRIDAY))) {
+                days.add(Calendar.FRIDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.SATURDAY))) {
+                days.add(Calendar.SATURDAY);
+            }
+            if (jsonObject.getBoolean(String.valueOf(Calendar.SUNDAY))) {
+                days.add(Calendar.SUNDAY);
+            }
+            daysAsInt = Ints.toArray(days);
+            if (jsonObject.has("watchdogExceptionTimes")) {
+                Object obj = jsonObject.get("watchdogExceptionTimes");
+                if (obj instanceof JSONArray) {
+                    for (Object json : (JSONArray)obj) {
+                        exceptionTimes.add(TimeSpan.createTimeSpanFromJSONObject((JSONObject)json));
+                    }
+                } else if (obj instanceof JSONObject) {
+                    exceptionTimes.add(TimeSpan.createTimeSpanFromJSONObject((JSONObject)obj));
+                }
+            }
+        }
+        return new WatchTimeExceptionData(daysAsInt, exceptionTimes);
+    }
 
 
     /**
@@ -653,5 +716,24 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public boolean isEnablePluginMessages() {
         return enablePluginMessages;
+    }
+
+    @Override
+    public int getWatchdogTimeoutSeconds() {
+        return (int)TimeUnit.MINUTES.toSeconds(watchdogTimeoutMinutes);
+    }
+
+    /**
+     * Convenience getter for the jelly view.
+     *
+     * @return the watchdogTimeoutMinutes.
+     */
+    public int getWatchdogTimeoutMinutes() {
+        return watchdogTimeoutMinutes;
+    }
+
+    @Override
+    public WatchTimeExceptionData getExceptionData() {
+        return watchTimeExceptionData;
     }
 }

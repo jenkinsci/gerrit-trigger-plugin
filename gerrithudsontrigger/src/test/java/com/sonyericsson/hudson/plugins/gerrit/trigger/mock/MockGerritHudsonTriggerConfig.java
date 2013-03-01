@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import net.sf.json.JSONObject;
@@ -240,5 +241,15 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public boolean isEnablePluginMessages() {
         return true;
+    }
+
+    @Override
+    public int getWatchdogTimeoutSeconds() {
+        return 0;
+    }
+
+    @Override
+    public WatchTimeExceptionData getExceptionData() {
+        return new WatchTimeExceptionData(new int[]{}, new LinkedList<WatchTimeExceptionData.TimeSpan>());
     }
 }
