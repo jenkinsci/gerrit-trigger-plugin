@@ -35,7 +35,7 @@ import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
 
-//CS IGNORE LineLength FOR NEXT 9 LINES. REASON: static import.
+//CS IGNORE LineLength FOR NEXT 12 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
@@ -43,6 +43,9 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_ENABLE_GERRIT_AMQP;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AMQP_URI;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AMQP_QUEUE_NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS;
 
@@ -112,6 +115,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
+    private boolean enableGerritAmqp;
+    private String gerritAmqpUri;
+    private String gerritAmqpQueueName;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -154,6 +160,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
         gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
         gerritEMail = formData.optString("gerritEMail", "");
+        enableGerritAmqp = formData.optBoolean("enableGerritAmqp", DEFAULT_ENABLE_GERRIT_AMQP);
+        gerritAmqpUri = formData.optString("gerritAmqpUri", DEFAULT_GERRIT_AMQP_URI);
+        gerritAmqpQueueName = formData.optString("gerritAmqpQueueName", DEFAULT_GERRIT_AMQP_QUEUE_NAME);
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -437,6 +446,60 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritEMail(String gerritEMail) {
         this.gerritEMail = gerritEMail;
+    }
+
+    /**
+     * If enable gerrit event queue in amqp service instead gerrit stream event.
+     * @return true if so.
+     */
+    @Override
+    public boolean isEnableGerritAmqp() {
+        return enableGerritAmqp;
+    }
+
+    /**
+     * If enable gerrit event queue in amqp service instead gerrit stream event.
+     * @param enableGerritAmqp if enable or not.
+     * @see #isEnableGerritAmqp()
+     */
+    public void setEnableGerritAmqp(boolean enableGerritAmqp) {
+        this.enableGerritAmqp = enableGerritAmqp;
+    }
+
+    /**
+     * The uri for gerrit event queue in amqp service.
+     * @return The uri.
+     */
+    @Override
+    public String getGerritAmqpUri() {
+        return gerritAmqpUri;
+    }
+
+    /**
+     * The uri for gerrit event queue in amqp service.
+     * @param gerritAmqpUri The uri.
+     * @see #getGerritAmqpUri()
+     */
+    public void setGerritAmqpUri(String gerritAmqpUri) {
+        this.gerritAmqpUri = gerritAmqpUri;
+    }
+
+    /**
+     * The name for gerrit event queue in amqp service.
+     * @return The queue name.
+     */
+    @Override
+    public String getGerritAmqpQueueName() {
+        return gerritAmqpQueueName;
+    }
+
+    /**
+     * The name for gerrit event queue in amqp service.
+     * @param gerritAmqpQueueName The queue name.
+     * @see #getGerritAmqpUri()
+     */
+    public void setGerritAmqpQueueName(String gerritAmqpQueueName) {
+        this.gerritAmqpQueueName = gerritAmqpQueueName;
     }
 
     @Override
