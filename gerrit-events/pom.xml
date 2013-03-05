@@ -134,6 +134,11 @@
             <version>1.2.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>3.0.2</version>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
