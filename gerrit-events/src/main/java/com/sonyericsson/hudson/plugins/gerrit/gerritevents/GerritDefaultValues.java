@@ -62,15 +62,15 @@ public final class GerritDefaultValues {
     /**
      * If enable gerrit event queue in amqp service instead gerrit stream event or not.
      */
-    public static final boolean DEFAULT_ENABLE_GERRIT_AMQP = false;
+    public static final boolean DEFAULT_ENABLE_GERRIT_RABBITMQ = false;
     /**
      * The default uri for gerrit event queue in amqp service.
      */
-    public static final String DEFAULT_GERRIT_AMQP_URI = "amqp://localhost/";
+    public static final String DEFAULT_GERRIT_RABBITMQ_URI = "amqp://localhost/";
     /**
      * The default queue name for gerrit event queue in amqp service.
      */
-    public static final String DEFAULT_GERRIT_AMQP_QUEUE_NAME = "gerrit-event";
+    public static final String DEFAULT_GERRIT_RABBITMQ_QUEUE_NAME = "gerrit-event";
     /**
      * The default nr of event worker threads.
      */

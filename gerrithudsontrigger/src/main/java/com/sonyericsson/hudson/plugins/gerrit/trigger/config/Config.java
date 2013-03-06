@@ -43,9 +43,9 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_ENABLE_GERRIT_AMQP;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AMQP_URI;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AMQP_QUEUE_NAME;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_ENABLE_GERRIT_RABBITMQ;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_RABBITMQ_URI;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_RABBITMQ_QUEUE_NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS;
 
@@ -115,9 +115,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
-    private boolean enableGerritAmqp;
-    private String gerritAmqpUri;
-    private String gerritAmqpQueueName;
+    private boolean enableGerritRabbitmq;
+    private String gerritRabbitmqUri;
+    private String gerritRabbitmqQueueName;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -160,9 +160,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
         gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
         gerritEMail = formData.optString("gerritEMail", "");
-        enableGerritAmqp = formData.optBoolean("enableGerritAmqp", DEFAULT_ENABLE_GERRIT_AMQP);
-        gerritAmqpUri = formData.optString("gerritAmqpUri", DEFAULT_GERRIT_AMQP_URI);
-        gerritAmqpQueueName = formData.optString("gerritAmqpQueueName", DEFAULT_GERRIT_AMQP_QUEUE_NAME);
+        enableGerritRabbitmq = formData.optBoolean("enableGerritRabbitmq", DEFAULT_ENABLE_GERRIT_RABBITMQ);
+        gerritRabbitmqUri = formData.optString("gerritRabbitmqUri", DEFAULT_GERRIT_RABBITMQ_URI);
+        gerritRabbitmqQueueName = formData.optString("gerritRabbitmqQueueName", DEFAULT_GERRIT_RABBITMQ_QUEUE_NAME);
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -449,57 +449,57 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * If enable gerrit event queue in amqp service instead gerrit stream event.
+     * If enable gerrit event queue in RabbitMQ instead gerrit stream event.
      * @return true if so.
      */
     @Override
-    public boolean isEnableGerritAmqp() {
-        return enableGerritAmqp;
+    public boolean isEnableGerritRabbitmq() {
+        return enableGerritRabbitmq;
     }
 
     /**
-     * If enable gerrit event queue in amqp service instead gerrit stream event.
-     * @param enableGerritAmqp if enable or not.
+     * If enable gerrit event queue in RabbitMQ instead gerrit stream event.
+     * @param enableGerritRabbitmq if enable or not.
      * @see #isEnableGerritAmqp()
      */
-    public void setEnableGerritAmqp(boolean enableGerritAmqp) {
-        this.enableGerritAmqp = enableGerritAmqp;
+    public void setEnableGerritRabbitmq(boolean enableGerritRabbitmq) {
+        this.enableGerritRabbitmq = enableGerritRabbitmq;
     }
 
     /**
-     * The uri for gerrit event queue in amqp service.
+     * The uri for gerrit event queue in RabbitMQ.
      * @return The uri.
      */
     @Override
-    public String getGerritAmqpUri() {
-        return gerritAmqpUri;
+    public String getGerritRabbitmqUri() {
+        return gerritRabbitmqUri;
     }
 
     /**
-     * The uri for gerrit event queue in amqp service.
-     * @param gerritAmqpUri The uri.
+     * The uri for gerrit event queue in RabbitMQ.
+     * @param gerritRabbitmqUri The uri.
      * @see #getGerritAmqpUri()
      */
-    public void setGerritAmqpUri(String gerritAmqpUri) {
-        this.gerritAmqpUri = gerritAmqpUri;
+    public void setGerritRabbitmqUri(String gerritRabbitmqUri) {
+        this.gerritRabbitmqUri = gerritRabbitmqUri;
     }
 
     /**
-     * The name for gerrit event queue in amqp service.
+     * The name for gerrit event queue in RabbitMQ.
      * @return The queue name.
      */
     @Override
-    public String getGerritAmqpQueueName() {
-        return gerritAmqpQueueName;
+    public String getGerritRabbitmqQueueName() {
+        return gerritRabbitmqQueueName;
     }
 
     /**
-     * The name for gerrit event queue in amqp service.
-     * @param gerritAmqpQueueName The queue name.
+     * The name for gerrit event queue in RabbitMQ.
+     * @param gerritRabbitmqQueueName The queue name.
      * @see #getGerritAmqpUri()
      */
-    public void setGerritAmqpQueueName(String gerritAmqpQueueName) {
-        this.gerritAmqpQueueName = gerritAmqpQueueName;
+    public void setGerritRabbitmqQueueName(String gerritRabbitmqQueueName) {
+        this.gerritRabbitmqQueueName = gerritRabbitmqQueueName;
     }
 
     @Override

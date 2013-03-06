@@ -65,22 +65,22 @@ public interface GerritConnectionConfig {
     String getGerritUserName();
 
     /**
-     * If enable gerrit event queue in amqp service instead gerrit stream event or not.
+     * If enable gerrit event queue in RabbitMQ instead gerrit stream event or not.
      * @return true if so.
      */
-    boolean isEnableGerritAmqp();
+    boolean isEnableGerritRabbitmq();
 
     /**
-     * The uri for gerrit event queue in amqp service.
+     * The uri for gerrit event queue in RabbitMQ.
      * @return the uri.
      */
-    String getGerritAmqpUri();
+    String getGerritRabbitmqUri();
 
     /**
-     * The name for gerrit event queue in amqp service.
+     * The name for gerrit event queue in RabbitMQ.
      * @return the queue name.
      */
-    String getGerritAmqpQueueName();
+    String getGerritRabbitmqQueueName();
 
     /**
      * The e-mail address for the user in gerrit.
