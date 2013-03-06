@@ -122,6 +122,21 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public boolean isEnableGerritAmqp() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getGerritAmqpUri() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String getGerritAmqpQueueName() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public String getGerritEMail() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
