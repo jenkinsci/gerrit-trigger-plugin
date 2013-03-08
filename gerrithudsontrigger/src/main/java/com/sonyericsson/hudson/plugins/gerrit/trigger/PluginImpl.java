@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritManager;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -62,6 +62,10 @@ public class PluginImpl extends Plugin {
     public static final String DISPLAY_NAME = "Gerrit Trigger";
 
     /**
+     * The timeout millis to wait termination.
+     */
+    private static final long TERMINATION_TIMEOUT_MILLIS = 100000;
+    /**
      * Any special permissions needed by this plugin are grouped into this.
      */
     public static final PermissionGroup PERMISSION_GROUP =
@@ -76,7 +80,7 @@ public class PluginImpl extends Plugin {
             Hudson.ADMINISTER);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
-    private transient GerritHandler gerritEventManager;
+    private transient GerritManager gerritManager;
     private transient GerritProjectListUpdater projectListUpdater;
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
@@ -167,10 +171,16 @@ public class PluginImpl extends Plugin {
         logger.info("Shutting down...");
         projectListUpdater.shutdown();
         projectListUpdater.join();
-        if (gerritEventManager != null) {
-            gerritEventManager.shutdown(false);
-            //TODO save to register listeners?
-            gerritEventManager = null;
+        if (gerritManager != null) {
+            try {
+                gerritManager.getConnectionHandler().shutdown();
+                boolean terminated = gerritManager.awaitTermination(TERMINATION_TIMEOUT_MILLIS);
+                if (!terminated) {
+                    logger.warn("Gerrit connection could not be terminated due to timeout. But go next.");
+                }
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted while shutdown GerritManager", e);
+            }
         }
         GerritSendCommandQueue.shutdown();
     }
@@ -181,21 +191,21 @@ public class PluginImpl extends Plugin {
     private void startManager() {
         logger.debug("starting Gerrit manager");
         createManager();
-        gerritEventManager.start();
+        gerritManager.start();
     }
 
     /**
-     * Creates the GerritEventManager
+     * Creates the GerritManager
      */
     private void createManager() {
-        gerritEventManager = new GerritHandler(config);
+        gerritManager = new GerritManager(config);
         //Add any event/connectionlisteners that were created while the connection was down.
         if (savedConnectionListeners != null) {
-            gerritEventManager.addConnectionListeners(savedConnectionListeners);
+            gerritManager.getConnectionHandler().addConnectionListeners(savedConnectionListeners);
             savedConnectionListeners = null;
         }
         if (savedEventListeners != null) {
-            gerritEventManager.addEventListeners(savedEventListeners);
+            gerritManager.getEventHandler().addEventListeners(savedEventListeners);
             savedEventListeners = null;
         }
     }
@@ -207,8 +217,8 @@ public class PluginImpl extends Plugin {
      * @see GerritHandler#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
      */
     public void addListener(GerritEventListener listener) {
-        if (gerritEventManager != null) {
-            gerritEventManager.addListener(listener);
+        if (gerritManager != null) {
+            gerritManager.getEventHandler().addEventListener(listener);
         } else {
             //If the eventmanager isn't created yet, save the eventlistener so it can be added once
             //the eventmanager is created.
@@ -226,8 +236,8 @@ public class PluginImpl extends Plugin {
      * @see GerritHandler#removeListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
      */
     public void removeListener(GerritEventListener listener) {
-        if (gerritEventManager != null) {
-            gerritEventManager.removeListener(listener);
+        if (gerritManager != null) {
+            gerritManager.getEventHandler().removeEventListener(listener);
         } else {
             if (savedEventListeners != null) {
                 savedEventListeners.remove(listener);
@@ -241,8 +251,8 @@ public class PluginImpl extends Plugin {
      * @param listener the listener to remove.
      */
     public void removeListener(ConnectionListener listener) {
-        if (gerritEventManager != null) {
-            gerritEventManager.removeListener(listener);
+        if (gerritManager != null) {
+            gerritManager.getConnectionHandler().removeConnectionListener(listener);
         } else {
             if (savedConnectionListeners != null) {
                 savedConnectionListeners.remove(listener);
@@ -256,17 +266,17 @@ public class PluginImpl extends Plugin {
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void startConnection() throws Exception {
-        if (gerritEventManager == null) {
+        if (gerritManager == null) {
             createManager();
             if (savedEventListeners != null) {
-                gerritEventManager.addEventListeners(savedEventListeners);
+                gerritManager.getEventHandler().addEventListeners(savedEventListeners);
                 savedEventListeners = null;
             }
             if (savedConnectionListeners != null) {
-                gerritEventManager.addConnectionListeners(savedConnectionListeners);
+                gerritManager.getConnectionHandler().addConnectionListeners(savedConnectionListeners);
                 savedConnectionListeners = null;
             }
-            gerritEventManager.start();
+            gerritManager.start();
         } else {
             logger.warn("Already started!");
         }
@@ -278,14 +288,19 @@ public class PluginImpl extends Plugin {
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void stopConnection() throws Exception {
-        if (gerritEventManager != null) {
+        if (gerritManager != null) {
             savedEventListeners = null;
             savedConnectionListeners = null;
-            gerritEventManager.shutdown(true);
+            gerritManager.getConnectionHandler().shutdown();
+            try {
+                gerritManager.awaitTermination();
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted while terminate gerrit event thread.");
+            }
 
-            savedEventListeners = gerritEventManager.removeAllEventListeners();
-            savedConnectionListeners = gerritEventManager.removeAllConnectionListeners();
-            gerritEventManager = null;
+            savedEventListeners = gerritManager.getEventHandler().removeAllEventListeners();
+            savedConnectionListeners = gerritManager.getConnectionHandler().removeAllConnectionListeners();
+            gerritManager = null;
         } else {
             logger.warn("Was told to shutdown again!?");
         }
@@ -312,8 +327,9 @@ public class PluginImpl extends Plugin {
      */
     public boolean addListener(ConnectionListener listener) {
         boolean connected = false;
-        if (gerritEventManager != null) {
-            connected = gerritEventManager.addListener(listener);
+        if (gerritManager != null) {
+            gerritManager.getConnectionHandler().addConnectionListener(listener);
+            connected = gerritManager.getConnectionHandler().isConnected();
         } else {
             //If the eventmanager isn't created yet, save the connectionlistener so it can be added once
             //the eventmanager is created.
@@ -346,8 +362,8 @@ public class PluginImpl extends Plugin {
      * @see GerritHandler#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
      */
     public void triggerEvent(GerritEvent event) {
-        if (gerritEventManager != null) {
-            gerritEventManager.triggerEvent(event);
+        if (gerritManager != null) {
+            gerritManager.triggerEvent(event);
         } else {
             throw new IllegalStateException("Manager not started!");
         }
@@ -360,8 +376,8 @@ public class PluginImpl extends Plugin {
      * @return the current gerrit version as a String.
      */
     public String getGerritVersion() {
-        if (gerritEventManager != null) {
-            return gerritEventManager.getGerritVersion();
+        if (gerritManager != null) {
+            return gerritManager.getGerritVersion();
         } else {
             return null;
         }
