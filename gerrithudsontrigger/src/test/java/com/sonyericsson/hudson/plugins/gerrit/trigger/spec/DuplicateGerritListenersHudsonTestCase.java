@@ -131,6 +131,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         ((Config)PluginImpl.getInstance().getConfig()).setGerritHostName("localhost");
         ((Config)PluginImpl.getInstance().getConfig()).setGerritFrontEndURL("http://localhost");
         ((Config)PluginImpl.getInstance().getConfig()).setGerritSshPort(29418);
+        ((Config)PluginImpl.getInstance().getConfig()).setGerritProxy("");
         PluginImpl.getInstance().restartConnection();
 
         handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);

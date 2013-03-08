@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import org.slf4j.Logger;
@@ -44,13 +45,13 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
      */
     protected static Logger logger = LoggerFactory.getLogger(AbstractSendCommandJob.class);
 
-    private GerritConnectionConfig config;
+    private GerritConnectionConfig2 config;
 
     /**
      * Standard constructor taking the latest configuration.
      * @param config the connection config.
      */
-    protected AbstractSendCommandJob(GerritConnectionConfig config) {
+    protected AbstractSendCommandJob(GerritConnectionConfig2 config) {
         this.config = config;
     }
 
@@ -71,7 +72,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     public boolean sendCommand(String command) {
         try {
             SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
-                    config.getGerritSshPort(), config.getGerritAuthentication());
+                    config.getGerritSshPort(), config.getGerritProxy(), config.getGerritAuthentication());
             ssh.executeCommand(command);
             ssh.disconnect();
             return true;
@@ -90,7 +91,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     public String sendCommandStr(String command) {
         try {
             SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
-                    config.getGerritSshPort(), config.getGerritAuthentication());
+                    config.getGerritSshPort(), config.getGerritProxy(), config.getGerritAuthentication());
             String str = ssh.executeCommand(command);
             ssh.disconnect();
             return str;

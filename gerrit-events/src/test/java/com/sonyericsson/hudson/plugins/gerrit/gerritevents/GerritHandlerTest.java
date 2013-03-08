@@ -98,7 +98,7 @@ public class GerritHandlerTest {
         when(sshConnectionMock.executeCommandReader(isA(String.class))).thenReturn(pipedReader);
         PowerMockito.mockStatic(SshConnectionFactory.class);
         PowerMockito.doReturn(sshConnectionMock).when(SshConnectionFactory.class, "getConnection",
-                isA(String.class), isA(Integer.class), isA(Authentication.class));
+                isA(String.class), isA(Integer.class), isA(String.class), isA(Authentication.class));
         handler = new GerritHandler("localhost", 29418, new Authentication(null, ""));
         handler.start();
         try {

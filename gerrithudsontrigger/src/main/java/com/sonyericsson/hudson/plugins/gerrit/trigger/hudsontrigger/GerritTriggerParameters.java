@@ -168,7 +168,11 @@ public enum GerritTriggerParameters {
      * A hashcode of the gerrit event object, to make sure every set of parameters
      * is unique (allowing jenkins to queue duplicate builds).
      */
-    GERRIT_EVENT_HASH;
+    GERRIT_EVENT_HASH,
+    /**
+     * The type of the event.
+     */
+    GERRIT_EVENT_TYPE;
 
     /**
      * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
@@ -223,6 +227,8 @@ public enum GerritTriggerParameters {
         boolean noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
         boolean escapeQuotes = trigger.isEscapeQuotes();
 
+        GERRIT_EVENT_TYPE.setOrCreateStringParameterValue(
+                parameters, gerritEvent.getEventType().getTypeValue(), escapeQuotes);
         GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
                 parameters, String.valueOf(((java.lang.Object)gerritEvent).hashCode()), escapeQuotes);
         if (gerritEvent instanceof ChangeBasedEvent) {

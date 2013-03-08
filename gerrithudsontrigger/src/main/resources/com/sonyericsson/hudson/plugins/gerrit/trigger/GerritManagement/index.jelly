@@ -35,6 +35,12 @@
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT}"
                                    checkUrl="'${rootURL}/gerrit-trigger/positiveIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Proxy}"
+                             help="/plugin/gerrit-trigger/help-GerritProxy.html">
+                        <f:textbox name="gerritProxy"
+                                   value="${it.config.gerritProxy}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY}"/>
+                    </f:entry>
                     <f:entry title="${%Username}"
                              help="/plugin/gerrit-trigger/help-GerritUserName.html">
                         <f:textbox name="gerritUserName"
@@ -68,7 +74,7 @@
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"
-                                      with="gerritHostName,gerritSshPort,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
+                                      with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
                 </f:section>
                 <f:section title="${%Gerrit Reporting Values}">
                     <tr>

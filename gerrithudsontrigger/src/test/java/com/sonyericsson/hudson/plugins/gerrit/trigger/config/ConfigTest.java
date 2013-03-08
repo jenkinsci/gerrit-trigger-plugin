@@ -69,6 +69,7 @@ public class ConfigTest {
                 + "\"gerritFrontEndUrl\":\"http://gerrit:8088\","
                 + "\"gerritHostName\":\"gerrit\","
                 + "\"gerritSshPort\":\"1337\","
+                + "\"gerritProxy\":\"\","
                 + "\"gerritUserName\":\"gerrit\","
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
@@ -105,6 +106,7 @@ public class ConfigTest {
         assertEquals("http://gerrit:8088/", config.getGerritFrontEndUrl());
         assertEquals("gerrit", config.getGerritHostName());
         assertEquals(1337, config.getGerritSshPort());
+        assertEquals("", config.getGerritProxy());
         assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());

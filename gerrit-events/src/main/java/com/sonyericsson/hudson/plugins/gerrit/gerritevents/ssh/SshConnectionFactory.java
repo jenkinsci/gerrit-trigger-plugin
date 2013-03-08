@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
+
 import java.io.IOException;
 
 /**
@@ -51,7 +53,26 @@ public abstract class SshConnectionFactory {
      * @see SshConnection
      * @see SshConnectionImpl
      */
-    public static SshConnection getConnection(String host, int port, Authentication authentication) throws IOException {
-        return new SshConnectionImpl(host, port, authentication);
+    public static SshConnection getConnection(String host, int port,
+                                              Authentication authentication) throws IOException {
+        return getConnection(host, port, GerritDefaultValues.DEFAULT_GERRIT_PROXY, authentication);
+    }
+
+    /**
+     * Creates a {@link SshConnection}.
+     *
+     * @param host           the host name
+     * @param port           the port
+     * @param proxy          the proxy url
+     * @param authentication the credentials
+     * @return a new connection.
+     *
+     * @throws IOException if so.
+     * @see SshConnection
+     * @see SshConnectionImpl
+     */
+    public static SshConnection getConnection(String host, int port, String proxy,
+                                              Authentication authentication) throws IOException {
+        return new SshConnectionImpl(host, port, proxy, authentication);
     }
 }

@@ -46,4 +46,11 @@ public interface GerritConnectionConfig2 extends GerritConnectionConfig {
      * @return the WatchTimeExceptionData.
      */
     WatchTimeExceptionData getExceptionData();
+
+    /**
+     * The http or socks5 proxy url.
+     *
+     * @return the proxy url.
+     */
+    String getGerritProxy();
 }

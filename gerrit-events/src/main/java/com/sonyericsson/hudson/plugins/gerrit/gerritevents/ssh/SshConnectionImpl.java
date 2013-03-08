@@ -32,6 +32,9 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+import com.jcraft.jsch.ProxySOCKS5;
+import com.jcraft.jsch.ProxyHTTP;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +42,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.MalformedURLException;
 
 /**
  * A simple ssh client connection with private key.
@@ -56,10 +60,14 @@ public class SshConnectionImpl implements SshConnection {
      * SSH Command to open an "exec channel".
      */
     protected static final String CMD_EXEC = "exec";
+    /**
+     * The str length of "://" used for proxy parsing.
+     */
+    protected static final int PROTO_HOST_DELIM_LENGTH = 3;
     private final JSch client;
     private Session connectSession;
 
-    //CS IGNORE RedundantThrows FOR NEXT 12 LINES. REASON: Informative
+    //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative
 
     /**
      * Creates and opens a SshConnection.
@@ -67,10 +75,24 @@ public class SshConnectionImpl implements SshConnection {
      * @param host           the host to connect to.
      * @param port           the port.
      * @param authentication the authentication-info
-     * @throws SshException if something happens - usually due to bad config.
-     * @throws IOException  if the unfortunate happens.
+     * @throws IOException if the unfortunate happens.
      */
-    protected SshConnectionImpl(String host, int port, Authentication authentication) throws SshException, IOException {
+    protected SshConnectionImpl(String host, int port,
+                                Authentication authentication) throws IOException {
+        this(host, port, GerritDefaultValues.DEFAULT_GERRIT_PROXY, authentication);
+    }
+
+    /**
+     * Creates and opens a SshConnection.
+     *
+     * @param host           the host to connect to.
+     * @param port           the port.
+     * @param proxy          the proxy url.
+     * @param authentication the authentication-info
+     * @throws IOException   if the unfortunate happens.
+     */
+    protected SshConnectionImpl(String host, int port, String proxy,
+                                Authentication authentication) throws IOException {
         logger.debug("connecting...");
         try {
             client = new JSch();
@@ -78,6 +100,25 @@ public class SshConnectionImpl implements SshConnection {
                     authentication.getPrivateKeyFilePassword());
             client.setHostKeyRepository(new BlindHostKeyRepository());
             connectSession = client.getSession(authentication.getUsername(), host, port);
+            if (proxy != null && !proxy.isEmpty()) {
+                String[] splitted = proxy.split(":");
+                if (splitted.length > 2 && splitted[1].length() >= PROTO_HOST_DELIM_LENGTH) {
+                    String pproto = splitted[0];
+                    String phost = splitted[1].substring(2);
+                    int pport = Integer.parseInt(splitted[2]);
+                    if (pproto.equals("socks5") || pproto.equals("http")) {
+                        if (pproto.equals("socks5")) {
+                             connectSession.setProxy(new ProxySOCKS5(phost, pport));
+                        } else {
+                             connectSession.setProxy(new ProxyHTTP(phost, pport));
+                        }
+                    } else {
+                        throw new MalformedURLException("Only http and socks5 protocols are supported");
+                    }
+                } else {
+                    throw new MalformedURLException(proxy);
+                }
+            }
             connectSession.connect();
             logger.debug("Connected: {}", connectSession.isConnected());
             connectSession.setServerAliveInterval(ALIVE_INTERVAL);

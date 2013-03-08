@@ -68,7 +68,7 @@ public class StreamWatchdogTest {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, WaitLongTimeCommand.class, true,
                 new Object[]{MINUTES.toMillis(5)}, new Class<?>[]{Long.class});
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
-        GerritHandler handler = new GerritHandler("localhost", SshdServerMock.GERRIT_SSH_PORT,
+        GerritHandler handler = new GerritHandler("localhost", SshdServerMock.GERRIT_SSH_PORT, "",
                 new Authentication(sshKey, "jenkins"), 1, "jenkins@localhost", 20,
                 new WatchTimeExceptionData(new int[0], Collections.<WatchTimeExceptionData.TimeSpan>emptyList()));
         Listen connectionListener = new Listen();
