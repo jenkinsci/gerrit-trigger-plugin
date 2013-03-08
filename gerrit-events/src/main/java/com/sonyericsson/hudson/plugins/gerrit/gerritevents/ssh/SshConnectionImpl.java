@@ -195,7 +195,7 @@ public class SshConnectionImpl implements SshConnection {
     @Override
     public synchronized ChannelExec executeCommandChannel(String command) throws SshException, IOException {
         if (!isConnected()) {
-            throw new IllegalStateException("Not connected!");
+            throw new IOException("Not connected!");
         }
         try {
             ChannelExec channel = (ChannelExec)connectSession.openChannel("exec");

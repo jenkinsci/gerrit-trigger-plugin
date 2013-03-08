@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +38,7 @@ import hudson.model.AbstractBuild;
  */
 @Extension(optional = true)
 public class GerritRebuildValidator extends RebuildValidator {
+    private static final long serialVersionUID = 2704238052581467905L;
 
     @Override
     public boolean isApplicable(AbstractBuild build) {

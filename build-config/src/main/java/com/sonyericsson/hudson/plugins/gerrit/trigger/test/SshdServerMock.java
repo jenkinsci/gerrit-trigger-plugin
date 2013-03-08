@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.test;
 
 import hudson.util.StreamCopyThread;
 import org.apache.sshd.SshServer;
@@ -56,17 +57,20 @@ import java.util.regex.Pattern;
  */
 public class SshdServerMock implements CommandFactory {
 
+    /**
+     * The stream-events command.
+     */
+    public static final String GERRIT_STREAM_EVENTS = "gerrit stream-events";
 
     /**
      * The default port that Gerrit usually listens to.
      */
-    protected static final int GERRIT_SSH_PORT = 29418;
+    public static final int GERRIT_SSH_PORT = 29418;
     /**
      * How long to sleep to let the ssh-keygen error output appear on stderr.
      */
     protected static final int WAIT_FOR_ERROR_OUTPUT = 1000;
 
-    private static SshdServerMock instance;
     /**
      * One second in ms.
      */
@@ -95,12 +99,21 @@ public class SshdServerMock implements CommandFactory {
      * @see CommandLookup
      */
     private CommandMock findAndCreateCommand(String s) {
+        CommandLookup found = null;
         for (CommandLookup lookup : commandLookups) {
             if (lookup.isCommand(s)) {
-                return lookup.newInstance(s);
+                found = lookup;
+                break;
             }
         }
-        return new CommandMock(s);
+        if (found != null) {
+            if (found.isOneShot()) {
+                commandLookups.remove(found);
+            }
+            return found.newInstance(s);
+        } else {
+            return new CommandMock(s);
+        }
     }
 
     /**
@@ -134,10 +147,12 @@ public class SshdServerMock implements CommandFactory {
      * @return the found command or null.
      */
     public synchronized CommandMock getRunningCommand(String commandSearch) {
-        Pattern p = Pattern.compile(commandSearch);
-        for (CommandMock command : commandHistory) {
-            if (!command.isDestroyed() && p.matcher(command.getCommand()).find()) {
-                return command;
+        if (commandHistory != null) {
+            Pattern p = Pattern.compile(commandSearch);
+            for (CommandMock command : commandHistory) {
+                if (!command.isDestroyed() && p.matcher(command.getCommand()).find()) {
+                    return command;
+                }
             }
         }
         return null;
@@ -158,17 +173,34 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
+         * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
+         * wanted.
+         *
+         * @param commandPattern the regular expression
+         * @param cmd            the class to create the command from. The class must have a constructor where the first
+         *                       argument is a String followed by the class types provided by the types parameter.
+         * @param arguments      the other arguments to the constructor besides the command.
+         * @param types          the other class types to match the constructor against.
+         * @throws NoSuchMethodException if there is no matching constructor.
+         */
+        public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd,
+                                                  Object[] arguments, Class<?>[] types) throws NoSuchMethodException {
+            returnCommandFor(commandPattern, cmd, false, arguments, types);
+        }
+
+    /**
      * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
      * wanted.
      *
      * @param commandPattern the regular expression
      * @param cmd            the class to create the command from. The class must have a constructor where the first
      *                       argument is a String followed by the class types provided by the types parameter.
+     * @param oneShot         if this command should only be returned the first time it is called for.
      * @param arguments      the other arguments to the constructor besides the command.
      * @param types          the other class types to match the constructor against.
      * @throws NoSuchMethodException if there is no matching constructor.
      */
-    public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd,
+    public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd, boolean oneShot,
                                               Object[] arguments, Class<?>[] types) throws NoSuchMethodException {
         Class<?>[] argumentTypes = new Class<?>[types.length + 1];
         argumentTypes[0] = String.class;
@@ -178,7 +210,7 @@ public class SshdServerMock implements CommandFactory {
             if (commandLookups == null) {
                 commandLookups = new LinkedList<CommandLookup>();
             }
-            commandLookups.add(new CommandLookup(cmd, commandPattern, constructor, arguments));
+            commandLookups.add(new CommandLookup(cmd, commandPattern, oneShot, constructor, arguments));
         }
     }
 
@@ -217,7 +249,7 @@ public class SshdServerMock implements CommandFactory {
      *
      * @throws IOException if so.
      */
-    public static SshServer startServer(int port) throws IOException {
+    public static SshServer startServer(int port, SshdServerMock server) throws IOException {
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
@@ -227,22 +259,11 @@ public class SshdServerMock implements CommandFactory {
                 return true;
             }
         });
-        sshd.setCommandFactory(getInstance());
+        sshd.setCommandFactory(server);
         sshd.start();
         return sshd;
     }
 
-    /**
-     * The singleton instance of the Server controller.
-     *
-     * @return the singleton
-     */
-    public static synchronized SshdServerMock getInstance() {
-        if (instance == null) {
-            instance = new SshdServerMock();
-        }
-        return instance;
-    }
 
     /**
      * Starts a ssh server on the standard Gerrit port.
@@ -252,8 +273,8 @@ public class SshdServerMock implements CommandFactory {
      * @throws IOException if so.
      * @see #GERRIT_SSH_PORT
      */
-    public static SshServer startServer() throws IOException {
-        return startServer(GERRIT_SSH_PORT);
+    public static SshServer startServer(SshdServerMock server) throws IOException {
+        return startServer(GERRIT_SSH_PORT, server);
     }
 
     /**
@@ -317,7 +338,7 @@ public class SshdServerMock implements CommandFactory {
         private OutputStream errorStream;
         private ExitCallback exitCallback;
         private boolean destroyed = false;
-        private String command;
+        protected String command;
 
         /**
          * Standard constructor.
@@ -526,6 +547,7 @@ public class SshdServerMock implements CommandFactory {
     public static class CommandLookup {
         private Class<? extends CommandMock> cmdClass;
         private Pattern commandPattern;
+        private boolean oneShot;
         private Constructor<? extends CommandMock> constructor;
         private Object[] arguments;
 
@@ -534,15 +556,17 @@ public class SshdServerMock implements CommandFactory {
          *
          * @param cmdClass       the class of the command to create.
          * @param commandPattern a regular expression matching a command the creation should be performed on.
+         * @param oneShot         if this command should only be returned the first time it is called for.
          * @param constructor    the constructor of the command to call.
          * @param arguments      the arguments to the constructor except for the first actual command.
          * @see SshdServerMock#returnCommandFor(String, Class)
          * @see SshdServerMock#returnCommandFor(String, Class, Object[], Class[])
          */
-        public CommandLookup(Class<? extends CommandMock> cmdClass, Pattern commandPattern,
+        public CommandLookup(Class<? extends CommandMock> cmdClass, Pattern commandPattern, boolean oneShot,
                              Constructor<? extends CommandMock> constructor, Object... arguments) {
             this.cmdClass = cmdClass;
             this.commandPattern = commandPattern;
+            this.oneShot = oneShot;
             this.constructor = constructor;
             this.arguments = arguments;
         }
@@ -552,14 +576,15 @@ public class SshdServerMock implements CommandFactory {
          *
          * @param cmdClass       the class of the command to create.
          * @param commandPattern a regular expression matching a command the creation should be performed on.
+         * @param oneShot         if this command should only be returned the first time it is called for.
          * @param constructor    the constructor of the command to call.
          * @param arguments      the arguments to the constructor except for the first actual command.
          * @see SshdServerMock#returnCommandFor(String, Class)
          * @see SshdServerMock#returnCommandFor(String, Class, Object[], Class[])
          */
-        public CommandLookup(Class<? extends CommandMock> cmdClass, String commandPattern,
+        public CommandLookup(Class<? extends CommandMock> cmdClass, String commandPattern, boolean oneShot,
                              Constructor<? extends CommandMock> constructor, Object... arguments) {
-            this(cmdClass, Pattern.compile(commandPattern), constructor, arguments);
+            this(cmdClass, Pattern.compile(commandPattern), oneShot, constructor, arguments);
         }
 
         /**
@@ -570,6 +595,10 @@ public class SshdServerMock implements CommandFactory {
          */
         public boolean isCommand(String command) {
             return commandPattern.matcher(command).find();
+        }
+
+        public boolean isOneShot() {
+            return oneShot;
         }
 
         /**

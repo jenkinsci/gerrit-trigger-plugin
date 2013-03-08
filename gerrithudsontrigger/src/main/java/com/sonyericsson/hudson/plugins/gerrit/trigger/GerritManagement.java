@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
@@ -45,6 +46,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.List;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
@@ -55,6 +59,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
 
 /**
  * Management link for configuring the global configuration of this trigger.
@@ -251,6 +259,19 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     /**
+     * Checks that the provided parameter is an integer and not negative, zero is accepted.
+     *
+     * @param value the value.
+     * @return {@link FormValidation#validateNonNegativeInteger(String)}
+     */
+    public FormValidation doNonNegativeIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        return FormValidation.validateNonNegativeInteger(value);
+    }
+
+    /**
      * Checks that the provided parameter is an integer, not negative, that is larger
      * than the minimum value.
      * @param value the value.
@@ -358,6 +379,45 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
     }
 
+    /**
+     * Checks to see if the provided value represents a time on the hh:mm format.
+     * Also checks that from is before to.
+     *
+     * @param fromValue the from value.
+     * @param toValue the to value.
+     * @return {@link FormValidation#ok() } if it is so.
+     */
+    public FormValidation doValidTimeCheck(
+            @QueryParameter final String fromValue, @QueryParameter final String toValue) {
+        String[] splitFrom = fromValue.split(":");
+        String[] splitTo = toValue.split(":");
+        int fromHour;
+        int fromMinute;
+        int toHour;
+        int toMinute;
+        if (splitFrom.length != 2 || splitTo.length != 2) {
+            return FormValidation.error(Messages.InvalidTimeString());
+        }
+        try {
+            fromHour = Integer.parseInt(splitFrom[0]);
+            fromMinute = Integer.parseInt(splitFrom[1]);
+            toHour = Integer.parseInt(splitTo[0]);
+            toMinute = Integer.parseInt(splitTo[1]);
+
+        } catch (NumberFormatException nfe) {
+            return FormValidation.error(Messages.InvalidTimeString());
+        }
+
+        if (fromHour < MIN_HOUR || fromHour > MAX_HOUR || fromMinute < MIN_MINUTE || fromMinute > MAX_MINUTE
+                || toHour < MIN_HOUR || toHour > MAX_HOUR || toMinute < MIN_MINUTE || toMinute > MAX_MINUTE) {
+                return FormValidation.error(Messages.InvalidTimeString());
+        }
+        if (fromHour > toHour || (fromHour == toHour && fromMinute > toMinute)) {
+            return FormValidation.error(Messages.InvalidTimeSpan());
+        }
+        return FormValidation.ok();
+    }
+
     @Override
     public Object getTarget() {
         Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
@@ -403,5 +463,23 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             }
         }
         return null;
+    }
+
+/**
+     * Generates a list of helper objects for the jelly view
+ * .
+     * @return a list of helper objects.
+     */
+    public List<ExceptionDataHelper> generateHelper() {
+        WatchTimeExceptionData data = getConfig().getExceptionData();
+        List<ExceptionDataHelper> list = new LinkedList<ExceptionDataHelper>();
+        list.add(new ExceptionDataHelper(Messages.MondayDisplayName(), Calendar.MONDAY, data));
+        list.add(new ExceptionDataHelper(Messages.TuesdayDisplayName(), Calendar.TUESDAY, data));
+        list.add(new ExceptionDataHelper(Messages.WednesdayDisplayName(), Calendar.WEDNESDAY, data));
+        list.add(new ExceptionDataHelper(Messages.ThursdayDisplayName(), Calendar.THURSDAY, data));
+        list.add(new ExceptionDataHelper(Messages.FridayDisplayName(), Calendar.FRIDAY, data));
+        list.add(new ExceptionDataHelper(Messages.SaturdayDisplayName(), Calendar.SATURDAY, data));
+        list.add(new ExceptionDataHelper(Messages.SundayDisplayName(), Calendar.SUNDAY, data));
+        return list;
     }
 }

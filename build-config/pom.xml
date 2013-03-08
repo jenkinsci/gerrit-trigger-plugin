@@ -17,6 +17,14 @@
         <java.net.id>rsandell</java.net.id>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+    </dependencies>
+
     <scm>
         <connection>scm:git:ssh://github.com/jenkinsci/gerrit-trigger-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/gerrit-trigger-plugin.git</developerConnection>

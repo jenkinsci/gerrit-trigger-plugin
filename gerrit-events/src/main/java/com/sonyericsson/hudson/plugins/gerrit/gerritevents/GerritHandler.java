@@ -38,6 +38,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthentication
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.StreamWatchdog;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
@@ -109,9 +111,10 @@ public class GerritHandler extends Thread implements Coordinator {
     private boolean connected = false;
     private String gerritVersion = null;
     private String ignoreEMail;
-
-
-
+    private int watchdogTimeoutSeconds;
+    private WatchTimeExceptionData exceptionData;
+    private StreamWatchdog watchdog;
+    private int reconnectCallCount = 0;
 
 
     /**
@@ -150,53 +153,85 @@ public class GerritHandler extends Thread implements Coordinator {
     }
 
     /**
-     * Creates a GerritHandler with the specified values.
+     * Standard Constructor.
      *
      * @param config the configuration containing the connection values.
      */
     public GerritHandler(GerritConnectionConfig config) {
-        this(config.getGerritHostName(),
-                config.getGerritSshPort(),
-                config.getGerritAuthentication(),
-                config.getNumberOfReceivingWorkerThreads(),
-                config.getGerritEMail());
+        this(config, 0, null);
+    }
+
+    /**
+     * Standard Constructor.
+     *
+     * @param config the configuration containing the connection values.
+     */
+    public GerritHandler(GerritConnectionConfig2 config) {
+        this(config, config.getWatchdogTimeoutSeconds(), config.getExceptionData());
     }
 
     /**
      * Creates a GerritHandler with the specified values.
      *
+     * @param config                 the configuration containing the connection values.
+     * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection set to 0
+     *                               or less to disable it.
+     * @param exceptionData          time info for when the watch dog's timeout should not be in effect. set to null to
+     *                               disable the watch dog.
+     */
+    public GerritHandler(GerritConnectionConfig config,
+                         int watchdogTimeoutSeconds,
+                         WatchTimeExceptionData exceptionData) {
+        this(config.getGerritHostName(),
+                config.getGerritSshPort(),
+                config.getGerritAuthentication(),
+                config.getNumberOfReceivingWorkerThreads(),
+                config.getGerritEMail(), watchdogTimeoutSeconds, exceptionData);
+    }
+
+    /**
+     * Standard Constructor.
+     *
      * @param gerritHostName        the hostName for gerrit.
      * @param gerritSshPort         the ssh port that the gerrit server listens to.
      * @param authentication        the authentication credentials.
-     * @param numberOfWorkerThreads the number of eventthreads.
+     * @param numberOfWorkerThreads the number of event threads.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
                          Authentication authentication,
                          int numberOfWorkerThreads) {
-        this(gerritHostName, gerritSshPort, authentication, numberOfWorkerThreads, null);
+        this(gerritHostName, gerritSshPort, authentication, numberOfWorkerThreads, null, 0, null);
     }
 
     /**
-     * Creates a GerritHandler with the specified values.
+     * Standard Constructor.
      *
-     * @param gerritHostName        the hostName for gerrit.
-     * @param gerritSshPort         the ssh port that the gerrit server listens to.
-     * @param authentication        the authentication credentials.
-     * @param numberOfWorkerThreads the number of eventthreads.
-     * @param ignoreEMail the e-mail to ignore events from.
+     * @param gerritHostName          the hostName for gerrit.
+     * @param gerritSshPort             the ssh port that the gerrit server listens to.
+     * @param authentication            the authentication credentials.
+     * @param numberOfWorkerThreads the number of event threads.
+     * @param ignoreEMail              the e-mail to ignore events from.
+     * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection
+     *                               set to 0 or less to disable it.
+     * @param exceptionData           time info for when the watch dog's timeout should not be in effect.
+     *                                  set to null to disable the watch dog.
      */
     public GerritHandler(String gerritHostName,
                          int gerritSshPort,
                          Authentication authentication,
                          int numberOfWorkerThreads,
-                         String ignoreEMail) {
+                         String ignoreEMail,
+                         int watchdogTimeoutSeconds,
+                         WatchTimeExceptionData exceptionData) {
         super("Gerrit Events Reader");
         this.gerritHostName = gerritHostName;
         this.gerritSshPort = gerritSshPort;
         this.authentication = authentication;
         this.numberOfWorkerThreads = numberOfWorkerThreads;
         this.ignoreEMail = ignoreEMail;
+        this.watchdogTimeoutSeconds = watchdogTimeoutSeconds;
+        this.exceptionData = exceptionData;
 
         workQueue = new LinkedBlockingQueue<Work>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
@@ -207,6 +242,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * The gerrit version we are connected to.
+     *
      * @return the gerrit version.
      */
     public String getGerritVersion() {
@@ -215,6 +251,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Standard getter for the ignoreEMail.
+     *
      * @return the e-mail address to ignore CommentAdded events from.
      */
     public String getIgnoreEMail() {
@@ -223,6 +260,7 @@ public class GerritHandler extends Thread implements Coordinator {
 
     /**
      * Standard setter for the ignoreEMail.
+     *
      * @param ignoreEMail the e-mail address to ignore CommentAdded events from.
      */
     public void setIgnoreEMail(String ignoreEMail) {
@@ -249,6 +287,9 @@ public class GerritHandler extends Thread implements Coordinator {
                 }
                 return;
             }
+            if (watchdogTimeoutSeconds > 0 && exceptionData != null) {
+                watchdog = new StreamWatchdog(this, watchdogTimeoutSeconds, exceptionData);
+            }
 
             BufferedReader br = null;
             try {
@@ -273,6 +314,9 @@ public class GerritHandler extends Thread implements Coordinator {
                     }
                     logger.trace("Reading next line.");
                     line = br.readLine();
+                    if (watchdog != null) {
+                        watchdog.signal();
+                    }
                 } while (line != null);
             } catch (IOException ex) {
                 logger.error("Stream events command error. ", ex);
@@ -723,6 +767,24 @@ public class GerritHandler extends Thread implements Coordinator {
         }
     }
 
+    @Override
+    public void reconnect() {
+        reconnectCallCount++;
+        if (watchdog != null) {
+            watchdog.shutdown();
+        }
+        sshConnection.disconnect();
+    }
+
+
+    /**
+     * Count how many times {@link #reconnect()} has been called since object creation.
+     *
+     * @return the count.
+     */
+    public int getReconnectCallCount() {
+        return reconnectCallCount;
+    }
 
     /**
      * Closes the connection.
@@ -730,6 +792,9 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param join if the method should wait for the thread to finish before returning.
      */
     public void shutdown(boolean join) {
+        if (watchdog != null) {
+            watchdog.shutdown();
+        }
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
             //For some reason the shutdown flag is not correctly set.

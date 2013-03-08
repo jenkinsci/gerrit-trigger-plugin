@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONObject;
 
@@ -34,7 +34,7 @@ import java.util.List;
  * Interface for the Global configuration.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig {
+public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
 
     /**
      * If enabled, then old patch revision builds will be canceled.

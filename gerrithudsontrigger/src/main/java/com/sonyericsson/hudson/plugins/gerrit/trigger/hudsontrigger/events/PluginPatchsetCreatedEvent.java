@@ -37,6 +37,7 @@ import java.io.Serializable;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Serializable {
+    private static final long serialVersionUID = 970946986242309088L;
 
     /**
      * Standard DataBoundConstructor.

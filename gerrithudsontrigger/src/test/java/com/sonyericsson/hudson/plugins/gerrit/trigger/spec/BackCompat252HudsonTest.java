@@ -37,7 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.SshdServerMock;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;
@@ -77,8 +77,8 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
     @Override
     protected void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        sshd = SshdServerMock.startServer();
-        server = SshdServerMock.getInstance();
+        server = new SshdServerMock();
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);

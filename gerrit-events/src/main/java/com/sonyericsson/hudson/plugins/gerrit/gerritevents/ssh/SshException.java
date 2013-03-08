@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +32,7 @@ import java.io.IOException;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class SshException extends IOException {
+    private static final long serialVersionUID = -5779837817631054974L;
 
     /**
      * Standard constructor.

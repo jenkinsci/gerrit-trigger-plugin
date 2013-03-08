@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +30,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritQueryException extends Exception {
+    private static final long serialVersionUID = 5110549476674599918L;
 
     /**
      * Standard constructor.
