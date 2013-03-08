@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -164,6 +165,26 @@ public enum GerritTriggerParameters {
      * The email of the submitter in a ref-updated event.
      */
     GERRIT_SUBMITTER_EMAIL,
+    /**
+     * The name of gerrit.
+     */
+    GERRIT_NAME,
+    /**
+     * The host of gerrit.
+     */
+    GERRIT_HOST,
+    /**
+     * The port of gerrit.
+     */
+    GERRIT_PORT,
+    /**
+     * The protocol where gerrit listen commands.
+     */
+    GERRIT_PROTO,
+    /**
+     * The version of gerrit.
+     */
+    GERRIT_VERSION,
     /**
      * A hashcode of the gerrit event object, to make sure every set of parameters
      * is unique (allowing jenkins to queue duplicate builds).
@@ -309,6 +330,19 @@ public enum GerritTriggerParameters {
                     parameters, getName(account), escapeQuotes);
             GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(account), escapeQuotes);
+        }
+        Provider provider = gerritEvent.getProvider();
+        if (provider != null) {
+            GERRIT_NAME.setOrCreateStringParameterValue(
+                    parameters, provider.getName(), escapeQuotes);
+            GERRIT_HOST.setOrCreateStringParameterValue(
+                    parameters, provider.getHost(), escapeQuotes);
+            GERRIT_PORT.setOrCreateStringParameterValue(
+                    parameters, provider.getPort(), escapeQuotes);
+            GERRIT_PROTO.setOrCreateStringParameterValue(
+                    parameters, provider.getProto(), escapeQuotes);
+            GERRIT_VERSION.setOrCreateStringParameterValue(
+                    parameters, provider.getVersion(), escapeQuotes);
         }
     }
 

@@ -31,9 +31,19 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 
+//CS IGNORE LineLength FOR NEXT 6 LINES. REASON: static import.
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTO;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +65,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsS
 public final class SshHandler extends AbstractHandler {
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final String CMD_VERSION = "gerrit version";
+    private static final String GERRIT_NAME = "gerrit";
+    private static final String GERRIT_PROTOCOL_NAME = "ssh";
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
 
     private static final Logger logger = LoggerFactory.getLogger(SshHandler.class);
@@ -133,13 +145,22 @@ public final class SshHandler extends AbstractHandler {
             Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
             br = new BufferedReader(reader);
             String line = "";
+            Map<String, String> providerValueMap = new LinkedHashMap<String, String>() {
+                {
+                    put(NAME, GERRIT_NAME);
+                    put(HOST, gerritHostName);
+                    put(PORT, String.valueOf(gerritSshPort));
+                    put(PROTO, GERRIT_PROTOCOL_NAME);
+                    put(VERSION, getGerritVersionString());
+                }
+            };
             logger.info("Ready to receive data from Gerrit");
             notifyConnectionEstablished();
             do {
                 logger.debug("Data-line from Gerrit: {}", line);
                 if (line != null && line.length() > 0) {
                     try {
-                        StreamEventsStringWork work = new StreamEventsStringWork(line);
+                        StreamEventsStringWork work = new StreamEventsStringWork(line, PROVIDER, providerValueMap);
                         logger.trace("putting work on queue: {}", work);
                         getWorkQueue().put(work);
                     } catch (InterruptedException ex) {
@@ -265,5 +286,17 @@ public final class SshHandler extends AbstractHandler {
             return version.trim();
         }
         return split[1].trim();
+    }
+
+    /**
+     * Gets the gerrit version.
+     * @return the gerrit version as valid string.
+     */
+    private String getGerritVersionString() {
+        String version = getGerritVersion();
+        if (version == null) {
+            version = "";
+        }
+        return version;
     }
 }
