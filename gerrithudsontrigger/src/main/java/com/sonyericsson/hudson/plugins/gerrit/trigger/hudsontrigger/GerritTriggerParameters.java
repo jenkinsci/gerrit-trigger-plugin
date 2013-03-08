@@ -85,6 +85,14 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_ABANDONER,
     /**
+     * The name of the abandoner of the change.
+     */
+    GERRIT_CHANGE_ABANDONER_NAME,
+    /**
+     * The email of the abandoner of the change.
+     */
+    GERRIT_CHANGE_ABANDONER_EMAIL,
+    /**
      * The name and email of the owner of the change.
      */
     GERRIT_CHANGE_OWNER,
@@ -100,6 +108,14 @@ public enum GerritTriggerParameters {
      * The name and email of the restorer of the change.
      */
     GERRIT_CHANGE_RESTORER,
+    /**
+     * The name of the restorer of the change.
+     */
+    GERRIT_CHANGE_RESTORER_NAME,
+    /**
+     * The email of the restorer of the change.
+     */
+    GERRIT_CHANGE_RESTORER_EMAIL,
     /**
      * The name and email of the uploader of the patch-set.
      */
@@ -229,9 +245,15 @@ public enum GerritTriggerParameters {
             }
             GERRIT_PROJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getProject(), escapeQuotes);
-            if (event instanceof ChangeRestored && !noNameAndEmailParameters) {
-                GERRIT_CHANGE_RESTORER.setOrCreateStringParameterValue(
-                        parameters, getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
+            if (event instanceof ChangeRestored) {
+                if (!noNameAndEmailParameters) {
+                    GERRIT_CHANGE_RESTORER.setOrCreateStringParameterValue(
+                            parameters, getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
+                }
+                GERRIT_CHANGE_RESTORER_NAME.setOrCreateStringParameterValue(
+                        parameters, getName(((ChangeRestored)event).getRestorer()), escapeQuotes);
+                GERRIT_CHANGE_RESTORER_EMAIL.setOrCreateStringParameterValue(
+                        parameters, getEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
@@ -239,9 +261,15 @@ public enum GerritTriggerParameters {
                     pNumber);
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
-            if (event instanceof ChangeAbandoned && !noNameAndEmailParameters) {
-                GERRIT_CHANGE_ABANDONER.setOrCreateStringParameterValue(
-                        parameters, getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+            if (event instanceof ChangeAbandoned) {
+                if (!noNameAndEmailParameters) {
+                    GERRIT_CHANGE_ABANDONER.setOrCreateStringParameterValue(
+                            parameters, getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+                }
+                GERRIT_CHANGE_ABANDONER_NAME.setOrCreateStringParameterValue(
+                        parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+                GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
+                        parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
             if (!noNameAndEmailParameters) {
                 GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
