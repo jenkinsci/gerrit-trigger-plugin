@@ -117,6 +117,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public String getGerritProxy() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public String getGerritUserName() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

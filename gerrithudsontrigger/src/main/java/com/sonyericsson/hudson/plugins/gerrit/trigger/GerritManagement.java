@@ -156,6 +156,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * Tests if the provided parameters can connect to Gerrit.
          * @param gerritHostName the hostname
          * @param gerritSshPort the ssh-port
+         * @param gerritProxy the proxy url
          * @param gerritUserName the username
          * @param gerritAuthKeyFile the private key file
          * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
@@ -165,17 +166,20 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         public FormValidation doTestConnection(
                 @QueryParameter("gerritHostName") final String gerritHostName,
                 @QueryParameter("gerritSshPort") final int gerritSshPort,
+                @QueryParameter("gerritProxy") final String gerritProxy,
                 @QueryParameter("gerritUserName") final String gerritUserName,
                 @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
                 @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
             if (logger.isDebugEnabled()) {
                 logger.debug("gerritHostName = {}\n"
                         + "gerritSshPort = {}\n"
+                        + "gerritProxy = {}\n"
                         + "gerritUserName = {}\n"
                         + "gerritAuthKeyFile = {}\n"
                         + "gerritAuthKeyFilePassword = {}",
                         new Object[]{gerritHostName,
                             gerritSshPort,
+                            gerritProxy,
                             gerritUserName,
                             gerritAuthKeyFile,
                             gerritAuthKeyFilePassword,  });
@@ -192,6 +196,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                         SshConnection sshConnection = SshConnectionFactory.getConnection(
                                 gerritHostName,
                                 gerritSshPort,
+                                gerritProxy,
                                 new Authentication(file, gerritUserName, password));
                         sshConnection.disconnect();
                         return FormValidation.ok(Messages.Success());

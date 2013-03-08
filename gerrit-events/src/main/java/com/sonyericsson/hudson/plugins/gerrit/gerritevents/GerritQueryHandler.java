@@ -49,19 +49,23 @@ public class GerritQueryHandler {
     public static final String QUERY_COMMAND = "gerrit query";
     private final String gerritHostName;
     private final int gerritSshPort;
+    private final String gerritProxy;
     private final Authentication authentication;
 
     /**
      * Creates a GerritQueryHandler with the specified values.
      * @param gerritHostName the hostName
-     * @param gerritSshPort the ssh port that the gerrit server listens to.
+     * @param gerritSshPort  the ssh port that the gerrit server listens to.
+     * @param gerritProxy    the ssh Proxy url
      * @param authentication the authentication credentials.
      */
     public GerritQueryHandler(String gerritHostName,
                               int gerritSshPort,
+                              String gerritProxy,
                               Authentication authentication) {
         this.gerritHostName = gerritHostName;
         this.gerritSshPort = gerritSshPort;
+        this.gerritProxy = gerritProxy;
         this.authentication = authentication;
 
     }
@@ -73,6 +77,7 @@ public class GerritQueryHandler {
     public GerritQueryHandler(GerritConnectionConfig config) {
         this(config.getGerritHostName(),
                 config.getGerritSshPort(),
+                config.getGerritProxy(),
                 config.getGerritAuthentication());
     }
 
@@ -223,7 +228,7 @@ public class GerritQueryHandler {
 
         SshConnection ssh = null;
         try {
-            ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, authentication);
+            ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
             BufferedReader reader = new BufferedReader(ssh.executeCommandReader(str.toString()));
             String incomingLine = null;
             while ((incomingLine = reader.readLine()) != null) {

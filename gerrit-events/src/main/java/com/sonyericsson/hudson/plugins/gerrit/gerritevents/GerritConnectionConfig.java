@@ -59,6 +59,12 @@ public interface GerritConnectionConfig {
     int getGerritSshPort();
 
     /**
+     * The http or socks5 proxy url.
+     * @return the proxy url.
+     */
+    String getGerritProxy();
+
+    /**
      * The username to authenticate to gerrit with.
      * @return the username.
      */

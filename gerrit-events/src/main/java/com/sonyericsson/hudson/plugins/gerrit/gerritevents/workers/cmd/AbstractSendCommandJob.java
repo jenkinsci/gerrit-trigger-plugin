@@ -71,7 +71,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     public boolean sendCommand(String command) {
         try {
             SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
-                    config.getGerritSshPort(), config.getGerritAuthentication());
+                    config.getGerritSshPort(), config.getGerritProxy(), config.getGerritAuthentication());
             ssh.executeCommand(command);
             ssh.disconnect();
             return true;
@@ -90,7 +90,7 @@ public abstract class AbstractSendCommandJob implements Runnable, GerritCmdRunne
     public String sendCommandStr(String command) {
         try {
             SshConnection ssh = SshConnectionFactory.getConnection(config.getGerritHostName(),
-                    config.getGerritSshPort(), config.getGerritAuthentication());
+                    config.getGerritSshPort(), config.getGerritProxy(), config.getGerritAuthentication());
             String str = ssh.executeCommand(command);
             ssh.disconnect();
             return str;
