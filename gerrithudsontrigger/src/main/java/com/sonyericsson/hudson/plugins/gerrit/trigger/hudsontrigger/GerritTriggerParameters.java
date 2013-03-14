@@ -296,6 +296,10 @@ public enum GerritTriggerParameters {
                     parameters, getEmail(uploader), escapeQuotes);
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
+            GERRIT_REFSPEC.setOrCreateStringParameterValue(
+                    parameters, event.getRefUpdate().getRefName(), escapeQuotes);
+            GERRIT_BRANCH.setOrCreateStringParameterValue(
+		    parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_REFNAME.setOrCreateStringParameterValue(
                     parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_PROJECT.setOrCreateStringParameterValue(
