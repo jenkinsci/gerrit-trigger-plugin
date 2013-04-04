@@ -7,6 +7,7 @@
         <strong>すべてのイベント</strong>
         <ul>
             <li><strong>GERRIT_PROJECT</strong>: プロジェクト名</li>
+            <li><strong>GERRIT_EVENT_TYPE</strong>: イベントタイプ</li>
             <li><strong>GERRIT_EVENT_HASH</strong>: イベントハッシュ。イベントキュー内でユニークな値を持つ</li>
             <li><strong>GERRIT_EVENT_ACCOUNT</strong>: イベントに関連付けられているアカウントの名前とメールアドレス（もしあれば）
                             <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
@@ -15,7 +16,7 @@
         </ul>
     </li>
     <li>
-	    <strong>Patchset Created, Draft Published, Change Merged, Comment Added</strong>
+	    <strong>チェンジに対するイベント</strong> <i>(Patchset Created, Draft Published, Change Merged, Comment Added)</i>
         <ul>
             <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id (SHA-1)</li>
             <li><strong>GERRIT_CHANGE_SUBJECT</strong>: コミットメッセージの最初の一行</li>
@@ -30,11 +31,21 @@
 			</li>
             <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: チェンジ・オーナーの名前</li>
             <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: チェンジ・オーナーのメールアドレス</li>
-            <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセット・アップローダーの名前とメールアドレス
+            <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセットをアップロードした人の名前とメールアドレス
 			    <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
 			</li>
-            <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップローダーの名前</li>
-            <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップローダーのメールアドレス</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップロードした人の名前</li>
+            <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップロードした人のメールアドレス</li>
+            <li><strong>GERRIT_PATCHSET_ABANDONER</strong>: パッチセットを破棄した人の名前とメールアドレス
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
+            <li><strong>GERRIT_PATCHSET_ABANDONER_NAME</strong>: パッチセットを破棄した人の名前</li>
+            <li><strong>GERRIT_PATCHSET_ABANDONER_EMAIL</strong>: パッチセットを破棄した人のメールアドレス</li>
+            <li><strong>GERRIT_PATCHSET_RESTORER</strong>: パッチセットをレストアした人の名前とメールアドレス
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
+            <li><strong>GERRIT_PATCHSET_RESTORER_NAME</strong>: パッチセットをレストアした人の名前</li>
+            <li><strong>GERRIT_PATCHSET_RESTORER_EMAIL</strong>: パッチセットをレストアした人のメールアドレス</li>
         </ul>
     </li>
     <li>

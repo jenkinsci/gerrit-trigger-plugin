@@ -266,8 +266,8 @@
                                        value="${it.config.watchdogTimeoutMinutes}"
                                        checkUrl="'${rootURL}/gerrit-trigger/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
-                        <f:optionalBlock name="watchdogExceptions" title="Connection watchdog exceptions" checked="${it.config.exceptionData.enabled}">
-                            <f:entry title="Exception days"
+                        <f:optionalBlock name="watchdogExceptions" title="${%Connection watchdog exceptions}" checked="${it.config.exceptionData.enabled}">
+                            <f:entry title="${%Exception days}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionDays.html">
                                 <table>
                                     <j:forEach var="helper" items="${it.generateHelper()}">
@@ -284,7 +284,7 @@
                                     </j:forEach>
                                 </table>
                             </f:entry>
-                            <f:entry title="Exception times"
+                            <f:entry title="${%Exception times}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionTimes.html">
                                 <f:repeatable var="t" items="${it.config.exceptionData.timesOfDay}"
                                               name="watchdogExceptionTimes" add="${%Add time}" minimum="0"
