@@ -33,41 +33,24 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPubli
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.StreamWatchdog;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsStringWork;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Work;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.runner.GerritEventRunner;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.runner.StreamEventsStringRunner;
+
+import net.sf.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-//CS IGNORE LineLength FOR NEXT 7 LINES. REASON: static import.
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
+//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 
 /**
@@ -75,391 +58,53 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritHandler extends Thread implements Coordinator {
+public class GerritHandler implements Handler {
 
-    /**
-     * Time to wait between connection attempts.
-     */
-    public static final int CONNECT_SLEEP = 2000;
-    private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
-    private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
-    /**
-     * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
-     */
-    protected static final int PAUSE_SECOND = 1000;
-    /**
-     * How many times to try and set the shutdown flag to true. Noticed during unit tests there seems to be a timing
-     * issue or something so sometimes the {@shutdownInProgress} flag is not set properly. Setting it a number of times
-     * with some delay helped.
-     *
-     * @see #shutdown(boolean)
-     * @see #PAUSE_SECOND
-     */
-    protected static final int BRUTE_FORCE_TRIES = 10;
+    private static final int TIMEOUT_SHUTDOWN_MILLIS = 30000;
     private static final Logger logger = LoggerFactory.getLogger(GerritHandler.class);
-    private BlockingQueue<Work> workQueue;
-    private String gerritHostName;
-    private int gerritSshPort;
-    private String gerritProxy;
-    private Authentication authentication;
+    private ExecutorService executorService;
     private int numberOfWorkerThreads;
+    private String ignoreEMail;
     private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
     private final Set<ConnectionListener> connectionListeners = new CopyOnWriteArraySet<ConnectionListener>();
-    private final List<EventThread> workers;
-    private SshConnection sshConnection;
-    private boolean shutdownInProgress = false;
-    private final Object shutdownInProgressSync = new Object();
-    private boolean connecting = false;
-    private boolean connected = false;
-    private String gerritVersion = null;
-    private String ignoreEMail;
-    private int watchdogTimeoutSeconds;
-    private WatchTimeExceptionData exceptionData;
-    private StreamWatchdog watchdog;
-    private int reconnectCallCount = 0;
-
 
     /**
-     * Creates a GerritHandler with all the default values set.
+     * Creates a GerritHandler with default number of worker threads.
      *
-     * @see GerritDefaultValues#DEFAULT_GERRIT_HOSTNAME
-     * @see GerritDefaultValues#DEFAULT_GERRIT_SSH_PORT
-     * @see GerritDefaultValues#DEFAULT_GERRIT_PROXY
-     * @see GerritDefaultValues#DEFAULT_GERRIT_USERNAME
-     * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE
-     * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD
      * @see GerritDefaultValues#DEFAULT_NR_OF_RECEIVING_WORKER_THREADS
      */
     public GerritHandler() {
-        this(DEFAULT_GERRIT_HOSTNAME,
-                DEFAULT_GERRIT_SSH_PORT,
-                DEFAULT_GERRIT_PROXY,
-                new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
-                        DEFAULT_GERRIT_USERNAME,
-                        DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD),
-                DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
-    }
-
-    /**
-     * Creates a GerritHandler with the specified values and default number of worker threads.
-     *
-     * @param gerritHostName the hostName
-     * @param gerritSshPort  the ssh port that the gerrit server listens to.
-     * @param authentication the authentication credentials.
-     */
-    public GerritHandler(String gerritHostName,
-                         int gerritSshPort,
-                         Authentication authentication) {
-        this(gerritHostName,
-                gerritSshPort,
-                authentication,
-                DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
-    }
-
-    /**
-     * Standard Constructor.
-     *
-     * @param config the configuration containing the connection values.
-     */
-    public GerritHandler(GerritConnectionConfig config) {
-        this(config, DEFAULT_GERRIT_PROXY, 0, null);
-    }
-
-    /**
-     * Standard Constructor.
-     *
-     * @param config the configuration containing the connection values.
-     */
-    public GerritHandler(GerritConnectionConfig2 config) {
-        this(config, config.getGerritProxy(), config.getWatchdogTimeoutSeconds(), config.getExceptionData());
+        this(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS, null);
     }
 
     /**
      * Creates a GerritHandler with the specified values.
      *
-     * @param config                 the configuration containing the connection values.
-     * @param gerritProxy            the proxy url socks5|http://host:port.
-     * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection set to 0
-     *                               or less to disable it.
-     * @param exceptionData          time info for when the watch dog's timeout should not be in effect. set to null to
-     *                               disable the watch dog.
-     */
-    public GerritHandler(GerritConnectionConfig config,
-                         String gerritProxy,
-                         int watchdogTimeoutSeconds,
-                         WatchTimeExceptionData exceptionData) {
-        this(config.getGerritHostName(),
-                config.getGerritSshPort(),
-                gerritProxy,
-                config.getGerritAuthentication(),
-                config.getNumberOfReceivingWorkerThreads(),
-                config.getGerritEMail(), watchdogTimeoutSeconds, exceptionData);
-    }
-
-    /**
-     * Standard Constructor.
-     *
-     * @param gerritHostName        the hostName for gerrit.
-     * @param gerritSshPort         the ssh port that the gerrit server listens to.
-     * @param gerritProxy           the proxy url socks5|http://host:port.
-     * @param authentication        the authentication credentials.
      * @param numberOfWorkerThreads the number of event threads.
+     * @param ignoreEMail the e-mail to ignore events from.
      */
-    public GerritHandler(String gerritHostName,
-                         int gerritSshPort,
-                         String gerritProxy,
-                         Authentication authentication,
-                         int numberOfWorkerThreads) {
-        this(gerritHostName, gerritSshPort, gerritProxy, authentication, numberOfWorkerThreads, null, 0, null);
-    }
-
-    /**
-         * Standard Constructor.
-         *
-         * @param gerritHostName        the hostName for gerrit.
-         * @param gerritSshPort         the ssh port that the gerrit server listens to.
-         * @param authentication        the authentication credentials.
-         * @param numberOfWorkerThreads the number of event threads.
-         */
-        public GerritHandler(String gerritHostName,
-                             int gerritSshPort,
-                             Authentication authentication,
-                             int numberOfWorkerThreads) {
-            this(gerritHostName, gerritSshPort, DEFAULT_GERRIT_PROXY, authentication, numberOfWorkerThreads);
-        }
-
-    /**
-     * Standard Constructor.
-     *
-     * @param gerritHostName          the hostName for gerrit.
-     * @param gerritSshPort             the ssh port that the gerrit server listens to.
-     * @param gerritProxy              the proxy url socks5|http://host:port.
-     * @param authentication            the authentication credentials.
-     * @param numberOfWorkerThreads the number of event threads.
-     * @param ignoreEMail              the e-mail to ignore events from.
-     * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection
-     *                               set to 0 or less to disable it.
-     * @param exceptionData           time info for when the watch dog's timeout should not be in effect.
-     *                                  set to null to disable the watch dog.
-     */
-    public GerritHandler(String gerritHostName,
-                         int gerritSshPort,
-                         String gerritProxy,
-                         Authentication authentication,
-                         int numberOfWorkerThreads,
-                         String ignoreEMail,
-                         int watchdogTimeoutSeconds,
-                         WatchTimeExceptionData exceptionData) {
-        super("Gerrit Events Reader");
-        this.gerritHostName = gerritHostName;
-        this.gerritSshPort = gerritSshPort;
-        this.gerritProxy = gerritProxy;
-        this.authentication = authentication;
+    public GerritHandler(int numberOfWorkerThreads, String ignoreEMail) {
         this.numberOfWorkerThreads = numberOfWorkerThreads;
         this.ignoreEMail = ignoreEMail;
-        this.watchdogTimeoutSeconds = watchdogTimeoutSeconds;
-        this.exceptionData = exceptionData;
-
-        workQueue = new LinkedBlockingQueue<Work>();
-        workers = new ArrayList<EventThread>(numberOfWorkerThreads);
-        for (int i = 0; i < numberOfWorkerThreads; i++) {
-            workers.add(new EventThread(this, "Gerrit Worker EventThread_" + i));
-        }
+        this.executorService = Executors.newFixedThreadPool(numberOfWorkerThreads);
     }
 
-    /**
-     * The gerrit version we are connected to.
-     *
-     * @return the gerrit version.
-     */
-    public String getGerritVersion() {
-        return gerritVersion;
-    }
-
-    /**
-     * Standard getter for the ignoreEMail.
-     *
-     * @return the e-mail address to ignore CommentAdded events from.
-     */
-    public String getIgnoreEMail() {
-        return ignoreEMail;
-    }
-
-    /**
-     * Standard setter for the ignoreEMail.
-     *
-     * @param ignoreEMail the e-mail address to ignore CommentAdded events from.
-     */
-    public void setIgnoreEMail(String ignoreEMail) {
-        this.ignoreEMail = ignoreEMail;
-    }
-
-    /**
-     * Main loop for connecting and reading Gerrit JSON Events and dispatching them to Workers.
-     */
     @Override
-    public void run() {
-        logger.info("Starting Up...");
-        //Start the workers
-        for (EventThread worker : workers) {
-            //TODO what if nr of workers are increased/decreased in runtime.
-            worker.start();
-        }
-        do {
-            sshConnection = connect();
-            if (sshConnection == null) {
-                //should mean unrecoverable error
-                for (EventThread worker : workers) {
-                    worker.shutdown();
-                }
-                return;
-            }
-            if (watchdogTimeoutSeconds > 0 && exceptionData != null) {
-                watchdog = new StreamWatchdog(this, watchdogTimeoutSeconds, exceptionData);
-            }
-
-            BufferedReader br = null;
-            try {
-                logger.trace("Executing stream-events command.");
-                Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
-                br = new BufferedReader(reader);
-                String line = "";
-                logger.info("Ready to receive data from Gerrit");
-                notifyConnectionEstablished();
-                do {
-                    logger.debug("Data-line from Gerrit: {}", line);
-                    if (line != null && line.length() > 0) {
-                        try {
-                            StreamEventsStringWork work = new StreamEventsStringWork(line);
-                            logger.trace("putting work on queue: {}", work);
-                            workQueue.put(work);
-                        } catch (InterruptedException ex) {
-                            logger.warn("Interrupted while putting work on queue!", ex);
-                            //TODO check if shutdown
-                            //TODO try again since it is important
-                        }
-                    }
-                    logger.trace("Reading next line.");
-                    line = br.readLine();
-                    if (watchdog != null) {
-                        watchdog.signal();
-                    }
-                } while (line != null);
-            } catch (IOException ex) {
-                logger.error("Stream events command error. ", ex);
-            } finally {
-                logger.trace("Connection closed, ended read loop.");
-                try {
-                    sshConnection.disconnect();
-                } catch (Exception ex) {
-                    logger.warn("Error when disconnecting sshConnection.", ex);
-                }
-                sshConnection = null;
-                notifyConnectionDown();
-                if (br != null) {
-                    try {
-                        br.close();
-                    } catch (IOException ex) {
-                        logger.warn("Could not close events reader.", ex);
-                    }
-                }
-            }
-        } while (!isShutdownInProgress());
-
-        for (EventThread worker : workers) {
-            worker.shutdown();
-        }
-        logger.debug("End of GerritHandler Thread.");
-    }
-
-    /**
-     * Connects to the Gerrit server and authenticates as the specified user.
-     *
-     * @return not null if everything is well, null if connect and reconnect failed.
-     */
-    private SshConnection connect() {
-        connecting = true;
-        while (true) { //TODO do not go on forever.
-            if (isShutdownInProgress()) {
-                connecting = false;
-                return null;
-            }
-            SshConnection ssh = null;
-            try {
-                logger.debug("Connecting...");
-                ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
-                notifyConnectionEstablished();
-                connecting = false;
-                gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
-                logger.debug("connection seems ok, returning it.");
-                return ssh;
-            } catch (SshConnectException sshConEx) {
-                logger.error("Could not connect to Gerrit server! "
-                        + "Host: {} Port: {}", gerritHostName, gerritSshPort);
-                logger.error(" Proxy: {}", gerritProxy);
-                logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
-                logger.error("ConnectionException: ", sshConEx);
-                notifyConnectionDown();
-            } catch (SshAuthenticationException sshAuthEx) {
-                logger.error("Could not authenticate to Gerrit server!"
-                        + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
-                        new Object[]{authentication.getUsername(),
-                                authentication.getPrivateKeyFile(),
-                                authentication.getPrivateKeyFilePassword(), });
-                logger.error("AuthenticationException: ", sshAuthEx);
-                notifyConnectionDown();
-            } catch (IOException ex) {
-                logger.error("Could not connect to Gerrit server! "
-                        + "Host: {} Port: {}", gerritHostName, gerritSshPort);
-                logger.error(" Proxy: {}", gerritProxy);
-                logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
-                logger.error("IOException: ", ex);
-                notifyConnectionDown();
-            }
-
-            if (ssh != null) {
-                logger.trace("Disconnecting bad connection.");
-                try {
-                    //The ssh lib used is starting at least one thread for each connection.
-                    //The thread isn't shutdown properly when the connection goes down,
-                    //so we need to close it "manually"
-                    ssh.disconnect();
-                } catch (Exception ex) {
-                    logger.warn("Error when disconnecting bad connection.", ex);
-                } finally {
-                    ssh = null;
-                }
-            }
-
-            if (isShutdownInProgress()) {
-                connecting = false;
-                return null;
-            }
-
-            //If we end up here, sleep for a while and then go back up in the loop.
-            logger.trace("Sleeping for a bit.");
-            try {
-                Thread.sleep(CONNECT_SLEEP);
-            } catch (InterruptedException ex) {
-                logger.warn("Got interrupted while sleeping.", ex);
-            }
+    public void post(String data) {
+        try {
+            executorService.execute(new StreamEventsStringRunner(this, data));
+        } catch (IOException ex) {
+            logger.error(ex.getMessage());
         }
     }
 
-    /**
-     * Removes the "gerrit version " from the start of the response from gerrit.
-     * @param version the response from gerrit.
-     * @return the input string with "gerrit version " removed.
-     */
-    private String formatVersion(String version) {
-        if (version == null) {
-            return version;
+    @Override
+    public void post(JSONObject json) {
+        try {
+            executorService.execute(new GerritEventRunner(this, GerritJsonEventFactory.getEvent(json)));
+        } catch (IOException ex) {
+            logger.error(ex.getMessage());
         }
-        String[] split = version.split(GERRIT_VERSION_PREFIX);
-        if (split.length < 2) {
-            return version.trim();
-        }
-        return split[1].trim();
     }
 
     /**
@@ -473,16 +118,6 @@ public class GerritHandler extends Thread implements Coordinator {
                 logger.warn("The listener was doubly-added: {}", listener);
             }
         }
-    }
-
-    /**
-     * Adds all the provided listeners to the internal list of listeners.
-     *
-     * @param listeners the listeners to add.
-     */
-    @Deprecated
-    public void addEventListeners(Map<Integer, GerritEventListener> listeners) {
-        addEventListeners(listeners.values());
     }
 
     /**
@@ -533,34 +168,18 @@ public class GerritHandler extends Thread implements Coordinator {
      * are added later than a connectionestablished/ connectiondown will get the current connection status.
      *
      * @param listener the listener to add.
-     * @return the connection status
      */
-    public boolean addListener(ConnectionListener listener) {
-        synchronized (this) {
-            connectionListeners.add(listener);
-            return connected;
-        }
+    public void addListener(ConnectionListener listener) {
+        connectionListeners.add(listener);
     }
 
-    /**
-     * Adds all ConnectionListeners.
-     *
-     * @param listeners the listener.
-     * @deprecated
-     */
-    @Deprecated
-    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
-        addConnectionListeners(listeners.values());
-    }
     /**
      * Add all ConnectionListeners to the list of listeners.
      *
      * @param listeners the listeners to add.
      */
     public void addConnectionListeners(Collection<? extends ConnectionListener> listeners) {
-        synchronized (this) {
-            connectionListeners.addAll(listeners);
-        }
+        connectionListeners.addAll(listeners);
     }
 
     /**
@@ -569,9 +188,7 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param listener the listener to remove.
      */
     public void removeListener(ConnectionListener listener) {
-        synchronized (this) {
-            connectionListeners.remove(listener);
-        }
+        connectionListeners.remove(listener);
     }
 
     /**
@@ -580,83 +197,9 @@ public class GerritHandler extends Thread implements Coordinator {
      * @return the list of former listeners.
      */
     public Collection<ConnectionListener> removeAllConnectionListeners() {
-        synchronized (this) {
-            Set<ConnectionListener> listeners = new HashSet<ConnectionListener>(connectionListeners);
-            connectionListeners.clear();
-            return listeners;
-        }
-    }
-
-    /**
-     * The authentication credentials for ssh connection.
-     *
-     * @return the credentials.
-     */
-    public Authentication getAuthentication() {
-        return authentication;
-    }
-
-    /**
-     * The authentication credentials for ssh connection.
-     *
-     * @param authentication the credentials.
-     */
-    public void setAuthentication(Authentication authentication) {
-        this.authentication = authentication;
-    }
-
-    /**
-     * gets the hostname where Gerrit is running.
-     *
-     * @return the hostname.
-     */
-    public String getGerritHostName() {
-        return gerritHostName;
-    }
-
-    /**
-     * Sets the hostname where Gerrit is running.
-     *
-     * @param gerritHostName the hostname.
-     */
-    public void setGerritHostName(String gerritHostName) {
-        this.gerritHostName = gerritHostName;
-    }
-
-    /**
-     * Gets the port for gerrit ssh commands.
-     *
-     * @return the port nr.
-     */
-    public int getGerritSshPort() {
-        return gerritSshPort;
-    }
-
-    /**
-     * Sets the port for gerrit ssh commands.
-     *
-     * @param gerritSshPort the port nr.
-     */
-    public void setGerritSshPort(int gerritSshPort) {
-        this.gerritSshPort = gerritSshPort;
-    }
-
-    /**
-     * Gets the proxy for gerrit ssh commands.
-     *
-     * @return the proxy url.
-     */
-    public String getGerritProxy() {
-        return gerritProxy;
-    }
-
-    /**
-     * Sets the proxy for gerrit ssh commands.
-     *
-     * @param gerritProxy the port nr.
-     */
-    public void setGerritProxy(String gerritProxy) {
-        this.gerritProxy = gerritProxy;
+        Set<ConnectionListener> listeners = new HashSet<ConnectionListener>(connectionListeners);
+        connectionListeners.clear();
+        return listeners;
     }
 
     /**
@@ -674,13 +217,42 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param numberOfWorkerThreads the number of threads
      */
     public void setNumberOfWorkerThreads(int numberOfWorkerThreads) {
-        this.numberOfWorkerThreads = numberOfWorkerThreads;
-        //TODO what if nr of workers are increased/decreased in runtime.
+        if (this.numberOfWorkerThreads != numberOfWorkerThreads) {
+            this.numberOfWorkerThreads = numberOfWorkerThreads;
+            updateWorkerThreads();
+        }
     }
 
-    @Override
-    public BlockingQueue<Work> getWorkQueue() {
-        return workQueue;
+    /**
+     * Updates worker threads safely.
+     */
+    public void updateWorkerThreads() {
+        ExecutorService disposedExecutorService = executorService;
+        executorService = Executors.newFixedThreadPool(numberOfWorkerThreads);
+        try {
+            boolean terminated = false;
+            while (!terminated) {
+                terminated = disposedExecutorService.awaitTermination(TIMEOUT_SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS);
+            }
+        } catch (InterruptedException ex) {
+            logger.error("Interrupted while shutdown handler.", ex);
+        }
+    }
+
+    /**
+     * Gets ignore e-mail.
+     * @return the e-mail.
+     */
+    public String getIgnoreEMail() {
+        return ignoreEMail;
+    }
+
+    /**
+     * Sets ignore e-mail.
+     * @param ignoreEMail an e-mail.
+     */
+    public void setIgnoreEMail(String ignoreEMail) {
+        this.ignoreEMail = ignoreEMail;
     }
 
     /**
@@ -691,7 +263,7 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param event the event.
      */
     @Override
-    public void notifyListeners(GerritEvent event) {
+    public void handleEvent(GerritEvent event) {
         //Notify lifecycle listeners.
         if (event instanceof PatchsetCreated) {
             try {
@@ -792,120 +364,20 @@ public class GerritHandler extends Thread implements Coordinator {
         }
     }
 
-    /**
-     * Sets the shutdown flag.
-     *
-     * @param isIt true if shutdown is in progress.
-     */
-    private void setShutdownInProgress(boolean isIt) {
-        synchronized (shutdownInProgressSync) {
-            this.shutdownInProgress = isIt;
-        }
-    }
-
-    /**
-     * If the system is shutting down. I.e. the shutdown method has been called.
-     *
-     * @return true if so.
-     */
-    public boolean isShutdownInProgress() {
-        synchronized (shutdownInProgressSync) {
-            return this.shutdownInProgress;
-        }
-    }
-
     @Override
-    public void reconnect() {
-        reconnectCallCount++;
-        if (watchdog != null) {
-            watchdog.shutdown();
-        }
-        sshConnection.disconnect();
-    }
-
-
-    /**
-     * Count how many times {@link #reconnect()} has been called since object creation.
-     *
-     * @return the count.
-     */
-    public int getReconnectCallCount() {
-        return reconnectCallCount;
-    }
-
-    /**
-     * Closes the connection.
-     *
-     * @param join if the method should wait for the thread to finish before returning.
-     */
-    public void shutdown(boolean join) {
-        if (watchdog != null) {
-            watchdog.shutdown();
-        }
-        if (sshConnection != null) {
-            logger.info("Shutting down the ssh connection.");
-            //For some reason the shutdown flag is not correctly set.
-            //So we'll try the brute force way.... and it actually works.
-            for (int i = 0; i < BRUTE_FORCE_TRIES; i++) {
-                setShutdownInProgress(true);
-                if (!isShutdownInProgress()) {
-                    try {
-                        Thread.sleep(PAUSE_SECOND);
-                    } catch (InterruptedException e) {
-                        logger.debug("Interrupted while pausing in the shutdown flag set.");
-                    }
-                } else {
+    public void handleEvent(GerritConnectionEvent event) {
+        for (ConnectionListener listener : connectionListeners) {
+            try {
+                switch(event) {
+                case GERRIT_CONNECTION_ESTABLISHED:
+                    listener.connectionEstablished();
+                    break;
+                case GERRIT_CONNECTION_DOWN:
+                    listener.connectionDown();
+                    break;
+                default:
                     break;
                 }
-            }
-            //Fail terribly if we still couldn't
-            if (!isShutdownInProgress()) {
-                throw new RuntimeException("Failed to set the shutdown flag!");
-            }
-            sshConnection.disconnect();
-            if (join) {
-                try {
-                    this.join();
-                } catch (InterruptedException ex) {
-                    logger.warn("Got interrupted while waiting for shutdown.", ex);
-                }
-            }
-        } else if (connecting) {
-            setShutdownInProgress(true);
-            if (join) {
-                try {
-                    this.join();
-                } catch (InterruptedException ex) {
-                    logger.warn("Got interrupted while waiting for shutdown.", ex);
-                }
-            }
-        } else {
-            logger.warn("Was told to shutdown without a connection.");
-        }
-    }
-
-    /**
-     * Notifies all ConnectionListeners that the connection is down.
-     */
-    protected void notifyConnectionDown() {
-        connected = false;
-        for (ConnectionListener listener : connectionListeners) {
-            try {
-                listener.connectionDown();
-            } catch (Exception ex) {
-                logger.error("ConnectionListener threw Exception. ", ex);
-            }
-        }
-    }
-
-    /**
-     * Notifies all ConnectionListeners that the connection is established.
-     */
-    protected void notifyConnectionEstablished() {
-        connected = true;
-        for (ConnectionListener listener : connectionListeners) {
-            try {
-                listener.connectionEstablished();
             } catch (Exception ex) {
                 logger.error("ConnectionListener threw Exception. ", ex);
             }
@@ -919,12 +391,33 @@ public class GerritHandler extends Thread implements Coordinator {
      * @param event the event to trigger.
      */
     public void triggerEvent(GerritEvent event) {
-        logger.debug("Internally trigger event: {}", event);
         try {
+            logger.debug("Internally trigger event: {}", event);
             logger.trace("putting work on queue.");
-            workQueue.put(new GerritEventWork(event));
-        } catch (InterruptedException ex) {
-            logger.error("Interrupted while putting work on queue!", ex);
+            executorService.execute(new GerritEventRunner(this, event));
+        } catch (IOException ex) {
+            logger.error(ex.getMessage());
+        }
+    }
+
+    /**
+     * Shutdown handler.
+     * @param join true if wait termination.
+     */
+    public void shutdown(boolean join) {
+        removeAllEventListeners();
+        removeAllConnectionListeners();
+        if (join) {
+            try {
+                boolean terminated = false;
+                while (!terminated) {
+                    terminated = executorService.awaitTermination(TIMEOUT_SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS);
+                }
+            } catch (InterruptedException ex) {
+                logger.error("Interrupted while shutdown handler.", ex);
+            }
+        } else {
+            executorService.shutdown();
         }
     }
 }
