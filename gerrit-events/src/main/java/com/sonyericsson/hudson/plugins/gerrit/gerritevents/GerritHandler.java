@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -108,16 +107,13 @@ public class GerritHandler implements Handler {
         }
     }
 
-    /**
-     * Gets the gerrit version.
-     * @return the gerrit version as valid string.
-     */
-    private String getGerritVersionString() {
-        String version = getGerritVersion();
-        if (version == null) {
-            version = "";
+    @Override
+    public void post(JSONObject json) {
+        try {
+            executorService.execute(new GerritEventRunner(this, GerritJsonEventFactory.getEvent(json)));
+        } catch (IOException ex) {
+            logger.error(ex.getMessage());
         }
-        return version;
     }
 
     /**

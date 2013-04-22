@@ -40,7 +40,6 @@ import hudson.model.Items;
 import hudson.model.Run;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
-import hudson.security.PermissionScope;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -182,22 +181,6 @@ public class PluginImpl extends Plugin {
             gerritEventHandler = null;
         }
         GerritSendCommandQueue.shutdown();
-    }
-
-    /**
-     * Creates the GerritEventManager
-     */
-    private void createManager() {
-        gerritEventManager = new GerritHandler(config);
-        //Add any event/connectionlisteners that were created while the connection was down.
-        if (savedConnectionListeners != null) {
-            gerritEventManager.addConnectionListeners(savedConnectionListeners);
-            savedConnectionListeners = null;
-        }
-        if (savedEventListeners != null) {
-            gerritEventManager.addEventListeners(savedEventListeners);
-            savedEventListeners = null;
-        }
     }
 
     /**
