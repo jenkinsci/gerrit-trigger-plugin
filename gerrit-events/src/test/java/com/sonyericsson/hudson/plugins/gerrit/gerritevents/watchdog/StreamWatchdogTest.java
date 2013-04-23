@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
@@ -68,12 +69,15 @@ public class StreamWatchdogTest {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, WaitLongTimeCommand.class, true,
                 new Object[]{MINUTES.toMillis(5)}, new Class<?>[]{Long.class});
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
-        GerritHandler handler = new GerritHandler("localhost", SshdServerMock.GERRIT_SSH_PORT, "",
-                new Authentication(sshKey, "jenkins"), 1, "jenkins@localhost", 20,
+        GerritHandler handler = new GerritHandler(1, "jenkins@localhost");
+        GerritConnection connection = new GerritConnection("localhost", SshdServerMock.GERRIT_SSH_PORT, "",
+                new Authentication(sshKey, "jenkins"), 20,
                 new WatchTimeExceptionData(new int[0], Collections.<WatchTimeExceptionData.TimeSpan>emptyList()));
+        Thread connectionThread = new Thread(connection);
         Listen connectionListener = new Listen();
         handler.addListener(connectionListener);
-        handler.start();
+        connection.setHandler(handler);
+        connectionThread.start();
         server.waitForCommand(GERRIT_STREAM_EVENTS, 8000);
         Thread.sleep(2000);
         assertTrue(connectionListener.isConnectionEstablished());
@@ -82,9 +86,14 @@ public class StreamWatchdogTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 8000);
         Thread.sleep(1000);
         assertTrue(connectionListener.isConnectionEstablished());
-        assertEquals(1, handler.getReconnectCallCount());
-        System.out.println("====Shutting down GerritHandler=====");
-        handler.shutdown(true);
+        assertEquals(1, connection.getReconnectCallCount());
+        System.out.println("====Shutting down GerritConnection=====");
+        connection.shutdown();
+        try {
+            connectionThread.join();
+        } catch (InterruptedException ex) {
+            System.err.println("interupted while waiting for connection to shut down.");
+        }
         System.out.println("====Shutting down SSHD=====");
         sshd.stop(true);
         System.out.println("====Done=====");
