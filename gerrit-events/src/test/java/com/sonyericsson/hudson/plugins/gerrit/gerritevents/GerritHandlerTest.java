@@ -33,22 +33,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPubli
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PipedReader;
-import java.io.PipedWriter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
@@ -60,11 +49,8 @@ import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
 
@@ -73,71 +59,30 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(SshConnectionFactory.class)
+//@RunWith(PowerMockRunner.class)
 public class GerritHandlerTest {
 
-    private SshConnection sshConnectionMock;
     private GerritHandler handler;
-    private BufferedWriter pipedWriter;
-    private PipedReader pipedReader;
 
     /**
-     * Creates a SshConnection mock and starts a GerritHandler with that connection-mock.
+     * Creates a GerritHandler.
      *
      * @throws Exception if so.
      */
     @Before
     public void setup() throws Exception {
-        sshConnectionMock = mock(SshConnection.class);
-        when(sshConnectionMock.isAuthenticated()).thenReturn(true);
-        when(sshConnectionMock.isConnected()).thenReturn(true);
-        PipedWriter piped = new PipedWriter();
-        pipedReader = new PipedReader(piped);
-        pipedWriter = new BufferedWriter(piped);
-        when(sshConnectionMock.executeCommandReader(isA(String.class))).thenReturn(pipedReader);
-        PowerMockito.mockStatic(SshConnectionFactory.class);
-        PowerMockito.doReturn(sshConnectionMock).when(SshConnectionFactory.class, "getConnection",
-                isA(String.class), isA(Integer.class), isA(String.class), isA(Authentication.class));
-        handler = new GerritHandler("localhost", 29418, new Authentication(null, ""));
-        handler.start();
-        try {
-            Thread.sleep(1000); //Lots and lots of timing issues here
-        } catch (InterruptedException e) {
-            System.out.println("Interrupted while sleeping.");
-        }
+        handler = new GerritHandler();
     }
 
     /**
-     * Shuts down the GerritHandler and the mocked connection.
+     * Shuts down the GerritHandler.
      */
     @After
     public void shutDown() {
         if (handler != null) {
-            handler.shutdown(false);
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                System.out.println("Interrupted while sleeping.");
-            }
-            if (!handler.isShutdownInProgress()) {
-                fail("Failed to set shutdown flag!");
-            }
-            try {
-                pipedWriter.append("hello");
-                pipedWriter.newLine();
-                pipedWriter.close();
-                handler.join();
-            } catch (InterruptedException e) {
-                System.err.println("interupted while waiting for handler to shut down.");
-            } catch (IOException e) {
-                System.err.println("Could not close the pipe.");
-            }
+            handler.shutdown(true);
         }
         handler = null;
-        sshConnectionMock = null;
-        pipedReader = null;
-        pipedWriter = null;
     }
 
     /**
@@ -332,7 +277,7 @@ public class GerritHandlerTest {
         Account account = new Account("name", email);
         CommentAdded ca = new CommentAdded();
         ca.setAccount(account);
-        handler.notifyListeners(ca);
+        handler.handleEvent(ca);
         verifyNoMoreInteractions(listenerMock);
     }
 
