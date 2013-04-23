@@ -405,8 +405,7 @@ public class GerritHandler implements Handler {
      * @param join true if wait termination.
      */
     public void shutdown(boolean join) {
-        removeAllEventListeners();
-        removeAllConnectionListeners();
+        executorService.shutdown();
         if (join) {
             try {
                 boolean terminated = false;
@@ -416,8 +415,8 @@ public class GerritHandler implements Handler {
             } catch (InterruptedException ex) {
                 logger.error("Interrupted while shutdown handler.", ex);
             }
-        } else {
-            executorService.shutdown();
+            removeAllEventListeners();
+            removeAllConnectionListeners();
         }
     }
 }
