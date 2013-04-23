@@ -245,8 +245,14 @@ public class PluginImpl extends Plugin {
      */
     public synchronized void stopConnection() {
         if (gerritConnection != null) {
-            gerritConnection.shutdown();
-            gerritConnection = null;
+            try {
+                gerritConnection.shutdown();
+                gerritConnectionThread.join();
+            } catch (InterruptedException ex) {
+                logger.warn("Got interrupted while waiting for shutdown connection.", ex);
+            } finally {
+                gerritConnection = null;
+            }
         } else {
             logger.warn("Was told to shutdown again!?");
         }
