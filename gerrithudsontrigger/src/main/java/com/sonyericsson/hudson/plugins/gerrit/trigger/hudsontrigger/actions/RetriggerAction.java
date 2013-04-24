@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +25,11 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
-import hudson.model.AbstractProject;
 import hudson.model.Action;
 import java.io.IOException;
 import org.kohsuke.stapler.StaplerRequest;
@@ -101,14 +102,14 @@ public class RetriggerAction implements Action {
     }
 
     /**
-     * checks if the current user has permission to build the project.
+     * checks if the current user has permission to build/retrigger the project.
      * @return true if so.
      */
     private boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         } else {
-            return context.getThisBuild().getProject().hasPermission(AbstractProject.BUILD);
+            return context.getThisBuild().getProject().hasPermission(PluginImpl.RETRIGGER);
         }
     }
 
