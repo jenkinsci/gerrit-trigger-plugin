@@ -71,12 +71,13 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 
-//CS IGNORE LineLength FOR NEXT 6 LINES. REASON: static import.
+//CS IGNORE LineLength FOR NEXT 7 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTO;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
 
 /**
@@ -335,13 +336,14 @@ public class GerritHandler extends Thread implements Coordinator {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
-                Map<String, String> providerValueMap = new LinkedHashMap<String, String>() {
+                Map<String, String> providerValueMap= new LinkedHashMap<String, String>() {
                     private static final long serialVersionUID = 1L;
                     {
                         put(NAME, GERRIT_NAME);
                         put(HOST, gerritHostName);
                         put(PORT, String.valueOf(gerritSshPort));
                         put(PROTO, GERRIT_PROTOCOL_NAME);
+                        put(URL, DEFAULT_GERRIT_HOSTNAME);
                         put(VERSION, getGerritVersionString());
                    }
                 };

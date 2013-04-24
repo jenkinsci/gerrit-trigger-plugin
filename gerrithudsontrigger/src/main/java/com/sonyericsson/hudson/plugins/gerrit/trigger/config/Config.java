@@ -685,6 +685,13 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public String getGerritFrontEndUrlFor(String frontUrl, String changeSetNumber, String revision) {
+        StringBuilder str = new StringBuilder(frontUrl);
+        str.append(changeSetNumber);
+        return str.toString();
+    }
+
+    @Override
     public List<VerdictCategory> getCategories() {
         return categories;
     }

@@ -154,6 +154,16 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritFrontEndUrlFor(String number, String revision);
 
     /**
+     * Creates a URL to the provided changeset number.
+     * @param frontUrl the url where frontend of Web UI
+     * @param number the changeset number
+     * @param revision the patch set number (currently not used)
+     * @return a URL based on frontUrl + / + number
+     * @see #getGerritFrontEndUrlFor()
+     */
+    String getGerritFrontEndUrlFor(String frontUrl, String number, String revision);
+
+    /**
      * Get the list of available VerdictCategories.
      * @return the list.
      */

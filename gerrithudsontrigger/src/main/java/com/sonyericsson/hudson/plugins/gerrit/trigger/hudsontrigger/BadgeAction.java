@@ -98,18 +98,22 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
+        String url = tEvent.getProvider().getUrl();
+        if ("".equals(url)) {
+            url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
+        }
         if (tEvent instanceof ChangeBasedEvent) {
             Change change = ((ChangeBasedEvent)tEvent).getChange();
             if (change.getUrl() != null && change.getUrl().length() > 0) {
                 return change.getUrl();
             } else {
                 return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
+                        url,
                         change.getNumber(),
                         change.getNumber());
             }
-        } else {
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
         }
+        return url;
     }
 
     /**
