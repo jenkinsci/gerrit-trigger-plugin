@@ -65,6 +65,7 @@ public class Provider implements GerritJsonDTO {
      * @param host the host for SSH interface.
      * @param port the port for SSH interface.
      * @param proto the port for SSH interface.
+     * @param url the frontend URL for gerrit WebUI.
      * @param version the gerrit version.
      */
     public Provider(String name, String host, String port, String proto, String url, String version) {
@@ -164,11 +165,11 @@ public class Provider implements GerritJsonDTO {
      * @return the url
      */
     public String getUrl() {
-        String url = this.url;
-        if (url != null && !url.isEmpty() && !url.endsWith("/")) {
-            url += '/';
+        String frontUrl = this.url;
+        if (frontUrl != null && !frontUrl.isEmpty() && !frontUrl.endsWith("/")) {
+            frontUrl += '/';
         }
-        return url;
+        return frontUrl;
     }
 
     /**

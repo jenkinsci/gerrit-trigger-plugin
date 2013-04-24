@@ -204,6 +204,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public String getGerritFrontEndUrlFor(String frontUrl, String number, String revision) {
+        return frontUrl + number;
+    }
+
+    @Override
     public List<VerdictCategory> getCategories() {
         return new LinkedList<VerdictCategory>();
     }

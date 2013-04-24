@@ -336,7 +336,7 @@ public class GerritHandler extends Thread implements Coordinator {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
-                Map<String, String> providerValueMap= new LinkedHashMap<String, String>() {
+                Map<String, String> providerValueMap = new LinkedHashMap<String, String>() {
                     private static final long serialVersionUID = 1L;
                     {
                         put(NAME, GERRIT_NAME);
