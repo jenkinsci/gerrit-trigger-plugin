@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved..
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -47,6 +48,7 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
         AbstractProject project = createFreeStyleProject("myProject");
         TriggeredItemEntity wrap = new TriggeredItemEntity(null, "myProject");
         assertNotNull(wrap.getProject());
+        assertSame(project, wrap.getProject());
     }
 
     /**

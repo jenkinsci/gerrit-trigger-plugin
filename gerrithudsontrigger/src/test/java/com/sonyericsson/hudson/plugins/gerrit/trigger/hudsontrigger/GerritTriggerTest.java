@@ -244,10 +244,6 @@ public class GerritTriggerTest {
         // and a reconfiguration
         trigger.stop();
         trigger.start(project, true);
-
-
-        PatchsetCreated event = Setup.createPatchsetCreated();
-        GerritCause gerritCause = new GerritCause(event, true);
     }
 
     /**

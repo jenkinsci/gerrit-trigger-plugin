@@ -68,6 +68,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
      */
     @LocalData
     public void testCreateNewProject() throws Exception {
+        @SuppressWarnings("unused")
         FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =

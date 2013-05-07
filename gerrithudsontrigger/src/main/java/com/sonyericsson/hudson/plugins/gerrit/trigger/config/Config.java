@@ -117,8 +117,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
 
-    private static final int SECONDS_PER_MINUTE = 60;
-
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;

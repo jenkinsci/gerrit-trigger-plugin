@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +26,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
@@ -115,16 +117,16 @@ public class RetriggerAllAction implements Action {
     }
 
     /**
-     * checks if the current user has permission to build this and the other projects.
+     * checks if the current user has permission to build/retrigger this and the other projects.
      * @return true if so.
      */
     private boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         }
-        if (context.getThisBuild().getProject().hasPermission(AbstractProject.BUILD)) {
+        if (context.getThisBuild().getProject().hasPermission(PluginImpl.RETRIGGER)) {
             for (AbstractProject project : context.getOtherProjects()) {
-                if (!project.hasPermission(AbstractProject.BUILD)) {
+                if (!project.hasPermission(PluginImpl.RETRIGGER)) {
                     return false;
                 }
             }

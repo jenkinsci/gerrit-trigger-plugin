@@ -71,6 +71,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
      */
     protected static final String GERRIT_STREAM_EVENTS = "gerrit stream-events";
     private SshServer sshd;
+    @SuppressWarnings("unused")
     private File sshKey;
     private SshdServerMock server;
 

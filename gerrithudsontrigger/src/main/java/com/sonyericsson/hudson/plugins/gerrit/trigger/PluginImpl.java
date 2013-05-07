@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 import hudson.Plugin;
+import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
@@ -74,6 +75,14 @@ public class PluginImpl extends Plugin {
             "ManualTrigger",
             Messages._ManualTriggerPermissionDescription(),
             Hudson.ADMINISTER);
+    /**
+     * The permission that allows users to perform the
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction}.
+     */
+    public static final Permission RETRIGGER = new Permission(PERMISSION_GROUP,
+            "Retrigger",
+            Messages._RetriggerPermissionDescription(),
+            AbstractProject.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private transient GerritHandler gerritEventManager;

@@ -60,6 +60,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     /**
      * Used by XStream for something.
      */
+    @SuppressWarnings("unused")
     private final String separator = "#";
 
     /**
