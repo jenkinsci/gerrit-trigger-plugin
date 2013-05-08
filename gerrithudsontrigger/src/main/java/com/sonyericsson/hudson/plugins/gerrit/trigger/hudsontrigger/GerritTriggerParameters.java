@@ -284,8 +284,7 @@ public enum GerritTriggerParameters {
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
-            String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event.getChange().getNumber(),
-                    pNumber);
+            String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event);
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {

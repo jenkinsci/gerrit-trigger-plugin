@@ -26,6 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
@@ -685,9 +688,25 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public String getGerritFrontEndUrlFor(String frontUrl, String changeSetNumber, String revision) {
-        StringBuilder str = new StringBuilder(frontUrl);
-        str.append(changeSetNumber);
+    public String getGerritFrontEndUrlFor(GerritTriggeredEvent event) {
+        if (event instanceof ChangeBasedEvent) {
+            String changeUrl = ((ChangeBasedEvent)event).getChange().getUrl();
+            if (changeUrl != null && !changeUrl.isEmpty()) {
+                return changeUrl;
+            }
+        }
+        String url = getGerritFrontEndUrl();
+        Provider provider = event.getProvider();
+        if (provider != null) {
+            String providerUrl = provider.getUrl();
+            if (providerUrl != null && !providerUrl.isEmpty()) {
+                url = providerUrl;
+            }
+        }
+        StringBuilder str = new StringBuilder(url);
+        if (event instanceof ChangeBasedEvent) {
+            str.append(((ChangeBasedEvent)event).getChange().getNumber());
+        }
         return str.toString();
     }
 

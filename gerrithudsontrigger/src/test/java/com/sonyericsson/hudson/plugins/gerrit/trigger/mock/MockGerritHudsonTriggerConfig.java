@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
@@ -204,8 +205,8 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public String getGerritFrontEndUrlFor(String frontUrl, String number, String revision) {
-        return frontUrl + number;
+    public String getGerritFrontEndUrlFor(GerritTriggeredEvent event) {
+        return "http://gerrit/1";
     }
 
     @Override

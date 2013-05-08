@@ -168,26 +168,7 @@ public class GerritCause extends SCMTriggerCause {
      * @return the URL.
      */
     public String getUrl() {
-        String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
-        Provider provider = tEvent.getProvider();
-        if (provider != null) {
-            String providerUrl = provider.getUrl();
-            if (providerUrl != null && !"".equals(providerUrl)) {
-                url = providerUrl;
-            }
-        }
-        if (tEvent instanceof ChangeBasedEvent) {
-            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)tEvent;
-            if (null == changeBasedEvent.getPatchSet()) {
-                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                        url, changeBasedEvent.getChange().getNumber(), null);
-            }
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    url,
-                    changeBasedEvent.getChange().getNumber(),
-                    changeBasedEvent.getPatchSet().getNumber());
-        }
-        return url;
+        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
     }
 
     @Override
