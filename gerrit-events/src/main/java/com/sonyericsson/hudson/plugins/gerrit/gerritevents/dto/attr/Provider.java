@@ -1,14 +1,20 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory.getString;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTO;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import net.sf.json.JSONObject;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
 
 /**
@@ -17,7 +23,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class Provider implements GerritJsonDTO {
+public class Provider implements GerritJsonDTO, GerritEventAttribute {
 
     /**
      * The name
@@ -85,6 +91,11 @@ public class Provider implements GerritJsonDTO {
         proto = getString(json, PROTO);
         url = getString(json, URL);
         version = getString(json, VERSION);
+    }
+
+    @Override
+    public String getKeyName() {
+        return PROVIDER;
     }
 
     /**
@@ -197,6 +208,21 @@ public class Provider implements GerritJsonDTO {
      */
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    @Override
+    public Map<String, String> toMap() {
+        return new LinkedHashMap<String, String>() {
+            private static final long serialVersionUID = 1878629125231214523L;
+            {
+                put(NAME, name);
+                put(HOST, host);
+                put(PORT, port);
+                put(PROTO, proto);
+                put(URL, url);
+                put(VERSION, version);
+            }
+        };
     }
 
     @Override

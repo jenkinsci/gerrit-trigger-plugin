@@ -25,7 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -52,11 +54,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -70,15 +72,6 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
-
-//CS IGNORE LineLength FOR NEXT 7 LINES. REASON: static import.
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTO;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
 
 /**
  * Main class for this module. Contains the main loop for connecting and reading streamed events from Gerrit.
@@ -336,24 +329,22 @@ public class GerritHandler extends Thread implements Coordinator {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
-                Map<String, String> providerValueMap = new LinkedHashMap<String, String>() {
-                    private static final long serialVersionUID = 1L;
-                    {
-                        put(NAME, GERRIT_NAME);
-                        put(HOST, gerritHostName);
-                        put(PORT, String.valueOf(gerritSshPort));
-                        put(PROTO, GERRIT_PROTOCOL_NAME);
-                        put(URL, DEFAULT_GERRIT_HOSTNAME);
-                        put(VERSION, getGerritVersionString());
-                   }
-                };
+                Provider provider = new Provider(
+                        GERRIT_NAME,
+                        gerritHostName,
+                        String.valueOf(gerritSshPort),
+                        GERRIT_PROTOCOL_NAME,
+                        DEFAULT_GERRIT_HOSTNAME,
+                        getGerritVersionString());
                 logger.info("Ready to receive data from Gerrit");
                 notifyConnectionEstablished();
                 do {
                     logger.debug("Data-line from Gerrit: {}", line);
                     if (line != null && line.length() > 0) {
                         try {
-                            StreamEventsStringWork work = new StreamEventsStringWork(line, PROVIDER, providerValueMap);
+                            StreamEventsStringWork work = new StreamEventsStringWork(
+                                    line,
+                                    Arrays.asList((GerritEventAttribute)provider));
                             logger.trace("putting work on queue: {}", work);
                             workQueue.put(work);
                         } catch (InterruptedException ex) {

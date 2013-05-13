@@ -24,9 +24,11 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
-import java.util.Map;
+import java.util.List;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
+
 import net.sf.json.JSONObject;
 
 /**
@@ -37,8 +39,7 @@ import net.sf.json.JSONObject;
 public class StreamEventsStringWork extends AbstractJsonObjectWork {
 
     private String line;
-    private String attrKey;
-    private Map<String, String> attrValueMap;
+    private List<GerritEventAttribute> gerritEventAttributes;
 
     /**
      * Default constructor.
@@ -51,21 +52,19 @@ public class StreamEventsStringWork extends AbstractJsonObjectWork {
     /**
      * Default constructor.
      * @param line a line of text from the stream-events stream of events.
-     * @param attrKey a attribute key.
-     * @param attrValueMap a map of values which want to be added into the events.
+     * @param gerritEventAttributes a list of exportable attributes.
      */
-    public StreamEventsStringWork(String line, String attrKey, Map<String, String> attrValueMap) {
+    public StreamEventsStringWork(String line, List<GerritEventAttribute> gerritEventAttributes) {
         this.line = line;
-        this.attrKey = attrKey;
-        this.attrValueMap = attrValueMap;
+        this.gerritEventAttributes = gerritEventAttributes;
     }
 
     @Override
     public void perform(Coordinator coordinator) {
         JSONObject obj = GerritJsonEventFactory.getJsonObjectIfInterestingAndUsable(line);
         if (obj != null) {
-            if (attrKey != null && attrValueMap != null) {
-                obj.put(attrKey, attrValueMap);
+            for (GerritEventAttribute attr : gerritEventAttributes) {
+                obj.put(attr.getKeyName(), attr.toMap());
             }
             perform(obj, coordinator);
         }
