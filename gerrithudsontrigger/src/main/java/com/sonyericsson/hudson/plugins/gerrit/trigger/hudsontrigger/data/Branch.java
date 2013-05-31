@@ -36,6 +36,7 @@ public class Branch extends AbstractDescribableImpl<Branch> {
 
     private CompareType compareType;
     private String pattern;
+    private boolean autoRebuild = false;
 
     /**
      * Default empty constructor.
@@ -48,11 +49,13 @@ public class Branch extends AbstractDescribableImpl<Branch> {
      * Default DataBound constructor.
      * @param compareType the CompareType to use when comparing with the pattern.
      * @param pattern the pattern to match on.
+     * @param autoRebuild enable rebuild all open commits when brunch is changed.
      */
     @DataBoundConstructor
-    public Branch(CompareType compareType, String pattern) {
+    public Branch(CompareType compareType, String pattern, boolean autoRebuild) {
         this.compareType = compareType;
         this.pattern = pattern;
+        this.autoRebuild = autoRebuild;
     }
 
     /**
@@ -105,5 +108,21 @@ public class Branch extends AbstractDescribableImpl<Branch> {
         public String getDisplayName() {
             return "";
         }
+    }
+
+    /**
+     * Specify if all open changes should be rebuild when branch is modified.
+     * @param autoRebuild rebuild true if auto rebuild is enabled.
+     */
+    public void setAutoRebuild(boolean autoRebuild) {
+        this.autoRebuild = autoRebuild;
+    }
+
+    /**
+     * Tells if open changes should be rebuild on branch modification.
+     * @return true if auto rebuild is enabled.
+     */
+    public boolean isAutoRebuild() {
+        return autoRebuild;
     }
 }

@@ -69,41 +69,41 @@ public class GerritProjectInterestingTest {
         List<InterestingScenario[]> parameters = new LinkedList<InterestingScenario[]>();
 
         List<Branch> branches = new LinkedList<Branch>();
-        Branch branch = new Branch(CompareType.PLAIN, "master");
+        Branch branch = new Branch(CompareType.PLAIN, "master", false);
         branches.add(branch);
         GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
-        branch = new Branch(CompareType.ANT, "**/master");
+        branch = new Branch(CompareType.ANT, "**/master", false);
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "origin/master", true)});
 
         branches = new LinkedList<Branch>();
-        branch = new Branch(CompareType.ANT, "**/master");
+        branch = new Branch(CompareType.ANT, "**/master", false);
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
-        branch = new Branch(CompareType.ANT, "**/master");
+        branch = new Branch(CompareType.ANT, "**/master", false);
         branches.add(branch);
-        branch = new Branch(CompareType.REG_EXP, "feature/.*master");
+        branch = new Branch(CompareType.REG_EXP, "feature/.*master", false);
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
-        branch = new Branch(CompareType.PLAIN, "olstorp");
+        branch = new Branch(CompareType.PLAIN, "olstorp", false);
         branches.add(branch);
-        branch = new Branch(CompareType.REG_EXP, "feature/.*master");
+        branch = new Branch(CompareType.REG_EXP, "feature/.*master", false);
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "feature/mymaster", true)});
 
         branches = new LinkedList<Branch>();
-        branch = new Branch(CompareType.ANT, "**/master");
+        branch = new Branch(CompareType.ANT, "**/master", false);
         branches.add(branch);
         config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "vendor/semc/master/project",

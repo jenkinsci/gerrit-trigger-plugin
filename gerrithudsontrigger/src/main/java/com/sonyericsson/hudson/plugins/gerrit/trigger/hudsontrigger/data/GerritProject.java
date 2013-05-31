@@ -175,6 +175,26 @@ public class GerritProject implements Describable<GerritProject> {
         }
     }
 
+    /**
+     * Checks if autorebuild is on for the project and branch specified. Return false
+     * if project and branch doesn't match patterns specified.
+     *
+     * @param project the gerrit project
+     * @param branch the branch.
+     * @return true is the rules match and autorebuild is enabled.
+     */
+    public boolean isAutoRebuildEnabled(String project, String branch) {
+        if (!compareType.matches(pattern, project)) {
+            return false;
+        }
+        for (Branch b : branches) {
+            if (b.isAutoRebuild() && b.isInteresting(branch)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Descriptor<GerritProject> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
