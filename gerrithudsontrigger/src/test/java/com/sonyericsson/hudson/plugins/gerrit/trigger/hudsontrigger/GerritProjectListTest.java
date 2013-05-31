@@ -58,7 +58,7 @@ public class GerritProjectListTest {
      */
     private GerritProject createGerritProject(String pattern, CompareType compareType) {
         List<Branch> branches = new LinkedList<Branch>();
-        Branch branch = new Branch(compareType, "master");
+        Branch branch = new Branch(compareType, "master", false);
         branches.add(branch);
         GerritProject config = new GerritProject(CompareType.PLAIN, pattern, branches, null);
         return config;
