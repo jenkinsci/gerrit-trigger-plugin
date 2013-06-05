@@ -39,7 +39,7 @@ public interface GerritEventAttribute {
      * @return the key name.
      */
     String getKeyName();
-    
+
     /**
      * Get properties as map boject.
      *
