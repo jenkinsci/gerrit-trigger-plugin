@@ -135,6 +135,26 @@ public abstract class GerritEventKeys {
      * approval value.
      */
     public static final String VALUE = "value";
+    /**
+     * provider.
+     */
+    public static final String PROVIDER = "provider";
+    /**
+     * name.
+     */
+    public static final String HOST = "host";
+    /**
+     * port.
+     */
+    public static final String PORT = "port";
+    /**
+     * proto.
+     */
+    public static final String PROTO = "proto";
+    /**
+     * version.
+     */
+    public static final String VERSION = "version";
 
     /**
      * Empty default constructor to hinder instantiation.

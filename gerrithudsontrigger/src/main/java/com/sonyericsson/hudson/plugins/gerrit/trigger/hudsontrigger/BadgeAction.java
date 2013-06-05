@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -98,18 +97,7 @@ public class BadgeAction implements BuildBadgeAction {
      * @return the URL to the change.
      */
     public String getUrl() {
-        if (tEvent instanceof ChangeBasedEvent) {
-            Change change = ((ChangeBasedEvent)tEvent).getChange();
-            if (change.getUrl() != null && change.getUrl().length() > 0) {
-                return change.getUrl();
-            } else {
-                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                        change.getNumber(),
-                        change.getNumber());
-            }
-        } else {
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
-        }
+        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
     }
 
     /**

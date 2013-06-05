@@ -342,13 +342,7 @@ public class ManualTriggerAction implements RootAction {
      * @return the URL to the event's change.
      */
     public String getGerritUrl(PatchsetCreated event) {
-        if (event.getChange().getUrl() != null && event.getChange().getUrl().length() > 0) {
-            return event.getChange().getUrl();
-        } else {
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    event.getChange().getNumber(),
-                    event.getPatchSet().getNumber());
-        }
+        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event);
     }
 
     /**

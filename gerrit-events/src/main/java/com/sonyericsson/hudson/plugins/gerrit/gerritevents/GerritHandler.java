@@ -25,7 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -52,6 +54,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -83,6 +86,8 @@ public class GerritHandler extends Thread implements Coordinator {
     public static final int CONNECT_SLEEP = 2000;
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
+    private static final String GERRIT_NAME = "gerrit";
+    private static final String GERRIT_PROTOCOL_NAME = "ssh";
     /**
      * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
      */
@@ -324,13 +329,22 @@ public class GerritHandler extends Thread implements Coordinator {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
+                Provider provider = new Provider(
+                        GERRIT_NAME,
+                        gerritHostName,
+                        String.valueOf(gerritSshPort),
+                        GERRIT_PROTOCOL_NAME,
+                        DEFAULT_GERRIT_HOSTNAME,
+                        getGerritVersionString());
                 logger.info("Ready to receive data from Gerrit");
                 notifyConnectionEstablished();
                 do {
                     logger.debug("Data-line from Gerrit: {}", line);
                     if (line != null && line.length() > 0) {
                         try {
-                            StreamEventsStringWork work = new StreamEventsStringWork(line);
+                            StreamEventsStringWork work = new StreamEventsStringWork(
+                                    line,
+                                    Arrays.asList((GerritEventAttribute)provider));
                             logger.trace("putting work on queue: {}", work);
                             workQueue.put(work);
                         } catch (InterruptedException ex) {
@@ -460,6 +474,18 @@ public class GerritHandler extends Thread implements Coordinator {
             return version.trim();
         }
         return split[1].trim();
+    }
+
+    /**
+     * Gets the gerrit version.
+     * @return the gerrit version as valid string.
+     */
+    private String getGerritVersionString() {
+        String version = getGerritVersion();
+        if (version == null) {
+            version = "";
+        }
+        return version;
     }
 
     /**

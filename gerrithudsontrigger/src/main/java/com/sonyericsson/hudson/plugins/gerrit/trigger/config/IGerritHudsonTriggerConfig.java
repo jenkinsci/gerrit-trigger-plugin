@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONObject;
 
@@ -152,6 +153,14 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @see #getGerritFrontEndUrl()
      */
     String getGerritFrontEndUrlFor(String number, String revision);
+
+    /**
+     * Creates a URL to the provided changeset number.
+     * @param event the gerrit triggered event
+     * @return a URL based on frontUrl + / + number
+     * @see #getGerritFrontEndUrlFor()
+     */
+    String getGerritFrontEndUrlFor(GerritTriggeredEvent event);
 
     /**
      * Get the list of available VerdictCategories.
