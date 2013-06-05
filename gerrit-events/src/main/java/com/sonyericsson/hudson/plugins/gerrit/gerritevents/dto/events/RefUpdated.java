@@ -73,6 +73,7 @@ public class RefUpdated extends GerritTriggeredEvent implements GerritJsonEvent 
 
     @Override
     public void fromJson(JSONObject json) {
+        super.fromJson(json);
         if (json.containsKey(REFUPDATE)) {
             refUpdate = new RefUpdate(json.getJSONObject(REFUPDATE));
         }

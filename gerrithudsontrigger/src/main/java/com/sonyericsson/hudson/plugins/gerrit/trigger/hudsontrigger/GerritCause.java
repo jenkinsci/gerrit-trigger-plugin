@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -167,17 +168,7 @@ public class GerritCause extends SCMTriggerCause {
      * @return the URL.
      */
     public String getUrl() {
-        if (tEvent instanceof ChangeBasedEvent) {
-            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)tEvent;
-            if (null == changeBasedEvent.getPatchSet()) {
-                return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                        changeBasedEvent.getChange().getNumber(), null);
-            }
-            return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(
-                    changeBasedEvent.getChange().getNumber(),
-                    changeBasedEvent.getPatchSet().getNumber());
-        }
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrl();
+        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
     }
 
     @Override
