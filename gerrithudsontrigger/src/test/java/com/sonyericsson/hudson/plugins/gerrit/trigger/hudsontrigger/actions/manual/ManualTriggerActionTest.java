@@ -271,36 +271,4 @@ public class ManualTriggerActionTest {
 
         assertEquals("http://gerrit/100", url);
     }
-
-    /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} with a URL in the event info.
-     */
-    @Test
-    public void testGetGerritUrl() {
-        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
-        patchsetCreated.getChange().setUrl("http://gerrit/1000");
-        ManualTriggerAction action = new ManualTriggerAction();
-        String url = action.getGerritUrl(patchsetCreated);
-
-        assertEquals("http://gerrit/1000", url);
-    }
-
-    /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(PatchsetCreated)} without a URL in the event info.
-     */
-    @Test
-    public void testGetGerritUrlNoUrl() {
-        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
-        patchsetCreated.getChange().setUrl(null);
-
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = mock(PluginImpl.class);
-        when(plugin.getConfig()).thenReturn(Setup.createConfig());
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-
-        ManualTriggerAction action = new ManualTriggerAction();
-        String url = action.getGerritUrl(patchsetCreated);
-
-        assertEquals("http://gerrit/1000", url);
-    }
 }

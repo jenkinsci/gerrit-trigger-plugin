@@ -25,6 +25,8 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +44,15 @@ public abstract class AbstractJsonObjectWork extends AbstractGerritEventWork imp
      * Parses the JSONObject into a Java bean and sends the parsed {@link GerritEvent} down the inheritance chain.
      * @param json the JSONObject to work on.
      * @param coordinator the coordinator.
+     * @param provider the Gerrit server info
      */
-    protected void perform(JSONObject json, Coordinator coordinator) {
+    protected void perform(JSONObject json, Coordinator coordinator, Provider provider) {
         logger.trace("Extracting event from JSON.");
         GerritEvent event = GerritJsonEventFactory.getEvent(json);
         if (event != null) {
+            if (event instanceof GerritTriggeredEvent) {
+                ((GerritTriggeredEvent)event).setProvider(provider);
+            }
             logger.debug("Event is: {}", event);
             perform(event, coordinator);
         } else {

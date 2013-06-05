@@ -24,25 +24,24 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
-import java.util.List;
-
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
-
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import net.sf.json.JSONObject;
 
 /**
  * Top of the hierarchies of work, converts the string to JSON if it is interesting and usable.
  * And then hands the work over to {@link AbstractJsonObjectWork}.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class StreamEventsStringWork extends AbstractJsonObjectWork {
 
     private String line;
-    private List<GerritEventAttribute> gerritEventAttributes;
+    private Provider provider;
 
     /**
      * Default constructor.
+     *
      * @param line a line of text from the stream-events stream of events.
      */
     public StreamEventsStringWork(String line) {
@@ -51,22 +50,20 @@ public class StreamEventsStringWork extends AbstractJsonObjectWork {
 
     /**
      * Default constructor.
-     * @param line a line of text from the stream-events stream of events.
-     * @param gerritEventAttributes a list of exportable attributes.
+     *
+     * @param line     a line of text from the stream-events stream of events.
+     * @param provider the Gerrit server info.
      */
-    public StreamEventsStringWork(String line, List<GerritEventAttribute> gerritEventAttributes) {
+    public StreamEventsStringWork(String line, Provider provider) {
         this.line = line;
-        this.gerritEventAttributes = gerritEventAttributes;
+        this.provider = provider;
     }
 
     @Override
     public void perform(Coordinator coordinator) {
         JSONObject obj = GerritJsonEventFactory.getJsonObjectIfInterestingAndUsable(line);
         if (obj != null) {
-            for (GerritEventAttribute attr : gerritEventAttributes) {
-                obj.put(attr.getKeyName(), attr.toMap());
-            }
-            perform(obj, coordinator);
+            perform(obj, coordinator, provider);
         }
     }
 

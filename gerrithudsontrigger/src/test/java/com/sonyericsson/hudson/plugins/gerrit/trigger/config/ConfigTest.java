@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.junit.Test;
@@ -110,5 +112,42 @@ public class ConfigTest {
         assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
+    }
+
+    /**
+     * Tests {@link Config#getGerritFrontEndUrlFor(String, String)}.
+     */
+    @Test
+    public void testGetGerritFrontEndUrlForStringString() {
+        Config config = new Config();
+        config.setGerritFrontEndURL("http://gerrit/");
+        assertEquals("http://gerrit/1000", config.getGerritFrontEndUrlFor("1000", "1"));
+    }
+
+    //CS IGNORE LineLength FOR NEXT 17 LINES. REASON: JavaDoc
+
+    /**
+     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
+     * With a standard PatchsetCreated event.
+     */
+    @Test
+    public void testGetGerritFrontEndUrlForChangeBasedEvent() {
+        Config config = new Config();
+        config.setGerritFrontEndURL("http://gerrit/");
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        assertEquals(event.getChange().getUrl(), config.getGerritFrontEndUrlFor(event));
+    }
+
+    /**
+     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
+     * With a standard PatchsetCreated event but missing url.
+     */
+    @Test
+    public void testGetGerritFrontEndUrlForChangeBasedEventProvider() {
+        Config config = new Config();
+        config.setGerritFrontEndURL("http://gerrit/");
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setUrl(null);
+        assertEquals("http://gerrit/1000", config.getGerritFrontEndUrlFor(event));
     }
 }

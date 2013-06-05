@@ -25,7 +25,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -54,7 +53,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -343,8 +341,7 @@ public class GerritHandler extends Thread implements Coordinator {
                     if (line != null && line.length() > 0) {
                         try {
                             StreamEventsStringWork work = new StreamEventsStringWork(
-                                    line,
-                                    Arrays.asList((GerritEventAttribute)provider));
+                                    line, provider);
                             logger.trace("putting work on queue: {}", work);
                             workQueue.put(work);
                         } catch (InterruptedException ex) {

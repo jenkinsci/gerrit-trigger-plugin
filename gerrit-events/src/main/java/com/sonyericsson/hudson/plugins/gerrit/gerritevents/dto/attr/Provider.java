@@ -1,7 +1,30 @@
+/*
+ *  The MIT License
+ *
+ *  Copyright 2013 rinrinne. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory.getString;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
@@ -9,12 +32,8 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import net.sf.json.JSONObject;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventAttribute;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
 
 /**
@@ -23,7 +42,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class Provider implements GerritJsonDTO, GerritEventAttribute {
+public class Provider implements GerritJsonDTO {
 
     /**
      * The name
@@ -91,11 +110,6 @@ public class Provider implements GerritJsonDTO, GerritEventAttribute {
         proto = getString(json, PROTO);
         url = getString(json, URL);
         version = getString(json, VERSION);
-    }
-
-    @Override
-    public String getKeyName() {
-        return PROVIDER;
     }
 
     /**
@@ -208,21 +222,6 @@ public class Provider implements GerritJsonDTO, GerritEventAttribute {
      */
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    @Override
-    public Map<String, String> toMap() {
-        return new LinkedHashMap<String, String>() {
-            private static final long serialVersionUID = 1878629125231214523L;
-            {
-                put(NAME, name);
-                put(HOST, host);
-                put(PORT, port);
-                put(PROTO, proto);
-                put(URL, url);
-                put(VERSION, version);
-            }
-        };
     }
 
     @Override
