@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONArray;
