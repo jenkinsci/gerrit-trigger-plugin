@@ -23,6 +23,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
@@ -37,6 +42,7 @@ import hudson.model.listeners.ItemListener;
  */
 @Extension
 public class GerritItemListener extends ItemListener {
+    private static final Logger logger = LoggerFactory.getLogger(GerritItemListener.class);
 
     /**
      * Called by Jenkins when an item is about to be deleted. If this item is a project
@@ -59,5 +65,18 @@ public class GerritItemListener extends ItemListener {
                 gerritTrigger.cancelTimer();
             }
         }
+    }
+
+    /**
+     * Called by Jenkins when all items are loaded.
+     */
+    @Override
+    public void onLoaded() {
+        try {
+            PluginImpl.getInstance().startConnection();
+        } catch (Exception e) {
+            logger.error("Could not start connection. ", e);
+        }
+        super.onLoaded();
     }
 }

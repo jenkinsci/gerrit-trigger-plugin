@@ -136,10 +136,6 @@ public class PluginImpl extends Plugin {
             categories.add(new VerdictCategory("CRVW", "Code Review"));
             categories.add(new VerdictCategory("VRIF", "Verified"));
         }
-        if (!config.hasDefaultValues()) {
-            startManager();
-            logger.info("Started");
-        }
     }
 
     /**
@@ -182,15 +178,6 @@ public class PluginImpl extends Plugin {
             gerritEventManager = null;
         }
         GerritSendCommandQueue.shutdown();
-    }
-
-    /**
-     * Starts the GerritEventManager
-     */
-    private void startManager() {
-        logger.debug("starting Gerrit manager");
-        createManager();
-        gerritEventManager.start();
     }
 
     /**
@@ -265,19 +252,22 @@ public class PluginImpl extends Plugin {
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void startConnection() throws Exception {
-        if (gerritEventManager == null) {
-            createManager();
-            if (savedEventListeners != null) {
-                gerritEventManager.addEventListeners(savedEventListeners);
-                savedEventListeners = null;
+        if (!config.hasDefaultValues()) {
+            if (gerritEventManager == null) {
+                createManager();
+                if (savedEventListeners != null) {
+                    gerritEventManager.addEventListeners(savedEventListeners);
+                    savedEventListeners = null;
+                }
+                if (savedConnectionListeners != null) {
+                    gerritEventManager.addConnectionListeners(savedConnectionListeners);
+                    savedConnectionListeners = null;
+                }
+                gerritEventManager.start();
+                logger.info("Started");
+            } else {
+                logger.warn("Already started!");
             }
-            if (savedConnectionListeners != null) {
-                gerritEventManager.addConnectionListeners(savedConnectionListeners);
-                savedConnectionListeners = null;
-            }
-            gerritEventManager.start();
-        } else {
-            logger.warn("Already started!");
         }
     }
 
