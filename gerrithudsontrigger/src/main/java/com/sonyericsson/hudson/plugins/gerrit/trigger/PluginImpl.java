@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueu
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.extension.GerritEventReceiver;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 import hudson.Plugin;
 import hudson.model.AbstractProject;
@@ -48,6 +49,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import jenkins.model.Jenkins;
 
 /**
  * Main Plugin entrance.
@@ -116,6 +119,15 @@ public class PluginImpl extends Plugin {
         return instance;
     }
 
+    /**
+     * Gets gerrit handler.
+     *
+     * @return the handler.
+     */
+    public GerritHandler getHandler() {
+        return gerritEventHandler;
+    }
+
     @Override
     public void start() throws Exception {
         logger.info("Starting");
@@ -137,11 +149,6 @@ public class PluginImpl extends Plugin {
         }
 
         gerritEventHandler = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
-
-        if (!config.hasDefaultValues()) {
-            startConnection();
-            logger.info("Started");
-        }
     }
 
     /**
@@ -176,6 +183,10 @@ public class PluginImpl extends Plugin {
     @Override
     public void stop() throws Exception {
         logger.info("Shutting down...");
+        GerritEventReceiver receiver = GerritEventReceiver.get();
+        if (receiver != null) {
+            receiver.fireOnDisposed();
+        }
         projectListUpdater.shutdown();
         projectListUpdater.join();
         if (gerritConnection != null) {
@@ -229,14 +240,19 @@ public class PluginImpl extends Plugin {
      * Starts the connection to Gerrit stream of events.
      */
     public synchronized void startConnection() {
-        if (gerritConnection == null) {
-            logger.debug("starting Gerrit connection.");
-            gerritConnection = new GerritConnection(config);
-            gerritConnection.setHandler(gerritEventHandler);
-            gerritConnectionThread = new Thread(gerritConnection);
-            gerritConnectionThread.start();
-        } else {
-            logger.warn("Already started!");
+        if (!config.hasDefaultValues()) {
+            if (gerritConnection == null) {
+                logger.debug("starting Gerrit connection.");
+                gerritConnection = new GerritConnection(config);
+                gerritEventHandler.setIgnoreEMail(config.getGerritEMail());
+                gerritEventHandler.setNumberOfWorkerThreads(config.getNumberOfReceivingWorkerThreads());
+                gerritConnection.setHandler(gerritEventHandler);
+                gerritConnectionThread = new Thread(gerritConnection);
+                gerritConnectionThread.start();
+                logger.info("Started");
+            } else {
+                logger.warn("Already started!");
+            }
         }
     }
 

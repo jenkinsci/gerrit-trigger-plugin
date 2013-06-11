@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Item;
@@ -59,5 +61,15 @@ public class GerritItemListener extends ItemListener {
                 gerritTrigger.cancelTimer();
             }
         }
+    }
+
+    /**
+     * Called by Jenkins when all items are loaded.
+     * It means that Jenkins can handle all trigger jobs.
+     */
+    @Override
+    public void onLoaded() {
+        PluginImpl.getInstance().startConnection();
+        super.onLoaded();
     }
 }
