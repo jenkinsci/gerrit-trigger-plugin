@@ -41,6 +41,10 @@ import hudson.model.Items;
 import hudson.model.Run;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
+<<<<<<< HEAD
+=======
+import hudson.security.PermissionScope;
+>>>>>>> c77ddae3e3b7d8f741ec57ea22cd958770ce0f3d
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +153,14 @@ public class PluginImpl extends Plugin {
         }
 
         gerritEventHandler = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
+<<<<<<< HEAD
+=======
+
+        if (!config.hasDefaultValues()) {
+            startConnection();
+            logger.info("Started");
+        }
+>>>>>>> c77ddae3e3b7d8f741ec57ea22cd958770ce0f3d
     }
 
     /**
@@ -240,6 +252,7 @@ public class PluginImpl extends Plugin {
      * Starts the connection to Gerrit stream of events.
      */
     public synchronized void startConnection() {
+<<<<<<< HEAD
         if (!config.hasDefaultValues()) {
             if (gerritConnection == null) {
                 logger.debug("starting Gerrit connection.");
@@ -253,6 +266,16 @@ public class PluginImpl extends Plugin {
             } else {
                 logger.warn("Already started!");
             }
+=======
+        if (gerritConnection == null) {
+            logger.debug("starting Gerrit connection.");
+            gerritConnection = new GerritConnection(config);
+            gerritConnection.setHandler(gerritEventHandler);
+            gerritConnectionThread = new Thread(gerritConnection);
+            gerritConnectionThread.start();
+        } else {
+            logger.warn("Already started!");
+>>>>>>> c77ddae3e3b7d8f741ec57ea22cd958770ce0f3d
         }
     }
 
