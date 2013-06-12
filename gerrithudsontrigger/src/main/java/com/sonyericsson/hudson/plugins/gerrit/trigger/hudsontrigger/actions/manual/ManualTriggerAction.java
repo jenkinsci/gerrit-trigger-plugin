@@ -35,7 +35,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.Extension;
-import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.ParameterValue;
 import hudson.model.RootAction;
@@ -367,8 +366,7 @@ public class ManualTriggerAction implements RootAction {
         PatchsetCreated event = new PatchsetCreated();
         event.setChange(change);
         event.setPatchset(patchSet);
-        AbstractProject project = AbstractProject.findNearest(change.getProject());
-        GerritTriggerParameters.setOrCreateParameters(event, project, parameters);
+        GerritTriggerParameters.setOrCreateParameters(event, parameters);
         return parameters;
     }
 
