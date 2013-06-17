@@ -237,6 +237,17 @@ public enum GerritTriggerParameters {
     /**
      * Adds or sets all the Gerrit-parameter values to the provided list.
      * @param gerritEvent the event.
+     * @param parameters the default parameters
+     * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
+     */
+    public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent,
+                                             List<ParameterValue> parameters) {
+        setOrCreateParameters(gerritEvent, null, parameters);
+    }
+
+    /**
+     * Adds or sets all the Gerrit-parameter values to the provided list.
+     * @param gerritEvent the event.
      * @param project the project for which the parameters are being set
      * @param parameters the default parameters
      * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
@@ -244,9 +255,15 @@ public enum GerritTriggerParameters {
     public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent, AbstractProject project,
             List<ParameterValue> parameters) {
 
-        GerritTrigger trigger = GerritTrigger.getTrigger(project);
-        boolean noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
-        boolean escapeQuotes = trigger.isEscapeQuotes();
+        boolean noNameAndEmailParameters = false;
+        boolean escapeQuotes = false;
+        if (project != null) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(project);
+            if (trigger != null) {
+                noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
+                escapeQuotes = trigger.isEscapeQuotes();
+            }
+        }
 
         GERRIT_EVENT_TYPE.setOrCreateStringParameterValue(
                 parameters, gerritEvent.getEventType().getTypeValue(), escapeQuotes);
