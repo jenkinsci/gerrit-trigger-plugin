@@ -25,7 +25,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -133,42 +132,6 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
             }
         }
         assertEquals(1, count);
-    }
-
-    /**
-     * Tests to trigger a build with the same patch set twice, one is a manual event and the other a normal. Expecting
-     * one build to be scheduled with two causes of different type.
-     *
-     * @throws Exception if so.
-     */
-    @LocalData
-    public void testDoubleTriggeredBuildOfDifferentType() throws Exception {
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
-        ManualPatchsetCreated mpc = new ManualPatchsetCreated();
-        mpc.setChange(patchsetCreated.getChange());
-        mpc.setPatchset(patchsetCreated.getPatchSet());
-        mpc.setAccount(patchsetCreated.getAccount());
-        mpc.setUserName("bobby");
-        PluginImpl.getInstance().triggerEvent(Setup.createPatchsetCreated());
-        PluginImpl.getInstance().triggerEvent(mpc);
-
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
-        FreeStyleBuild build = builds.get(0);
-        assertSame(Result.SUCCESS, build.getResult());
-        assertEquals(1, builds.size());
-
-        int count = 0;
-        for (Cause cause : build.getCauses()) {
-            if (cause instanceof GerritCause) {
-                count++;
-                assertNotNull(((GerritCause)cause).getContext());
-                assertNotNull(((GerritCause)cause).getContext().getThisBuild());
-                assertNotNull(((GerritCause)cause).getEvent());
-            }
-        }
-        assertEquals(2, count);
     }
 
     /**
