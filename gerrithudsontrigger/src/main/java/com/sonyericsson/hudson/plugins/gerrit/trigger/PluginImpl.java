@@ -50,6 +50,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import jenkins.model.Jenkins;
+
 /**
  * Main Plugin entrance.
  *
