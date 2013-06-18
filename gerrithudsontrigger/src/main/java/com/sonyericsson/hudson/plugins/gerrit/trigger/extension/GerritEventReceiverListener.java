@@ -35,5 +35,5 @@ public interface GerritEventReceiverListener {
      * Called when GerritEventReceiver instance is disposed.
      * If this event is received, you must dispose all saved GerritEventReceiver instance.
      */
-    public void OnDisposed();
+    void onDisposed();
 }

@@ -30,8 +30,6 @@ import java.util.HashSet;
 
 import jenkins.model.Jenkins;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import net.sf.json.JSONObject;
@@ -102,7 +100,7 @@ public class GerritEventReceiver implements ExtensionPoint {
      */
     public void fireOnDisposed() {
         for (GerritEventReceiverListener listener : listeners) {
-            listener.OnDisposed();
+            listener.onDisposed();
         }
     }
 

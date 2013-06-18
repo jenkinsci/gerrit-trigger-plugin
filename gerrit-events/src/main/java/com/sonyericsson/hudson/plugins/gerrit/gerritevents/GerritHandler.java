@@ -107,15 +107,6 @@ public class GerritHandler implements Handler {
         }
     }
 
-    @Override
-    public void post(JSONObject json) {
-        try {
-            executorService.execute(new GerritEventRunner(this, GerritJsonEventFactory.getEvent(json)));
-        } catch (IOException ex) {
-            logger.error(ex.getMessage());
-        }
-    }
-
     /**
      * Add a GerritEventListener to the list of listeners.
      *
