@@ -44,7 +44,11 @@ public class ExceptionDataHelper {
      */
     public ExceptionDataHelper(String displayName, int id, WatchTimeExceptionData data) {
         this.displayName = displayName;
-        this.checked = data.isExceptionDay(id);
+        if (data == null) {
+            this.checked = false;
+        } else {
+            this.checked = data.isExceptionDay(id);
+        }
         this.id = id;
     }
 
