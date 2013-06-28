@@ -23,10 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object.CommentedFile;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
+
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,6 +63,10 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
      */
     public String getBuildCompletedMessage(AbstractBuild build) {
         return null;
+    }
+
+    public Collection<CommentedFile> getFileComments(AbstractBuild build) {
+        return Collections.emptyList();
     }
 
      /**

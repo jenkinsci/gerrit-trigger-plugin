@@ -127,6 +127,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
+    private boolean useRestApi;
+    private String gerritHttpUserName;
+    private String gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -284,6 +287,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
         watchTimeExceptionData = addWatchTimeExceptionData(formData);
+
+        if(formData.has("useRestApi")) {
+            useRestApi = true;
+            JSONObject restApi = formData.getJSONObject("useRestApi");
+            gerritHttpUserName = restApi.optString("gerritHttpUserName", "");
+            gerritHttpPassword = restApi.optString("gerritHttpPassword", "");
+        } else {
+            useRestApi = false;
+        }
+
     }
 
     /**
@@ -778,5 +791,20 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public WatchTimeExceptionData getExceptionData() {
         return watchTimeExceptionData;
+    }
+
+    @Override
+    public boolean isUseRestApi() {
+        return useRestApi;
+    }
+
+    @Override
+    public String getGerritHttpPassword() {
+        return gerritHttpPassword;
+    }
+
+    @Override
+    public String getGerritHttpUserName() {
+        return gerritHttpUserName;
     }
 }

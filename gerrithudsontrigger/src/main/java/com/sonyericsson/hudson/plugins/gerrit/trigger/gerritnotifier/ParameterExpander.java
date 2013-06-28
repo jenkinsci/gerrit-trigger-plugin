@@ -349,7 +349,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
-    protected int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+    public int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Result result = entry.getBuild().getResult();
@@ -376,7 +376,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
-    protected int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+    public int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Result result = entry.getBuild().getResult();

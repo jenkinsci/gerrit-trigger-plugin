@@ -255,6 +255,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public boolean isUseRestApi() {
+        return false;
+    }
+
+    @Override
     public int getWatchdogTimeoutSeconds() {
         return 0;
     }
@@ -263,4 +268,15 @@ public class MockGerritHudsonTriggerConfig implements
     public WatchTimeExceptionData getExceptionData() {
         return new WatchTimeExceptionData(new int[]{}, new LinkedList<WatchTimeExceptionData.TimeSpan>());
     }
+
+    @Override
+    public String getGerritHttpPassword() {
+        return "";
+    }
+
+    @Override
+    public String getGerritHttpUserName() {
+        return "";
+    }
+
 }

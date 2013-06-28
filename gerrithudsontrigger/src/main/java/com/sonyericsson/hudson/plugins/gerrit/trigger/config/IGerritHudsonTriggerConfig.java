@@ -204,4 +204,10 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return true if so
      */
     boolean isEnablePluginMessages();
- }
+
+    boolean isUseRestApi();
+
+    String getGerritHttpPassword();
+
+    String getGerritHttpUserName();
+}
