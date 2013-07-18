@@ -7,10 +7,10 @@
     <gerritAuthKeyFile>/tmp/jenkins-testkey</gerritAuthKeyFile>
     <gerritAuthKeyFilePassword> </gerritAuthKeyFilePassword>
     <numberOfWorkerThreads>3</numberOfWorkerThreads>
-    <gerritVerifiedCmdBuildSuccessful>gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Successful &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildSuccessful>
-    <gerritVerifiedCmdBuildUnstable>gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Unstable &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildUnstable>
-    <gerritVerifiedCmdBuildFailed>gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Failed &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildFailed>
-    <gerritVerifiedCmdBuildStarted>gerrit approve &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildStarted>
+    <gerritVerifiedCmdBuildSuccessful>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Successful &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildSuccessful>
+    <gerritVerifiedCmdBuildUnstable>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Unstable &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildUnstable>
+    <gerritVerifiedCmdBuildFailed>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Failed &lt;BUILDS_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildFailed>
+    <gerritVerifiedCmdBuildStarted>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message &apos;Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;&apos; --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;</gerritVerifiedCmdBuildStarted>
     <gerritFrontEndUrl>http://localhost/</gerritFrontEndUrl>
     <gerritBuildStartedVerifiedValue>0</gerritBuildStartedVerifiedValue>
     <gerritBuildStartedCodeReviewValue>0</gerritBuildStartedCodeReviewValue>

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ * Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,7 +82,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
-        server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
+        server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         super.setUp();
     }
