@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
@@ -129,7 +130,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritAuthKeyFilePassword;
     private boolean useRestApi;
     private String gerritHttpUserName;
-    private String gerritHttpPassword;
+    private Secret gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -292,7 +293,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             useRestApi = true;
             JSONObject restApi = formData.getJSONObject("useRestApi");
             gerritHttpUserName = restApi.optString("gerritHttpUserName", "");
-            gerritHttpPassword = restApi.optString("gerritHttpPassword", "");
+            gerritHttpPassword = Secret.fromString(restApi.optString("gerritHttpPassword", ""));
         } else {
             useRestApi = false;
         }
@@ -800,7 +801,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritHttpPassword() {
-        return gerritHttpPassword;
+        return Secret.toString(gerritHttpPassword);
     }
 
     @Override
