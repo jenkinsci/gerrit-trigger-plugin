@@ -334,6 +334,11 @@
                                 <f:password name="gerritHttpPassword"
                                             value="${it.config.gerritHttpPassword}"/>
                             </f:entry>
+                            <f:validateButton title="${%Test REST Connection}"
+                                               progress="${%Testing...}"
+                                               method="testRestConnection"
+                                               with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
+
                         </f:optionalBlock>
                     </f:section>
                 </f:advanced>
