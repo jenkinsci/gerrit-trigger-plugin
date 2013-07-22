@@ -57,8 +57,7 @@ public abstract class AbstractRestCommandJob extends AbstractSendCommandJob impl
         if (httpPost == null) return;
 
         DefaultHttpClient httpclient = new DefaultHttpClient();
-        HttpHost httpHost = new HttpHost(getConfig().getGerritHostName());
-        httpclient.getCredentialsProvider().setCredentials(new AuthScope(httpHost),
+        httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
                 new UsernamePasswordCredentials(config.getGerritHttpUserName(),
                         config.getGerritHttpPassword()));
         try {
