@@ -119,6 +119,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
+    /**
+     * Default value for {@link #isGerritUseRabbitMQ()}.
+     */
+    public static final boolean DEFAULT_USE_RABBITMQ = false;
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -128,6 +132,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
     private boolean gerritBuildCurrentPatchesOnly;
+    private boolean gerritUseRabbitMQ;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
     private String gerritVerifiedCmdBuildUnstable;
@@ -188,7 +193,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
                 "gerritBuildCurrentPatchesOnly",
                 DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
-
+        gerritUseRabbitMQ = formData.optBoolean(
+                "gerritUseRabbitMQ",
+                DEFAULT_USE_RABBITMQ);
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
                 DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
@@ -392,6 +399,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
     }
 
+    /**
+     * GerritUseRabbitMQ.
+     *
+     * @param gerritUseRabbitMQ whether to use RabbitMQ for getting gerrit events
+     * @see #isGerritUseRabbitMQ()
+     */
+    public void setGerritUseRabbitMQ(boolean gerritUseRabbitMQ) {
+        this.gerritUseRabbitMQ = gerritUseRabbitMQ;
+    }
+
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -551,6 +568,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return gerritBuildCurrentPatchesOnly;
+    }
+
+    @Override
+    public boolean isGerritUseRabbitMQ() {
+        return gerritUseRabbitMQ;
     }
 
     @Override

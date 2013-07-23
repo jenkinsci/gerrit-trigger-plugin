@@ -38,6 +38,12 @@ import java.util.List;
 public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
 
     /**
+     * If enabled, then RabbitMQ is used for getting gerrit events.
+     * @return true if so.
+     */
+    boolean isGerritUseRabbitMQ();
+
+    /**
      * If enabled, then old patch revision builds will be canceled.
      * @return true if so.
      */

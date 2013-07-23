@@ -263,4 +263,9 @@ public class MockGerritHudsonTriggerConfig implements
     public WatchTimeExceptionData getExceptionData() {
         return new WatchTimeExceptionData(new int[]{}, new LinkedList<WatchTimeExceptionData.TimeSpan>());
     }
+
+    @Override
+    public boolean isGerritUseRabbitMQ() {
+        return true;
+    }
 }
