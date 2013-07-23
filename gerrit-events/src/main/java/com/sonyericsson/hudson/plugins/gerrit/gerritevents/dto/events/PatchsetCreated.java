@@ -43,6 +43,16 @@ public class PatchsetCreated extends ChangeBasedEvent implements GerritJsonEvent
     @SuppressWarnings("unused")
     private transient Account uploader;
 
+    /**
+     * Constructor that fills data directly.
+     * @param json the JSON Object
+     * @see #fromJson(net.sf.json.JSONObject)
+     */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    public PatchsetCreated(JSONObject json) {
+        fromJson(json);
+    }
+
     @Override
     public GerritEventType getEventType() {
         return GerritEventType.PATCHSET_CREATED;

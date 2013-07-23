@@ -69,6 +69,16 @@ public class CommentAdded extends ChangeBasedEvent implements GerritJsonEvent {
         return true;
     }
 
+    /**
+     * Constructor that fills data directly.
+     * @param json the JSON Object
+     * @see #fromJson(net.sf.json.JSONObject)
+     */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    public CommentAdded(JSONObject json) {
+        fromJson(json);
+    }
+
     @Override
     public void fromJson(JSONObject json) {
         super.fromJson(json);
