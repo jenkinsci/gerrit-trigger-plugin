@@ -148,9 +148,13 @@ public abstract class GerritEventKeys {
      */
     public static final String PORT = "port";
     /**
-     * proto.
+     * protocol (deprecated).
      */
-    public static final String PROTO = "proto";
+    public static final String PROTOCOL = "proto";
+    /**
+     * scheme.
+     */
+    public static final String SCHEME = "scheme";
     /**
      * version.
      */

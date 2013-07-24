@@ -166,27 +166,27 @@ public enum GerritTriggerParameters {
      */
     GERRIT_SUBMITTER_EMAIL,
     /**
-    * The name of gerrit.
-    */
-   GERRIT_NAME,
-   /**
-    * The host of gerrit.
-    */
-   GERRIT_HOST,
-   /**
-    * The port of gerrit.
-    */
-   GERRIT_PORT,
-   /**
-    * The protocol where gerrit listen commands.
-    */
-   GERRIT_PROTO,
-   /**
-    * The version of gerrit.
-    */
-   GERRIT_VERSION,
-   /**
-     * A hashcode of the gerrit event object, to make sure every set of parameters
+     * The name of the Gerrit instance.
+     */
+    GERRIT_NAME,
+    /**
+     * The host of the Gerrit instance.
+     */
+    GERRIT_HOST,
+    /**
+     * The port number of the Gerrit instance.
+     */
+    GERRIT_PORT,
+    /**
+     * The protocol scheme of the Gerrit instance.
+     */
+    GERRIT_SCHEME,
+    /**
+     * The version of the Gerrit instance.
+     */
+    GERRIT_VERSION,
+    /**
+     * A hashcode of the Gerrit event object, to make sure every set of parameters
      * is unique (allowing jenkins to queue duplicate builds).
      */
     GERRIT_EVENT_HASH,
@@ -361,8 +361,8 @@ public enum GerritTriggerParameters {
                     parameters, provider.getHost(), escapeQuotes);
             GERRIT_PORT.setOrCreateStringParameterValue(
                     parameters, provider.getPort(), escapeQuotes);
-            GERRIT_PROTO.setOrCreateStringParameterValue(
-                    parameters, provider.getProto(), escapeQuotes);
+            GERRIT_SCHEME.setOrCreateStringParameterValue(
+                    parameters, provider.getScheme(), escapeQuotes);
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
