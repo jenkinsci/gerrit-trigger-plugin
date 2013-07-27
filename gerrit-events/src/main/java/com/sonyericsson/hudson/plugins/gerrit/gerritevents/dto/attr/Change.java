@@ -252,5 +252,17 @@ public class Change implements GerritJsonDTO {
         return "Change: " + getNumber();
     }
 
-
+    /**
+     * Returns change's info in string format.
+     * @param preText the text before change info.
+     * @return change info.
+     */
+    public String getChangeInfo(String preText) {
+        StringBuilder s = new StringBuilder();
+        s.append(preText + "\n");
+        s.append("Subject: " + getSubject() + "\n");
+        s.append("Project: " + getProject() + "  " + getBranch() + "  " + getId() + "\n");
+        s.append("Link:    " + getUrl() + "\n");
+        return s.toString();
+    }
 }

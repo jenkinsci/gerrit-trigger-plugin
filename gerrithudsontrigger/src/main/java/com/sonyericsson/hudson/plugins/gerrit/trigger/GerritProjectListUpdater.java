@@ -28,13 +28,19 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.TriggerMissedPatches;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritProjectList;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Class responsible for providing the Config object with a list of all
@@ -87,6 +93,26 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         notify();
     }
 
+    /**
+     * Checks changes from all "Jenkins" related Gerrit projects.
+     * Triggers event, if important change has happened.
+     */
+    private void runMissedPatchSets() {
+        logger.info("Checking changes in open projects in Gerrit.");
+        Map<String, GerritProject> projects = GerritProjectList.getGerritProjects();
+        for (GerritProject p : projects.values()) {
+            String projectName = p.getPattern();
+            try {
+                IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+                TriggerMissedPatches triggerMissedPatches = new TriggerMissedPatches(projectName);
+                triggerMissedPatches.triggerMissedPatches(config.getGerritUserName());
+            } catch (Exception ex) {
+                logger.error("Unable to identify untriggered patch set!\nProject name: " + projectName, ex);
+            }
+        }
+        logger.info("All changes checked.");
+    }
+
     @Override
     public void run() {
         while (!shutdown) {
@@ -101,6 +127,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                     );
                     setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
                     sshConnection.disconnect();
+                    runMissedPatchSets();
                 }
             } catch (SshException ex) {
                  logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);

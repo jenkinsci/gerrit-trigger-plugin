@@ -254,7 +254,7 @@ public class GerritTriggerTest {
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", null, null, null, false, "");
+                true, true, false, "", "", "", "", "", null, null, null, false, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNull(triggerOnEvents);

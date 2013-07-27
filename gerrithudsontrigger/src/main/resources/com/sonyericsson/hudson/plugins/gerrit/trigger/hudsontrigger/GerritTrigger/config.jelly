@@ -154,6 +154,11 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
+        <f:entry title="${%Check missed patchsets}"
+                 field="allowTriggerMissedPatches"
+                 help="/plugin/gerrit-trigger/trigger/help-MissedPatches.html">
+           <f:checkbox name="allowTriggerMissedPatches" checked="${it.allowTriggerMissedPatches}"/>
+        </f:entry>
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">
             <f:hetero-list descriptors="${descriptor.getGerritEventDescriptors()}" items="${instance.triggerOnEvents}" name="triggerOnEvents" hasHeader="true"/>
