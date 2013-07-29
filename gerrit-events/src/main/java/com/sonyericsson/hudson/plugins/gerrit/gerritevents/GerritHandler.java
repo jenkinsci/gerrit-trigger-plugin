@@ -412,11 +412,6 @@ public class GerritHandler implements Coordinator {
         }
     }
 */
-    @Override
-    public void reconnect() {
-        logger.debug("No operation");
-    }
-
     /**
      * Count how many times {@link #reconnect()} has been called since object creation.
      *
