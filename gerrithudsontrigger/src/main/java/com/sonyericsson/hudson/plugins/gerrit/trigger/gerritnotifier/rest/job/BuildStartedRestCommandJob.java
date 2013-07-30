@@ -42,8 +42,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
     }
 
     protected ReviewInput createReview() {
-        String startedCommand = parameterExpander.getBuildStartedCommand(build, listener, event, stats);
-        String message = findMessage(startedCommand);
+        String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
         return new ReviewInput(message);
     }
 

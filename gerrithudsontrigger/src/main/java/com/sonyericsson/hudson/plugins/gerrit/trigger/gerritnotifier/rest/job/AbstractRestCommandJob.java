@@ -121,12 +121,4 @@ public abstract class AbstractRestCommandJob extends AbstractSendCommandJob impl
 
         return gerritFrontEndUrl + "a/changes/" + changeId.asUrlPart() + "/revisions/" + event.getPatchSet().getRevision() + "/review";
     }
-
-    protected String findMessage(String completedCommand) {
-        String messageStart = "--message '";
-        String fromMessage = completedCommand.substring(completedCommand.indexOf(messageStart));
-        int endIndex = fromMessage.indexOf("' --");
-        return fromMessage.substring(messageStart.length(), endIndex != -1 ? endIndex : fromMessage.length());
-    }
-
 }

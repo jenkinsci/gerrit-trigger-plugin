@@ -47,8 +47,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     @Override
     protected ReviewInput createReview() {
-        String completedCommand = parameterExpander.getBuildCompletedCommand(memoryImprint, listener);
-        String message = findMessage(completedCommand);
+        String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
 
         int verified = 0;
         int codeReview = 0;
