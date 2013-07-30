@@ -55,7 +55,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class GerritConnection extends Thread {
+public class GerritConnection extends Thread implements Connector {
 
     /**
      * Time to wait between connection attempts.
@@ -499,9 +499,7 @@ public class GerritConnection extends Thread {
         }
     }
 
-    /**
-     * Shuts down the stream-events connection so that the auto reconnect goes in effect.
-     */
+    @Override
     public void reconnect() {
         reconnectCallCount++;
         if (watchdog != null) {
