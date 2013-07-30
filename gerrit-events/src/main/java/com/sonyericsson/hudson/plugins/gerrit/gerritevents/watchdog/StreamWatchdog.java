@@ -24,7 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class StreamWatchdog extends TimerTask {
 
     private long lastSignal;
     private Timer timer;
-    private Coordinator coordinator;
+    private GerritConnection coordinator;
     private int timeoutSeconds;
     private WatchTimeExceptionData exceptionData;
 
@@ -70,7 +70,7 @@ public class StreamWatchdog extends TimerTask {
      * @param exceptionData  time spans and days when the timeout trigger should not be in effect.
      * @see #StreamWatchdog(Coordinator, int, WatchTimeExceptionData, long, long)
      */
-    public StreamWatchdog(Coordinator coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData) {
+    public StreamWatchdog(GerritConnection coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData) {
         this(coordinator, timeoutSeconds, exceptionData, DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD);
     }
 
@@ -83,7 +83,7 @@ public class StreamWatchdog extends TimerTask {
      * @param checkStartDelay millis until the first timeout check should be performed
      * @param checkPeriod     millis between timeout checks
      */
-    public StreamWatchdog(Coordinator coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData,
+    public StreamWatchdog(GerritConnection coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData,
                           long checkStartDelay, long checkPeriod) {
         this.coordinator = coordinator;
         this.timeoutSeconds = timeoutSeconds;
