@@ -24,7 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.Connector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class StreamWatchdog extends TimerTask {
 
     private long lastSignal;
     private Timer timer;
-    private Coordinator coordinator;
+    private Connector connector;
     private int timeoutSeconds;
     private WatchTimeExceptionData exceptionData;
 
@@ -65,27 +65,27 @@ public class StreamWatchdog extends TimerTask {
      * Standard Constructor. Same as calling <code> StreamWatchdog(coordinator, timeoutSeconds, exceptionData,
      * DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD) </code>
      *
-     * @param coordinator    the coordinator who can do the actual restart of the connection.
+     * @param connector    the connector who can do the actual restart of the connection.
      * @param timeoutSeconds number of seconds before a timeout should occur.
      * @param exceptionData  time spans and days when the timeout trigger should not be in effect.
      * @see #StreamWatchdog(Coordinator, int, WatchTimeExceptionData, long, long)
      */
-    public StreamWatchdog(Coordinator coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData) {
-        this(coordinator, timeoutSeconds, exceptionData, DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD);
+    public StreamWatchdog(Connector connector, int timeoutSeconds, WatchTimeExceptionData exceptionData) {
+        this(connector, timeoutSeconds, exceptionData, DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD);
     }
 
     /**
      * Standard Constructor.
      *
-     * @param coordinator     the coordinator who can do the actual restart of the connection.
+     * @param connector     the connector who can do the actual restart of the connection.
      * @param timeoutSeconds  number of seconds before a timeout should occur.
      * @param exceptionData   time spans and days when the timeout trigger should not be in effect.
      * @param checkStartDelay millis until the first timeout check should be performed
      * @param checkPeriod     millis between timeout checks
      */
-    public StreamWatchdog(Coordinator coordinator, int timeoutSeconds, WatchTimeExceptionData exceptionData,
+    public StreamWatchdog(Connector connector, int timeoutSeconds, WatchTimeExceptionData exceptionData,
                           long checkStartDelay, long checkPeriod) {
-        this.coordinator = coordinator;
+        this.connector = connector;
         this.timeoutSeconds = timeoutSeconds;
         this.exceptionData = exceptionData;
         lastSignal = System.currentTimeMillis();
@@ -100,7 +100,7 @@ public class StreamWatchdog extends TimerTask {
             logger.debug("Quiettime: {}", quietTime);
             if (quietTime > timeoutSeconds) {
                 logger.info("Last data from Gerrit was {} seconds ago; reconnecting.", quietTime);
-                coordinator.reconnect();
+                connector.reconnect();
             }
         }
     }
