@@ -3,13 +3,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 
@@ -17,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-import hudson.model.AbstractBuild;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,12 +25,11 @@ import java.util.HashMap;
  * Checks changes from Gerrit server, when ssh connection is created.
  * Runs Jenkins jobs to missed Gerrit patches.
  *
- * TODO: Optimization by adding branch support.
  * TODO: Support to all types of events.
  */
 public class TriggerMissedPatches {
 
-    private List<JSONObject> patchSets;
+    private List<JSONObject> changeSets;
     private Map<String, Integer> patchIndexes;  // patch id : index
     private Map<String, List<String>> patchReviewers;  // patch id : [reviewers]
     private static final Logger logger = LoggerFactory.getLogger(TriggerMissedPatches.class);
@@ -47,8 +40,8 @@ public class TriggerMissedPatches {
     private void createPatchReviwersList() {
         this.patchIndexes = new HashMap<String, Integer>();
         this.patchReviewers = new HashMap<String, List<String>>();
-        for (int i = 0; i < this.patchSets.size(); i++) {
-            JSONObject changeObj = this.patchSets.get(i);
+        for (int i = 0; i < this.changeSets.size(); i++) {
+            JSONObject changeObj = this.changeSets.get(i);
             Change change = new Change(changeObj);
             String changeId = change.getId();
             Object patchSetObj = changeObj.get("currentPatchSet");
@@ -87,7 +80,7 @@ public class TriggerMissedPatches {
         try {
             IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
             GerritQueryHandler handler = new GerritQueryHandler(config);
-            this.patchSets = handler.queryJava(queryString, false, true, false);
+            this.changeSets = handler.queryJava(queryString, false, true, false);
         } catch (GerritQueryException gqe) {
             logger.debug("Bad query. ", gqe);
         } catch (Exception ex) {
@@ -135,16 +128,6 @@ public class TriggerMissedPatches {
      * Trigger missed patches.
      * Function goes through every current open patch in gerrit project.
      * and triggers patches which aren't reviewed by Gerrit user.
-     * 
-     *  GerritCause(GerritTriggeredEvent event, boolean silentMode)
-     *  
-     *gerritEvent(PatchsetCreated event)
-     *
-     *    public void retriggerAllBuilds(TriggerContext context) {
-        if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {
-            retrigger(context.getThisBuild().getProject(), context.getEvent());
-            for (AbstractBuild build : context.getOtherBuilds()) {
-                GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
      * @param username the Jenkins plugin's Gerrit username.
      */
     public void triggerMissedPatches(String username) {
@@ -153,9 +136,9 @@ public class TriggerMissedPatches {
             if (hasUserReviewedChange(changeId, username)) {
                 logger.debug(username + ", Change up to date! ChangeId: " + changeId);
             } else {
-                JSONObject changedPatch = this.patchSets.get(this.patchIndexes.get(changeId));
+                JSONObject changedPatch = this.changeSets.get(this.patchIndexes.get(changeId));
                 Change change = new Change(changedPatch);
-                logger.info(change.getChangeInfo("Running jobs to a following commit:"));
+                logger.info(change.getChangeInfo("Located a new patchset in Gerrit:"));
                 Object patchSetObj = changedPatch.get("currentPatchSet");
                 if (patchSetObj instanceof JSONObject) {
                     JSONObject currentPatchSet = (JSONObject)patchSetObj;

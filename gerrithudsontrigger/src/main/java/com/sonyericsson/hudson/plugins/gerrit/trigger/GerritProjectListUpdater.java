@@ -99,13 +99,17 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     private void runMissedPatchSets() {
         logger.info("Checking changes in open projects in Gerrit.");
-        List<GerritProject> projects = GerritProjectList.getGerritProjects();
-        for (GerritProject p : projects) {
-            String projectName = p.getPattern();
+        Map<String, ArrayList<GerritProject>> allProjects = GerritProjectList.getGerritProjects();
+        for (Map.Entry<String, ArrayList<GerritProject>> entry : allProjects.entrySet()) {
+            IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+            String projectName = entry.getKey();
+
             try {
-                IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+                ArrayList<GerritProject> projects = entry.getValue();
                 TriggerMissedPatches triggerMissedPatches = new TriggerMissedPatches(projectName);
-                triggerMissedPatches.triggerMissedPatches(config.getGerritUserName());
+                for (GerritProject p : projects) {
+                    triggerMissedPatches.triggerMissedPatches(config.getGerritUserName());
+                }
             } catch (Exception ex) {
                 logger.error("Unable to identify untriggered patch set!\nProject name: " + projectName, ex);
             }
