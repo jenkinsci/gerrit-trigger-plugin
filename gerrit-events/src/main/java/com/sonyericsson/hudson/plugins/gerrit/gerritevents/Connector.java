@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2013 rinrinne All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,25 +21,15 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
-
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import java.util.concurrent.BlockingQueue;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 /**
- * Representation interface of an EventThread workers coordinator.
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
+ * A interface to connect network resources.
+ * @author rinrinne &lt;rinrin.ne@gmail.om&gt;
  */
-public interface Coordinator {
+public interface Connector {
     /**
-     * Retrieves the work queue for workers to poll.
-     * @return the queue
+     * Shuts down the stream-events connection so that the auto reconnect goes in effect.
      */
-    BlockingQueue<Work> getWorkQueue();
-
-    /**
-     * Notifies the listeners of a GerritEvent.
-     * @param event the event to fire.
-     */
-    void notifyListeners(GerritEvent event);
+    void reconnect();
 }
