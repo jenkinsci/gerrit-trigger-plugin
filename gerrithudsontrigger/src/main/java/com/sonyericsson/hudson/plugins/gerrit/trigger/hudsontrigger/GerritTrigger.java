@@ -304,7 +304,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (allowTriggerMissedPatches) {
             for (GerritProject p : gerritProjects) {
-                GerritProjectList.addProject(p);
+                GerritProjectList.addProject(p, this.silentMode);
             }
         }
     }

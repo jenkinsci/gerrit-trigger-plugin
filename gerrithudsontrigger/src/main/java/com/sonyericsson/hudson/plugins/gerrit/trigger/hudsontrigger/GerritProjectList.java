@@ -5,14 +5,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
- * A sigleton class that keeps list of Jenkin's Gerrit project's depedencies.
- * Basically this class makes TriggerMissedPatches-class work faster
- * by giving spesific locations of interesting gerrit projects.
+ * A sigleton class that keeps list of Jenkin's Gerrit projects.
  *
  * TODO: RemoveProject (So disabling the property would be possible without restarting Jenkins)
  * TODO: Support to other project formats (At the moment only plain text is supported).
@@ -27,7 +24,7 @@ public final class GerritProjectList {
      * Data structure, which holds Project data from jenkins.
      * projectList[Gerrit project pattern] = GerritProject data
      */
-    private Map<String, GerritProject> projectList = new HashMap<String, GerritProject>();
+    private List<GerritProject> projectList = new ArrayList<GerritProject>();
 
     /**
      * A private Constructor prevents any other class from instantiating.
@@ -44,40 +41,21 @@ public final class GerritProjectList {
     }
 
     /**
-     * Function returns projects name.
-     * @param project the GerritProject
-     * @return null if parameter project is null or if its type is not PLAIN text.
-     *         Otherwise method will return project's pattern.
-     */
-    private String createKeyString(GerritProject project) {
-        if (project != null) {
-            if (project.getCompareType() == CompareType.PLAIN) {
-                return project.getPattern();
-            }
-        }
-        return null;
-    }
-
-    /**
      *  Adds project to project list.
      *  @param project the GerritProject
+     *  @param silentMode is silent mode enabled.
      */
-    public static void addProject(GerritProject project) {
+    public static void addProject(GerritProject project, boolean silentMode) {
         GerritProjectList inst = getInstance();
-        String key = inst.createKeyString(project);
-        if (key != null) {
-            if (inst.projectList.get(key) == null) {
-                inst.projectList.put(key, project);
-                logger.info("Project " + key + " added to Gerrit project list.");
-            }
-        }
+        inst.projectList.add(project);
+        logger.info("Project " + project.getPattern() + " added to Gerrit project list. SilentMode: " + silentMode);
     }
 
     /**
      *  Returns project list.
      *  @return gerrit projects that are stored into map.
      */
-    public static Map<String, GerritProject> getGerritProjects() {
+    public static List<GerritProject> getGerritProjects() {
         return getInstance().projectList;
     }
 }

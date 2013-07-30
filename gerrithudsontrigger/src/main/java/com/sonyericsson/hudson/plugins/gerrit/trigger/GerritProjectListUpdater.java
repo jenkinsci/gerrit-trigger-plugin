@@ -99,8 +99,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     private void runMissedPatchSets() {
         logger.info("Checking changes in open projects in Gerrit.");
-        Map<String, GerritProject> projects = GerritProjectList.getGerritProjects();
-        for (GerritProject p : projects.values()) {
+        List<GerritProject> projects = GerritProjectList.getGerritProjects();
+        for (GerritProject p : projects) {
             String projectName = p.getPattern();
             try {
                 IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();

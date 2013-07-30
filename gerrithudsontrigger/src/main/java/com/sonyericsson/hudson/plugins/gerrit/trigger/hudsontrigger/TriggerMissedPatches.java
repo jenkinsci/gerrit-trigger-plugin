@@ -3,9 +3,13 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 
@@ -13,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import hudson.model.AbstractBuild;
 
 import java.io.IOException;
 import java.util.List;
@@ -129,7 +135,16 @@ public class TriggerMissedPatches {
      * Trigger missed patches.
      * Function goes through every current open patch in gerrit project.
      * and triggers patches which aren't reviewed by Gerrit user.
+     * 
+     *  GerritCause(GerritTriggeredEvent event, boolean silentMode)
+     *  
+     *gerritEvent(PatchsetCreated event)
      *
+     *    public void retriggerAllBuilds(TriggerContext context) {
+        if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {
+            retrigger(context.getThisBuild().getProject(), context.getEvent());
+            for (AbstractBuild build : context.getOtherBuilds()) {
+                GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
      * @param username the Jenkins plugin's Gerrit username.
      */
     public void triggerMissedPatches(String username) {
