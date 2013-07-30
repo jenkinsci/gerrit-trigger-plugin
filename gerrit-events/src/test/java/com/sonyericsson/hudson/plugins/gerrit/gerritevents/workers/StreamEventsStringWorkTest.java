@@ -96,11 +96,6 @@ public class StreamEventsStringWorkTest {
             public void notifyListeners(GerritEvent event) {
                 notifiedEvent[0] = event;
             }
-
-            @Override
-            public void reconnect() {
-                //nada
-            }
         };
         work.perform(coordinator);
 
