@@ -30,7 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.TriggerMissedPatches;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritProjectList;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -99,15 +99,16 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     private void runMissedPatchSets() {
         logger.info("Checking changes in open projects in Gerrit.");
-        Map<String, ArrayList<GerritProject>> allProjects = GerritProjectList.getGerritProjects();
-        for (Map.Entry<String, ArrayList<GerritProject>> entry : allProjects.entrySet()) {
+        Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
+        for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
             IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
             String projectName = entry.getKey();
+            ArrayList<GerritTrigger> triggerList = entry.getValue();
 
             try {
-                ArrayList<GerritProject> projects = entry.getValue();
-                TriggerMissedPatches triggerMissedPatches = new TriggerMissedPatches(projectName);
-                for (GerritProject p : projects) {
+                if (triggerList != null && !triggerList.isEmpty()) {
+                    // Send request to Gerrit
+                    TriggerMissedPatches triggerMissedPatches = new TriggerMissedPatches(projectName);
                     triggerMissedPatches.triggerMissedPatches(config.getGerritUserName());
                 }
             } catch (Exception ex) {

@@ -302,9 +302,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (dynamicTriggerConfiguration) {
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         }
+
+        GerritProjectList.clearTriggerProjects(this);
         if (allowTriggerMissedPatches) {
+            //GerritProjectList.cleanTriggerProjects(this);
             for (GerritProject p : gerritProjects) {
-                GerritProjectList.addProject(p);
+                GerritProjectList.addProject(p, this);
             }
         }
     }

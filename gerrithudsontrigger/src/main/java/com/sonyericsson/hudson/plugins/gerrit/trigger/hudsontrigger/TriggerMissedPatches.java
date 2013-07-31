@@ -29,23 +29,24 @@ import java.util.HashMap;
  */
 public class TriggerMissedPatches {
 
-    private List<JSONObject> changeSets;
-    private Map<String, Integer> patchIndexes;  // patch id : index
-    private Map<String, List<String>> patchReviewers;  // patch id : [reviewers]
+    /**
+     * changeSets data structure has Gerrit project's current open change sets as keys
+     * and as value reviewers of the latest patch set.
+     *
+     * changeSet : [list of reviewers]
+     */
+    private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
     private static final Logger logger = LoggerFactory.getLogger(TriggerMissedPatches.class);
 
     /**
-     * Initializes patchIndexes and patchReviewers data structures.
+     * Initializes changeSet.
+     * @param changeList the list of Gerrit project's current open change sets
      */
-    private void createPatchReviwersList() {
-        this.patchIndexes = new HashMap<String, Integer>();
-        this.patchReviewers = new HashMap<String, List<String>>();
-        for (int i = 0; i < this.changeSets.size(); i++) {
-            JSONObject changeObj = this.changeSets.get(i);
+    private void createPatchReviwersList(List<JSONObject> changeList) {
+        for (JSONObject changeObj : changeList) {
             Change change = new Change(changeObj);
-            String changeId = change.getId();
             Object patchSetObj = changeObj.get("currentPatchSet");
-            if (changeId == null || changeId.isEmpty() || (!(patchSetObj instanceof JSONObject))) {
+            if (!(patchSetObj instanceof JSONObject)) {
                 continue;
             }
 
@@ -65,27 +66,29 @@ public class TriggerMissedPatches {
                     }
                 }
             }
-            this.patchReviewers.put(changeId, usernames);
-            this.patchIndexes.put(changeId, i);
+            this.changeSets.put(changeObj, usernames);
         }
     }
 
     /**
      * Gets current open patches from gerrit.
      * @param project the name of the project.
+     * @return list of Gerrit patch sets.
      * @throws IOException if the unfortunate happens.
      */
-    public void getCurrentPatchesFromGerrit(String project) throws IOException {
+    public List<JSONObject> getCurrentPatchesFromGerrit(String project) throws IOException {
         final String queryString = "project:" + project + " is:open";
+        List<JSONObject> changeList = new ArrayList<JSONObject>();
         try {
             IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
             GerritQueryHandler handler = new GerritQueryHandler(config);
-            this.changeSets = handler.queryJava(queryString, false, true, false);
+            changeList = handler.queryJava(queryString, false, true, false);
         } catch (GerritQueryException gqe) {
             logger.debug("Bad query. ", gqe);
         } catch (Exception ex) {
             logger.warn("Could not query Gerrit for [" + queryString + "]", ex);
         }
+        return changeList;
     }
 
     /**
@@ -95,25 +98,25 @@ public class TriggerMissedPatches {
      */
     public TriggerMissedPatches(String project) throws IOException {
         logger.info("Fetching data from Gerrit server's current open patches.");
-        getCurrentPatchesFromGerrit(project);
-        createPatchReviwersList();
+        List<JSONObject> changeList = getCurrentPatchesFromGerrit(project);
+        createPatchReviwersList(changeList);
     }
 
     /**
      * Searches userName from patch change and returns true if username was found.
      *
-     * @param changeId the patch set's id.
+     * @param changeSet the change set.
      * @param userName the Jenkins plugin's Gerrit username.
      * @return true if userName was found or given input was invalid - else false
      */
-    private boolean hasUserReviewedChange(String changeId, String userName) {
-        if (changeId == null || changeId.isEmpty()) {
-            logger.warn("Invalid changeID: " + changeId);
+    private boolean hasUserReviewedChange(JSONObject changeSet, String userName) {
+        if (changeSet == null) {
+            logger.warn("Invalid changeSet: " + changeSet);
             return true;
         }
-        List<String> names = this.patchReviewers.get(changeId);
+        List<String> names = this.changeSets.get(changeSet);
         if (names == null) {
-            logger.error("Failed to read names from a patch set. ChangeId: " + changeId);
+            logger.error("Failed to read names from a patch set.");
             return true;
         }
         for (String name : names) {
@@ -126,17 +129,14 @@ public class TriggerMissedPatches {
 
     /**
      * Trigger missed patches.
-     * Function goes through every current open patch in gerrit project.
-     * and triggers patches which aren't reviewed by Gerrit user.
+     * Function goes through every current open patch sets in gerrit project.
+     * Function triggers patches which aren't reviewed by Gerrit user.
      * @param username the Jenkins plugin's Gerrit username.
      */
     public void triggerMissedPatches(String username) {
         logger.info("Starting checking missed patches from project!");
-        for (String changeId : this.patchReviewers.keySet()) {
-            if (hasUserReviewedChange(changeId, username)) {
-                logger.debug(username + ", Change up to date! ChangeId: " + changeId);
-            } else {
-                JSONObject changedPatch = this.changeSets.get(this.patchIndexes.get(changeId));
+        for (JSONObject changedPatch : this.changeSets.keySet()) {
+            if (!hasUserReviewedChange(changedPatch, username)) {
                 Change change = new Change(changedPatch);
                 logger.info(change.getChangeInfo("Located a new patchset in Gerrit:"));
                 Object patchSetObj = changedPatch.get("currentPatchSet");

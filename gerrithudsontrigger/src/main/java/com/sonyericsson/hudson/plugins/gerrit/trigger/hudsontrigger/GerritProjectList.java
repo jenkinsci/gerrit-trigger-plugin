@@ -12,7 +12,6 @@ import java.util.ArrayList;
 /**
  * A sigleton class that keeps list of Jenkin's Gerrit projects.
  *
- * TODO: RemoveProject (So disabling the property would be possible without restarting Jenkins)
  * TODO: Support to other project formats (At the moment only plain text is supported).
  *
  */
@@ -27,7 +26,8 @@ public final class GerritProjectList {
      * projectList data structure has Gerrit project's pattern as key value
      * and as content a ArrayList of Jenkins GerritProjects related to that Gerrit project.
      */
-    private Map<String, ArrayList<GerritProject>> projectList = new HashMap<String, ArrayList<GerritProject>>();
+    private Map<String, ArrayList<GerritTrigger>> projectList = new HashMap<String, ArrayList<GerritTrigger>>();
+
 
     /**
      * A private Constructor prevents any other class from instantiating.
@@ -59,18 +59,43 @@ public final class GerritProjectList {
     }
 
     /**
+     *  Deletes trigger from projectList.
+     *  @param trigger the GerritTrigger
+     */
+    public static void clearTriggerProjects(GerritTrigger trigger) {
+        GerritProjectList inst = getInstance();
+
+        for (Map.Entry<String, ArrayList<GerritTrigger>> entry : inst.projectList.entrySet()) {
+            String projectName = entry.getKey();
+            ArrayList<GerritTrigger> triggers = entry.getValue();
+            ArrayList<GerritTrigger> newTriggers = new ArrayList<GerritTrigger>();
+
+            for (GerritTrigger trig : triggers) {
+                logger.warn("Trig: " + trig + "      trigger " + trigger);
+                if (trig.equals(trigger)) {
+                    logger.error("SAMAT!!!!! REMOVED: ");
+                } else {
+                    newTriggers.add(trig);
+                }
+            }
+            inst.projectList.put(projectName, newTriggers);
+        }
+    }
+
+    /**
      *  Adds project to project list.
      *  @param project the GerritProject
+     *  @param trigger the GerritTrigger
      */
-    public static void addProject(GerritProject project) {
+    public static void addProject(GerritProject project, GerritTrigger trigger) {
         GerritProjectList inst = getInstance();
         String key = inst.createKeyString(project);
         if (key != null) {
             if (inst.projectList.get(key) == null) {
-                inst.projectList.put(key, new ArrayList<GerritProject>());
+                inst.projectList.put(key, new ArrayList<GerritTrigger>());
                 logger.info("Gerrit project location " + project.getPattern() + " added to Gerrit project list.");
             }
-            inst.projectList.get(key).add(project);
+            inst.projectList.get(key).add(trigger);
         }
     }
 
@@ -78,7 +103,7 @@ public final class GerritProjectList {
      *  Returns project list.
      *  @return gerrit projects that are stored into map.
      */
-    public static Map<String, ArrayList<GerritProject>> getGerritProjects() {
+    public static Map<String, ArrayList<GerritTrigger>> getGerritProjects() {
         return getInstance().projectList;
     }
 }
