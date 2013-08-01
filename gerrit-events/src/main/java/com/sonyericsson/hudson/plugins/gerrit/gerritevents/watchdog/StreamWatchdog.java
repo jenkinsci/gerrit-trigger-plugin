@@ -129,6 +129,5 @@ public class StreamWatchdog extends TimerTask {
      */
     public void shutdown() {
         timer.cancel();
-        timer = null;
     }
 }
