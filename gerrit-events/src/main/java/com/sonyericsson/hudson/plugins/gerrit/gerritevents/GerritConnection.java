@@ -274,7 +274,6 @@ public class GerritConnection extends Thread implements Connector {
                     logger.warn("Error when disconnecting sshConnection.", ex);
                 }
                 sshConnection = null;
-                notifyConnectionDown();
                 if (br != null) {
                     try {
                         br.close();
@@ -282,6 +281,7 @@ public class GerritConnection extends Thread implements Connector {
                         logger.warn("Could not close events reader.", ex);
                     }
                 }
+                notifyConnectionDown();
             }
         } while (!isShutdownInProgress());
         handler = null;
@@ -299,7 +299,6 @@ public class GerritConnection extends Thread implements Connector {
             try {
                 logger.debug("Connecting...");
                 ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
-                notifyConnectionEstablished();
                 gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
                 logger.debug("connection seems ok, returning it.");
                 return ssh;
@@ -309,7 +308,6 @@ public class GerritConnection extends Thread implements Connector {
                 logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("ConnectionException: ", sshConEx);
-                notifyConnectionDown();
             } catch (SshAuthenticationException sshAuthEx) {
                 logger.error("Could not authenticate to Gerrit server!"
                         + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
@@ -317,14 +315,12 @@ public class GerritConnection extends Thread implements Connector {
                                 authentication.getPrivateKeyFile(),
                                 authentication.getPrivateKeyFilePassword(), });
                 logger.error("AuthenticationException: ", sshAuthEx);
-                notifyConnectionDown();
             } catch (IOException ex) {
                 logger.error("Could not connect to Gerrit server! "
                         + "Host: {} Port: {}", gerritHostName, gerritSshPort);
                 logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("IOException: ", ex);
-                notifyConnectionDown();
             }
 
             if (ssh != null) {
