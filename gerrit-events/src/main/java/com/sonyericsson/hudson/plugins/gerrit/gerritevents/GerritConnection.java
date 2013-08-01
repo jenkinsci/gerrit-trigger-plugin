@@ -65,27 +65,13 @@ public class GerritConnection extends Thread implements Connector {
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
     private static final String GERRIT_NAME = "gerrit";
     private static final String GERRIT_PROTOCOL_NAME = "ssh";
-    /**
-     * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
-     */
-    protected static final int PAUSE_SECOND = 1000;
-    /**
-     * How many times to try and set the shutdown flag to true. Noticed during unit tests there seems to be a timing
-     * issue or something so sometimes the {@shutdownInProgress} flag is not set properly. Setting it a number of times
-     * with some delay helped.
-     *
-     * @see #shutdown(boolean)
-     * @see #PAUSE_SECOND
-     */
-    protected static final int BRUTE_FORCE_TRIES = 10;
     private static final Logger logger = LoggerFactory.getLogger(GerritConnection.class);
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
     private Authentication authentication;
     private SshConnection sshConnection;
-    private boolean shutdownInProgress = false;
-    private final Object shutdownInProgressSync = new Object();
+    private volatile boolean shutdownInProgress = false;
     private boolean connecting = false;
     private String gerritVersion = null;
     private int watchdogTimeoutSeconds;
@@ -482,10 +468,8 @@ public class GerritConnection extends Thread implements Connector {
      *
      * @param isIt true if shutdown is in progress.
      */
-    private void setShutdownInProgress(boolean isIt) {
-        synchronized (shutdownInProgressSync) {
-            this.shutdownInProgress = isIt;
-        }
+    private void setShutdownInProgress() {
+            this.shutdownInProgress = false;
     }
 
     /**
@@ -494,9 +478,7 @@ public class GerritConnection extends Thread implements Connector {
      * @return true if so.
      */
     public boolean isShutdownInProgress() {
-        synchronized (shutdownInProgressSync) {
-            return this.shutdownInProgress;
-        }
+            return shutdownInProgress;
     }
 
     @Override
@@ -529,25 +511,12 @@ public class GerritConnection extends Thread implements Connector {
         }
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
-            //For some reason the shutdown flag is not correctly set.
-            //So we'll try the brute force way.... and it actually works.
-            for (int i = 0; i < BRUTE_FORCE_TRIES; i++) {
-                setShutdownInProgress(true);
-                if (!isShutdownInProgress()) {
-                    try {
-                        Thread.sleep(PAUSE_SECOND);
-                    } catch (InterruptedException e) {
-                        logger.debug("Interrupted while pausing in the shutdown flag set.");
-                    }
-                } else {
-                    break;
-                }
+            setShutdownInProgress();
+            try {
+                sshConnection.disconnect();
+            } catch (Exception ex) {
+                logger.warn("Error when disconnecting sshConnection.", ex);
             }
-            //Fail terribly if we still couldn't
-            if (!isShutdownInProgress()) {
-                throw new RuntimeException("Failed to set the shutdown flag!");
-            }
-            sshConnection.disconnect();
             if (join) {
                 try {
                     this.join();
@@ -556,7 +525,7 @@ public class GerritConnection extends Thread implements Connector {
                 }
             }
         } else if (connecting) {
-            setShutdownInProgress(true);
+            setShutdownInProgress();
             if (join) {
                 try {
                     this.join();
