@@ -72,7 +72,6 @@ public class GerritConnection extends Thread implements Connector {
     private Authentication authentication;
     private SshConnection sshConnection;
     private volatile boolean shutdownInProgress = false;
-    private boolean connecting = false;
     private String gerritVersion = null;
     private int watchdogTimeoutSeconds;
     private WatchTimeExceptionData exceptionData;
@@ -295,10 +294,8 @@ public class GerritConnection extends Thread implements Connector {
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {
-        connecting = true;
         while (true) { //TODO do not go on forever.
             if (isShutdownInProgress()) {
-                connecting = false;
                 return null;
             }
             SshConnection ssh = null;
@@ -306,7 +303,6 @@ public class GerritConnection extends Thread implements Connector {
                 logger.debug("Connecting...");
                 ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
                 notifyConnectionEstablished();
-                connecting = false;
                 gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
                 logger.debug("connection seems ok, returning it.");
                 return ssh;
@@ -349,7 +345,6 @@ public class GerritConnection extends Thread implements Connector {
             }
 
             if (isShutdownInProgress()) {
-                connecting = false;
                 return null;
             }
 
@@ -506,35 +501,24 @@ public class GerritConnection extends Thread implements Connector {
      * @param join if the method should wait for the thread to finish before returning.
      */
     public void shutdown(boolean join) {
+        setShutdownInProgress();
         if (watchdog != null) {
             watchdog.shutdown();
         }
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
-            setShutdownInProgress();
             try {
                 sshConnection.disconnect();
             } catch (Exception ex) {
                 logger.warn("Error when disconnecting sshConnection.", ex);
             }
-            if (join) {
-                try {
-                    this.join();
-                } catch (InterruptedException ex) {
-                    logger.warn("Got interrupted while waiting for shutdown.", ex);
-                }
+        }
+        if (join) {
+            try {
+                this.join();
+            } catch (InterruptedException ex) {
+                logger.warn("Got interrupted while waiting for shutdown.", ex);
             }
-        } else if (connecting) {
-            setShutdownInProgress();
-            if (join) {
-                try {
-                    this.join();
-                } catch (InterruptedException ex) {
-                    logger.warn("Got interrupted while waiting for shutdown.", ex);
-                }
-            }
-        } else {
-            logger.warn("Was told to shutdown without a connection.");
         }
     }
 
