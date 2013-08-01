@@ -294,10 +294,7 @@ public class GerritConnection extends Thread implements Connector {
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {
-        while (true) { //TODO do not go on forever.
-            if (isShutdownInProgress()) {
-                return null;
-            }
+        while (!isShutdownInProgress()) {
             SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
@@ -344,18 +341,17 @@ public class GerritConnection extends Thread implements Connector {
                 }
             }
 
-            if (isShutdownInProgress()) {
-                return null;
-            }
-
-            //If we end up here, sleep for a while and then go back up in the loop.
-            logger.trace("Sleeping for a bit.");
-            try {
-                Thread.sleep(CONNECT_SLEEP);
-            } catch (InterruptedException ex) {
-                logger.warn("Got interrupted while sleeping.", ex);
+            if (!isShutdownInProgress()) {
+                //If we end up here, sleep for a while and then go back up in the loop.
+                logger.trace("Sleeping for a bit.");
+                try {
+                    Thread.sleep(CONNECT_SLEEP);
+                } catch (InterruptedException ex) {
+                    logger.warn("Got interrupted while sleeping.", ex);
+                }
             }
         }
+        return null;
     }
 
     /**
