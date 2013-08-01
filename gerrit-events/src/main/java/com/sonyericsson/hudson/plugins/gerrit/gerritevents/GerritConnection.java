@@ -72,6 +72,7 @@ public class GerritConnection extends Thread implements Connector {
     private Authentication authentication;
     private SshConnection sshConnection;
     private volatile boolean shutdownInProgress = false;
+    private volatile boolean connected = false;
     private String gerritVersion = null;
     private int watchdogTimeoutSeconds;
     private WatchTimeExceptionData exceptionData;
@@ -468,6 +469,14 @@ public class GerritConnection extends Thread implements Connector {
             return shutdownInProgress;
     }
 
+    /**
+     * If already connected.
+     * @return true if already connected.
+     */
+    public boolean isConnected() {
+        return connected;
+    }
+
     @Override
     public void reconnect() {
         reconnectCallCount++;
@@ -518,6 +527,7 @@ public class GerritConnection extends Thread implements Connector {
      * Notifies all ConnectionListeners that the connection is down.
      */
     protected void notifyConnectionDown() {
+        connected = false;
         if (handler != null) {
             handler.notifyConnectionDown();
         }
@@ -527,6 +537,7 @@ public class GerritConnection extends Thread implements Connector {
      * Notifies all ConnectionListeners that the connection is established.
      */
     protected void notifyConnectionEstablished() {
+        connected = true;
         if (handler != null) {
             handler.notifyConnectionEstablished();
         }
