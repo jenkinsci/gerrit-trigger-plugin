@@ -97,7 +97,6 @@ public class TriggerNotReviewedPatches {
      * @throws IOException if the unfortunate happens.
      */
     public TriggerNotReviewedPatches(String project) throws IOException {
-        logger.info("Fetching data from Gerrit server's current open patches.");
         List<JSONObject> changeList = getCurrentPatchesFromGerrit(project);
         createPatchReviwersList(changeList);
     }
@@ -132,8 +131,9 @@ public class TriggerNotReviewedPatches {
      * Function goes through every current open patch sets in gerrit project.
      * Function triggers patches which aren't reviewed by Gerrit user.
      * @param username the Jenkins plugin's Gerrit username.
+     * @param trigger the GerritTrigger.
      */
-    public void triggerNotReviewedPatches(String username) {
+    public void triggerNotReviewedPatches(String username, GerritTrigger trigger) {
         logger.debug("Starting checking missed patches from project!");
         for (JSONObject changedPatch : this.changeSets.keySet()) {
             if (!hasUserReviewedChange(changedPatch, username)) {
@@ -146,8 +146,9 @@ public class TriggerNotReviewedPatches {
                     PatchsetCreated event = new PatchsetCreated();
                     event.setChange(change);
                     event.setPatchset(patchSet);
-                    // TODO: Trigger only allowed builds
-                    PluginImpl.getInstance().triggerEvent(event);
+                    if (trigger.isAllowTriggeringUnreviewedPatches()) {
+                        trigger.gerritEvent(event);
+                    }
                 } else {
                     logger.error("Parsing JSON object failed: " + changedPatch.toString());
                 }

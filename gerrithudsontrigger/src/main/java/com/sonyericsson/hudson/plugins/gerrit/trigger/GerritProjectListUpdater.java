@@ -107,9 +107,10 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
 
             try {
                 if (triggerList != null && !triggerList.isEmpty()) {
-                    // Send request to Gerrit
                     TriggerNotReviewedPatches unreviewedPatches = new TriggerNotReviewedPatches(projectName);
-                    unreviewedPatches.triggerNotReviewedPatches(config.getGerritUserName());
+                    for (GerritTrigger trigger : triggerList) {
+                        unreviewedPatches.triggerNotReviewedPatches(config.getGerritUserName(), trigger);
+                    }
                 }
             } catch (Exception ex) {
                 logger.error("Unable to identify unreviewed patch sets!\nProject name: " + projectName, ex);
