@@ -23,11 +23,11 @@ import java.util.HashMap;
 
 /**
  * Checks changes from Gerrit server, when ssh connection is created.
- * Runs Jenkins jobs to missed Gerrit patches.
+ * Runs Jenkins jobs to unreviewed Gerrit patches.
  *
  * TODO: Support to all types of events.
  */
-public class TriggerMissedPatches {
+public class TriggerNotReviewedPatches {
 
     /**
      * changeSets data structure has Gerrit project's current open change sets as keys
@@ -36,7 +36,7 @@ public class TriggerMissedPatches {
      * changeSet : [list of reviewers]
      */
     private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
-    private static final Logger logger = LoggerFactory.getLogger(TriggerMissedPatches.class);
+    private static final Logger logger = LoggerFactory.getLogger(TriggerNotReviewedPatches.class);
 
     /**
      * Initializes changeSet.
@@ -96,7 +96,7 @@ public class TriggerMissedPatches {
      * @param project the name of the Gerrit project.
      * @throws IOException if the unfortunate happens.
      */
-    public TriggerMissedPatches(String project) throws IOException {
+    public TriggerNotReviewedPatches(String project) throws IOException {
         logger.info("Fetching data from Gerrit server's current open patches.");
         List<JSONObject> changeList = getCurrentPatchesFromGerrit(project);
         createPatchReviwersList(changeList);
@@ -128,24 +128,25 @@ public class TriggerMissedPatches {
     }
 
     /**
-     * Trigger missed patches.
+     * Trigger unreviewed patches.
      * Function goes through every current open patch sets in gerrit project.
      * Function triggers patches which aren't reviewed by Gerrit user.
      * @param username the Jenkins plugin's Gerrit username.
      */
-    public void triggerMissedPatches(String username) {
-        logger.info("Starting checking missed patches from project!");
+    public void triggerNotReviewedPatches(String username) {
+        logger.debug("Starting checking missed patches from project!");
         for (JSONObject changedPatch : this.changeSets.keySet()) {
             if (!hasUserReviewedChange(changedPatch, username)) {
                 Change change = new Change(changedPatch);
-                logger.info(change.getChangeInfo("Located a new patchset in Gerrit:"));
                 Object patchSetObj = changedPatch.get("currentPatchSet");
+                logger.debug(change.getChangeInfo("Located a new patchset in Gerrit:"));
                 if (patchSetObj instanceof JSONObject) {
                     JSONObject currentPatchSet = (JSONObject)patchSetObj;
                     PatchSet patchSet = new PatchSet(currentPatchSet);
                     PatchsetCreated event = new PatchsetCreated();
                     event.setChange(change);
                     event.setPatchset(patchSet);
+                    // TODO: Trigger only allowed builds
                     PluginImpl.getInstance().triggerEvent(event);
                 } else {
                     logger.error("Parsing JSON object failed: " + changedPatch.toString());

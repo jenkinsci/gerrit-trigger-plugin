@@ -131,7 +131,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildUnsuccessfulFilepath;
     private String customUrl;
     private List<PluginGerritEvent> triggerOnEvents;
-    private boolean allowTriggerMissedPatches;
+    private boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
@@ -187,7 +187,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param customUrl                      Custom URL to sen to gerrit instead of build URL
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
-     * @param allowTriggerMissedPatches      Is automatic patch checking allowed when connection is established
+     * @param allowTriggeringUnreviewedPatches
+     *                                       Is automatic patch checking allowed when connection is established
      * @param triggerConfigURL               Where to fetch the configuration file from
      */
     @DataBoundConstructor
@@ -216,7 +217,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String customUrl,
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
-            boolean allowTriggerMissedPatches,
+            boolean allowTriggeringUnreviewedPatches,
             String triggerConfigURL) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
@@ -245,7 +246,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
-        this.allowTriggerMissedPatches = allowTriggerMissedPatches;
+        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
     }
 
     /**
@@ -304,7 +305,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         GerritProjectList.clearTriggerProjects(this);
-        if (allowTriggerMissedPatches) {
+        if (allowTriggeringUnreviewedPatches) {
             //GerritProjectList.cleanTriggerProjects(this);
             for (GerritProject p : gerritProjects) {
                 GerritProjectList.addProject(p, this);
@@ -1116,18 +1117,18 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @return true if checking and triggering missing patches is allowed.
      */
-    public boolean isAllowTriggerMissedPatches() {
-        return allowTriggerMissedPatches;
+    public boolean isAllowTriggeringUnreviewedPatches() {
+        return allowTriggeringUnreviewedPatches;
     }
 
     /**
      * Set if triggering missing patches configuration should be enabled or not.
      *
-     * @param allowTriggerMissedPatches
+     * @param allowTriggeringUnreviewedPatches
      *         true if triggering missing patches configuration should be enabled.
      */
-    public void setAllowTriggerMissedPatches(boolean allowTriggerMissedPatches) {
-        this.allowTriggerMissedPatches = allowTriggerMissedPatches;
+    public void setAllowTriggeringUnreviewedPatches(boolean allowTriggeringUnreviewedPatches) {
+        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
     }
 
     /**

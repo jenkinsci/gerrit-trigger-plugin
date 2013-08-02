@@ -154,10 +154,10 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Check missed patchsets}"
-                 field="allowTriggerMissedPatches"
-                 help="/plugin/gerrit-trigger/trigger/help-MissedPatches.html">
-           <f:checkbox name="allowTriggerMissedPatches" checked="${it.allowTriggerMissedPatches}"/>
+        <f:entry title="${%Check unreviewed patchsets}"
+                 field="allowTriggeringUnreviewedPatches"
+                 help="/plugin/gerrit-trigger/trigger/help-TriggerUnreviewedPatches.html">
+           <f:checkbox name="allowTriggeringUnreviewedPatches" checked="${it.allowTriggeringUnreviewedPatches}"/>
         </f:entry>
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">

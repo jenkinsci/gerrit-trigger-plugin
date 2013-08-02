@@ -28,7 +28,6 @@ public final class GerritProjectList {
      */
     private Map<String, ArrayList<GerritTrigger>> projectList = new HashMap<String, ArrayList<GerritTrigger>>();
 
-
     /**
      * A private Constructor prevents any other class from instantiating.
      */
@@ -64,17 +63,13 @@ public final class GerritProjectList {
      */
     public static void clearTriggerProjects(GerritTrigger trigger) {
         GerritProjectList inst = getInstance();
-
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : inst.projectList.entrySet()) {
             String projectName = entry.getKey();
             ArrayList<GerritTrigger> triggers = entry.getValue();
             ArrayList<GerritTrigger> newTriggers = new ArrayList<GerritTrigger>();
 
             for (GerritTrigger trig : triggers) {
-                logger.warn("Trig: " + trig + "      trigger " + trigger);
-                if (trig.equals(trigger)) {
-                    logger.error("SAMAT!!!!! REMOVED: ");
-                } else {
+                if (!trig.equals(trigger)) {
                     newTriggers.add(trig);
                 }
             }
