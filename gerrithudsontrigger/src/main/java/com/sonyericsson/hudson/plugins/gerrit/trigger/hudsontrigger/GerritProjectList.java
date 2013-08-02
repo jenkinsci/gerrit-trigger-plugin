@@ -24,7 +24,7 @@ public final class GerritProjectList {
      * Data structure, which holds Project data from jenkins.
      *
      * projectList data structure has Gerrit project's pattern as key value
-     * and as content a ArrayList of Jenkins GerritProjects related to that Gerrit project.
+     * and as content a ArrayList of Jenkins jobs related to that Gerrit project.
      */
     private Map<String, ArrayList<GerritTrigger>> projectList = new HashMap<String, ArrayList<GerritTrigger>>();
 
@@ -58,10 +58,10 @@ public final class GerritProjectList {
     }
 
     /**
-     *  Deletes trigger from projectList.
+     *  Removes trigger from projectList.
      *  @param trigger the GerritTrigger
      */
-    public static void clearTriggerProjects(GerritTrigger trigger) {
+    public static void removeTriggerFromProjectList(GerritTrigger trigger) {
         GerritProjectList inst = getInstance();
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : inst.projectList.entrySet()) {
             String projectName = entry.getKey();
@@ -88,7 +88,6 @@ public final class GerritProjectList {
         if (key != null) {
             if (inst.projectList.get(key) == null) {
                 inst.projectList.put(key, new ArrayList<GerritTrigger>());
-                logger.info("Gerrit project location " + project.getPattern() + " added to Gerrit project list.");
             }
             inst.projectList.get(key).add(trigger);
         }

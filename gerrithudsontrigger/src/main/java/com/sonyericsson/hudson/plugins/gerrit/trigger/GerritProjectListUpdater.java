@@ -98,7 +98,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * Triggers Jenkins jobs which are realted to unreviewed Gerrit patch sets.
      */
     private void runUnreviewedPatchSets() {
-        logger.info("Checking changes in open projects in Gerrit.");
         Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
             IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
@@ -116,7 +115,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 logger.error("Unable to identify unreviewed patch sets!\nProject name: " + projectName, ex);
             }
         }
-        logger.info("All changes checked.");
     }
 
     @Override

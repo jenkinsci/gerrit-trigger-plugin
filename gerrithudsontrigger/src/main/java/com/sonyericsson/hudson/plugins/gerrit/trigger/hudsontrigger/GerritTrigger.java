@@ -304,9 +304,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         }
 
-        GerritProjectList.clearTriggerProjects(this);
+        GerritProjectList.removeTriggerFromProjectList(this);
         if (allowTriggeringUnreviewedPatches) {
-            //GerritProjectList.cleanTriggerProjects(this);
             for (GerritProject p : gerritProjects) {
                 GerritProjectList.addProject(p, this);
             }

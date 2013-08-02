@@ -154,7 +154,7 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Check unreviewed patchsets}"
+        <f:entry title="${%Check non-reviewed patchsets}"
                  field="allowTriggeringUnreviewedPatches"
                  help="/plugin/gerrit-trigger/trigger/help-TriggerUnreviewedPatches.html">
            <f:checkbox name="allowTriggeringUnreviewedPatches" checked="${it.allowTriggeringUnreviewedPatches}"/>
