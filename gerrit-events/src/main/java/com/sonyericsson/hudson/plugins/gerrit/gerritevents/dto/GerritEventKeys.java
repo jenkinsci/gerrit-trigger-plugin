@@ -120,7 +120,7 @@ public abstract class GerritEventKeys {
      */
     public static final String NEWREV = "newRev";
     /**
-     * submitter.
+     * author.
      */
     public static final String AUTHOR = "author";
     /**
