@@ -37,6 +37,7 @@ public class TriggerNotReviewedPatches {
      */
     private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
     private static final Logger logger = LoggerFactory.getLogger(TriggerNotReviewedPatches.class);
+    private List<PatchsetCreated> events = new ArrayList<PatchsetCreated>();
 
     /**
      * Initializes changeSet.
@@ -127,28 +128,35 @@ public class TriggerNotReviewedPatches {
     }
 
     /**
-     * Trigger unreviewed patches.
-     * Function goes through every current open patch sets in gerrit project.
-     * Function triggers patches which aren't reviewed by Gerrit user.
-     * @param username the Jenkins plugin's Gerrit username.
-     * @param trigger the GerritTrigger.
+     * Triggers all patches in events-list.
+     * @param trigger the GerritTrigger
      */
-    public void triggerNotReviewedPatches(String username, GerritTrigger trigger) {
-        logger.debug("Starting checking missed patches from project!");
+    public void triggerUnreviewedPatches(GerritTrigger trigger) {
+        if (trigger != null && trigger.isAllowTriggeringUnreviewedPatches()) {
+            for (PatchsetCreated event : this.events) {
+                trigger.gerritEvent(event);
+            }
+        }
+    }
+
+    /**
+     * Searches unreviewed patches and adds those to events-list.
+     * Function goes through every current open patch sets in gerrit project.
+     * Function adds patches to events-list, which aren't reviewed by Gerrit user.
+     * @param username the Jenkins plugin's Gerrit username.
+     */
+    public void searchUnreviewedPatches(String username) {
         for (JSONObject changedPatch : this.changeSets.keySet()) {
             if (!hasUserReviewedChange(changedPatch, username)) {
                 Change change = new Change(changedPatch);
                 Object patchSetObj = changedPatch.get("currentPatchSet");
-                logger.debug(change.getChangeInfo("Located a new patchset in Gerrit:"));
                 if (patchSetObj instanceof JSONObject) {
                     JSONObject currentPatchSet = (JSONObject)patchSetObj;
                     PatchSet patchSet = new PatchSet(currentPatchSet);
                     PatchsetCreated event = new PatchsetCreated();
                     event.setChange(change);
                     event.setPatchset(patchSet);
-                    if (trigger.isAllowTriggeringUnreviewedPatches()) {
-                        trigger.gerritEvent(event);
-                    }
+                    this.events.add(event);
                 } else {
                     logger.error("Parsing JSON object failed: " + changedPatch.toString());
                 }

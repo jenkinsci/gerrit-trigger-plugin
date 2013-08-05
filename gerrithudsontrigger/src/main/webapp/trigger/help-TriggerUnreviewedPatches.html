@@ -1,11 +1,10 @@
-Option allows checking and running unreviewed patches when connection is established.
-If a new unreviewed patchset has been created during Jenkins server down time,
-will Jenkins trigger patchset created event normally when connection is created.<br/><br/>
+Allows checking and running unreviewed patches when connection is established.
+If a unreviewed patchset has been created during Jenkins server down time,
+will Jenkins trigger "patchset created"-event normally when connection is created.<br/><br/>
 
 
 <b>Caution!</b><br/>
 <ul>
-  <li>Allowing the property, allows the property in every job which uses the same Gerrit projects.</li>
   <li>Property <b>supports only plain text</b> formatted project patterns. Other type of project patterns will be ignored.</li>
-  <li>Property <b>supports only patchset created events</b>. Other type of events will be ignored.</li>
+  <li>Property <b>supports only "patchset created"-events</b>. Other type of events will be ignored.</li>
 </ul>

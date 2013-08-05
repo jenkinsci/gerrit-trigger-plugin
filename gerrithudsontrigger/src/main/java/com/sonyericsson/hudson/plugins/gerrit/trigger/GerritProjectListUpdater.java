@@ -102,14 +102,16 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
             IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
             String projectName = entry.getKey();
-            ArrayList<GerritTrigger> triggerList = entry.getValue();
+            ArrayList<GerritTrigger> triggers = entry.getValue();
+            if (triggers == null || triggers.isEmpty()) {
+                continue;
+            }
 
             try {
-                if (triggerList != null && !triggerList.isEmpty()) {
-                    TriggerNotReviewedPatches unreviewedPatches = new TriggerNotReviewedPatches(projectName);
-                    for (GerritTrigger trigger : triggerList) {
-                        unreviewedPatches.triggerNotReviewedPatches(config.getGerritUserName(), trigger);
-                    }
+                TriggerNotReviewedPatches unreviewedPatches = new TriggerNotReviewedPatches(projectName);
+                unreviewedPatches.searchUnreviewedPatches(config.getGerritUserName());
+                for (GerritTrigger trigger : triggers) {
+                    unreviewedPatches.triggerUnreviewedPatches(trigger);
                 }
             } catch (Exception ex) {
                 logger.error("Unable to identify unreviewed patch sets!\nProject name: " + projectName, ex);
