@@ -45,22 +45,24 @@ public class GerritManualCause extends GerritUserCause {
     /**
      * Standard constructor.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if silent mode.
      * @param context the trigger context.
      * @see GerritCause#GerritCause(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated, boolean, com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext)
      */
-    public GerritManualCause(ManualPatchsetCreated event, boolean silentMode, TriggerContext context) {
-        super(event, silentMode, context, event.getUserName());
+    public GerritManualCause(ManualPatchsetCreated event, String serverName, boolean silentMode, TriggerContext context) {
+        super(event, serverName, silentMode, context, event.getUserName());
     }
 
     /**
      * Standard constructor.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if it is in silent mode.
      * @see GerritCause#GerritCause(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated, boolean)
      */
-    public GerritManualCause(ManualPatchsetCreated event, boolean silentMode) {
-        super(event, silentMode, event.getUserName());
+    public GerritManualCause(ManualPatchsetCreated event, String serverName, boolean silentMode) {
+        super(event, serverName, silentMode, event.getUserName());
     }
 
     /**

@@ -39,6 +39,10 @@ public final class GerritDefaultValues {
 
     }
     /**
+     * The default gerrit name.
+     */
+    public static final String DEFAULT_GERRIT_NAME = "";
+    /**
      * The default gerrit hostname.
      */
     public static final String DEFAULT_GERRIT_HOSTNAME = "";

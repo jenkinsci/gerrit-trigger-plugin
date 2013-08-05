@@ -385,7 +385,7 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", null, null, triggerOnEvents, false, "");
+                true, true, false, "", "", "", "", "", "", null, null, triggerOnEvents, false, "");
 
         if (project != null) {
             trigger.start(project, true);
@@ -410,7 +410,7 @@ public final class Setup {
      */
     public static ToGerritRunListener createFailureMessageRunListener(final AbstractBuild build,
             final PatchsetCreated event, final String filepath) {
-        GerritCause cause = new GerritCause(event, false);
+        GerritCause cause = new GerritCause(event, "server", false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));

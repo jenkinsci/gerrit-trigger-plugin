@@ -41,7 +41,7 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     GerritTriggerTimerTask(GerritTrigger gerritTrigger) {
         this.gerritTrigger = gerritTrigger;
-        GerritTriggerTimer.getInstance().schedule(this);
+        GerritTriggerTimer.getInstance().schedule(this, gerritTrigger.getServerName());
     }
 
     /**

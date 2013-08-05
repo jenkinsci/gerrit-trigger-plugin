@@ -34,6 +34,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCo
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildStartedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 
@@ -59,27 +61,24 @@ public class NotificationFactory {
     }
 
     /**
-     * Shortcut method to get the config from {@link com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl}.
-     * Throws an IllegalStateException if PluginImpl hasn't been started yet.
+     * Shortcut method to get the config from {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer}.
      *
-     * @return the plugin-config.
+     * @param serverName the name of the server.
+     * @return the server-config.
      */
-    public IGerritHudsonTriggerConfig getConfig() {
-        if (PluginImpl.getInstance() == null) {
-            //If this happens we are sincerely screwed anyways.
-            throw new IllegalStateException("PluginImpl has not been loaded yet!");
-        }
-        return PluginImpl.getInstance().getConfig();
+    public IGerritHudsonTriggerConfig getConfig(String serverName) {
+        return PluginImpl.getInstance().getServer(serverName).getConfig();
     }
 
     /**
      * Factory method for creating a GerritNotifier.
      *
      * @param cmdRunner - something capable of sending commands to Gerrit.
+     * @param serverName  the name of the server.
      * @return a GerritNotifier
      */
-    public GerritNotifier createGerritNotifier(GerritCmdRunner cmdRunner) {
-        IGerritHudsonTriggerConfig config = getConfig();
+    public GerritNotifier createGerritNotifier(GerritCmdRunner cmdRunner, String serverName) {
+        IGerritHudsonTriggerConfig config = getConfig(serverName);
         return createGerritNotifier(config, cmdRunner);
     }
 
@@ -105,7 +104,8 @@ public class NotificationFactory {
      * @see BuildCompletedCommandJob
      */
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
-        BuildCompletedCommandJob job = new BuildCompletedCommandJob(getConfig(),
+        String serverName = memoryImprint.getEvent().getProvider().getName();
+        BuildCompletedCommandJob job = new BuildCompletedCommandJob(getConfig(serverName),
                 memoryImprint, listener);
         GerritSendCommandQueue.queue(job);
     }
@@ -124,7 +124,8 @@ public class NotificationFactory {
      */
     public void queueBuildStarted(AbstractBuild build, TaskListener listener,
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
-        BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(),
+        String serverName = GerritTrigger.getTrigger(build.getProject()).getServerName();
+        BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(serverName),
                 build, listener, event, stats);
         GerritSendCommandQueue.queue(job);
     }

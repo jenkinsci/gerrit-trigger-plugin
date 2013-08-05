@@ -301,7 +301,15 @@ public enum GerritTriggerParameters {
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
-            String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event);
+
+            String serverName = PluginImpl.DEFAULT_SERVER_NAME;
+            if (project != null) {
+                serverName = GerritTrigger.getTrigger(project).getServerName();
+            } else if (event.getProvider() != null) {
+                serverName = event.getProvider().getName();
+            }
+            String url = PluginImpl.getInstance().getServer(serverName).getConfig().getGerritFrontEndUrlFor(event);
+
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {

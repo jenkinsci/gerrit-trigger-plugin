@@ -1,7 +1,10 @@
  <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
-    <j:set var="fileTriggerEnabled" value="${descriptor.isFileTriggerEnabled()}"/>
+    <j:set var="fileTriggerEnabled" value="${it.isFileTriggerEnabled()}"/>
+    <j:invokeStatic var="trigger" method="getTrigger" className="com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger">
+        <j:arg type="hudson.model.AbstractProject" value="${it}" />
+    </j:invokeStatic>
     <f:section title="${%Gerrit Trigger}">
         <f:advanced>
             <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
@@ -148,6 +151,7 @@
                 </f:entry>
             </f:section>
         </f:advanced>
+
         <f:entry title="${%Silent Mode}"
                  field="silentMode"
                  help="/plugin/gerrit-trigger/trigger/help-SilentMode.html">
@@ -172,6 +176,14 @@
                 </f:optionalBlock>
             </table>
         </f:entry>
+
+        <!-- Getting list of GerritServer objects configured at the global level -->
+        <f:section title="Gerrit Servers">
+            <f:entry title="Choose a server" description="${it.description}" field="serverName">
+                <f:select/>
+            </f:entry>
+        </f:section>
+
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
                 <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">

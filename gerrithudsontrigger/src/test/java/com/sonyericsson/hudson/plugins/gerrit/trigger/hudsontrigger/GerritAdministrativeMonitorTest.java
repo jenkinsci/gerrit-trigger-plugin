@@ -24,9 +24,10 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +35,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -52,6 +55,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class GerritAdministrativeMonitorTest {
 
     private PluginImpl plugin;
+    private GerritServer server;
 
     /**
      * Static mocking setup of {@link #plugin}.
@@ -59,9 +63,14 @@ public class GerritAdministrativeMonitorTest {
     @Before
     public void setUp() {
         plugin = mock(PluginImpl.class);
-        when(plugin.addListener(any(ConnectionListener.class))).thenReturn(true);
+        server = mock(GerritServer.class);
+        ArrayList<GerritServer> servers = new ArrayList<GerritServer>();
+        servers.add(server);
         PowerMockito.mockStatic(PluginImpl.class);
         when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getServers()).thenReturn(servers);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
     }
 
     /**
@@ -72,8 +81,12 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testIsGerritSnapshotVersion() throws Exception {
         String version = "2.2.2.1-340-g47084d4";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
         assertTrue(monitor.isGerritSnapshotVersion());
     }
 
@@ -85,8 +98,12 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testIsGerritSnapshotVersionNot() throws Exception {
         String version = "2.2.2.1";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
         assertFalse(monitor.isGerritSnapshotVersion());
     }
 
@@ -98,8 +115,12 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testIsGerritSnapshotVersionNotRc() throws Exception {
         String version = "2.3-rc0";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
         assertFalse(monitor.isGerritSnapshotVersion());
     }
 
@@ -111,9 +132,16 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testGetDisabledFeatures() throws Exception {
         String version = "2.2.2.1";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
-        List<GerritVersionChecker.Feature> disabledFeatures = monitor.getDisabledFeatures();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
+        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<GerritVersionChecker.Feature>();
+        if (monitor.hasDisabledFeatures()) {
+            disabledFeatures = monitor.getDisabledFeatures(server.getName());
+        }
         assertFalse(disabledFeatures.isEmpty());
         boolean foundFileTrigger = false;
         for (GerritVersionChecker.Feature feature : disabledFeatures) {
@@ -125,7 +153,7 @@ public class GerritAdministrativeMonitorTest {
     }
 
     /**
-     * Tests {@link GerritAdministrativeMonitor#getDisabledFeatures()} is empty for version 2.5. TODO update this test's
+   * Tests {@link GerritAdministrativeMonitor#getDisabledFeatures()} is empty for version 2.5. TODO update this test's
      * version check whenever we get a new feature requiring a newer version.
      *
      * @throws Exception if so.
@@ -133,9 +161,13 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testGetDisabledFeaturesNone() throws Exception {
         String version = "2.5";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
-        List<GerritVersionChecker.Feature> disabledFeatures = monitor.getDisabledFeatures();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
+        List<GerritVersionChecker.Feature> disabledFeatures = monitor.getDisabledFeatures(server.getName());
         assertTrue(disabledFeatures.isEmpty());
     }
 
@@ -147,8 +179,12 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testHasDisabledFeatures() throws Exception {
         String version = "2.2.2.1";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
         assertTrue(monitor.hasDisabledFeatures());
     }
 
@@ -161,8 +197,12 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testHasDisabledFeaturesNot() throws Exception {
         String version = "2.5";
-        when(plugin.getGerritVersion()).thenReturn(version);
+        when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        GerritConnectionListener listener = new GerritConnectionListener(server.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(server.getGerritConnectionListener()).thenReturn(listener);
         assertFalse(monitor.hasDisabledFeatures());
     }
 }

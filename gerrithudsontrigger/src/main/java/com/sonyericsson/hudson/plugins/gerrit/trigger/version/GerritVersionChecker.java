@@ -99,11 +99,17 @@ public final class GerritVersionChecker {
      * Tells us if we are running the correct version for a particular feature.
      *
      * @param feature the feature we want to check.
+     * @param serverName the name of the Gerrit server.
      * @return true if the Gerrit version is high enough for us to use this feature.
      */
-    public static boolean isCorrectVersion(Feature feature) {
-        GerritVersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getGerritVersion());
-        return isCorrectVersion(gerritVersion, feature);
+    public static boolean isCorrectVersion(Feature feature, String serverName) {
+        if (PluginImpl.getInstance() != null) {
+            GerritVersionNumber gerritVersion
+                = createVersionNumber(PluginImpl.getInstance().getServer(serverName).getGerritVersion());
+            return isCorrectVersion(gerritVersion, feature);
+        } else {
+            return false;
+        }
     }
 
     /**

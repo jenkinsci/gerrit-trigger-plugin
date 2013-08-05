@@ -57,15 +57,18 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     private boolean shutdown = false;
     private static final Logger logger = LoggerFactory.getLogger(GerritProjectListUpdater.class);
     private List<String> gerritProjects;
+    private String serverName;
 
     /**
      * Standard constructor.
+     *
+     * @param serverName the name of the Gerrit server.
      */
-    public GerritProjectListUpdater() {
-        this.setName(this.getClass().getName() + " Thread");
+    public GerritProjectListUpdater(String serverName) {
+        this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
-
-        connected = PluginImpl.getInstance().addListener(this);
+        this.serverName = serverName;
+        connected = PluginImpl.getInstance().getServer(serverName).addListener(this);
     }
 
     @Override
@@ -91,8 +94,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     public void run() {
         while (!shutdown) {
             try {
-                if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null && isConnected()) {
-                    IGerritHudsonTriggerConfig activeConfig = PluginImpl.getInstance().getConfig();
+                if (isConnected()) {
+                    IGerritHudsonTriggerConfig activeConfig = PluginImpl.getInstance().getServer(serverName).getConfig();
                     SshConnection sshConnection = SshConnectionFactory.getConnection(
                             activeConfig.getGerritHostName(),
                             activeConfig.getGerritSshPort(),
@@ -117,7 +120,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 break;
             }
         }
-        PluginImpl.getInstance().removeListener(this);
+        PluginImpl.getInstance().getServer(serverName).removeListener(this);
     }
 
     /**

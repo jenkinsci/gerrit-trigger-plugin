@@ -31,6 +31,14 @@
                             <f:description>
                                 ${%SearchDescription}
                             </f:description>
+                            <f:entry title="Select Gerrit Server">
+                                <j:set var="servers" value="${it.getEnabledServers()}" />
+                                <select name="enabledServer">
+                                    <j:forEach var="inst" items="${servers}">
+                                        <f:option selected="${inst==it.getActiveServer()}">${inst}</f:option>
+                                    </j:forEach>
+                                </select>
+                            </f:entry>
                             <f:entry title="${%Query String}"
                                      help="/plugin/gerrit-trigger/manual/help-Search.html">
                                 <f:textbox name="queryString"

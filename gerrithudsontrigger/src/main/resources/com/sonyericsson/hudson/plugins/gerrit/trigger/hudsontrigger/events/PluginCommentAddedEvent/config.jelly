@@ -22,8 +22,18 @@
   ~ THE SOFTWARE.
   -->
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+
+    <!-- populate the dropdown in GerritTrigger to get information on the selected server -->
+    <j:invokeStatic var="trigger" method="getTrigger" className="com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger">
+        <j:arg type="hudson.model.AbstractProject" value="${it}" />
+    </j:invokeStatic>
+
     <f:entry title="${%Verdict Category}" >
-        <f:select field="verdictCategory"/>
+        <select name="verdictCategory">
+            <j:forEach var="i" items="${trigger.doFillVerdictCategoryItems()}" varStatus="loop">
+                <option value="${i.value}">${i.name}</option>
+            </j:forEach>
+        </select>
     </f:entry>
     <f:entry title="${%Value}" field="commentAddedTriggerApprovalValue">
         <f:textbox name="commentAddedTriggerApprovalValue" field="commentAddedTriggerApprovalValue"/>

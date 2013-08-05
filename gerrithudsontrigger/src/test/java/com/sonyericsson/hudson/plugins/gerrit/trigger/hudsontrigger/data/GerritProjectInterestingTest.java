@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 
 /**
  * Testing different scenarios if they are interesting.
@@ -71,19 +72,19 @@ public class GerritProjectInterestingTest {
         List<Branch> branches = new LinkedList<Branch>();
         Branch branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
-        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, null);
+        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, null, any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, null , any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "origin/master", true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, null, any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
@@ -91,7 +92,7 @@ public class GerritProjectInterestingTest {
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, null, any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
 
         branches = new LinkedList<Branch>();
@@ -99,13 +100,13 @@ public class GerritProjectInterestingTest {
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, null, any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "feature/mymaster", true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, null);
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, null, any(String.class));
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "vendor/semc/master/project",
                                                             "origin/master", true), });
 

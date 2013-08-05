@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
 
 
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +37,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for the version checking of gerrit.
@@ -44,6 +45,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ PluginImpl.class })
 public class VersionCheckTest {
+
+    private final String testServer = "server";
+
     /**
      * Tests that the gerrit version is high enough to run the file trigger feature.
      */
@@ -51,9 +55,11 @@ public class VersionCheckTest {
     public void testHighEnoughVersion() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getGerritVersion()).thenReturn("2.3.1-450");
-        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        PowerMockito.when(plugin.getServer(testServer)).thenReturn(server);
+        PowerMockito.when(server.getGerritVersion()).thenReturn("2.3.1-450");
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
 
     /**
@@ -63,9 +69,11 @@ public class VersionCheckTest {
     public void testNotHighEnoughVersion() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getGerritVersion()).thenReturn("2.2.2.1-150");
-        assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        PowerMockito.when(plugin.getServer(testServer)).thenReturn(server);
+        PowerMockito.when(server.getGerritVersion()).thenReturn("2.2.2.1-150");
+        assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
 
     /**
@@ -75,9 +83,11 @@ public class VersionCheckTest {
     public void testUnknownVersionEmpty() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getGerritVersion()).thenReturn("");
-        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        PowerMockito.when(plugin.getServer(testServer)).thenReturn(server);
+        PowerMockito.when(server.getGerritVersion()).thenReturn("");
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
 
     /**
@@ -87,9 +97,11 @@ public class VersionCheckTest {
     public void testUnknownVersionNull() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(plugin.getGerritVersion()).thenReturn(null);
-        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        PowerMockito.when(plugin.getServer(testServer)).thenReturn(server);
+        PowerMockito.when(server.getGerritVersion()).thenReturn(null);
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger , testServer));
     }
 
     /**
@@ -99,10 +111,12 @@ public class VersionCheckTest {
     public void testSnapshotVersion() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        PowerMockito.when(plugin.getServer(testServer)).thenReturn(server);
         String version = "2.2.2.1-340-g47084d4";
-        when(plugin.getGerritVersion()).thenReturn(version);
-        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger));
+        PowerMockito.when(server.getGerritVersion()).thenReturn(version);
+        assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger , testServer));
         assertTrue(GerritVersionNumber.getGerritVersionNumber(version).isSnapshot());
     }
 }

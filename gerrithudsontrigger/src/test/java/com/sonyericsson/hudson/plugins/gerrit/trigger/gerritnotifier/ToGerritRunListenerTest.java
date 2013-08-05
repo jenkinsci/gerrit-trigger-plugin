@@ -81,6 +81,9 @@ public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
     private NotificationFactory mockNotificationFactory;
+    private final String testServer1 = "server";
+    private final String testServer2 = "server2";
+    private final String testServer3 = "server3";
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -92,7 +95,8 @@ public class ToGerritRunListenerTest {
         PowerMockito.mockStatic(NotificationFactory.class);
         mockNotificationFactory = mock(NotificationFactory.class);
         mockNotifier = mock(GerritNotifier.class);
-        doReturn(mockNotifier).when(mockNotificationFactory).createGerritNotifier(any(GerritCmdRunner.class));
+        doReturn(mockNotifier).when(mockNotificationFactory)
+                .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
         PowerMockito.when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
     }
 
@@ -143,7 +147,7 @@ public class ToGerritRunListenerTest {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event = spy(event);
-        GerritCause cause = new GerritCause(event, false);
+        GerritCause cause = new GerritCause(event, testServer1, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
@@ -174,7 +178,7 @@ public class ToGerritRunListenerTest {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event = spy(event);
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
@@ -274,7 +278,7 @@ public class ToGerritRunListenerTest {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event = spy(event);
-        GerritCause cause = new GerritCause(event, false);
+        GerritCause cause = new GerritCause(event, testServer1, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
@@ -302,7 +306,7 @@ public class ToGerritRunListenerTest {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         event = spy(event);
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
@@ -364,7 +368,7 @@ public class ToGerritRunListenerTest {
     public void testCleanUpGerritCausesOne() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         List<Cause> causes = new LinkedList<Cause>();
@@ -389,7 +393,7 @@ public class ToGerritRunListenerTest {
     public void testCleanUpGerritCausesThree() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         List<Cause> causes = new LinkedList<Cause>();
@@ -416,13 +420,13 @@ public class ToGerritRunListenerTest {
     public void testCleanUpGerritCausesThreeInstances() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         List<Cause> causes = new LinkedList<Cause>();
         causes.add(cause);
-        causes.add(new GerritCause(event, true));
-        causes.add(new GerritCause(event, true));
+        causes.add(new GerritCause(event, testServer2, true));
+        causes.add(new GerritCause(event, testServer3, true));
         when(causeAction.getCauses()).thenReturn(causes);
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
@@ -443,7 +447,7 @@ public class ToGerritRunListenerTest {
     public void testCleanUpGerritCausesOneManual() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
-        GerritCause cause = new GerritCause(event, true);
+        GerritCause cause = new GerritCause(event, testServer1, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         GerritManualCause manualCause = new GerritManualCause();
         manualCause.setEvent(event);

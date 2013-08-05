@@ -41,15 +41,18 @@ public class GerritCause extends SCMTriggerCause {
     private GerritTriggeredEvent tEvent;
     private boolean silentMode;
     private TriggerContext context;
+    private String serverName;
 
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
+     * @param serverName the name of the server that triggered the event.
      * @param silentMode Silent Mode on or off.
      */
-    public GerritCause(GerritTriggeredEvent event, boolean silentMode) {
+    public GerritCause(GerritTriggeredEvent event, String serverName, boolean silentMode) {
         super("");
         this.tEvent = event;
+        this.serverName = serverName;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
     }
@@ -57,12 +60,14 @@ public class GerritCause extends SCMTriggerCause {
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
+     * @param serverName the name of the server that triggered the event.
      * @param silentMode Silent Mode on or off.
      * @param context The context with information about other builds triggered for the same event as this one.
      */
-    public GerritCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
+    public GerritCause(GerritTriggeredEvent event, String serverName, boolean silentMode, TriggerContext context) {
         super("");
         this.tEvent = event;
+        this.serverName = serverName;
         this.silentMode = silentMode;
         this.context = context;
     }
@@ -163,10 +168,10 @@ public class GerritCause extends SCMTriggerCause {
 
     /**
      * Gets the URL to the Gerrit patchSet.
-     * @return the URL.
+     * @return the URL. Empty String if no server found.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
+        return PluginImpl.getInstance().getServer(serverName).getConfig().getGerritFrontEndUrlFor(tEvent);
     }
 
     @Override

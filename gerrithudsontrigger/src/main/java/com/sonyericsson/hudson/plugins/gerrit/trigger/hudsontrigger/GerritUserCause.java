@@ -49,36 +49,39 @@ public class GerritUserCause extends GerritCause {
     /**
      * Standard Constructor.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if silentMode.
      * @param context the context.
      */
-    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
-        super(event, silentMode, context);
+    public GerritUserCause(GerritTriggeredEvent event, String serverName, boolean silentMode, TriggerContext context) {
+        super(event, serverName, silentMode, context);
         this.authenticationName = Hudson.getAuthentication().getName();
     }
 
     /**
      * Standard Constructor.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if silentMode.
      * @param context the context.
      * @param authenticationName the username.
      */
-    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode,
+    public GerritUserCause(GerritTriggeredEvent event, String serverName, boolean silentMode,
             TriggerContext context, String authenticationName) {
-        super(event, silentMode, context);
+        super(event, serverName, silentMode, context);
         this.authenticationName = authenticationName;
     }
 
     /**
      * Standard Constructor.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if silentMode.
      * @param authenticationName the username.
      */
-    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode,
+    public GerritUserCause(GerritTriggeredEvent event, String serverName, boolean silentMode,
             String authenticationName) {
-        super(event, silentMode);
+        super(event, serverName, silentMode);
         this.authenticationName = authenticationName;
     }
 
@@ -86,10 +89,11 @@ public class GerritUserCause extends GerritCause {
      * Standard Constructor.
      * Will take the userName from the current web-context.
      * @param event the event.
+     * @param serverName the name of the Gerrit server.
      * @param silentMode if silentMode.
      */
-    public GerritUserCause(GerritTriggeredEvent event, boolean silentMode) {
-        super(event, silentMode);
+    public GerritUserCause(GerritTriggeredEvent event, String serverName, boolean silentMode) {
+        super(event, serverName, silentMode);
         this.authenticationName = Hudson.getAuthentication().getName();
     }
 

@@ -25,16 +25,13 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.util.ListBoxModel;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * An event configuration that causes the build to be triggered when a comment is added.
@@ -100,21 +97,6 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
         @Override
         public String getDisplayName() {
             return Messages.CommentAddedDisplayName();
-        }
-
-        /**
-         * Fills the verdict category drop-down list.
-         * @return a ListBoxModel for the drop-down list.
-         */
-        public ListBoxModel doFillVerdictCategoryItems() {
-            ListBoxModel m = new ListBoxModel();
-            List<VerdictCategory> list = PluginImpl.getInstance().getConfig().getCategories();
-            if (list != null && !list.isEmpty()) {
-                for (VerdictCategory v : list) {
-                    m.add(v.getVerdictDescription(), v.getVerdictValue());
-                }
-            }
-            return m;
         }
     }
 

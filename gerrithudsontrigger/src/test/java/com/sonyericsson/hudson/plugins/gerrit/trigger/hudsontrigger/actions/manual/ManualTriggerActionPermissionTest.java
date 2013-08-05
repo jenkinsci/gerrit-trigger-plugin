@@ -6,6 +6,7 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.model.Hudson;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -29,6 +30,8 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testGetGetUrlNameNotPermitted() throws Exception {
+        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         WebClient wc = new WebClient();
         HtmlPage page = wc.goTo("/");
@@ -49,6 +52,8 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testGetUrlName() throws Exception {
+        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         WebClient wc = new WebClient().login("admin", "admin");
         HtmlPage page = wc.goTo("/");
@@ -68,6 +73,8 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testGetUrlNamePrivileged() throws Exception {
+        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         WebClient wc = new WebClient().login("bobby", "bobby");
         HtmlPage page = wc.goTo("/");
@@ -114,6 +121,10 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testDoGerritSearch() throws Exception {
+        //TODO: this test fails with code 500 and a SSH connection error.
+
+        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         WebClient wc = new WebClient().login("bobby", "bobby");
         try {
@@ -141,6 +152,8 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testDoGerritSearchNotPermitted() throws Exception {
+        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         WebClient wc = new WebClient();
         try {

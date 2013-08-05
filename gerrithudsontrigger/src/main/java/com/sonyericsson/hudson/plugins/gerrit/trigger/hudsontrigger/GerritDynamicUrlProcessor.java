@@ -102,11 +102,12 @@ public final class GerritDynamicUrlProcessor {
     /**
      * Read and parse the dynamic trigger configuration
      * @param reader stream from which to read the config
+     * @param serverName the name of the Gerrit server.
      * @return List of Gerrit projects
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader)
+    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader, String serverName)
             throws IOException, ParseException {
       Pattern linePattern = buildLinePattern();
 
@@ -162,7 +163,7 @@ public final class GerritDynamicUrlProcessor {
 
           branches = new ArrayList<Branch>();
           filePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, filePaths);
+          dynamicGerritProject = new GerritProject(type, text, branches, filePaths, serverName);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
@@ -194,11 +195,12 @@ public final class GerritDynamicUrlProcessor {
      * since the last fetch, it returns null.
      *
      * @param gerritTriggerConfigUrl the URL to fetch
+     * @param serverName name of the Gerrit server.
      * @return a list of GerritProjects if successful, or null if no change
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    public static List<GerritProject> fetch(String gerritTriggerConfigUrl)
+    public static List<GerritProject> fetch(String gerritTriggerConfigUrl, String serverName)
             throws IOException, ParseException {
 
         if (gerritTriggerConfigUrl == null) {
@@ -219,7 +221,7 @@ public final class GerritDynamicUrlProcessor {
         try {
           instream = connection.getInputStream();
           reader = new BufferedReader(new InputStreamReader(instream));
-          return readAndParseTriggerConfig(reader);
+          return readAndParseTriggerConfig(reader, serverName);
         } finally {
           if (reader != null) {
             reader.close();
