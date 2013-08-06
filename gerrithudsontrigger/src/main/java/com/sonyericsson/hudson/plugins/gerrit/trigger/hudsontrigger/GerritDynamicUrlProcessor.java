@@ -28,6 +28,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +114,7 @@ public final class GerritDynamicUrlProcessor {
 
       List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
       List<Branch> branches = null;
+      List<Topic> topics = null;
       List<FilePath> filePaths = null;
       GerritProject dynamicGerritProject = null;
 
@@ -161,8 +164,9 @@ public final class GerritDynamicUrlProcessor {
           }
 
           branches = new ArrayList<Branch>();
+          topics = new ArrayList<Topic>();
           filePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, filePaths);
+          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
