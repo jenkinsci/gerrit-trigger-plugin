@@ -58,6 +58,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @param compareType the compareType
      * @param pattern the project-name pattern
      * @param branches the branch-rules
+     * @param topics the topic-rules
      * @param filePaths the file-path rules.
      */
     @DataBoundConstructor
@@ -158,6 +159,7 @@ public class GerritProject implements Describable<GerritProject> {
      * Compares the project, branch and files to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
+     * @param topic the topic.
      * @param files the files.
      * @return true is the rules match.
      */
