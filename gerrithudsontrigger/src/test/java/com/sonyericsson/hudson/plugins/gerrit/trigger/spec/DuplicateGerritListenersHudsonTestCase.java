@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -132,11 +133,15 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         //create a server for testing
         GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         servers.add(server);
+        server.start();
 
         FreeStyleProject p = createGerritTriggeredJob(this, "testJob4");
         GerritHandler handler = Whitebox.getInternalState(server, GerritHandler.class);
-        assertNull(handler);
-        Collection<GerritEventListener> savedEventListeners = Whitebox.getInternalState(server, "savedEventListeners");
+        assertNotNull(handler);
+        GerritConnection connection = Whitebox.getInternalState(server, GerritConnection.class);
+        assertNull(connection);
+        Collection<GerritEventListener> savedEventListeners =
+                Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, savedEventListeners.size());
         Config config = (Config)server.getConfig();
         config.setGerritAuthKeyFile(keyFile);
@@ -150,6 +155,8 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
+        connection = Whitebox.getInternalState(server, GerritConnection.class);
+        assertNotNull(connection);
     }
 
 

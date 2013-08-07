@@ -62,13 +62,13 @@ public class StreamWatchdog extends TimerTask {
     private WatchTimeExceptionData exceptionData;
 
     /**
-     * Standard Constructor. Same as calling <code> StreamWatchdog(coordinator, timeoutSeconds, exceptionData,
+     * Standard Constructor. Same as calling <code> StreamWatchdog(connector, timeoutSeconds, exceptionData,
      * DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD) </code>
      *
      * @param connector    the connector who can do the actual restart of the connection.
      * @param timeoutSeconds number of seconds before a timeout should occur.
      * @param exceptionData  time spans and days when the timeout trigger should not be in effect.
-     * @see #StreamWatchdog(Coordinator, int, WatchTimeExceptionData, long, long)
+     * @see #StreamWatchdog(Connector, int, WatchTimeExceptionData, long, long)
      */
     public StreamWatchdog(Connector connector, int timeoutSeconds, WatchTimeExceptionData exceptionData) {
         this(connector, timeoutSeconds, exceptionData, DEFAULT_CHECK_START_DELAY, DEFAULT_CHECK_PERIOD);
@@ -129,6 +129,5 @@ public class StreamWatchdog extends TimerTask {
      */
     public void shutdown() {
         timer.cancel();
-        timer = null;
     }
 }
