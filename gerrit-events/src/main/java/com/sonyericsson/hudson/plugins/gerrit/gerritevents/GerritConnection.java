@@ -65,14 +65,28 @@ public class GerritConnection extends Thread implements Connector {
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
     private static final String GERRIT_NAME = "gerrit";
     private static final String GERRIT_PROTOCOL_NAME = "ssh";
+    /**
+     * The amount of milliseconds to pause when brute forcing the shutdown flag to true.
+     */
+    protected static final int PAUSE_SECOND = 1000;
+    /**
+     * How many times to try and set the shutdown flag to true. Noticed during unit tests there seems to be a timing
+     * issue or something so sometimes the {@shutdownInProgress} flag is not set properly. Setting it a number of times
+     * with some delay helped.
+     *
+     * @see #shutdown(boolean)
+     * @see #PAUSE_SECOND
+     */
+    protected static final int BRUTE_FORCE_TRIES = 10;
     private static final Logger logger = LoggerFactory.getLogger(GerritConnection.class);
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
     private Authentication authentication;
     private SshConnection sshConnection;
-    private volatile boolean shutdownInProgress = false;
-    private volatile boolean connected = false;
+    private boolean shutdownInProgress = false;
+    private final Object shutdownInProgressSync = new Object();
+    private boolean connecting = false;
     private String gerritVersion = null;
     private int watchdogTimeoutSeconds;
     private WatchTimeExceptionData exceptionData;
@@ -275,6 +289,7 @@ public class GerritConnection extends Thread implements Connector {
                     logger.warn("Error when disconnecting sshConnection.", ex);
                 }
                 sshConnection = null;
+                notifyConnectionDown();
                 if (br != null) {
                     try {
                         br.close();
@@ -282,7 +297,6 @@ public class GerritConnection extends Thread implements Connector {
                         logger.warn("Could not close events reader.", ex);
                     }
                 }
-                notifyConnectionDown();
             }
         } while (!isShutdownInProgress());
         handler = null;
@@ -295,11 +309,18 @@ public class GerritConnection extends Thread implements Connector {
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {
-        while (!isShutdownInProgress()) {
+        connecting = true;
+        while (true) { //TODO do not go on forever.
+            if (isShutdownInProgress()) {
+                connecting = false;
+                return null;
+            }
             SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
                 ssh = SshConnectionFactory.getConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
+                notifyConnectionEstablished();
+                connecting = false;
                 gerritVersion  = formatVersion(ssh.executeCommand("gerrit version"));
                 logger.debug("connection seems ok, returning it.");
                 return ssh;
@@ -309,6 +330,7 @@ public class GerritConnection extends Thread implements Connector {
                 logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("ConnectionException: ", sshConEx);
+                notifyConnectionDown();
             } catch (SshAuthenticationException sshAuthEx) {
                 logger.error("Could not authenticate to Gerrit server!"
                         + "\n\tUsername: {}\n\tKeyFile: {}\n\tPassword: {}",
@@ -316,12 +338,14 @@ public class GerritConnection extends Thread implements Connector {
                                 authentication.getPrivateKeyFile(),
                                 authentication.getPrivateKeyFilePassword(), });
                 logger.error("AuthenticationException: ", sshAuthEx);
+                notifyConnectionDown();
             } catch (IOException ex) {
                 logger.error("Could not connect to Gerrit server! "
                         + "Host: {} Port: {}", gerritHostName, gerritSshPort);
                 logger.error(" Proxy: {}", gerritProxy);
                 logger.error(" User: {} KeyFile: {}", authentication.getUsername(), authentication.getPrivateKeyFile());
                 logger.error("IOException: ", ex);
+                notifyConnectionDown();
             }
 
             if (ssh != null) {
@@ -338,17 +362,19 @@ public class GerritConnection extends Thread implements Connector {
                 }
             }
 
-            if (!isShutdownInProgress()) {
-                //If we end up here, sleep for a while and then go back up in the loop.
-                logger.trace("Sleeping for a bit.");
-                try {
-                    Thread.sleep(CONNECT_SLEEP);
-                } catch (InterruptedException ex) {
-                    logger.warn("Got interrupted while sleeping.", ex);
-                }
+            if (isShutdownInProgress()) {
+                connecting = false;
+                return null;
+            }
+
+            //If we end up here, sleep for a while and then go back up in the loop.
+            logger.trace("Sleeping for a bit.");
+            try {
+                Thread.sleep(CONNECT_SLEEP);
+            } catch (InterruptedException ex) {
+                logger.warn("Got interrupted while sleeping.", ex);
             }
         }
-        return null;
     }
 
     /**
@@ -456,8 +482,10 @@ public class GerritConnection extends Thread implements Connector {
      *
      * @param isIt true if shutdown is in progress.
      */
-    private void setShutdownInProgress() {
-            this.shutdownInProgress = false;
+    private void setShutdownInProgress(boolean isIt) {
+        synchronized (shutdownInProgressSync) {
+            this.shutdownInProgress = isIt;
+        }
     }
 
     /**
@@ -466,15 +494,9 @@ public class GerritConnection extends Thread implements Connector {
      * @return true if so.
      */
     public boolean isShutdownInProgress() {
-            return shutdownInProgress;
-    }
-
-    /**
-     * If already connected.
-     * @return true if already connected.
-     */
-    public boolean isConnected() {
-        return connected;
+        synchronized (shutdownInProgressSync) {
+            return this.shutdownInProgress;
+        }
     }
 
     @Override
@@ -502,24 +524,48 @@ public class GerritConnection extends Thread implements Connector {
      * @param join if the method should wait for the thread to finish before returning.
      */
     public void shutdown(boolean join) {
-        setShutdownInProgress();
         if (watchdog != null) {
             watchdog.shutdown();
         }
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
-            try {
-                sshConnection.disconnect();
-            } catch (Exception ex) {
-                logger.warn("Error when disconnecting sshConnection.", ex);
+            //For some reason the shutdown flag is not correctly set.
+            //So we'll try the brute force way.... and it actually works.
+            for (int i = 0; i < BRUTE_FORCE_TRIES; i++) {
+                setShutdownInProgress(true);
+                if (!isShutdownInProgress()) {
+                    try {
+                        Thread.sleep(PAUSE_SECOND);
+                    } catch (InterruptedException e) {
+                        logger.debug("Interrupted while pausing in the shutdown flag set.");
+                    }
+                } else {
+                    break;
+                }
             }
-        }
-        if (join) {
-            try {
-                this.join();
-            } catch (InterruptedException ex) {
-                logger.warn("Got interrupted while waiting for shutdown.", ex);
+            //Fail terribly if we still couldn't
+            if (!isShutdownInProgress()) {
+                throw new RuntimeException("Failed to set the shutdown flag!");
             }
+            sshConnection.disconnect();
+            if (join) {
+                try {
+                    this.join();
+                } catch (InterruptedException ex) {
+                    logger.warn("Got interrupted while waiting for shutdown.", ex);
+                }
+            }
+        } else if (connecting) {
+            setShutdownInProgress(true);
+            if (join) {
+                try {
+                    this.join();
+                } catch (InterruptedException ex) {
+                    logger.warn("Got interrupted while waiting for shutdown.", ex);
+                }
+            }
+        } else {
+            logger.warn("Was told to shutdown without a connection.");
         }
     }
 
@@ -527,7 +573,6 @@ public class GerritConnection extends Thread implements Connector {
      * Notifies all ConnectionListeners that the connection is down.
      */
     protected void notifyConnectionDown() {
-        connected = false;
         if (handler != null) {
             handler.notifyConnectionDown();
         }
@@ -537,7 +582,6 @@ public class GerritConnection extends Thread implements Connector {
      * Notifies all ConnectionListeners that the connection is established.
      */
     protected void notifyConnectionEstablished() {
-        connected = true;
         if (handler != null) {
             handler.notifyConnectionEstablished();
         }
