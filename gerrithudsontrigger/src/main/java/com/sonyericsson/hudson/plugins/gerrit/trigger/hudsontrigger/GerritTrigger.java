@@ -315,6 +315,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     @Override
     public void stop() {
         logger.debug("Stop");
+        GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
             if (PluginImpl.getInstance() != null) {

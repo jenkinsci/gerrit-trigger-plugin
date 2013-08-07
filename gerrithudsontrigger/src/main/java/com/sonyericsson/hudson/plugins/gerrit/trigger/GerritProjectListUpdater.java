@@ -28,19 +28,13 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.TriggerNotReviewedPatches;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritProjectList;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * Class responsible for providing the Config object with a list of all
@@ -93,32 +87,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         notify();
     }
 
-    /**
-     * Checks changes from Jenkins related Gerrit projects.
-     * Triggers Jenkins jobs which are realted to unreviewed Gerrit patch sets.
-     */
-    private void runUnreviewedPatchSets() {
-        Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
-        for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
-            IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
-            String projectName = entry.getKey();
-            ArrayList<GerritTrigger> triggers = entry.getValue();
-            if (triggers == null || triggers.isEmpty()) {
-                continue;
-            }
-
-            try {
-                TriggerNotReviewedPatches unreviewedPatches = new TriggerNotReviewedPatches(projectName);
-                unreviewedPatches.searchUnreviewedPatches(config.getGerritUserName());
-                for (GerritTrigger trigger : triggers) {
-                    unreviewedPatches.triggerUnreviewedPatches(trigger);
-                }
-            } catch (Exception ex) {
-                logger.error("Unable to identify unreviewed patch sets!\nProject name: " + projectName, ex);
-            }
-        }
-    }
-
     @Override
     public void run() {
         while (!shutdown) {
@@ -133,7 +101,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                     );
                     setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
                     sshConnection.disconnect();
-                    runUnreviewedPatchSets();
                 }
             } catch (SshException ex) {
                  logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);

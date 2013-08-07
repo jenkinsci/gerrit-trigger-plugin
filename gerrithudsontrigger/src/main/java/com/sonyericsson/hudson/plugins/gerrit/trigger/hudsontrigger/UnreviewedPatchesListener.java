@@ -1,3 +1,27 @@
+/*
+ *  The MIT License
+ *
+ *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
@@ -6,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 
@@ -13,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -27,7 +51,10 @@ import java.util.HashMap;
  *
  * TODO: Support to all types of events.
  */
-public class TriggerNotReviewedPatches {
+public class UnreviewedPatchesListener implements ConnectionListener {
+
+    private boolean connected = false;
+    private static final Logger logger = LoggerFactory.getLogger(UnreviewedPatchesListener.class);
 
     /**
      * changeSets data structure has Gerrit project's current open change sets as keys
@@ -36,11 +63,46 @@ public class TriggerNotReviewedPatches {
      * changeSet : [list of reviewers]
      */
     private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
-    private static final Logger logger = LoggerFactory.getLogger(TriggerNotReviewedPatches.class);
     private List<PatchsetCreated> events = new ArrayList<PatchsetCreated>();
 
     /**
-     * Initializes changeSet.
+     * Class constructor.
+     */
+    public UnreviewedPatchesListener() {
+        this.connected = PluginImpl.getInstance().addListener(this);
+    }
+
+    @Override
+    public void connectionEstablished() {
+        if (!connected) {
+            if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
+                runUnreviewedPatchSets();
+                setConnected(true);
+            }
+        }
+    }
+
+    @Override
+    public void connectionDown() {
+        setConnected(false);
+    }
+
+    /**
+     * Shutdown the listener.
+     */
+    public void shutdown() {
+        PluginImpl.getInstance().removeListener(this);
+    }
+
+    /**
+     * @param connected the connected to set.
+     */
+    public void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
+    /**
+     * Initializes changeSets.
      * @param changeList the list of Gerrit project's current open change sets
      */
     private void createPatchReviwersList(List<JSONObject> changeList) {
@@ -77,7 +139,7 @@ public class TriggerNotReviewedPatches {
      * @return list of Gerrit patch sets.
      * @throws IOException if the unfortunate happens.
      */
-    public List<JSONObject> getCurrentPatchesFromGerrit(String project) throws IOException {
+    private List<JSONObject> getCurrentPatchesFromGerrit(String project) throws IOException {
         final String queryString = "project:" + project + " is:open";
         List<JSONObject> changeList = new ArrayList<JSONObject>();
         try {
@@ -93,13 +155,43 @@ public class TriggerNotReviewedPatches {
     }
 
     /**
-     * Class constructor.
-     * @param project the name of the Gerrit project.
-     * @throws IOException if the unfortunate happens.
+     * Triggers all patches in events-list.
+     * @param trigger the GerritTrigger
      */
-    public TriggerNotReviewedPatches(String project) throws IOException {
-        List<JSONObject> changeList = getCurrentPatchesFromGerrit(project);
-        createPatchReviwersList(changeList);
+    public void triggerUnreviewedPatches(GerritTrigger trigger) {
+        if (trigger != null && trigger.isAllowTriggeringUnreviewedPatches()) {
+            for (PatchsetCreated event : this.events) {
+                trigger.gerritEvent(event);
+            }
+        }
+    }
+
+    /**
+     * Checks changes in Gerrit.
+     * Triggers Jenkins jobs which are related to unreviewed Gerrit patch sets.
+     */
+    private void runUnreviewedPatchSets() {
+        logger.info("Checking non-reviewed patch sets from allowed Jobs.");
+        Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
+        for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
+            IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+            String projectName = entry.getKey();
+            ArrayList<GerritTrigger> triggers = entry.getValue();
+            if (triggers == null || triggers.isEmpty()) {
+                continue;
+            }
+
+            try {
+                List<JSONObject> changeList = getCurrentPatchesFromGerrit(projectName);
+                createPatchReviwersList(changeList);
+                searchUnreviewedPatches(config.getGerritUserName());
+                for (GerritTrigger trigger : triggers) {
+                    triggerUnreviewedPatches(trigger);
+                }
+            } catch (Exception ex) {
+                logger.error("Unable to identify unreviewed patch sets!\nProject name: " + projectName, ex);
+            }
+        }
     }
 
     /**
@@ -128,24 +220,12 @@ public class TriggerNotReviewedPatches {
     }
 
     /**
-     * Triggers all patches in events-list.
-     * @param trigger the GerritTrigger
-     */
-    public void triggerUnreviewedPatches(GerritTrigger trigger) {
-        if (trigger != null && trigger.isAllowTriggeringUnreviewedPatches()) {
-            for (PatchsetCreated event : this.events) {
-                trigger.gerritEvent(event);
-            }
-        }
-    }
-
-    /**
      * Searches unreviewed patches and adds those to events-list.
      * Function goes through every current open patch sets in gerrit project.
      * Function adds patches to events-list, which aren't reviewed by Gerrit user.
      * @param username the Jenkins plugin's Gerrit username.
      */
-    public void searchUnreviewedPatches(String username) {
+    private void searchUnreviewedPatches(String username) {
         for (JSONObject changedPatch : this.changeSets.keySet()) {
             if (!hasUserReviewedChange(changedPatch, username)) {
                 Change change = new Change(changedPatch);
