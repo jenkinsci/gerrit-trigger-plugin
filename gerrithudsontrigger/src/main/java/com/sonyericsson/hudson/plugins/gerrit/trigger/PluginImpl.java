@@ -36,6 +36,7 @@ import hudson.security.PermissionGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -166,6 +167,14 @@ public class PluginImpl extends Plugin {
         doXStreamRegistrations();
         logger.trace("Loading configs");
         load();
+        for (GerritServer s : servers) {
+            s.start();
+        }
+    }
+
+    @Override
+    public void load() throws IOException {
+        super.load();
         if (servers == null) {
             servers = new ArrayList<GerritServer>();
             if (config != null) { //have loaded data in old format, so add a new server with the old config to the list.
@@ -173,9 +182,6 @@ public class PluginImpl extends Plugin {
                 defaultServer.setConfig(config);
                 servers.add(defaultServer);
             }
-        }
-        for (GerritServer s : servers) {
-            s.start();
         }
     }
 
