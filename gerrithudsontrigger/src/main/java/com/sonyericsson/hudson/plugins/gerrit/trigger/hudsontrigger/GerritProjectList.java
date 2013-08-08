@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A sigleton class that keeps list of Jenkin's Gerrit projects.
@@ -82,27 +83,30 @@ public final class GerritProjectList {
     }
 
     /**
-     *  Removes trigger from projectList.
+     *  Removes trigger from the projectList.
      *  @param trigger the GerritTrigger
      */
     public static void removeTriggerFromProjectList(GerritTrigger trigger) {
         GerritProjectList inst = getInstance();
-        for (Map.Entry<String, ArrayList<GerritTrigger>> entry : inst.projectList.entrySet()) {
-            String projectName = entry.getKey();
-            ArrayList<GerritTrigger> triggers = entry.getValue();
-            ArrayList<GerritTrigger> newTriggers = new ArrayList<GerritTrigger>();
+        Iterator entries = inst.projectList.entrySet().iterator();
+        while (entries.hasNext()) {
+            Map.Entry entry = (Map.Entry)entries.next();
+            String projectName = (String)entry.getKey();
+            ArrayList<GerritTrigger> triggers = (ArrayList<GerritTrigger>)entry.getValue();
             if (triggers == null || projectName == null || projectName.isEmpty()) {
                 logger.warn("Invalid parameters: Triggers: " + triggers + " ProjectName: " + projectName);
                 continue;
             }
 
-            for (GerritTrigger trig : triggers) {
-                if (!trig.equals(trigger)) {
-                    newTriggers.add(trig);
+            for (Iterator i = triggers.iterator(); i.hasNext();) {
+                GerritTrigger trig = (GerritTrigger)i.next();
+                if (trig == trigger) {
+                   i.remove();
                 }
             }
-
-            inst.projectList.put(projectName, newTriggers);
+            if (triggers == null || triggers.isEmpty()) {
+                entries.remove();
+            }
         }
     }
 
