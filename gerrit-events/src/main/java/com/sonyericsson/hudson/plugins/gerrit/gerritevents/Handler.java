@@ -55,6 +55,13 @@ public interface Handler {
      */
     void post(JSONObject json);
     /**
+     * Post json object to working queue.
+     *
+     * @param json a json object from the stream-events stream of events.
+     * @param provider the Gerrit server info.
+     */
+    void post(JSONObject json, Provider provider);
+    /**
      * Post GerritEvent object to working queue.
      *
      * @param event a GerritEvent object.
