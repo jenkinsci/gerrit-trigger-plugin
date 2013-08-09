@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -46,9 +47,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -89,13 +87,12 @@ public class PluginImpl extends Plugin {
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private transient GerritHandler gerritEventManager;
+    private transient GerritConnection gerritConnection;
     private transient GerritProjectListUpdater projectListUpdater;
     private transient UnreviewedPatchesListener unreviewedPatchesListener;
 
     private static PluginImpl instance;
     private IGerritHudsonTriggerConfig config;
-    private transient Collection<GerritEventListener> savedEventListeners;
-    private transient Collection<ConnectionListener> savedConnectionListeners;
 
     /**
      * Constructor.
@@ -130,9 +127,6 @@ public class PluginImpl extends Plugin {
         projectListUpdater = new GerritProjectListUpdater();
         projectListUpdater.start();
 
-        //Starts unreviewed patches listener
-        unreviewedPatchesListener = new UnreviewedPatchesListener();
-
         //Starts the send-command-queue
         GerritSendCommandQueue.getInstance(config);
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
@@ -145,6 +139,10 @@ public class PluginImpl extends Plugin {
             categories.add(new VerdictCategory("CRVW", "Code Review"));
             categories.add(new VerdictCategory("VRIF", "Verified"));
         }
+        gerritEventManager = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
+
+        //Starts unreviewed patches listener
+        unreviewedPatchesListener = new UnreviewedPatchesListener();
     }
 
     /**
@@ -181,29 +179,23 @@ public class PluginImpl extends Plugin {
         logger.info("Shutting down...");
         projectListUpdater.shutdown();
         projectListUpdater.join();
-        unreviewedPatchesListener.shutdown();
+
+        if (unreviewedPatchesListener != null) {
+            unreviewedPatchesListener.shutdown(false);
+            unreviewedPatchesListener = null;
+        }
+
+        if (gerritConnection != null) {
+            gerritConnection.shutdown(false);
+            gerritConnection = null;
+        }
+
         if (gerritEventManager != null) {
             gerritEventManager.shutdown(false);
             //TODO save to register listeners?
             gerritEventManager = null;
         }
         GerritSendCommandQueue.shutdown();
-    }
-
-    /**
-     * Creates the GerritEventManager
-     */
-    private void createManager() {
-        gerritEventManager = new GerritHandler(config);
-        //Add any event/connectionlisteners that were created while the connection was down.
-        if (savedConnectionListeners != null) {
-            gerritEventManager.addConnectionListeners(savedConnectionListeners);
-            savedConnectionListeners = null;
-        }
-        if (savedEventListeners != null) {
-            gerritEventManager.addEventListeners(savedEventListeners);
-            savedEventListeners = null;
-        }
     }
 
     /**
@@ -215,13 +207,6 @@ public class PluginImpl extends Plugin {
     public void addListener(GerritEventListener listener) {
         if (gerritEventManager != null) {
             gerritEventManager.addListener(listener);
-        } else {
-            //If the eventmanager isn't created yet, save the eventlistener so it can be added once
-            //the eventmanager is created.
-            if (savedEventListeners == null) {
-                savedEventListeners = Collections.synchronizedSet(new HashSet<GerritEventListener>());
-            }
-            savedEventListeners.add(listener);
         }
     }
 
@@ -234,10 +219,6 @@ public class PluginImpl extends Plugin {
     public void removeListener(GerritEventListener listener) {
         if (gerritEventManager != null) {
             gerritEventManager.removeListener(listener);
-        } else {
-            if (savedEventListeners != null) {
-                savedEventListeners.remove(listener);
-            }
         }
     }
 
@@ -249,10 +230,6 @@ public class PluginImpl extends Plugin {
     public void removeListener(ConnectionListener listener) {
         if (gerritEventManager != null) {
             gerritEventManager.removeListener(listener);
-        } else {
-            if (savedConnectionListeners != null) {
-                savedConnectionListeners.remove(listener);
-            }
         }
     }
 
@@ -263,17 +240,13 @@ public class PluginImpl extends Plugin {
      */
     public synchronized void startConnection() throws Exception {
         if (!config.hasDefaultValues()) {
-            if (gerritEventManager == null) {
-                createManager();
-                if (savedEventListeners != null) {
-                    gerritEventManager.addEventListeners(savedEventListeners);
-                    savedEventListeners = null;
-                }
-                if (savedConnectionListeners != null) {
-                    gerritEventManager.addConnectionListeners(savedConnectionListeners);
-                    savedConnectionListeners = null;
-                }
-                gerritEventManager.start();
+            if (gerritConnection == null) {
+                logger.debug("Starting Gerrit connection...");
+                gerritConnection = new GerritConnection(config);
+                gerritEventManager.setIgnoreEMail(config.getGerritEMail());
+                gerritEventManager.setNumberOfWorkerThreads(config.getNumberOfReceivingWorkerThreads());
+                gerritConnection.setHandler(gerritEventManager);
+                gerritConnection.start();
                 logger.info("Started");
             } else {
                 logger.warn("Already started!");
@@ -287,14 +260,9 @@ public class PluginImpl extends Plugin {
      * @throws Exception if it is so unfortunate.
      */
     public synchronized void stopConnection() throws Exception {
-        if (gerritEventManager != null) {
-            savedEventListeners = null;
-            savedConnectionListeners = null;
-            gerritEventManager.shutdown(true);
-
-            savedEventListeners = gerritEventManager.removeAllEventListeners();
-            savedConnectionListeners = gerritEventManager.removeAllConnectionListeners();
-            gerritEventManager = null;
+        if (gerritConnection != null) {
+            gerritConnection.shutdown(true);
+            gerritConnection = null;
         } else {
             logger.warn("Was told to shutdown again!?");
         }
@@ -323,13 +291,6 @@ public class PluginImpl extends Plugin {
         boolean connected = false;
         if (gerritEventManager != null) {
             connected = gerritEventManager.addListener(listener);
-        } else {
-            //If the eventmanager isn't created yet, save the connectionlistener so it can be added once
-            //the eventmanager is created.
-            if (savedConnectionListeners == null) {
-                savedConnectionListeners = Collections.synchronizedSet(new HashSet<ConnectionListener>());
-            }
-            savedConnectionListeners.add(listener);
         }
         return connected;
     }
@@ -369,8 +330,8 @@ public class PluginImpl extends Plugin {
      * @return the current gerrit version as a String.
      */
     public String getGerritVersion() {
-        if (gerritEventManager != null) {
-            return gerritEventManager.getGerritVersion();
+        if (gerritConnection != null) {
+            return gerritConnection.getGerritVersion();
         } else {
             return null;
         }
