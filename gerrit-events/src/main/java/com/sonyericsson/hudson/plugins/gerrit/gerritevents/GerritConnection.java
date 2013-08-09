@@ -284,7 +284,7 @@ public class GerritConnection extends Thread implements Connector {
                 }
                 notifyConnectionDown();
             }
-        } while (!isShutdownInProgress());
+        } while (!shutdownInProgress);
         handler = null;
         logger.debug("End of GerritHandler Thread.");
     }
@@ -295,7 +295,7 @@ public class GerritConnection extends Thread implements Connector {
      * @return not null if everything is well, null if connect and reconnect failed.
      */
     private SshConnection connect() {
-        while (!isShutdownInProgress()) {
+        while (!shutdownInProgress) {
             SshConnection ssh = null;
             try {
                 logger.debug("Connecting...");
@@ -338,7 +338,7 @@ public class GerritConnection extends Thread implements Connector {
                 }
             }
 
-            if (!isShutdownInProgress()) {
+            if (!shutdownInProgress) {
                 //If we end up here, sleep for a while and then go back up in the loop.
                 logger.trace("Sleeping for a bit.");
                 try {
