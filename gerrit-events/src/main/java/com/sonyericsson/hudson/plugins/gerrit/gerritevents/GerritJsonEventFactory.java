@@ -121,19 +121,44 @@ public final class GerritJsonEventFactory {
         try {
             JSONObject jsonObject = (JSONObject)JSONSerializer.toJSON(jsonString);
             logger.debug("Parsed a JSONObject");
-            if (jsonObject.get("type") != null) {
-                logger.trace("It has a type");
-                GerritEventType type = GerritEventType.findByTypeValue(jsonObject.getString("type"));
-                logger.debug("Type found: {}", type);
-                if (type != null && type.isInteresting() && type.getEventRepresentative() != null) {
-                    logger.debug("It is interesting and usable.");
-                    return jsonObject;
-                }
+            if (isInteresgingAndUsable(jsonObject)) {
+                return jsonObject;
             }
         } catch (Exception ex) {
             logger.warn("Unanticipated error when examining JSON String", ex);
         }
         return null;
+    }
+
+    /**
+     * Check if it is interesting and usable. If it is interesting is determined by:
+     * <ol>
+     *  <li>The object contains a String field named type</li>
+     *  <li>The String returns a non null GerritEventType from
+     *      {@link GerritEventType#findByTypeValue(java.lang.String) }</li>
+     *  <li>The property {@link GerritEventType#isInteresting() } == true</li>
+     * </ol>
+     * It is usable if the type's {@link GerritEventType#getEventRepresentative() } is not null.
+     * @param json the string to parse.
+     * @return true if an interesting and usable JSONObject.
+     */
+    public static boolean isInteresgingAndUsable(JSONObject json) {
+        try {
+            if (json != null) {
+                if (json.get("type") != null) {
+                    logger.trace("It has a type");
+                    GerritEventType type = GerritEventType.findByTypeValue(json.getString("type"));
+                    logger.debug("Type found: {}", type);
+                    if (type != null && type.isInteresting() && type.getEventRepresentative() != null) {
+                        logger.debug("It is interesting and usable.");
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            logger.warn("Unanticipated error when examining JSON String.");
+        }
+        return false;
     }
 
     /**
