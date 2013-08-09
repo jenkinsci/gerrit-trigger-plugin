@@ -37,12 +37,14 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 public interface Handler {
     /**
      * Post string data to working queue.
+     * Note that you must not update objects passed to this method.
      *
      * @param data a line of text from the stream-events stream of events.
      */
     void post(String data);
     /**
      * Post string data to working queue.
+     * Note that you must not update objects passed to this method.
      *
      * @param data a line of text from the stream-events stream of events.
      * @param provider the Gerrit server info.
@@ -50,12 +52,14 @@ public interface Handler {
     void post(String data, Provider provider);
     /**
      * Post json object to working queue.
+     * Note that you must not update objects passed to this method.
      *
      * @param json a json object from the stream-events stream of events.
      */
     void post(JSONObject json);
     /**
      * Post json object to working queue.
+     * Note that you must not update objects passed to this method.
      *
      * @param json a json object from the stream-events stream of events.
      * @param provider the Gerrit server info.
@@ -63,6 +67,7 @@ public interface Handler {
     void post(JSONObject json, Provider provider);
     /**
      * Post GerritEvent object to working queue.
+     * Note that you must not update objects passed to this method.
      *
      * @param event a GerritEvent object.
      */
