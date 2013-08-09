@@ -155,7 +155,14 @@ public abstract class GerritEventKeys {
      * version.
      */
     public static final String VERSION = "version";
-
+    /**
+     * misc.
+     */
+    public static final String MISC = "misc";
+    /**
+     * event id.
+     */
+    public static final String EVENT_ID = "event_id";
     /**
      * Empty default constructor to hinder instantiation.
      */

@@ -25,11 +25,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROVIDER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.MISC;
 import net.sf.json.JSONObject;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Misc;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
 
@@ -53,6 +55,10 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
      */
     protected Provider provider;
 
+    /**
+     * The misc that provide the event.
+     */
+    protected Misc misc;
 
     /**
      * The account that triggered the event.
@@ -90,10 +96,31 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
         this.provider = provider;
     }
 
+    /**
+     * The misc that provide the event.
+     *
+     * @return the misc.
+     */
+    public Misc getMisc() {
+        return misc;
+    }
+
+    /**
+     * The misc that provide the event.
+     *
+     * @param misc the misc.
+     */
+    public void setMisc(Misc misc) {
+        this.misc = misc;
+    }
+
     @Override
     public void fromJson(JSONObject json) {
         if (json.containsKey(PROVIDER)) {
             provider = new Provider(json.getJSONObject(PROVIDER));
+        }
+        if (json.containsKey(MISC)) {
+            misc = new Misc(json.getJSONObject(MISC));
         }
     }
 }
