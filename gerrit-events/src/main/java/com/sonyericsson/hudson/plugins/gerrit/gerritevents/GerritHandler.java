@@ -135,40 +135,35 @@ public class GerritHandler implements Coordinator, Handler {
 
     @Override
     public void post(String data, Provider provider) {
-        try {
-            StreamEventsStringWork work = new StreamEventsStringWork(
-                    data, provider);
-            logger.trace("putting work on queue: {}", work);
-            workQueue.put(work);
-        } catch (InterruptedException ex) {
-            logger.warn("Interrupted while putting work on queue!", ex);
-            //TODO check if shutdown
-            //TODO try again since it is important
-        }
+        logger.debug("Trigger event string: {}", data);
+        post(new StreamEventsStringWork(data, provider));
     }
 
     @Override
     public void post(JSONObject json, Provider provider) {
-        try {
-            JSONEventWork work = new JSONEventWork(
-                    json, provider);
-            logger.trace("putting work on queue: {}", work);
-            workQueue.put(work);
-        } catch (InterruptedException ex) {
-            logger.warn("Interrupted while putting work on queue!", ex);
-            //TODO check if shutdown
-            //TODO try again since it is important
-        }
+        logger.debug("Trigger event json object: {}", json);
+        post(new JSONEventWork(json, provider));
     }
 
     @Override
     public void post(GerritEvent event) {
         logger.debug("Internally trigger event: {}", event);
+        post(new GerritEventWork(event));
+    }
+
+    /**
+     * Post work object to work queue.
+     *
+     * @param work the work object.
+     */
+    private void post(Work work) {
         try {
             logger.trace("putting work on queue.");
-            workQueue.put(new GerritEventWork(event));
+            workQueue.put(work);
         } catch (InterruptedException ex) {
             logger.warn("Interrupted while putting work on queue!", ex);
+            //TODO check if shutdown
+            //TODO try again since it is important
         }
     }
 
