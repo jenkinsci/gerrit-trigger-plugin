@@ -29,6 +29,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEven
 import net.sf.json.JSONObject;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.COMMIT_MESSAGE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ID;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
@@ -64,6 +65,10 @@ public class Change implements GerritJsonDTO {
      */
     private String subject;
     /**
+     * The change's full commit message.
+     */
+    private String commitMessage;
+    /**
      * Owner in account attribute.
      */
     private Account owner;
@@ -96,6 +101,9 @@ public class Change implements GerritJsonDTO {
         subject = getString(json, SUBJECT);
         if (json.containsKey(OWNER)) {
             owner = new Account(json.getJSONObject(OWNER));
+        }
+        if (json.containsKey(COMMIT_MESSAGE)) {
+            commitMessage = getString(json, COMMIT_MESSAGE);
         }
         url = getString(json, URL);
     }
@@ -196,6 +204,22 @@ public class Change implements GerritJsonDTO {
      */
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    /**
+     * Full commit message.
+     * @return the commit message.
+     */
+    public String getCommitMessage() {
+        return commitMessage;
+    }
+
+    /**
+     * Full commit message.
+     * @param commitMessage the commit message.
+     */
+    public void setCommitMessage(String commitMessage) {
+        this.commitMessage = commitMessage;
     }
 
     /**

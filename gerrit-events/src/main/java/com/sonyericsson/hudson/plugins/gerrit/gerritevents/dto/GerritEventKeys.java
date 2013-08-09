@@ -82,7 +82,10 @@ public abstract class GerritEventKeys {
      * subject.
      */
     public static final String SUBJECT = "subject";
-
+    /**
+     * commit message.
+     */
+    public static final String COMMIT_MESSAGE = "commitMessage";
     /**
      * url.
      */

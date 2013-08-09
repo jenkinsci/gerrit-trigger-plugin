@@ -50,6 +50,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_SUBJECT,
     /**
+     * Parameter name for the full commit message.
+     */
+    GERRIT_CHANGE_COMMIT_MESSAGE,
+    /**
      * Parameter name for the branch.
      */
     GERRIT_BRANCH,
@@ -301,6 +305,11 @@ public enum GerritTriggerParameters {
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
+            String commitMessage = event.getChange().getCommitMessage();
+            if (commitMessage != null) {
+                GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
+                    parameters, commitMessage, escapeQuotes);
+            }
             String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event);
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
