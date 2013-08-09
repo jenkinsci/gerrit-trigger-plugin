@@ -136,6 +136,14 @@ public abstract class GerritEventKeys {
      */
     public static final String VALUE = "value";
     /**
+     * approval by.
+     */
+    public static final String BY = "by";
+    /**
+     * approval username.
+     */
+    public static final String USERNAME = "username";
+    /**
      * provider.
      */
     public static final String PROVIDER = "provider";
