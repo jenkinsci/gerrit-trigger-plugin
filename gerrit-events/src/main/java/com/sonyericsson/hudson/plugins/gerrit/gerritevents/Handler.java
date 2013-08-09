@@ -24,8 +24,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import net.sf.json.JSONObject;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 
