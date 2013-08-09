@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.JSONEventWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsStringWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Work;
 
@@ -129,7 +130,7 @@ public class GerritHandler implements Coordinator, Handler {
 
     @Override
     public void post(JSONObject json) {
-        post(json.toString(), null);
+        post(json, null);
     }
 
     @Override
@@ -137,6 +138,20 @@ public class GerritHandler implements Coordinator, Handler {
         try {
             StreamEventsStringWork work = new StreamEventsStringWork(
                     data, provider);
+            logger.trace("putting work on queue: {}", work);
+            workQueue.put(work);
+        } catch (InterruptedException ex) {
+            logger.warn("Interrupted while putting work on queue!", ex);
+            //TODO check if shutdown
+            //TODO try again since it is important
+        }
+    }
+
+    @Override
+    public void post(JSONObject json, Provider provider) {
+        try {
+            JSONEventWork work = new JSONEventWork(
+                    json, provider);
             logger.trace("putting work on queue: {}", work);
             workQueue.put(work);
         } catch (InterruptedException ex) {
