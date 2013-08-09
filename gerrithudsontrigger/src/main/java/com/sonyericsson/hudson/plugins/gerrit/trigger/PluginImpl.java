@@ -181,7 +181,7 @@ public class PluginImpl extends Plugin {
         projectListUpdater.join();
 
         if (unreviewedPatchesListener != null) {
-            unreviewedPatchesListener.shutdown(false);
+            unreviewedPatchesListener.shutdown();
             unreviewedPatchesListener = null;
         }
 
