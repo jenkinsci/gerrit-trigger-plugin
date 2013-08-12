@@ -27,8 +27,10 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEven
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
 import net.sf.json.JSONObject;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BY;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.TYPE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VALUE;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.USERNAME;
 
 /**
  * Represents a Gerrit JSON Approval DTO.
@@ -44,6 +46,11 @@ public class Approval implements GerritJsonDTO {
      * The approval value
      */
     private String value;
+    /**
+     * The approval username
+     * The user who has approved the patch
+     */
+    private String username;
 
     /**
      * Default constructor.
@@ -65,6 +72,31 @@ public class Approval implements GerritJsonDTO {
             type = getString(json, TYPE);
             value = getString(json, VALUE);
         }
+        if (json.containsKey(BY)) {
+            Object obj = json.get(BY);
+            if (obj instanceof JSONObject) {
+                JSONObject userData = (JSONObject)obj;
+                if (userData.containsKey(USERNAME)) {
+                    username = getString(userData, USERNAME);
+                }
+            }
+        }
+    }
+
+    /**
+     * The approval category.
+     * @return the username.
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * The approval category.
+     * @param username the reviewer's username.
+     */
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     /**
