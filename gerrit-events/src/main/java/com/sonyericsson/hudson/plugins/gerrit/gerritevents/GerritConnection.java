@@ -453,11 +453,9 @@ public class GerritConnection extends Thread implements Connector {
 
     /**
      * Sets the shutdown flag.
-     *
-     * @param isIt true if shutdown is in progress.
      */
     private void setShutdownInProgress() {
-            this.shutdownInProgress = false;
+            this.shutdownInProgress = true;
     }
 
     /**
