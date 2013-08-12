@@ -10,35 +10,36 @@
             <li><strong>GERRIT_EVENT_TYPE</strong>: イベントタイプ</li>
             <li><strong>GERRIT_EVENT_HASH</strong>: イベントハッシュ。イベントキュー内でユニークな値を持つ</li>
             <li><strong>GERRIT_EVENT_ACCOUNT</strong>: イベントに関連付けられているアカウントの名前とメールアドレス（もしあれば）
-                            <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_NAME</strong>: イベントに関連付けられているアカウントの名前（もしあれば）</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_EMAIL</strong>: イベントに関連付けられているアカウントのメールアドレス（もしあれば）</li>
-			<li><strong>GERRIT_NAME</strong>: イベントを提供するgerritの名前</li>
-			<li><strong>GERRIT_HOST</strong>: イベントを提供するgerritのホスト名</li>
-			<li><strong>GERRIT_PORT</strong>: イベントを提供するgerritのポート番号</li>
-			<li><strong>GERRIT_PROTO</strong>: イベントを提供するgerritのプロトコル名</li>
-			<li><strong>GERRIT_VERSION</strong>: イベントを提供するgerritのバージョン</li>
+            <li><strong>GERRIT_NAME</strong>: イベントを提供するgerritの名前</li>
+            <li><strong>GERRIT_HOST</strong>: イベントを提供するgerritのホスト名</li>
+            <li><strong>GERRIT_PORT</strong>: イベントを提供するgerritのポート番号</li>
+            <li><strong>GERRIT_SCHEME</strong>: イベントを提供するgerritのプロトコル名</li>
+            <li><strong>GERRIT_VERSION</strong>: イベントを提供するgerritのバージョン</li>
         </ul>
     </li>
     <li>
-	    <strong>チェンジに対するイベント</strong> <i>(Patchset Created, Draft Published, Change Merged, Comment Added)</i>
+        <strong>チェンジに対するイベント</strong>
+        <i>(Patchset Created, Draft Published, Change Merged, Change abandoned, Change restored, Comment Added)</i>
         <ul>
             <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id (SHA-1)</li>
             <li><strong>GERRIT_CHANGE_SUBJECT</strong>: コミットメッセージの最初の一行</li>
-	        <li><strong>GERRIT_CHANGE_NUMBER</strong>: チェンジ番号</li>
+            <li><strong>GERRIT_CHANGE_NUMBER</strong>: チェンジ番号</li>
             <li><strong>GERRIT_CHANGE_URL</strong>: チェンジへのURL</li>
             <li><strong>GERRIT_PATCHSET_NUMBER</strong>: パッチセット番号</li>
             <li><strong>GERRIT_PATCHSET_REVISION</strong>: パッチセットリビジョン</li>
             <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
             <li><strong>GERRIT_REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
             <li><strong>GERRIT_CHANGE_OWNER</strong>: チェンジ・オーナーの名前とメールアドレス
-			    <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
-			</li>
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
             <li><strong>GERRIT_CHANGE_OWNER_NAME</strong>: チェンジ・オーナーの名前</li>
             <li><strong>GERRIT_CHANGE_OWNER_EMAIL</strong>: チェンジ・オーナーのメールアドレス</li>
             <li><strong>GERRIT_PATCHSET_UPLOADER</strong>: パッチセットをアップロードした人の名前とメールアドレス
-			    <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
-			</li>
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
+            </li>
             <li><strong>GERRIT_PATCHSET_UPLOADER_NAME</strong>: パッチセット・アップロードした人の名前</li>
             <li><strong>GERRIT_PATCHSET_UPLOADER_EMAIL</strong>: パッチセット・アップロードした人のメールアドレス</li>
             <li><strong>GERRIT_PATCHSET_ABANDONER</strong>: パッチセットを破棄した人の名前とメールアドレス

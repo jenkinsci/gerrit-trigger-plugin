@@ -2,7 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -235,23 +235,23 @@ public class Config implements IGerritHudsonTriggerConfig {
 
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
-                "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
+                "gerrit review <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildFailed = formData.optString(
                 "gerritVerifiedCmdBuildFailed",
-                "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
+                "gerrit review <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildSuccessful = formData.optString(
                 "gerritVerifiedCmdBuildSuccessful",
-                "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
+                "gerrit review <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
-                "gerrit approve <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
+                "gerrit review <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritVerifiedCmdBuildNotBuilt = formData.optString(
                 "gerritVerifiedCmdBuildNotBuilt",
-                "gerrit approve <CHANGE>,<PATCHSET> --message 'No Builds Executed <BUILDS_STATS>' "
+                "gerrit review <CHANGE>,<PATCHSET> --message 'No Builds Executed <BUILDS_STATS>' "
                         + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",

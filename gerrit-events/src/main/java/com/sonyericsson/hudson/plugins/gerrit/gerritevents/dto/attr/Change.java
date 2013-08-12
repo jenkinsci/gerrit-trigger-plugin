@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications.  All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +28,13 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactory.getString;
 import net.sf.json.JSONObject;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROJECT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.COMMIT_MESSAGE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ID;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROJECT;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 
 /**
@@ -62,6 +64,10 @@ public class Change implements GerritJsonDTO {
      * Description of change.
      */
     private String subject;
+    /**
+     * The change's full commit message.
+     */
+    private String commitMessage;
     /**
      * Owner in account attribute.
      */
@@ -95,6 +101,9 @@ public class Change implements GerritJsonDTO {
         subject = getString(json, SUBJECT);
         if (json.containsKey(OWNER)) {
             owner = new Account(json.getJSONObject(OWNER));
+        }
+        if (json.containsKey(COMMIT_MESSAGE)) {
+            commitMessage = getString(json, COMMIT_MESSAGE);
         }
         url = getString(json, URL);
     }
@@ -195,6 +204,22 @@ public class Change implements GerritJsonDTO {
      */
     public void setSubject(String subject) {
         this.subject = subject;
+    }
+
+    /**
+     * Full commit message.
+     * @return the commit message.
+     */
+    public String getCommitMessage() {
+        return commitMessage;
+    }
+
+    /**
+     * Full commit message.
+     * @param commitMessage the commit message.
+     */
+    public void setCommitMessage(String commitMessage) {
+        this.commitMessage = commitMessage;
     }
 
     /**
