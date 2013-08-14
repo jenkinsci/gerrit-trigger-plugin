@@ -13,11 +13,11 @@
                 <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_NAME</strong>: イベントに関連付けられているアカウントの名前（もしあれば）</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_EMAIL</strong>: イベントに関連付けられているアカウントのメールアドレス（もしあれば）</li>
-            <li><strong>GERRIT_NAME</strong>: イベントを提供するgerritの名前</li>
-            <li><strong>GERRIT_HOST</strong>: イベントを提供するgerritのホスト名</li>
-            <li><strong>GERRIT_PORT</strong>: イベントを提供するgerritのポート番号</li>
-            <li><strong>GERRIT_SCHEME</strong>: イベントを提供するgerritのプロトコル名</li>
-            <li><strong>GERRIT_VERSION</strong>: イベントを提供するgerritのバージョン</li>
+            <li><strong>GERRIT_NAME</strong>: イベントを提供するGerritの名前</li>
+            <li><strong>GERRIT_HOST</strong>: イベントを提供するGerritのホスト名</li>
+            <li><strong>GERRIT_PORT</strong>: イベントを提供するGerritのポート番号</li>
+            <li><strong>GERRIT_SCHEME</strong>: イベントを提供するGerritのプロトコル名</li>
+            <li><strong>GERRIT_VERSION</strong>: イベントを提供するGerritのバージョン</li>
         </ul>
     </li>
     <li>
@@ -26,11 +26,13 @@
         <ul>
             <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id (SHA-1)</li>
             <li><strong>GERRIT_CHANGE_SUBJECT</strong>: コミットメッセージの最初の一行</li>
+            <li><strong>GERRIT_CHANGE_COMMIT_MESSAGE</strong>: コミットメッセージ
+            （Gerritのバージョンが2.8以上の場合のみ）</li>
             <li><strong>GERRIT_CHANGE_NUMBER</strong>: チェンジ番号</li>
             <li><strong>GERRIT_CHANGE_URL</strong>: チェンジへのURL</li>
             <li><strong>GERRIT_PATCHSET_NUMBER</strong>: パッチセット番号</li>
             <li><strong>GERRIT_PATCHSET_REVISION</strong>: パッチセットリビジョン</li>
-            <li><strong>GERRIT_BRANCH</strong>: The name of the branch.</li>
+            <li><strong>GERRIT_BRANCH</strong>: ブランチ名</li>
             <li><strong>GERRIT_REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
             <li><strong>GERRIT_CHANGE_OWNER</strong>: チェンジ・オーナーの名前とメールアドレス
                 <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.
