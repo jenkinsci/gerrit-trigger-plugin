@@ -52,7 +52,6 @@ import java.util.HashMap;
  */
 public class UnreviewedPatchesListener implements ConnectionListener {
 
-    private boolean connected = false;
     private static final Logger logger = LoggerFactory.getLogger(UnreviewedPatchesListener.class);
 
     /**
@@ -68,22 +67,18 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Class constructor.
      */
     public UnreviewedPatchesListener() {
-        this.connected = PluginImpl.getInstance().addListener(this);
+        PluginImpl.getInstance().addListener(this);
     }
 
     @Override
     public void connectionEstablished() {
-        if (!connected) {
-            if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
-                runUnreviewedPatchSets();
-                setConnected(true);
-            }
+        if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
+            runUnreviewedPatchSets();
         }
     }
 
     @Override
     public void connectionDown() {
-        setConnected(false);
     }
 
     /**
@@ -91,13 +86,6 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      */
     public void shutdown() {
         PluginImpl.getInstance().removeListener(this);
-    }
-
-    /**
-     * @param connected the connected to set.
-     */
-    public void setConnected(boolean connected) {
-        this.connected = connected;
     }
 
     /**

@@ -285,14 +285,11 @@ public class PluginImpl extends Plugin {
      * will get the current connection status.
      *
      * @param listener the listener.
-     * @return the connection status.
      */
-    public boolean addListener(ConnectionListener listener) {
-        boolean connected = false;
+    public void addListener(ConnectionListener listener) {
         if (gerritEventManager != null) {
-            connected = gerritEventManager.addListener(listener);
+            gerritEventManager.addListener(listener);
         }
-        return connected;
     }
 
     /**
