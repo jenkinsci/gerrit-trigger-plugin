@@ -37,8 +37,12 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.JSONEventWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.StreamEventsStringWork;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Work;
+
+import net.sf.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +64,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultV
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritHandler implements Coordinator {
+public class GerritHandler implements Coordinator, Handler {
 
     /**
      * Time to wait between connection attempts.
@@ -71,7 +75,6 @@ public class GerritHandler implements Coordinator {
     private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
     private final Set<ConnectionListener> connectionListeners = new CopyOnWriteArraySet<ConnectionListener>();
     private final List<EventThread> workers;
-    private boolean connected = false;
     private String ignoreEMail;
 
     /**
@@ -120,24 +123,42 @@ public class GerritHandler implements Coordinator {
         this.ignoreEMail = ignoreEMail;
     }
 
-    /**
-     * Post string data to working queue.
-     * @param data a line of text from the stream-events stream of events.
-     */
+    @Override
     public void post(String data) {
         post(data, null);
     }
 
-    /**
-     * Post string data to working queue.
-     * @param data a line of text from the stream-events stream of events.
-     * @param provider the Gerrit server info.
-     */
+    @Override
+    public void post(JSONObject json) {
+        post(json, null);
+    }
+
+    @Override
     public void post(String data, Provider provider) {
+        logger.debug("Trigger event string: {}", data);
+        post(new StreamEventsStringWork(data, provider));
+    }
+
+    @Override
+    public void post(JSONObject json, Provider provider) {
+        logger.debug("Trigger event json object: {}", json);
+        post(new JSONEventWork(json, provider));
+    }
+
+    @Override
+    public void post(GerritEvent event) {
+        logger.debug("Internally trigger event: {}", event);
+        post(new GerritEventWork(event));
+    }
+
+    /**
+     * Post work object to work queue.
+     *
+     * @param work the work object.
+     */
+    private void post(Work work) {
         try {
-            StreamEventsStringWork work = new StreamEventsStringWork(
-                    data, provider);
-            logger.trace("putting work on queue: {}", work);
+            logger.trace("putting work on queue.");
             workQueue.put(work);
         } catch (InterruptedException ex) {
             logger.warn("Interrupted while putting work on queue!", ex);
@@ -146,11 +167,7 @@ public class GerritHandler implements Coordinator {
         }
     }
 
-    /**
-     * Add a GerritEventListener to the list of listeners.
-     *
-     * @param listener the listener to add.
-     */
+    @Override
     public void addListener(GerritEventListener listener) {
         synchronized (this) {
             if (!gerritEventListeners.add(listener)) {
@@ -180,11 +197,7 @@ public class GerritHandler implements Coordinator {
         }
     }
 
-    /**
-     * Removes a GerritEventListener from the list of listeners.
-     *
-     * @param listener the listener to remove.
-     */
+    @Override
     public void removeListener(GerritEventListener listener) {
         synchronized (this) {
             gerritEventListeners.remove(listener);
@@ -213,16 +226,13 @@ public class GerritHandler implements Coordinator {
     }
 
     /**
-     * Add a ConnectionListener to the list of listeners. Return the current connection status so that listeners that
-     * are added later than a connectionestablished/ connectiondown will get the current connection status.
+     * Add a ConnectionListener to the list of listeners.
      *
      * @param listener the listener to add.
-     * @return the connection status
      */
-    public boolean addListener(ConnectionListener listener) {
+    public void addListener(ConnectionListener listener) {
         synchronized (this) {
             connectionListeners.add(listener);
-            return connected;
         }
     }
 
@@ -247,11 +257,7 @@ public class GerritHandler implements Coordinator {
         }
     }
 
-    /**
-     * Removes a ConnectionListener from the list of listeners.
-     *
-     * @param listener the listener to remove.
-     */
+    @Override
     public void removeListener(ConnectionListener listener) {
         synchronized (this) {
             connectionListeners.remove(listener);
@@ -401,10 +407,34 @@ public class GerritHandler implements Coordinator {
     }
 
     /**
+     * Notifies all listeners of a Gerrit connection event.
+     *
+     * @param event the event.
+     */
+    public void notifyListeners(GerritConnectionEvent event) {
+        for (ConnectionListener listener : connectionListeners) {
+            try {
+                switch(event) {
+                case GERRIT_CONNECTION_ESTABLISHED:
+                    listener.connectionEstablished();
+                    break;
+                case GERRIT_CONNECTION_DOWN:
+                    listener.connectionDown();
+                    break;
+                default:
+                    break;
+                }
+            } catch (Exception ex) {
+                logger.error("ConnectionListener threw Exception. ", ex);
+            }
+        }
+    }
+
+    /**
      * Notifies all ConnectionListeners that the connection is down.
      */
+    @Deprecated
     public void notifyConnectionDown() {
-        connected = false;
         for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionDown();
@@ -417,8 +447,8 @@ public class GerritHandler implements Coordinator {
     /**
      * Notifies all ConnectionListeners that the connection is established.
      */
+    @Deprecated
     public void notifyConnectionEstablished() {
-        connected = true;
         for (ConnectionListener listener : connectionListeners) {
             try {
                 listener.connectionEstablished();
@@ -434,6 +464,7 @@ public class GerritHandler implements Coordinator {
      *
      * @param event the event to trigger.
      */
+    @Deprecated
     public void triggerEvent(GerritEvent event) {
         logger.debug("Internally trigger event: {}", event);
         try {
