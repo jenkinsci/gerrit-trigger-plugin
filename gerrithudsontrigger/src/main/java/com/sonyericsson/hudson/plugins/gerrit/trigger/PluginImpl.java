@@ -269,6 +269,18 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * A quick check if a connection to Gerrit is open.
+     *
+     * @return true if so.
+     */
+    public synchronized boolean isConnected() {
+        if (gerritConnection != null) {
+            return gerritConnection.isConnected();
+        }
+        return false;
+    }
+
+    /**
      * Restarts the connection to Gerrit stream of events.
      *
      * @throws Exception if it is so unfortunate.

@@ -68,7 +68,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
      */
     protected void addThisAsConnectionListener() {
         if (PluginImpl.getInstance() != null) {
-            connected = PluginImpl.getInstance().addListener(this);
+            PluginImpl.getInstance().addListener(this);
+            connected = PluginImpl.getInstance().isConnected();
             checkGerritVersionFeatures();
         } else {
             //We were created first... let's wait without disrupting the flow.
@@ -87,7 +88,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
                     }
                     PluginImpl plugin = PluginImpl.getInstance();
                     if (plugin != null) {
-                        connected = plugin.addListener(GerritAdministrativeMonitor.this);
+                        plugin.addListener(GerritAdministrativeMonitor.this);
+                        connected = PluginImpl.getInstance().isConnected();
                         checkGerritVersionFeatures();
                     } else {
                         logger.error("Unable to register GerritAdministrativeMonitor");

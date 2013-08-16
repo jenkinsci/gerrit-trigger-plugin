@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import org.junit.Before;
@@ -38,7 +37,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -59,7 +57,7 @@ public class GerritAdministrativeMonitorTest {
     @Before
     public void setUp() {
         plugin = mock(PluginImpl.class);
-        when(plugin.addListener(any(ConnectionListener.class))).thenReturn(true);
+        when(plugin.isConnected()).thenReturn(true);
         PowerMockito.mockStatic(PluginImpl.class);
         when(PluginImpl.getInstance()).thenReturn(plugin);
     }
