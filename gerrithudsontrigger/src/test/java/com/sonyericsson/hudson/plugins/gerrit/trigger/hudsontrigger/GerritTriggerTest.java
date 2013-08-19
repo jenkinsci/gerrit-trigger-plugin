@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.AutoRebuildPatchset;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -970,6 +971,46 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a normal scenario.
+     * With a AutoRebuildPatchset event.
+     */
+    @Test
+    public void testGerritAutoRebuildEvent() {
+        mockPluginConfig();
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        AbstractProject<?, ?> project = PowerMockito.mock(AbstractProject.class);
+        when(project.isBuildable()).thenReturn(true);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        Whitebox.setInternalState(trigger, "myProject", project);
+
+        AutoRebuildPatchset event = Setup.createAutoRebuildEvent();
+
+        trigger.gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+
+        verify(project).scheduleBuild2(
+                anyInt(),
+                isA(GerritAutoRebuildCause.class),
+                isA(BadgeAction.class),
+                isA(RetriggerAction.class),
+                isA(RetriggerAllAction.class),
+                isA(Action.class));
+    }
+
+    /**
      * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a normal scenario, but with silentMode on.
      */
     @Test
@@ -1038,6 +1079,44 @@ public class GerritTriggerTest {
         verify(project).scheduleBuild2(
                 anyInt(),
                 isA(GerritManualCause.class),
+                isA(BadgeAction.class),
+                isA(RetriggerAction.class),
+                isA(RetriggerAllAction.class),
+                isA(Action.class));
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)}.
+     * With a AutoRebuildPatchset event and silentMode on.
+     */
+    @Test
+    public void testGerritAutoRebuildEventSilentMode() {
+        mockPluginConfig();
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        AbstractProject<?, ?> project = PowerMockito.mock(AbstractProject.class);
+        when(project.isBuildable()).thenReturn(true);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        Whitebox.setInternalState(trigger, "myProject", project);
+
+        AutoRebuildPatchset event = Setup.createAutoRebuildEvent();
+
+        trigger.gerritEvent(event);
+
+        verifyNoMoreInteractions(listener);
+
+        verify(project).scheduleBuild2(
+                anyInt(),
+                isA(GerritAutoRebuildCause.class),
                 isA(BadgeAction.class),
                 isA(RetriggerAction.class),
                 isA(RetriggerAllAction.class),

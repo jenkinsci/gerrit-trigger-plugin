@@ -31,6 +31,8 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.RefUpdate;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.AutoRebuildPatchset;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
@@ -334,6 +336,37 @@ public final class Setup {
         patch.setRevision("9999");
         event.setPatchset(patch);
         event.setUserName("Bobby");
+        return event;
+    }
+
+    /**
+     * Gives you a ManualPatchsetCreated mock.
+     * @return PatchsetCreated mock.
+     */
+    public static AutoRebuildPatchset createAutoRebuildEvent() {
+        AutoRebuildPatchset event = new AutoRebuildPatchset();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        RefUpdate refUpdate = new RefUpdate();
+        refUpdate.setNewRev("578e31ab5d245df2b8b920753d2f5b7396ce7ab8");
+        refUpdate.setOldRev("4af639dd27d25ceb24200456217dc3bec2f1156c");
+        refUpdate.setRefName("branch");
+        refUpdate.setProject("project");
+        event.setRefUpdate(refUpdate);
         return event;
     }
 

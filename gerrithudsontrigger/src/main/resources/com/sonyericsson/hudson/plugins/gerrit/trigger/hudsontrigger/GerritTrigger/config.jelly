@@ -224,6 +224,9 @@
                                     <th minwidth="150" style="border-bottom: 1px solid grey;">
                                         ${%Pattern}
                                     </th>
+                                    <th minwidth="80" style="border-bottom: 1px solid grey;">
+                                        ${%Rebuild on approve}
+                                    </th>
                                     <th width="65" style="border-bottom: 1px solid grey;">
                                         <st:nbsp/>
                                     </th>
@@ -252,6 +255,9 @@
                                         </td>
                                         <td minwidth="150">
                                             <f:textbox field="pattern" value="${b.pattern}" default=""/>
+                                        </td>
+                                        <td minwidth="80">
+                                            <f:checkbox name="autoRebuild" field="autoRebuild" checked="${b.autoRebuild}"/>
                                         </td>
                                         <td width="65">
                                             <f:repeatableDeleteButton/>

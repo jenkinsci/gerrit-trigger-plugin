@@ -20,6 +20,16 @@
                 </j:otherwise>
             </j:choose>
         </j:when>
+        <j:when test="${it.autoRebuild}">
+            <j:choose>
+                <j:when test="${it.silentMode}">
+                    ${%AutoRebuidTriggeredShortDescriptionInSilentMode(it.url,it.branch,it.oldRev,it.newRev)}
+                </j:when>
+                <j:otherwise>
+                    ${%AutoRebuidTriggeredShortDescription(it.url,it.branch,it.oldRev,it.newRev)}
+                </j:otherwise>
+            </j:choose>
+        </j:when>
         <j:otherwise>
             <j:choose>
                 <j:when test="${it.silentMode}">
