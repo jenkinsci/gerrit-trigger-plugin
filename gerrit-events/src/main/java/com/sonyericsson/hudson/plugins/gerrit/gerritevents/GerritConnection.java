@@ -527,7 +527,7 @@ public class GerritConnection extends Thread implements Connector {
     protected void notifyConnectionDown() {
         connected = false;
         if (handler != null) {
-            handler.notifyConnectionDown();
+            handler.notifyListeners(GerritConnectionEvent.GERRIT_CONNECTION_DOWN);
         }
     }
 
@@ -537,7 +537,7 @@ public class GerritConnection extends Thread implements Connector {
     protected void notifyConnectionEstablished() {
         connected = true;
         if (handler != null) {
-            handler.notifyConnectionEstablished();
+            handler.notifyListeners(GerritConnectionEvent.GERRIT_CONNECTION_ESTABLISHED);
         }
     }
 }

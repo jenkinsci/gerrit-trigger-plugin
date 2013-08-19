@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -117,6 +118,15 @@ public class PluginImpl extends Plugin {
      */
     public static PluginImpl getInstance() {
         return instance;
+    }
+
+    /**
+     * Gets handler.
+     *
+     * @return the handler.
+     */
+    public Handler getHandler() {
+        return gerritEventManager;
     }
 
     @Override
@@ -322,11 +332,11 @@ public class PluginImpl extends Plugin {
      * It gets added to the same event queue as any event coming from the stream-events command in Gerrit.
      *
      * @param event the event.
-     * @see GerritHandler#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     * @see GerritHandler#post(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
      */
     public void triggerEvent(GerritEvent event) {
         if (gerritEventManager != null) {
-            gerritEventManager.triggerEvent(event);
+            gerritEventManager.post(event);
         } else {
             throw new IllegalStateException("Manager not started!");
         }
