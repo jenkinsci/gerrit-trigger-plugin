@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -117,6 +118,15 @@ public class PluginImpl extends Plugin {
      */
     public static PluginImpl getInstance() {
         return instance;
+    }
+
+    /**
+     * Gets handler.
+     *
+     * @return the handler.
+     */
+    public Handler getHandler() {
+        return gerritEventManager;
     }
 
     @Override
