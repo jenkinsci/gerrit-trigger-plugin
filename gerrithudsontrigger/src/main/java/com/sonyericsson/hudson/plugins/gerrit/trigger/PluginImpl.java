@@ -322,11 +322,11 @@ public class PluginImpl extends Plugin {
      * It gets added to the same event queue as any event coming from the stream-events command in Gerrit.
      *
      * @param event the event.
-     * @see GerritHandler#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     * @see GerritHandler#post(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
      */
     public void triggerEvent(GerritEvent event) {
         if (gerritEventManager != null) {
-            gerritEventManager.triggerEvent(event);
+            gerritEventManager.post(event);
         } else {
             throw new IllegalStateException("Manager not started!");
         }
