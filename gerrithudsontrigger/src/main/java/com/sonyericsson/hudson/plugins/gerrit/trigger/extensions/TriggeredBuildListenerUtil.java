@@ -28,6 +28,9 @@ import hudson.ExtensionList;
 import hudson.model.Result;
 import jenkins.model.Jenkins;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 
@@ -37,6 +40,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
 public final class TriggeredBuildListenerUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(TriggeredBuildListenerUtil.class);
 
     /**
      * Default constructor.
@@ -52,7 +57,11 @@ public final class TriggeredBuildListenerUtil {
      */
     public static void fireOnStarted(GerritTriggeredEvent event, String command) {
         for (TriggeredBuildListener listener : getAllListeners()) {
-            listener.onStarted(event, command);
+            try {
+                listener.onStarted(event, command);
+            } catch (Exception ex) {
+                logger.warn(ex.getMessage());
+            }
         }
     }
 
@@ -74,7 +83,11 @@ public final class TriggeredBuildListenerUtil {
             result = Result.NOT_BUILT;
         }
         for (TriggeredBuildListener listener : getAllListeners()) {
-            listener.onCompleted(result, memoryImprint.getEvent(), command);
+            try {
+                listener.onCompleted(result, memoryImprint.getEvent(), command);
+            } catch (Exception ex) {
+                logger.warn(ex.getMessage());
+            }
         }
     }
 
