@@ -349,7 +349,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
-    protected int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+    public int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Result result = entry.getBuild().getResult();
@@ -376,7 +376,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
-    protected int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+    public int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Result result = entry.getBuild().getResult();
@@ -534,5 +534,36 @@ public class ParameterExpander {
         }
 
         return str.toString();
+    }
+
+    /**
+     * Returns cover message to be send after build has been completed.
+     * @param memoryImprint
+     * @param listener
+     * @return
+     */
+    public String getBuildCompletedMessage(MemoryImprint memoryImprint, TaskListener listener) {
+        String completedCommand = getBuildCompletedCommand(memoryImprint, listener);
+        return findMessage(completedCommand);
+    }
+
+    /**
+     * Returns cover message to be send after build has been started.
+     * @param build
+     * @param listener
+     * @param event
+     * @param stats
+     * @return
+     */
+    public String getBuildStartedMessage(AbstractBuild build, TaskListener listener, ChangeBasedEvent event, BuildsStartedStats stats) {
+        String startedCommand = getBuildStartedCommand(build, listener, event, stats);
+        return findMessage(startedCommand);
+    }
+
+    protected String findMessage(String completedCommand) {
+        String messageStart = "--message '";
+        String fromMessage = completedCommand.substring(completedCommand.indexOf(messageStart));
+        int endIndex = fromMessage.indexOf("' --");
+        return fromMessage.substring(messageStart.length(), endIndex != -1 ? endIndex : fromMessage.length());
     }
 }

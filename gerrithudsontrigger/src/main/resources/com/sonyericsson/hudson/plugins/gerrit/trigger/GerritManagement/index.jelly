@@ -324,6 +324,23 @@
                             </f:entry>
                         </f:optionalBlock>
                     </f:section>
+                    <f:section title="${%Rest API}">
+                        <f:optionalBlock name="useRestApi" title="${%Use rest API}" checked="${it.config.useRestApi}">
+                            <f:entry title="${%Gerrit HTTP username}">
+                                <f:textbox name="gerritHttpUserName"
+                                           value="${it.config.gerritHttpUserName}" />
+                            </f:entry>
+                            <f:entry title="${%Gerrit HTTP password}">
+                                <f:password name="gerritHttpPassword"
+                                            value="${it.config.gerritHttpPassword}"/>
+                            </f:entry>
+                            <f:validateButton title="${%Test REST Connection}"
+                                               progress="${%Testing...}"
+                                               method="testRestConnection"
+                                               with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
+
+                        </f:optionalBlock>
+                    </f:section>
                 </f:advanced>
                 <f:entry title="${%EnablePluginMessages}">
                     <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>

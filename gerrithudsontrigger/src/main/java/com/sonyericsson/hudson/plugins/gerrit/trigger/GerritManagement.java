@@ -51,6 +51,11 @@ import java.util.LinkedList;
 import java.util.List;
 import javax.servlet.ServletException;
 import net.sf.json.JSONObject;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
@@ -224,8 +229,36 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             }
 
         }
-    }
 
+        public FormValidation doTestRestConnection(
+                @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
+                @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
+                @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
+            DefaultHttpClient httpclient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(gerritFrontEndUrl + "/a/projects/?d");
+            httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
+                    new UsernamePasswordCredentials(gerritHttpUserName,
+                            gerritHttpPassword));
+            HttpResponse execute;
+            try {
+                execute = httpclient.execute(httpGet);
+            } catch (IOException e) {
+                return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+            }
+
+            int statusCode = execute.getStatusLine().getStatusCode();
+            switch(statusCode) {
+                case 200:
+                    return FormValidation.ok(Messages.Success());
+                case 401:
+                    return FormValidation.error(Messages.HttpConnectionUnauthorized());
+                default:
+                    return FormValidation.error(Messages.HttpConnectionError(statusCode));
+            }
+
+        }
+
+    }
     /**
      * Saves the form to the configuration and disk.
      * @param req StaplerRequest

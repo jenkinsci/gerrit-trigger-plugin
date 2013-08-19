@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
@@ -127,6 +128,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
+    private boolean useRestApi;
+    private String gerritHttpUserName;
+    private Secret gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -284,6 +288,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
         watchTimeExceptionData = addWatchTimeExceptionData(formData);
+
+        if(formData.has("useRestApi")) {
+            useRestApi = true;
+            JSONObject restApi = formData.getJSONObject("useRestApi");
+            gerritHttpUserName = restApi.optString("gerritHttpUserName", "");
+            gerritHttpPassword = Secret.fromString(restApi.optString("gerritHttpPassword", ""));
+        } else {
+            useRestApi = false;
+        }
+
     }
 
     /**
@@ -778,5 +792,20 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public WatchTimeExceptionData getExceptionData() {
         return watchTimeExceptionData;
+    }
+
+    @Override
+    public boolean isUseRestApi() {
+        return useRestApi;
+    }
+
+    @Override
+    public String getGerritHttpPassword() {
+        return Secret.toString(gerritHttpPassword);
+    }
+
+    @Override
+    public String getGerritHttpUserName() {
+        return gerritHttpUserName;
     }
 }

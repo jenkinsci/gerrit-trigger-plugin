@@ -27,11 +27,15 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job.BuildCompletedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildStartedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job.BuildStartedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import hudson.model.AbstractBuild;
@@ -105,8 +109,13 @@ public class NotificationFactory {
      * @see BuildCompletedCommandJob
      */
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
-        BuildCompletedCommandJob job = new BuildCompletedCommandJob(getConfig(),
-                memoryImprint, listener);
+        AbstractSendCommandJob job;
+        if(getConfig().isUseRestApi()) {
+            job = new BuildCompletedRestCommandJob(getConfig(), memoryImprint, listener);
+        } else {
+            job = new BuildCompletedCommandJob(getConfig(),
+                    memoryImprint, listener);
+        }
         GerritSendCommandQueue.queue(job);
     }
 
@@ -124,8 +133,13 @@ public class NotificationFactory {
      */
     public void queueBuildStarted(AbstractBuild build, TaskListener listener,
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
-        BuildStartedCommandJob job = new BuildStartedCommandJob(getConfig(),
+        AbstractSendCommandJob job;
+        if(getConfig().isUseRestApi()) {
+            job = new BuildStartedRestCommandJob(getConfig(), build, listener, (ChangeBasedEvent) event, stats);
+        } else {
+            job = new BuildStartedCommandJob(getConfig(),
                 build, listener, event, stats);
+        }
         GerritSendCommandQueue.queue(job);
     }
 }
