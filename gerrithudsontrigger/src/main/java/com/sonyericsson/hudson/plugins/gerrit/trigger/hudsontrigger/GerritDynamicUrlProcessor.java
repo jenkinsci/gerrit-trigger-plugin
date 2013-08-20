@@ -58,6 +58,7 @@ public final class GerritDynamicUrlProcessor {
 
     private static final String SHORTNAME_PROJECT = "p";
     private static final String SHORTNAME_BRANCH = "b";
+    private static final String SHORTNAME_TOPIC = "t";
     private static final String SHORTNAME_FILE = "f";
     private static final int SOCKET_READ_TIMEOUT = 10000;
 
@@ -74,7 +75,7 @@ public final class GerritDynamicUrlProcessor {
     private static Pattern buildLinePattern() {
       // This is what a line in the file should look like, after all comments and
       // leading and trailing whitespace have been removed:
-      // item: one of the characters p (for Project), b (for Branch) or f (for FilePath)
+      // item: one of the characters p (for Project), b (for Branch), t (for Topic) or f (for FilePath)
       // optional whitespace
       // operator: one of the characters = (for Plain), ~ (for RegExp), or ^ (for ANT path)
       // optional whitespace
@@ -82,6 +83,7 @@ public final class GerritDynamicUrlProcessor {
       String projectBranchFile = "^("
               + SHORTNAME_PROJECT
               + "|" + SHORTNAME_BRANCH
+              + "|" + SHORTNAME_TOPIC
               + "|" + SHORTNAME_FILE
               + ")";
       String operators = "(";
@@ -174,6 +176,13 @@ public final class GerritDynamicUrlProcessor {
           Branch branch = new Branch(type, text);
           branches.add(branch);
           dynamicGerritProject.setBranches(branches);
+        } else if (SHORTNAME_TOPIC.equals(item)) { // Topic
+            if (topics == null) {
+                throw new ParseException("Line " + lineNr + ": attempt to use 'Topic' before 'Project'", lineNr);
+            }
+            Topic topic = new Topic(type, text);
+            topics.add(topic);
+            dynamicGerritProject.setTopics(topics);
         } else { // FilePath (because it must be an 'f')
           if (filePaths == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
