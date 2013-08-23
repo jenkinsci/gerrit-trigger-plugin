@@ -184,7 +184,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
-     * @param customUrl                      Custom URL to sen to gerrit instead of build URL
+     * @param customUrl                      Custom URL to send to Gerrit instead of build URL
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
      * @param allowTriggeringUnreviewedPatches
@@ -442,7 +442,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
-        //Experimental feature!
+
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
             if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
@@ -1268,26 +1268,26 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * URL to send in comment to gerrit.
+     * URL to send in comment to Gerrit.
      *
-     * @return custom URL to post back to gerrit
+     * @return custom URL to post back to Gerrit
      */
     public String getCustomUrl() {
         return customUrl;
     }
 
     /**
-     * Set custom URL to post back to gerrit.
+     * Set custom URL to post back to Gerrit.
      *
-     * @param customUrl url to set
+     * @param customUrl URL to set
      */
     public void setCustomUrl(String customUrl) {
         this.customUrl = customUrl;
     }
 
     /**
-     * Convenience method for finding it out if file triggering is enabled in the gerrit version.
-     * @return true if file triggering is enabled in the gerrit version.
+     * Convenience method for finding it out if file triggering is enabled in the Gerrit version.
+     * @return true if file triggering is enabled in the Gerrit version.
      */
     public boolean isFileTriggerEnabled() {
         return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
@@ -1467,7 +1467,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         /**
         * Convenience method for the jelly file, accessing the instance proved to be hard.
-        * @return true if file triggering is enabled in the gerrit version.
+        * @return true if file triggering is enabled in the Gerrit version.
         */
         public boolean isFileTriggerEnabled() {
             return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
