@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
+
 import hudson.Plugin;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
 
 /**
  * Main Plugin entrance.

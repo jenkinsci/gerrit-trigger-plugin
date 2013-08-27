@@ -66,6 +66,7 @@ public class GerritAdministrativeMonitorTest {
         server = mock(GerritServer.class);
         ArrayList<GerritServer> servers = new ArrayList<GerritServer>();
         servers.add(server);
+        when(server.isConnected()).thenReturn(true);
         PowerMockito.mockStatic(PluginImpl.class);
         when(PluginImpl.getInstance()).thenReturn(plugin);
         when(plugin.getServers()).thenReturn(servers);

@@ -68,7 +68,9 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
         this.serverName = serverName;
-        connected = PluginImpl.getInstance().getServer(serverName).addListener(this);
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        server.addListener(this);
+        connected = server.isConnected();
     }
 
     @Override

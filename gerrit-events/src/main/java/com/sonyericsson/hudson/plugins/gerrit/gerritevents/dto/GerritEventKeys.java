@@ -82,7 +82,10 @@ public abstract class GerritEventKeys {
      * subject.
      */
     public static final String SUBJECT = "subject";
-
+    /**
+     * commit message.
+     */
+    public static final String COMMIT_MESSAGE = "commitMessage";
     /**
      * url.
      */
@@ -120,7 +123,7 @@ public abstract class GerritEventKeys {
      */
     public static final String NEWREV = "newRev";
     /**
-     * submitter.
+     * author.
      */
     public static final String AUTHOR = "author";
     /**
@@ -136,6 +139,14 @@ public abstract class GerritEventKeys {
      */
     public static final String VALUE = "value";
     /**
+     * approval by.
+     */
+    public static final String BY = "by";
+    /**
+     * approval username.
+     */
+    public static final String USERNAME = "username";
+    /**
      * provider.
      */
     public static final String PROVIDER = "provider";
@@ -148,9 +159,13 @@ public abstract class GerritEventKeys {
      */
     public static final String PORT = "port";
     /**
-     * proto.
+     * protocol (deprecated).
      */
-    public static final String PROTO = "proto";
+    public static final String PROTOCOL = "proto";
+    /**
+     * scheme.
+     */
+    public static final String SCHEME = "scheme";
     /**
      * version.
      */

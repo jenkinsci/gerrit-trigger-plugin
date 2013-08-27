@@ -28,7 +28,8 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEven
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.HOST;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PORT;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTO;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROTOCOL;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SCHEME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
 
@@ -38,34 +39,34 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
 
 /**
  * Represents a Gerrit JSON Provider DTO.
- * An Provider that is related to an event or attribute.
+ * A Provider that is related to an event or attribute.
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
 public class Provider implements GerritJsonDTO {
 
     /**
-     * The name
+     * The name of the Gerrit instance.
      */
     private String name;
     /**
-     * The host where serve this event.
+     * The host name of the Gerrit instance that provided this event.
      */
     private String host;
     /**
-     * The port where listen connection.
+     * The port where the Gerrit instance listens for connections.
      */
     private String port;
     /**
-     * The proto which through this event.
+     * The protocol scheme through which this event was provided.
      */
-    private String proto;
+    private String scheme;
     /**
-     * The url where serve gerrit Web UI.
+     * The url of the Gerrit instance's Web UI.
      */
     private String url;
     /**
-     * The version.
+     * The version of the Gerrit instance.
      */
     private String version;
     /**
@@ -86,18 +87,18 @@ public class Provider implements GerritJsonDTO {
 
     /**
      * For easier testing.
-     * @param name the host for SSH interface.
-     * @param host the host for SSH interface.
-     * @param port the port for SSH interface.
-     * @param proto the port for SSH interface.
-     * @param url the frontend URL for gerrit WebUI.
-     * @param version the gerrit version.
+     * @param name the name.
+     * @param host the host.
+     * @param port the port.
+     * @param scheme the scheme.
+     * @param url the frontend URL for Gerrit WebUI.
+     * @param version the Gerrit version.
      */
-    public Provider(String name, String host, String port, String proto, String url, String version) {
+    public Provider(String name, String host, String port, String scheme, String url, String version) {
         this.name = name;
         this.host = host;
         this.port = port;
-        this.proto = proto;
+        this.scheme = scheme;
         this.url = url;
         this.version = version;
     }
@@ -107,7 +108,12 @@ public class Provider implements GerritJsonDTO {
         name = getString(json, NAME);
         host = getString(json, HOST);
         port = getString(json, PORT);
-        proto = getString(json, PROTO);
+        // For backwards compatibility we check for `proto` first
+        // and if it's not set, then try `scheme`.
+        scheme = getString(json, PROTOCOL);
+        if (scheme == null) {
+            scheme = getString(json, SCHEME);
+        }
         url = getString(json, URL);
         version = getString(json, VERSION);
     }
@@ -131,7 +137,7 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Get host where serve this event.
+     * Get host.
      *
      * @return the host.
      */
@@ -140,7 +146,7 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Set host where server this event.
+     * Set host.
      *
      * @param host the host.
      */
@@ -149,7 +155,7 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Get port where listen connection.
+     * Get port.
      *
      * @return the port.
      */
@@ -158,7 +164,7 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Set port where listen connection.
+     * Set port.
      *
      * @param port the port.
      */
@@ -167,25 +173,45 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Get proto which through this event.
+     * Get protocol scheme.
      *
-     * @return the proto.
+     * @return the scheme.
+     * @deprecated use getSecheme instead.
      */
     public String getProto() {
-        return proto;
+        return getScheme();
     }
 
     /**
-     * Set proto which through this event.
+     * Set protocol scheme.
      *
-     * @param proto the proto.
+     * @param proto the scheme.
+     * @deprecated use setScheme instead.
      */
     public void setProto(String proto) {
-        this.proto = proto;
+        setScheme(proto);
     }
 
     /**
-     * Get url where serve gerrit Web UI.
+     * Get protocol scheme.
+     *
+     * @return the scheme.
+     */
+    public String getScheme() {
+        return scheme;
+    }
+
+    /**
+     * Set protocol scheme.
+     *
+     * @param scheme the scheme.
+     */
+    public void setScheme(String scheme) {
+        this.scheme = scheme;
+    }
+
+    /**
+     * Get url.
      *
      * @return the url
      */
@@ -198,7 +224,7 @@ public class Provider implements GerritJsonDTO {
     }
 
     /**
-     * Set url where serve gerrit Web UI.
+     * Set url.
      *
      * @param url the url.
      */
@@ -226,7 +252,7 @@ public class Provider implements GerritJsonDTO {
 
     @Override
     public String toString() {
-        return "Provider: " + getName() + " " + getHost() + " " + getPort() + " " + getProto()
+        return "Provider: " + getName() + " " + getHost() + " " + getPort() + " " + getScheme()
                 + " " + getUrl() + " " + getVersion();
     }
 
@@ -239,7 +265,7 @@ public class Provider implements GerritJsonDTO {
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((host == null) ? 0 : host.hashCode());
         result = prime * result + ((port == null) ? 0 : port.hashCode());
-        result = prime * result + ((proto == null) ? 0 : proto.hashCode());
+        result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
         result = prime * result + ((url == null) ? 0 : url.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
         return result;
@@ -271,10 +297,10 @@ public class Provider implements GerritJsonDTO {
                 return false;
         } else if (!port.equals(other.port))
             return false;
-        if (proto == null) {
-            if (other.proto != null)
+        if (scheme == null) {
+            if (other.scheme != null)
                 return false;
-        } else if (!proto.equals(other.proto))
+        } else if (!scheme.equals(other.scheme))
             return false;
         if (url == null) {
             if (other.url != null)

@@ -1,7 +1,8 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Ericsson Mobile Communications.  All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB.  All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -107,7 +108,7 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * The list of FilePath-rules.
+     * The list of branch-rules.
      * @return the branch-rules
      */
     public List<Branch> getBranches() {
@@ -115,7 +116,7 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
-     * The list of FilePath-rules.
+     * The list of branch-rules.
      * @param branches the branch-rules
      */
     public void setBranches(List<Branch> branches) {
@@ -140,7 +141,7 @@ public class GerritProject implements Describable<GerritProject> {
 
     /**
      * Compares the project, branch and files to see if the rules specified is a match.
-     * @param project the gerrit project
+     * @param project the Gerrit project
      * @param branch the branch.
      * @param files the files.
      * @return true is the rules match.
@@ -164,7 +165,7 @@ public class GerritProject implements Describable<GerritProject> {
 
     /**
      * Compares the project and branch to see if the rules specified is a match.
-     * @param project the gerrit project
+     * @param project the Gerrit project
      * @param branch the branch.
      * @return true is the rules match.
      */

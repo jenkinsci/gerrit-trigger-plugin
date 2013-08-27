@@ -64,7 +64,7 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
     }
 
     /**
-     * The account that triggered the change.
+     * The account that triggered the event.
      *
      * @param account the account.
      */
@@ -73,7 +73,7 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
     }
 
     /**
-     * The provider that provide the event.
+     * The provider that provided the event.
      *
      * @return the provider.
      */
@@ -82,7 +82,7 @@ public abstract class GerritTriggeredEvent extends GerritEventLifecycle implemen
     }
 
     /**
-     * The provider that provide the event.
+     * The provider that provided the event.
      *
      * @param provider the provider.
      */

@@ -2,7 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock
  */
 public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
-    //TODO Fix the SshdServerMock so that asserts can be done on approve commands.
+    //TODO Fix the SshdServerMock so that asserts can be done on review commands.
 
     private SshServer sshd;
     @SuppressWarnings("unused")
@@ -79,7 +79,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
-        server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
+        server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         super.setUp();
     }

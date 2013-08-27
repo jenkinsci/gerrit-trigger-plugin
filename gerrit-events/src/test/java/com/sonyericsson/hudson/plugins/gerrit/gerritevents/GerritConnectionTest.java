@@ -25,8 +25,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -36,6 +37,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PipedReader;
 import java.io.PipedWriter;
+
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -66,10 +69,12 @@ public class GerritConnectionTest {
     private static GerritConnection connection;
     private static BufferedWriter pipedWriter;
     private static PipedReader pipedReader;
-    private static Thread connectionThread;
+
+    private static CountDownLatch establishedLatch = new CountDownLatch(1);
+    private static CountDownLatch finishLatch = new CountDownLatch(1);
+    private static CountDownLatch downLatch = new CountDownLatch(1);
 
     private static final String FINISH_WORD = "FINISH";
-    private static volatile boolean isFinished = false;
     /**
      * Creates a SshConnection mock and starts a GerritConnection with that connection-mock.
      *
@@ -90,13 +95,14 @@ public class GerritConnectionTest {
                 isA(String.class), isA(Integer.class), isA(String.class), isA(Authentication.class));
         connection = new GerritConnection("", "localhost", 29418, new Authentication(null, ""));
         connection.setHandler(new HandlerMock());
-        connectionThread = new Thread(connection);
-        connectionThread.start();
+        connection.start();
         try {
-            Thread.sleep(1000); //Lots and lots of timing issues here
+            establishedLatch.await();
         } catch (InterruptedException e) {
             System.out.println("Interrupted while sleeping.");
         }
+        assertTrue(connection.isConnected());
+        assertFalse(connection.isShutdownInProgress());
     }
 
     /**
@@ -104,29 +110,22 @@ public class GerritConnectionTest {
      */
     @AfterClass
     public static void shutDown() {
-        while (!isFinished) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                System.out.println("Interrupted while sleeping.");
-            }
+        try {
+            finishLatch.await();
+        } catch (InterruptedException e) {
+            System.out.println("Interrupted while sleeping.");
         }
         if (connection != null) {
             connection.shutdown(false);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                System.out.println("Interrupted while sleeping.");
-            }
-            if (!connection.isShutdownInProgress()) {
-                fail("Failed to set shutdown flag!");
-            }
+            assertTrue(connection.isShutdownInProgress());
 
             try {
                 pipedWriter.append("hello");
                 pipedWriter.newLine();
                 pipedWriter.close();
-                connectionThread.join();
+                downLatch.await();
+                assertFalse(connection.isConnected());
+                connection.join();
             } catch (InterruptedException e) {
                 System.err.println("interupted while waiting for connection to shut down.");
             } catch (IOException e) {
@@ -134,7 +133,6 @@ public class GerritConnectionTest {
             }
         }
         connection = null;
-        connectionThread = null;
         sshConnectionMock = null;
         pipedReader = null;
         pipedWriter = null;
@@ -220,18 +218,20 @@ public class GerritConnectionTest {
                 System.out.println("INFO: Posted " + provider);
             }
             if (data.equals(FINISH_WORD)) {
-                isFinished = true;
+                finishLatch.countDown();
             }
         }
 
         @Override
         public void notifyConnectionEstablished() {
             System.out.println("INFO: Handled connection established");
+            establishedLatch.countDown();
         }
 
         @Override
         public void notifyConnectionDown() {
             System.out.println("INFO: Handled connection down");
+            downLatch.countDown();
         }
     }
 }

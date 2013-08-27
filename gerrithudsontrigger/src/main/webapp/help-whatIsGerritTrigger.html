@@ -10,21 +10,24 @@
             <li><strong>GERRIT_EVENT_TYPE</strong>: The type of this event.</li>
             <li><strong>GERRIT_EVENT_HASH</strong>: A unique hash making all triggered builds unique in the queue.</li>
             <li><strong>GERRIT_EVENT_ACCOUNT</strong>: The name and email of the account associated with the event, if any.
-                            <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
+                <i>&quot;Name&quot; &lt;name@somewhere.com&gt;</i>.</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_NAME</strong>: The name of the account associated with the event, if any.</li>
             <li><strong>GERRIT_EVENT_ACCOUNT_EMAIL</strong>: The email of the account associated with the event, if any.</li>
-			<li><strong>GERRIT_NAME</strong>: The name of gerrit which provides the event.</li>
-			<li><strong>GERRIT_HOST</strong>: The hostname of gerrit which prvides the event.</li>
-			<li><strong>GERRIT_PORT</strong>: The number of gerrit command port which provides the event.</li>
-			<li><strong>GERRIT_PROTO</strong>: The protocol of gerrit command port which provides the event.</li>
-			<li><strong>GERRIT_VERSION</strong>: The version of gerrit which provides the event.</li>
+            <li><strong>GERRIT_NAME</strong>: The name of the Gerrit instance that provided the event.</li>
+            <li><strong>GERRIT_HOST</strong>: The hostname of the Gerrit instance that provided the event.</li>
+            <li><strong>GERRIT_PORT</strong>: The port number of the Gerrit instance that provided the event.</li>
+            <li><strong>GERRIT_SCHEME</strong>: The protocol name of the Gerrit instance that provided the event.</li>
+            <li><strong>GERRIT_VERSION</strong>: The version number of the Gerrit instance that provided the event.</li>
         </ul>
     </li>
     <li>
-        <strong>For events on a change</strong> <i>(Patch set created, Draft published, Change merged, Comment added)</i>
+        <strong>For events on a change</strong>
+        <i>(Patch set created, Draft published, Change merged, Change abandoned, Change restored, Comment added)</i>
         <ul>
             <li><strong>GERRIT_CHANGE_ID</strong>: The Change-Id.</li>
             <li><strong>GERRIT_CHANGE_SUBJECT</strong>: The first line of the commit message.</li>
+            <li><strong>GERRIT_CHANGE_COMMIT_MESSAGE</strong>: The full commit message.
+            (Only when Gerrit version is 2.8 or above).</li>
             <li><strong>GERRIT_CHANGE_NUMBER</strong>: The change number.</li>
             <li><strong>GERRIT_CHANGE_URL</strong>: The URL to the change.</li>
             <li><strong>GERRIT_PATCHSET_NUMBER</strong>: The Patch Set number.</li>

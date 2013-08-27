@@ -45,6 +45,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -63,6 +64,7 @@ public class GerritServer {
     private transient GerritHandler gerritEventManager;
     private transient GerritConnection gerritConnection;
     private transient GerritProjectListUpdater projectListUpdater;
+    private transient UnreviewedPatchesListener unreviewedPatchesListener;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
 
@@ -147,6 +149,9 @@ public class GerritServer {
         gerritEventManager = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
 
         initializeConnectionListener();
+
+        //Starts unreviewed patches listener
+        unreviewedPatchesListener = new UnreviewedPatchesListener(name);
         logger.info(name + " started");
     }
 
@@ -157,8 +162,8 @@ public class GerritServer {
      */
     private void initializeConnectionListener() {
         gerritConnectionListener = new GerritConnectionListener(name);
-        boolean connected = addListener(gerritConnectionListener);
-        gerritConnectionListener.setConnected(connected);
+        addListener(gerritConnectionListener);
+        gerritConnectionListener.setConnected(isConnected());
         gerritConnectionListener.checkGerritVersionFeatures();
     }
 
@@ -174,6 +179,12 @@ public class GerritServer {
         } catch (InterruptedException ie) {
             logger.error("project list updater of " + name + "interrupted", ie);
         }
+
+        if (unreviewedPatchesListener != null) {
+            unreviewedPatchesListener.shutdown();
+            unreviewedPatchesListener = null;
+        }
+
         if (gerritConnection != null) {
             gerritConnection.shutdown(false);
             gerritConnection = null;
@@ -266,6 +277,19 @@ public class GerritServer {
     }
 
     /**
+     * A quick check if a connection to Gerrit is open.
+     *
+     * @return true if so.
+     */
+
+    public synchronized boolean isConnected() {
+        if (gerritConnection != null) {
+            return gerritConnection.isConnected();
+        }
+        return false;
+    }
+
+    /**
      * Restarts the connection to Gerrit stream of events.
      *
      * @see GerritManagement.DescriptorImpl#doRestartConnection()
@@ -282,14 +306,11 @@ public class GerritServer {
      * will get the current connection status.
      *
      * @param listener the listener to be added.
-     * @return the connection status, ie., whether we are connected to the server or not.
      */
-    public boolean addListener(ConnectionListener listener) {
-        boolean connected = false;
+    public void addListener(ConnectionListener listener) {
         if (gerritEventManager != null) {
-            connected = gerritEventManager.addListener(listener);
+            gerritEventManager.addListener(listener);
         }
-        return connected;
     }
 
     /**

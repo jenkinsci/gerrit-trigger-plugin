@@ -2,7 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -98,14 +98,14 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
-        String parameterString = "gerrit approve MSG=OK VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
+        String parameterString = "gerrit review MSG=OK VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildSuccessful()).thenReturn(parameterString);
         when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
         when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
-        String parameterStringExpected = "gerrit approve MSG=OK VERIFIED=1 CODEREVIEW=1";
+        String parameterStringExpected = "gerrit review MSG=OK VERIFIED=1 CODEREVIEW=1";
 
         verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }
@@ -149,14 +149,14 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
-        String parameterString = "gerrit approve MSG=Failed VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
+        String parameterString = "gerrit review MSG=Failed VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildFailed()).thenReturn(parameterString);
         when(config.getGerritBuildFailedVerifiedValue()).thenReturn(-1);
         when(config.getGerritBuildFailedCodeReviewValue()).thenReturn(-1);
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
-        String parameterStringExpected = "gerrit approve MSG=Failed VERIFIED=-1 CODEREVIEW=-1";
+        String parameterStringExpected = "gerrit review MSG=Failed VERIFIED=-1 CODEREVIEW=-1";
 
         verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }
@@ -213,7 +213,7 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
-        String parameterString = "gerrit approve MSG=FAILED VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
+        String parameterString = "gerrit review MSG=FAILED VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildFailed()).thenReturn(parameterString);
         when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
         when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
@@ -222,7 +222,7 @@ public class SpecGerritVerifiedSetterTest {
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
-        String parameterStringExpected = "gerrit approve MSG=FAILED VERIFIED=-1 CODEREVIEW=-1";
+        String parameterStringExpected = "gerrit review MSG=FAILED VERIFIED=-1 CODEREVIEW=-1";
 
         verify(mockGerritCmdRunner).sendCommand(parameterStringExpected);
     }

@@ -58,6 +58,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
@@ -133,6 +134,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String customUrl;
     private String serverName;
     private List<PluginGerritEvent> triggerOnEvents;
+    private boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
@@ -189,6 +191,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param serverName                     The selected server
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
+     * @param allowTriggeringUnreviewedPatches
+     *                                       Is automatic patch checking allowed when connection is established
      * @param triggerConfigURL               Where to fetch the configuration file from
      */
     @DataBoundConstructor
@@ -218,6 +222,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String serverName,
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
+            boolean allowTriggeringUnreviewedPatches,
             String triggerConfigURL) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
@@ -247,6 +252,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
+        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
     }
 
     /**
@@ -315,11 +321,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (dynamicTriggerConfiguration) {
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         }
+
+        GerritProjectList.removeTriggerFromProjectList(this);
+        if (allowTriggeringUnreviewedPatches) {
+            for (GerritProject p : gerritProjects) {
+                GerritProjectList.addProject(p, this);
+            }
+        }
     }
 
     @Override
     public void stop() {
         logger.debug("Stop");
+        GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
             if (PluginImpl.getInstance() != null) {
@@ -1144,6 +1158,25 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
+    }
+
+    /**
+     * Is checking and triggering missed patches allowed when connection is created.
+     *
+     * @return true if checking and triggering missing patches is allowed.
+     */
+    public boolean isAllowTriggeringUnreviewedPatches() {
+        return allowTriggeringUnreviewedPatches;
+    }
+
+    /**
+     * Set if triggering missing patches configuration should be enabled or not.
+     *
+     * @param allowTriggeringUnreviewedPatches
+     *         true if triggering missing patches configuration should be enabled.
+     */
+    public void setAllowTriggeringUnreviewedPatches(boolean allowTriggeringUnreviewedPatches) {
+        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
     }
 
     /**

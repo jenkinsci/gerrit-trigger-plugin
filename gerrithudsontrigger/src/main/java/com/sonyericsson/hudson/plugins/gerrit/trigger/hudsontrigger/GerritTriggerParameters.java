@@ -50,6 +50,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_SUBJECT,
     /**
+     * Parameter name for the full commit message.
+     */
+    GERRIT_CHANGE_COMMIT_MESSAGE,
+    /**
      * Parameter name for the branch.
      */
     GERRIT_BRANCH,
@@ -166,27 +170,27 @@ public enum GerritTriggerParameters {
      */
     GERRIT_SUBMITTER_EMAIL,
     /**
-    * The name of gerrit.
-    */
-   GERRIT_NAME,
-   /**
-    * The host of gerrit.
-    */
-   GERRIT_HOST,
-   /**
-    * The port of gerrit.
-    */
-   GERRIT_PORT,
-   /**
-    * The protocol where gerrit listen commands.
-    */
-   GERRIT_PROTO,
-   /**
-    * The version of gerrit.
-    */
-   GERRIT_VERSION,
-   /**
-     * A hashcode of the gerrit event object, to make sure every set of parameters
+     * The name of the Gerrit instance.
+     */
+    GERRIT_NAME,
+    /**
+     * The host of the Gerrit instance.
+     */
+    GERRIT_HOST,
+    /**
+     * The port number of the Gerrit instance.
+     */
+    GERRIT_PORT,
+    /**
+     * The protocol scheme of the Gerrit instance.
+     */
+    GERRIT_SCHEME,
+    /**
+     * The version of the Gerrit instance.
+     */
+    GERRIT_VERSION,
+    /**
+     * A hashcode of the Gerrit event object, to make sure every set of parameters
      * is unique (allowing jenkins to queue duplicate builds).
      */
     GERRIT_EVENT_HASH,
@@ -310,6 +314,11 @@ public enum GerritTriggerParameters {
             }
             String url = PluginImpl.getInstance().getServer(serverName).getConfig().getGerritFrontEndUrlFor(event);
 
+            String commitMessage = event.getChange().getCommitMessage();
+            if (commitMessage != null) {
+                GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
+                    parameters, commitMessage, escapeQuotes);
+            }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
@@ -369,8 +378,8 @@ public enum GerritTriggerParameters {
                     parameters, provider.getHost(), escapeQuotes);
             GERRIT_PORT.setOrCreateStringParameterValue(
                     parameters, provider.getPort(), escapeQuotes);
-            GERRIT_PROTO.setOrCreateStringParameterValue(
-                    parameters, provider.getProto(), escapeQuotes);
+            GERRIT_SCHEME.setOrCreateStringParameterValue(
+                    parameters, provider.getScheme(), escapeQuotes);
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
