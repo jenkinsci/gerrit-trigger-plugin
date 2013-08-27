@@ -32,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -44,19 +43,19 @@ import java.util.List;
 @Extension
 public class GerritAdministrativeMonitor extends AdministrativeMonitor {
 
-    private ArrayList<GerritConnectionListener> warningList;
-    private ArrayList<GerritConnectionListener> errorList;
-    private ArrayList<GerritConnectionListener> snapshotList;
-    private ArrayList<GerritConnectionListener> disabledFeaturesList;
+    private LinkedList<GerritConnectionListener> warningList;
+    private LinkedList<GerritConnectionListener> errorList;
+    private LinkedList<GerritConnectionListener> snapshotList;
+    private LinkedList<GerritConnectionListener> disabledFeaturesList;
 
     /**
      * Default constructor.
      */
     public GerritAdministrativeMonitor() {
-        warningList = new ArrayList<GerritConnectionListener>();
-        errorList = new ArrayList<GerritConnectionListener>();
-        snapshotList = new ArrayList<GerritConnectionListener>();
-        disabledFeaturesList = new ArrayList<GerritConnectionListener>();
+        warningList = new LinkedList<GerritConnectionListener>();
+        errorList = new LinkedList<GerritConnectionListener>();
+        snapshotList = new LinkedList<GerritConnectionListener>();
+        disabledFeaturesList = new LinkedList<GerritConnectionListener>();
     }
 
     @Override
@@ -77,7 +76,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
         warningList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
             GerritConnectionListener listener = s.getGerritConnectionListener();
-            boolean connected = listener.isConnected();
+            boolean connected = listener != null && listener.isConnected();
             if (!connected && s.getConfig().hasDefaultValues()) {
                 warningList.add(listener);
             }
@@ -90,8 +89,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
      *
      * @return the names, or an empty list if no connection warning.
      */
-    public ArrayList<String> getConnectionWarningServers() {
-        ArrayList<String> warningServers = new ArrayList<String>();
+    public LinkedList<String> getConnectionWarningServers() {
+        LinkedList<String> warningServers = new LinkedList<String>();
         for (GerritConnectionListener l : warningList) {
             warningServers.add(l.getName());
         }
@@ -110,7 +109,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
         errorList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
             GerritConnectionListener listener = s.getGerritConnectionListener();
-            boolean connected = listener.isConnected();
+            boolean connected = listener != null && listener.isConnected();
             if (!connected && !s.getConfig().hasDefaultValues()) {
                 errorList.add(listener);
             }
@@ -123,8 +122,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
      *
      * @return the names, or an empty list if no connection error.
      */
-    public ArrayList<String> getConnectionErrorServers() {
-        ArrayList<String> errorServers = new ArrayList<String>();
+    public LinkedList<String> getConnectionErrorServers() {
+        LinkedList<String> errorServers = new LinkedList<String>();
         for (GerritConnectionListener l : errorList) {
             errorServers.add(l.getName());
         }
@@ -159,7 +158,7 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
         snapshotList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
             GerritConnectionListener listener = s.getGerritConnectionListener();
-            if (listener.isSnapShotGerrit()) {
+            if (listener != null && listener.isSnapShotGerrit()) {
                 snapshotList.add(listener);
             }
         }
@@ -171,8 +170,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
      *
      * @return the names, or an empty list if no snapshot servers.
      */
-    public ArrayList<String> getSnapshotServers() {
-        ArrayList<String> snapshotServers = new ArrayList<String>();
+    public LinkedList<String> getSnapshotServers() {
+        LinkedList<String> snapshotServers = new LinkedList<String>();
         for (GerritConnectionListener l : snapshotList) {
             snapshotServers.add(l.getName());
         }
@@ -188,9 +187,11 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
         disabledFeaturesList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
             GerritConnectionListener listener = s.getGerritConnectionListener();
-            List<GerritVersionChecker.Feature> disabledFeatures = listener.getDisabledFeatures();
-            if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
-                disabledFeaturesList.add(listener);
+            if (listener != null) {
+                List<GerritVersionChecker.Feature> disabledFeatures = listener.getDisabledFeatures();
+                if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
+                    disabledFeaturesList.add(listener);
+                }
             }
         }
         return !disabledFeaturesList.isEmpty();
@@ -201,8 +202,8 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
      *
      * @return the names, or an empty list if no servers have disabled features.
      */
-    public ArrayList<String> getDisabledFeaturesServers() {
-        ArrayList<String> disabledFeaturesServers = new ArrayList<String>();
+    public LinkedList<String> getDisabledFeaturesServers() {
+        LinkedList<String> disabledFeaturesServers = new LinkedList<String>();
         for (GerritConnectionListener l : disabledFeaturesList) {
             disabledFeaturesServers.add(l.getName());
         }

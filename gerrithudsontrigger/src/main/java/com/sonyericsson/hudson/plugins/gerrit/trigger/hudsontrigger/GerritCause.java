@@ -24,10 +24,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.triggers.SCMTrigger.SCMTriggerCause;
 
@@ -37,39 +42,37 @@ import hudson.triggers.SCMTrigger.SCMTriggerCause;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritCause extends SCMTriggerCause {
-
+    private static final Logger logger = LoggerFactory.getLogger(GerritCause.class);
     private GerritTriggeredEvent tEvent;
     private boolean silentMode;
     private TriggerContext context;
-    private String serverName;
+    private String url;
 
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
-     * @param serverName the name of the server that triggered the event.
      * @param silentMode Silent Mode on or off.
      */
-    public GerritCause(GerritTriggeredEvent event, String serverName, boolean silentMode) {
+    public GerritCause(GerritTriggeredEvent event, boolean silentMode) {
         super("");
         this.tEvent = event;
-        this.serverName = serverName;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
+        this.url = getUrlFromEvent();
     }
 
     /**
      * Default DataBound Constructor.
      * @param event the event that triggered the build.
-     * @param serverName the name of the server that triggered the event.
      * @param silentMode Silent Mode on or off.
      * @param context The context with information about other builds triggered for the same event as this one.
      */
-    public GerritCause(GerritTriggeredEvent event, String serverName, boolean silentMode, TriggerContext context) {
+    public GerritCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
         super("");
         this.tEvent = event;
-        this.serverName = serverName;
         this.silentMode = silentMode;
         this.context = context;
+        this.url = getUrlFromEvent();
     }
 
     /**
@@ -171,7 +174,32 @@ public class GerritCause extends SCMTriggerCause {
      * @return the URL. Empty String if no server found.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getServer(serverName).getConfig().getGerritFrontEndUrlFor(tEvent);
+        return url;
+    }
+
+    /**
+     * Gets the URL to the Gerrit patchSet. Called only once in the constructor to
+     * avoid NPEs after server name change.
+     * @return the URL. Empty String if no server found.
+     */
+    private String getUrlFromEvent() {
+        if (tEvent.getProvider() != null) {
+            String serverName = tEvent.getProvider().getName();
+            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    return config.getGerritFrontEndUrlFor(tEvent);
+                } else {
+                    logger.error("Could not get the server config {}", config);
+                }
+            } else {
+            logger.error("Could not get the server {}", serverName);
+            }
+        } else {
+            logger.error("Event provider has not been properly initialized.");
+        }
+        return "";
     }
 
     @Override

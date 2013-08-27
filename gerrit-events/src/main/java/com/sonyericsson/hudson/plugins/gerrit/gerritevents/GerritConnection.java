@@ -259,6 +259,7 @@ public class GerritConnection extends Thread implements Connector {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
+                notifyConnectionEstablished();
                 Provider provider = new Provider(
                         gerritName,
                         gerritHostName,
@@ -267,7 +268,6 @@ public class GerritConnection extends Thread implements Connector {
                         DEFAULT_GERRIT_HOSTNAME,
                         getGerritVersionString());
                 logger.info("Ready to receive data from Gerrit: " + gerritName);
-                notifyConnectionEstablished();
                 do {
                     logger.debug("Data-line from Gerrit: {}", line);
                     if (line != null && line.length() > 0) {

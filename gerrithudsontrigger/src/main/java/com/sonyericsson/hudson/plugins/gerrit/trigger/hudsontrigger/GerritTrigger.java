@@ -40,7 +40,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTrig
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
@@ -280,6 +279,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Set the selected server.
+     *
+     * @param name the name of the newly selected server.
+     *
+     */
+    public void setServerName(String name) {
+        this.serverName = name;
+    }
+
+    /**
      * Finds the GerritTrigger in a project.
      *
      * @param project the project.
@@ -299,6 +308,24 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             gerritTriggerTimerTask = null;
         }
     }
+
+    /**
+    * Adds listener to the server.
+    *
+    *
+    */
+       private void addListener() {
+           PluginImpl plugin = PluginImpl.getInstance();
+           if (plugin != null) {
+               if (plugin.getServer(serverName) != null) {
+                    PluginImpl.getInstance().getServer(serverName).addListener(this);
+               } else {
+                   logger.error("Server [" + serverName + "] was now found!");
+                   }
+       } else {
+       logger.error("The plugin instance could not be found");
+       }
+   }
 
     @Override
     public void start(AbstractProject project, boolean newInstance) {
@@ -336,14 +363,29 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
-            if (PluginImpl.getInstance() != null) {
-                PluginImpl.getInstance().getServer(serverName).removeListener(this);
-            }
+                removeListener();
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
 
         cancelTimer();
+    }
+/**
+ * Removes listener from the server.
+ *
+ *
+ */
+    private void removeListener() {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            if (plugin.getServer(serverName) != null) {
+                PluginImpl.getInstance().getServer(serverName).removeListener(this);
+            } else {
+                logger.error("Could not find server {}", serverName);
+            }
+        } else {
+       logger.error("The plugin instance could not be found");
+        }
     }
 
     @Override
@@ -351,6 +393,20 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         //Default should do nothing
     }
 
+    /**
+     * Initializes the event's provider and pass it the server name info.
+     *
+     * @param tEvent the event.
+     */
+    private void initializeProvider(GerritTriggeredEvent tEvent) {
+        Provider provider = tEvent.getProvider();
+        if (provider == null) {
+            provider = new Provider();
+            provider.setName(serverName);
+        } else if (provider.getName() == null) {
+            provider.setName(serverName);
+        }
+    }
     /**
      * Called when a PatchSetCreated event arrives.
      *
@@ -366,6 +422,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
@@ -373,9 +430,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
             GerritCause cause;
             if (event instanceof ManualPatchsetCreated) {
-                cause = new GerritManualCause((ManualPatchsetCreated)event, serverName, silentMode);
+                cause = new GerritManualCause((ManualPatchsetCreated)event, silentMode);
             } else {
-                cause = new GerritCause(event, serverName, silentMode);
+                cause = new GerritCause(event, silentMode);
             }
 
             schedule(cause, event);
@@ -397,13 +454,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
                 event.fireProjectTriggered(myProject);
             }
 
-            schedule(new GerritCause(event, serverName, silentMode), event);
+            schedule(new GerritCause(event, silentMode), event);
         }
     }
 
@@ -442,11 +500,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param project the project to build.
      */
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
-        if (event.getProvider() == null) {
-            Provider provider = new Provider();
-            provider.setName(serverName);
-            event.setProvider(provider);
-        }
         BadgeAction badgeAction = new BadgeAction(event);
             //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = getBuildScheduleDelay();
@@ -490,12 +543,26 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Get the list of verdict categories available on the selected GerritServer.
+     *
+     * @return the list of verdict categories, or an empty linkedlist if server not found.
+     */
+    private List<VerdictCategory> getVerdictCategoriesList() {
+         if (PluginImpl.getInstance().getServer(serverName) != null) {
+            return PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+         } else {
+            logger.error("Could not find server {}", serverName);
+            return new LinkedList<VerdictCategory>();
+         }
+    }
+
+    /**
      * Fills the verdict category drop-down list for the comment-added events.
      * @return a ListBoxModel for the drop-down list.
      */
     public ListBoxModel doFillVerdictCategoryItems() {
         ListBoxModel m = new ListBoxModel();
-        List<VerdictCategory> list = PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+        List<VerdictCategory> list = getVerdictCategoriesList();
         for (VerdictCategory v : list) {
             m.add(v.getVerdictDescription(), v.getVerdictValue());
         }
@@ -609,14 +676,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
                         context.getEvent())) {
-
+            initializeProvider(context.getEvent());
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
                         context.getThisBuild().getProject(),
                         context.getEvent(),
                         context.getOtherBuilds());
             }
-            final GerritUserCause cause = new GerritUserCause(context.getEvent(), serverName, silentMode);
+            final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent(), context.getThisBuild().getProject());
         }
     }
@@ -651,10 +718,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private void retrigger(AbstractProject project, GerritTriggeredEvent event) {
         if (project.isBuildable()) {
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(project, event, null);
             }
-            GerritUserCause cause = new GerritUserCause(event, serverName, silentMode);
+            GerritUserCause cause = new GerritUserCause(event, silentMode);
             schedule(cause, event, project);
         }
     }
@@ -747,10 +815,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            GerritCause cause = new GerritCause(event, serverName, silentMode);
+            GerritCause cause = new GerritCause(event, silentMode);
             schedule(cause, event);
         }
     }
@@ -769,10 +838,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            GerritCause cause = new GerritCause(event, serverName, silentMode);
+            GerritCause cause = new GerritCause(event, silentMode);
             schedule(cause, event);
         }
     }
@@ -791,10 +861,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            GerritCause cause = new GerritCause(event, serverName, silentMode);
+            GerritCause cause = new GerritCause(event, silentMode);
             schedule(cause, event);
         }
     }
@@ -841,10 +912,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event) && matchesApproval(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            GerritCause cause = new GerritCause(event, serverName, silentMode);
+            GerritCause cause = new GerritCause(event, silentMode);
             schedule(cause, event);
         }
     }
@@ -863,10 +935,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
-            GerritCause cause = new GerritCause(event, serverName, silentMode);
+            GerritCause cause = new GerritCause(event, silentMode);
             schedule(cause, event);
         }
     }
@@ -1451,9 +1524,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          */
         public ListBoxModel doFillServerNameItems() {
             ListBoxModel items = new ListBoxModel();
-            ArrayList<GerritServer> servers = PluginImpl.getInstance().getServers();
-            for (GerritServer s : servers) {
-                items.add(s.getName());
+            LinkedList<String> serverNames = PluginImpl.getInstance().getServerNames();
+            for (String s : serverNames) {
+                items.add(s);
             }
             return items;
         }

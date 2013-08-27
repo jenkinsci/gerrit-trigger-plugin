@@ -25,27 +25,57 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
+import hudson.Extension;
 import hudson.model.AbstractProject;
+import hudson.model.Describable;
+//import hudson.model.Failure;
+import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.util.FormValidation;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.servlet.ServletException;
+
+import jenkins.model.Jenkins;
+
+import net.sf.json.JSONObject;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshUtil;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -57,10 +87,17 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPa
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
-public class GerritServer {
-
+public class GerritServer implements Describable<GerritServer> {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
+    private static final String START_SUCCESS = "Connection started";
+    private static final String START_FAILURE = "Error establising conection";
+    private static final String STOP_SUCCESS = "Connection stopped";
+    private static final String STOP_FAILURE = "Error terminating connection";
+    private static final String RESTART_SUCCESS = "Connection restarted";
+    private static final String RESTART_FAILURE = "Error restarting connection";
     private String name;
+    private transient boolean started;
+    private transient String connectionResponse = "";
     private transient GerritHandler gerritEventManager;
     private transient GerritConnection gerritConnection;
     private transient GerritProjectListUpdater projectListUpdater;
@@ -68,6 +105,29 @@ public class GerritServer {
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
+
+    /**
+     * Convenience method for jelly to get url of the server list's page relative to root.
+     * @link {@link GerritManagement#getUrlName()}.
+     *
+     * @return the relative url
+     */
+    public String getParentUrl() {
+        return GerritManagement.get().getUrlName();
+    }
+    /**
+     * Convenience method for jelly to get url of this server's config page relative to root.
+     * @link {@link GerritManagement#getUrlName()}.
+     *
+     * @return the relative url
+     */
+    public String getUrl() {
+        return GerritManagement.get().getUrlName() + "/server/" + name;
+    }
     /**
      * Constructor.
      *
@@ -106,25 +166,6 @@ public class GerritServer {
     }
 
     /**
-     * Return the list of jobs configured with this server.
-     * Used for blocking removal of a server from the list when some jobs still have listeners for that server.
-     *
-     * @return the list of jobs configured with this server.
-     */
-    public List<AbstractProject> getConfiguredJobs() {
-        ArrayList<AbstractProject> configuredJobs = new ArrayList<AbstractProject>();
-        for (AbstractProject<?, ?> project : Hudson.getInstance().getItems(AbstractProject.class)) { //get the jobs
-            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
-
-            //if the job has a gerrit trigger, check whether the trigger has selected this server:
-            if (gerritTrigger != null && gerritTrigger.getServerName().equals(name)) {
-                configuredJobs.add(project); //job has selected this server, add it to the list
-            }
-        }
-        return configuredJobs;
-    }
-
-    /**
      * Starts the server's project list updater, send command queue and event manager.
      *
      */
@@ -153,12 +194,11 @@ public class GerritServer {
         //Starts unreviewed patches listener
         unreviewedPatchesListener = new UnreviewedPatchesListener(name);
         logger.info(name + " started");
+        started = true;
     }
 
     /**
      * Initializes the Gerrit connection listener for this server.
-     * Add it to the list of connection listeners if not in saved listeners.
-     *
      */
     private void initializeConnectionListener() {
         gerritConnectionListener = new GerritConnectionListener(name);
@@ -173,11 +213,14 @@ public class GerritServer {
      */
     public void stop() {
         logger.info("Stopping GerritServer " + name);
-        projectListUpdater.shutdown();
-        try {
-            projectListUpdater.join();
-        } catch (InterruptedException ie) {
-            logger.error("project list updater of " + name + "interrupted", ie);
+        if (projectListUpdater != null) {
+            projectListUpdater.shutdown();
+            try {
+                projectListUpdater.join();
+            } catch (InterruptedException ie) {
+                logger.error("project list updater of " + name + "interrupted", ie);
+            }
+            projectListUpdater = null;
         }
 
         if (unreviewedPatchesListener != null) {
@@ -196,6 +239,7 @@ public class GerritServer {
         }
         GerritSendCommandQueue.shutdown();
         logger.info(name + " stopped");
+        started = false;
     }
 
     /**
@@ -353,5 +397,480 @@ public class GerritServer {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Descriptor is only used for UI form bindings.
+     */
+    @Extension
+    public static final class DescriptorImpl extends Descriptor<GerritServer> {
+
+        @Override
+        public String getDisplayName() {
+            return "Gerrit Server with Default Configurations";
+        }
+
+        /**
+         * Tests if the provided parameters can connect to Gerrit.
+         * @param gerritHostName the hostname
+         * @param gerritSshPort the ssh-port
+         * @param gerritProxy the proxy url
+         * @param gerritUserName the username
+         * @param gerritAuthKeyFile the private key file
+         * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
+         * @return {@link FormValidation#ok() } if can be done,
+         *         {@link FormValidation#error(java.lang.String) } otherwise.
+         */
+        public FormValidation doTestConnection(
+                @QueryParameter("gerritHostName") final String gerritHostName,
+                @QueryParameter("gerritSshPort") final int gerritSshPort,
+                @QueryParameter("gerritProxy") final String gerritProxy,
+                @QueryParameter("gerritUserName") final String gerritUserName,
+                @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
+                @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("gerritHostName = {}\n"
+                        + "gerritSshPort = {}\n"
+                        + "gerritProxy = {}\n"
+                        + "gerritUserName = {}\n"
+                        + "gerritAuthKeyFile = {}\n"
+                        + "gerritAuthKeyFilePassword = {}",
+                        new Object[]{gerritHostName,
+                            gerritSshPort,
+                            gerritProxy,
+                            gerritUserName,
+                            gerritAuthKeyFile,
+                            gerritAuthKeyFilePassword,  });
+            }
+
+            File file = new File(gerritAuthKeyFile);
+            String password = null;
+            if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() > 0) {
+                password = gerritAuthKeyFilePassword;
+            }
+            if (SshUtil.checkPassPhrase(file, password)) {
+                if (file.exists() && file.isFile()) {
+                    try {
+                        SshConnection sshConnection = SshConnectionFactory.getConnection(
+                                gerritHostName,
+                                gerritSshPort,
+                                gerritProxy,
+                                new Authentication(file, gerritUserName, password));
+                        sshConnection.disconnect();
+                        return FormValidation.ok(Messages.Success());
+
+                    } catch (SshConnectException ex) {
+                        return FormValidation.error(Messages.SshConnectException());
+                    } catch (SshAuthenticationException ex) {
+                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
+                    } catch (Exception e) {
+                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+                    }
+                } else {
+                    return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
+                }
+            } else {
+                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+            }
+
+        }
+    }
+
+    /**
+     * Saves the form to the configuration and disk.
+     * @param req StaplerRequest
+     * @param rsp StaplerResponse
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
+     * @throws InterruptedException if something unfortunate happens.
+     */
+    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    IOException,
+    InterruptedException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("submit {}", req.toString());
+        }
+        JSONObject form = req.getSubmittedForm();
+
+        //TODO: In changeSelectedServerInJobs method below,
+        //      save trigger configurations without having to restart Jenkins or save job configs manually after rename.
+        //      Then, re-enable rename (textbox currently disabled in index.jelly).
+//        String newName = form.getString("name");
+//        boolean renamed = false;
+//        if (!name.equals(newName)) {
+//            if (PluginImpl.getInstance().containsServer(newName)) {
+//                throw new Failure("A server already exists with the name '" + newName + "'");
+//            }
+//            rename(newName);
+//            renamed = true;
+//        }
+        config.setValues(form);
+
+        PluginImpl.getInstance().save();
+
+        if (!started) {
+            this.start();
+        }
+//        if (renamed) {
+//            rsp.sendRedirect("../..");
+//            return;
+//        } else {
+            rsp.sendRedirect(".");
+//        }
+    }
+
+    /**
+     * Rename the server.
+     * Assumes that newName is different from current name.
+     *
+     * @param newName the new name
+     */
+    private void rename(String newName) {
+        stopConnection();
+        stop();
+        String oldName = name;
+        name = newName;
+        changeSelectedServerInJobs(oldName);
+        start();
+        startConnection();
+    }
+
+    /**
+     * Convenience method for remove.jelly.
+     *
+     * @return the list of jobs configured with this server.
+     */
+    public List<AbstractProject> getConfiguredJobs() {
+        return PluginImpl.getInstance().getConfiguredJobs(name);
+    }
+
+    /**
+     * Change the selectedServer value in jobs to select the new name.
+     *
+     * @param oldName the old name of the Gerrit server
+     */
+    private void changeSelectedServerInJobs(String oldName) {
+        for (AbstractProject job : PluginImpl.getInstance().getConfiguredJobs(oldName)) {
+            GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
+            trigger.stop();
+            try {
+                job.removeTrigger(trigger.getDescriptor());
+                trigger.setServerName(name);
+                trigger.start(job, false);
+                job.addTrigger(trigger);
+                job.save();
+            } catch (IOException e) {
+                logger.error("Error saving Gerrit Trigger configurations for job [" + job.getName()
+                        + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
+            }
+        }
+    }
+
+    /**
+     * Remove "Gerrit event" as a trigger in all jobs selecting this server.
+     */
+    private void removeGerritTriggerInJobs() {
+        for (AbstractProject job : getConfiguredJobs()) {
+            GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
+            trigger.stop();
+            try {
+                job.removeTrigger(trigger.getDescriptor());
+            } catch (IOException e) {
+                logger.error("Error removing Gerrit trigger from job [" + job.getName()
+                        + "]. Please check job config");
+            }
+            trigger = null;
+            try {
+                job.save();
+            } catch (IOException e) {
+                logger.error("Error saving configuration of job [" + job.getName()
+                        + "] while trying to remove Gerrit server [" + name + "]. Please check job config.");
+            }
+        }
+    }
+
+    /**
+     *
+     * @param req the StaplerRequest
+     * @param rsp the StaplerResponse
+     * @throws IOException if unable to send redirect.
+     */
+    public void doConnectionSubmit(StaplerRequest req, StaplerResponse rsp) throws IOException {
+
+        setConnectionResponse("");
+        if (req.getParameter("button").equals("Start")) {
+            try {
+                startConnection();
+                //TODO wait for the connection to actually be established.
+                //setConnectionResponse(START_SUCCESS);
+            } catch (Exception ex) {
+                setConnectionResponse(START_FAILURE);
+                logger.error("Could not start connection. ", ex);
+            }
+        } else if (req.getParameter("button").equals("Stop")) {
+            try {
+                stopConnection();
+                //TODO wait for the connection to actually be shutdown.
+                //setConnectionResponse(STOP_SUCCESS);
+            } catch (Exception ex) {
+                setConnectionResponse(STOP_FAILURE);
+                logger.error("Could not stop connection. ", ex);
+            }
+        } else {
+            try {
+                restartConnection();
+                //TODO wait for the connection to actually be shut down and connected again.
+                //setConnectionResponse(RESTART_SUCCESS);
+            } catch (Exception ex) {
+                setConnectionResponse(RESTART_FAILURE);
+                logger.error("Could not restart connection. ", ex);
+            }
+        }
+        rsp.sendRedirect(".");
+    }
+
+    /**
+     * Get the response after a start/stop/restartConnection; Used by jelly.
+     * @return the connection response
+     */
+    public String getConnectionResponse() {
+        return connectionResponse;
+    }
+
+    /**
+     * Set the connection status.
+     * @param response the response to be set.
+     */
+    private void setConnectionResponse(String response) {
+        connectionResponse = response;
+    }
+
+    /**
+     * Saves the form to the configuration and disk.
+     * @param req StaplerRequest
+     * @param rsp StaplerResponse
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
+     * @throws InterruptedException if something unfortunate happens.
+     */
+    public void doRemoveConfirm(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    IOException,
+    InterruptedException {
+
+        stopConnection();
+        stop();
+        PluginImpl plugin = PluginImpl.getInstance();
+        removeGerritTriggerInJobs();
+        plugin.removeServer(this);
+        plugin.save();
+
+        rsp.sendRedirect(Jenkins.getInstance().getRootUrl() + GerritManagement.get().getUrlName());
+    }
+
+    /**
+     * Checks that the provided parameter is an integer and not negative.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doPositiveIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        return FormValidation.validatePositiveInteger(value);
+    }
+
+    /**
+     * Checks that the provided parameter is an integer and not negative, zero is accepted.
+     *
+     * @param value the value.
+     * @return {@link FormValidation#validateNonNegativeInteger(String)}
+     */
+    public FormValidation doNonNegativeIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        return FormValidation.validateNonNegativeInteger(value);
+    }
+
+    /**
+     * Checks that the provided parameter is an integer, not negative, that is larger
+     * than the minimum value.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doDynamicConfigRefreshCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        FormValidation validatePositive = FormValidation.validatePositiveInteger(value);
+        if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
+            return validatePositive;
+        } else {
+            int intValue = Integer.parseInt(value);
+            if (intValue < GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL) {
+                return FormValidation.error(Messages.DynamicConfRefreshTooLowError(
+                        GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL));
+            }
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Checks that the provided parameter is an integer.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        try {
+            Integer.parseInt(value);
+            return FormValidation.ok();
+        } catch (NumberFormatException e) {
+            return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+        }
+    }
+
+    /**
+     * Checks that the provided parameter is an empty string or an integer.
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doEmptyOrIntegerCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        if (value == null || value.length() <= 0) {
+            return FormValidation.ok();
+        } else {
+            try {
+                Integer.parseInt(value);
+                return FormValidation.ok();
+            } catch (NumberFormatException e) {
+                return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+            }
+        }
+    }
+
+    /**
+     * Checks if the value is a valid URL. It does not check if the URL is reachable.
+     * @param value the value
+     * @return {@link FormValidation#ok() } if it is so.
+     */
+    public FormValidation doUrlCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        if (value == null || value.length() <= 0) {
+            return FormValidation.error(Messages.EmptyError());
+        } else {
+            try {
+                new URL(value);
+
+                return FormValidation.ok();
+            } catch (MalformedURLException ex) {
+                return FormValidation.error(Messages.BadUrlError());
+            }
+        }
+    }
+
+    /**
+     * Checks to see if the provided value is a file path to a valid private key file.
+     * @param value the value.
+     * @return {@link FormValidation#ok() } if it is so.
+     */
+    public FormValidation doValidKeyFileCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        File f = new File(value);
+        if (!f.exists()) {
+            return FormValidation.error(Messages.FileNotFoundError(value));
+        } else if (!f.isFile()) {
+            return FormValidation.error(Messages.NotFileError(value));
+        } else {
+            if (SshUtil.isPrivateKeyFileValid(f)) {
+                return FormValidation.ok();
+            } else {
+                return FormValidation.error(Messages.InvalidKeyFileError(value));
+            }
+        }
+    }
+
+    /**
+     * Checks to see if the provided value represents a time on the hh:mm format.
+     * Also checks that from is before to.
+     *
+     * @param fromValue the from value.
+     * @param toValue the to value.
+     * @return {@link FormValidation#ok() } if it is so.
+     */
+    public FormValidation doValidTimeCheck(
+            @QueryParameter final String fromValue, @QueryParameter final String toValue) {
+        String[] splitFrom = fromValue.split(":");
+        String[] splitTo = toValue.split(":");
+        int fromHour;
+        int fromMinute;
+        int toHour;
+        int toMinute;
+        if (splitFrom.length != 2 || splitTo.length != 2) {
+            return FormValidation.error(Messages.InvalidTimeString());
+        }
+        try {
+            fromHour = Integer.parseInt(splitFrom[0]);
+            fromMinute = Integer.parseInt(splitFrom[1]);
+            toHour = Integer.parseInt(splitTo[0]);
+            toMinute = Integer.parseInt(splitTo[1]);
+
+        } catch (NumberFormatException nfe) {
+            return FormValidation.error(Messages.InvalidTimeString());
+        }
+
+        if (fromHour < MIN_HOUR || fromHour > MAX_HOUR || fromMinute < MIN_MINUTE || fromMinute > MAX_MINUTE
+                || toHour < MIN_HOUR || toHour > MAX_HOUR || toMinute < MIN_MINUTE || toMinute > MAX_MINUTE) {
+            return FormValidation.error(Messages.InvalidTimeString());
+        }
+        if (fromHour > toHour || (fromHour == toHour && fromMinute > toMinute)) {
+            return FormValidation.error(Messages.InvalidTimeSpan());
+        }
+        return FormValidation.ok();
+    }
+
+    /**
+     * Checks whether server name already exists.
+     * @param value the value of the name field.
+     * @return ok or error.
+     */
+    public FormValidation doNameFreeCheck(
+            @QueryParameter("value")
+            final String value) {
+        if (!value.equals(name)) {
+            if (PluginImpl.getInstance().containsServer(value)) {
+                return FormValidation.error("The server name " + value + " is already in use!");
+            } else {
+                return FormValidation.warning("The server " + name + " will be renamed");
+            }
+        } else {
+            return FormValidation.ok();
+        }
+    }
+
+    /**
+     * Generates a list of helper objects for the jelly view.
+     *
+     * @return a list of helper objects.
+     */
+    public List<ExceptionDataHelper> generateHelper() {
+        WatchTimeExceptionData data = config.getExceptionData();
+        List<ExceptionDataHelper> list = new LinkedList<ExceptionDataHelper>();
+        list.add(new ExceptionDataHelper(Messages.MondayDisplayName(), Calendar.MONDAY, data));
+        list.add(new ExceptionDataHelper(Messages.TuesdayDisplayName(), Calendar.TUESDAY, data));
+        list.add(new ExceptionDataHelper(Messages.WednesdayDisplayName(), Calendar.WEDNESDAY, data));
+        list.add(new ExceptionDataHelper(Messages.ThursdayDisplayName(), Calendar.THURSDAY, data));
+        list.add(new ExceptionDataHelper(Messages.FridayDisplayName(), Calendar.FRIDAY, data));
+        list.add(new ExceptionDataHelper(Messages.SaturdayDisplayName(), Calendar.SATURDAY, data));
+        list.add(new ExceptionDataHelper(Messages.SundayDisplayName(), Calendar.SUNDAY, data));
+        return list;
     }
 }

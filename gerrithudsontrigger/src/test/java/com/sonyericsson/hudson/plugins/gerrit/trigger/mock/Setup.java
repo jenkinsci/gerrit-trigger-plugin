@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPubli
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -125,7 +126,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        event.setProvider(new Provider("gerrit", "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
 
@@ -410,7 +411,7 @@ public final class Setup {
      */
     public static ToGerritRunListener createFailureMessageRunListener(final AbstractBuild build,
             final PatchsetCreated event, final String filepath) {
-        GerritCause cause = new GerritCause(event, "server", false);
+        GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
         when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));

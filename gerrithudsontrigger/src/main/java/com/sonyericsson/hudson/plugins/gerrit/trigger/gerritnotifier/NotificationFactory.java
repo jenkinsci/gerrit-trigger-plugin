@@ -27,7 +27,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
@@ -35,9 +37,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildSt
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A factory for creating notification entities.
@@ -46,6 +49,7 @@ import hudson.model.TaskListener;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class NotificationFactory {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationFactory.class);
     private static NotificationFactory instance;
 
     /**
@@ -67,7 +71,13 @@ public class NotificationFactory {
      * @return the server-config.
      */
     public IGerritHudsonTriggerConfig getConfig(String serverName) {
-        return PluginImpl.getInstance().getServer(serverName).getConfig();
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            return server.getConfig();
+        } else {
+            logger.error("Could not find the Gerrit Server: {}", serverName);
+        }
+        return null;
     }
 
     /**
@@ -104,11 +114,41 @@ public class NotificationFactory {
      * @see BuildCompletedCommandJob
      */
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
-        String serverName = memoryImprint.getEvent().getProvider().getName();
+        String serverName = getServerName(memoryImprint);
         BuildCompletedCommandJob job = new BuildCompletedCommandJob(getConfig(serverName),
                 memoryImprint, listener);
         GerritSendCommandQueue.queue(job);
     }
+
+    /**
+     * Get the server name from the event provider.
+     * @param memoryImprint the memory of the builds.
+     * @return serverName the server name.
+     */
+    private String getServerName(BuildMemory.MemoryImprint memoryImprint) {
+        if (memoryImprint != null) {
+            GerritTriggeredEvent event = memoryImprint.getEvent();
+            if (event != null) {
+                Provider prov = event.getProvider();
+                if (prov != null) {
+                    String serverName = prov.getName();
+                    if (serverName != null) {
+                        return serverName;
+                    } else {
+                        logger.warn("Could not find the Gerrit Server name from the provider {}", prov);
+                    }
+                } else {
+                    logger.warn("Could not get the Provider from event {}", event);
+                }
+            } else {
+                logger.error("Could not get the GerritTriggeredEvent from memoryImprint");
+            }
+        } else {
+            logger.error("The memory imprint is null");
+        }
+        return null;
+    }
+
 
     //CS IGNORE LineLength FOR NEXT 10 LINES. REASON: Javadoc
 

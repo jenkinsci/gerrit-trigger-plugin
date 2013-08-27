@@ -121,7 +121,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      */
     @LocalData
     public void testDoGerritSearch() throws Exception {
-        //TODO: this test fails with code 500 and a SSH connection error.
+        //TODO: this test fails with code 500 and a SSH connection error in GerritQueryHandler's runQuery method.
 
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));

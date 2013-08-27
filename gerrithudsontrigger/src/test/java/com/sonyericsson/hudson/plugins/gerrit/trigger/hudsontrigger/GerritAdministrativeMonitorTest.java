@@ -35,7 +35,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public class GerritAdministrativeMonitorTest {
     public void setUp() {
         plugin = mock(PluginImpl.class);
         server = mock(GerritServer.class);
-        ArrayList<GerritServer> servers = new ArrayList<GerritServer>();
+        LinkedList <GerritServer> servers = new LinkedList<GerritServer>();
         servers.add(server);
         when(server.isConnected()).thenReturn(true);
         PowerMockito.mockStatic(PluginImpl.class);

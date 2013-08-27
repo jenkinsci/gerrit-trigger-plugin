@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 
 import hudson.Plugin;
@@ -38,7 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -77,7 +79,7 @@ public class PluginImpl extends Plugin {
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private static PluginImpl instance;
-    private ArrayList<GerritServer> servers;
+    private LinkedList<GerritServer> servers;
 
     // the old config field is left as deprecated and transient so that data in previous format can be read in but
     // not written back into the XML.
@@ -108,13 +110,26 @@ public class PluginImpl extends Plugin {
     /**
      * Get the list of Gerrit servers.
      *
-     * @return the list as an ArrayList of GerritServers
+     * @return the list as a LinkedList of GerritServers
      */
-    public synchronized ArrayList<GerritServer> getServers() {
+    public synchronized LinkedList<GerritServer> getServers() {
         if (servers == null) {
-            servers = new ArrayList<GerritServer>();
+            servers = new LinkedList<GerritServer>();
         }
         return servers;
+    }
+
+    /**
+     * Get the list of Gerrit server names.
+     *
+     * @return the list of server names as a list.
+     */
+    public synchronized LinkedList<String> getServerNames() {
+        LinkedList<String> names = new LinkedList<String>();
+        for (GerritServer s : getServers()) {
+            names.add(s.getName());
+        }
+        return names;
     }
 
     /**
@@ -137,7 +152,7 @@ public class PluginImpl extends Plugin {
      *
      * @param servers the list to be set.
      */
-    public synchronized void setServers(ArrayList<GerritServer> servers) {
+    public synchronized void setServers(LinkedList<GerritServer> servers) {
         this.servers = servers;
     }
 
@@ -147,7 +162,7 @@ public class PluginImpl extends Plugin {
      * @param s the server to be added.
      * @return the list after adding the server.
      */
-    public synchronized ArrayList<GerritServer> addServer(GerritServer s) {
+    public synchronized LinkedList<GerritServer> addServer(GerritServer s) {
         servers.add(s);
         return servers;
     }
@@ -158,9 +173,46 @@ public class PluginImpl extends Plugin {
      * @param s the server to be removed.
      * @return the list after removing the server.
      */
-    public synchronized ArrayList<GerritServer> removeServer(GerritServer s) {
+    public synchronized LinkedList<GerritServer> removeServer(GerritServer s) {
         servers.remove(s);
         return servers;
+    }
+
+
+    /**
+     * Check whether the list of servers contains a GerritServer object of a specific name.
+     *
+     * @param serverName to check.
+     * @return whether the list contains a server with the given name.
+     */
+    public boolean containsServer(String serverName) {
+        boolean contains = false;
+        for (GerritServer s : getServers()) {
+            if (s.getName().equals(serverName)) {
+                contains = true;
+            }
+        }
+        return contains;
+    }
+
+
+    /**
+     * Return the list of jobs configured with a server.
+     *
+     * @param serverName the name of the Gerrit server.
+     * @return the list of jobs configured with this server.
+     */
+    public List<AbstractProject> getConfiguredJobs(String serverName) {
+        LinkedList<AbstractProject> configuredJobs = new LinkedList<AbstractProject>();
+        for (AbstractProject<?, ?> project : Hudson.getInstance().getItems(AbstractProject.class)) { //get the jobs
+            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
+
+            //if the job has a gerrit trigger, check whether the trigger has selected this server:
+            if (gerritTrigger != null && gerritTrigger.getServerName().equals(serverName)) {
+                configuredJobs.add(project); //job has selected this server, add it to the list
+            }
+        }
+        return configuredJobs;
     }
 
     @Override
@@ -178,12 +230,14 @@ public class PluginImpl extends Plugin {
     public void load() throws IOException {
         super.load();
         if (servers == null) {
-            servers = new ArrayList<GerritServer>();
+            servers = new LinkedList<GerritServer>();
             if (config != null) { //have loaded data in old format, so add a new server with the old config to the list.
                 GerritServer defaultServer = new GerritServer(DEFAULT_SERVER_NAME);
                 defaultServer.setConfig(config);
                 servers.add(defaultServer);
             }
+            setServers(servers);
+            save();
         }
     }
 

@@ -32,8 +32,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 
-import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -48,7 +48,7 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
      */
     public void testPopulateDropDown() throws Exception {
         @SuppressWarnings("unused")
-        ArrayList<GerritServer> servers = PluginImpl.getInstance().getServers();
+        LinkedList<GerritServer> servers = PluginImpl.getInstance().getServers();
 
         //create a server for testing
         GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);

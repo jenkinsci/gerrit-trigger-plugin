@@ -68,9 +68,20 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
         this.serverName = serverName;
+        addThisAsListener();
+    }
+
+    /**
+     * Add the current list updater as a listener to the GerritServer object.
+     */
+    private void addThisAsListener() {
         GerritServer server = PluginImpl.getInstance().getServer(serverName);
-        server.addListener(this);
-        connected = server.isConnected();
+        if (server != null) {
+            server.addListener(this);
+            connected = server.isConnected();
+        } else {
+            logger.error("Could not find the server {}", serverName);
+        }
     }
 
     @Override
@@ -97,7 +108,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         while (!shutdown) {
             try {
                 if (isConnected()) {
-                    IGerritHudsonTriggerConfig activeConfig = PluginImpl.getInstance().getServer(serverName).getConfig();
+                    IGerritHudsonTriggerConfig activeConfig = getConfig();
                     SshConnection sshConnection = SshConnectionFactory.getConnection(
                             activeConfig.getGerritHostName(),
                             activeConfig.getGerritSshPort(),
@@ -122,7 +133,31 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 break;
             }
         }
-        PluginImpl.getInstance().getServer(serverName).removeListener(this);
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+             server.removeListener(this);
+        } else {
+            logger.error("Could not find server {}", serverName);
+        }
+    }
+
+    /**
+     * Get the the server config.
+     * @return the server config or null if config not found.
+     */
+    private IGerritHudsonTriggerConfig getConfig() {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+            if (config != null) {
+                return config;
+            } else {
+                logger.error("Could not find the server config");
+            }
+        } else {
+            logger.error("Could not find server {}", serverName);
+        }
+        return null;
     }
 
     /**
