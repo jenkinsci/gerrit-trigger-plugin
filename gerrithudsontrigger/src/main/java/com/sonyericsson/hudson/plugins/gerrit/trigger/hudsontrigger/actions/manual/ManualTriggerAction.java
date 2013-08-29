@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
 /**
@@ -144,23 +145,17 @@ public class ManualTriggerAction implements RootAction {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#isEnableManualTrigger()
      */
     public boolean isEnabled(String server) {
-        GerritServer serverName = PluginImpl.getInstance().getServer(server);
-        if (serverName != null) {
-            IGerritHudsonTriggerConfig config = serverName.getConfig();
-            if (config != null) {
-                return config.isEnableManualTrigger();
-            } else {
-                logger.error("Could not find the server config");
-            }
+        if (getConfig() != null) {
+            return getConfig().isEnableManualTrigger();
         } else {
-            logger.error("Could not find server {}", server);
+            return false;
         }
-        return false;
     }
 
     /**
-     * Get the server config
-     * @return config the config of the server or null if config not found.
+     * Get the server config.
+     *
+     * @return the config of the server or null if config not found.
      */
     private IGerritHudsonTriggerConfig getConfig() {
         GerritServer server = PluginImpl.getInstance().getServer(activeServer);
@@ -282,18 +277,24 @@ public class ManualTriggerAction implements RootAction {
         activeServer = enabledServer;
         Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
         if (getConfig() != null) {
-        IGerritHudsonTriggerConfig config = getConfig();
-        GerritQueryHandler handler = new GerritQueryHandler(config);
-        clearSessionData(request);
-        request.getSession(true).setAttribute("queryString", queryString);
-        try {
-            List<JSONObject> json = handler.queryJava(queryString, true, true, false);
-            request.getSession(true).setAttribute(SESSION_RESULT, json);
-        } catch (GerritQueryException gqe) {
-            logger.debug("Bad query. ", gqe);
-            request.getSession(true).setAttribute(SESSION_SEARCH_ERROR, gqe);
-        }
-        response.sendRedirect2(".");
+            IGerritHudsonTriggerConfig config = getConfig();
+            GerritQueryHandler handler = new GerritQueryHandler(config);
+            clearSessionData(request);
+            request.getSession(true).setAttribute("queryString", queryString);
+
+            try {
+                List<JSONObject> json = handler.queryJava(queryString, true, true, false);
+                request.getSession(true).setAttribute(SESSION_RESULT, json);
+                //TODO Implement some smart default selection.
+                //That can notice that a specific revision is searched or that there is only one result etc.
+            } catch (GerritQueryException gqe) {
+                logger.debug("Bad query. ", gqe);
+                request.getSession(true).setAttribute(SESSION_SEARCH_ERROR, gqe);
+            } catch (Exception ex) {
+                logger.warn("Could not query Gerrit for [" + queryString + "]", ex);
+                request.getSession(true).setAttribute(SESSION_SEARCH_ERROR, ex);
+            }
+            response.sendRedirect2(".");
         } else {
             logger.error("Could not find config for the server {}", activeServer);
         }
