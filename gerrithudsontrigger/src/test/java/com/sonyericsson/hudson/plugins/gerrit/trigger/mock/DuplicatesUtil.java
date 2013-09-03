@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import hudson.model.AbstractBuild;
@@ -71,7 +72,8 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")),
+                Collections.singletonList(new Topic(CompareType.ANT, "**")), null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, null, null, null, null, null, null, null, null, false, false, null));
@@ -122,7 +124,8 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")),
+                Collections.singletonList(new Topic(CompareType.ANT, "**")), null));
         PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);

@@ -58,6 +58,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_BRANCH,
     /**
+     * Parameter name for the topic.
+     */
+    GERRIT_TOPIC,
+    /**
      * Parameter name for the change-id.
      */
     GERRIT_CHANGE_ID,
@@ -277,6 +281,8 @@ public enum GerritTriggerParameters {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             GERRIT_BRANCH.setOrCreateStringParameterValue(
                     parameters, event.getChange().getBranch(), escapeQuotes);
+            GERRIT_TOPIC.setOrCreateStringParameterValue(
+                    parameters, event.getChange().getTopic(), escapeQuotes);
             GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
                     parameters, event.getChange().getNumber(), escapeQuotes);
             GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
