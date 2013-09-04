@@ -32,7 +32,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.Watch
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Describable;
-//import hudson.model.Failure;
+import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
@@ -492,18 +492,15 @@ public class GerritServer implements Describable<GerritServer> {
         }
         JSONObject form = req.getSubmittedForm();
 
-        //TODO: In changeSelectedServerInJobs method below,
-        //      save trigger configurations without having to restart Jenkins or save job configs manually after rename.
-        //      Then, re-enable rename (textbox currently disabled in index.jelly).
-//        String newName = form.getString("name");
-//        boolean renamed = false;
-//        if (!name.equals(newName)) {
-//            if (PluginImpl.getInstance().containsServer(newName)) {
-//                throw new Failure("A server already exists with the name '" + newName + "'");
-//            }
-//            rename(newName);
-//            renamed = true;
-//        }
+        String newName = form.getString("name");
+        boolean renamed = false;
+        if (!name.equals(newName)) {
+            if (PluginImpl.getInstance().containsServer(newName)) {
+                throw new Failure("A server already exists with the name '" + newName + "'");
+            }
+            rename(newName);
+            renamed = true;
+        }
         config.setValues(form);
 
         PluginImpl.getInstance().save();
@@ -511,12 +508,12 @@ public class GerritServer implements Describable<GerritServer> {
         if (!started) {
             this.start();
         }
-//        if (renamed) {
-//            rsp.sendRedirect("../..");
-//            return;
-//        } else {
+        if (renamed) {
+            rsp.sendRedirect("../..");
+            return;
+        } else {
             rsp.sendRedirect(".");
-//        }
+        }
     }
 
     /**
@@ -526,13 +523,21 @@ public class GerritServer implements Describable<GerritServer> {
      * @param newName the new name
      */
     private void rename(String newName) {
-        stopConnection();
-        stop();
-        String oldName = name;
-        name = newName;
-        changeSelectedServerInJobs(oldName);
-        start();
-        startConnection();
+        if (isConnected()) {
+            stopConnection();
+            stop();
+            String oldName = name;
+            name = newName;
+            start();
+            startConnection();
+            changeSelectedServerInJobs(oldName);
+        } else {
+            stop();
+            String oldName = name;
+            name = newName;
+            start();
+            changeSelectedServerInJobs(oldName);
+        }
     }
 
     /**
@@ -552,9 +557,7 @@ public class GerritServer implements Describable<GerritServer> {
     private void changeSelectedServerInJobs(String oldName) {
         for (AbstractProject job : PluginImpl.getInstance().getConfiguredJobs(oldName)) {
             GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
-            trigger.stop();
             try {
-                job.removeTrigger(trigger.getDescriptor());
                 trigger.setServerName(name);
                 trigger.start(job, false);
                 job.addTrigger(trigger);

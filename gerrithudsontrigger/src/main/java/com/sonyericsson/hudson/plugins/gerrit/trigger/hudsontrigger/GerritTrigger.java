@@ -334,10 +334,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         initializeTriggerOnEvents();
         this.myProject = project;
         try {
-            if (PluginImpl.getInstance() != null) {
+            if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getServer(serverName) != null) {
                 PluginImpl.getInstance().getServer(serverName).addListener(this);
             } else {
-                logger.warn("The server instance could not be found! Project {} will not be triggered!",
+                logger.warn("The server {} could not be found! Project {} will not be triggered!",
+                        serverName,
                         project.getFullDisplayName());
             }
         } catch (IllegalStateException e) {
