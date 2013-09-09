@@ -179,7 +179,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @see GerritServer#getConfig()
      */
     public static IGerritHudsonTriggerConfig getConfig(String serverName) {
-        return PluginImpl.getInstance().getServer(serverName).getConfig();
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            return server.getConfig();
+        } else {
+            logger.error("Could not find the Gerrit Server: {}", serverName);
+            return null;
+        }
     }
 
     /**
