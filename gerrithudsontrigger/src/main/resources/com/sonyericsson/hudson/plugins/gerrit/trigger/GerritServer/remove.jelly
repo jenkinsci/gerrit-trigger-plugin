@@ -11,6 +11,9 @@
         <l:main-panel>
             <form method="post" action="removeConfirm">
                 <j:choose>
+                    <j:when test="${it.isLastServer()}">
+                        Cannot remove the last server!
+                    </j:when>
                     <j:when test="${it.configuredJobs.isEmpty()}">
                         Remove server ${it.name}?
                         <f:submit value="${%Yes}" />

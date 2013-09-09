@@ -166,6 +166,16 @@ public class GerritServer implements Describable<GerritServer> {
     }
 
     /**
+     * Check whether this server is the last one.
+     * Used by jelly to stop removal if true.
+     *
+     * @return whether it is the last one;
+     */
+    public boolean isLastServer() {
+        return PluginImpl.getInstance().getServers().size() == 1;
+    }
+
+    /**
      * Starts the server's project list updater, send command queue and event manager.
      *
      */
