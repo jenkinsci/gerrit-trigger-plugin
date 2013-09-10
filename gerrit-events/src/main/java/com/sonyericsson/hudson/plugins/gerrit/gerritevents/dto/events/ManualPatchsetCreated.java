@@ -38,18 +38,13 @@ public class ManualPatchsetCreated extends PatchsetCreated {
     private String userName;
 
     /**
-     * Default Constructor.
-     */
-    public ManualPatchsetCreated() {
-    }
-
-    /**
      * Standard Constructor.
      * @param change JSONObject containing the change information.
      * @param patch JSONObject containing the patchSet information.
      * @param userName the user that manually fired the Gerrit event.
      */
     public ManualPatchsetCreated(JSONObject change, JSONObject patch, String userName) {
+        super(change);
         fromJson(change, patch);
         this.userName = userName;
     }

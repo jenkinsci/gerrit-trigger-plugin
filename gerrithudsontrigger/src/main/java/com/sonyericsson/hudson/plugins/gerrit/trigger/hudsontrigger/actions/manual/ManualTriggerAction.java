@@ -357,7 +357,7 @@ public class ManualTriggerAction implements RootAction {
         List<ParameterValue> parameters = new LinkedList<ParameterValue>();
         Change change = new Change(jsonChange);
         PatchSet patchSet = new PatchSet(jsonPatchSet);
-        PatchsetCreated event = new PatchsetCreated();
+        PatchsetCreated event = new PatchsetCreated(jsonChange);
         event.setChange(change);
         event.setPatchset(patchSet);
         GerritTriggerParameters.setOrCreateParameters(event, parameters);
