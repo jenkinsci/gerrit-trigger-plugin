@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 
@@ -129,7 +130,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      */
     public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
         String serverName = req.getParameter("name");
-        if (PluginImpl.getInstance().containsServer(serverName)) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin.containsServer(serverName)) {
             throw new Failure("A server already exists with the name '" + serverName + "'");
         }
         GerritServer server = new GerritServer(serverName);
@@ -137,17 +139,20 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         String mode = req.getParameter("mode");
         if (mode != null && mode.equals("copy")) { //"Copy Existing Server Configuration" has been chosen
             String from = req.getParameter("from");
-            GerritServer fromServer = PluginImpl.getInstance().getServer(from);
+            GerritServer fromServer = plugin.getServer(from);
             if (fromServer != null) {
-                server.setConfig(fromServer.getConfig());
-                PluginImpl.getInstance().addServer(server);
+                server.setConfig(new Config(fromServer.getConfig()));
+                plugin.addServer(server);
                 server.start();
             } else {
                 throw new Failure("Server '" + from + "' does not exist!");
             }
         } else {
-            PluginImpl.getInstance().addServer(server);
+            plugin.addServer(server);
+            server.start();
         }
+        plugin.save();
+
         rsp.sendRedirect("./server/" + serverName);
         return server;
     }

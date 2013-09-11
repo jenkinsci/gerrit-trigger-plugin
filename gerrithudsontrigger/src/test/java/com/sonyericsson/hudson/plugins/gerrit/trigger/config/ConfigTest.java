@@ -115,6 +115,82 @@ public class ConfigTest {
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }
 
+    //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
+
+    /**
+     * Test creation of a config object from an existing one.
+     */
+    @Test
+    public void testCopyConfig() {
+        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review <CHANGE>,<PATCHSET>"
+                + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
+                + "\"gerritAuthKeyFilePassword\":\"passis\","
+                + "\"gerritBuildFailedCodeReviewValue\":\"1\","
+                + "\"gerritBuildFailedVerifiedValue\":\"-1\","
+                + "\"gerritBuildStartedCodeReviewValue\":\"2\","
+                + "\"gerritBuildStartedVerifiedValue\":\"-2\","
+                + "\"gerritBuildSuccessfulCodeReviewValue\":\"3\","
+                + "\"gerritBuildSuccessfulVerifiedValue\":\"-3\","
+                + "\"gerritBuildUnstableCodeReviewValue\":\"4\","
+                + "\"gerritBuildUnstableVerifiedValue\":\"-4\","
+                + "\"gerritBuildNotBuiltCodeReviewValue\":\"5\","
+                + "\"gerritBuildNotBuiltVerifiedValue\":\"-5\","
+                + "\"gerritFrontEndUrl\":\"http://gerrit:8088\","
+                + "\"gerritHostName\":\"gerrit\","
+                + "\"gerritSshPort\":\"1337\","
+                + "\"gerritProxy\":\"\","
+                + "\"gerritUserName\":\"gerrit\","
+                + "\"numberOfSendingWorkerThreads\":\"4\","
+                + "\"numberOfReceivingWorkerThreads\":\"6\"}";
+        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
+        Config initialConfig = new Config(form);
+        Config config = new Config(initialConfig);
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildFailed());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildStarted());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET>"
+                + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildSuccessful());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildUnstable());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildNotBuilt());
+        assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),
+                config.getGerritAuthKeyFile().getPath());
+        assertEquals("passis", config.getGerritAuthKeyFilePassword());
+        assertEquals(1, config.getGerritBuildFailedCodeReviewValue());
+        assertEquals(-1, config.getGerritBuildFailedVerifiedValue());
+        assertEquals(2, config.getGerritBuildStartedCodeReviewValue());
+        assertEquals(-2, config.getGerritBuildStartedVerifiedValue());
+        assertEquals(3, config.getGerritBuildSuccessfulCodeReviewValue());
+        assertEquals(-3, config.getGerritBuildSuccessfulVerifiedValue());
+        assertEquals(4, config.getGerritBuildUnstableCodeReviewValue());
+        assertEquals(-4, config.getGerritBuildUnstableVerifiedValue());
+        assertEquals(5, config.getGerritBuildNotBuiltCodeReviewValue());
+        assertEquals(-5, config.getGerritBuildNotBuiltVerifiedValue());
+        assertEquals("http://gerrit:8088/", config.getGerritFrontEndUrl());
+        assertEquals("gerrit", config.getGerritHostName());
+        assertEquals(1337, config.getGerritSshPort());
+        assertEquals("", config.getGerritProxy());
+        assertEquals("gerrit", config.getGerritUserName());
+        assertEquals(6, config.getNumberOfReceivingWorkerThreads());
+        assertEquals(4, config.getNumberOfSendingWorkerThreads());
+    }
+
     /**
      * Tests {@link Config#getGerritFrontEndUrlFor(String, String)}.
      */
