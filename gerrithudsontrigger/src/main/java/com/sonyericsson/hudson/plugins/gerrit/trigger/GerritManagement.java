@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdmini
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
 import hudson.model.Failure;
 import hudson.model.Descriptor;
@@ -109,6 +110,22 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                     .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
         }
 
+        /**
+         * Auto-completion for the "copy from" field in the new server page.
+         *
+         * @param value the value that the user has typed in the textbox.
+         * @return the list of server names, depending on the current value in the textbox.
+         */
+        public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value) {
+            final AutoCompletionCandidates r = new AutoCompletionCandidates();
+
+            for (String s : PluginImpl.getInstance().getServerNames()) {
+                if (s.startsWith(value)) {
+                    r.add(s);
+                }
+            }
+            return r;
+        }
     }
 
     /**
