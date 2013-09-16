@@ -24,24 +24,26 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.google.common.collect.Lists;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
@@ -443,6 +445,62 @@ public class ParameterExpander {
     }
 
     /**
+     * Gets the "expanded" build completed commands to separately send to gerrit.
+     *
+     * @param memoryImprint the memory with all the information
+     * @param listener      the taskListener
+     * @return the commands.
+     */
+    public Iterable<String> getSeparateBuildCompletedCommands(MemoryImprint memoryImprint, TaskListener listener) {
+        List<String> commands = Lists.newArrayList();
+
+        for (String message : getSeparateBuildCompleteMessages(memoryImprint)) {
+            Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), 0, 0);
+            parameters.put("SEPARATE", message);
+
+            AbstractBuild build = null;
+            Entry[] entries = memoryImprint.getEntries();
+            if (entries.length > 0 && entries[0].getBuild() != null) {
+                build = entries[0].getBuild();
+            }
+            commands.add(expandParameters("", build, listener, parameters));
+        }
+
+        return commands;
+    }
+
+    /**
+     * Get the messages to send to Gerrit separately.
+     *
+     * @param memoryImprint the memory with all the information
+     * @return the messages.
+     */
+    public Iterable<String> getSeparateBuildCompleteMessages(MemoryImprint memoryImprint) {
+        List<String> messages = Lists.newArrayList();
+
+        Entry[] entries = memoryImprint.getEntries();
+        if (entries.length > 0) {
+            for (Entry entry : entries) {
+                AbstractBuild build = entry.getBuild();
+                if (build != null) {
+                    if (config.isEnablePluginMessages()) {
+                        for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+                            String message = messageProvider.getBuildCompletedMessage(build);
+                            if (messageProvider.isSeparateMessageBuildCompleted() && message != null) {
+                                messages.add(message);
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            logger.error("I got a request to create build statistics, but no entries where found!");
+        }
+
+        return messages;
+    }
+
+    /**
      * Creates the BUILD_STATS string to send in a message,
      * it contains the status of every build with its URL.
      * @param memoryImprint the memory of all the builds.
@@ -522,7 +580,7 @@ public class ParameterExpander {
                     if (config.isEnablePluginMessages()) {
                         for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
                             String extensionMessage = messageProvider.getBuildCompletedMessage(build);
-                            if (extensionMessage != null) {
+                            if (extensionMessage != null && !messageProvider.isSeparateMessageBuildCompleted()) {
                                 str.append("\n\n").append(extensionMessage);
                             }
                         }

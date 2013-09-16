@@ -121,6 +121,23 @@ public class GerritNotifier {
                     logger.error("Something wrong during parameter extraction. "
                             + "Gerrit will not be notified of BuildCompleted");
                 }
+
+                Iterable<String> separateCommands =
+                        parameterExpander.getSeparateBuildCompletedCommands(memoryImprint, listener);
+                for (String separateCommand : separateCommands) {
+                    if (separateCommand != null) {
+                        if (!separateCommand.isEmpty()) {
+                            logger.info("Notifying BuildCompleted to gerrit: {}", separateCommand);
+                            cmdRunner.sendCommand(separateCommand);
+                        } else {
+                            logger.info(
+                                    "BuildCompleted command is empty.  Gerrit will not be notified of BuildCompleted");
+                        }
+                    } else {
+                        logger.error("Something wrong during parameter extraction. "
+                                + "Gerrit will not be notified of BuildCompleted");
+                    }
+                }
             }
         } catch (Exception ex) {
             logger.error("Could not complete BuildCompleted notification!", ex);

@@ -69,4 +69,13 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
     public static List<GerritMessageProvider> all() {
         return Hudson.getInstance().getExtensionList(GerritMessageProvider.class);
     }
+
+    /**
+     * Method allowing plug-ins to send the message separately on build complete.
+     *
+     * @return whether the message is sent separately or not
+     */
+    public boolean isSeparateMessageBuildCompleted() {
+        return false;
+    }
 }
