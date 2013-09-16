@@ -181,9 +181,6 @@ public class GerritServer implements Describable<GerritServer> {
      */
     public void start() {
         logger.info("Starting GerritServer: " + name);
-
-        initializeConnectionListener();
-
         projectListUpdater = new GerritProjectListUpdater(name);
         projectListUpdater.start();
 
@@ -201,6 +198,8 @@ public class GerritServer implements Describable<GerritServer> {
         }
         config.setCategories(categories);
         gerritEventManager = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
+
+        initializeConnectionListener();
 
         //Starts unreviewed patches listener
         unreviewedPatchesListener = new UnreviewedPatchesListener(name);

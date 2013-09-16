@@ -191,7 +191,7 @@ public class GerritCause extends SCMTriggerCause {
                 if (config != null) {
                     return config.getGerritFrontEndUrlFor(tEvent);
                 } else {
-                    logger.error("Could not get the server config {}", config);
+                    logger.error("Could not get the server config for server {}", server.getName());
                 }
             } else {
             logger.error("Could not get the server {}", serverName);

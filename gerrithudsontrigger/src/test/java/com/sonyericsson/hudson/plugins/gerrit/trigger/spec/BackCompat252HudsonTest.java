@@ -199,7 +199,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
         FreeStyleProject project = (FreeStyleProject)item;
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME).triggerEvent(Setup.createPatchsetCreated());
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 4, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 4, 20000);
         //3 old builds + the new one.
         assertEquals(4, builds.size());
         assertSame(Result.SUCCESS, builds.getLastBuild().getResult());

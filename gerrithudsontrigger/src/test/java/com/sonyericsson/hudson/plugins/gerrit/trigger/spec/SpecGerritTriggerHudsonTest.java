@@ -152,7 +152,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         patchsetCreated.getChange().setNumber("2000");
         gerritServer.triggerEvent(patchsetCreated);
 
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
+        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
         assertEquals(2, builds.size());
         assertSame(Result.SUCCESS, builds.get(0).getResult());
         assertSame(Result.SUCCESS, builds.get(1).getResult());
