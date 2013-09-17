@@ -626,7 +626,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (myProject == null) {
             return super.hashCode();
         } else {
-            return myProject.hashCode();
+            return myProject.getFullName().hashCode();
         }
     }
 
@@ -634,7 +634,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public boolean equals(Object obj) {
         if (obj instanceof GerritTrigger) {
             GerritTrigger that = (GerritTrigger)obj;
-            return this.myProject == that.myProject;
+            if (myProject == null || that.myProject == null) {
+                return super.equals(obj);
+            } else {
+                return myProject.getFullName().equals(that.myProject.getFullName());
+            }
         }
         return false;
     }
