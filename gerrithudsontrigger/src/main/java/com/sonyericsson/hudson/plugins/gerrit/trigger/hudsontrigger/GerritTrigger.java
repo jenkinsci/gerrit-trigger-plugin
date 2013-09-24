@@ -684,6 +684,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                         context.getEvent(),
                         context.getOtherBuilds());
             }
+            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
+            Provider provider = context.getEvent().getProvider();
+            if (provider != null) {
+                if (!PluginImpl.getInstance().containsServer(provider.getName())) {
+                    provider.setName(serverName);
+                }
+            } else {
+                Provider newProvider = new Provider();
+                newProvider.setName(serverName);
+                context.getEvent().setProvider(newProvider);
+            }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent(), context.getThisBuild().getProject());
         }
