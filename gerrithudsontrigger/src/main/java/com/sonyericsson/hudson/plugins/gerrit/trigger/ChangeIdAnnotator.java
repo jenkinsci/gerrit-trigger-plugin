@@ -22,7 +22,8 @@ import java.util.regex.Pattern;
 public class ChangeIdAnnotator extends ChangeLogAnnotator {
     @Override
     public void annotate(AbstractBuild<?, ?> build, Entry change, MarkupText text) {
-        IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+        String serverName = GerritTrigger.getTrigger(build.getProject()).getServerName();
+        IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getServer(serverName).getConfig();
         annotate(build.getProject(), text, config);
     }
 

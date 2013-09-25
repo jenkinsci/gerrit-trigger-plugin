@@ -60,7 +60,7 @@ public class GerritProjectListTest {
         List<Branch> branches = new LinkedList<Branch>();
         Branch branch = new Branch(compareType, "master");
         branches.add(branch);
-        GerritProject config = new GerritProject(CompareType.PLAIN, pattern, branches, null);
+        GerritProject config = new GerritProject(CompareType.PLAIN, pattern, branches, null, "testServer");
         return config;
     }
 

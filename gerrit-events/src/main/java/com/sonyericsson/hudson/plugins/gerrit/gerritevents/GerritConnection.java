@@ -45,6 +45,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExc
 //CS IGNORE LineLength FOR NEXT 7 LINES. REASON: static import.
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY;
@@ -63,9 +64,9 @@ public class GerritConnection extends Thread implements Connector {
     public static final int CONNECT_SLEEP = 2000;
     private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
-    private static final String GERRIT_NAME = "gerrit";
     private static final String GERRIT_PROTOCOL_NAME = "ssh";
     private static final Logger logger = LoggerFactory.getLogger(GerritConnection.class);
+    private String gerritName;
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
@@ -83,6 +84,7 @@ public class GerritConnection extends Thread implements Connector {
     /**
      * Creates a GerritHandler with all the default values set.
      *
+     * @see GerritDefaultValues#DEFAULT_GERRIT_NAME
      * @see GerritDefaultValues#DEFAULT_GERRIT_HOSTNAME
      * @see GerritDefaultValues#DEFAULT_GERRIT_SSH_PORT
      * @see GerritDefaultValues#DEFAULT_GERRIT_PROXY
@@ -91,7 +93,8 @@ public class GerritConnection extends Thread implements Connector {
      * @see GerritDefaultValues#DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD
      */
     public GerritConnection() {
-        this(DEFAULT_GERRIT_HOSTNAME,
+        this(DEFAULT_GERRIT_NAME,
+                DEFAULT_GERRIT_HOSTNAME,
                 DEFAULT_GERRIT_SSH_PORT,
                 DEFAULT_GERRIT_PROXY,
                 new Authentication(DEFAULT_GERRIT_AUTH_KEY_FILE,
@@ -102,14 +105,17 @@ public class GerritConnection extends Thread implements Connector {
     /**
      * Creates a GerritHandler with the specified values.
      *
+     * @param gerritName the name of the gerrit server.
      * @param gerritHostName the hostName
      * @param gerritSshPort  the ssh port that the gerrit server listens to.
      * @param authentication the authentication credentials.
      */
-    public GerritConnection(String gerritHostName,
+    public GerritConnection(String gerritName,
+                         String gerritHostName,
                          int gerritSshPort,
                          Authentication authentication) {
-        this(gerritHostName,
+        this(gerritName,
+                gerritHostName,
                 gerritSshPort,
                 DEFAULT_GERRIT_PROXY,
                 authentication);
@@ -118,24 +124,27 @@ public class GerritConnection extends Thread implements Connector {
     /**
      * Standard Constructor.
      *
+     * @param gerritName the name of the gerrit server.
      * @param config the configuration containing the connection values.
      */
-    public GerritConnection(GerritConnectionConfig config) {
-        this(config, DEFAULT_GERRIT_PROXY, 0, null);
+    public GerritConnection(String gerritName, GerritConnectionConfig config) {
+        this(gerritName, config, DEFAULT_GERRIT_PROXY, 0, null);
     }
 
     /**
      * Standard Constructor.
      *
+     * @param gerritName the name of the gerrit server.
      * @param config the configuration containing the connection values.
      */
-    public GerritConnection(GerritConnectionConfig2 config) {
-        this(config, config.getGerritProxy(), config.getWatchdogTimeoutSeconds(), config.getExceptionData());
+    public GerritConnection(String gerritName, GerritConnectionConfig2 config) {
+        this(gerritName, config, config.getGerritProxy(), config.getWatchdogTimeoutSeconds(), config.getExceptionData());
     }
 
     /**
      * Creates a GerritHandler with the specified values.
      *
+     * @param gerritName             the name of the gerrit server.
      * @param config                 the configuration containing the connection values.
      * @param gerritProxy            the URL of gerrit proxy.
      * @param watchdogTimeoutSeconds number of seconds before the connection watch dog restarts the connection set to 0
@@ -143,11 +152,13 @@ public class GerritConnection extends Thread implements Connector {
      * @param exceptionData          time info for when the watch dog's timeout should not be in effect. set to null to
      *                               disable the watch dog.
      */
-    public GerritConnection(GerritConnectionConfig config,
+    public GerritConnection(String gerritName,
+                         GerritConnectionConfig config,
                          String gerritProxy,
                          int watchdogTimeoutSeconds,
                          WatchTimeExceptionData exceptionData) {
-        this(config.getGerritHostName(),
+        this(gerritName,
+                config.getGerritHostName(),
                 config.getGerritSshPort(),
                 gerritProxy,
                 config.getGerritAuthentication(),
@@ -157,21 +168,24 @@ public class GerritConnection extends Thread implements Connector {
     /**
      * Standard Constructor.
      *
+     * @param gerritName            the name of the gerrit server.
      * @param gerritHostName        the hostName for gerrit.
      * @param gerritSshPort         the ssh port that the gerrit server listens to.
      * @param gerritProxy           the proxy url socks5|http://host:port.
      * @param authentication        the authentication credentials.
      */
-    public GerritConnection(String gerritHostName,
+    public GerritConnection(String gerritName,
+                         String gerritHostName,
                          int gerritSshPort,
                          String gerritProxy,
                          Authentication authentication) {
-        this(gerritHostName, gerritSshPort, gerritProxy, authentication, 0, null);
+        this(gerritName, gerritHostName, gerritSshPort, gerritProxy, authentication, 0, null);
     }
 
     /**
      * Standard Constructor.
      *
+     * @param gerritName              the name of the gerrit server.
      * @param gerritHostName          the hostName for gerrit.
      * @param gerritSshPort             the ssh port that the gerrit server listens to.
      * @param gerritProxy              the proxy url socks5|http://host:port.
@@ -181,12 +195,14 @@ public class GerritConnection extends Thread implements Connector {
      * @param exceptionData           time info for when the watch dog's timeout should not be in effect.
      *                                  set to null to disable the watch dog.
      */
-    public GerritConnection(String gerritHostName,
+    public GerritConnection(String gerritName,
+                         String gerritHostName,
                          int gerritSshPort,
                          String gerritProxy,
                          Authentication authentication,
                          int watchdogTimeoutSeconds,
                          WatchTimeExceptionData exceptionData) {
+        this.gerritName = gerritName;
         this.gerritHostName = gerritHostName;
         this.gerritSshPort = gerritSshPort;
         this.gerritProxy = gerritProxy;
@@ -227,7 +243,7 @@ public class GerritConnection extends Thread implements Connector {
      */
     @Override
     public void run() {
-        logger.info("Starting Up...");
+        logger.info("Starting Up " + gerritName);
         do {
             sshConnection = connect();
             if (sshConnection == null) {
@@ -243,15 +259,15 @@ public class GerritConnection extends Thread implements Connector {
                 Reader reader = sshConnection.executeCommandReader(CMD_STREAM_EVENTS);
                 br = new BufferedReader(reader);
                 String line = "";
+                notifyConnectionEstablished();
                 Provider provider = new Provider(
-                        GERRIT_NAME,
+                        gerritName,
                         gerritHostName,
                         String.valueOf(gerritSshPort),
                         GERRIT_PROTOCOL_NAME,
                         DEFAULT_GERRIT_HOSTNAME,
                         getGerritVersionString());
-                logger.info("Ready to receive data from Gerrit");
-                notifyConnectionEstablished();
+                logger.info("Ready to receive data from Gerrit: " + gerritName);
                 do {
                     logger.debug("Data-line from Gerrit: {}", line);
                     if (line != null && line.length() > 0) {

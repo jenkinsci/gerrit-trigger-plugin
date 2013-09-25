@@ -26,7 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
@@ -62,17 +64,33 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      */
     private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
     private List<PatchsetCreated> events = new ArrayList<PatchsetCreated>();
+    private String serverName;
 
     /**
      * Class constructor.
+     *
+     * @param name the name of the GerritServer
      */
-    public UnreviewedPatchesListener() {
-        PluginImpl.getInstance().addListener(this);
+    public UnreviewedPatchesListener(String name) {
+        this.serverName = name;
+        addThisAsListener();
+    }
+
+    /**
+     * Add this patches listener to the GerritServer object to which it is associated.
+     */
+    private void addThisAsListener() {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            server.addListener(this);
+        } else {
+            logger.error("Could not find server {}", serverName);
+        }
     }
 
     @Override
     public void connectionEstablished() {
-        if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getConfig() != null) {
+        if (getConfig() != null) {
             runUnreviewedPatchSets();
         }
     }
@@ -85,7 +103,12 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Shutdown the listener.
      */
     public void shutdown() {
-        PluginImpl.getInstance().removeListener(this);
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            server.removeListener(this);
+        } else {
+            logger.error("Could not find server {}", serverName);
+        }
     }
 
     /**
@@ -130,7 +153,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
         final String queryString = "project:" + project + " is:open";
         List<JSONObject> changeList = new ArrayList<JSONObject>();
         try {
-            IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+            IGerritHudsonTriggerConfig config = getConfig();
             GerritQueryHandler handler = new GerritQueryHandler(config);
             changeList = handler.queryJava(queryString, false, true, false);
         } catch (GerritQueryException gqe) {
@@ -139,6 +162,25 @@ public class UnreviewedPatchesListener implements ConnectionListener {
             logger.warn("Could not query Gerrit for [" + queryString + "]", ex);
         }
         return changeList;
+    }
+
+    /**
+     * Get the server config.
+     * @return the server config or null if not found.
+     */
+    private IGerritHudsonTriggerConfig getConfig() {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+            if (config != null) {
+                return config;
+            } else {
+                logger.error("Could not find the config for server {}", serverName);
+            }
+        } else {
+            logger.error("Could not find server {}", serverName);
+        }
+        return null;
     }
 
     /**
@@ -158,10 +200,10 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Triggers Jenkins jobs which are related to unreviewed Gerrit patch sets.
      */
     private void runUnreviewedPatchSets() {
-        logger.info("Checking non-reviewed patch sets from allowed Jobs.");
+        logger.info("Checking non-reviewed patch sets from allowed jobs for: {}.", serverName);
         Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
-            IGerritHudsonTriggerConfig config = PluginImpl.getInstance().getConfig();
+            IGerritHudsonTriggerConfig config = getConfig();
             String projectName = entry.getKey();
             ArrayList<GerritTrigger> triggers = entry.getValue();
             if (triggers == null || triggers.isEmpty()) {
@@ -221,8 +263,11 @@ public class UnreviewedPatchesListener implements ConnectionListener {
                     JSONObject currentPatchSet = (JSONObject)patchSetObj;
                     PatchSet patchSet = new PatchSet(currentPatchSet);
                     PatchsetCreated event = new PatchsetCreated();
+                    Provider provider = new Provider();
+                    provider.setName(serverName);
                     event.setChange(change);
                     event.setPatchset(patchSet);
+                    event.setProvider(provider);
                     this.events.add(event);
                 } else {
                     logger.error("Parsing JSON object failed: " + changedPatch.toString());

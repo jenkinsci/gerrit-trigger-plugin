@@ -30,6 +30,9 @@ pushed from Gerrit instead of pulled as scm-triggers usually are.
 Multiple builds can be triggered by one change-event, and one consolidated
 report is sent back to Gerrit.
 
+Multiple Gerrit server connections can be established per Jenkins instance.
+Each job can be configured with one Gerrit server.
+
 =============
 Maintainers
 
