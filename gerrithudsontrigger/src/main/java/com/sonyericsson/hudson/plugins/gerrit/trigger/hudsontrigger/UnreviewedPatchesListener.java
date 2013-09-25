@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -199,7 +200,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Triggers Jenkins jobs which are related to unreviewed Gerrit patch sets.
      */
     private void runUnreviewedPatchSets() {
-        logger.info("Checking non-reviewed patch sets from allowed Jobs.");
+        logger.info("Checking non-reviewed patch sets from allowed jobs for: {}.", serverName);
         Map<String, ArrayList<GerritTrigger>> gerritProjectContainer = GerritProjectList.getGerritProjects();
         for (Map.Entry<String, ArrayList<GerritTrigger>> entry : gerritProjectContainer.entrySet()) {
             IGerritHudsonTriggerConfig config = getConfig();
@@ -262,8 +263,11 @@ public class UnreviewedPatchesListener implements ConnectionListener {
                     JSONObject currentPatchSet = (JSONObject)patchSetObj;
                     PatchSet patchSet = new PatchSet(currentPatchSet);
                     PatchsetCreated event = new PatchsetCreated();
+                    Provider provider = new Provider();
+                    provider.setName(serverName);
                     event.setChange(change);
                     event.setPatchset(patchSet);
+                    event.setProvider(provider);
                     this.events.add(event);
                 } else {
                     logger.error("Parsing JSON object failed: " + changedPatch.toString());
