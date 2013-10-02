@@ -125,6 +125,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                         logger.info("All Builds are completed for cause: {}", cause);
                         event.fireAllBuildsCompleted();
                         NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
+                        if(memory.isAllBuildsSuccessful(event)) {
+                            NotificationFactory.getInstance().queueAddReviewers(memory.getMemoryImprint(event), listener);
+                        }
                     } finally {
                         memory.forget(event);
                     }

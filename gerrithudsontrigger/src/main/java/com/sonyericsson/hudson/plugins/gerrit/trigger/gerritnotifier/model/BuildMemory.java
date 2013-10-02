@@ -51,6 +51,16 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldS
  */
 public class BuildMemory {
 
+    public boolean isAllBuildsSuccessful(GerritTriggeredEvent event) {
+        boolean result = true;
+        for (AbstractBuild build : getBuilds(event)) {
+            if (build.getResult() != Result.SUCCESS) {
+                result = false;
+            }
+        }
+        return result;
+    }
+
     /**
      * Compares GerritTriggeredEvents using the Object.hashCode() method. This ensures that every event received from
      * Gerrit is kept track of individually.
