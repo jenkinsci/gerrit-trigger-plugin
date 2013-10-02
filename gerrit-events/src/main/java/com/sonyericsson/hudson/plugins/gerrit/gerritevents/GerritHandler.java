@@ -353,7 +353,7 @@ public class GerritHandler implements Coordinator, Handler {
      * @param event    the event.
      */
     private void notifyListener(GerritEventListener listener, GerritEvent event) {
-        logger.debug("Notifying listener {} of event {}", listener, event);
+        logger.trace("Notifying listener {} of event {}", listener, event);
         try {
             if (event instanceof PatchsetCreated) {
                 listener.gerritEvent((PatchsetCreated)event);

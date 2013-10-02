@@ -37,7 +37,12 @@ import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The parameters to add to a build.
@@ -199,6 +204,8 @@ public enum GerritTriggerParameters {
      */
     GERRIT_EVENT_TYPE;
 
+    private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
+
     /**
      * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
      * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
@@ -316,8 +323,13 @@ public enum GerritTriggerParameters {
 
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
-                GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
-                    parameters, commitMessage, escapeQuotes);
+                try {
+                    byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
+                    GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
+                        parameters, new String(encodedBytes), escapeQuotes);
+                } catch (UnsupportedEncodingException uee) {
+                    logger.error("Failed to encode commit message as Base64: ", uee);
+                }
             }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
