@@ -24,10 +24,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.model.BuildBadgeAction;
@@ -94,10 +96,22 @@ public class BadgeAction implements BuildBadgeAction {
     /**
      * Gets the URL for the change.
      *
-     * @return the URL to the change.
+     * @return the URL to the change or the empty string if no server matches the event provider's name.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
+        Provider provider = tEvent.getProvider();
+        if (provider == null) {
+            provider = new Provider();
+            provider.setName(PluginImpl.DEFAULT_SERVER_NAME);
+            tEvent.setProvider(provider);
+        }
+        GerritServer server = PluginImpl.getInstance().getServer(provider.getName());
+        //TODO: investigate the case where server == null:
+        if (server != null) {
+            return server.getConfig().getGerritFrontEndUrlFor(tEvent);
+        } else {
+            return "";
+        }
     }
 
     /**

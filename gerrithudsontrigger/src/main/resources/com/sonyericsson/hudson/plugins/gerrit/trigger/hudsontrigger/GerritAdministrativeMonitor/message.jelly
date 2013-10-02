@@ -2,20 +2,24 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--class=error or warning-->
     <j:if test="${it.isConnectionWarning()}">
-        <div class="warning">
-            ${%The connection to Gerrit is not started yet.} ${%Check the Gerrit URL in the settings.}
-        </div>
-        <div class="warning">
-            ${%VersionConnectionWarning}
-        </div>
+        <j:forEach var="server" items="${it.connectionWarningServers}">
+            <div class="warning">
+                ${%ConnectionWarning(server)}
+            </div>
+            <div class="warning">
+                ${%VersionConnectionWarning(server)}
+            </div>
+        </j:forEach>
     </j:if>
     <j:if test="${it.isConnectionError()}">
-        <div class="error">
-            ${%The connection to Gerrit is down!} ${%Check your settings and the Gerrit server.}
-        </div>
-        <div class="warning">
-            ${%VersionConnectionWarning}
-        </div>
+        <j:forEach var="server" items="${it.connectionErrorServers}">
+            <div class="error">
+                ${%ConnectionError(server)}
+            </div>
+            <div class="warning">
+                ${%VersionConnectionWarning(server)}
+            </div>
+        </j:forEach>
     </j:if>
     <j:if test="${it.isSendQueueWarning()}">
         <div class="warning">
@@ -23,18 +27,22 @@
         </div>
     </j:if>
     <j:if test="${it.isGerritSnapshotVersion()}">
-        <div class="warning">
-            ${%SnapshotVersionWarning}
-        </div>
+        <j:forEach var="server" items="${it.snapshotServers}">
+            <div class="warning">
+                ${%SnapshotVersionWarning(server)}
+            </div>
+        </j:forEach>
     </j:if>
     <j:if test="${it.hasDisabledFeatures()}">
-        <div class="warning">
-            ${%DisabledFeaturesWarning}
-            <ul>
-                <j:forEach items="${it.getDisabledFeatures()}" var="feature">
-                    <li>${%SpecificVersionRequiredWarning(feature.getDisplayName(), feature.getVersion())}</li>
-                </j:forEach>
-            </ul>
-        </div>
+        <j:forEach var="server" items="${it.disabledFeaturesServers}">
+            <div class="warning">
+                ${%DisabledFeaturesWarning(server)}
+                <ul>
+                    <j:forEach items="${it.getDisabledFeatures(server)}" var="feature">
+                        <li>${%SpecificVersionRequiredWarning(feature.getDisplayName(), feature.getVersion())}</li>
+                    </j:forEach>
+                </ul>
+            </div>
+        </j:forEach>
     </j:if>
 </j:jelly>

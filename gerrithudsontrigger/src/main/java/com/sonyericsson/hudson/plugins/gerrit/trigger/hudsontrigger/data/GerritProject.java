@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -43,6 +42,7 @@ public class GerritProject implements Describable<GerritProject> {
     private String pattern;
     private List<Branch> branches;
     private List<FilePath> filePaths;
+    private String serverName;
 
 
     /**
@@ -58,14 +58,21 @@ public class GerritProject implements Describable<GerritProject> {
      * @param pattern the project-name pattern
      * @param branches the branch-rules
      * @param filePaths the file-path rules.
+     * @param serverName the name of the Gerrit server.
      */
     @DataBoundConstructor
-    public GerritProject(CompareType compareType, String pattern, List<Branch> branches, List<FilePath> filePaths) {
+    public GerritProject(
+            CompareType compareType,
+            String pattern,
+            List<Branch> branches,
+            List<FilePath> filePaths,
+            String serverName) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
         this.filePaths = filePaths;
+        this.serverName = serverName;
     }
 
     /**
@@ -186,15 +193,15 @@ public class GerritProject implements Describable<GerritProject> {
      */
     @Extension
     public static final class DescriptorImpl extends Descriptor<GerritProject> {
+
         /**
          * Used to fill the project pattern combobox with AJAX.
          *
          * @return ComboBoxModels containing a list of all Gerrit Projects
          */
         public ComboBoxModel doFillPatternItems() {
-            return new ComboBoxModel(PluginImpl.getInstance().getGerritProjects());
+            return new ComboBoxModel();
         }
-
         @Override
         public String getDisplayName() {
             return null;

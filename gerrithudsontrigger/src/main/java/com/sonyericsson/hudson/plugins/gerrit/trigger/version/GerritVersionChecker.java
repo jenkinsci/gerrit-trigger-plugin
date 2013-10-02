@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.util.VersionNumber;
 import org.slf4j.Logger;
@@ -99,11 +100,37 @@ public final class GerritVersionChecker {
      * Tells us if we are running the correct version for a particular feature.
      *
      * @param feature the feature we want to check.
+     * @param serverName the name of the Gerrit server.
      * @return true if the Gerrit version is high enough for us to use this feature.
      */
-    public static boolean isCorrectVersion(Feature feature) {
-        GerritVersionNumber gerritVersion = createVersionNumber(PluginImpl.getInstance().getGerritVersion());
-        return isCorrectVersion(gerritVersion, feature);
+    public static boolean isCorrectVersion(Feature feature, String serverName) {
+        if (PluginImpl.getInstance() != null) {
+            GerritVersionNumber gerritVersion
+                = createVersionNumber(getGerritVersion(serverName));
+            return isCorrectVersion(gerritVersion, feature);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     *Returns the current Gerrit version.
+     *@param serverName the name of the server.
+     *@return the current Gerrit version as a String if connected, or null otherwise.
+    */
+    private static String getGerritVersion(String serverName) {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            String version = server.getGerritVersion();
+            if (version != null) {
+                return version;
+            } else {
+                logger.error("Could not find the Gerrit version {}", version);
+            }
+        } else {
+            logger.error("Could not find the server {}", serverName);
+        }
+        return null;
     }
 
     /**

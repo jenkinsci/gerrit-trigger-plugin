@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 
 /**
  * Testing different scenarios with file paths to see if they are interesting.
@@ -75,7 +76,7 @@ public class GerritProjectWithFilesInterestingTest {
         List<FilePath> filePaths = new LinkedList<FilePath>();
         FilePath filePath = new FilePath(CompareType.PLAIN, "test.txt");
         filePaths.add(filePath);
-        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, filePaths);
+        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, filePaths, any(String.class));
         List<String> files = new LinkedList<String>();
         files.add("test.txt");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
@@ -89,7 +90,7 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("tests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths);
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths, any(String.class));
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "projectNumber5", "feature/mymaster", files, true), });
 
@@ -99,7 +100,7 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths = new LinkedList<FilePath>();
         filePath = new FilePath(CompareType.ANT, "**/*test*");
         filePaths.add(filePath);
-        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, filePaths);
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, filePaths, any(String.class));
         files = new LinkedList<String>();
         files.add("resources/test.xml");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
@@ -113,7 +114,7 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("notintests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths);
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths, any(String.class));
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "projectNumber5", "feature/mymaster", files, false), });
 

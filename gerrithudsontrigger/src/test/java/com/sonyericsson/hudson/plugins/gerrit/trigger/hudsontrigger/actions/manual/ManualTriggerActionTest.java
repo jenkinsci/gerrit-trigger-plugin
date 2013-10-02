@@ -23,7 +23,8 @@
  */
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
-
+import static org.mockito.Mockito.any;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONArray;
@@ -34,7 +35,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -262,7 +262,9 @@ public class ManualTriggerActionTest {
         change.put("number", "100");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = mock(PluginImpl.class);
-        when(plugin.getConfig()).thenReturn(Setup.createConfig());
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        when(server.getConfig()).thenReturn(Setup.createConfig());
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         ManualTriggerAction action = new ManualTriggerAction();

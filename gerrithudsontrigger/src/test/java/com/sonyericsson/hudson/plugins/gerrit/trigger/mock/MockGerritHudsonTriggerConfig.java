@@ -255,6 +255,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public int getWatchdogTimeoutMinutes() {
+        return 0;
+    }
+
+    @Override
     public int getWatchdogTimeoutSeconds() {
         return 0;
     }

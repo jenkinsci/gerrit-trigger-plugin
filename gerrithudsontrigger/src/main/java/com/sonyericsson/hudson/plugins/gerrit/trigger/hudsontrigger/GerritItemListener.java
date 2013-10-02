@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import hudson.Extension;
@@ -34,8 +35,10 @@ import hudson.model.Item;
 import hudson.model.listeners.ItemListener;
 
 /**
- * Listens for onDeleted events, and if the deleted project has a Gerrit trigger,
- * cancels its timers. Since this class has no member variables, and doesn't need any
+ * Listens for onDeleted and onLoaded events.
+ * If the deleted project has a Gerrit trigger, it will be stopped
+ * If all project have been loaded, start the connections to Gerrit servers.
+ * Since this class has no member variables, and doesn't need any
  * initialization, there is no constructor.
  *
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
@@ -47,11 +50,11 @@ public class GerritItemListener extends ItemListener {
     /**
      * Called by Jenkins when an item is about to be deleted. If this item is a project
      * (AbstractProject or any of its subclasses), then we check if it has a GerritTrigger
-     * among its triggers. If so, call the trigger's cancelTimer() method.
+     * among its triggers. If so, call the trigger's stop() method.
      *
      * This class is unfortunately needed because Jenkins doesn't call Trigger.stop() when
      * a project is deleted, only when a project is reconfigured. Thus we need this class
-     * to cancel the timer when a project is deleted.
+     * to remove the listener and cancel the timer when a project is deleted.
      *
      * @param item the item that will be deleted, it is interesting if it is
      * a subclass of an AbstractProject
@@ -62,7 +65,7 @@ public class GerritItemListener extends ItemListener {
             AbstractProject<?, ?> project = (AbstractProject<?, ?>)item;
             GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
             if (gerritTrigger != null) {
-                gerritTrigger.cancelTimer();
+                gerritTrigger.stop();
             }
         }
     }
@@ -72,10 +75,8 @@ public class GerritItemListener extends ItemListener {
      */
     @Override
     public void onLoaded() {
-        try {
-            PluginImpl.getInstance().startConnection();
-        } catch (Exception e) {
-            logger.error("Could not start connection. ", e);
+        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+            s.startConnection();
         }
         super.onLoaded();
     }

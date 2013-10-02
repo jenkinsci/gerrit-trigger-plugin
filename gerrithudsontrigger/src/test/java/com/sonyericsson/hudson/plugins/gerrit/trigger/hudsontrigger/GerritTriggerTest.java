@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -112,6 +113,7 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AbstractProject.class, ToGerritRunListener.class, PluginImpl.class })
 public class GerritTriggerTest {
+
     /**
      * test.
      */
@@ -193,10 +195,12 @@ public class GerritTriggerTest {
         when(project.getFullDisplayName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(20);
 
@@ -254,7 +258,7 @@ public class GerritTriggerTest {
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", null, null, null, false, false, "");
+                true, true, false, "", "", "", "", "", "", null, null, null, false, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNull(triggerOnEvents);
@@ -277,10 +281,12 @@ public class GerritTriggerTest {
         when(project.getFullDisplayName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(-20);
 
@@ -312,10 +318,12 @@ public class GerritTriggerTest {
         when(project.getFullDisplayName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(10000);
 
@@ -352,19 +360,22 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
         trigger.schedule(gerritCause, event);
 
         verify(project).scheduleBuild2(
@@ -397,19 +408,22 @@ public class GerritTriggerTest {
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -446,6 +460,12 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
@@ -453,13 +473,10 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -495,6 +512,12 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
@@ -502,13 +525,10 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -544,6 +564,12 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Nisse", "nisse@acme.org");
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
@@ -551,13 +577,10 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -592,6 +615,12 @@ public class GerritTriggerTest {
 
         Account owner = new Account("Bobby", "bobby@somewhere.com");
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
@@ -599,13 +628,10 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -641,6 +667,12 @@ public class GerritTriggerTest {
         Account owner = new Account("Bobby", "bobby@somewhere.com");
         Account uploader = new Account("Bobby", null);
 
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         trigger.setEscapeQuotes(false);
@@ -648,13 +680,10 @@ public class GerritTriggerTest {
         GerritCause gerritCause = new GerritCause(event, true);
         gerritCause = spy(gerritCause);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
 
@@ -1087,10 +1116,12 @@ public class GerritTriggerTest {
         //mock the returned url
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
@@ -1156,10 +1187,12 @@ public class GerritTriggerTest {
         //mock the returned url
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
@@ -1242,10 +1275,12 @@ public class GerritTriggerTest {
     private static void mockPluginConfig() {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getConfig()).thenReturn(config);
+        when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
     }
 

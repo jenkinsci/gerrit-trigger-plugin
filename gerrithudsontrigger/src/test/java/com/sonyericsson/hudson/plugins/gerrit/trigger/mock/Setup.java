@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPubli
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -125,7 +126,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        event.setProvider(new Provider("gerrit", "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
 
@@ -385,7 +386,7 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", null, null, triggerOnEvents, false, false, "");
+                true, true, false, "", "", "", "", "", "", null, null, triggerOnEvents, false, false, "");
 
         if (project != null) {
             trigger.start(project, true);

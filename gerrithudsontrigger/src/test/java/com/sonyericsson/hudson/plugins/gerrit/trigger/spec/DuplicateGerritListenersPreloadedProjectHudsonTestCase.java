@@ -55,7 +55,8 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
      */
     @LocalData
     public void testProject() throws Exception {
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
+        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
+            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, gerritEventListeners.size());
@@ -70,7 +71,8 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     public void testCreateNewProject() throws Exception {
         @SuppressWarnings("unused")
         FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
+        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
+            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(2, gerritEventListeners.size());
@@ -84,7 +86,8 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     @LocalData
     public void testReconfigureNewProject() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance(), GerritHandler.class);
+        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
+            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(2, gerritEventListeners.size());

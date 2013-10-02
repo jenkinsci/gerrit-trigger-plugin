@@ -81,11 +81,11 @@ public final class GerritTriggerTimer {
      * Schedule a TimerTask according to the two constants above.
      *
      * @param timerTask the subclass of TimerTask to be scheduled
+     * @param serverName the name of the Gerrit server.
      */
-    public void schedule(TimerTask timerTask) {
+    public void schedule(TimerTask timerTask, String serverName) {
         long timerPeriod = MILLISECONDS_PER_SECOND
-                * PluginImpl.getInstance().getConfig().getDynamicConfigRefreshInterval();
-
+                    * PluginImpl.getInstance().getServer(serverName).getConfig().getDynamicConfigRefreshInterval();
         try {
             timer.schedule(timerTask, DELAY_MILLISECONDS, timerPeriod);
         } catch (IllegalArgumentException iae) {

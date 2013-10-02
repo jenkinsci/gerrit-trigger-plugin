@@ -27,6 +27,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -75,12 +77,15 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = {
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory"
+        "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory",
+        "com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl"
 }, value = AbstractProject.class)
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
     private NotificationFactory mockNotificationFactory;
+    private PluginImpl plugin;
+    private GerritServer server;
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -90,10 +95,17 @@ public class ToGerritRunListenerTest {
     @Before
     public void setup() throws Exception {
         PowerMockito.mockStatic(NotificationFactory.class);
+        PowerMockito.mockStatic(PluginImpl.class);
         mockNotificationFactory = mock(NotificationFactory.class);
+        plugin = mock(PluginImpl.class);
         mockNotifier = mock(GerritNotifier.class);
-        doReturn(mockNotifier).when(mockNotificationFactory).createGerritNotifier(any(GerritCmdRunner.class));
+        server = mock(GerritServer.class);
+        doReturn(mockNotifier).when(mockNotificationFactory)
+                .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
         PowerMockito.when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
+        PowerMockito.when(PluginImpl.class, "getInstance").thenReturn(plugin);
+        when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
+        when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
     }
 
     /**
