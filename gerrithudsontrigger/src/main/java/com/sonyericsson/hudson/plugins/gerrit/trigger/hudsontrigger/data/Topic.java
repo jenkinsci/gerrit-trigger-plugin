@@ -29,7 +29,7 @@ import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Represents a rule for triggering on a tpic of a GerritProject.
+ * Represents a rule for triggering on a topic of a GerritProject.
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
 public class Topic extends AbstractDescribableImpl<Topic> {
