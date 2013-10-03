@@ -45,7 +45,6 @@ import java.util.LinkedList;
 
 import jenkins.model.Jenkins;
 
-
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
@@ -57,6 +56,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PL
 
 /**
  * Management link for configuring the global configuration of this trigger.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
@@ -127,7 +127,6 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return r;
         }
     }
-
     /**
     * Used when redirected to a server.
     * @param serverName the name of the server.

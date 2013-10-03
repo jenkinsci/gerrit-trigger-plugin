@@ -39,6 +39,7 @@ import hudson.util.FormValidation;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -51,6 +52,11 @@ import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 
 import net.sf.json.JSONObject;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -298,7 +304,7 @@ public class GerritServer implements Describable<GerritServer> {
     /**
      * Starts the connection to Gerrit stream of events.
      *
-     * @see GerritManagement.DescriptorImpl#doStartConnection()
+     * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public synchronized void startConnection() {
         if (!config.hasDefaultValues()) {
@@ -318,7 +324,7 @@ public class GerritServer implements Describable<GerritServer> {
     /**
      * Stops the connection to Gerrit stream of events.
      *
-     * @see GerritManagement.DescriptorImpl#doStopConnection()
+     * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public synchronized void stopConnection() {
         if (gerritConnection != null) {
@@ -346,7 +352,7 @@ public class GerritServer implements Describable<GerritServer> {
     /**
      * Restarts the connection to Gerrit stream of events.
      *
-     * @see GerritManagement.DescriptorImpl#doRestartConnection()
+     * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public void restartConnection() {
         stopConnection();
@@ -481,6 +487,42 @@ public class GerritServer implements Describable<GerritServer> {
                 }
             } else {
                 return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+            }
+
+        }
+
+        /**
+         * Tests if the REST API settings can connect to Gerrit.
+         *
+         * @param gerritFrontEndUrl the url
+         * @param gerritHttpUserName the user name
+         * @param gerritHttpPassword the password
+         * @return {@link FormValidation#ok()} if it works.
+         */
+        public FormValidation doTestRestConnection(
+                @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
+                @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
+                @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
+            DefaultHttpClient httpclient = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(gerritFrontEndUrl + "/a/projects/?d");
+            httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
+                    new UsernamePasswordCredentials(gerritHttpUserName,
+                            gerritHttpPassword));
+            HttpResponse execute;
+            try {
+                execute = httpclient.execute(httpGet);
+            } catch (IOException e) {
+                return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+            }
+
+            int statusCode = execute.getStatusLine().getStatusCode();
+            switch(statusCode) {
+                case HttpURLConnection.HTTP_OK:
+                    return FormValidation.ok(Messages.Success());
+                case HttpURLConnection.HTTP_UNAUTHORIZED:
+                    return FormValidation.error(Messages.HttpConnectionUnauthorized());
+                default:
+                    return FormValidation.error(Messages.HttpConnectionError(statusCode));
             }
 
         }
