@@ -256,8 +256,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Converts old trigger configs when only patchset created was available as event
-     * and when the job did not need to choose a Gerrit server for trigerring.
-     * If no event selection is set to true, triggering on patchset created will be.
+     * and when jobs were not associated to Gerrit servers.
      *
      * @return the resolved instance.
      * @throws ObjectStreamException if something beneath goes wrong.
@@ -310,37 +309,35 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-    * Adds listener to the server.
+    * Adds this trigger as listener to the Gerrit server.
     *
-    *
+    * @param project the project associated with the trigger.
     */
-       private void addListener() {
-           PluginImpl plugin = PluginImpl.getInstance();
-           if (plugin != null) {
-               if (plugin.getServer(serverName) != null) {
-                    PluginImpl.getInstance().getServer(serverName).addListener(this);
-               } else {
-                   logger.error("Server [" + serverName + "] was now found!");
-                   }
-       } else {
-       logger.error("The plugin instance could not be found");
-       }
-   }
-
-    @Override
-    public void start(AbstractProject project, boolean newInstance) {
-        logger.debug("Start project: {}", project);
-        super.start(project, newInstance);
-        initializeTriggerOnEvents();
-        this.myProject = project;
-        try {
-            if (PluginImpl.getInstance() != null && PluginImpl.getInstance().getServer(serverName) != null) {
-                PluginImpl.getInstance().getServer(serverName).addListener(this);
+    private void addThisTriggerAsListener(AbstractProject project) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            if (plugin.getServer(serverName) != null) {
+                 plugin.getServer(serverName).addListener(this);
             } else {
                 logger.warn("The server {} could not be found! Project {} will not be triggered!",
                         serverName,
                         project.getFullDisplayName());
             }
+        } else {
+            logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
+                    project.getFullDisplayName());
+        }
+    }
+
+    @Override
+    public void start(AbstractProject project, boolean newInstance) {
+        logger.debug("Start project: {}", project);
+        super.start(project, newInstance);
+        initializeServerName();
+        initializeTriggerOnEvents();
+        this.myProject = project;
+        try {
+            addThisTriggerAsListener(project);
         } catch (IllegalStateException e) {
             logger.error("I am too early!", e);
         }

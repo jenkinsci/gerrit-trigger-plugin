@@ -75,8 +75,10 @@ public class GerritItemListener extends ItemListener {
      */
     @Override
     public void onLoaded() {
-        for (GerritServer s : PluginImpl.getInstance().getServers()) {
-            s.startConnection();
+        if (PluginImpl.getInstance() != null) {
+            for (GerritServer s : PluginImpl.getInstance().getServers()) {
+                s.startConnection();
+            }
         }
         super.onLoaded();
     }
