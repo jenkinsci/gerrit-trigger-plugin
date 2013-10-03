@@ -43,6 +43,7 @@ public class GerritProject implements Describable<GerritProject> {
     private List<Branch> branches;
     private List<FilePath> filePaths;
     private String serverName;
+    private List<Topic> topics;
 
 
     /**
@@ -57,6 +58,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @param compareType the compareType
      * @param pattern the project-name pattern
      * @param branches the branch-rules
+     * @param topics the topic-rules
      * @param filePaths the file-path rules.
      * @param serverName the name of the Gerrit server.
      */
@@ -65,12 +67,14 @@ public class GerritProject implements Describable<GerritProject> {
             CompareType compareType,
             String pattern,
             List<Branch> branches,
+            List<Topic> topics,
             List<FilePath> filePaths,
             String serverName) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
+        this.topics = topics;
         this.filePaths = filePaths;
         this.serverName = serverName;
     }
@@ -140,46 +144,94 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
+     * The list of topic-rules.
+     * @return the topic-rules
+     */
+    public List<Topic> getTopics() {
+        return topics;
+    }
+
+    /**
+     * The list of topic-rules.
+     * @param topics the topic-rules
+     */
+    public void setTopics(List<Topic> topics) {
+        this.topics = topics;
+    }
+
+    /**
      * Compares the project, branch and files to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
+     * @param topic the topic.
      * @param files the files.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch, List<String> files) {
+    public boolean isInteresting(String project, String branch, String topic, List<String> files) {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 if (b.isInteresting(branch)) {
-                    for (FilePath f : filePaths) {
-                        if (f.isInteresting(files)) {
-                            return true;
-                        }
+                    if (isInterestingTopic(topic) && isInterestingFile(files)) {
+                        return true;
                     }
                 }
             }
-            return false;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Compares the project and branch to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
+     * @param topic the topic.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch) {
+    public boolean isInteresting(String project, String branch, String topic) {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 if (b.isInteresting(branch)) {
+                    return isInterestingTopic(topic);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Compare topics to see if the rules specified is a match.
+     *
+     * @param topic the topic.
+     * @return true if the rules match or no rules.
+     */
+    private boolean isInterestingTopic(String topic) {
+        if (topics != null && topics.size() > 0) {
+            for (Topic t : topics) {
+                if (t.isInteresting(topic)) {
                     return true;
                 }
             }
             return false;
-        } else {
+        }
+        return true;
+    }
+
+    /**
+     * Compare files to see if the rules specified is a match.
+     *
+     * @param files the files.
+     * @return true if the rules match or no rules.
+     */
+    private boolean isInterestingFile(List<String> files) {
+        if (filePaths != null && filePaths.size() > 0) {
+            for (FilePath f : filePaths) {
+                if (f.isInteresting(files)) {
+                    return true;
+                }
+            }
             return false;
         }
+        return true;
     }
 
     @Override

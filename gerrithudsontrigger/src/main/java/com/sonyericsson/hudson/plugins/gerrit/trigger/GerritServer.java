@@ -390,7 +390,7 @@ public class GerritServer implements Describable<GerritServer> {
      */
     public void triggerEvent(GerritEvent event) {
         if (gerritEventManager != null) {
-            gerritEventManager.triggerEvent(event);
+            gerritEventManager.post(event);
         } else {
             throw new IllegalStateException("Manager not started!");
         }

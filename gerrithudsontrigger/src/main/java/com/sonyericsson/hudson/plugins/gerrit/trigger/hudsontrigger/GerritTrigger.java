@@ -784,11 +784,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
                     if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                            changeBasedEvent.getChange().getBranch())) {
+                            changeBasedEvent.getChange().getBranch(),
+                            changeBasedEvent.getChange().getTopic())) {
                         if (isFileTriggerEnabled() && p.getFilePaths() != null
                                 && p.getFilePaths().size() > 0) {
                             if (p.isInteresting(changeBasedEvent.getChange().getProject(),
                                     changeBasedEvent.getChange().getBranch(),
+                                    changeBasedEvent.getChange().getTopic(),
                                     changeBasedEvent.getFiles(
                                             new GerritQueryHandler(PluginImpl.getInstance()
                                                     .getServer(serverName).getConfig())))) {
@@ -803,7 +805,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
                     if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                            refUpdated.getRefUpdate().getRefName())) {
+                            refUpdated.getRefUpdate().getRefName(), null)) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }

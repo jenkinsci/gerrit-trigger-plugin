@@ -59,6 +59,10 @@ public abstract class GerritEventKeys {
      */
     public static final String BRANCH = "branch";
     /**
+     * topic.
+     */
+    public static final String TOPIC = "topic";
+    /**
      * id.
      */
     public static final String ID = "id";
