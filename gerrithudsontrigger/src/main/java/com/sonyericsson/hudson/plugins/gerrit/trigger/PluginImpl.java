@@ -242,6 +242,21 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Adds the given event to the stream of events.
+     * It gets added to the same event queue as any event coming from the stream-events command in Gerrit.
+     *
+     * @param event the event.
+     * @see GerritHandler#post(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     */
+    public void triggerEvent(GerritEvent event) {
+        if (gerritEventManager != null) {
+            gerritEventManager.post(event);
+        } else {
+            throw new IllegalStateException("Manager not started!");
+        }
+    }
+
+    /**
      * Registers XStream alias and converters to handle backwards compatibility with old data.
      */
     protected static void doXStreamRegistrations() {
