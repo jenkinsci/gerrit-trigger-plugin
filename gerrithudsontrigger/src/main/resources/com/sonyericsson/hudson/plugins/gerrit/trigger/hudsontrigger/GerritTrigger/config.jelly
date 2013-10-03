@@ -6,7 +6,7 @@
         <j:arg type="hudson.model.AbstractProject" value="${it}" />
     </j:invokeStatic>
     <f:section title="${%Gerrit Trigger}">
-        <f:entry title="Choose a server" description="${it.description}" field="serverName">
+        <f:entry title="${%Choose a server}" description="${it.description}" field="serverName">
             <f:select/>
         </f:entry>
         <f:advanced>

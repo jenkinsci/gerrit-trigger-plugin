@@ -15,7 +15,7 @@
                 <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
             </j:if>
 
-            <h1> Gerrit Servers </h1>
+            <h1>${%Gerrit Servers}</h1>
             <ul>
                 <j:forEach var="serverName" items="${it.serverNames}" varStatus="loop">
                     <li> <a href="server/${serverName}"> ${serverName} </a> </li>

@@ -12,15 +12,14 @@
             <form method="post" action="removeConfirm">
                 <j:choose>
                     <j:when test="${it.isLastServer()}">
-                        Cannot remove the last server!
+                        ${%RemoveLastServerWarning}
                     </j:when>
                     <j:when test="${it.configuredJobs.isEmpty()}">
-                        Remove server ${it.name}?
+                        ${%RemoveServerConfirmationWithNoJobs(it.name)}
                         <f:submit value="${%Yes}" />
                     </j:when>
                     <j:otherwise>
-                        Disable Gerrit Trigger in the following jobs and remove server ${it.name}?
-                        <b>(Gerrit Trigger configurations for those jobs will be lost)</b>
+                        ${%RemoveServerConfirmation(it.name)}
                         <f:submit value="${%Yes}" />
                         <ul>
                             <j:forEach var="job" items="${it.configuredJobs}" varStatus="loop">
