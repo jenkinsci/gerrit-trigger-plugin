@@ -31,7 +31,7 @@
                             <f:description>
                                 ${%SearchDescription}
                             </f:description>
-                            <f:entry title="Select Gerrit Server">
+                            <f:entry title="${%Select Gerrit Server}">
                                 <j:set var="servers" value="${it.getEnabledServers()}" />
                                 <select name="enabledServer">
                                     <j:forEach var="inst" items="${servers}">
