@@ -288,8 +288,8 @@ public class GerritServer implements Describable<GerritServer> {
      * @param listener the listener to remove.
      */
     public void removeListener(ConnectionListener listener) {
-        if (gerritEventManager != null) {
-            gerritEventManager.removeListener(listener);
+        if (gerritConnection != null) {
+            gerritConnection.removeListener(listener);
         }
     }
 
@@ -314,6 +314,7 @@ public class GerritServer implements Describable<GerritServer> {
                 gerritEventManager.setIgnoreEMail(config.getGerritEMail());
                 gerritEventManager.setNumberOfWorkerThreads(config.getNumberOfReceivingWorkerThreads());
                 gerritConnection.setHandler(gerritEventManager);
+                gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");
@@ -329,6 +330,7 @@ public class GerritServer implements Describable<GerritServer> {
     public synchronized void stopConnection() {
         if (gerritConnection != null) {
             gerritConnection.shutdown(true);
+            gerritConnection.removeListener(gerritConnectionListener);
             gerritConnection = null;
         } else {
             logger.warn("Was told to shutdown again?");
@@ -368,8 +370,8 @@ public class GerritServer implements Describable<GerritServer> {
      * @param listener the listener to be added.
      */
     public void addListener(ConnectionListener listener) {
-        if (gerritEventManager != null) {
-            gerritEventManager.addListener(listener);
+        if (gerritConnection != null) {
+            gerritConnection.addListener(listener);
         }
     }
 

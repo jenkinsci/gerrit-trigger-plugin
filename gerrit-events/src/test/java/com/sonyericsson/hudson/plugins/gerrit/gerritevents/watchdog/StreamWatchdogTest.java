@@ -72,9 +72,9 @@ public class StreamWatchdogTest {
         GerritConnection connection = new GerritConnection("", "localhost", SshdServerMock.GERRIT_SSH_PORT, "",
                 new Authentication(sshKey, "jenkins"), 20,
                 new WatchTimeExceptionData(new int[0], Collections.<WatchTimeExceptionData.TimeSpan>emptyList()));
-        GerritHandler handler = new GerritHandler();
         Listen connectionListener = new Listen();
-        handler.addListener(connectionListener);
+        connection.addListener(connectionListener);
+        GerritHandler handler = new GerritHandler();
         connection.setHandler(handler);
         Thread connectionThread = new Thread(connection);
         connectionThread.start();
