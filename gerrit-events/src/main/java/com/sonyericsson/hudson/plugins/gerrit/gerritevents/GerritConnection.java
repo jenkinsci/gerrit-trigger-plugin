@@ -28,6 +28,8 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,6 +82,7 @@ public class GerritConnection extends Thread implements Connector {
     private StreamWatchdog watchdog;
     private int reconnectCallCount = 0;
     private GerritHandler handler;
+    private final Set<ConnectionListener> listeners = new CopyOnWriteArraySet<ConnectionListener>();
 
     /**
      * Creates a GerritHandler with all the default values set.
@@ -236,6 +239,35 @@ public class GerritConnection extends Thread implements Connector {
      */
     public String getGerritVersion() {
         return gerritVersion;
+    }
+
+    /**
+     * Add listener for GerrirtConnectionEvent.
+     *
+     * @param listener the listener.
+     */
+    public void addListener(ConnectionListener listener) {
+        if (!listeners.add(listener)) {
+            logger.warn("The connection listener was doubly-added: {}", listener);
+        }
+    }
+
+    /**
+     * Remove listener for GerrirtConnectionEvent.
+     *
+     * @param listener the listener.
+     */
+    public void removeListener(ConnectionListener listener) {
+        listeners.remove(listener);
+    }
+
+    /**
+     * Removes all connection listeners.
+     *
+     * @return the list of former listeners.
+     */
+    public void removeListeners() {
+        listeners.clear();
     }
 
     /**
@@ -538,13 +570,35 @@ public class GerritConnection extends Thread implements Connector {
     }
 
     /**
+     * Notifies all listeners of a Gerrit connection event.
+     *
+     * @param event the event.
+     */
+    public void notifyListeners(GerritConnectionEvent event) {
+        for (ConnectionListener listener : listeners) {
+            try {
+                switch(event) {
+                case GERRIT_CONNECTION_ESTABLISHED:
+                    listener.connectionEstablished();
+                    break;
+                case GERRIT_CONNECTION_DOWN:
+                    listener.connectionDown();
+                    break;
+                default:
+                    break;
+                }
+            } catch (Exception ex) {
+                logger.error("ConnectionListener threw Exception. ", ex);
+            }
+        }
+    }
+
+    /**
      * Notifies all ConnectionListeners that the connection is down.
      */
     protected void notifyConnectionDown() {
         connected = false;
-        if (handler != null) {
-            handler.notifyConnectionDown();
-        }
+        notifyListeners(GerritConnectionEvent.GERRIT_CONNECTION_DOWN);
     }
 
     /**
@@ -552,8 +606,6 @@ public class GerritConnection extends Thread implements Connector {
      */
     protected void notifyConnectionEstablished() {
         connected = true;
-        if (handler != null) {
-            handler.notifyConnectionEstablished();
-        }
+        notifyListeners(GerritConnectionEvent.GERRIT_CONNECTION_ESTABLISHED);
     }
 }
