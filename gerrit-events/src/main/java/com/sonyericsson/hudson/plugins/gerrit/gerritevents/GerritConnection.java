@@ -263,8 +263,6 @@ public class GerritConnection extends Thread implements Connector {
 
     /**
      * Removes all connection listeners.
-     *
-     * @return the list of former listeners.
      */
     public void removeListeners() {
         listeners.clear();
