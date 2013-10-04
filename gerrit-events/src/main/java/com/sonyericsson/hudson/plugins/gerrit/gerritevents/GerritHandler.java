@@ -73,7 +73,6 @@ public class GerritHandler implements Coordinator, Handler {
     private BlockingQueue<Work> workQueue;
     private int numberOfWorkerThreads;
     private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
-    private final Set<ConnectionListener> connectionListeners = new CopyOnWriteArraySet<ConnectionListener>();
     private final List<EventThread> workers;
     private String ignoreEMail;
 
@@ -226,58 +225,6 @@ public class GerritHandler implements Coordinator, Handler {
     }
 
     /**
-     * Add a ConnectionListener to the list of listeners.
-     *
-     * @param listener the listener to add.
-     */
-    public void addListener(ConnectionListener listener) {
-        synchronized (this) {
-            connectionListeners.add(listener);
-        }
-    }
-
-    /**
-     * Adds all ConnectionListeners.
-     *
-     * @param listeners the listener.
-     * @deprecated
-     */
-    @Deprecated
-    public void addConnectionListeners(Map<Integer, ConnectionListener> listeners) {
-        addConnectionListeners(listeners.values());
-    }
-    /**
-     * Add all ConnectionListeners to the list of listeners.
-     *
-     * @param listeners the listeners to add.
-     */
-    public void addConnectionListeners(Collection<? extends ConnectionListener> listeners) {
-        synchronized (this) {
-            connectionListeners.addAll(listeners);
-        }
-    }
-
-    @Override
-    public void removeListener(ConnectionListener listener) {
-        synchronized (this) {
-            connectionListeners.remove(listener);
-        }
-    }
-
-    /**
-     * Removes all connection listeners and returns those who where removed.
-     *
-     * @return the list of former listeners.
-     */
-    public Collection<ConnectionListener> removeAllConnectionListeners() {
-        synchronized (this) {
-            Set<ConnectionListener> listeners = new HashSet<ConnectionListener>(connectionListeners);
-            connectionListeners.clear();
-            return listeners;
-        }
-    }
-
-    /**
      * Gets the number of event worker threads.
      *
      * @return the number of threads.
@@ -404,58 +351,6 @@ public class GerritHandler implements Coordinator, Handler {
             worker.shutdown();
         }
         workers.clear();
-    }
-
-    /**
-     * Notifies all listeners of a Gerrit connection event.
-     *
-     * @param event the event.
-     */
-    public void notifyListeners(GerritConnectionEvent event) {
-        for (ConnectionListener listener : connectionListeners) {
-            try {
-                switch(event) {
-                case GERRIT_CONNECTION_ESTABLISHED:
-                    listener.connectionEstablished();
-                    break;
-                case GERRIT_CONNECTION_DOWN:
-                    listener.connectionDown();
-                    break;
-                default:
-                    break;
-                }
-            } catch (Exception ex) {
-                logger.error("ConnectionListener threw Exception. ", ex);
-            }
-        }
-    }
-
-    /**
-     * Notifies all ConnectionListeners that the connection is down.
-     */
-    @Deprecated
-    public void notifyConnectionDown() {
-        for (ConnectionListener listener : connectionListeners) {
-            try {
-                listener.connectionDown();
-            } catch (Exception ex) {
-                logger.error("ConnectionListener threw Exception. ", ex);
-            }
-        }
-    }
-
-    /**
-     * Notifies all ConnectionListeners that the connection is established.
-     */
-    @Deprecated
-    public void notifyConnectionEstablished() {
-        for (ConnectionListener listener : connectionListeners) {
-            try {
-                listener.connectionEstablished();
-            } catch (Exception ex) {
-                logger.error("ConnectionListener threw Exception. ", ex);
-            }
-        }
     }
 
     /**
