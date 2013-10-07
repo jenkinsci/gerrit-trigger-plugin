@@ -31,8 +31,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBase
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -319,13 +322,7 @@ public enum GerritTriggerParameters {
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
 
-            String serverName = PluginImpl.DEFAULT_SERVER_NAME;
-            if (project != null) {
-                serverName = GerritTrigger.getTrigger(project).getServerName();
-            } else if (event.getProvider() != null) {
-                serverName = event.getProvider().getName();
-            }
-            String url = PluginImpl.getInstance().getServer(serverName).getConfig().getGerritFrontEndUrlFor(event);
+            String url = getURL(event, project);
 
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
@@ -401,6 +398,36 @@ public enum GerritTriggerParameters {
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
+    }
+
+    /**
+     * Get the front end url from a ChangeBasedEvent.
+     *
+     * @param event the event
+     * @param project the project for which the parameters are being set
+     * @return the front end url
+     */
+    private static String getURL(ChangeBasedEvent event, AbstractProject project) {
+        String url = "";
+        String serverName = PluginImpl.DEFAULT_SERVER_NAME;
+        if (project != null) {
+            serverName = GerritTrigger.getTrigger(project).getServerName();
+        } else if (event.getProvider() != null) {
+            serverName = event.getProvider().getName();
+        }
+
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+            if (config != null) {
+                url = config.getGerritFrontEndUrlFor(event);
+            } else {
+                logger.error("Could not find config for Gerrit server {}", serverName);
+            }
+        } else {
+            logger.error("Could not find Gerrit server {}", serverName);
+        }
+        return url;
     }
 
     /**

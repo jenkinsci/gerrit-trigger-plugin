@@ -229,7 +229,7 @@ public class PluginImpl extends Plugin {
     @Override
     public void load() throws IOException {
         super.load();
-        if (servers == null) {
+        if (servers == null || servers.isEmpty()) {
             servers = new LinkedList<GerritServer>();
             if (config != null) { //have loaded data in old format, so add a new server with the old config to the list.
                 GerritServer defaultServer = new GerritServer(DEFAULT_SERVER_NAME);
