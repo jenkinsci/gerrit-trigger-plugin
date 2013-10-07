@@ -40,7 +40,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildSt
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job.BuildStartedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
@@ -119,18 +118,28 @@ public class NotificationFactory {
      */
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
         String serverName = getServerName(memoryImprint);
-        AbstractSendCommandJob job;
-        if (getConfig(serverName).isUseRestApi()) {
-            job = new BuildCompletedRestCommandJob(getConfig(serverName), memoryImprint, listener);
+        if (serverName != null) {
+            IGerritHudsonTriggerConfig config = getConfig(serverName);
+            if (config != null) {
+                AbstractSendCommandJob job;
+                if (config.isUseRestApi()) {
+                    job = new BuildCompletedRestCommandJob(config, memoryImprint, listener);
+                } else {
+                    job = new BuildCompletedCommandJob(config,
+                        memoryImprint, listener);
+                }
+                GerritSendCommandQueue.queue(job);
+            } else {
+                logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
+            }
         } else {
-            job = new BuildCompletedCommandJob(getConfig(serverName),
-                memoryImprint, listener);
+            logger.warn("Nothing queued since the event in memory contained no serverName: {}", memoryImprint);
         }
-        GerritSendCommandQueue.queue(job);
     }
 
     /**
      * Get the server name from the event provider.
+     *
      * @param memoryImprint the memory of the builds.
      * @return serverName the server name.
      */
@@ -138,22 +147,35 @@ public class NotificationFactory {
         if (memoryImprint != null) {
             GerritTriggeredEvent event = memoryImprint.getEvent();
             if (event != null) {
-                Provider prov = event.getProvider();
-                if (prov != null) {
-                    String serverName = prov.getName();
-                    if (serverName != null) {
-                        return serverName;
-                    } else {
-                        logger.warn("Could not find the Gerrit Server name from the provider {}", prov);
-                    }
-                } else {
-                    logger.warn("Could not get the Provider from event {}", event);
-                }
+                return getServerName(event);
             } else {
                 logger.error("Could not get the GerritTriggeredEvent from memoryImprint");
             }
         } else {
             logger.error("The memory imprint is null");
+        }
+        return null;
+    }
+
+    /**
+     * Get the server name from the event provider.
+     *
+     * @param event the event
+     * @return the server name from the provider or null if none is found.
+     */
+    private String getServerName(GerritTriggeredEvent event) {
+        if (event != null) {
+            Provider prov = event.getProvider();
+            if (prov != null) {
+                String serverName = prov.getName();
+                if (serverName != null) {
+                    return serverName;
+                } else {
+                    logger.warn("Could not find the Gerrit Server name from the provider {}", prov);
+                }
+            } else {
+                logger.warn("Could not get the Provider from event {}", event);
+            }
         }
         return null;
     }
@@ -173,15 +195,24 @@ public class NotificationFactory {
      */
     public void queueBuildStarted(AbstractBuild build, TaskListener listener,
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
-        String serverName = GerritTrigger.getTrigger(build.getProject()).getServerName();
-        AbstractSendCommandJob job;
-        if (getConfig(serverName).isUseRestApi() && event instanceof ChangeBasedEvent) {
-            job = new BuildStartedRestCommandJob(getConfig(serverName), build, listener,
-                    (ChangeBasedEvent)event, stats);
+        String serverName = getServerName(event);
+        if (serverName != null) {
+            IGerritHudsonTriggerConfig config = getConfig(serverName);
+            if (config != null) {
+                AbstractSendCommandJob job;
+                if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
+                    job = new BuildStartedRestCommandJob(config, build, listener,
+                            (ChangeBasedEvent)event, stats);
+                } else {
+                    job = new BuildStartedCommandJob(config,
+                        build, listener, event, stats);
+                }
+                GerritSendCommandQueue.queue(job);
+            } else {
+                logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
+            }
         } else {
-            job = new BuildStartedCommandJob(getConfig(serverName),
-                build, listener, event, stats);
+            logger.warn("Nothing queued since the event contained no serverName: {}", event);
         }
-        GerritSendCommandQueue.queue(job);
     }
 }
