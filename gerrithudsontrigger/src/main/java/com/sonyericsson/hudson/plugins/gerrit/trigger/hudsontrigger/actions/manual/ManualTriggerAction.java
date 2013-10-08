@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
@@ -86,21 +87,10 @@ public class ManualTriggerAction implements RootAction {
      * The maximum length of a change subject to display.
      */
     private static final int MAX_SUBJECT_STR_LENGTH = 65;
-    private String activeServer;
-
-    /**
-     * Returns name of selected server.
-     *
-     * @return the active server name
-     *
-     */
-    public String getActiveServer() {
-        return activeServer;
-    }
 
     @Override
     public String getIconFileName() {
-        if (isEnabled() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
+        if (hasEnabledServers() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return getPluginImageUrl("icon_retrigger24.png");
         } else {
             return null;
@@ -109,7 +99,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getDisplayName() {
-        if (isEnabled() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
+        if (hasEnabledServers() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return Messages.ManualGerritTrigger();
         } else {
         return null;
@@ -122,13 +112,12 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * If this page/link is enabled or not.
+     * If this page/link is enabled or not, depending on whether at least one server is enabled.
      *
-     * @return true if enabled, false otherwise.
+     * @return true if at least one server is enabled, false otherwise.
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#isEnableManualTrigger()
      */
-    public boolean isEnabled() {
-        ArrayList<String> enabledServers = new ArrayList<String>();
+    public boolean hasEnabledServers() {
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
             if (s.getConfig().isEnableManualTrigger()) {
                 return true;
@@ -138,14 +127,15 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * If this page/link is enabled or not.
+     * Check whether a server is allowed to be queried and manually triggered.
      *
-     * @return true if enabled, false otherwise.
+     * @param serverName the name of the server selected in the dropdown.
+     * @return true if server exists and manual trigger is enabled.
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#isEnableManualTrigger()
      */
-    private boolean isActiveServerEnabled() {
-        if (getActiveServerConfig() != null) {
-            return getActiveServerConfig().isEnableManualTrigger();
+    private boolean isServerEnabled(String serverName) {
+        if (getServerConfig(serverName) != null) {
+            return getServerConfig(serverName).isEnableManualTrigger();
         } else {
             return false;
         }
@@ -154,26 +144,27 @@ public class ManualTriggerAction implements RootAction {
     /**
      * Get the server config.
      *
+     * @param serverName the name of the server.
      * @return the config of the server or null if config not found.
      */
-    private IGerritHudsonTriggerConfig getActiveServerConfig() {
-        GerritServer server = PluginImpl.getInstance().getServer(activeServer);
+    private IGerritHudsonTriggerConfig getServerConfig(String serverName) {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
             if (config != null) {
                 return config;
             } else {
-                logger.error("Could not find the server config");
+                logger.error("Could not find the config of server: {}", serverName);
             }
         } else {
-            logger.error("Could not find server {}", activeServer);
+            logger.error("Could not find server {}", serverName);
         }
         return null;
     }
 
 
     /**
-     * Returns enabled servers.
+     * Returns the list of servers allowed to be queried and manually triggered.
      *
      * @return the enabled server names
      *
@@ -260,22 +251,23 @@ public class ManualTriggerAction implements RootAction {
      *
      * @param queryString the query to send to Gerrit.
      * @param request     the request.
-     * @param enabledServer the enabledServer.
+     * @param selectedServer the selected Gerrit server.
      * @param response    the response.
      * @throws IOException if the query fails.
      */
     @SuppressWarnings("unused")
     //Called from jelly
     public void doGerritSearch(@QueryParameter("queryString") final String queryString,
-        @QueryParameter("enabledServer") final String enabledServer, StaplerRequest request,
+        @QueryParameter("selectedServer") final String selectedServer, StaplerRequest request,
                                StaplerResponse response) throws IOException {
-        activeServer = enabledServer;
-        if (!isActiveServerEnabled()) {
+
+        request.getSession(true).setAttribute("selectedServer", selectedServer);
+        if (!isServerEnabled(selectedServer)) {
             response.sendRedirect2(".");
             return;
         }
         Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
-        IGerritHudsonTriggerConfig config = getActiveServerConfig();
+        IGerritHudsonTriggerConfig config = getServerConfig(selectedServer);
 
         if (config != null) {
             GerritQueryHandler handler = new GerritQueryHandler(config);
@@ -296,7 +288,7 @@ public class ManualTriggerAction implements RootAction {
             }
             response.sendRedirect2(".");
         } else {
-            logger.error("Could not find config for the server {}", activeServer);
+            logger.error("Could not find config for the server {}", selectedServer);
         }
     }
 
@@ -312,11 +304,14 @@ public class ManualTriggerAction implements RootAction {
     //Called from jelly
     public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
                         StaplerResponse response) throws IOException {
-        if (!isActiveServerEnabled()) {
+
+        String selectedServer = (String)request.getSession().getAttribute("selectedServer");
+        if (!isServerEnabled(selectedServer)) {
             response.sendRedirect2(".");
             return;
         }
         Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
+
         request.getSession(true).removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
         if (selectedIds != null && selectedIds.length() > 0) {
@@ -339,6 +334,9 @@ public class ManualTriggerAction implements RootAction {
                 ManualPatchsetCreated event = findAndCreatePatchSetEvent(rowId, indexed);
                 logger.debug("Created event: {}", event);
                 if (event != null) {
+                    if (event.getProvider() == null || event.getProvider().getName() == null) {
+                        event.setProvider(createProviderFromGerritServer(selectedServer));
+                    }
                     monitor.add(event);
                     logger.trace("Triggering event: {}", event);
                     triggerEvent(event);
@@ -411,19 +409,26 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Generates the URL to the provided change in Gerrit.
-     * If the change already has a URL provided, that URL will be used.
+     * Create event Provider from GerritServer.
      *
-     * @param event the event who's change to link to.
-     * @return the URL to the event's change.
+     * @param serverName the name of the GerritServer
+     * @return the Provider with info from the GerritServer, or an empty provider if server not found
      */
-    public String getGerritUrl(PatchsetCreated event) {
-        if (getActiveServerConfig() != null) {
-            return getActiveServerConfig().getGerritFrontEndUrlFor(event);
+    private Provider createProviderFromGerritServer(String serverName) {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            return new Provider(
+                    server.getName(),
+                    server.getConfig().getGerritHostName(),
+                    String.valueOf(server.getConfig().getGerritSshPort()),
+                    GerritDefaultValues.DEFAULT_GERRIT_SCHEME,
+                    server.getConfig().getGerritFrontEndUrl(),
+                    server.getGerritVersion()
+                   );
         } else {
-            logger.error("Could not find config for the server");
+            logger.warn("Could not find GerritServer: {}", serverName);
+            return new Provider();
         }
-        return "";
     }
 
     /**
@@ -432,18 +437,21 @@ public class ManualTriggerAction implements RootAction {
      *
      * @param jsonChange   the JSON data for the change.
      * @param jsonPatchSet the JSON data for the patch-set.
+     * @param serverName the name of the GerritServer from the current session.
      * @return a list of the parameters.
      */
     @SuppressWarnings("unused") //called from jelly.
-    public List<ParameterValue> getParametersForPatchSet(JSONObject jsonChange, JSONObject jsonPatchSet) {
+    public List<ParameterValue> getParametersForPatchSet(
+            JSONObject jsonChange,
+            JSONObject jsonPatchSet,
+            String serverName) {
         List<ParameterValue> parameters = new LinkedList<ParameterValue>();
         Change change = new Change(jsonChange);
         PatchSet patchSet = new PatchSet(jsonPatchSet);
-        Provider provider = new Provider();
         PatchsetCreated event = new PatchsetCreated();
+        Provider provider = createProviderFromGerritServer(serverName);
         event.setChange(change);
         event.setPatchset(patchSet);
-        provider.setName(activeServer);
         event.setProvider(provider);
         GerritTriggerParameters.setOrCreateParameters(event, parameters);
         return parameters;
@@ -462,22 +470,23 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Generates the URL to the provided change in Gerrit.
+     * Generates the URL to the provided change in Gerrit
      * If the change already has a URL provided, that URL will be used.
      *
      * @param change the change to link to.
+     * @param serverName the name of the selected Gerrit server.
      * @return the URL to the change.
      */
-    public String getGerritUrl(JSONObject change) {
+    public String getGerritUrl(JSONObject change, String serverName) {
         String url = change.optString("url", null);
         if (url != null && url.length() > 0) {
             return url;
         } else if (change.optString("number", "").length() > 0) {
-            if (getActiveServerConfig() != null) {
-                return getActiveServerConfig().getGerritFrontEndUrlFor(
+            if (getServerConfig(serverName) != null) {
+                return getServerConfig(serverName).getGerritFrontEndUrlFor(
                     change.getString("number"), "1");
             } else {
-                logger.error("Could not get config for the server");
+                logger.error("Could not get config for the server: {}", serverName);
             }
         } else {
             return "";
@@ -529,16 +538,12 @@ public class ManualTriggerAction implements RootAction {
      */
     private void triggerEvent(ManualPatchsetCreated event) {
         logger.trace("Going to trigger event: {}", event);
-        GerritServer server = PluginImpl.getInstance().getServer(activeServer);
+        String serverName = event.getProvider().getName(); //null handled by caller method doBuild
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
         if (server != null) {
-            if (event.getProvider() == null || event.getProvider().getName() == null) {
-                event.setProvider(new Provider(server.getName(), server.getConfig().getGerritHostName(),
-                        String.valueOf(server.getConfig().getGerritSshPort()), "ssh",
-                        server.getConfig().getGerritFrontEndUrl(), server.getGerritVersion()));
-            }
             server.triggerEvent(event);
         } else {
-            logger.error("Could not find ther server {}", activeServer);
+            logger.error("Could not find Gerrit server {}", serverName);
         }
 
     }
