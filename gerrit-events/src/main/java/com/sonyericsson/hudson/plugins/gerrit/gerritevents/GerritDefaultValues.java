@@ -51,6 +51,10 @@ public final class GerritDefaultValues {
      */
     public static final int DEFAULT_GERRIT_SSH_PORT = 29418;
     /**
+     * The default scheme for the gerrit server.
+     */
+    public static final String DEFAULT_GERRIT_SCHEME = "ssh";
+    /**
      * The default gerrit proxy.
      */
     public static final String DEFAULT_GERRIT_PROXY = "";
