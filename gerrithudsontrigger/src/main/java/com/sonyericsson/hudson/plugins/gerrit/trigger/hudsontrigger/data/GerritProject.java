@@ -25,12 +25,16 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 /**
  * Base settings for one matcher rule of a Gerrit project.
@@ -248,11 +252,18 @@ public class GerritProject implements Describable<GerritProject> {
 
         /**
          * Used to fill the project pattern combobox with AJAX.
+         * The filled values will depend on the server that the user has chosen from the dropdown.
          *
-         * @return ComboBoxModels containing a list of all Gerrit Projects
+         * @param serverName the name of the server that the user has chosen.
+         * @return ComboBoxModels containing a list of all Gerrit Projects found on that server.
          */
-        public ComboBoxModel doFillPatternItems() {
-            return new ComboBoxModel();
+        public ComboBoxModel doFillPatternItems(@QueryParameter("serverName")
+                @RelativePath("..") final String serverName) {
+            if (serverName != null && !serverName.isEmpty()) {
+                return new ComboBoxModel(PluginImpl.getInstance().getServer(serverName).getGerritProjects());
+            } else {
+                return new ComboBoxModel();
+            }
         }
         @Override
         public String getDisplayName() {

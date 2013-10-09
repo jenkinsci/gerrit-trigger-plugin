@@ -316,6 +316,7 @@ public class GerritServer implements Describable<GerritServer> {
                 gerritEventManager.setNumberOfWorkerThreads(config.getNumberOfReceivingWorkerThreads());
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
+                gerritConnection.addListener(projectListUpdater);
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");

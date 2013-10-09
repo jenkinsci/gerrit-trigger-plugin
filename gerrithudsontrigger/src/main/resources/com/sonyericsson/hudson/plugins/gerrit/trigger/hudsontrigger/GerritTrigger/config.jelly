@@ -221,7 +221,7 @@
                             </select>
                         </td>
                         <td minwidth="150" valign="top" style="border-bottom: 1px solid black;" rowspan="2">
-                            <f:combobox clazz="setting-input" field="pattern" value="${p.pattern}"/>
+                            <f:combobox clazz="setting-input" field="pattern"/>
                         </td>
                         <td style="border-right: 1px solid black; border-left: 1px solid grey;">
                             <table style="margin-top: 0; margin-bottom: 0; width: 100%;" cellspacing="0" cellpadding="2">
