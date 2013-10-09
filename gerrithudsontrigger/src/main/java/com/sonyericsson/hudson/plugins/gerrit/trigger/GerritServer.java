@@ -199,8 +199,12 @@ public class GerritServer implements Describable<GerritServer> {
             categories = new LinkedList<VerdictCategory>();
         }
         if (categories.isEmpty()) {
-            categories.add(new VerdictCategory("CRVW", "Code Review"));
-            categories.add(new VerdictCategory("VRIF", "Verified"));
+            categories.add(new VerdictCategory(
+                    VerdictCategory.CODEREVIEW_VALUE,
+                    VerdictCategory.CODEREVIEW_DESCRIPTION));
+            categories.add(new VerdictCategory(
+                    VerdictCategory.VERIFIED_VALUE,
+                    VerdictCategory.VERIFIED_DESCRIPTION));
         }
         config.setCategories(categories);
         gerritEventManager = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
