@@ -248,7 +248,7 @@ public class ManualTriggerActionTest {
         JSONObject change = new JSONObject();
         change.put("url", "http://gerrit/test");
         ManualTriggerAction action = new ManualTriggerAction();
-        String url = action.getGerritUrl(change);
+        String url = action.getGerritUrl(change, null);
 
         assertEquals("http://gerrit/test", url);
     }
@@ -268,7 +268,7 @@ public class ManualTriggerActionTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 
         ManualTriggerAction action = new ManualTriggerAction();
-        String url = action.getGerritUrl(change);
+        String url = action.getGerritUrl(change, null);
 
         assertEquals("http://gerrit/100", url);
     }

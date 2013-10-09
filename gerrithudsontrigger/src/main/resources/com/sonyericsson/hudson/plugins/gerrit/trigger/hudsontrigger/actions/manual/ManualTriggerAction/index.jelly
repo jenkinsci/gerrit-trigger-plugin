@@ -19,7 +19,7 @@
         </l:side-panel>
         <l:main-panel>
             <j:choose>
-                <j:when test="${!it.isEnabled()}">
+                <j:when test="${!it.hasEnabledServers()}">
                     <p class="error">
                         ${%ErrorManualTriggerDisabled}
                     </p>
@@ -31,11 +31,11 @@
                             <f:description>
                                 ${%SearchDescription}
                             </f:description>
-                            <f:entry title="${%Select Gerrit Server}">
-                                <j:set var="servers" value="${it.getEnabledServers()}" />
-                                <select name="enabledServer">
-                                    <j:forEach var="inst" items="${servers}">
-                                        <f:option selected="${inst==it.getActiveServer()}">${inst}</f:option>
+                            <f:entry title="Select Gerrit Server">
+                                <j:set var="servers" value="${it.enabledServers}" />
+                                <select name="selectedServer">
+                                    <j:forEach var="serverName" items="${servers}">
+                                        <f:option selected="${serverName == request.session.getAttribute('selectedServer')}">${serverName}</f:option>
                                     </j:forEach>
                                 </select>
                             </f:entry>
@@ -205,7 +205,8 @@
                                                                         ${%Patch Set Details}
                                                                     </td>
                                                                 </tr>
-                                                                <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch)}">
+                                                                <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                                <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch, selectedServer)}">
                                                                     <tr>
                                                                         <td width="15%">
                                                                             ${parameter.getName()}
