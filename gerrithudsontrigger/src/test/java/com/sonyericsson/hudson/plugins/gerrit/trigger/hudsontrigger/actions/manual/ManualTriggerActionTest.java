@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.man
 import static org.mockito.Mockito.any;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -57,7 +58,7 @@ public class ManualTriggerActionTest {
 
     /**
      * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject)}.
-     * With CRVW patchset info.
+     * With Code-Review patchset info.
      * @throws Exception if so.
      */
     @Test
@@ -67,19 +68,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", VerdictCategory.CODEREVIEW_VALUE);
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", VerdictCategory.CODEREVIEW_VALUE);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", VerdictCategory.VERIFIED_VALUE);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", VerdictCategory.CODEREVIEW_VALUE);
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
@@ -113,7 +114,7 @@ public class ManualTriggerActionTest {
 
     /**
      * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject)}.
-     * With VRIF patchset info.
+     * With Verified patchset info.
      * @throws Exception if so.
      */
     @Test
@@ -123,19 +124,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", VerdictCategory.VERIFIED_VALUE);
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", VerdictCategory.VERIFIED_VALUE);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", VerdictCategory.CODEREVIEW_VALUE);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", VerdictCategory.VERIFIED_VALUE);
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
