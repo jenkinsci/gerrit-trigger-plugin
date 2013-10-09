@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -591,13 +592,13 @@ public class ManualTriggerAction implements RootAction {
      */
     public static enum Approval {
         /**
-         * A Code Review Approval type <i>CRVW</i>.
+         * A Code Review Approval type <i>Code Review</i>.
          */
-        CODE_REVIEW("CRVW"),
+        CODE_REVIEW(VerdictCategory.CODEREVIEW_VALUE),
         /**
-         * A Verified Approval type <i>VRIF</i>.
+         * A Verified Approval type <i>Verified</i>.
          */
-        VERIFIED("VRIF");
+        VERIFIED(VerdictCategory.VERIFIED_VALUE);
         private String type;
 
         /**
@@ -627,7 +628,7 @@ public class ManualTriggerAction implements RootAction {
                     logger.trace("Approvals: ", approvals);
                     for (Object o : approvals) {
                         JSONObject ap = (JSONObject)o;
-                        if (type.equalsIgnoreCase(ap.optString("type"))) {
+                        if (type.equalsIgnoreCase(VerdictCategory.normalizeValue(ap.optString("type")))) {
                             logger.trace("A {}", type);
                             try {
                                 int approval = Integer.parseInt(ap.getString("value"));
