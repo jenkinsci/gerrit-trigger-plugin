@@ -28,6 +28,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -73,9 +74,9 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
         HtmlElement option = iterator.next();
         String value = option.getAttribute("value");
         //This will test that the default values are correct.
-        assertEquals("First value should be CRVW", "CRVW", value);
+        assertEquals("First value should be Code-Review", VerdictCategory.CODEREVIEW_VALUE, value);
         option = iterator.next();
         value = option.getAttribute("value");
-        assertEquals("Second value should be VRIF", "VRIF", value);
+        assertEquals("Second value should be Verified", VerdictCategory.VERIFIED_VALUE, value);
     }
 }

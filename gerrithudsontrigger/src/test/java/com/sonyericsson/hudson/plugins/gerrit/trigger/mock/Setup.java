@@ -272,7 +272,7 @@ public final class Setup {
         event.setPatchset(patch);
         List<Approval> approvals = new LinkedList<Approval>();
         Approval approval = new Approval();
-        approval.setType("CRVW");
+        approval.setType(VerdictCategory.CODEREVIEW_VALUE);
         approval.setValue("1");
         approvals.add(approval);
         event.setApprovals(approvals);
@@ -430,7 +430,8 @@ public final class Setup {
      * @return the List.
      */
     public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
-        VerdictCategory cat = new VerdictCategory("CRVW", "Code review");
+        VerdictCategory cat = new VerdictCategory(
+                VerdictCategory.CODEREVIEW_VALUE, VerdictCategory.CODEREVIEW_DESCRIPTION);
         List<VerdictCategory> list = new LinkedList<VerdictCategory>();
         list.add(cat);
         return list;
