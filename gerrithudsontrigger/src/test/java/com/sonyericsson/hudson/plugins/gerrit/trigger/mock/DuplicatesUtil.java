@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -125,8 +126,8 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
-        PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, name));
+        PluginCommentAddedEvent event = new PluginCommentAddedEvent(VerdictCategory.CODEREVIEW_VALUE, "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
