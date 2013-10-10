@@ -72,7 +72,7 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, name));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, null, null, null, null, null, null, null,
@@ -125,7 +125,7 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, name));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
         PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
