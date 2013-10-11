@@ -31,8 +31,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBase
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -62,6 +65,10 @@ public enum GerritTriggerParameters {
      * Parameter name for the branch.
      */
     GERRIT_BRANCH,
+    /**
+     * Parameter name for the topic.
+     */
+    GERRIT_TOPIC,
     /**
      * Parameter name for the change-id.
      */
@@ -284,6 +291,8 @@ public enum GerritTriggerParameters {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             GERRIT_BRANCH.setOrCreateStringParameterValue(
                     parameters, event.getChange().getBranch(), escapeQuotes);
+            GERRIT_TOPIC.setOrCreateStringParameterValue(
+                    parameters, event.getChange().getTopic(), escapeQuotes);
             GERRIT_CHANGE_NUMBER.setOrCreateStringParameterValue(
                     parameters, event.getChange().getNumber(), escapeQuotes);
             GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
@@ -312,6 +321,9 @@ public enum GerritTriggerParameters {
             }
             GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getSubject(), escapeQuotes);
+
+            String url = getURL(event, project);
+
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
                 try {
@@ -322,7 +334,6 @@ public enum GerritTriggerParameters {
                     logger.error("Failed to encode commit message as Base64: ", uee);
                 }
             }
-            String url = PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(event);
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
@@ -387,6 +398,36 @@ public enum GerritTriggerParameters {
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
+    }
+
+    /**
+     * Get the front end url from a ChangeBasedEvent.
+     *
+     * @param event the event
+     * @param project the project for which the parameters are being set
+     * @return the front end url
+     */
+    private static String getURL(ChangeBasedEvent event, AbstractProject project) {
+        String url = "";
+        String serverName = PluginImpl.DEFAULT_SERVER_NAME;
+        if (project != null) {
+            serverName = GerritTrigger.getTrigger(project).getServerName();
+        } else if (event.getProvider() != null) {
+            serverName = event.getProvider().getName();
+        }
+
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+            if (config != null) {
+                url = config.getGerritFrontEndUrlFor(event);
+            } else {
+                logger.error("Could not find config for Gerrit server {}", serverName);
+            }
+        } else {
+            logger.error("Could not find Gerrit server {}", serverName);
+        }
+        return url;
     }
 
     /**

@@ -29,7 +29,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
@@ -60,7 +63,7 @@ public class GerritProjectListTest {
         List<Branch> branches = new LinkedList<Branch>();
         Branch branch = new Branch(compareType, "master");
         branches.add(branch);
-        GerritProject config = new GerritProject(CompareType.PLAIN, pattern, branches, null);
+        GerritProject config = new GerritProject(CompareType.PLAIN, pattern, branches, null, null, "testServer");
         return config;
     }
 
@@ -91,12 +94,11 @@ public class GerritProjectListTest {
     }
 
     /**
-     * Set up project list.
-     *
-     * @return list of Gerrit triggers.
-     * @throws Exception if so.
+     * Set up the projects and triggers needed by tests.
+     * @throws Exception if so
      */
-    private List<GerritTrigger> createProjects() throws Exception {
+    @Before
+    public void createProjectsAndTriggers() throws Exception {
         GerritProject gP1 = createGerritProject("test/project1", CompareType.PLAIN);
         GerritProject gP2 = createGerritProject("test/project2", CompareType.PLAIN);
         GerritProject gP3 = createGerritProject("test/project3", CompareType.PLAIN);
@@ -116,7 +118,18 @@ public class GerritProjectListTest {
         for (GerritProject p : trigger3.getGerritProjects()) {
             GerritProjectList.addProject(p, trigger3);
         }
-        return Arrays.asList(trigger1, trigger2, trigger3);
+        gerritTriggers = Arrays.asList(trigger1, trigger2, trigger3);
+    }
+
+    /**
+     * Remove all the projects and triggers created in the test set up.
+     */
+    @After
+    public void clearProjectsAndTriggers() {
+        for (GerritTrigger gerritTrigger : gerritTriggers) {
+          GerritProjectList.removeTriggerFromProjectList(gerritTrigger);
+        }
+        gerritTriggers = null;
     }
 
     /**
@@ -126,7 +139,6 @@ public class GerritProjectListTest {
      */
     @Test
     public void testAddProject() throws Exception {
-        this.gerritTriggers = createProjects();
 
         //CS IGNORE MagicNumberCheck FOR NEXT 15 LINES. REASON: test input
         Map<String, Integer> projectNumbers = new HashMap<String, Integer>() {
@@ -155,7 +167,7 @@ public class GerritProjectListTest {
      */
     @Test
     public void testClearProjects() throws Exception {
-        GerritProjectList.removeTriggerFromProjectList(this.gerritTriggers.get(1));
+        GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(1));
         Map<String, ArrayList<GerritTrigger>> projects = GerritProjectList.getGerritProjects();
 
         //CS IGNORE MagicNumberCheck FOR NEXT 10 LINES. REASON: test input
@@ -184,16 +196,20 @@ public class GerritProjectListTest {
      */
     @Test
     public void testClearAndAddProjects() throws Exception {
-        GerritProjectList.removeTriggerFromProjectList(this.gerritTriggers.get(0));
         Map<String, ArrayList<GerritTrigger>> projects = GerritProjectList.getGerritProjects();
-        //CS IGNORE MagicNumberCheck FOR NEXT 1 LINES. REASON: Test input
+        //CS IGNORE MagicNumberCheck FOR NEXT 20 LINES. REASON: Test input
+        assertEquals(4, projects.size());
+
+        GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(0));
+        GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(1));
+        GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(2));
+        projects = GerritProjectList.getGerritProjects();
         assertEquals(0, projects.size());
 
-        this.gerritTriggers = createProjects();
-        GerritProjectList.removeTriggerFromProjectList(this.gerritTriggers.get(2));
-        projects = GerritProjectList.getGerritProjects();
 
-        //CS IGNORE MagicNumberCheck FOR NEXT 6 LINES. REASON: test input
+        createProjectsAndTriggers();
+        GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(2));
+        projects = GerritProjectList.getGerritProjects();
         assertEquals(3, projects.size());
         Map<String, Integer> projectNumbers = new HashMap<String, Integer>() {
             {

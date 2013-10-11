@@ -93,8 +93,9 @@ public class GerritConnectionTest {
         PowerMockito.mockStatic(SshConnectionFactory.class);
         PowerMockito.doReturn(sshConnectionMock).when(SshConnectionFactory.class, "getConnection",
                 isA(String.class), isA(Integer.class), isA(String.class), isA(Authentication.class));
-        connection = new GerritConnection("localhost", 29418, new Authentication(null, ""));
+        connection = new GerritConnection("", "localhost", 29418, new Authentication(null, ""));
         connection.setHandler(new HandlerMock());
+        connection.addListener(new ListenerMock());
         connection.start();
         try {
             establishedLatch.await();
@@ -221,15 +222,21 @@ public class GerritConnectionTest {
                 finishLatch.countDown();
             }
         }
+    }
+
+    /**
+     * A Listener mock
+     */
+    static class ListenerMock implements ConnectionListener {
 
         @Override
-        public void notifyConnectionEstablished() {
+        public void connectionEstablished() {
             System.out.println("INFO: Handled connection established");
             establishedLatch.countDown();
         }
 
         @Override
-        public void notifyConnectionDown() {
+        public void connectionDown() {
             System.out.println("INFO: Handled connection down");
             downLatch.countDown();
         }

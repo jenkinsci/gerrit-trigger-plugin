@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 
 /**
  * Testing different scenarios with file paths to see if they are interesting.
@@ -52,12 +53,12 @@ public class GerritProjectWithFilesInterestingTest {
     }
 
     /**
-     * Tests {@link GerritProject#isInteresting(String, String, List<String>)}.
+     * Tests {@link GerritProject#isInteresting(String, String, String, java.util.List)}.
      */
     @Test
     public void testInteresting() {
         assertEquals(scenarioWithFiles.expected, scenarioWithFiles.config.isInteresting(
-                scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.files));
+                scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic, scenarioWithFiles.files));
     }
 
     /**
@@ -72,14 +73,16 @@ public class GerritProjectWithFilesInterestingTest {
         List<Branch> branches = new LinkedList<Branch>();
         Branch branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
+        List<Topic> topics = new LinkedList<Topic>();
         List<FilePath> filePaths = new LinkedList<FilePath>();
         FilePath filePath = new FilePath(CompareType.PLAIN, "test.txt");
         filePaths.add(filePath);
-        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, filePaths);
+        GerritProject config = new GerritProject(CompareType.PLAIN, "project",
+                branches, topics, filePaths, any(String.class));
         List<String> files = new LinkedList<String>();
         files.add("test.txt");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
-                config, "project", "master", files, true), });
+                config, "project", "master", null, files, true), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
@@ -89,9 +92,9 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("tests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths);
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, any(String.class));
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
-                config, "projectNumber5", "feature/mymaster", files, true), });
+                config, "projectNumber5", "feature/mymaster", null, files, true), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
@@ -99,11 +102,11 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths = new LinkedList<FilePath>();
         filePath = new FilePath(CompareType.ANT, "**/*test*");
         filePaths.add(filePath);
-        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, filePaths);
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, filePaths, any(String.class));
         files = new LinkedList<String>();
         files.add("resources/test.xml");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
-                config, "vendor/semc/master/project", "origin/master", files, true), });
+                config, "vendor/semc/master/project", "origin/master", null, files, true), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
@@ -113,9 +116,9 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("notintests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, filePaths);
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, any(String.class));
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
-                config, "projectNumber5", "feature/mymaster", files, false), });
+                config, "projectNumber5", "feature/mymaster", null, files, false), });
 
         return parameters;
     }
@@ -128,6 +131,7 @@ public class GerritProjectWithFilesInterestingTest {
         GerritProject config;
         String project;
         String branch;
+        String topic;
         boolean expected;
         List<String> files;
 
@@ -136,14 +140,20 @@ public class GerritProjectWithFilesInterestingTest {
          * @param config config
          * @param project the project of this scenario.
          * @param branch the branch of this scenario.
+         * @param topic the topic of this scenario.
          * @param files the files in this scenario.
          * @param expected the expected outcome, true if interesting, false if not.
          */
-        public InterestingScenarioWithFiles(
-                GerritProject config, String project, String branch, List<String> files, boolean expected) {
+        public InterestingScenarioWithFiles(GerritProject config,
+                String project,
+                String branch,
+                String topic,
+                List<String> files,
+                boolean expected) {
             this.config = config;
             this.project = project;
             this.branch = branch;
+            this.topic = topic;
             this.files = files;
             this.expected = expected;
         }

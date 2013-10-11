@@ -31,8 +31,10 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBase
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
@@ -127,6 +129,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private String gerritAuthKeyFilePassword;
+    private boolean useRestApi;
+    private String gerritHttpUserName;
+    private Secret gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -163,6 +168,52 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public Config(JSONObject formData) {
         setValues(formData);
+    }
+
+    /**
+     * Copy constructor.
+     *
+     * @param config the Config object to be copied.
+     */
+    public Config(IGerritHudsonTriggerConfig config) {
+        gerritHostName = config.getGerritHostName();
+        gerritSshPort = config.getGerritSshPort();
+        gerritProxy = config.getGerritProxy();
+        gerritUserName = config.getGerritUserName();
+        gerritEMail = config.getGerritEMail();
+        gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
+        gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
+        gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
+        numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
+        numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
+        gerritBuildStartedVerifiedValue = config.getGerritBuildStartedVerifiedValue();
+        gerritBuildStartedCodeReviewValue = config.getGerritBuildStartedCodeReviewValue();
+        gerritBuildSuccessfulVerifiedValue = config.getGerritBuildSuccessfulVerifiedValue();
+        gerritBuildSuccessfulCodeReviewValue = config.getGerritBuildSuccessfulCodeReviewValue();
+        gerritBuildFailedVerifiedValue = config.getGerritBuildFailedVerifiedValue();
+        gerritBuildFailedCodeReviewValue = config.getGerritBuildFailedCodeReviewValue();
+        gerritBuildUnstableVerifiedValue = config.getGerritBuildUnstableVerifiedValue();
+        gerritBuildUnstableCodeReviewValue = config.getGerritBuildUnstableCodeReviewValue();
+        gerritBuildNotBuiltVerifiedValue = config.getGerritBuildNotBuiltVerifiedValue();
+        gerritBuildNotBuiltCodeReviewValue = config.getGerritBuildNotBuiltCodeReviewValue();
+        gerritVerifiedCmdBuildStarted = config.getGerritCmdBuildStarted();
+        gerritVerifiedCmdBuildFailed = config.getGerritCmdBuildFailed();
+        gerritVerifiedCmdBuildSuccessful = config.getGerritCmdBuildSuccessful();
+        gerritVerifiedCmdBuildUnstable = config.getGerritCmdBuildUnstable();
+        gerritVerifiedCmdBuildNotBuilt = config.getGerritCmdBuildNotBuilt();
+        gerritFrontEndUrl = config.getGerritFrontEndUrl();
+        enableManualTrigger = config.isEnableManualTrigger();
+        enablePluginMessages = config.isEnablePluginMessages();
+        buildScheduleDelay = config.getBuildScheduleDelay();
+        dynamicConfigRefreshInterval = config.getDynamicConfigRefreshInterval();
+        if (config.getCategories() != null) {
+            categories = new LinkedList<VerdictCategory>();
+            for (VerdictCategory cat : config.getCategories()) {
+                categories.add(new VerdictCategory(cat.getVerdictValue(), cat.getVerdictDescription()));
+            }
+        }
+        watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
+        watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
     }
 
     @Override
@@ -284,6 +335,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
         watchTimeExceptionData = addWatchTimeExceptionData(formData);
+
+        if (formData.has("useRestApi")) {
+            useRestApi = true;
+            JSONObject restApi = formData.getJSONObject("useRestApi");
+            gerritHttpUserName = restApi.optString("gerritHttpUserName", "");
+            gerritHttpPassword = Secret.fromString(restApi.optString("gerritHttpPassword", ""));
+        } else {
+            useRestApi = false;
+        }
+
     }
 
     /**
@@ -332,6 +393,27 @@ public class Config implements IGerritHudsonTriggerConfig {
             }
         }
         return new WatchTimeExceptionData(daysAsInt, exceptionTimes);
+    }
+
+    /**
+     * Copy method for WatchTimeExceptionData.
+     *
+     * @param data the data to be copied from
+     * @return the new WatchTimeExceptionData
+     */
+    private WatchTimeExceptionData addWatchTimeExceptionData(WatchTimeExceptionData data) {
+        if (data != null) {
+            int[] daysAsInt = data.getDaysOfWeek();
+            List<TimeSpan> exceptionTimes = new LinkedList<TimeSpan>();
+            for (TimeSpan s : data.getTimesOfDay()) {
+                Time newFromTime = new Time(s.getFrom().getHour(), s.getFrom().getMinute());
+                Time newToTime = new Time(s.getTo().getHour(), s.getTo().getMinute());
+                exceptionTimes.add(new TimeSpan(newFromTime, newToTime));
+            }
+            return new WatchTimeExceptionData(daysAsInt, exceptionTimes);
+        } else {
+            return null;
+        }
     }
 
 
@@ -778,5 +860,20 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public WatchTimeExceptionData getExceptionData() {
         return watchTimeExceptionData;
+    }
+
+    @Override
+    public boolean isUseRestApi() {
+        return useRestApi;
+    }
+
+    @Override
+    public String getGerritHttpPassword() {
+        return Secret.toString(gerritHttpPassword);
+    }
+
+    @Override
+    public String getGerritHttpUserName() {
+        return gerritHttpUserName;
     }
 }

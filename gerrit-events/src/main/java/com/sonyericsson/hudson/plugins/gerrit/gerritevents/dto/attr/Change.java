@@ -30,6 +30,7 @@ import net.sf.json.JSONObject;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.COMMIT_MESSAGE;
+import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.TOPIC;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ID;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
@@ -52,6 +53,10 @@ public class Change implements GerritJsonDTO {
      * Branch name within project.
      */
     private String branch;
+    /**
+     * Topic name.
+     */
+    private String topic;
     /**
      * Change identifier.
      */
@@ -96,6 +101,7 @@ public class Change implements GerritJsonDTO {
     public void fromJson(JSONObject json) {
         project = getString(json, PROJECT);
         branch = getString(json, BRANCH);
+        topic = getString(json, TOPIC);
         id = getString(json, ID);
         number = getString(json, NUMBER);
         subject = getString(json, SUBJECT);
@@ -122,6 +128,22 @@ public class Change implements GerritJsonDTO {
      */
     public void setBranch(String branch) {
         this.branch = branch;
+    }
+
+    /**
+     * Topic name.
+     * @return the topic.
+     */
+    public String getTopic() {
+        return topic;
+    }
+
+    /**
+     * Topic name.
+     * @param topic the topic.
+     */
+    public void setTopic(String topic) {
+        this.topic = topic;
     }
 
     /**

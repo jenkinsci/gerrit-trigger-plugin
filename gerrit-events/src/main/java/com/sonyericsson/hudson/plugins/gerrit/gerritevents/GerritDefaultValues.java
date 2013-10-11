@@ -39,6 +39,10 @@ public final class GerritDefaultValues {
 
     }
     /**
+     * The default gerrit name.
+     */
+    public static final String DEFAULT_GERRIT_NAME = "";
+    /**
      * The default gerrit hostname.
      */
     public static final String DEFAULT_GERRIT_HOSTNAME = "";
@@ -46,6 +50,10 @@ public final class GerritDefaultValues {
      * The default ssh port for the gerrit server.
      */
     public static final int DEFAULT_GERRIT_SSH_PORT = 29418;
+    /**
+     * The default scheme for the gerrit server.
+     */
+    public static final String DEFAULT_GERRIT_SCHEME = "ssh";
     /**
      * The default gerrit proxy.
      */

@@ -24,10 +24,13 @@
     You can add more branch patterns by clicking on &quot;Add Branch&quot;
 </p>
 <p>
-    Then you can optionally provide the name of the specific file path(s) to trigger on.
-    E.g. to only trigger builds if the patch set contains files in a certain folder.
+    Then you can optionally provide the name of the specific file path(s) and topic names to trigger on.
+    <ul>
+        <li>To only trigger builds if the patch set contains files in a certain folder.</li>
+        <li>To only trigger builds if the change belongs to a topic.</li>
+    </ul>
     The same "pattern types" are available as above. If no file paths are added,
-    all files will trigger a build.
+    all files will trigger a build. (same as topic.)
 
 <p>
     So for example to trigger on all files in any folder structure under a sub-folder called java:

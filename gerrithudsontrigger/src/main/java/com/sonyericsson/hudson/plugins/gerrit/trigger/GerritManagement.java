@@ -24,33 +24,27 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
+
+import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
+import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.util.FormValidation;
-import java.io.File;
+
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.List;
-import javax.servlet.ServletException;
-import net.sf.json.JSONObject;
+
+import jenkins.model.Jenkins;
+
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
@@ -59,13 +53,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
 
 /**
  * Management link for configuring the global configuration of this trigger.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
@@ -110,317 +101,76 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
 
         /**
-         * Starts the event connection to Gerrit.
-         * @return ok or error.
+         * Returns the list containing the GerritServer descriptor.
+         *
+         * @return the list of descriptors containing GerritServer's descriptor.
          */
-        public FormValidation doStartConnection() {
-            logger.debug("check permisson of doStartConnection().");
-            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
-            try {
-                PluginImpl.getInstance().startConnection();
-                //TODO wait for the connection to actually be established.
-                return FormValidation.ok();
-            } catch (Exception ex) {
-                logger.error("Could not start connection. ", ex);
-                return FormValidation.error(ex.getMessage());
-            }
+        public static DescriptorExtensionList<GerritServer, GerritServer.DescriptorImpl> serverDescriptorList() {
+            return Jenkins.getInstance()
+                    .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
         }
 
         /**
-         * Stops the event connection to Gerrit.
-         * @return ok or error.
+         * Auto-completion for the "copy from" field in the new server page.
+         *
+         * @param value the value that the user has typed in the textbox.
+         * @return the list of server names, depending on the current value in the textbox.
          */
-        public FormValidation doStopConnection() {
-            logger.debug("check permisson of doStopConnection().");
-            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
-            try {
-                PluginImpl.getInstance().stopConnection();
-                //TODO wait for the connection to actually be shut down.
-                return FormValidation.ok();
-            } catch (Exception ex) {
-                logger.error("Could not stop connection. ", ex);
-                return FormValidation.error(ex.getMessage());
-            }
-        }
+        public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value) {
+            final AutoCompletionCandidates r = new AutoCompletionCandidates();
 
-        /**
-         * Stops the event connection to Gerrit.
-         * @return ok or error.
-         */
-        public FormValidation doRestartConnection() {
-            logger.debug("check permisson of doRestartConnection().");
-            Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
-            try {
-                PluginImpl.getInstance().restartConnection();
-                //TODO wait for the connection to actually be shut down and connected again.
-                return FormValidation.ok();
-            } catch (Exception ex) {
-                logger.error("Could not restart connection. ", ex);
-                return FormValidation.error(ex.getMessage());
-            }
-        }
-
-        /**
-         * Tests if the provided parameters can connect to Gerrit.
-         * @param gerritHostName the hostname
-         * @param gerritSshPort the ssh-port
-         * @param gerritProxy the proxy url
-         * @param gerritUserName the username
-         * @param gerritAuthKeyFile the private key file
-         * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
-         * @return {@link FormValidation#ok() } if can be done,
-         *         {@link FormValidation#error(java.lang.String) } otherwise.
-         */
-        public FormValidation doTestConnection(
-                @QueryParameter("gerritHostName") final String gerritHostName,
-                @QueryParameter("gerritSshPort") final int gerritSshPort,
-                @QueryParameter("gerritProxy") final String gerritProxy,
-                @QueryParameter("gerritUserName") final String gerritUserName,
-                @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
-                @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("gerritHostName = {}\n"
-                        + "gerritSshPort = {}\n"
-                        + "gerritProxy = {}\n"
-                        + "gerritUserName = {}\n"
-                        + "gerritAuthKeyFile = {}\n"
-                        + "gerritAuthKeyFilePassword = {}",
-                        new Object[]{gerritHostName,
-                            gerritSshPort,
-                            gerritProxy,
-                            gerritUserName,
-                            gerritAuthKeyFile,
-                            gerritAuthKeyFilePassword,  });
-            }
-
-            File file = new File(gerritAuthKeyFile);
-            String password = null;
-            if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() > 0) {
-                password = gerritAuthKeyFilePassword;
-            }
-            if (SshUtil.checkPassPhrase(file, password)) {
-                if (file.exists() && file.isFile()) {
-                    try {
-                        SshConnection sshConnection = SshConnectionFactory.getConnection(
-                                gerritHostName,
-                                gerritSshPort,
-                                gerritProxy,
-                                new Authentication(file, gerritUserName, password));
-                        sshConnection.disconnect();
-                        return FormValidation.ok(Messages.Success());
-
-                    } catch (SshConnectException ex) {
-                        return FormValidation.error(Messages.SshConnectException());
-                    } catch (SshAuthenticationException ex) {
-                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
-                    } catch (Exception e) {
-                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
-                    }
-                } else {
-                    return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
+            for (String s : PluginImpl.getInstance().getServerNames()) {
+                if (s.startsWith(value)) {
+                    r.add(s);
                 }
-            } else {
-                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
             }
-
+            return r;
         }
+    }
+    /**
+    * Used when redirected to a server.
+    * @param serverName the name of the server.
+    * @return the GerritServer object.
+    */
+    public GerritServer getServer(String serverName) {
+        return PluginImpl.getInstance().getServer(serverName);
     }
 
     /**
-     * Saves the form to the configuration and disk.
-     * @param req StaplerRequest
-     * @param rsp StaplerResponse
-     * @throws ServletException if something unfortunate happens.
-     * @throws IOException if something unfortunate happens.
-     * @throws InterruptedException if something unfortunate happens.
-     */
-    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-            IOException,
-            InterruptedException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("submit {}", req.toString());
-        }
-        JSONObject form = req.getSubmittedForm();
-
-        try {
-            getConfig().setValues(form);
-            PluginImpl.getInstance().save();
-        } catch (Exception ex) {
-            throw new ServletException(ex);
-        }
-        rsp.sendRedirect(".");
-    }
-
-    /**
-     * Checks that the provided parameter is an integer and not negative.
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doPositiveIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        return FormValidation.validatePositiveInteger(value);
-    }
-
-    /**
-     * Checks that the provided parameter is an integer and not negative, zero is accepted.
+     * Add a new server.
      *
-     * @param value the value.
-     * @return {@link FormValidation#validateNonNegativeInteger(String)}
+     * @param req the StaplerRequest
+     * @param rsp the StaplerResponse
+     * @throws IOException when error sending redirect back to the list of servers
+     * @return the new GerritServer
      */
-    public FormValidation doNonNegativeIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        return FormValidation.validateNonNegativeInteger(value);
-    }
-
-    /**
-     * Checks that the provided parameter is an integer, not negative, that is larger
-     * than the minimum value.
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doDynamicConfigRefreshCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        FormValidation validatePositive = FormValidation.validatePositiveInteger(value);
-        if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
-            return validatePositive;
-        } else {
-            int intValue = Integer.parseInt(value);
-            if (intValue < GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL) {
-                return FormValidation.error(Messages.DynamicConfRefreshTooLowError(
-                        GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL));
-            }
+    public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        String serverName = req.getParameter("name");
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin.containsServer(serverName)) {
+            throw new Failure("A server already exists with the name '" + serverName + "'");
         }
-        return FormValidation.ok();
-    }
+        GerritServer server = new GerritServer(serverName);
 
-
-
-    /**
-     * Checks that the provided parameter is an integer.
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        try {
-            Integer.parseInt(value);
-            return FormValidation.ok();
-        } catch (NumberFormatException e) {
-            return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
-        }
-    }
-
-    /**
-     * Checks that the provided parameter is an empty string or an integer.
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doEmptyOrIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        if (value == null || value.length() <= 0) {
-            return FormValidation.ok();
-        } else {
-            try {
-                Integer.parseInt(value);
-                return FormValidation.ok();
-            } catch (NumberFormatException e) {
-                return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
-            }
-        }
-    }
-
-    /**
-     * Checks if the value is a valid URL. It does not check if the URL is reachable.
-     * @param value the value
-     * @return {@link FormValidation#ok() } if it is so.
-     */
-    public FormValidation doUrlCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        if (value == null || value.length() <= 0) {
-            return FormValidation.error(Messages.EmptyError());
-        } else {
-            try {
-                new URL(value);
-
-                return FormValidation.ok();
-            } catch (MalformedURLException ex) {
-                return FormValidation.error(Messages.BadUrlError());
-            }
-        }
-    }
-
-    /**
-     * Checks to see if the provided value is a file path to a valid private key file.
-     * @param value the value.
-     * @return {@link FormValidation#ok() } if it is so.
-     */
-    public FormValidation doValidKeyFileCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        File f = new File(value);
-        if (!f.exists()) {
-            return FormValidation.error(Messages.FileNotFoundError(value));
-        } else if (!f.isFile()) {
-            return FormValidation.error(Messages.NotFileError(value));
-        } else {
-            if (SshUtil.isPrivateKeyFileValid(f)) {
-                return FormValidation.ok();
+        String mode = req.getParameter("mode");
+        if (mode != null && mode.equals("copy")) { //"Copy Existing Server Configuration" has been chosen
+            String from = req.getParameter("from");
+            GerritServer fromServer = plugin.getServer(from);
+            if (fromServer != null) {
+                server.setConfig(new Config(fromServer.getConfig()));
+                plugin.addServer(server);
+                server.start();
             } else {
-                return FormValidation.error(Messages.InvalidKeyFileError(value));
+                throw new Failure("Server '" + from + "' does not exist!");
             }
+        } else {
+            plugin.addServer(server);
+            server.start();
         }
-    }
+        plugin.save();
 
-    /**
-     * Checks to see if the provided value represents a time on the hh:mm format.
-     * Also checks that from is before to.
-     *
-     * @param fromValue the from value.
-     * @param toValue the to value.
-     * @return {@link FormValidation#ok() } if it is so.
-     */
-    public FormValidation doValidTimeCheck(
-            @QueryParameter final String fromValue, @QueryParameter final String toValue) {
-        String[] splitFrom = fromValue.split(":");
-        String[] splitTo = toValue.split(":");
-        int fromHour;
-        int fromMinute;
-        int toHour;
-        int toMinute;
-        if (splitFrom.length != 2 || splitTo.length != 2) {
-            return FormValidation.error(Messages.InvalidTimeString());
-        }
-        try {
-            fromHour = Integer.parseInt(splitFrom[0]);
-            fromMinute = Integer.parseInt(splitFrom[1]);
-            toHour = Integer.parseInt(splitTo[0]);
-            toMinute = Integer.parseInt(splitTo[1]);
-
-        } catch (NumberFormatException nfe) {
-            return FormValidation.error(Messages.InvalidTimeString());
-        }
-
-        if (fromHour < MIN_HOUR || fromHour > MAX_HOUR || fromMinute < MIN_MINUTE || fromMinute > MAX_MINUTE
-                || toHour < MIN_HOUR || toHour > MAX_HOUR || toMinute < MIN_MINUTE || toMinute > MAX_MINUTE) {
-                return FormValidation.error(Messages.InvalidTimeString());
-        }
-        if (fromHour > toHour || (fromHour == toHour && fromMinute > toMinute)) {
-            return FormValidation.error(Messages.InvalidTimeSpan());
-        }
-        return FormValidation.ok();
+        rsp.sendRedirect("./server/" + serverName);
+        return server;
     }
 
     @Override
@@ -443,22 +193,27 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     /**
-     * Gets the global config.
+     * Get the config of a server.
+     *
+     * @param serverName the name of the server for which we want to get the config.
      * @return the config.
-     * @see PluginImpl#getConfig()
+     * @see GerritServer#getConfig()
      */
-    public static IGerritHudsonTriggerConfig getConfig() {
-        if (PluginImpl.getInstance() != null) {
-            return PluginImpl.getInstance().getConfig();
+    public static IGerritHudsonTriggerConfig getConfig(String serverName) {
+        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        if (server != null) {
+            return server.getConfig();
+        } else {
+            logger.error("Could not find the Gerrit Server: {}", serverName);
+            return null;
         }
-        return null;
     }
 
     /**
      * The AdministrativeMonitor related to Gerrit.
      * convenience method for the jelly page.
      *
-     * @return the monitor if it could be found.
+     * @return the monitor if it could be found, or null otherwise.
      */
     @SuppressWarnings("unused") //Called from Jelly
     public GerritAdministrativeMonitor getAdministrativeMonitor() {
@@ -470,21 +225,27 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         return null;
     }
 
-/**
-     * Generates a list of helper objects for the jelly view
- * .
-     * @return a list of helper objects.
+    /**
+     * Convenience method for jelly. Get the list of Gerrit server names.
+     *
+     * @return the list of server names as a list.
      */
-    public List<ExceptionDataHelper> generateHelper() {
-        WatchTimeExceptionData data = getConfig().getExceptionData();
-        List<ExceptionDataHelper> list = new LinkedList<ExceptionDataHelper>();
-        list.add(new ExceptionDataHelper(Messages.MondayDisplayName(), Calendar.MONDAY, data));
-        list.add(new ExceptionDataHelper(Messages.TuesdayDisplayName(), Calendar.TUESDAY, data));
-        list.add(new ExceptionDataHelper(Messages.WednesdayDisplayName(), Calendar.WEDNESDAY, data));
-        list.add(new ExceptionDataHelper(Messages.ThursdayDisplayName(), Calendar.THURSDAY, data));
-        list.add(new ExceptionDataHelper(Messages.FridayDisplayName(), Calendar.FRIDAY, data));
-        list.add(new ExceptionDataHelper(Messages.SaturdayDisplayName(), Calendar.SATURDAY, data));
-        list.add(new ExceptionDataHelper(Messages.SundayDisplayName(), Calendar.SUNDAY, data));
-        return list;
+    public LinkedList<String> getServerNames() {
+        return PluginImpl.getInstance().getServerNames();
+    }
+
+    /**
+     * Checks whether server name already exists.
+     * @param value the value of the name field.
+     * @return ok or error.
+     */
+    public FormValidation doNameFreeCheck(
+            @QueryParameter("value")
+            final String value) {
+        if (PluginImpl.getInstance().containsServer(value)) {
+            return FormValidation.error("The server name " + value + " is already in use!");
+        } else {
+            return FormValidation.ok();
+        }
     }
 }

@@ -24,10 +24,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.triggers.SCMTrigger.SCMTriggerCause;
 
@@ -37,10 +42,11 @@ import hudson.triggers.SCMTrigger.SCMTriggerCause;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritCause extends SCMTriggerCause {
-
+    private static final Logger logger = LoggerFactory.getLogger(GerritCause.class);
     private GerritTriggeredEvent tEvent;
     private boolean silentMode;
     private TriggerContext context;
+    private String url;
 
     /**
      * Default DataBound Constructor.
@@ -52,6 +58,7 @@ public class GerritCause extends SCMTriggerCause {
         this.tEvent = event;
         this.silentMode = silentMode;
         this.context = new TriggerContext(event);
+        this.url = getUrlFromEvent();
     }
 
     /**
@@ -65,6 +72,7 @@ public class GerritCause extends SCMTriggerCause {
         this.tEvent = event;
         this.silentMode = silentMode;
         this.context = context;
+        this.url = getUrlFromEvent();
     }
 
     /**
@@ -163,10 +171,35 @@ public class GerritCause extends SCMTriggerCause {
 
     /**
      * Gets the URL to the Gerrit patchSet.
-     * @return the URL.
+     * @return the URL. Empty String if no server found.
      */
     public String getUrl() {
-        return PluginImpl.getInstance().getConfig().getGerritFrontEndUrlFor(tEvent);
+        return url;
+    }
+
+    /**
+     * Gets the URL to the Gerrit patchSet. Called only once in the constructor to
+     * avoid NPEs after server name change.
+     * @return the URL. Empty String if no server found.
+     */
+    private String getUrlFromEvent() {
+        if (tEvent.getProvider() != null) {
+            String serverName = tEvent.getProvider().getName();
+            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    return config.getGerritFrontEndUrlFor(tEvent);
+                } else {
+                    logger.error("Could not get the server config for server {}", server.getName());
+                }
+            } else {
+            logger.error("Could not get the server {}", serverName);
+            }
+        } else {
+            logger.error("Event provider has not been properly initialized.");
+        }
+        return "";
     }
 
     @Override

@@ -38,6 +38,13 @@ public interface GerritConnectionConfig2 extends GerritConnectionConfig {
      *
      * @return the timeout setting in minutes for the watchdog.
      */
+    int getWatchdogTimeoutMinutes();
+
+    /**
+     * Gets the time in seconds before the watchdog times out.
+     *
+     * @return the timeout setting in seconds for the watchdog.
+     */
     int getWatchdogTimeoutSeconds();
 
     /**

@@ -24,15 +24,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionNumber;
+
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -43,69 +41,99 @@ import java.util.List;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
-public class GerritAdministrativeMonitor extends AdministrativeMonitor implements ConnectionListener {
+public class GerritAdministrativeMonitor extends AdministrativeMonitor {
 
-    private static final Logger logger = LoggerFactory.getLogger(GerritAdministrativeMonitor.class);
-    private boolean connected = false;
-    private boolean gerritSnapshotVersion;
-    private List<GerritVersionChecker.Feature> disabledFeatures;
+    private LinkedList<GerritConnectionListener> warningList;
+    private LinkedList<GerritConnectionListener> errorList;
+    private LinkedList<GerritConnectionListener> snapshotList;
+    private LinkedList<GerritConnectionListener> disabledFeaturesList;
 
     /**
-     * Default constructor. Adds this as a ConnectionListener to PluginImpl by calling {@link
-     * #addThisAsConnectionListener()}.
-     *
-     * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
+     * Default constructor.
      */
     public GerritAdministrativeMonitor() {
-        addThisAsConnectionListener();
+        warningList = new LinkedList<GerritConnectionListener>();
+        errorList = new LinkedList<GerritConnectionListener>();
+        snapshotList = new LinkedList<GerritConnectionListener>();
+        disabledFeaturesList = new LinkedList<GerritConnectionListener>();
+    }
+
+    @Override
+    public boolean isActivated() {
+        return isConnectionWarning() || isConnectionError() || isSendQueueWarning()
+                || isGerritSnapshotVersion() || hasDisabledFeatures();
     }
 
     /**
-     * Adds this monitor as a connection listener to PluginImpl. If PluginImpl hasn't started yet, a separate Thread
-     * will be started that tries again in a little while.
+     * Tells if there is at least one connection warning. Utility method for the jelly page.
      *
-     * @see PluginImpl#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener)
+     * @return true if warning, false otherwise.
      */
-    protected void addThisAsConnectionListener() {
-        if (PluginImpl.getInstance() != null) {
-            PluginImpl.getInstance().addListener(this);
-            connected = PluginImpl.getInstance().isConnected();
-            checkGerritVersionFeatures();
-        } else {
-            //We were created first... let's wait without disrupting the flow.
-            Runnable runner = new Runnable() {
-
-                private static final int SLEEP_INTERVAL = 500;
-
-                @Override
-                public void run() {
-                    while (PluginImpl.getInstance() == null) {
-                        try {
-                            Thread.sleep(SLEEP_INTERVAL);
-                        } catch (InterruptedException ex) {
-                            logger.debug("Got interrupted while sleeping...", ex);
-                        }
-                    }
-                    PluginImpl plugin = PluginImpl.getInstance();
-                    if (plugin != null) {
-                        plugin.addListener(GerritAdministrativeMonitor.this);
-                        connected = PluginImpl.getInstance().isConnected();
-                        checkGerritVersionFeatures();
-                    } else {
-                        logger.error("Unable to register GerritAdministrativeMonitor");
-                    }
-                }
-            };
-            Thread thread = new Thread(runner);
-            thread.setDaemon(true);
-            thread.start();
+    //called from jelly
+    public boolean isConnectionWarning() {
+        //Show a warning if at least one server config does not have a value for the front end URL.
+        //Remind the user to add a frontend URL.
+        warningList.clear();
+        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+            GerritConnectionListener listener = s.getGerritConnectionListener();
+            boolean connected = listener != null && listener.isConnected();
+            if (!connected && s.getConfig().hasDefaultValues()) {
+                warningList.add(listener);
+            }
         }
+        return !warningList.isEmpty();
+    }
+
+    /**
+     * Returns the names of the servers with a connection warning.
+     *
+     * @return the names, or an empty list if no connection warning.
+     */
+    public LinkedList<String> getConnectionWarningServers() {
+        LinkedList<String> warningServers = new LinkedList<String>();
+        for (GerritConnectionListener l : warningList) {
+            warningServers.add(l.getName());
+        }
+        return warningServers;
+    }
+
+    /**
+     * Tells if there is at least one connection error. Utility method for the jelly page,
+     *
+     * @return true if error, false otherwise.
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public boolean isConnectionError() {
+        //Show an error if at least one server connection could not be established with the configured front end URL
+        errorList.clear();
+        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+            GerritConnectionListener listener = s.getGerritConnectionListener();
+            boolean connected = listener != null && listener.isConnected();
+            if (!connected && !s.getConfig().hasDefaultValues()) {
+                errorList.add(listener);
+            }
+        }
+        return !errorList.isEmpty();
+    }
+
+    /**
+     * Returns the names of the servers with a connection error.
+     *
+     * @return the names, or an empty list if no connection error.
+     */
+    public LinkedList<String> getConnectionErrorServers() {
+        LinkedList<String> errorServers = new LinkedList<String>();
+        for (GerritConnectionListener l : errorList) {
+            errorServers.add(l.getName());
+        }
+        return errorServers;
     }
 
     /**
      * Tells if there is a warning with the send-commands-queue. Utility method for the jelly page.
      *
-     * @return true if so.
+     * @return true if so, false otherwise.
      */
     public boolean isSendQueueWarning() {
         return getSendQueueSize() >= GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD;
@@ -121,107 +149,79 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor implement
     }
 
     /**
-     * Tells if there is a connection warning. Utility method for the jelly page.
+     * If at least one connected Gerrit is a snapshot version.
      *
-     * @return true if so.
+     * @return true if so, false otherwise.
      */
-    @SuppressWarnings("unused")
-    //called from jelly
-    public boolean isConnectionWarning() {
-        //If the frontend URL does not have a value, don't try to connect and show a warning
-        //reminding the user to add a frontend URL.
-        return !connected
-                && PluginImpl.getInstance().getConfig().hasDefaultValues();
-    }
-
-    /**
-     * Tells if there is a connection error. Utility method for the jelly page,
-     *
-     * @return true if so.
-     */
-    @SuppressWarnings("unused")
-    //called from jelly
-    public boolean isConnectionError() {
-        //If the frontend URL has a value, try to connect to it and if it is not possible,
-        //show an error to the user
-        return !connected
-                && !PluginImpl.getInstance().getConfig().hasDefaultValues();
-    }
-
-    @Override
-    public boolean isActivated() {
-        return isConnectionWarning() || isConnectionError() || isSendQueueWarning()
-                || isGerritSnapshotVersion() || hasDisabledFeatures();
-    }
-
-    /**
-     * If the connected Gerrit is a snapshot version.
-     *
-     * @return true if so.
-     */
-    @SuppressWarnings("unused")
     //called from jelly
     public boolean isGerritSnapshotVersion() {
-        return gerritSnapshotVersion;
+        snapshotList.clear();
+        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+            GerritConnectionListener listener = s.getGerritConnectionListener();
+            if (listener != null && listener.isSnapShotGerrit()) {
+                snapshotList.add(listener);
+            }
+        }
+        return !snapshotList.isEmpty();
     }
 
     /**
-     * A list of the features that has been disabled due to old Gerrit version.
+     * Returns the names of the Gerrit servers with a snapshot version.
      *
-     * @return the list.
+     * @return the names, or an empty list if no snapshot servers.
      */
-    @SuppressWarnings("unused")
-    //called from jelly
-    public List<GerritVersionChecker.Feature> getDisabledFeatures() {
-        return disabledFeatures;
+    public LinkedList<String> getSnapshotServers() {
+        LinkedList<String> snapshotServers = new LinkedList<String>();
+        for (GerritConnectionListener l : snapshotList) {
+            snapshotServers.add(l.getName());
+        }
+        return snapshotServers;
     }
 
     /**
-     * If there are features disabled due to old Gerrit version.
+     * If there is at least one server with features disabled due to old Gerrit version.
      *
-     * @return true if so.
+     * @return true if so, false otherwise.
      */
     public boolean hasDisabledFeatures() {
-        return disabledFeatures != null && !disabledFeatures.isEmpty();
-    }
-
-    @Override
-    public void connectionEstablished() {
-        connected = true;
-        checkGerritVersionFeatures();
-    }
-
-    @Override
-    public void connectionDown() {
-        connected = false;
-        checkGerritVersionFeatures();
+        disabledFeaturesList.clear();
+        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+            GerritConnectionListener listener = s.getGerritConnectionListener();
+            if (listener != null) {
+                List<GerritVersionChecker.Feature> disabledFeatures = listener.getDisabledFeatures();
+                if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
+                    disabledFeaturesList.add(listener);
+                }
+            }
+        }
+        return !disabledFeaturesList.isEmpty();
     }
 
     /**
-     * Checks the Gerrit version that we are connected to.
-     * If it is a snapshot or if any features will be disabled because of this.
-     * It should be called whenever we got some new connection status.
+     * Returns the names of the servers with disabled features.
+     *
+     * @return the names, or an empty list if no servers have disabled features.
      */
-    private void checkGerritVersionFeatures() {
-        try {
-            if (connected) {
-                GerritVersionNumber version =
-                        GerritVersionChecker.createVersionNumber(PluginImpl.getInstance().getGerritVersion());
-                List<GerritVersionChecker.Feature> list = new LinkedList<GerritVersionChecker.Feature>();
-                for (GerritVersionChecker.Feature f : GerritVersionChecker.Feature.values()) {
-                    if (!GerritVersionChecker.isCorrectVersion(version, f)) {
-                        list.add(f);
-                    }
-                }
-                this.disabledFeatures = list;
-                this.gerritSnapshotVersion = version.isSnapshot();
-            } else {
-                this.disabledFeatures = null;
-                this.gerritSnapshotVersion = false;
-            }
-        } catch (Exception ex) {
-            logger.warn("Failed to calculate version info! ", ex);
+    public LinkedList<String> getDisabledFeaturesServers() {
+        LinkedList<String> disabledFeaturesServers = new LinkedList<String>();
+        for (GerritConnectionListener l : disabledFeaturesList) {
+            disabledFeaturesServers.add(l.getName());
         }
+        return disabledFeaturesServers;
     }
 
+    /**
+     * Returns the list of disabled features for a specific server.
+     *
+     * @param serverName the name of the Gerrit server
+     * @return the list of disabled features or empty list if listener not found
+     */
+    public List<GerritVersionChecker.Feature> getDisabledFeatures(String serverName) {
+        for (GerritConnectionListener listener : disabledFeaturesList) {
+            if (listener.getName().equals(serverName)) {
+                return listener.getDisabledFeatures();
+            }
+        }
+        return new LinkedList<GerritVersionChecker.Feature>();
+    }
 }

@@ -77,21 +77,9 @@ public interface Handler {
      */
     void addListener(GerritEventListener listener);
     /**
-     * Add listener for GerrirtConnectionEvent.
-     *
-     * @param listener the listener.
-     */
-    void addListener(ConnectionListener listener);
-    /**
      * Remove listener for GerritEvent.
      *
      * @param listener the listener.
      */
     void removeListener(GerritEventListener listener);
-    /**
-     * Remove listener for GerrirtConnectionEvent.
-     *
-     * @param listener the listener.
-     */
-    void removeListener(ConnectionListener listener);
 }
