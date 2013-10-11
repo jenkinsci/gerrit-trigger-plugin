@@ -85,7 +85,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
- * event manager, project list updater, configuration, and lists of listeners.
+ * connection, project list updater, configuration, and lists of listeners.
  * All interactions with a Gerrit server should go through this class.
  * The list of GerritServer is kept in @PluginImpl.
  *
@@ -201,7 +201,7 @@ public class GerritServer implements Describable<GerritServer> {
             categories.add(new VerdictCategory("VRIF", "Verified"));
         }
         config.setCategories(categories);
-        gerritEventManager = new GerritHandler(config.getNumberOfReceivingWorkerThreads(), config.getGerritEMail());
+        gerritEventManager = PluginImpl.getInstance().getHandler();
 
         initializeConnectionListener();
 
@@ -249,11 +249,7 @@ public class GerritServer implements Describable<GerritServer> {
             gerritConnection.shutdown(false);
             gerritConnection = null;
         }
-        if (gerritEventManager != null) {
-            gerritEventManager.shutdown(false);
-            //TODO save to registered listeners?
-            gerritEventManager = null;
-        }
+
         GerritSendCommandQueue.shutdown();
         logger.info(name + " stopped");
         started = false;

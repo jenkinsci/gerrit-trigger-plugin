@@ -129,7 +129,6 @@ public final class Setup {
         event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
-
     /**
      * Create a new patchset created event with the given data.
      *
@@ -266,6 +265,7 @@ public final class Setup {
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
         event.setChange(change);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
         patch.setRevision("9999");
@@ -335,6 +335,7 @@ public final class Setup {
         patch.setRevision("9999");
         event.setPatchset(patch);
         event.setUserName("Bobby");
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
 
@@ -386,7 +387,8 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", "", null, null, triggerOnEvents, false, false, "");
+                true, true, false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME,
+                triggerOnEvents, false, false, "");
 
         if (project != null) {
             trigger.start(project, true);
