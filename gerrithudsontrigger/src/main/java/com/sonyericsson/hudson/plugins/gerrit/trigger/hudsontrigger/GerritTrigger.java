@@ -392,11 +392,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Initializes the event's provider and pass it the server name info.
+     * Initializes the event's provider and pass it the server name info if necessary.
      *
      * @param tEvent the event.
+     * @return the initialized provider.
      */
-    private void initializeProvider(GerritTriggeredEvent tEvent) {
+    private Provider initializeProvider(GerritTriggeredEvent tEvent) {
         Provider provider = tEvent.getProvider();
         if (provider == null) {
             provider = new Provider();
@@ -404,6 +405,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } else if (provider.getName() == null) {
             provider.setName(serverName);
         }
+        return provider;
     }
     /**
      * Called when a PatchSetCreated event arrives.
@@ -672,23 +674,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
                         context.getEvent())) {
-            initializeProvider(context.getEvent());
+
+            Provider provider = initializeProvider(context.getEvent());
+
+            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
+            if (!PluginImpl.getInstance().containsServer(provider.getName())) {
+                provider.setName(serverName);
+            }
+
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
                         context.getThisBuild().getProject(),
                         context.getEvent(),
                         context.getOtherBuilds());
-            }
-            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
-            Provider provider = context.getEvent().getProvider();
-            if (provider != null) {
-                if (!PluginImpl.getInstance().containsServer(provider.getName())) {
-                    provider.setName(serverName);
-                }
-            } else {
-                Provider newProvider = new Provider();
-                newProvider.setName(serverName);
-                context.getEvent().setProvider(newProvider);
             }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent(), context.getThisBuild().getProject());
@@ -775,7 +773,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
 
-        initializeProvider(event);
         for (GerritProject p : allGerritProjects) {
             try {
                 if (event instanceof ChangeBasedEvent) {
@@ -825,7 +822,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if same server name
      */
     private boolean isServerInteresting(GerritTriggeredEvent event) {
-        return event.getProvider().getName().equals(serverName);
+        Provider provider = initializeProvider(event);
+        return provider.getName().equals(serverName);
     }
 
     /**
