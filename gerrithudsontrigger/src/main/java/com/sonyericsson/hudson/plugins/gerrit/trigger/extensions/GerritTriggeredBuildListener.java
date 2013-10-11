@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2013 rinrinne All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -36,13 +35,13 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTrig
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 
 /**
- * A abstract class for listening build result.
+ * A abstract class for listening Gerrit triggered build result.
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public abstract class AbstractTriggeredBuildListener implements ExtensionPoint {
+public abstract class GerritTriggeredBuildListener implements ExtensionPoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractTriggeredBuildListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(GerritTriggeredBuildListener.class);
     /**
      * Calls when build started.
      *
@@ -67,7 +66,7 @@ public abstract class AbstractTriggeredBuildListener implements ExtensionPoint {
       * @param command the command.
       */
      public static void fireOnStarted(GerritTriggeredEvent event, String command) {
-         for (AbstractTriggeredBuildListener listener : all()) {
+         for (GerritTriggeredBuildListener listener : all()) {
              try {
                  listener.onStarted(event, command);
              } catch (Exception ex) {
@@ -93,7 +92,7 @@ public abstract class AbstractTriggeredBuildListener implements ExtensionPoint {
          } else if (memoryImprint.wereAllBuildsNotBuilt()) {
              result = Result.NOT_BUILT;
          }
-         for (AbstractTriggeredBuildListener listener : all()) {
+         for (GerritTriggeredBuildListener listener : all()) {
              try {
                  listener.onCompleted(result, memoryImprint.getEvent(), command);
              } catch (Exception ex) {
@@ -107,7 +106,7 @@ public abstract class AbstractTriggeredBuildListener implements ExtensionPoint {
       *
       * @return the extension list.
       */
-     public static ExtensionList<AbstractTriggeredBuildListener> all() {
-         return Jenkins.getInstance().getExtensionList(AbstractTriggeredBuildListener.class);
+     public static ExtensionList<GerritTriggeredBuildListener> all() {
+         return Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
      }
 }
