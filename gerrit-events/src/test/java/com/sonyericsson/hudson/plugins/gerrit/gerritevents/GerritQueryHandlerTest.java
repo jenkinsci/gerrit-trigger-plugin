@@ -81,7 +81,7 @@ public class GerritQueryHandlerTest {
 
     /**
      * Test {@Link GerritQueryHandler.queryJava} and {@Link GerritQueryHandler.queryJson}
-     * with full parameter list.
+     * with 4 parameter list.
      *
      * @throws Exception when something wrong.
      */
@@ -132,6 +132,29 @@ public class GerritQueryHandlerTest {
 
         queryHandler.queryJava("X", false, false, false);
         queryHandler.queryJson("X", false, false, false);
+
+        verify(sshConnectionMock, times(2))
+                .executeCommandReader("gerrit query --format=JSON \"X\"");
+
+    }
+
+    /**
+     * Test {@Link GerritQueryHandler.queryJava} and {@Link GerritQueryHandler.queryJson}
+     * with full parameter list.
+     *
+     * @throws Exception when something wrong.
+     */
+    @Test
+    public void testQueryStr4Bool() throws Exception {
+
+        queryHandler.queryJava("X", false, false, false, true);
+        queryHandler.queryJson("X", false, false, false, true);
+
+        verify(sshConnectionMock, times(2))
+                .executeCommandReader("gerrit query --format=JSON --commit-message \"X\"");
+
+        queryHandler.queryJava("X", false, false, false, false);
+        queryHandler.queryJson("X", false, false, false, false);
 
         verify(sshConnectionMock, times(2))
                 .executeCommandReader("gerrit query --format=JSON \"X\"");
