@@ -392,11 +392,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Initializes the event's provider and pass it the server name info.
+     * Initializes the event's provider and pass it the server name info if necessary.
      *
      * @param tEvent the event.
+     * @return the initialized provider.
      */
-    private void initializeProvider(GerritTriggeredEvent tEvent) {
+    private Provider initializeProvider(GerritTriggeredEvent tEvent) {
         Provider provider = tEvent.getProvider();
         if (provider == null) {
             provider = new Provider();
@@ -404,6 +405,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } else if (provider.getName() == null) {
             provider.setName(serverName);
         }
+        return provider;
     }
     /**
      * Called when a PatchSetCreated event arrives.
@@ -420,7 +422,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
@@ -452,7 +453,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
@@ -674,23 +674,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (context.getThisBuild().getProject().isBuildable()
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
                         context.getEvent())) {
-            initializeProvider(context.getEvent());
+
+            Provider provider = initializeProvider(context.getEvent());
+
+            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
+            if (!PluginImpl.getInstance().containsServer(provider.getName())) {
+                provider.setName(serverName);
+            }
+
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
                         context.getThisBuild().getProject(),
                         context.getEvent(),
                         context.getOtherBuilds());
-            }
-            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
-            Provider provider = context.getEvent().getProvider();
-            if (provider != null) {
-                if (!PluginImpl.getInstance().containsServer(provider.getName())) {
-                    provider.setName(serverName);
-                }
-            } else {
-                Provider newProvider = new Provider();
-                newProvider.setName(serverName);
-                context.getEvent().setProvider(newProvider);
             }
             final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
             schedule(cause, context.getEvent(), context.getThisBuild().getProject());
@@ -776,21 +772,24 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             allGerritProjects.addAll(dynamicGerritProjects);
         }
         logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
+
         for (GerritProject p : allGerritProjects) {
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                    if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                            changeBasedEvent.getChange().getBranch(),
-                            changeBasedEvent.getChange().getTopic())) {
+                    if (isServerInteresting(event)
+                         && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                            changeBasedEvent.getChange().getBranch(),
+                                            changeBasedEvent.getChange().getTopic())) {
                         if (isFileTriggerEnabled() && p.getFilePaths() != null
                                 && p.getFilePaths().size() > 0) {
-                            if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                    changeBasedEvent.getChange().getBranch(),
-                                    changeBasedEvent.getChange().getTopic(),
-                                    changeBasedEvent.getFiles(
-                                            new GerritQueryHandler(PluginImpl.getInstance()
-                                                    .getServer(serverName).getConfig())))) {
+                            if (isServerInteresting(event)
+                                 && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                                    changeBasedEvent.getChange().getBranch(),
+                                                    changeBasedEvent.getChange().getTopic(),
+                                                    changeBasedEvent.getFiles(
+                                                        new GerritQueryHandler(PluginImpl.getInstance()
+                                                                .getServer(serverName).getConfig())))) {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
@@ -801,8 +800,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     }
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
-                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                            refUpdated.getRefUpdate().getRefName(), null)) {
+                    if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                                                                      refUpdated.getRefUpdate().getRefName(), null)) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }
@@ -814,6 +813,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         logger.trace("Nothing interesting here, move along folks!");
         return false;
+    }
+
+    /**
+     * Check whether the event provider contains the same server name as the serverName field.
+     *
+     * @param event the event
+     * @return true if same server name
+     */
+    private boolean isServerInteresting(GerritTriggeredEvent event) {
+        Provider provider = initializeProvider(event);
+        return provider.getName().equals(serverName);
     }
 
     /**
@@ -830,7 +840,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
@@ -853,7 +862,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
@@ -876,7 +884,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
@@ -927,7 +934,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event) && matchesApproval(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }
@@ -950,7 +956,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         if (isInteresting(event)) {
             logger.trace("The event is interesting.");
-            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             }

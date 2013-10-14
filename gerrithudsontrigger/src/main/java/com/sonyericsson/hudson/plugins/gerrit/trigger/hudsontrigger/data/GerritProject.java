@@ -46,7 +46,6 @@ public class GerritProject implements Describable<GerritProject> {
     private String pattern;
     private List<Branch> branches;
     private List<FilePath> filePaths;
-    private String serverName;
     private List<Topic> topics;
 
 
@@ -64,7 +63,6 @@ public class GerritProject implements Describable<GerritProject> {
      * @param branches the branch-rules
      * @param topics the topic-rules
      * @param filePaths the file-path rules.
-     * @param serverName the name of the Gerrit server.
      */
     @DataBoundConstructor
     public GerritProject(
@@ -72,15 +70,13 @@ public class GerritProject implements Describable<GerritProject> {
             String pattern,
             List<Branch> branches,
             List<Topic> topics,
-            List<FilePath> filePaths,
-            String serverName) {
+            List<FilePath> filePaths) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
         this.topics = topics;
         this.filePaths = filePaths;
-        this.serverName = serverName;
     }
 
     /**
