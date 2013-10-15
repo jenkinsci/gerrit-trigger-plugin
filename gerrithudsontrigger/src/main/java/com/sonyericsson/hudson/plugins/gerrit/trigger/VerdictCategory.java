@@ -51,8 +51,8 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      */
     public static final String VERIFIED_DESCRIPTION = "Verified";
 
-    private static final String ALTERNATIVE_CODEREVIEW_VALUE = "CRVW";
-    private static final String ALTERNATIVE_VERIFIED_VALUE = "VRIF";
+    private static final String LEGACY_CODEREVIEW_VALUE = "CRVW";
+    private static final String LEGACY_VERIFIED_VALUE = "VRIF";
 
     private String verdictValue;
     private String verdictDescription;
@@ -87,13 +87,13 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      * Normalize value.
      *
      * @param value the value in Gerrit for the verdict category.
-     * @return the normarized value.
+     * @return the normalized value.
      */
     public static String normalizeValue(String value) {
-        if (ALTERNATIVE_CODEREVIEW_VALUE.equals(value)) {
+        if (LEGACY_CODEREVIEW_VALUE.equals(value)) {
             return CODEREVIEW_VALUE;
         }
-        if (ALTERNATIVE_VERIFIED_VALUE.equals(value)) {
+        if (LEGACY_VERIFIED_VALUE.equals(value)) {
             return VERIFIED_VALUE;
         }
         return value;
