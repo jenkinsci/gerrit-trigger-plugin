@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
@@ -80,6 +81,7 @@ public class PluginImpl extends Plugin {
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private static PluginImpl instance;
     private LinkedList<GerritServer> servers;
+    private transient GerritHandler gerritEventManager;
 
     // the old config field is left as deprecated and transient so that data in previous format can be read in but
     // not written back into the XML.
@@ -195,6 +197,14 @@ public class PluginImpl extends Plugin {
         return contains;
     }
 
+    /**
+     * Returns the GerritHandler object.
+     *
+     * @return gerritEventManager
+     */
+    public GerritHandler getHandler() {
+        return gerritEventManager;
+    }
 
     /**
      * Return the list of jobs configured with a server.
@@ -221,6 +231,7 @@ public class PluginImpl extends Plugin {
         doXStreamRegistrations();
         logger.trace("Loading configs");
         load();
+        gerritEventManager = new GerritHandler();
         for (GerritServer s : servers) {
             s.start();
         }
@@ -261,5 +272,11 @@ public class PluginImpl extends Plugin {
         for (GerritServer s : servers) {
             s.stop();
         }
+        if (gerritEventManager != null) {
+            gerritEventManager.shutdown(false);
+            //TODO save to registered listeners?
+            gerritEventManager = null;
+        }
     }
+
 }

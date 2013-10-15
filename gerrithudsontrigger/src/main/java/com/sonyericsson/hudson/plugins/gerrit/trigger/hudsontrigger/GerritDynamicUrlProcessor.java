@@ -169,7 +169,7 @@ public final class GerritDynamicUrlProcessor {
           branches = new ArrayList<Branch>();
           topics = new ArrayList<Topic>();
           filePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths, serverName);
+          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
