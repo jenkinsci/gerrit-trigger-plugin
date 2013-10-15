@@ -126,7 +126,7 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, name));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
         PluginCommentAddedEvent event = new PluginCommentAddedEvent(VerdictCategory.CODEREVIEW_VALUE, "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
