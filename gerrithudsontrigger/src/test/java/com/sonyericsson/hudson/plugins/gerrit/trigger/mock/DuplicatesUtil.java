@@ -63,20 +63,35 @@ public abstract class DuplicatesUtil {
      * Creates a {@link FreeStyleProject} with a gerrit-trigger configured.
      *
      * @param base the test case that is doing the current testing.
-     * @param name the name of the new job.
+     * @param projectName the name of the new job.
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritTriggeredJob(HudsonTestCase base, String name) throws Exception {
-        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
+    public static FreeStyleProject createGerritTriggeredJob(HudsonTestCase base, String projectName) throws Exception {
+        return createGerritTriggeredJob(base, projectName, PluginImpl.DEFAULT_SERVER_NAME);
+    }
+
+    /**
+     * Creates a {@link FreeStyleProject} with a gerrit-trigger configured for a specific server name.
+     *
+     * @param base the test case that is doing the current testing.
+     * @param projectName the name of the new job.
+     * @param serverName of your server
+     * @return the project.
+     *
+     * @throws Exception if so.
+     */
+    public static FreeStyleProject createGerritTriggeredJob(HudsonTestCase base,
+            String projectName, String serverName) throws Exception {
+        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, projectName);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, null, null, null, null, null, null, null,
-                PluginImpl.DEFAULT_SERVER_NAME, null, false, false, null));
+                serverName, null, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
