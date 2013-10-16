@@ -109,6 +109,15 @@ public final class Setup {
      * @return PatchsetCreated mock.
      */
     public static PatchsetCreated createPatchsetCreated() {
+        return createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME);
+    }
+
+    /**
+     * Gives you a PatchsetCreated mock for a specific server name.
+     * @param serverName name of the server.
+     * @return PatchsetCreated mock.
+     */
+    public static PatchsetCreated createPatchsetCreated(String serverName) {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setBranch("branch");
@@ -126,7 +135,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
     /**
