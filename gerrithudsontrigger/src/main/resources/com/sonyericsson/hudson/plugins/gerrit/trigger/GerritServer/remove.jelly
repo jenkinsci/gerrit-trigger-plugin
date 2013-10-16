@@ -9,7 +9,7 @@
             </l:tasks>
         </l:side-panel>
         <l:main-panel>
-            <form method="post" action="removeConfirm">
+            <form name="removal" method="post" action="removeConfirm">
                 <j:choose>
                     <j:when test="${it.isLastServer()}">
                         ${%RemoveLastServerWarning}
