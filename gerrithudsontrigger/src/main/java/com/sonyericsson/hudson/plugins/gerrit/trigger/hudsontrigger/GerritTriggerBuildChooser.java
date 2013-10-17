@@ -45,6 +45,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jenkinsci.plugins.gitclient.GitClient;
+import org.jenkinsci.plugins.gitclient.RepositoryCallback;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.eclipse.jgit.lib.ObjectId;
 
@@ -119,7 +120,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
 
     @Override
     public Build prevBuildForChangelog(String singleBranch, BuildData data, GitClient git,
-                                       BuildChooserContext context) {
+                                       BuildChooserContext context) throws InterruptedException, IOException {
         ObjectId sha1 = git.revParse("FETCH_HEAD");
 
         // Now we cheat and add the parent as the last build on the branch, so we can
@@ -148,28 +149,36 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      * @param git GitClient API object
      * @return object id of Revision's parent, or of Revision itself if there is no parent
      * @throws GitException In case of error in git call
+     * @throws InterruptedException if the repository handling gets interrupted
+     * @throws IOException in case of communication errors.
      */
-    private ObjectId getFirstParent(ObjectId id, GitClient git) throws GitException {
-        RevWalk walk = null;
-        ObjectId result = null;
-        try {
-            Repository repository = git.getRepository();
-            walk = new RevWalk(repository);
-            RevCommit commit = walk.parseCommit(id);
-            if (commit.getParentCount() > 0) {
-                result = commit.getParent(0);
-            } else {
-                // If this is the first commit in the git, there is no parent.
-                result = id;
+    private ObjectId getFirstParent(final ObjectId id, GitClient git)
+            throws GitException, IOException, InterruptedException {
+        return git.withRepository(new RepositoryCallback<ObjectId>() {
+            @Override
+            public ObjectId invoke(Repository repository, VirtualChannel virtualChannel)
+                    throws IOException, InterruptedException {
+                RevWalk walk = null;
+                ObjectId result = null;
+                try {
+                    walk = new RevWalk(repository);
+                    RevCommit commit = walk.parseCommit(id);
+                    if (commit.getParentCount() > 0) {
+                        result = commit.getParent(0);
+                    } else {
+                        // If this is the first commit in the git, there is no parent.
+                        result = id;
+                    }
+                } catch (Exception e) {
+                    throw new GitException("Failed to find parent id. ", e);
+                } finally {
+                    if (walk != null) {
+                        walk.release();
+                    }
+                }
+                return result;
             }
-        } catch (Exception e) {
-            throw new GitException("Failed to find parent id. ", e);
-        } finally {
-            if (walk != null) {
-                walk.release();
-            }
-        }
-        return result;
+        });
     }
 
     /**
