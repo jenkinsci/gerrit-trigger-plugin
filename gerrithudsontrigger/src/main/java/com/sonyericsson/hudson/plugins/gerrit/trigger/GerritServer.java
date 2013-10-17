@@ -101,6 +101,10 @@ public class GerritServer implements Describable<GerritServer> {
     private static final String STOP_FAILURE = "Error terminating connection";
     private static final String RESTART_SUCCESS = "Connection restarted";
     private static final String RESTART_FAILURE = "Error restarting connection";
+    /**
+     * Key that is used to select to trigger a build on events from any server.
+     */
+    public static final String ANY_SERVER = "__ANY__";
     private String name;
     private transient boolean started;
     private transient String connectionResponse = "";
@@ -549,6 +553,8 @@ public class GerritServer implements Describable<GerritServer> {
         if (!name.equals(newName)) {
             if (PluginImpl.getInstance().containsServer(newName)) {
                 throw new Failure("A server already exists with the name '" + newName + "'");
+            } else if (ANY_SERVER.equals(newName)) {
+                throw new Failure("Illegal name '" + newName + "'");
             }
             rename(newName);
             renamed = true;
@@ -903,6 +909,8 @@ public class GerritServer implements Describable<GerritServer> {
         if (!value.equals(name)) {
             if (PluginImpl.getInstance().containsServer(value)) {
                 return FormValidation.error("The server name " + value + " is already in use!");
+            } else if (ANY_SERVER.equals(value)) {
+                return FormValidation.error("Illegal name " + value + "!");
             } else {
                 return FormValidation.warning("The server " + name + " will be renamed");
             }
