@@ -111,24 +111,29 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     @Override
     public Build prevBuildForChangelog(String singleBranch, BuildData data, GitClient git,
                                        BuildChooserContext context) throws InterruptedException, IOException {
-        ObjectId sha1 = git.revParse("FETCH_HEAD");
+        if (data != null) {
+            ObjectId sha1 = git.revParse("FETCH_HEAD");
 
-        // Now we cheat and add the parent as the last build on the branch, so we can
-        // get the changelog working properly-ish.
-        ObjectId parentSha1 = getFirstParent(sha1, git);
-        Revision parentRev = new Revision(parentSha1);
-        parentRev.getBranches().add(new Branch(singleBranch, parentSha1));
+            // Now we cheat and add the parent as the last build on the branch, so we can
+            // get the changelog working properly-ish.
+            ObjectId parentSha1 = getFirstParent(sha1, git);
+            Revision parentRev = new Revision(parentSha1);
+            parentRev.getBranches().add(new Branch(singleBranch, parentSha1));
 
-        int prevBuildNum = 0;
-        Result r = null;
+            int prevBuildNum = 0;
+            Result r = null;
 
-        Build lastBuild = data.getLastBuildOfBranch(singleBranch);
-        if (lastBuild != null) {
-            prevBuildNum = lastBuild.getBuildNumber();
-            r = lastBuild.getBuildResult();
+            Build lastBuild = data.getLastBuildOfBranch(singleBranch);
+            if (lastBuild != null) {
+                prevBuildNum = lastBuild.getBuildNumber();
+                r = lastBuild.getBuildResult();
+            }
+
+            return new Build(parentRev, prevBuildNum, r);
+        } else {
+            //Hmm no sure what to do here, but the git plugin can handle us returning null here
+            return null;
         }
-
-        return new Build(parentRev, prevBuildNum, r);
     }
 
     //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative, and could happen.
