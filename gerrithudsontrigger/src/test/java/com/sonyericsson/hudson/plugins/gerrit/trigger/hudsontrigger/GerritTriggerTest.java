@@ -193,6 +193,7 @@ public class GerritTriggerTest {
     public void testScheduleWithAverageBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -257,6 +258,7 @@ public class GerritTriggerTest {
     @Test
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, true, false, "", "", "", "", "", "", null, null, null, false, false, "");
         trigger = spy(trigger);
@@ -279,6 +281,7 @@ public class GerritTriggerTest {
     public void testScheduleWithNegativeBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -316,6 +319,7 @@ public class GerritTriggerTest {
     public void testScheduleWithMaximumBuildScheduleDelay() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -354,6 +358,7 @@ public class GerritTriggerTest {
 
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         List<ParameterDefinition> list = new LinkedList<ParameterDefinition>();
         list.add(new StringParameterDefinition("MOCK_PARAM", "mock_value"));
@@ -404,6 +409,7 @@ public class GerritTriggerTest {
     public void testScheduleWithNoDefaultParameters() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
@@ -453,6 +459,7 @@ public class GerritTriggerTest {
     public void testScheduleWithOwnerAndUploader() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
@@ -505,6 +512,7 @@ public class GerritTriggerTest {
     public void testScheduleWithOwnerAndOneUploaderNull() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
@@ -557,6 +565,7 @@ public class GerritTriggerTest {
     public void testScheduleWithOwnerAndOtherUploaderNull() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
@@ -609,6 +618,7 @@ public class GerritTriggerTest {
     public void testScheduleWithOwnerAndBothUploadersNull() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
@@ -660,6 +670,7 @@ public class GerritTriggerTest {
     public void testScheduleWithOwnerAndPartOfUploadersNull() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
         when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);

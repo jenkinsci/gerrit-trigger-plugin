@@ -45,6 +45,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jenkinsci.plugins.gitclient.GitClient;
+import org.jenkinsci.plugins.gitclient.RepositoryCallback;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.eclipse.jgit.lib.ObjectId;
 
@@ -119,25 +120,30 @@ public class GerritTriggerBuildChooser extends BuildChooser {
 
     @Override
     public Build prevBuildForChangelog(String singleBranch, BuildData data, GitClient git,
-                                       BuildChooserContext context) {
-        ObjectId sha1 = git.revParse("FETCH_HEAD");
+                                       BuildChooserContext context) throws InterruptedException, IOException {
+        if (data != null) {
+            ObjectId sha1 = git.revParse("FETCH_HEAD");
 
-        // Now we cheat and add the parent as the last build on the branch, so we can
-        // get the changelog working properly-ish.
-        ObjectId parentSha1 = getFirstParent(sha1, git);
-        Revision parentRev = new Revision(parentSha1);
-        parentRev.getBranches().add(new Branch(singleBranch, parentSha1));
+            // Now we cheat and add the parent as the last build on the branch, so we can
+            // get the changelog working properly-ish.
+            ObjectId parentSha1 = getFirstParent(sha1, git);
+            Revision parentRev = new Revision(parentSha1);
+            parentRev.getBranches().add(new Branch(singleBranch, parentSha1));
 
-        int prevBuildNum = 0;
-        Result r = null;
+            int prevBuildNum = 0;
+            Result r = null;
 
-        Build lastBuild = data.getLastBuildOfBranch(singleBranch);
-        if (lastBuild != null) {
-            prevBuildNum = lastBuild.getBuildNumber();
-            r = lastBuild.getBuildResult();
+            Build lastBuild = data.getLastBuildOfBranch(singleBranch);
+            if (lastBuild != null) {
+                prevBuildNum = lastBuild.getBuildNumber();
+                r = lastBuild.getBuildResult();
+            }
+
+            return new Build(parentRev, prevBuildNum, r);
+        } else {
+            //Hmm no sure what to do here, but the git plugin can handle us returning null here
+            return null;
         }
-
-        return new Build(parentRev, prevBuildNum, r);
     }
 
     //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative, and could happen.
@@ -148,28 +154,36 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      * @param git GitClient API object
      * @return object id of Revision's parent, or of Revision itself if there is no parent
      * @throws GitException In case of error in git call
+     * @throws InterruptedException if the repository handling gets interrupted
+     * @throws IOException in case of communication errors.
      */
-    private ObjectId getFirstParent(ObjectId id, GitClient git) throws GitException {
-        RevWalk walk = null;
-        ObjectId result = null;
-        try {
-            Repository repository = git.getRepository();
-            walk = new RevWalk(repository);
-            RevCommit commit = walk.parseCommit(id);
-            if (commit.getParentCount() > 0) {
-                result = commit.getParent(0);
-            } else {
-                // If this is the first commit in the git, there is no parent.
-                result = id;
+    private ObjectId getFirstParent(final ObjectId id, GitClient git)
+            throws GitException, IOException, InterruptedException {
+        return git.withRepository(new RepositoryCallback<ObjectId>() {
+            @Override
+            public ObjectId invoke(Repository repository, VirtualChannel virtualChannel)
+                    throws IOException, InterruptedException {
+                RevWalk walk = null;
+                ObjectId result = null;
+                try {
+                    walk = new RevWalk(repository);
+                    RevCommit commit = walk.parseCommit(id);
+                    if (commit.getParentCount() > 0) {
+                        result = commit.getParent(0);
+                    } else {
+                        // If this is the first commit in the git, there is no parent.
+                        result = id;
+                    }
+                } catch (Exception e) {
+                    throw new GitException("Failed to find parent id. ", e);
+                } finally {
+                    if (walk != null) {
+                        walk.release();
+                    }
+                }
+                return result;
             }
-        } catch (Exception e) {
-            throw new GitException("Failed to find parent id. ", e);
-        } finally {
-            if (walk != null) {
-                walk.release();
-            }
-        }
-        return result;
+        });
     }
 
     /**
