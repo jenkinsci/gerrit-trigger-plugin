@@ -28,7 +28,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+<<<<<<< HEAD
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
+=======
+import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.AbstractTriggeredBuildListener;
+>>>>>>> f67615642c7485b9f26d915f90b0746b26e67d80
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import hudson.model.AbstractBuild;
@@ -116,7 +120,11 @@ public class GerritNotifier {
                     if (!command.isEmpty()) {
                         logger.info("Notifying BuildCompleted to gerrit: {}", command);
                         cmdRunner.sendCommand(command);
+<<<<<<< HEAD
                         GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
+=======
+                        AbstractTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
+>>>>>>> f67615642c7485b9f26d915f90b0746b26e67d80
                     } else {
                         logger.info("BuildCompleted command is empty.  Gerrit will not be notified of BuildCompleted");
                     }
