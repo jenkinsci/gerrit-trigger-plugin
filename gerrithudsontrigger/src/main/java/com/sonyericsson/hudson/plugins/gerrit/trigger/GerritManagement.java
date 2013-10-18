@@ -149,6 +149,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin.containsServer(serverName)) {
             throw new Failure("A server already exists with the name '" + serverName + "'");
+        } else if (GerritServer.ANY_SERVER.equals(serverName)) {
+            throw new Failure("Illegal server name '" + serverName + "'");
         }
         GerritServer server = new GerritServer(serverName);
 
@@ -236,14 +238,15 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     /**
      * Checks whether server name already exists.
+     *
      * @param value the value of the name field.
      * @return ok or error.
      */
-    public FormValidation doNameFreeCheck(
-            @QueryParameter("value")
-            final String value) {
+    public FormValidation doNameFreeCheck(@QueryParameter("value") final String value) {
         if (PluginImpl.getInstance().containsServer(value)) {
             return FormValidation.error("The server name " + value + " is already in use!");
+        } else if (GerritServer.ANY_SERVER.equals(value)) {
+            return FormValidation.error("Illegal name " + value + "!");
         } else {
             return FormValidation.ok();
         }

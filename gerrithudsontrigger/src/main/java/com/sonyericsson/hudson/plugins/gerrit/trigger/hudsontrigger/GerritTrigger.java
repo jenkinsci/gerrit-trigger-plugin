@@ -44,7 +44,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
@@ -57,6 +56,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -368,11 +370,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
         cancelTimer();
     }
-/**
- * Removes listener from the server.
- *
- *
- */
+
+    /**
+     * Removes listener from the server.
+     *
+     *
+     */
     private void removeListener() {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
@@ -822,6 +825,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if same server name
      */
     private boolean isServerInteresting(GerritTriggeredEvent event) {
+        if (serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName)) {
+            return true;
+        }
         Provider provider = initializeProvider(event);
         return provider.getName().equals(serverName);
     }
@@ -1308,7 +1314,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if escapeQuotes is on.
      */
     public boolean isEscapeQuotes() {
-
         return escapeQuotes;
     }
 
@@ -1544,6 +1549,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          */
         public ListBoxModel doFillServerNameItems() {
             ListBoxModel items = new ListBoxModel();
+            items.add(Messages.AnyServer(), ANY_SERVER);
             LinkedList<String> serverNames = PluginImpl.getInstance().getServerNames();
             for (String s : serverNames) {
                 items.add(s);
