@@ -37,7 +37,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
-import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import org.slf4j.Logger;
@@ -102,21 +101,19 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             if (!cause.isSilentMode()) {
                 memory.completed(event, r);
 
-                if (r.getResult().isWorseThan(Result.SUCCESS)) {
-                    try {
-                        // Attempt to record the failure message, if applicable
-                        String failureMessage = this.obtainFailureMessage(event, r, listener);
-                        logger.info("Obtained failure message: {}", failureMessage);
-                        memory.setEntryFailureMessage(event, r, failureMessage);
-                    } catch (IOException e) {
-                        listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
-                        logger.warn("IOException while obtaining failure message for build: "
-                                + r.getDisplayName(), e);
-                    } catch (InterruptedException e) {
-                        listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
-                        logger.warn("InterruptedException while obtaining failure message for build: "
-                                + r.getDisplayName(), e);
-                    }
+                try {
+                    // Attempt to record the message, if applicable
+                    String message = this.obtainBuildMessage(event, r, listener);
+                    logger.info("Obtained message: {}", message);
+                    memory.setEntryMessage(event, r, message);
+                } catch (IOException e) {
+                    listener.error("[gerrit-trigger] Unable to read message from the workspace.");
+                    logger.warn("IOException while obtaining message for build: "
+                            + r.getDisplayName(), e);
+                } catch (InterruptedException e) {
+                    listener.error("[gerrit-trigger] Unable to read message from the workspace.");
+                    logger.warn("InterruptedException while message for build: "
+                            + r.getDisplayName(), e);
                 }
 
                 updateTriggerContexts(r);
@@ -324,16 +321,16 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     /**
-     * Attempt to obtain the failure message for a build.
+     * Attempt to obtain the message for a build.
      *
      * @param event The event that triggered this build
      * @param build The build being executed
      * @param listener The build listener
-     * @return Message content from the configured unsuccessful message file
+     * @return Message content from the configured message file
      * @throws IOException In case of an error communicating with the {@link FilePath} or {@link EnvVars Environment}
      * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
      */
-    private String obtainFailureMessage(GerritTriggeredEvent event, AbstractBuild build, TaskListener listener)
+    private String obtainBuildMessage(GerritTriggeredEvent event, AbstractBuild build, TaskListener listener)
             throws IOException, InterruptedException {
         AbstractProject project = build.getProject();
         String content = null;
@@ -342,8 +339,8 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
 
         // trigger will be null in unit tests
         if (trigger != null) {
-            String filepath = trigger.getBuildUnsuccessfulFilepath();
-            logger.debug("Looking for failure message in file glob: {}", filepath);
+            String filepath = trigger.getBuildMessageFilepath();
+            logger.debug("Looking for message in file glob: {}", filepath);
 
 
             if (filepath != null && !filepath.isEmpty()) {
@@ -366,7 +363,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                     // Use the first match
                     FilePath path = matches[0];
                     content = this.getExpandedContent(path, envVars);
-                    logger.info("Obtained failure message from file: {}", content);
+                    logger.info("Obtained message from file: {}", content);
                 }
             }
         }

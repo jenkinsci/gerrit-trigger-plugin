@@ -455,7 +455,7 @@ public class ParameterExpander {
         StringBuilder str = new StringBuilder("");
         final String rootUrl = hudson.getRootUrl();
 
-        String unsuccessfulMessage = null;
+        String message = null;
 
         Entry[] entries = memoryImprint.getEntries();
 
@@ -508,15 +508,13 @@ public class ParameterExpander {
                         str.append(customMessage);
                     }
 
-                    if (res.isWorseThan(Result.SUCCESS)) {
-                        unsuccessfulMessage = entry.getUnsuccessfulMessage();
+                    message = entry.getMessage();
 
-                        if (null != unsuccessfulMessage && !unsuccessfulMessage.isEmpty()) {
-                            logger.trace("Using unsuccessful message from file.");
-                            str.append(" <<<\n");
-                            str.append(unsuccessfulMessage.trim());
-                            str.append("\n>>>");
-                        }
+                    if (null != message && !message.isEmpty()) {
+                        logger.trace("Using message from file.");
+                        str.append(" <<<\n");
+                        str.append(message.trim());
+                        str.append("\n>>>");
                     }
 
                     if (config.isEnablePluginMessages()) {

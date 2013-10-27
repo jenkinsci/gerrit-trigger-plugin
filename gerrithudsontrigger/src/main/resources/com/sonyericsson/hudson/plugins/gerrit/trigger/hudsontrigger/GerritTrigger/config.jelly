@@ -147,9 +147,9 @@
                          help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
                    <f:textbox/>
                 </f:entry>
-                <f:entry title="${%Unsuccessful Message File}"
-                         field="buildUnsuccessfulFilepath"
-                         help="/plugin/gerrit-trigger/trigger/help-BuildUnsuccessfulFilepath.html">
+                <f:entry title="${%Build Message File}"
+                         field="buildMessageFilepath"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildMessageFilepath.html">
                    <f:textbox/>
                 </f:entry>
             </f:section>

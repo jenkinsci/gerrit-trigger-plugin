@@ -131,7 +131,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
     private String buildNotBuiltMessage;
-    private String buildUnsuccessfulFilepath;
+    private String buildMessageFilepath;
     private String customUrl;
     private String serverName;
     private List<PluginGerritEvent> triggerOnEvents;
@@ -186,8 +186,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
-     * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
-     *                                       unsuccessful build.
+     * @param buildMessageFilepath           Filename to retrieve Gerrit comment message from
      * @param customUrl                      Custom URL to sen to Gerrit instead of build URL
      * @param serverName                     The selected server
      * @param triggerOnEvents                The list of event types to trigger on.
@@ -218,7 +217,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildUnstableMessage,
             String buildFailureMessage,
             String buildNotBuiltMessage,
-            String buildUnsuccessfulFilepath,
+            String buildMessageFilepath,
             String customUrl,
             String serverName,
             List<PluginGerritEvent> triggerOnEvents,
@@ -245,7 +244,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
         this.buildNotBuiltMessage = buildNotBuiltMessage;
-        this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
+        this.buildMessageFilepath = buildMessageFilepath;
         this.customUrl = customUrl;
         this.serverName = serverName;
         this.triggerOnEvents = triggerOnEvents;
@@ -1203,7 +1202,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param path The unsuccessful message comment file path
      */
     public void setBuildUnsuccessfulFilepath(String path) {
-        buildUnsuccessfulFilepath = path;
+        buildMessageFilepath = path;
     }
 
     /**
@@ -1399,8 +1398,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @return The unsuccessful message comment file path
      */
-    public String getBuildUnsuccessfulFilepath() {
-        return buildUnsuccessfulFilepath;
+    public String getBuildMessageFilepath() {
+        return buildMessageFilepath;
     }
 
     /**
