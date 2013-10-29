@@ -133,6 +133,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritHttpUserName;
     private Secret gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
+    @Deprecated
     private int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
     private String gerritVerifiedCmdBuildUnstable;
@@ -152,6 +153,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildNotBuiltCodeReviewValue;
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
+    @Deprecated
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
@@ -605,6 +607,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    @Deprecated
     public int getNumberOfReceivingWorkerThreads() {
         if (numberOfWorkerThreads <= 0) {
             numberOfWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
@@ -613,6 +616,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    @Deprecated
     public int getNumberOfSendingWorkerThreads() {
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
@@ -626,6 +630,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param numberOfReceivingWorkerThreads nr of threads.
      * @see #getNumberOfReceivingWorkerThreads()
      */
+    @Deprecated
     public void setNumberOfReceivingWorkerThreads(int numberOfReceivingWorkerThreads) {
         this.numberOfWorkerThreads = numberOfReceivingWorkerThreads;
     }
