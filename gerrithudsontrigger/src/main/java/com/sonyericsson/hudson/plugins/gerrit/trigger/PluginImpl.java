@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritTriggerPluginConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 
@@ -87,6 +89,8 @@ public class PluginImpl extends Plugin {
     // not written back into the XML.
     @Deprecated
     private transient IGerritHudsonTriggerConfig config;
+
+    private IGerritTriggerPluginConfig pluginConfig;
 
     /**
      * the default server name.
@@ -198,6 +202,15 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Gets the global config.
+     *
+     * @return the config.
+     */
+    public IGerritTriggerPluginConfig getPluginConfig() {
+        return pluginConfig;
+    }
+
+    /**
      * Returns the GerritHandler object.
      *
      * @return gerritEventManager
@@ -231,7 +244,7 @@ public class PluginImpl extends Plugin {
         doXStreamRegistrations();
         logger.trace("Loading configs");
         load();
-        gerritEventManager = new GerritHandler();
+        gerritEventManager = new GerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads(), null);
         for (GerritServer s : servers) {
             s.start();
         }
@@ -240,6 +253,14 @@ public class PluginImpl extends Plugin {
     @Override
     public void load() throws IOException {
         super.load();
+        if (pluginConfig == null) {
+            PluginConfig conf = new PluginConfig();
+            if (config != null) {
+                conf.setNumberOfReceivingWorkerThreads(config.getNumberOfReceivingWorkerThreads());
+                conf.setNumberOfSendingWorkerThreads(config.getNumberOfSendingWorkerThreads());
+            }
+            pluginConfig = conf;
+        }
         if (servers == null || servers.isEmpty()) {
             servers = new LinkedList<GerritServer>();
             if (config != null) { //have loaded data in old format, so add a new server with the old config to the list.

@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritTriggerPluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 
 import hudson.DescriptorExtensionList;
@@ -43,7 +44,11 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import javax.servlet.ServletException;
+
 import jenkins.model.Jenkins;
+
+import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
@@ -195,6 +200,15 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     /**
+     * Get the plugin config.
+     *
+     * @return the plugin config.
+     */
+    public static IGerritTriggerPluginConfig getPluginConfig() {
+        return PluginImpl.getInstance().getPluginConfig();
+    }
+
+    /**
      * Get the config of a server.
      *
      * @param serverName the name of the server for which we want to get the config.
@@ -250,5 +264,26 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         } else {
             return FormValidation.ok();
         }
+    }
+
+    /**
+     * Saves the form to the configuration and disk.
+     * @param req StaplerRequest
+     * @param rsp StaplerResponse
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
+     * @throws InterruptedException if something unfortunate happens.
+     */
+    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    IOException,
+    InterruptedException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("submit {}", req.toString());
+        }
+        JSONObject form = req.getSubmittedForm();
+        PluginImpl.getInstance().getPluginConfig().setValues(form);
+        PluginImpl.getInstance().save();
+
+        rsp.sendRedirect(".");
     }
 }

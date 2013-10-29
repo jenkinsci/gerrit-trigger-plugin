@@ -313,7 +313,6 @@ public class GerritServer implements Describable<GerritServer> {
                 logger.debug("Starting Gerrit connection...");
                 gerritConnection = new GerritConnection(name, config);
                 gerritEventManager.setIgnoreEMail(config.getGerritEMail());
-                gerritEventManager.setNumberOfWorkerThreads(config.getNumberOfReceivingWorkerThreads());
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
