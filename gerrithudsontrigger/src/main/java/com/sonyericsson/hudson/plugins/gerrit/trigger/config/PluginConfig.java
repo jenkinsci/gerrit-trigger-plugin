@@ -63,6 +63,16 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
     }
 
     /**
+     * Copy constructor.
+     *
+     * @param pluginConfig the PluginConfig object to be copied.
+     */
+    public PluginConfig(IGerritTriggerPluginConfig pluginConfig) {
+        numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
+        numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
+    }
+
+    /**
      * Unused Constructor?
      *
      * @param formData the data
