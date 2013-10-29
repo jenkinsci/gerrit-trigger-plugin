@@ -28,8 +28,11 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
+
 import hudson.model.FreeStyleProject;
+
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.util.Iterator;
@@ -77,5 +80,59 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
         option = iterator.next();
         value = option.getAttribute("value");
         assertEquals("Second value should be VRIF", "VRIF", value);
+    }
+
+    /**
+     * Tests that the dropdown list for comment added is populated with the correct values when we choose "Any Server".
+     * @throws Exception if so.
+     */
+    public void testPopulateDropDownFromTwoServers() throws Exception {
+        @SuppressWarnings("unused")
+        LinkedList<GerritServer> servers = PluginImpl.getInstance().getServers();
+
+        //create a server with default Verdict Categories
+        GerritServer server1 = new GerritServer("testServer1");
+        servers.add(server1);
+        server1.start();
+
+        GerritServer server2 = new GerritServer("testServer2");
+        servers.add(server2);
+        server2.start();
+        server2.getConfig().getCategories().add(new VerdictCategory("Code-Review", "Code Review For Gerrit 2.6+"));
+        server2.getConfig().getCategories().add(new VerdictCategory("Verified", "Verified For Gerrit 2.6+"));
+
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "myGerritProject",
+                GerritServer.ANY_SERVER);
+        WebClient wc = createWebClient();
+        HtmlPage page = wc.goTo("/job/myGerritProject/configure");
+        List<HtmlElement> elements = page.getDocumentElement().getElementsByAttribute("td", "class", "setting-name");
+        HtmlElement tr = null;
+        for (HtmlElement element : elements) {
+            if ("Verdict Category".equals(element.getTextContent())) {
+                tr = element.getEnclosingElement("tr");
+                break;
+            }
+        }
+        assertNotNull(tr);
+        HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
+        HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
+
+        Iterator<HtmlElement> iterator = select.getChildElements().iterator();
+
+        HtmlElement option = iterator.next();
+        String value = option.getAttribute("value");
+        //This will test that the default values are correct.
+        assertEquals("First value should be VRIF", "VRIF", value);
+        option = iterator.next();
+        value = option.getAttribute("value");
+        assertEquals("Second value should be CRVW", "CRVW", value);
+        option = iterator.next();
+        value = option.getAttribute("value");
+        assertEquals("Third value should be Code-Review", "Code-Review", value);
+        option = iterator.next();
+        value = option.getAttribute("value");
+        assertEquals("Fourth value should be Verified", "Verified", value);
+
+        assertFalse(iterator.hasNext());
     }
 }

@@ -137,6 +137,22 @@ public abstract class DuplicatesUtil {
      */
     public static FreeStyleProject createGerritTriggeredJobForCommentAdded(HudsonTestCase base, String name)
             throws Exception {
+        return createGerritTriggeredJobForCommentAdded(base, name, PluginImpl.DEFAULT_SERVER_NAME);
+    }
+
+    /**
+     * Creates a {@link FreeStyleProject} with a gerrit-trigger configured with a specific server and Code Review +1.
+     *
+     * @param base the test case that is doing the current testing.
+     * @param name the name of the new job.
+     * @param serverName the name of the GerritServer
+     * @return the project.
+     *
+     * @throws Exception if so.
+     */
+    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(HudsonTestCase base,
+            String name, String serverName)
+            throws Exception {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
@@ -147,7 +163,7 @@ public abstract class DuplicatesUtil {
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, null, null, null, null, null, null, null,
-                PluginImpl.DEFAULT_SERVER_NAME, list, false, false, null));
+                serverName, list, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
