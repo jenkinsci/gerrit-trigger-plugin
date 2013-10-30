@@ -38,13 +38,8 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
      * Default number of receiving worker threads.
      */
     public static final int DEFAULT_NR_OF_RECEIVING_WORKER_THREADS = 3;
-    /**
-     * Default number of sending worker threads.
-     */
-    public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
 
     private int numberOfReceivingWorkerThreads;
-    private int numberOfSendingWorkerThreads;
 
     /**
      * Constructs a config with default data.
@@ -69,7 +64,6 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
      */
     public PluginConfig(IGerritTriggerPluginConfig pluginConfig) {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
-        numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
     }
 
     /**
@@ -90,13 +84,6 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
         if (numberOfReceivingWorkerThreads <= 0) {
             numberOfReceivingWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
         }
-
-        numberOfSendingWorkerThreads = formData.optInt(
-                "numberOfSendingWorkerThreads",
-                DEFAULT_NR_OF_SENDING_WORKER_THREADS);
-        if (numberOfSendingWorkerThreads <= 0) {
-            numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
-        }
     }
 
     @Override
@@ -115,23 +102,5 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
      */
     public void setNumberOfReceivingWorkerThreads(int numberOfReceivingWorkerThreads) {
         this.numberOfReceivingWorkerThreads = numberOfReceivingWorkerThreads;
-    }
-
-    @Override
-    public int getNumberOfSendingWorkerThreads() {
-        if (numberOfSendingWorkerThreads <= 0) {
-            numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
-        }
-        return numberOfSendingWorkerThreads;
-    }
-
-    /**
-     * NumberOfSendingWorkerThreads.
-     *
-     * @param numberOfSendingWorkerThreads nr of threads.
-     * @see #getNumberOfSendingWorkerThreads()
-     */
-    public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
-        this.numberOfSendingWorkerThreads = numberOfSendingWorkerThreads;
     }
 }

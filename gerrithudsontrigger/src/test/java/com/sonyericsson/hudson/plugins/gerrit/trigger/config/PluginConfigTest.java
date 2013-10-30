@@ -43,12 +43,10 @@ public class PluginConfigTest {
     @Test
     public void testSetValues() {
         String formString = "{"
-                + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         PluginConfig config = new PluginConfig(form);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
-        assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
@@ -59,12 +57,10 @@ public class PluginConfigTest {
     @Test
     public void testCopyConfig() {
         String formString = "{"
-                + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         PluginConfig initialConfig = new PluginConfig(form);
         PluginConfig config = new PluginConfig(initialConfig);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
-        assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }
 }
