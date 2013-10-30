@@ -97,9 +97,9 @@ public class StreamWatchdog extends TimerTask {
     public void run() {
         if (!exceptionData.isExceptionNow()) {
             long quietTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - getLastSignal());
-            logger.debug("Quiettime: {}", quietTime);
-            if (quietTime > timeoutSeconds) {
-                logger.info("Last data from Gerrit was {} seconds ago; reconnecting.", quietTime);
+            logger.debug("Quiet time: {}", quietTime);
+            if (quietTime >= timeoutSeconds) {
+                logger.info("Last lively connection with Gerrit was {} seconds ago; reconnecting.", quietTime);
                 connector.reconnect();
             }
         }

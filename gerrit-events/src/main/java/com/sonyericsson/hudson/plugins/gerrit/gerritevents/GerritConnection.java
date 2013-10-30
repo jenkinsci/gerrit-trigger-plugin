@@ -269,6 +269,15 @@ public class GerritConnection extends Thread implements Connector {
     }
 
     /**
+     * If watchdog field is not null, shut it down and put it to null.
+     */
+    private void nullifyWatchdog() {
+        if (watchdog != null) {
+            watchdog.shutdown();
+            watchdog = null;
+        }
+    }
+    /**
      * Main loop for connecting and reading Gerrit JSON Events and dispatching them to Workers.
      */
     @Override
@@ -280,6 +289,7 @@ public class GerritConnection extends Thread implements Connector {
                 return;
             }
             if (watchdogTimeoutSeconds > 0 && exceptionData != null) {
+                nullifyWatchdog();
                 watchdog = new StreamWatchdog(this, watchdogTimeoutSeconds, exceptionData);
             }
 
@@ -299,6 +309,9 @@ public class GerritConnection extends Thread implements Connector {
                         getGerritVersionString());
                 logger.info("Ready to receive data from Gerrit: " + gerritName);
                 do {
+                    if (watchdog != null) {
+                        watchdog.signal();
+                    }
                     logger.debug("Data-line from Gerrit: {}", line);
                     if (line != null && line.length() > 0) {
                         if (handler != null) {
@@ -307,14 +320,12 @@ public class GerritConnection extends Thread implements Connector {
                     }
                     logger.trace("Reading next line.");
                     line = br.readLine();
-                    if (watchdog != null) {
-                        watchdog.signal();
-                    }
                 } while (line != null);
             } catch (IOException ex) {
                 logger.error("Stream events command error. ", ex);
             } finally {
                 logger.trace("Connection closed, ended read loop.");
+                nullifyWatchdog();
                 try {
                     sshConnection.disconnect();
                 } catch (Exception ex) {
@@ -332,7 +343,7 @@ public class GerritConnection extends Thread implements Connector {
             }
         } while (!shutdownInProgress);
         handler = null;
-        logger.debug("End of GerritHandler Thread.");
+        logger.debug("End of GerritConnection Thread.");
     }
 
     /**
@@ -524,9 +535,7 @@ public class GerritConnection extends Thread implements Connector {
     @Override
     public void reconnect() {
         reconnectCallCount++;
-        if (watchdog != null) {
-            watchdog.shutdown();
-        }
+        nullifyWatchdog();
         sshConnection.disconnect();
     }
 
@@ -547,9 +556,7 @@ public class GerritConnection extends Thread implements Connector {
      */
     public void shutdown(boolean join) {
         setShutdownInProgress();
-        if (watchdog != null) {
-            watchdog.shutdown();
-        }
+        nullifyWatchdog();
         if (sshConnection != null) {
             logger.info("Shutting down the ssh connection.");
             try {
