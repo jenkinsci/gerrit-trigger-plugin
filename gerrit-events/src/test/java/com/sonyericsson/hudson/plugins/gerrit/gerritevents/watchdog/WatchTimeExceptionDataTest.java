@@ -63,9 +63,15 @@ public class WatchTimeExceptionDataTest {
     @Test
     public void testIsExceptionAtThisTimeHours() throws Exception {
         List<WatchTimeExceptionData.TimeSpan> spans = new LinkedList<WatchTimeExceptionData.TimeSpan>();
-        Calendar from = Calendar.getInstance();
+        Calendar current = Calendar.getInstance();
+        if (current.get(Calendar.HOUR_OF_DAY) == 23) {
+            current.add(Calendar.HOUR_OF_DAY, -1);
+        } else if (current.get(Calendar.HOUR_OF_DAY) == 0) {
+            current.add(Calendar.HOUR_OF_DAY, 1);
+        }
+        Calendar from = (Calendar)current.clone();
         from.add(Calendar.HOUR_OF_DAY, -1);
-        Calendar to = Calendar.getInstance();
+        Calendar to = (Calendar)current.clone();
         to.add(Calendar.HOUR_OF_DAY, 1);
         spans.add(new WatchTimeExceptionData.TimeSpan(new WatchTimeExceptionData.Time(20, 0),
                 new WatchTimeExceptionData.Time(23, 59)));
@@ -87,9 +93,17 @@ public class WatchTimeExceptionDataTest {
     @Test
     public void testIsExceptionAtThisTimeMinutes() throws Exception {
         List<WatchTimeExceptionData.TimeSpan> spans = new LinkedList<WatchTimeExceptionData.TimeSpan>();
-        Calendar from = Calendar.getInstance();
+        Calendar current = Calendar.getInstance();
+        if (current.get(Calendar.HOUR_OF_DAY) == 23
+                && current.get(Calendar.MINUTE) >= 45) {
+            current.add(Calendar.MINUTE, -15);
+        } else if (current.get(Calendar.HOUR_OF_DAY) == 0
+                && current.get(Calendar.MINUTE) <= 15) {
+            current.add(Calendar.HOUR_OF_DAY, 15);
+        }
+        Calendar from = (Calendar)current.clone();
         from.add(Calendar.MINUTE, -15);
-        Calendar to = Calendar.getInstance();
+        Calendar to = (Calendar)current.clone();
         to.add(Calendar.MINUTE, 15);
         spans.add(new WatchTimeExceptionData.TimeSpan(new WatchTimeExceptionData.Time(
                 from.get(Calendar.HOUR_OF_DAY), from.get(Calendar.MINUTE)),
