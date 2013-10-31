@@ -68,13 +68,23 @@ public class NotificationFactory {
     }
 
     /**
+     * Gets the server.
+     *
+     * @param serverName the name of the server.
+     * @return the instance of GerritServer. null if unknown server name.
+     */
+    public GerritServer getServer(String serverName) {
+        return PluginImpl.getInstance().getServer(serverName);
+    }
+
+    /**
      * Shortcut method to get the config from {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer}.
      *
      * @param serverName the name of the server.
      * @return the server-config.
      */
     public IGerritHudsonTriggerConfig getConfig(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = getServer(serverName);
         if (server != null) {
             return server.getConfig();
         } else {
@@ -119,18 +129,24 @@ public class NotificationFactory {
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
         String serverName = getServerName(memoryImprint);
         if (serverName != null) {
-            IGerritHudsonTriggerConfig config = getConfig(serverName);
-            if (config != null) {
-                AbstractSendCommandJob job;
-                if (config.isUseRestApi()) {
-                    job = new BuildCompletedRestCommandJob(config, memoryImprint, listener);
+            GerritServer server = getServer(serverName);
+            if (server != null) {
+                IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    AbstractSendCommandJob job;
+                    if (config.isUseRestApi()) {
+                        job = new BuildCompletedRestCommandJob(config, memoryImprint, listener);
+                    } else {
+                        job = new BuildCompletedCommandJob(config,
+                                memoryImprint, listener);
+                    }
+                    GerritSendCommandQueue sendQueue = server.getSendCommandQueue();
+                    if (sendQueue != null) {
+                        sendQueue.queue(job);
+                    }
                 } else {
-                    job = new BuildCompletedCommandJob(config,
-                        memoryImprint, listener);
+                    logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
                 }
-                GerritSendCommandQueue.queue(job);
-            } else {
-                logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
         } else {
             logger.warn("Nothing queued since the event in memory contained no serverName: {}", memoryImprint);
@@ -197,19 +213,25 @@ public class NotificationFactory {
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
         String serverName = getServerName(event);
         if (serverName != null) {
-            IGerritHudsonTriggerConfig config = getConfig(serverName);
-            if (config != null) {
-                AbstractSendCommandJob job;
-                if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
-                    job = new BuildStartedRestCommandJob(config, build, listener,
-                            (ChangeBasedEvent)event, stats);
+            GerritServer server = getServer(serverName);
+            if (server != null) {
+                IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    AbstractSendCommandJob job;
+                    if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
+                        job = new BuildStartedRestCommandJob(config, build, listener,
+                                (ChangeBasedEvent)event, stats);
+                    } else {
+                        job = new BuildStartedCommandJob(config,
+                                build, listener, event, stats);
+                    }
+                    GerritSendCommandQueue sendQueue = server.getSendCommandQueue();
+                    if (sendQueue != null) {
+                        sendQueue.queue(job);
+                    }
                 } else {
-                    job = new BuildStartedCommandJob(config,
-                        build, listener, event, stats);
+                    logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
                 }
-                GerritSendCommandQueue.queue(job);
-            } else {
-                logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
         } else {
             logger.warn("Nothing queued since the event contained no serverName: {}", event);

@@ -136,16 +136,14 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
      * @return true if so, false otherwise.
      */
     public boolean isSendQueueWarning() {
-        return getSendQueueSize() >= GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD;
-    }
-
-    /**
-     * Gets the current send-command queue size. Utility method for the jelly page.
-     *
-     * @return the amount of jobs in the queue.
-     */
-    public int getSendQueueSize() {
-        return GerritSendCommandQueue.getQueueSize();
+        boolean result = true;
+        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            GerritSendCommandQueue queue = server.getSendCommandQueue();
+            if (queue != null) {
+                result = result & queue.getQueueSize() >= GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD;
+            }
+        }
+        return result;
     }
 
     /**

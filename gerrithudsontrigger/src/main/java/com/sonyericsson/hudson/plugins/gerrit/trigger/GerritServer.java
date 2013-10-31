@@ -114,6 +114,7 @@ public class GerritServer implements Describable<GerritServer> {
     private transient UnreviewedPatchesListener unreviewedPatchesListener;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
+    private transient GerritSendCommandQueue gerritSendCommandQueue;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -193,7 +194,7 @@ public class GerritServer implements Describable<GerritServer> {
         logger.info("Starting GerritServer: " + name);
 
         //Starts the send-command-queue
-        GerritSendCommandQueue.getInstance(config);
+        gerritSendCommandQueue = GerritSendCommandQueue.getInstance(config);
 
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
         List<VerdictCategory> categories = config.getCategories();
@@ -254,7 +255,10 @@ public class GerritServer implements Describable<GerritServer> {
             gerritConnection = null;
         }
 
-        GerritSendCommandQueue.shutdown();
+        if (gerritSendCommandQueue != null) {
+            gerritSendCommandQueue.shutdown();
+            gerritSendCommandQueue = null;
+        }
         logger.info(name + " stopped");
         started = false;
     }
@@ -417,6 +421,15 @@ public class GerritServer implements Describable<GerritServer> {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Gets queue for Gerrit command to send.
+     *
+     * @return the queue instance.
+     */
+    public GerritSendCommandQueue getSendCommandQueue() {
+        return gerritSendCommandQueue;
     }
 
     /**
