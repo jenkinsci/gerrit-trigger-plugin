@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 public final class GerritSendCommandQueue {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritSendCommandQueue.class);
-    private static GerritSendCommandQueue instance;
     private ThreadPoolExecutor executor = null;
     private static final int THREAD_KEEP_ALIVE_TIME = 20;
     /**
@@ -65,12 +64,10 @@ public final class GerritSendCommandQueue {
      * @return the instance.
      */
     public static synchronized GerritSendCommandQueue getInstance(GerritConnectionConfig config) {
-        if (instance == null) {
-            if (config == null) {
-                throw new NullPointerException("A config instance is needed for the first init.");
-            }
-            instance = new GerritSendCommandQueue();
+        if (config == null) {
+            throw new NullPointerException("A config instance is needed for the first init.");
         }
+        GerritSendCommandQueue instance = new GerritSendCommandQueue();
         if (config != null) {
             instance.startQueue(config);
         }
@@ -82,8 +79,8 @@ public final class GerritSendCommandQueue {
      *
      * @param job the job to do.
      */
-    public static void queue(AbstractSendCommandJob job) {
-        getInstance(job.getConfig()).queueJob(job);
+    public void queue(AbstractSendCommandJob job) {
+        queueJob(job);
     }
 
     /**
@@ -92,9 +89,9 @@ public final class GerritSendCommandQueue {
      * @return the queue size,
      * @see java.util.concurrent.ThreadPoolExecutor#getQueue()
      */
-    public static int getQueueSize() {
-        if (instance != null && instance.executor != null) {
-            return instance.executor.getQueue().size();
+    public int getQueueSize() {
+        if (executor != null) {
+            return executor.getQueue().size();
         } else {
             return 0;
         }
@@ -107,7 +104,7 @@ public final class GerritSendCommandQueue {
      * @param job the job to do.
      * @see java.util.concurrent.ThreadPoolExecutor#submit(Runnable)
      */
-    public void queueJob(AbstractSendCommandJob job) {
+    protected void queueJob(AbstractSendCommandJob job) {
         try {
             logger.debug("Queueing job {}", job);
             executor.submit(job);
@@ -164,10 +161,10 @@ public final class GerritSendCommandQueue {
      * Gracefully waits for {@link #WAIT_FOR_JOBS_SHUTDOWN_TIMEOUT} seconds for all jobs to finish
      * before forcefully shutting them down.
      */
-    public static void shutdown() {
-        if (instance != null && instance.executor != null) {
-            ThreadPoolExecutor pool = instance.executor;
-            instance.executor = null;
+    public synchronized void shutdown() {
+        if (executor != null) {
+            ThreadPoolExecutor pool = executor;
+            executor = null;
             pool.shutdown(); // Disable new tasks from being submitted
             try {
                 // Wait a while for existing tasks to terminate
