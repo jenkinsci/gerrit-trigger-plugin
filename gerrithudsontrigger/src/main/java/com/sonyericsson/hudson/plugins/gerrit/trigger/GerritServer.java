@@ -488,7 +488,7 @@ public class GerritServer implements Describable<GerritServer> {
                         Future<Integer> future = service.submit(new Callable<Integer>() {
                             @Override
                             public Integer call() throws Exception {
-                                return sshConnection.executeCommandReader("gerrit stream-events").read();
+                                return sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read();
                             }
                         });
                         int readChar;
