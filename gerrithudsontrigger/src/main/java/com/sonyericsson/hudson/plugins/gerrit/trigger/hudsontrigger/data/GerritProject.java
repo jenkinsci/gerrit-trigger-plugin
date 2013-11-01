@@ -24,16 +24,22 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
+
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 /**
@@ -255,11 +261,18 @@ public class GerritProject implements Describable<GerritProject> {
          */
         public ComboBoxModel doFillPatternItems(@QueryParameter("serverName")
                 @RelativePath("..") final String serverName) {
+            Collection<String> projects = new HashSet<String>();
+
             if (serverName != null && !serverName.isEmpty()) {
-                return new ComboBoxModel(PluginImpl.getInstance().getServer(serverName).getGerritProjects());
-            } else {
-                return new ComboBoxModel();
+                if (ANY_SERVER.equals(serverName)) {
+                    for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                        projects.addAll(server.getGerritProjects());
+                    }
+                } else {
+                    projects.addAll(PluginImpl.getInstance().getServer(serverName).getGerritProjects());
+                }
             }
+            return new ComboBoxModel(projects);
         }
         @Override
         public String getDisplayName() {

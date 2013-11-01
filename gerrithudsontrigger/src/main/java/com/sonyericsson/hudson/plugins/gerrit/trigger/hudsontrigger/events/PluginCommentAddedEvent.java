@@ -23,7 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
+
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -38,7 +41,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An event configuration that causes the build to be triggered when a comment is added.
@@ -115,7 +120,21 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
         public ListBoxModel doFillVerdictCategoryItems(
                     @QueryParameter("serverName") @RelativePath(value = "..") String serverName) {
             ListBoxModel m = new ListBoxModel();
-            List<VerdictCategory> list = PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+
+            Collection<VerdictCategory> list = null;
+            if (ANY_SERVER.equals(serverName)) { //list all configured VCs in all servers
+                Map<String, VerdictCategory> map = new HashMap<String, VerdictCategory>();
+                for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                    for (VerdictCategory vc : server.getConfig().getCategories()) {
+                        if (!map.containsKey(vc.getVerdictValue())) {
+                            map.put(vc.getVerdictValue(), vc);
+                        }
+                    }
+                }
+                list = map.values();
+            } else {
+                list = PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+            }
             if (list != null && !list.isEmpty()) {
                 for (VerdictCategory v : list) {
                     m.add(v.getVerdictDescription(), v.getVerdictValue());
