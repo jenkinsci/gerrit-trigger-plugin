@@ -46,6 +46,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletException;
 
@@ -105,6 +111,8 @@ public class GerritServer implements Describable<GerritServer> {
      * Key that is used to select to trigger a build on events from any server.
      */
     public static final String ANY_SERVER = "__ANY__";
+    private static final int THREADS_FOR_TEST_CONNECTION = 1;
+    private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
     private String name;
     private transient boolean started;
     private transient String connectionResponse = "";
@@ -471,14 +479,31 @@ public class GerritServer implements Describable<GerritServer> {
             if (SshUtil.checkPassPhrase(file, password)) {
                 if (file.exists() && file.isFile()) {
                     try {
-                        SshConnection sshConnection = SshConnectionFactory.getConnection(
+                        final SshConnection sshConnection = SshConnectionFactory.getConnection(
                                 gerritHostName,
                                 gerritSshPort,
                                 gerritProxy,
                                 new Authentication(file, gerritUserName, password));
-                        sshConnection.disconnect();
-                        return FormValidation.ok(Messages.Success());
-
+                        ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
+                        Future<Integer> future = service.submit(new Callable<Integer>() {
+                            @Override
+                            public Integer call() throws Exception {
+                                return sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read();
+                            }
+                        });
+                        int readChar;
+                        try {
+                            readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);
+                        } catch (TimeoutException ex) {
+                            readChar = 0;
+                        } finally {
+                            sshConnection.disconnect();
+                        }
+                        if (readChar < 0) {
+                            return FormValidation.error(Messages.StreamEventsCapabilityException(gerritUserName));
+                        } else {
+                            return FormValidation.ok(Messages.Success());
+                        }
                     } catch (SshConnectException ex) {
                         return FormValidation.error(Messages.SshConnectException());
                     } catch (SshAuthenticationException ex) {

@@ -64,7 +64,10 @@ public class GerritConnection extends Thread implements Connector {
      * Time to wait between connection attempts.
      */
     public static final int CONNECT_SLEEP = 2000;
-    private static final String CMD_STREAM_EVENTS = "gerrit stream-events";
+    /**
+     * Command to open gerrit event stream.
+     */
+    public static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
     private static final String GERRIT_PROTOCOL_NAME = "ssh";
     private static final Logger logger = LoggerFactory.getLogger(GerritConnection.class);
