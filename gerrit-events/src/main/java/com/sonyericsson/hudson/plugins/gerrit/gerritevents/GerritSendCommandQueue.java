@@ -25,13 +25,17 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A thread-pool and queue implementation for queueing commands to the Gerrit server.
@@ -43,6 +47,7 @@ public final class GerritSendCommandQueue {
     private static final Logger logger = LoggerFactory.getLogger(GerritSendCommandQueue.class);
     private static GerritSendCommandQueue instance;
     private ThreadPoolExecutor executor = null;
+    private static final String THREAD_PREFIX = "Gerrit-send-command-thread-";
     private static final int THREAD_KEEP_ALIVE_TIME = 20;
     /**
      * The minimum size of the job-queue before monitors should begin to warn the administrator(s).
@@ -138,7 +143,18 @@ public final class GerritSendCommandQueue {
                     config.getNumberOfSendingWorkerThreads(),
                     config.getNumberOfSendingWorkerThreads(),
                     THREAD_KEEP_ALIVE_TIME, TimeUnit.MINUTES,
-                    new LinkedBlockingQueue<Runnable>());
+                    new LinkedBlockingQueue<Runnable>(),
+                    new ThreadFactory() {
+                        private final ThreadFactory parent = Executors.defaultThreadFactory();
+                        private final AtomicInteger tid = new AtomicInteger(1);
+
+                        @Override
+                        public Thread newThread(final Runnable task) {
+                          final Thread t = parent.newThread(task);
+                          t.setName(THREAD_PREFIX + tid.getAndIncrement());
+                          return t;
+                        }
+                      });
             executor.allowCoreThreadTimeOut(true);
             //Start with one thread, and build it up gradually as it needs.
             executor.prestartCoreThread();
