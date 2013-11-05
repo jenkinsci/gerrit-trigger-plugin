@@ -84,7 +84,8 @@ public class PluginConfig {
 
     /**
      * Sets all config values from the provided JSONObject.
-     * @param form the JSON object with form data.
+     *
+     * @param formData the JSON object with form data.
      */
     public void setValues(JSONObject formData) {
         numberOfReceivingWorkerThreads = formData.optInt(
