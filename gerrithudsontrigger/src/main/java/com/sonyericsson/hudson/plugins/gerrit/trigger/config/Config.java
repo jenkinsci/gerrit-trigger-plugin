@@ -134,7 +134,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Secret gerritHttpPassword;
     private boolean gerritBuildCurrentPatchesOnly;
     @Deprecated
-    private int numberOfWorkerThreads;
+    private transient int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
     private String gerritVerifiedCmdBuildUnstable;
     private String gerritVerifiedCmdBuildFailed;
