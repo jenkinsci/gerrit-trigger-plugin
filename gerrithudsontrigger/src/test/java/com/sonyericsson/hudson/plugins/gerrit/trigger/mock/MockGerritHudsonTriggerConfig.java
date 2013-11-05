@@ -144,6 +144,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
+        return;
+    }
+
+    @Override
     public void setValues(JSONObject form) {
         //Empty
     }
