@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -297,6 +298,7 @@ public class PluginImpl extends Plugin {
             //TODO save to registered listeners?
             gerritEventManager = null;
         }
+        GerritSendCommandQueue.shutdown();
     }
 
 }

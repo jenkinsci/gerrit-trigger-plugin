@@ -254,7 +254,6 @@ public class GerritServer implements Describable<GerritServer> {
             gerritConnection = null;
         }
 
-        GerritSendCommandQueue.shutdown();
         logger.info(name + " stopped");
         started = false;
     }
