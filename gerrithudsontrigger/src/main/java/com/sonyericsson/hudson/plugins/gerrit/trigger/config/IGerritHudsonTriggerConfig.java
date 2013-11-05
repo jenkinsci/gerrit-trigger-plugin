@@ -225,4 +225,12 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return username
      */
     String getGerritHttpUserName();
+
+    /**
+     * NumberOfSendingWorkerThreads.
+     * TODO: Should be removed in future.
+     *
+     * @param numberOfSendingWorkerThreads nr of threads.
+     */
+    void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads);
 }

@@ -635,6 +635,12 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.numberOfWorkerThreads = numberOfReceivingWorkerThreads;
     }
 
+    @Deprecated
+    @Override
+    public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
+        this.numberOfSendingWorkerThreads = numberOfSendingWorkerThreads;
+    }
+
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return gerritBuildCurrentPatchesOnly;
