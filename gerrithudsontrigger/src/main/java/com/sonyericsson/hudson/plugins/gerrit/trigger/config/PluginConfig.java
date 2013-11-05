@@ -32,7 +32,7 @@ import net.sf.json.JSONObject;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class PluginConfig implements IGerritTriggerPluginConfig {
+public class PluginConfig {
 
     /**
      * Default number of receiving worker threads.
@@ -67,7 +67,7 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
      *
      * @param pluginConfig the PluginConfig object to be copied.
      */
-    public PluginConfig(IGerritTriggerPluginConfig pluginConfig) {
+    public PluginConfig(PluginConfig pluginConfig) {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
     }
@@ -82,7 +82,10 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
         this(formData);
     }
 
-    @Override
+    /**
+     * Sets all config values from the provided JSONObject.
+     * @param form the JSON object with form data.
+     */
     public void setValues(JSONObject formData) {
         numberOfReceivingWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -99,7 +102,11 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
         }
     }
 
-    @Override
+    /**
+     * The number of threads to handle incoming events with.
+     *
+     * @return the number of worker threads.
+     */
     public int getNumberOfReceivingWorkerThreads() {
         if (numberOfReceivingWorkerThreads <= 0) {
             numberOfReceivingWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
@@ -117,7 +124,11 @@ public class PluginConfig implements IGerritTriggerPluginConfig {
         this.numberOfReceivingWorkerThreads = numberOfReceivingWorkerThreads;
     }
 
-    @Override
+    /**
+     * The number of worker threads that sends approvals/review commands.
+     *
+     * @return the number of worker threads.
+     */
     public int getNumberOfSendingWorkerThreads() {
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;

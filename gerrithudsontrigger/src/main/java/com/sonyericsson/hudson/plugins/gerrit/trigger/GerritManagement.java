@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritTriggerPluginConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 
 import hudson.DescriptorExtensionList;
@@ -204,7 +204,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @return the plugin config.
      */
-    public static IGerritTriggerPluginConfig getPluginConfig() {
+    public static PluginConfig getPluginConfig() {
         return PluginImpl.getInstance().getPluginConfig();
     }
 

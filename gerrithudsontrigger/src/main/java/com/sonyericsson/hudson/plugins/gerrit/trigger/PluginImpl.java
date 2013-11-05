@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritTriggerPluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
@@ -90,7 +89,7 @@ public class PluginImpl extends Plugin {
     @Deprecated
     private transient IGerritHudsonTriggerConfig config;
 
-    private IGerritTriggerPluginConfig pluginConfig;
+    private PluginConfig pluginConfig;
 
     /**
      * the default server name.
@@ -206,7 +205,7 @@ public class PluginImpl extends Plugin {
      *
      * @return the config.
      */
-    public IGerritTriggerPluginConfig getPluginConfig() {
+    public PluginConfig getPluginConfig() {
         return pluginConfig;
     }
 
