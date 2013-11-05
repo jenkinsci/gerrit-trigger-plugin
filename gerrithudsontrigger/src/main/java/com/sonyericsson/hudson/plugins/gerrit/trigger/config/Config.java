@@ -153,6 +153,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int gerritBuildNotBuiltCodeReviewValue;
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
+    @Deprecated
     private int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
@@ -615,6 +616,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    @Deprecated
     public int getNumberOfSendingWorkerThreads() {
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;

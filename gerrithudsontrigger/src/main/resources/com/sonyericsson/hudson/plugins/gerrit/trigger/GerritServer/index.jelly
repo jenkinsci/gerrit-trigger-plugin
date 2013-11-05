@@ -205,12 +205,6 @@
                         </f:entry>
                     </f:section>
                     <f:section title="${%Misc.}">
-                        <f:entry title="${%Nr of Sending Worker Threads}"
-                                 help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
-                            <f:textbox name="numberOfSendingWorkerThreads"
-                                       value="${it.config.numberOfSendingWorkerThreads}"
-                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
-                        </f:entry>
                         <f:entry title="${%Build Schedule Delay}"
                                  help="/plugin/gerrit-trigger/help-BuildScheduleDelay.html">
                             <f:textbox name="buildScheduleDelay"

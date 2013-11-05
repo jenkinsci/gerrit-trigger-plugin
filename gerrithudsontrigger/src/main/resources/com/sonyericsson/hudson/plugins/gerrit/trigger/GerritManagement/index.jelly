@@ -23,6 +23,12 @@
                                    value="${it.pluginConfig.numberOfReceivingWorkerThreads}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS}"/>
                     </f:entry>
+                    <f:entry title="${%Nr of Sending Worker Threads}"
+                             help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
+                        <f:textbox name="numberOfSendingWorkerThreads"
+                                   value="${it.pluginConfig.numberOfSendingWorkerThreads}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
+                    </f:entry>
                 </f:section>
                 <f:block>
                     <f:submit value="${%Save}" />

@@ -257,6 +257,7 @@ public class PluginImpl extends Plugin {
             PluginConfig conf = new PluginConfig();
             if (config != null) {
                 conf.setNumberOfReceivingWorkerThreads(config.getNumberOfReceivingWorkerThreads());
+                conf.setNumberOfSendingWorkerThreads(config.getNumberOfSendingWorkerThreads());
             }
             pluginConfig = conf;
         }

@@ -42,4 +42,10 @@ public interface IGerritTriggerPluginConfig {
      * @return the number of worker threads.
      */
     int getNumberOfReceivingWorkerThreads();
+
+    /**
+     * The number of worker threads that sends approvals/review commands.
+     * @return the number of worker threads.
+     */
+    int getNumberOfSendingWorkerThreads();
 }
