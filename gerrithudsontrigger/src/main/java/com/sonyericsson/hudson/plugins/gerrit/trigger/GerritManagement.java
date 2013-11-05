@@ -158,6 +158,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             throw new Failure("Illegal server name '" + serverName + "'");
         }
         GerritServer server = new GerritServer(serverName);
+        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
+        server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
 
         String mode = req.getParameter("mode");
         if (mode != null && mode.equals("copy")) { //"Copy Existing Server Configuration" has been chosen
@@ -281,7 +283,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             logger.debug("submit {}", req.toString());
         }
         JSONObject form = req.getSubmittedForm();
-        PluginImpl.getInstance().getPluginConfig().setValues(form);
+        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
+        pluginConfig.setValues(form);
+        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
+        }
         PluginImpl.getInstance().save();
 
         rsp.sendRedirect(".");
