@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 
 import hudson.DescriptorExtensionList;
@@ -43,7 +44,11 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import javax.servlet.ServletException;
+
 import jenkins.model.Jenkins;
+
+import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
@@ -153,6 +158,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             throw new Failure("Illegal server name '" + serverName + "'");
         }
         GerritServer server = new GerritServer(serverName);
+        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
+        server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
 
         String mode = req.getParameter("mode");
         if (mode != null && mode.equals("copy")) { //"Copy Existing Server Configuration" has been chosen
@@ -192,6 +199,15 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      */
     public static GerritManagement get() {
         return ManagementLink.all().get(GerritManagement.class);
+    }
+
+    /**
+     * Get the plugin config.
+     *
+     * @return the plugin config.
+     */
+    public static PluginConfig getPluginConfig() {
+        return PluginImpl.getInstance().getPluginConfig();
     }
 
     /**
@@ -250,5 +266,30 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         } else {
             return FormValidation.ok();
         }
+    }
+
+    /**
+     * Saves the form to the configuration and disk.
+     * @param req StaplerRequest
+     * @param rsp StaplerResponse
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
+     * @throws InterruptedException if something unfortunate happens.
+     */
+    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    IOException,
+    InterruptedException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("submit {}", req.toString());
+        }
+        JSONObject form = req.getSubmittedForm();
+        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
+        pluginConfig.setValues(form);
+        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
+        }
+        PluginImpl.getInstance().save();
+
+        rsp.sendRedirect(".");
     }
 }
