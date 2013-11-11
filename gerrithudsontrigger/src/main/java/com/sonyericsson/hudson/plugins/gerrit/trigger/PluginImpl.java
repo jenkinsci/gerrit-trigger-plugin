@@ -244,6 +244,8 @@ public class PluginImpl extends Plugin {
         doXStreamRegistrations();
         logger.trace("Loading configs");
         load();
+        GerritSendCommandQueue.initialize(pluginConfig);
+        //TODO fix ignoreEmail
         gerritEventManager = new GerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads(), null);
         for (GerritServer s : servers) {
             s.start();

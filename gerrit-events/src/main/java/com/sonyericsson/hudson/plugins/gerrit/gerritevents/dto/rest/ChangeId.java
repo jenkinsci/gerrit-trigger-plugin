@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2013 Jyrki Puttonen. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,32 +22,47 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 
 /**
- * TODO Missing JavaDoc.
+ * A changeId.
  */
-public class Comments {
-
-    final Map<String, List<LineComment>> comments = new HashMap<String, List<LineComment>>();
+public class ChangeId {
+    private final String projectName;
+    private final String branchName;
+    private final String id;
 
     /**
-     * Standard Constructor.
+     * Constructor.
      *
-     * @param commentedFiles the files.
+     * @param projectName project name
+     * @param branchName branch name
+     * @param id id
      */
-    public Comments(List<CommentedFile> commentedFiles) {
-        for (CommentedFile file : commentedFiles) {
-            if (!comments.containsKey(file.getFileName())) {
-                comments.put(file.getFileName(), new ArrayList<LineComment>());
-            }
-            comments.get(file.getFileName()).addAll(file.getLineComments());
-        }
+    public ChangeId(String projectName, String branchName, String id) {
+        this.projectName = projectName;
+        this.branchName = branchName;
+        this.id = id;
     }
 
+    /**
+     * Constructor getting values from a change object.
+     *
+     * @param change the change
+     * @see #ChangeId(String, String, String)
+     */
+    public ChangeId(Change change) {
+        this(change.getProject(), change.getBranch(), change.getId());
+    }
+
+    /**
+     * As the part of the URL.
+     *
+     * @return the url part.
+     */
+    public String asUrlPart() {
+        return projectName + "~" + branchName + "~" + id;
+    }
 }

@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritWorkersConfig;
 import org.kohsuke.stapler.StaplerRequest;
 
 import net.sf.json.JSONObject;
@@ -32,7 +33,7 @@ import net.sf.json.JSONObject;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class PluginConfig {
+public class PluginConfig implements GerritWorkersConfig {
 
     /**
      * Default number of receiving worker threads.

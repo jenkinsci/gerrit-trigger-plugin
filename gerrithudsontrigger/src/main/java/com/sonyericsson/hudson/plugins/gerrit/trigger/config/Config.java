@@ -37,6 +37,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
@@ -154,7 +156,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
     @Deprecated
-    private int numberOfSendingWorkerThreads;
+    private transient int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
     private List<VerdictCategory> categories;
@@ -878,13 +880,49 @@ public class Config implements IGerritHudsonTriggerConfig {
         return useRestApi;
     }
 
+    /**
+     * Sets useRestApi.
+     *
+     * @param useRestApi true if so
+     * @see #isUseRestApi()
+     */
+    public void setUseRestApi(boolean useRestApi) {
+        this.useRestApi = useRestApi;
+    }
+
     @Override
     public String getGerritHttpPassword() {
         return Secret.toString(gerritHttpPassword);
+    }
+
+    /**
+     * Sets gerritHttpPassword.
+     *
+     * @param gerritHttpPassword the password
+     * @see #getGerritHttpPassword()
+     */
+    public void setGerritHttpPassword(String gerritHttpPassword) {
+        this.gerritHttpPassword = Secret.fromString(gerritHttpPassword);
     }
 
     @Override
     public String getGerritHttpUserName() {
         return gerritHttpUserName;
     }
+
+    /**
+     * Sets gerritHttpUserName.
+     *
+     * @param gerritHttpUserName the username
+     * @see #getGerritHttpUserName()
+     */
+    public void setGerritHttpUserName(String gerritHttpUserName) {
+        this.gerritHttpUserName = gerritHttpUserName;
+    }
+
+    @Override
+    public Credentials getHttpCredentials() {
+        return new UsernamePasswordCredentials(gerritHttpUserName, Secret.toString(gerritHttpPassword));
+    }
+
 }

@@ -21,37 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.rest.RestConnectionConfig;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
 /**
- * Interface for an object that has information about how to connect to the Gerrit server.
- * Additions to the GerritConnectionConfig for the connection watchdog.
- *
- * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
+ * Configuration related to the workers, like limitations for incoming and outgoing worker threads.
  */
-public interface GerritConnectionConfig2 extends GerritConnectionConfig, RestConnectionConfig {
+public interface GerritWorkersConfig {
+    /**
+     * The number of threads to handle incoming events with.
+     * @return the number of worker threads.
+     */
+    int getNumberOfReceivingWorkerThreads();
 
     /**
-     * Gets the time in minutes before the watchdog times out.
-     *
-     * @return the timeout setting in minutes for the watchdog.
+     * The default nr of worker threads that sends approvals/review commands.
+     * @return the number of worker threads.
      */
-    int getWatchdogTimeoutMinutes();
-
-    /**
-     * Gets the time in seconds before the watchdog times out.
-     *
-     * @return the timeout setting in seconds for the watchdog.
-     */
-    int getWatchdogTimeoutSeconds();
-
-    /**
-     * Gets the exception data for when the watchdog shouldn't try to reconnect to Gerrit.
-     *
-     * @return the WatchTimeExceptionData.
-     */
-    WatchTimeExceptionData getExceptionData();
+    int getNumberOfSendingWorkerThreads();
 }

@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2013 Jyrki Puttonen. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +22,17 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object.CommentedFile;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object.ReviewInput;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object.ReviewLabel;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.CommentedFile;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewInput;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewLabel;
 import hudson.model.TaskListener;
 
 import java.util.ArrayList;
@@ -37,11 +40,14 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * TODO Missing JavaDoc.
- */
+* A job for the {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue} that
+* sends a build completed message.
+*/
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     private final BuildMemory.MemoryImprint memoryImprint;
+    private final TaskListener listener;
+    private final ParameterExpander parameterExpander;
 
     /**
      * Constructor.
@@ -52,8 +58,11 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
      */
     public BuildCompletedRestCommandJob(IGerritHudsonTriggerConfig config, BuildMemory.MemoryImprint memoryImprint,
                                         TaskListener listener) {
-        super(config, listener, (ChangeBasedEvent)memoryImprint.getEvent());
+        //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
+        super(config, (listener != null ? listener.getLogger() : null), (ChangeBasedEvent)memoryImprint.getEvent());
         this.memoryImprint = memoryImprint;
+        this.listener = listener;
+        parameterExpander = new ParameterExpander(config);
     }
 
     @Override

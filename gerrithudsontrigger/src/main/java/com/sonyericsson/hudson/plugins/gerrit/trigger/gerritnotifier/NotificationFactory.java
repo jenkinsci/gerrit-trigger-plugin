@@ -31,13 +31,12 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildCompletedCommandJob;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job.BuildCompletedRestCommandJob;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.BuildStartedCommandJob;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job.BuildStartedRestCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildCompletedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildCompletedRestCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildStartedCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildStartedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import hudson.model.AbstractBuild;
@@ -121,14 +120,11 @@ public class NotificationFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                AbstractSendCommandJob job;
                 if (config.isUseRestApi()) {
-                    job = new BuildCompletedRestCommandJob(config, memoryImprint, listener);
+                    GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
                 } else {
-                    job = new BuildCompletedCommandJob(config,
-                        memoryImprint, listener);
+                    GerritSendCommandQueue.queue(new BuildCompletedCommandJob(config, memoryImprint, listener));
                 }
-                GerritSendCommandQueue.queue(job);
             } else {
                 logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
@@ -199,15 +195,12 @@ public class NotificationFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                AbstractSendCommandJob job;
                 if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
-                    job = new BuildStartedRestCommandJob(config, build, listener,
-                            (ChangeBasedEvent)event, stats);
+                    GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
+                            (ChangeBasedEvent)event, stats));
                 } else {
-                    job = new BuildStartedCommandJob(config,
-                        build, listener, event, stats);
+                    GerritSendCommandQueue.queue(new BuildStartedCommandJob(config, build, listener, event, stats));
                 }
-                GerritSendCommandQueue.queue(job);
             } else {
                 logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
