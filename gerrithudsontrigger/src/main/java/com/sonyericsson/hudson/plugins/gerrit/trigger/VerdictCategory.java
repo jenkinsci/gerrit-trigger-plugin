@@ -34,6 +34,26 @@ import net.sf.json.JSONObject;
  */
 public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
 
+    /**
+     * The value for Code-Review.
+     */
+    public static final String CODEREVIEW_VALUE = "Code-Review";
+    /**
+     * The description for Code-Review.
+     */
+    public static final String CODEREVIEW_DESCRIPTION = "Code Review";
+    /**
+     * The value for Verified.
+     */
+    public static final String VERIFIED_VALUE = "Verified";
+    /**
+     * The description for Verified.
+     */
+    public static final String VERIFIED_DESCRIPTION = "Verified";
+
+    private static final String LEGACY_CODEREVIEW_VALUE = "CRVW";
+    private static final String LEGACY_VERIFIED_VALUE = "VRIF";
+
     private String verdictValue;
     private String verdictDescription;
 
@@ -43,7 +63,7 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      * @param description the text describing the verdict category.
      */
     public VerdictCategory(String value, String description) {
-        verdictValue = value;
+        verdictValue = normalizeValue(value);
         verdictDescription = description;
     }
 
@@ -63,6 +83,21 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
         return verdictDescription;
     }
 
+    /**
+     * Normalize value.
+     *
+     * @param value the value in Gerrit for the verdict category.
+     * @return the normalized value.
+     */
+    public static String normalizeValue(String value) {
+        if (LEGACY_CODEREVIEW_VALUE.equals(value)) {
+            return CODEREVIEW_VALUE;
+        }
+        if (LEGACY_VERIFIED_VALUE.equals(value)) {
+            return VERIFIED_VALUE;
+        }
+        return value;
+    }
     /**
      * Creates a VerdictCategory from a JSONObject.
      * @param obj the JSONObject.

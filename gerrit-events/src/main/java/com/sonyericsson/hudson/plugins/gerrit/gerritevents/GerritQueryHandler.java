@@ -98,7 +98,7 @@ public class GerritQueryHandler {
 
     /**
      * Runs the query and returns the result as a list of Java JSONObjects.
-     * It is the equivalent of calling queryJava(queryString, true, true).
+     * It is the equivalent of calling queryJava(queryString, true, true, false, false).
      * @param queryString the query.
      * @return the query result as a List of JSONObjects.
      * @throws GerritQueryException if Gerrit reports an error with the query.
@@ -106,10 +106,10 @@ public class GerritQueryHandler {
      * @throws IOException for some other IO problem.
      */
     public List<JSONObject> queryJava(String queryString) throws SshException, IOException, GerritQueryException {
-        return queryJava(queryString, true, true, false);
+        return queryJava(queryString, true, true, false, false);
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 18 LINES. REASON: Informative.
+    //CS IGNORE RedundantThrows FOR NEXT 22 LINES. REASON: Informative.
     //CS IGNORE JavadocMethod FOR NEXT 17 LINES. REASON: It is there.
 
     /**
@@ -119,6 +119,9 @@ public class GerritQueryHandler {
      *                      Meaning if --patch-sets should be appended to the command call.
      * @param getCurrentPatchSet if the current patch-set for the projects found should be included in the result.
      *                          Meaning if --current-patch-set should be appended to the command call.
+     * @param getFiles if the files of the patch sets should be included in the result.
+     *                          Meaning if --files should be appended to the command call.
+     *
      * @return the query result as a List of JSONObjects.
      * @throws GerritQueryException if Gerrit reports an error with the query.
      * @throws SshException if there is an error in the SSH Connection.
@@ -126,10 +129,35 @@ public class GerritQueryHandler {
      */
     public List<JSONObject> queryJava(String queryString, boolean getPatchSets, boolean getCurrentPatchSet,
                                       boolean getFiles) throws SshException, IOException, GerritQueryException {
+        return queryJava(queryString, getPatchSets, getCurrentPatchSet, getFiles, false);
+    }
+
+    //CS IGNORE RedundantThrows FOR NEXT 22 LINES. REASON: Informative.
+
+    /**
+     * Runs the query and returns the result as a list of Java JSONObjects.
+     * @param queryString the query.
+     * @param getPatchSets getPatchSets if all patch-sets of the projects found should be included in the result.
+     *                      Meaning if --patch-sets should be appended to the command call.
+     * @param getCurrentPatchSet if the current patch-set for the projects found should be included in the result.
+     *                          Meaning if --current-patch-set should be appended to the command call.
+     * @param getFiles if the files of the patch sets should be included in the result.
+     *                          Meaning if --files should be appended to the command call.
+     * @param getCommitMessage if full commit message should be included in the result.
+     *                          Meaning if --commit-message should be appended to the command call.
+     *
+     * @return the query result as a List of JSONObjects.
+     * @throws GerritQueryException if Gerrit reports an error with the query.
+     * @throws SshException if there is an error in the SSH Connection.
+     * @throws IOException for some other IO problem.
+     */
+    public List<JSONObject> queryJava(String queryString, boolean getPatchSets, boolean getCurrentPatchSet,
+                                      boolean getFiles, boolean getCommitMessage)
+            throws SshException, IOException, GerritQueryException {
 
         final List<JSONObject> list = new LinkedList<JSONObject>();
 
-        runQuery(queryString, getPatchSets, getCurrentPatchSet, getFiles, new LineVisitor() {
+        runQuery(queryString, getPatchSets, getCurrentPatchSet, getFiles, getCommitMessage, new LineVisitor() {
 
             @Override
             public void visit(String line) throws GerritQueryException {
@@ -157,7 +185,7 @@ public class GerritQueryHandler {
      */
     public List<JSONObject> queryFiles(String queryString) throws
             SshException, IOException, GerritQueryException {
-        return queryJava(queryString, false, true, true);
+        return queryJava(queryString, false, true, true, false);
     }
 
 
@@ -166,14 +194,14 @@ public class GerritQueryHandler {
 
     /**
      * Runs the query and returns the result as a list of JSON formatted strings.
-     * This is the equivalent of calling queryJava(queryString, true, true).
+     * This is the equivalent of calling queryJava(queryString, true, true, false, false).
      * @param queryString the query.
      * @return a List of JSON formatted strings.
      * @throws SshException if there is an error in the SSH Connection.
      * @throws IOException for some other IO problem.
      */
     public List<String> queryJson(String queryString) throws SshException, IOException {
-        return queryJson(queryString, true, true, false);
+        return queryJson(queryString, true, true, false, false);
     }
 
     //CS IGNORE RedundantThrows FOR NEXT 17 LINES. REASON: Informative.
@@ -193,9 +221,32 @@ public class GerritQueryHandler {
      */
     public List<String> queryJson(String queryString, boolean getPatchSets, boolean getCurrentPatchSet, boolean getFiles)
             throws SshException, IOException {
+        return queryJson(queryString, getPatchSets, getCurrentPatchSet, getFiles, false);
+    }
+
+    //CS IGNORE RedundantThrows FOR NEXT 20 LINES. REASON: Informative.
+
+    /**
+     * Runs the query and returns the result as a list of JSON formatted strings.
+     * @param queryString the query.
+     * @param getPatchSets if all patch-sets of the projects found should be included in the result.
+     *                      Meaning if --patch-sets should be appended to the command call.
+     * @param getCurrentPatchSet if the current patch-set for the projects found should be included in the result.
+     *                          Meaning if --current-patch-set should be appended to the command call.
+     * @param getFiles if the files of the patch sets should be included in the result.
+     *                          Meaning if --files should be appended to the command call.
+     * @param getCommitMessage if full commit message should be included in the result.
+     *                          Meaning if --commit-message should be appended to the command call.
+     * @return a List of JSON formatted strings.
+     * @throws SshException if there is an error in the SSH Connection.
+     * @throws IOException for some other IO problem.
+     */
+    public List<String> queryJson(String queryString, boolean getPatchSets, boolean getCurrentPatchSet, boolean getFiles,
+                                  boolean getCommitMessage)
+            throws SshException, IOException {
         final List<String> list = new LinkedList<String>();
         try {
-            runQuery(queryString, getPatchSets, getCurrentPatchSet, getFiles, new LineVisitor() {
+            runQuery(queryString, getPatchSets, getCurrentPatchSet, getFiles, getCommitMessage, new LineVisitor() {
 
                 @Override
                 public void visit(String line) {
@@ -208,7 +259,7 @@ public class GerritQueryHandler {
         return list;
     }
 
-    //CS IGNORE RedundantThrows FOR NEXT 18 LINES. REASON: Informative.
+    //CS IGNORE RedundantThrows FOR NEXT 22 LINES. REASON: Informative.
     //CS IGNORE JavadocMethod FOR NEXT 17 LINES. REASON: It is there.
 
     /**
@@ -218,13 +269,18 @@ public class GerritQueryHandler {
      *                      Meaning if --patch-sets should be appended to the command call.
      * @param getCurrentPatchSet if the current patch-set for the projects found should be included in the result.
      *                          Meaning if --current-patch-set should be appended to the command call.
+     * @param getFiles if changed files list should be included in the result.
+     *                          Meaning if --files should be appended to the command call.
+     * @param getCommitMessage if full commit message should be included in the result.
+     *                          Meaning if --commit-message should be appended to the command call.
      * @param visitor the visitor to handle each line in the result.
      * @throws GerritQueryException if a visitor finds that Gerrit reported an error with the query.
      * @throws SshException if there is an error in the SSH Connection.
      * @throws IOException for some other IO problem.
      */
     private void runQuery(String queryString, boolean getPatchSets, boolean getCurrentPatchSet, boolean getFiles,
-                          LineVisitor visitor) throws GerritQueryException, SshException, IOException {
+                          boolean getCommitMessage, LineVisitor visitor)
+            throws GerritQueryException, SshException, IOException {
         StringBuilder str = new StringBuilder(QUERY_COMMAND);
         str.append(" --format=JSON");
         if (getPatchSets) {
@@ -235,6 +291,9 @@ public class GerritQueryHandler {
         }
         if (getFiles) {
             str.append(" --files");
+        }
+        if (getCommitMessage) {
+            str.append(" --commit-message");
         }
         str.append(" \"").append(queryString.replace((CharSequence)"\"", (CharSequence)"\\\"")).append("\"");
 
@@ -258,7 +317,7 @@ public class GerritQueryHandler {
 
     /**
      * Internal visitor for handling a line of text.
-     * Used by {@link #runQuery(java.lang.String, boolean, boolean, boolean, LineVisitor)}.
+     * Used by {@link #runQuery(java.lang.String, boolean, boolean, boolean, boolean, LineVisitor)}.
      */
     interface LineVisitor {
         /**

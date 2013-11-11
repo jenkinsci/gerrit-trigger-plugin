@@ -1,8 +1,14 @@
  <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
-    <j:set var="fileTriggerEnabled" value="${descriptor.isFileTriggerEnabled()}"/>
+    <j:set var="fileTriggerEnabled" value="${it.isFileTriggerEnabled()}"/>
+    <j:invokeStatic var="trigger" method="getTrigger" className="com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger">
+        <j:arg type="hudson.model.AbstractProject" value="${it}" />
+    </j:invokeStatic>
     <f:section title="${%Gerrit Trigger}">
+        <f:entry title="${%Choose a server}" description="${it.description}" field="serverName">
+            <f:select/>
+        </f:entry>
         <f:advanced>
             <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
@@ -148,6 +154,7 @@
                 </f:entry>
             </f:section>
         </f:advanced>
+
         <f:entry title="${%Silent Mode}"
                  field="silentMode"
                  help="/plugin/gerrit-trigger/trigger/help-SilentMode.html">
@@ -177,6 +184,7 @@
                 </f:optionalBlock>
             </table>
         </f:entry>
+
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
             <f:repeatable var="p" field="gerritProjects" add="${%Add Project}" minimum="1" header="${%Gerrit Project}">
                 <table cellpadding="2" cellspacing="0" style="margin-bottom: 5px;" width="100%">
@@ -213,7 +221,7 @@
                             </select>
                         </td>
                         <td minwidth="150" valign="top" style="border-bottom: 1px solid black;" rowspan="2">
-                            <f:combobox clazz="setting-input" field="pattern" value="${p.pattern}"/>
+                            <f:combobox clazz="setting-input" field="pattern"/>
                         </td>
                         <td style="border-right: 1px solid black; border-left: 1px solid grey;">
                             <table style="margin-top: 0; margin-bottom: 0; width: 100%;" cellspacing="0" cellpadding="2">
@@ -259,6 +267,39 @@
                                     </tr>
                                 </table>
                             </f:repeatable>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
+                            <f:repeatable var="t" field="topics" add="${%Add Topic}" minimum="0" header="">
+                            <table width="100%">
+                                <tr>
+                                    <td width="60">
+                                    ${%Topic}
+                                    </td>
+                                    <td width="80">
+                                        <select class="setting-input" name="_.compareType">
+                                            <j:forEach items="${types}" var="me">
+                                                <j:choose>
+                                                    <j:when test="${loop.getCompareType().name()==me.name()}">
+                                                        <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                                    </j:when>
+                                                    <j:otherwise>
+                                                        <option value="${me.name()}">${me.getDisplayName()}</option>
+                                                    </j:otherwise>
+                                                </j:choose>
+                                            </j:forEach>
+                                            </select>
+                                    </td>
+                                    <td minwidth="150">
+                                        <f:textbox field="pattern" value="${b.pattern}" default=""/>
+                                    </td>
+                                    <td width="65">
+                                        <f:repeatableDeleteButton/>
+                                    </td>
+                                </tr>
+                            </table>
+                        </f:repeatable>
                         </td>
                     </tr>
                     <j:if test="${fileTriggerEnabled}">

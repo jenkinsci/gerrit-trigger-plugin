@@ -28,6 +28,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +58,7 @@ public final class GerritDynamicUrlProcessor {
 
     private static final String SHORTNAME_PROJECT = "p";
     private static final String SHORTNAME_BRANCH = "b";
+    private static final String SHORTNAME_TOPIC = "t";
     private static final String SHORTNAME_FILE = "f";
     private static final int SOCKET_READ_TIMEOUT = 10000;
 
@@ -72,7 +75,7 @@ public final class GerritDynamicUrlProcessor {
     private static Pattern buildLinePattern() {
       // This is what a line in the file should look like, after all comments and
       // leading and trailing whitespace have been removed:
-      // item: one of the characters p (for Project), b (for Branch) or f (for FilePath)
+      // item: one of the characters p (for Project), b (for Branch), t (for Topic) or f (for FilePath)
       // optional whitespace
       // operator: one of the characters = (for Plain), ~ (for RegExp), or ^ (for ANT path)
       // optional whitespace
@@ -80,6 +83,7 @@ public final class GerritDynamicUrlProcessor {
       String projectBranchFile = "^("
               + SHORTNAME_PROJECT
               + "|" + SHORTNAME_BRANCH
+              + "|" + SHORTNAME_TOPIC
               + "|" + SHORTNAME_FILE
               + ")";
       String operators = "(";
@@ -102,16 +106,18 @@ public final class GerritDynamicUrlProcessor {
     /**
      * Read and parse the dynamic trigger configuration
      * @param reader stream from which to read the config
+     * @param serverName the name of the Gerrit server.
      * @return List of Gerrit projects
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader)
+    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader, String serverName)
             throws IOException, ParseException {
       Pattern linePattern = buildLinePattern();
 
       List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
       List<Branch> branches = null;
+      List<Topic> topics = null;
       List<FilePath> filePaths = null;
       GerritProject dynamicGerritProject = null;
 
@@ -161,8 +167,9 @@ public final class GerritDynamicUrlProcessor {
           }
 
           branches = new ArrayList<Branch>();
+          topics = new ArrayList<Topic>();
           filePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, filePaths);
+          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
@@ -170,6 +177,13 @@ public final class GerritDynamicUrlProcessor {
           Branch branch = new Branch(type, text);
           branches.add(branch);
           dynamicGerritProject.setBranches(branches);
+        } else if (SHORTNAME_TOPIC.equals(item)) { // Topic
+            if (topics == null) {
+                throw new ParseException("Line " + lineNr + ": attempt to use 'Topic' before 'Project'", lineNr);
+            }
+            Topic topic = new Topic(type, text);
+            topics.add(topic);
+            dynamicGerritProject.setTopics(topics);
         } else { // FilePath (because it must be an 'f')
           if (filePaths == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
@@ -194,11 +208,12 @@ public final class GerritDynamicUrlProcessor {
      * since the last fetch, it returns null.
      *
      * @param gerritTriggerConfigUrl the URL to fetch
+     * @param serverName name of the Gerrit server.
      * @return a list of GerritProjects if successful, or null if no change
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    public static List<GerritProject> fetch(String gerritTriggerConfigUrl)
+    public static List<GerritProject> fetch(String gerritTriggerConfigUrl, String serverName)
             throws IOException, ParseException {
 
         if (gerritTriggerConfigUrl == null) {
@@ -219,7 +234,7 @@ public final class GerritDynamicUrlProcessor {
         try {
           instream = connection.getInputStream();
           reader = new BufferedReader(new InputStreamReader(instream));
-          return readAndParseTriggerConfig(reader);
+          return readAndParseTriggerConfig(reader, serverName);
         } finally {
           if (reader != null) {
             reader.close();

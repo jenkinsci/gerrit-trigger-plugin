@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -71,10 +73,11 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, true, false, null, null, null, null, null, null, null, null, false, false, null));
+                false, true, false, null, null, null, null, null, null, null,
+                PluginImpl.DEFAULT_SERVER_NAME, null, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
@@ -102,7 +105,8 @@ public abstract class DuplicatesUtil {
         String filepath = uri.toURL().toString();
         GerritTrigger trigger = new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, false, true,
-                false, null, null, null, null, null, null, null, list, true, false, filepath);
+                false, null, null, null, null, null, null, null, PluginImpl.DEFAULT_SERVER_NAME,
+                list, true, false, filepath);
         p.addTrigger(trigger);
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
@@ -122,13 +126,14 @@ public abstract class DuplicatesUtil {
         FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")), null));
-        PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
+                Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null));
+        PluginCommentAddedEvent event = new PluginCommentAddedEvent(VerdictCategory.CODEREVIEW_VALUE, "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, true, false, null, null, null, null, null, null, null, list, false, false, null));
+                false, true, false, null, null, null, null, null, null, null,
+                PluginImpl.DEFAULT_SERVER_NAME, list, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }

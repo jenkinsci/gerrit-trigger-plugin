@@ -158,7 +158,7 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * Creates a URL to the provided changeset number.
      * @param event the gerrit triggered event
      * @return a URL based on frontUrl + / + number
-     * @see #getGerritFrontEndUrlFor()
+     * @see #getGerritFrontEndUrlFor(String, String)
      */
     String getGerritFrontEndUrlFor(GerritTriggeredEvent event);
 
@@ -204,4 +204,25 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return true if so
      */
     boolean isEnablePluginMessages();
- }
+
+    /**
+     * If the HTTP REST API should be used for change approval instead of the sh API.
+     *
+     * @return true if so.
+     */
+    boolean isUseRestApi();
+
+    /**
+     * The password for the HTTP REST API.
+     *
+     * @return the password
+     */
+    String getGerritHttpPassword();
+
+    /**
+     * The user name for the HTTP REST API.
+     *
+     * @return username
+     */
+    String getGerritHttpUserName();
+}

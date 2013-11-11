@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPubli
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -125,10 +126,9 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        event.setProvider(new Provider("gerrit", "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
-
     /**
      * Create a new patchset created event with the given data.
      *
@@ -265,13 +265,14 @@ public final class Setup {
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
         event.setChange(change);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
         List<Approval> approvals = new LinkedList<Approval>();
         Approval approval = new Approval();
-        approval.setType("CRVW");
+        approval.setType(VerdictCategory.CODEREVIEW_VALUE);
         approval.setValue("1");
         approvals.add(approval);
         event.setApprovals(approvals);
@@ -334,6 +335,7 @@ public final class Setup {
         patch.setRevision("9999");
         event.setPatchset(patch);
         event.setUserName("Bobby");
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
 
@@ -385,7 +387,8 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", null, null, triggerOnEvents, false, false, "");
+                true, true, false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME,
+                triggerOnEvents, false, false, "");
 
         if (project != null) {
             trigger.start(project, true);
@@ -429,7 +432,8 @@ public final class Setup {
      * @return the List.
      */
     public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
-        VerdictCategory cat = new VerdictCategory("CRVW", "Code review");
+        VerdictCategory cat = new VerdictCategory(
+                VerdictCategory.CODEREVIEW_VALUE, VerdictCategory.CODEREVIEW_DESCRIPTION);
         List<VerdictCategory> list = new LinkedList<VerdictCategory>();
         list.add(cat);
         return list;

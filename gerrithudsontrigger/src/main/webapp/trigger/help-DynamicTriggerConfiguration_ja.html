@@ -11,6 +11,7 @@
     設定ファイルのフォーマットは以下の通りです。
 <pre style="border: 1px dashed black; padding: 2px"><code>p=some/project
 b^**/master/*
+t^.*
 f~\.txt$
 p=some/other/project
 b^**</code></pre>
@@ -20,6 +21,7 @@ b^**</code></pre>
 	    <dd>
             p プロジェクト<br/>
             b ブランチ<br/>
+            t トピック<br />
             f ファイル<br/>
             = プレーンな文字列<br/>
             ^ ANTスタイルの構文<br/>
@@ -27,5 +29,5 @@ b^**</code></pre>
 	    </dd>
     </dl>
 
-	ブランチとファイルの行は、直前に現れるプロジェクト行の一部とみなされます。
+	ブランチ、トピック、ファイルの行は、直前に現れるプロジェクト行の一部とみなされます。
 </p>

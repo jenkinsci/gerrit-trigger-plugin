@@ -52,11 +52,14 @@ public class GerritProjectInterestingTest {
     }
 
     /**
-     * Tests {@link GerritProject#isInteresting(java.lang.String, java.lang.String)}.
+     * Tests {@link GerritProject#isInteresting(String, String, String)}.
      */
     @Test
     public void testInteresting() {
-        assertEquals(scenario.expected, scenario.config.isInteresting(scenario.project, scenario.branch));
+        assertEquals(scenario.expected, scenario.config.isInteresting(
+                scenario.project,
+                scenario.branch,
+                scenario.topic));
     }
 
     /**
@@ -69,45 +72,71 @@ public class GerritProjectInterestingTest {
         List<InterestingScenario[]> parameters = new LinkedList<InterestingScenario[]>();
 
         List<Branch> branches = new LinkedList<Branch>();
+        List<Topic> topics = new LinkedList<Topic>();
         Branch branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
-        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
+        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "origin/master", true)});
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "project", "origin/master", null, true), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", true)});
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.PLAIN, "olstorp");
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN, "project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "feature/mymaster", true)});
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "project", "feature/mymaster", null, true), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
-        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, null);
-        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "vendor/semc/master/project",
-                                                            "origin/master", true), });
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "vendor/semc/master/project", "origin/master", null, true), });
+
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.PLAIN, "master");
+        branches.add(branch);
+        topics = new LinkedList<Topic>();
+        Topic topic = new Topic(CompareType.PLAIN, "topic");
+        topics.add(topic);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", "topic", true)});
+
+        topics = new LinkedList<Topic>();
+        topic = new Topic(CompareType.ANT, "**/topic");
+        topics.add(topic);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "project", "master", "team/topic", true), });
+
+        topics = new LinkedList<Topic>();
+        topic = new Topic(CompareType.REG_EXP, ".*_topic");
+        topics.add(topic);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null);
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "project", "master", "team-wolf_topic", true), });
 
         return parameters;
     }
@@ -120,6 +149,7 @@ public class GerritProjectInterestingTest {
         GerritProject config;
         String project;
         String branch;
+        String topic;
         boolean expected;
 
         /**
@@ -127,12 +157,18 @@ public class GerritProjectInterestingTest {
          * @param config config
          * @param project project
          * @param branch branch
+         * @param topic topic
          * @param expected expected
          */
-        public InterestingScenario(GerritProject config, String project, String branch, boolean expected) {
+        public InterestingScenario(GerritProject config,
+                String project,
+                String branch,
+                String topic,
+                boolean expected) {
             this.config = config;
             this.project = project;
             this.branch = branch;
+            this.topic = topic;
             this.expected = expected;
         }
 

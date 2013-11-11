@@ -26,7 +26,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Extension;
+import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import hudson.plugins.git.GitException;
@@ -37,6 +40,7 @@ import hudson.plugins.git.util.BuildChooser;
 import hudson.plugins.git.util.BuildChooserContext;
 import hudson.plugins.git.util.BuildChooserDescriptor;
 import hudson.plugins.git.util.BuildData;
+import hudson.remoting.VirtualChannel;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -87,15 +91,21 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      *
      * @throws GitException in case of error
      * @throws IOException  In case of error
+     * @throws InterruptedException  In case of error
      */
     @Override
     public Collection<Revision> getCandidateRevisions(boolean isPollCall, String singleBranch,
                                                       GitClient git, TaskListener listener,
                                                       BuildData data, BuildChooserContext context)
-        throws GitException, IOException {
+            throws GitException, IOException, InterruptedException {
 
         try {
-            ObjectId sha1 = git.revParse("FETCH_HEAD");
+            String rev = context.actOnBuild(new GetGerritEventRevision());
+            if (rev == null) {
+                rev = "FETCH_HEAD";
+            }
+
+            ObjectId sha1 = git.revParse(rev);
 
             Revision revision = new Revision(sha1);
             revision.getBranches().add(new Branch(singleBranch, sha1));
@@ -178,4 +188,21 @@ public class GerritTriggerBuildChooser extends BuildChooser {
         }
     }
 
+    /**
+     * Retrieve the Gerrit event revision
+     */
+    private static class GetGerritEventRevision
+            implements BuildChooserContext.ContextCallable<AbstractBuild<?, ?>, String> {
+        @Override
+        public String invoke(AbstractBuild<?, ?> build, VirtualChannel channel) {
+            GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
+            if (cause != null) {
+                GerritTriggeredEvent event = cause.getEvent();
+                if (event instanceof ChangeBasedEvent) {
+                    return ((ChangeBasedEvent)event).getPatchSet().getRevision();
+                }
+            }
+            return null;
+        }
+    }
 }

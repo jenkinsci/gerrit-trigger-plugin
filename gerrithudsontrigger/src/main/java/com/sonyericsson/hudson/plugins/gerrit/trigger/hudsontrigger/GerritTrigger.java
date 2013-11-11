@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
@@ -130,6 +131,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildNotBuiltMessage;
     private String buildUnsuccessfulFilepath;
     private String customUrl;
+    private String serverName;
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
@@ -184,7 +186,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
-     * @param customUrl                      Custom URL to sen to gerrit instead of build URL
+     * @param customUrl                      Custom URL to sen to Gerrit instead of build URL
+     * @param serverName                     The selected server
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
      * @param allowTriggeringUnreviewedPatches
@@ -215,6 +218,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildNotBuiltMessage,
             String buildUnsuccessfulFilepath,
             String customUrl,
+            String serverName,
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
             boolean allowTriggeringUnreviewedPatches,
@@ -241,6 +245,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildNotBuiltMessage = buildNotBuiltMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
+        this.serverName = serverName;
         this.triggerOnEvents = triggerOnEvents;
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
         this.triggerConfigURL = triggerConfigURL;
@@ -250,15 +255,36 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Converts old trigger configs when only patchset created was available as event.
-     * If no event selection is set to true, triggering on patchset created will be.
+     * Converts old trigger configs when only patchset created was available as event
+     * and when jobs were not associated to Gerrit servers.
      *
      * @return the resolved instance.
      * @throws ObjectStreamException if something beneath goes wrong.
      */
     public Object readResolve() throws ObjectStreamException {
+        initializeServerName();
         initializeTriggerOnEvents();
         return super.readResolve();
+    }
+
+    /**
+     * Returns name of server.
+     *
+     * @return the server name
+     *
+     */
+    public String getServerName() {
+        return this.serverName;
+    }
+
+    /**
+     * Set the selected server.
+     *
+     * @param name the name of the newly selected server.
+     *
+     */
+    public void setServerName(String name) {
+        this.serverName = name;
     }
 
     /**
@@ -282,19 +308,36 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
+    /**
+    * Adds this trigger as listener to the Gerrit server.
+    *
+    * @param project the project associated with the trigger.
+    */
+    private void addThisTriggerAsListener(AbstractProject project) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            if (plugin.getServer(serverName) != null) {
+                 plugin.getServer(serverName).addListener(this);
+            } else {
+                logger.warn("The server {} could not be found! Project {} will not be triggered!",
+                        serverName,
+                        project.getFullDisplayName());
+            }
+        } else {
+            logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
+                    project.getFullDisplayName());
+        }
+    }
+
     @Override
     public void start(AbstractProject project, boolean newInstance) {
         logger.debug("Start project: {}", project);
         super.start(project, newInstance);
+        initializeServerName();
         initializeTriggerOnEvents();
         this.myProject = project;
         try {
-            if (PluginImpl.getInstance() != null) {
-                PluginImpl.getInstance().addListener(this);
-            } else {
-                logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
-                        project.getFullDisplayName());
-            }
+            addThisTriggerAsListener(project);
         } catch (IllegalStateException e) {
             logger.error("I am too early!", e);
         }
@@ -318,14 +361,29 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
-            if (PluginImpl.getInstance() != null) {
-                PluginImpl.getInstance().removeListener(this);
-            }
+                removeListener();
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
 
         cancelTimer();
+    }
+/**
+ * Removes listener from the server.
+ *
+ *
+ */
+    private void removeListener() {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            if (plugin.getServer(serverName) != null) {
+                PluginImpl.getInstance().getServer(serverName).removeListener(this);
+            } else {
+                logger.error("Could not find server {}", serverName);
+            }
+        } else {
+       logger.error("The plugin instance could not be found");
+        }
     }
 
     @Override
@@ -333,6 +391,22 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         //Default should do nothing
     }
 
+    /**
+     * Initializes the event's provider and pass it the server name info if necessary.
+     *
+     * @param tEvent the event.
+     * @return the initialized provider.
+     */
+    private Provider initializeProvider(GerritTriggeredEvent tEvent) {
+        Provider provider = tEvent.getProvider();
+        if (provider == null) {
+            provider = new Provider();
+            provider.setName(serverName);
+        } else if (provider.getName() == null) {
+            provider.setName(serverName);
+        }
+        return provider;
+    }
     /**
      * Called when a PatchSetCreated event arrives.
      *
@@ -442,10 +516,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
-        //Experimental feature!
+
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            if (PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
                 getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
             }
             if (null != changeBasedEvent.getPatchSet()) {
@@ -467,6 +541,33 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Get the list of verdict categories available on the selected GerritServer.
+     *
+     * @return the list of verdict categories, or an empty linkedlist if server not found.
+     */
+    private List<VerdictCategory> getVerdictCategoriesList() {
+         if (PluginImpl.getInstance().getServer(serverName) != null) {
+            return PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+         } else {
+            logger.error("Could not find server {}", serverName);
+            return new LinkedList<VerdictCategory>();
+         }
+    }
+
+    /**
+     * Fills the verdict category drop-down list for the comment-added events.
+     * @return a ListBoxModel for the drop-down list.
+     */
+    public ListBoxModel doFillVerdictCategoryItems() {
+        ListBoxModel m = new ListBoxModel();
+        List<VerdictCategory> list = getVerdictCategoriesList();
+        for (VerdictCategory v : list) {
+            m.add(v.getVerdictDescription(), v.getVerdictValue());
+        }
+        return m;
+    }
+
+    /**
      * Gives you {@link #runningJobs}. It makes sure that the reference is not null.
      *
      * @return the store of running jobs.
@@ -479,7 +580,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Used to inform the plugin that the builds for a job have ended. This allows us to clean up our list of what jobs
+     * Used to inform the server that the builds for a job have ended. This allows us to clean up our list of what jobs
      * we're running.
      *
      * @param event the event.
@@ -487,7 +588,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         //Experimental feature!
         if (event instanceof ChangeBasedEvent
-                && PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+                && PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
             getRunningJobs().remove((ChangeBasedEvent)event);
         }
     }
@@ -500,10 +601,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return buildScheduleDelay.
      */
     public int getBuildScheduleDelay() {
-        if (PluginImpl.getInstance() == null || PluginImpl.getInstance().getConfig() == null) {
+        if (PluginImpl.getInstance().getServer(serverName) == null
+                || PluginImpl.getInstance().getServer(serverName).getConfig() == null) {
             return DEFAULT_BUILD_SCHEDULE_DELAY;
         } else {
-            int buildScheduleDelay = PluginImpl.getInstance().getConfig().getBuildScheduleDelay();
+            int buildScheduleDelay = PluginImpl.getInstance().getServer(serverName).getConfig()
+                    .getBuildScheduleDelay();
             if (buildScheduleDelay < DEFAULT_BUILD_SCHEDULE_DELAY) {
                 return DEFAULT_BUILD_SCHEDULE_DELAY;
             } else {
@@ -572,6 +675,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
                         context.getEvent())) {
 
+            Provider provider = initializeProvider(context.getEvent());
+
+            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
+            if (!PluginImpl.getInstance().containsServer(provider.getName())) {
+                provider.setName(serverName);
+            }
+
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(
                         context.getThisBuild().getProject(),
@@ -613,6 +723,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private void retrigger(AbstractProject project, GerritTriggeredEvent event) {
         if (project.isBuildable()) {
+            initializeProvider(event);
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onRetriggered(project, event, null);
             }
@@ -626,7 +737,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (myProject == null) {
             return super.hashCode();
         } else {
-            return myProject.hashCode();
+            return myProject.getFullName().hashCode();
         }
     }
 
@@ -634,7 +745,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public boolean equals(Object obj) {
         if (obj instanceof GerritTrigger) {
             GerritTrigger that = (GerritTrigger)obj;
-            return this.myProject == that.myProject;
+            if (myProject == null || that.myProject == null) {
+                return super.equals(obj);
+            } else {
+                return myProject.getFullName().equals(that.myProject.getFullName());
+            }
         }
         return false;
     }
@@ -657,18 +772,24 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             allGerritProjects.addAll(dynamicGerritProjects);
         }
         logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
+
         for (GerritProject p : allGerritProjects) {
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                    if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                            changeBasedEvent.getChange().getBranch())) {
+                    if (isServerInteresting(event)
+                         && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                            changeBasedEvent.getChange().getBranch(),
+                                            changeBasedEvent.getChange().getTopic())) {
                         if (isFileTriggerEnabled() && p.getFilePaths() != null
                                 && p.getFilePaths().size() > 0) {
-                            if (p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                    changeBasedEvent.getChange().getBranch(),
-                                    changeBasedEvent.getFiles(
-                                            new GerritQueryHandler(PluginImpl.getInstance().getConfig())))) {
+                            if (isServerInteresting(event)
+                                 && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                                    changeBasedEvent.getChange().getBranch(),
+                                                    changeBasedEvent.getChange().getTopic(),
+                                                    changeBasedEvent.getFiles(
+                                                        new GerritQueryHandler(PluginImpl.getInstance()
+                                                                .getServer(serverName).getConfig())))) {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
@@ -679,8 +800,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     }
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
-                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                            refUpdated.getRefUpdate().getRefName())) {
+                    if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                                                                      refUpdated.getRefUpdate().getRefName(), null)) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }
@@ -692,6 +813,17 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         logger.trace("Nothing interesting here, move along folks!");
         return false;
+    }
+
+    /**
+     * Check whether the event provider contains the same server name as the serverName field.
+     *
+     * @param event the event
+     * @return true if same server name
+     */
+    private boolean isServerInteresting(GerritTriggeredEvent event) {
+        Provider provider = initializeProvider(event);
+        return provider.getName().equals(serverName);
     }
 
     /**
@@ -773,7 +905,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (e instanceof PluginCommentAddedEvent) {
                 commentAdded = (PluginCommentAddedEvent)e;
                 for (Approval approval : event.getApprovals()) {
-                    if (approval.getType().equals(commentAdded.getVerdictCategory())
+                    if (VerdictCategory.normalizeValue(approval.getType()).equals(commentAdded.getVerdictCategory())
                         && (approval.getValue().equals(commentAdded.getCommentAddedTriggerApprovalValue())
                         || ("+" + approval.getValue()).equals(commentAdded.getCommentAddedTriggerApprovalValue()))) {
                     return true;
@@ -1094,6 +1226,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Initializes serverName if the field cannot be resolved from the config.xml file.
+     */
+    private void initializeServerName() {
+        if (serverName == null) {
+            serverName = PluginImpl.DEFAULT_SERVER_NAME;
+        }
+    }
+
+    /**
      * If trigger configuration should be fetched from a URL or not.
      *
      * @return true if trigger configuration should be fetched from a URL.
@@ -1268,29 +1409,29 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * URL to send in comment to gerrit.
+     * URL to send in comment to Gerrit.
      *
-     * @return custom URL to post back to gerrit
+     * @return custom URL to post back to Gerrit
      */
     public String getCustomUrl() {
         return customUrl;
     }
 
     /**
-     * Set custom URL to post back to gerrit.
+     * Set custom URL to post back to Gerrit.
      *
-     * @param customUrl url to set
+     * @param customUrl URL to set
      */
     public void setCustomUrl(String customUrl) {
         this.customUrl = customUrl;
     }
 
     /**
-     * Convenience method for finding it out if file triggering is enabled in the gerrit version.
-     * @return true if file triggering is enabled in the gerrit version.
+     * Convenience method for finding it out if file triggering is enabled in the Gerrit version.
+     * @return true if file triggering is enabled in the Gerrit version.
      */
     public boolean isFileTriggerEnabled() {
-        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, serverName);
     }
 
     /**
@@ -1305,7 +1446,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         triggerInformationAction.setErrorMessage("");
         try {
 
-            List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL);
+            List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL, serverName);
             dynamicGerritProjects = fetchedProjects;
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
@@ -1348,7 +1489,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if triggering on draft published is enabled in the Gerrit version.
      */
     public boolean isTriggerOnDraftPublishedEnabled() {
-        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished);
+        return GerritVersionChecker
+                .isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished, serverName);
     }
 
     @Override
@@ -1394,6 +1536,19 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
                 }
             }
+        }
+
+        /**
+         * method to get list of servers configured globally.
+         * @return list of servers.
+         */
+        public ListBoxModel doFillServerNameItems() {
+            ListBoxModel items = new ListBoxModel();
+            LinkedList<String> serverNames = PluginImpl.getInstance().getServerNames();
+            for (String s : serverNames) {
+                items.add(s);
+            }
+            return items;
         }
 
         /**
@@ -1443,34 +1598,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         /**
-         * Fills the verdict category drop-down list.
-         * @return a ListBoxModel for the drop-down list.
-         */
-        public ListBoxModel doFillVerdictCategoryItems() {
-            ListBoxModel m = new ListBoxModel();
-            List<VerdictCategory> list = PluginImpl.getInstance().getConfig().getCategories();
-            if (list != null && !list.isEmpty()) {
-                for (VerdictCategory v : list) {
-                    m.add(v.getVerdictDescription(), v.getVerdictValue());
-                }
-            }
-            return m;
-        }
-
-        /**
          * A list of CompareTypes for the UI.
          *
          * @return A list of CompareTypes
          */
         public CompareType[] getCompareTypes() {
             return CompareType.values();
-        }
-        /**
-        * Convenience method for the jelly file, accessing the instance proved to be hard.
-        * @return true if file triggering is enabled in the gerrit version.
-        */
-        public boolean isFileTriggerEnabled() {
-            return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger);
         }
 
         /**
@@ -1501,7 +1634,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          * @param projectName the name of the current project for better logging.
          */
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
-            if (!PluginImpl.getInstance().getConfig().isGerritBuildCurrentPatchesOnly()) {
+            if (!PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();

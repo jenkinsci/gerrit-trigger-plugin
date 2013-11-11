@@ -24,14 +24,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 import java.util.List;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 /**
  * Base settings for one matcher rule of a Gerrit project.
@@ -43,6 +46,7 @@ public class GerritProject implements Describable<GerritProject> {
     private String pattern;
     private List<Branch> branches;
     private List<FilePath> filePaths;
+    private List<Topic> topics;
 
 
     /**
@@ -57,14 +61,21 @@ public class GerritProject implements Describable<GerritProject> {
      * @param compareType the compareType
      * @param pattern the project-name pattern
      * @param branches the branch-rules
+     * @param topics the topic-rules
      * @param filePaths the file-path rules.
      */
     @DataBoundConstructor
-    public GerritProject(CompareType compareType, String pattern, List<Branch> branches, List<FilePath> filePaths) {
+    public GerritProject(
+            CompareType compareType,
+            String pattern,
+            List<Branch> branches,
+            List<Topic> topics,
+            List<FilePath> filePaths) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
+        this.topics = topics;
         this.filePaths = filePaths;
     }
 
@@ -133,46 +144,94 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
+     * The list of topic-rules.
+     * @return the topic-rules
+     */
+    public List<Topic> getTopics() {
+        return topics;
+    }
+
+    /**
+     * The list of topic-rules.
+     * @param topics the topic-rules
+     */
+    public void setTopics(List<Topic> topics) {
+        this.topics = topics;
+    }
+
+    /**
      * Compares the project, branch and files to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
+     * @param topic the topic.
      * @param files the files.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch, List<String> files) {
+    public boolean isInteresting(String project, String branch, String topic, List<String> files) {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 if (b.isInteresting(branch)) {
-                    for (FilePath f : filePaths) {
-                        if (f.isInteresting(files)) {
-                            return true;
-                        }
+                    if (isInterestingTopic(topic) && isInterestingFile(files)) {
+                        return true;
                     }
                 }
             }
-            return false;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
      * Compares the project and branch to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
+     * @param topic the topic.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch) {
+    public boolean isInteresting(String project, String branch, String topic) {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 if (b.isInteresting(branch)) {
+                    return isInterestingTopic(topic);
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Compare topics to see if the rules specified is a match.
+     *
+     * @param topic the topic.
+     * @return true if the rules match or no rules.
+     */
+    private boolean isInterestingTopic(String topic) {
+        if (topics != null && topics.size() > 0) {
+            for (Topic t : topics) {
+                if (t.isInteresting(topic)) {
                     return true;
                 }
             }
             return false;
-        } else {
+        }
+        return true;
+    }
+
+    /**
+     * Compare files to see if the rules specified is a match.
+     *
+     * @param files the files.
+     * @return true if the rules match or no rules.
+     */
+    private boolean isInterestingFile(List<String> files) {
+        if (filePaths != null && filePaths.size() > 0) {
+            for (FilePath f : filePaths) {
+                if (f.isInteresting(files)) {
+                    return true;
+                }
+            }
             return false;
         }
+        return true;
     }
 
     @Override
@@ -186,15 +245,22 @@ public class GerritProject implements Describable<GerritProject> {
      */
     @Extension
     public static final class DescriptorImpl extends Descriptor<GerritProject> {
+
         /**
          * Used to fill the project pattern combobox with AJAX.
+         * The filled values will depend on the server that the user has chosen from the dropdown.
          *
-         * @return ComboBoxModels containing a list of all Gerrit Projects
+         * @param serverName the name of the server that the user has chosen.
+         * @return ComboBoxModels containing a list of all Gerrit Projects found on that server.
          */
-        public ComboBoxModel doFillPatternItems() {
-            return new ComboBoxModel(PluginImpl.getInstance().getGerritProjects());
+        public ComboBoxModel doFillPatternItems(@QueryParameter("serverName")
+                @RelativePath("..") final String serverName) {
+            if (serverName != null && !serverName.isEmpty()) {
+                return new ComboBoxModel(PluginImpl.getInstance().getServer(serverName).getGerritProjects());
+            } else {
+                return new ComboBoxModel();
+            }
         }
-
         @Override
         public String getDisplayName() {
             return null;
