@@ -1,0 +1,21 @@
+<com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated>
+  <provider>
+    <name>Default</name>
+    <host>review</host>
+    <port>29418</port>
+    <proto>ssh</proto>
+    <url>http://review:8080/</url>
+    <version>2.6</version>
+  </provider>
+  <change>
+    <branch>master</branch>
+    <id>Iabc123</id>
+    <number>12345</number>
+    <subject>The Subject</subject>
+  </change>
+  <patchSet>
+    <number>1</number>
+    <revision>abc123</revision>
+    <ref>refs/changes/45/12345/1</ref>
+  </patchSet>
+</com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated>

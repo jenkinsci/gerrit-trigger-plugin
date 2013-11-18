@@ -69,7 +69,10 @@ public class GerritConnection extends Thread implements Connector {
      */
     public static final String CMD_STREAM_EVENTS = "gerrit stream-events";
     private static final String GERRIT_VERSION_PREFIX = "gerrit version ";
-    private static final String GERRIT_PROTOCOL_NAME = "ssh";
+    /**
+     * The standard scheme used for stream-events.
+     */
+    public static final String GERRIT_PROTOCOL_SCHEME_NAME = "ssh";
     private static final Logger logger = LoggerFactory.getLogger(GerritConnection.class);
     private String gerritName;
     private String gerritHostName;
@@ -307,7 +310,7 @@ public class GerritConnection extends Thread implements Connector {
                         gerritName,
                         gerritHostName,
                         String.valueOf(gerritSshPort),
-                        GERRIT_PROTOCOL_NAME,
+                        GERRIT_PROTOCOL_SCHEME_NAME,
                         DEFAULT_GERRIT_HOSTNAME,
                         getGerritVersionString());
                 logger.info("Ready to receive data from Gerrit: " + gerritName);

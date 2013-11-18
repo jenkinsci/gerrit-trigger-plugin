@@ -33,6 +33,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.VERSION;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import net.sf.json.JSONObject;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonDTO;
@@ -314,4 +315,27 @@ public class Provider implements GerritJsonDTO {
             return false;
         return true;
     }
+
+    /**
+     * Deserialization handling.
+     *
+     * @return itself
+     */
+    protected Object readResolve() {
+        if (proto != null && scheme == null) {
+            scheme = proto;
+            proto = null;
+        } else if (scheme == null && proto == null) {
+            scheme = GerritConnection.GERRIT_PROTOCOL_SCHEME_NAME; //The default for old stuff
+        }
+        return this;
+    }
+
+    //------ Old fields ------
+
+    /**
+     * Old name of {@link #scheme}, never to be used again.
+     */
+    @Deprecated
+    private transient String proto;
 }
