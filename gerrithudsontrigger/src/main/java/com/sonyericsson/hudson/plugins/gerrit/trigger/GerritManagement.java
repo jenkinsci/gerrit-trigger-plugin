@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
@@ -270,6 +271,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     /**
      * Saves the form to the configuration and disk.
+     *
      * @param req StaplerRequest
      * @param rsp StaplerResponse
      * @throws ServletException if something unfortunate happens.
@@ -285,10 +287,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         JSONObject form = req.getSubmittedForm();
         PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
         pluginConfig.setValues(form);
-        for (GerritServer server : PluginImpl.getInstance().getServers()) {
-            server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
-        }
         PluginImpl.getInstance().save();
+        GerritSendCommandQueue.configure(pluginConfig);
+        //TODO reconfigure the incoming worker threads as well
 
         rsp.sendRedirect(".");
     }

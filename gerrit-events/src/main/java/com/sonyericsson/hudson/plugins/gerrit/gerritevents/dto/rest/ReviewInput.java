@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2013 Jyrki Puttonen. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +22,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest;
 
 
 import java.util.ArrayList;
@@ -32,8 +33,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+//CS IGNORE LineLength FOR NEXT 6 LINES. REASON: JavaDoc.
 /**
- * TODO Missing JavaDoc, Move into gerrit-events module.
+ * What to send as input to the actual review.
+ *
+ * @see <a href="https://gerrit-documentation.storage.googleapis.com/Documentation/2.7/rest-api-changes.html#set-review">Gerrit Documentation</a>
  */
 public class ReviewInput {
     final String message;

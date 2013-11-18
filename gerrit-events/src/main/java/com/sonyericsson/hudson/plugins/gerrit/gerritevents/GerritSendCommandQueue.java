@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
+ * Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +25,10 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritWorkersConfig;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,20 +67,12 @@ public final class GerritSendCommandQueue {
 
     /**
      * Returns the singleton instance of the command-queue.
-     * Updating it with the latest connection configuration.
      *
-     * @param config the config.
      * @return the instance.
      */
-    public static synchronized GerritSendCommandQueue getInstance(GerritConnectionConfig config) {
+    public static GerritSendCommandQueue getInstance() {
         if (instance == null) {
-            if (config == null) {
-                throw new NullPointerException("A config instance is needed for the first init.");
-            }
-            instance = new GerritSendCommandQueue();
-        }
-        if (config != null) {
-            instance.startQueue(config);
+            throw new IllegalStateException("Need to initialize the instance first!");
         }
         return instance;
     }
@@ -88,7 +83,16 @@ public final class GerritSendCommandQueue {
      * @param job the job to do.
      */
     public static void queue(AbstractSendCommandJob job) {
-        getInstance(job.getConfig()).queueJob(job);
+        getInstance().queueJob(job);
+    }
+
+    /**
+     * Adds a command-job to the singleton instance's queue.
+     *
+     * @param job the job to do.
+     */
+    public static void queue(AbstractRestCommandJob job) {
+        getInstance().queueJob(job);
     }
 
     /**
@@ -112,7 +116,7 @@ public final class GerritSendCommandQueue {
      * @param job the job to do.
      * @see java.util.concurrent.ThreadPoolExecutor#submit(Runnable)
      */
-    public void queueJob(AbstractSendCommandJob job) {
+    public void queueJob(Runnable job) {
         try {
             logger.debug("Queueing job {}", job);
             executor.submit(job);
@@ -136,7 +140,7 @@ public final class GerritSendCommandQueue {
      *
      * @param config the config with the pool-size.
      */
-    protected void startQueue(GerritConnectionConfig config) {
+    protected void startQueue(GerritWorkersConfig config) {
         if (executor == null) {
             logger.debug("Starting the sending thread pool.");
             executor = new ThreadPoolExecutor(
@@ -173,6 +177,27 @@ public final class GerritSendCommandQueue {
                     executor.getPoolSize(), getQueueSize());
             logger.debug("Nr of active pool-threads: {}", executor.getActiveCount());
         }
+    }
+
+    /**
+     * Initializes the singleton instance and configures it.
+     *
+     * @param config the configuration.
+     */
+    public static synchronized void initialize(GerritWorkersConfig config) {
+        if (instance == null) {
+            instance = new GerritSendCommandQueue();
+        }
+        getInstance().startQueue(config);
+    }
+
+    /**
+     * Reconfigures the instance.
+     *
+     * @param config the config
+     */
+    public static synchronized void configure(GerritWorkersConfig config) {
+        getInstance().startQueue(config);
     }
 
     /**

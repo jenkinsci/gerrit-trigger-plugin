@@ -25,44 +25,14 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-
-import java.io.File;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionConfig;
 
 /**
  * Interface for an object that has information about how to connect to the Gerrit server.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public interface GerritConnectionConfig {
-    /**
-     * The path to the private key.
-     * @return the path.
-     */
-    File getGerritAuthKeyFile();
+public interface GerritConnectionConfig extends SshConnectionConfig {
 
-    /**
-     * The password for the private key, or null if there is none.
-     * @return the password
-     */
-    String getGerritAuthKeyFilePassword();
-
-    /**
-     * The hostname for gerrit where it is listening to ssh commands.
-     * @return the hostname.
-     */
-    String getGerritHostName();
-
-    /**
-     * The port to connect with ssh to.
-     * @return the port.
-     */
-    int getGerritSshPort();
-
-    /**
-     * The username to authenticate to gerrit with.
-     * @return the username.
-     */
-    String getGerritUserName();
 
     /**
      * The e-mail address for the user in gerrit.
@@ -70,26 +40,4 @@ public interface GerritConnectionConfig {
      * @return the e-mail address.
      */
     String getGerritEMail();
-
-    /**
-     * The number of threads to handle incoming events with.
-     * @return the number of worker threads.
-     */
-    int getNumberOfReceivingWorkerThreads();
-
-    /**
-     * The default nr of worker threads that sends approvals/review commands.
-     * @return the number of worker threads.
-     */
-    int getNumberOfSendingWorkerThreads();
-
-    /**
-     * The the Gerrit authentication credentials.
-     * Containing
-     * {@link #getGerritAuthKeyFile() },
-     * {@link #getGerritUserName() } and
-     * {@link #getGerritAuthKeyFilePassword() }.
-     * @return the credentials.
-     */
-    Authentication getGerritAuthentication();
 }

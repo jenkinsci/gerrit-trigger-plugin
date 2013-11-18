@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExc
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import net.sf.json.JSONObject;
+import org.apache.http.auth.Credentials;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -287,6 +288,11 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public String getGerritHttpUserName() {
         return "";
+    }
+
+    @Override
+    public Credentials getHttpCredentials() {
+        return null;
     }
 
 }

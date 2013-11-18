@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2013 Jyrki Puttonen. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +21,34 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object;
+package com.sonyericsson.hudson.plugins.gerrit.gerritevents.rest;
+
+import org.apache.http.auth.Credentials;
 
 /**
- * TODO Missing JavaDoc.
+ * Interface for the REST specific connection values.
  */
-public class ChangeId {
-    private final String projectName;
-    private final String branchName;
-    private final String id;
+public interface RestConnectionConfig {
 
     /**
-     * Constructor.
+     * Base URL for Gerrit HTTP.
      *
-     * @param projectName project name
-     * @param branchName branch name
-     * @param id id
+     * @return the gerrit front end URL. Always ends with '/'
      */
-    public ChangeId(String projectName, String branchName, String id) {
-        this.projectName = projectName;
-        this.branchName = branchName;
-        this.id = id;
-    }
+    String getGerritFrontEndUrl();
 
     /**
-     * As the part of the URL.
+     * The credentials to use when connecting with the REST API.
+     * For example a {@link org.apache.http.auth.UsernamePasswordCredentials}.
      *
-     * @return the url part.
+     * @return the credentials to use.
      */
-    public String asUrlPart() {
-        return projectName + "~" + branchName + "~" + id;
-    }
+    Credentials getHttpCredentials();
+
+    /**
+     * The http or socks5 proxy url.
+     *
+     * @return the proxy url.
+     */
+    String getGerritProxy();
 }

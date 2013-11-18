@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2013 Jyrki Puttonen. All rights reserved.
+ *  Copyright 2013 Sony Mobile Communications AB. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -21,22 +22,27 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.job;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.rest.object.ReviewInput;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewInput;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 
 /**
- * TODO Missing JavaDoc.
+ * A job for the {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue} that
+ * sends a build started message.
  */
 public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
 
     private final AbstractBuild build;
     private final BuildsStartedStats stats;
+    private final TaskListener listener;
+    private final ParameterExpander parameterExpander;
 
     /**
      * Constructor.
@@ -49,9 +55,12 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      */
     public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, AbstractBuild build, TaskListener listener,
                                       ChangeBasedEvent event, BuildsStartedStats stats) {
-        super(config, listener, event);
+        //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
+        super(config, (listener != null ? listener.getLogger() : null), event);
         this.build = build;
         this.stats = stats;
+        this.listener = listener;
+        parameterExpander = new ParameterExpander(config);
     }
 
     /**

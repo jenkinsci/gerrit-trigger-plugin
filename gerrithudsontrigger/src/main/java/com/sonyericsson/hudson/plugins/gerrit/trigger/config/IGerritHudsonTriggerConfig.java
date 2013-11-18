@@ -233,4 +233,18 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @param numberOfSendingWorkerThreads nr of threads.
      */
     void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads);
+
+    /**
+     * The number of threads to handle incoming events with.
+     * @return the number of worker threads.
+     */
+    @Deprecated
+    int getNumberOfReceivingWorkerThreads();
+
+    /**
+     * The default nr of worker threads that sends approvals/review commands.
+     * @return the number of worker threads.
+     */
+    @Deprecated
+    int getNumberOfSendingWorkerThreads();
 }
