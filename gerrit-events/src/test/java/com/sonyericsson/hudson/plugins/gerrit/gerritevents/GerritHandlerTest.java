@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -263,20 +264,38 @@ public class GerritHandlerTest {
     }
 
     /**
+     * Tests that ignoreEMails is handled correctly.
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIgnoreEMails() throws Exception {
+        String email = "e@mail.com";
+        String server = "testserver";
+        handler.setIgnoreEMail(server, email);
+        assertEquals(email, handler.getIgnoreEMail(server));
+        handler.setIgnoreEMail(server, null);
+        assertEquals(null, handler.getIgnoreEMail(server));
+    }
+
+    /**
      * Tests that circular CommentAdded events are ignored correctly.
      * @throws Exception if so.
      */
     @Test
     public void testIgnoreCommentAdded() throws Exception {
         String email = "e@mail.com";
-        handler.setIgnoreEMail(email);
+        String server = "testserver";
+        handler.setIgnoreEMail(server, email);
         ListenerMock listenerMock = mock(ListenerMock.class);
         Collection<GerritEventListener> listeners = new HashSet<GerritEventListener>();
         listeners.add(listenerMock);
         handler.addEventListeners(listeners);
         Account account = new Account("name", email);
+        Provider provider = new Provider();
+        provider.setName(server);
         CommentAdded ca = new CommentAdded();
         ca.setAccount(account);
+        ca.setProvider(provider);
         handler.notifyListeners(ca);
         verifyNoMoreInteractions(listenerMock);
     }

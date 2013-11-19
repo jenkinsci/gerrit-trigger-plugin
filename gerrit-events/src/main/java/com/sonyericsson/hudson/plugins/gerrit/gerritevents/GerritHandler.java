@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -74,7 +75,7 @@ public class GerritHandler implements Coordinator, Handler {
     private int numberOfWorkerThreads;
     private final Set<GerritEventListener> gerritEventListeners = new CopyOnWriteArraySet<GerritEventListener>();
     private final List<EventThread> workers;
-    private String ignoreEMail;
+    private Map<String, String> ignoreEMails = new ConcurrentHashMap<String, String>();
 
     /**
      * Creates a GerritHandler with all the default values set.
@@ -82,18 +83,16 @@ public class GerritHandler implements Coordinator, Handler {
      * @see GerritDefaultValues#DEFAULT_NR_OF_RECEIVING_WORKER_THREADS
      */
     public GerritHandler() {
-        this(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS, null);
+        this(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
      * Standard Constructor.
      *
      * @param numberOfWorkerThreads the number of event threads.
-     * @param ignoreEMail              the e-mail to ignore events from.
      */
-    public GerritHandler(int numberOfWorkerThreads, String ignoreEMail) {
+    public GerritHandler(int numberOfWorkerThreads) {
         this.numberOfWorkerThreads = numberOfWorkerThreads;
-        this.ignoreEMail = ignoreEMail;
 
         workQueue = new LinkedBlockingQueue<Work>();
         workers = new ArrayList<EventThread>(numberOfWorkerThreads);
@@ -107,19 +106,32 @@ public class GerritHandler implements Coordinator, Handler {
     /**
      * Standard getter for the ignoreEMail.
      *
+     * @param serverName the server name.
      * @return the e-mail address to ignore CommentAdded events from.
      */
-    public String getIgnoreEMail() {
-        return ignoreEMail;
+    public String getIgnoreEMail(String serverName) {
+        if (serverName != null) {
+            return ignoreEMails.get(serverName);
+        } else {
+            return null;
+        }
     }
 
     /**
      * Standard setter for the ignoreEMail.
      *
+     * @param serverName the server name.
      * @param ignoreEMail the e-mail address to ignore CommentAdded events from.
+     * If you want to remove, please set null.
      */
-    public void setIgnoreEMail(String ignoreEMail) {
-        this.ignoreEMail = ignoreEMail;
+    public void setIgnoreEMail(String serverName, String ignoreEMail) {
+        if (serverName != null) {
+            if (ignoreEMail != null) {
+                ignoreEMails.put(serverName, ignoreEMail);
+            } else {
+                ignoreEMails.remove(serverName);
+            }
+        }
     }
 
     @Override
@@ -334,9 +346,12 @@ public class GerritHandler implements Coordinator, Handler {
         if (account == null) {
             return false;
         }
-        String eMail = account.getEmail();
-        if (ignoreEMail != null && ignoreEMail.equals(eMail)) {
-            return true;
+        Provider provider = event.getProvider();
+        if (provider != null) {
+            String ignoreEMail = ignoreEMails.get(provider.getName());
+            if (ignoreEMail != null && ignoreEMail.equals(account.getEmail())) {
+                return true;
+            }
         }
         return false;
     }
