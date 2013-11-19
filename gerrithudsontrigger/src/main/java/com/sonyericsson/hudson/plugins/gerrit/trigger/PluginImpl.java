@@ -245,8 +245,7 @@ public class PluginImpl extends Plugin {
         logger.trace("Loading configs");
         load();
         GerritSendCommandQueue.initialize(pluginConfig);
-        //TODO fix ignoreEmail
-        gerritEventManager = new GerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads(), null);
+        gerritEventManager = new GerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
         for (GerritServer s : servers) {
             s.start();
         }
