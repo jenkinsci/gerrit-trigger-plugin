@@ -147,13 +147,7 @@ public class GerritServer implements Describable<GerritServer> {
      * @return the relative url
      */
     public String getUrl() {
-        String url;
-        try {
-            url = GerritManagement.get().getUrlName() + "/server/" + URLEncoder.encode(name, CharEncoding.UTF_8);
-        } catch (Exception ex) {
-            url = GerritManagement.get().getUrlName() + "/server/" + URLEncoder.encode(name);
-        }
-        return url;
+        return GerritManagement.get().getUrlName() + "/server/" + getUrlName();
     }
     /**
      * Constructor.
@@ -190,6 +184,21 @@ public class GerritServer implements Describable<GerritServer> {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Get the url encoded name of the server.
+     *
+     * @return the url encoded name.
+     */
+    public String getUrlName() {
+        String urlName;
+        try {
+            urlName = URLEncoder.encode(name, CharEncoding.UTF_8);
+        } catch (Exception ex) {
+            urlName = URLEncoder.encode(name);
+        }
+        return urlName;
     }
 
     /**
