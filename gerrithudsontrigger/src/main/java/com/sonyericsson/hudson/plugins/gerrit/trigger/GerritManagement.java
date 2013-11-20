@@ -43,7 +43,10 @@ import hudson.model.Saveable;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.ServletException;
 
@@ -51,6 +54,7 @@ import jenkins.model.Jenkins;
 
 import net.sf.json.JSONObject;
 
+import org.apache.commons.lang.CharEncoding;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
@@ -133,12 +137,30 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return r;
         }
     }
+
+    /**
+    * Gets the list of GerritServer.
+    *
+    * @return the list of GerritServer.
+    */
+    @SuppressWarnings("unused") //Called from Jelly
+    public List<GerritServer> getServers() {
+        return PluginImpl.getInstance().getServers();
+    }
+
     /**
     * Used when redirected to a server.
-    * @param serverName the name of the server.
+    * @param encodedServerName the server name encoded by URLEncoder.encode(name,"UTF-8").
     * @return the GerritServer object.
     */
-    public GerritServer getServer(String serverName) {
+    @SuppressWarnings("unused") //Called from Jelly
+    public GerritServer getServer(String encodedServerName) {
+        String serverName;
+        try {
+            serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
+        } catch (Exception ex) {
+            serverName = URLDecoder.decode(encodedServerName);
+        }
         return PluginImpl.getInstance().getServer(serverName);
     }
 
@@ -179,7 +201,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
         plugin.save();
 
-        rsp.sendRedirect("./server/" + serverName);
+        rsp.sendRedirect("./server/" + URLEncoder.encode(serverName, CharEncoding.UTF_8));
         return server;
     }
 
