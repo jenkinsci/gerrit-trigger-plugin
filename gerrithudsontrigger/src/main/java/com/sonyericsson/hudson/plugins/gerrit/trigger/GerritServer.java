@@ -318,7 +318,7 @@ public class GerritServer implements Describable<GerritServer> {
             if (gerritConnection == null) {
                 logger.debug("Starting Gerrit connection...");
                 gerritConnection = new GerritConnection(name, config);
-                gerritEventManager.setIgnoreEMail(config.getGerritEMail());
+                gerritEventManager.setIgnoreEMail(name, config.getGerritEMail());
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
@@ -339,6 +339,7 @@ public class GerritServer implements Describable<GerritServer> {
             gerritConnection.shutdown(true);
             gerritConnection.removeListener(gerritConnectionListener);
             gerritConnection = null;
+            gerritEventManager.setIgnoreEMail(name, null);
         } else {
             logger.warn("Was told to shutdown again?");
         }
