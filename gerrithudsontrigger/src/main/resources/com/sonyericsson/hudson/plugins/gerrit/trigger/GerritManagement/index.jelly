@@ -34,12 +34,14 @@
                     <f:submit value="${%Save}" />
                 </f:block>
             </f:form>
-            <div class="section-header">${%Gerrit Servers}</div>
-            <ul>
-                <j:forEach var="server" items="${it.servers}" varStatus="loop">
-                    <li> <a href="server/${server.urlName}"> ${server.name} </a> </li>
-                </j:forEach>
-            </ul>
+            <div class="gerrit-trigger-section">
+                <div class="section-header">${%Gerrit Servers}</div>
+                <ul>
+                    <j:forEach var="server" items="${it.servers}" varStatus="loop">
+                        <li> <a href="server/${server.urlName}"> ${server.name} </a> </li>
+                    </j:forEach>
+                </ul>
+            </div>
         </l:main-panel>
     </l:layout>
 </j:jelly>
