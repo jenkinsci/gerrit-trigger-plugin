@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -59,6 +60,8 @@ import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 
 import net.sf.json.JSONObject;
+
+import org.apache.commons.lang.CharEncoding;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -144,7 +147,7 @@ public class GerritServer implements Describable<GerritServer> {
      * @return the relative url
      */
     public String getUrl() {
-        return GerritManagement.get().getUrlName() + "/server/" + name;
+        return GerritManagement.get().getUrlName() + "/server/" + getUrlName();
     }
     /**
      * Constructor.
@@ -181,6 +184,21 @@ public class GerritServer implements Describable<GerritServer> {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * Get the url encoded name of the server.
+     *
+     * @return the url encoded name.
+     */
+    public String getUrlName() {
+        String urlName;
+        try {
+            urlName = URLEncoder.encode(name, CharEncoding.UTF_8);
+        } catch (Exception ex) {
+            urlName = URLEncoder.encode(name);
+        }
+        return urlName;
     }
 
     /**
