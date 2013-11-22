@@ -174,6 +174,18 @@ public abstract class GerritEventKeys {
      * version.
      */
     public static final String VERSION = "version";
+    /**
+     * status.
+     */
+    public static final String STATUS = "status";
+    /**
+     * targetNode.
+     */
+    public static final String TARGET_NODE = "targetNode";
+    /**
+     * nodesCount.
+     */
+    public static final String NODES_COUNT = "nodesCount";
 
     /**
      * Empty default constructor to hinder instantiation.

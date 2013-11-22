@@ -30,7 +30,10 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRest
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicationDone;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -67,7 +70,15 @@ public enum GerritEventType {
     /**
      * A ref-updated event.
      */
-    REF_UPDATED("ref-updated", true, RefUpdated.class);
+    REF_UPDATED("ref-updated", true, RefUpdated.class),
+    /**
+     * A ref-replicated event.
+     */
+    REF_REPLICATED("ref-replicated", true, RefReplicated.class),
+    /**
+     * A ref-replication-done event.
+     */
+    REF_REPLICATION_DONE("ref-replication-done", true, RefReplicationDone.class);
 
     private String typeValue;
     private boolean interesting;
