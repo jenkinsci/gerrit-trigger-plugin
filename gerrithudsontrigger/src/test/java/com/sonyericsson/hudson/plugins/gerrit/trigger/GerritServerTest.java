@@ -17,6 +17,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
 
+import hudson.Functions;
 import org.apache.sshd.SshServer;
 import org.junit.Test;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -226,7 +227,7 @@ public class GerritServerTest extends HudsonTestCase {
      */
     private void removeServer(String serverName, HtmlPage serverPage) throws IOException {
         HtmlPage currentPage = serverPage;
-        String serverLink = "server/" + serverName;
+        String serverLink = Functions.joinPath("/", GerritManagement.URL_NAME, "server", serverName);
         HtmlPage configPage = currentPage.getAnchorByHref(serverLink).click();
         HtmlPage removalPage = configPage.getAnchorByHref("remove").click();
 

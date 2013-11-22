@@ -38,7 +38,7 @@
                 <div class="section-header">${%Gerrit Servers}</div>
                 <ul>
                     <j:forEach var="server" items="${it.servers}" varStatus="loop">
-                        <li> <a href="server/${server.urlName}"> ${server.name} </a> </li>
+                        <li> <a href="${server.urlName}"> ${server.name} </a> </li>
                     </j:forEach>
                 </ul>
             </div>
