@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
@@ -318,11 +319,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private void addThisTriggerAsListener(AbstractProject project) {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
-            if (plugin.getServer(serverName) != null) {
-                 plugin.getServer(serverName).addListener(this);
+            GerritHandler handler = plugin.getHandler();
+            if (handler != null) {
+                handler.addListener(this);
             } else {
-                logger.warn("The server {} could not be found! Project {} will not be triggered!",
-                        serverName,
+                logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
                         project.getFullDisplayName());
             }
         } else {

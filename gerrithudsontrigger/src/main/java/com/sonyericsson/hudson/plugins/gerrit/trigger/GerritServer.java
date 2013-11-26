@@ -29,9 +29,12 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.Watch
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
 
 import hudson.Extension;
+import hudson.Functions;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Failure;
 import hudson.model.Descriptor;
@@ -102,7 +105,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
-public class GerritServer implements Describable<GerritServer> {
+public class GerritServer implements Describable<GerritServer>, Action {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
     private static final String START_FAILURE = "Error establising conection";
@@ -147,7 +150,7 @@ public class GerritServer implements Describable<GerritServer> {
      * @return the relative url
      */
     public String getUrl() {
-        return GerritManagement.get().getUrlName() + "/server/" + getUrlName();
+        return GerritManagement.get().getUrlName() + "/server/" + getUrlEncodedName();
     }
     /**
      * Constructor.
@@ -186,12 +189,28 @@ public class GerritServer implements Describable<GerritServer> {
         return name;
     }
 
+    @Override
+    public String getIconFileName() {
+        return PLUGIN_IMAGES_URL + "icon24.png";
+    }
+
+    @Override
+    public String getDisplayName() {
+        return getName();
+    }
+
+    @Override
+    public String getUrlName() {
+        //Lets make an absolute url to circumvent some buggy things in core
+        return Functions.joinPath("/", getParentUrl(), "server", getUrlEncodedName());
+    }
+
     /**
      * Get the url encoded name of the server.
      *
      * @return the url encoded name.
      */
-    public String getUrlName() {
+    public String getUrlEncodedName() {
         String urlName;
         try {
             urlName = URLEncoder.encode(name, CharEncoding.UTF_8);

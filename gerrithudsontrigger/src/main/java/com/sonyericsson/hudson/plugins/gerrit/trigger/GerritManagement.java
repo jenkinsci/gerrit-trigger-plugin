@@ -52,6 +52,7 @@ import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
 
+import jenkins.model.ModelObjectWithContextMenu;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.CharEncoding;
@@ -70,9 +71,17 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PL
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension
-public class GerritManagement extends ManagementLink implements StaplerProxy, Describable<GerritManagement>, Saveable {
+public class GerritManagement extends ManagementLink implements StaplerProxy, Describable<GerritManagement>,
+        Saveable, ModelObjectWithContextMenu {
+
+    /**
+     * The relative url name for this management link.
+     * As returned by {@link #getUrlName()}.
+     */
+    public static final String URL_NAME = "gerrit-trigger";
 
     private static final Logger logger = LoggerFactory.getLogger(GerritManagement.class);
+
 
     @Override
     public String getIconFileName() {
@@ -81,7 +90,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public String getUrlName() {
-        return "gerrit-trigger";
+        return URL_NAME;
     }
 
     @Override
@@ -97,6 +106,16 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     @Override
     public DescriptorImpl getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
+
+    @Override
+    public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+        ContextMenu menu = new ContextMenu();
+        menu.add("newServer", "/images/24x24/new-package.png", Messages.AddNewServer());
+        for (GerritServer server : getServers()) {
+            menu.add(server);
+        }
+        return menu;
     }
 
     /**

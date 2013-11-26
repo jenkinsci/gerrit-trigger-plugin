@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
@@ -201,6 +202,8 @@ public class GerritTriggerTest {
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(20);
@@ -290,6 +293,8 @@ public class GerritTriggerTest {
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(server.getConfig()).thenReturn(config);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(-20);
 
@@ -328,6 +333,8 @@ public class GerritTriggerTest {
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(server.getConfig()).thenReturn(config);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         when(config.getBuildScheduleDelay()).thenReturn(10000);
 
@@ -370,6 +377,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -419,6 +428,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -472,6 +483,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -525,6 +538,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -578,6 +593,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -630,6 +647,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -683,6 +702,8 @@ public class GerritTriggerTest {
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
@@ -1129,6 +1150,8 @@ public class GerritTriggerTest {
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
@@ -1200,6 +1223,8 @@ public class GerritTriggerTest {
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
@@ -1288,6 +1313,8 @@ public class GerritTriggerTest {
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
