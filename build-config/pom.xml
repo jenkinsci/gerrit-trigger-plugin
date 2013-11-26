@@ -3,13 +3,13 @@
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>build-config</artifactId>
     <packaging>jar</packaging>
-    <version>1.3.3</version>
+    <version>1.3.4-SNAPSHOT</version>
     <name>Build Config</name>
 
     <parent>
         <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
         <artifactId>gerrit-trigger-parent</artifactId>
-        <version>1.8.5</version>
+        <version>1.8.6-SNAPSHOT</version>
     </parent>
 
     <properties>
