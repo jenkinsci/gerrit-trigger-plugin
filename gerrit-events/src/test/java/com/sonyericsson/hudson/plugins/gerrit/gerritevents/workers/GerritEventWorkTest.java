@@ -25,7 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import net.sf.json.JSONObject;
 import org.junit.Test;
 
@@ -75,7 +77,9 @@ public class GerritEventWorkTest {
         change.put(OWNER, jsonAccount);
         change.put(URL, "http://localhost:8080");
 
-        ManualPatchsetCreated event = new ManualPatchsetCreated(change, patch, "bobby");
+        PatchsetCreated event = new PatchsetCreated();
+        event.setChange(new Change(change));
+        event.setPatchset(new PatchSet(patch));
 
         GerritEventWork work = new GerritEventWork(event);
         final GerritEvent[] notifiedEvent = {null};

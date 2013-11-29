@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 
@@ -285,7 +286,9 @@ public class PluginImpl extends Plugin {
         Hudson.XSTREAM.registerConverter(new TriggerContextConverter());
         //This is where the problems where, reading builds.
         Run.XSTREAM.registerConverter(new TriggerContextConverter());
-
+        Run.XSTREAM2.addCompatibilityAlias(
+            "com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated",
+            ManualPatchsetCreated.class);
         logger.trace("XStream alias registrations done.");
     }
 
