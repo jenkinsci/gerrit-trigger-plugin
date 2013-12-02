@@ -51,7 +51,6 @@ import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import java.io.File;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
@@ -68,8 +67,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     //TODO Fix the SshdServerMock so that asserts can be done on review commands.
 
     private SshServer sshd;
-    @SuppressWarnings("unused")
-    private File sshKey;
+    private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock server;
 
     @Override
@@ -81,6 +79,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
     }
 

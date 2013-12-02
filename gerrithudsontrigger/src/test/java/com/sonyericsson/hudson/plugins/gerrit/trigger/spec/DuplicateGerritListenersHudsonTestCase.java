@@ -42,7 +42,6 @@ import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -60,7 +59,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
  */
 public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
 
-    private File keyFile;
+    private SshdServerMock.KeyPairFiles keyFile;
 
     @Override
     protected void setUp() throws Exception {
@@ -144,7 +143,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
                 Whitebox.getInternalState(handler, "gerritEventListeners");
         assertEquals(1, savedEventListeners.size());
         Config config = (Config)server.getConfig();
-        config.setGerritAuthKeyFile(keyFile);
+        config.setGerritAuthKeyFile(keyFile.getPublicKey());
         config.setGerritHostName("localhost");
         config.setGerritFrontEndURL("http://localhost");
         config.setGerritSshPort(29418);

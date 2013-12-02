@@ -52,7 +52,6 @@ import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import java.io.File;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -71,8 +70,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
      */
     protected static final String GERRIT_STREAM_EVENTS = "gerrit stream-events";
     private SshServer sshd;
-    @SuppressWarnings("unused")
-    private File sshKey;
+    private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock server;
 
     @Override
@@ -84,6 +82,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
     }
 

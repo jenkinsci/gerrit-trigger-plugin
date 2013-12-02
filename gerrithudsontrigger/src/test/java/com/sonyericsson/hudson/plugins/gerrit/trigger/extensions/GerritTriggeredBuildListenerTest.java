@@ -37,7 +37,6 @@ import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 
-import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +55,7 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
 
     private SshServer sshd;
     @SuppressWarnings("unused")
-    private File sshKey;
+    private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock server;
 
     private static CountDownLatch buildListenerLatch;
@@ -70,6 +69,7 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
     }
 

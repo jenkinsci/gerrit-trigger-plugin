@@ -31,9 +31,6 @@ The maintainers' development, tests and production environments are
 Ubuntu 12.04 so we have no means of detecting or fixing any Windows issues,
 but there are some kind contributors who provides win fixes every now and then.
 
-To build it however some of the tests needs ssh-keygen to be available,
-so some kind of GNU-like system is needed.
-
 
 # Build
 

@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -42,6 +43,7 @@ import hudson.security.PermissionGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,6 +99,11 @@ public class PluginImpl extends Plugin {
      * the default server name.
      */
     public static final String DEFAULT_SERVER_NAME = "defaultServer";
+
+    /**
+     * System property used during testing to replace the location of the public key for mock connections.
+     */
+    public static final String TEST_SSH_KEYFILE_LOCATION_PROPERTY = PluginImpl.class.getName() + "_test_ssh_key_file";
 
     /**
      * Constructor.
@@ -272,6 +279,13 @@ public class PluginImpl extends Plugin {
             }
             setServers(servers);
             save();
+        }
+        //For unit/integration testing only...
+        if (System.getProperty(TEST_SSH_KEYFILE_LOCATION_PROPERTY) != null && !servers.isEmpty()) {
+            File location = new File(System.getProperty(TEST_SSH_KEYFILE_LOCATION_PROPERTY));
+            for (GerritServer server : servers) {
+                ((Config)server.getConfig()).setGerritAuthKeyFile(location);
+            }
         }
     }
 

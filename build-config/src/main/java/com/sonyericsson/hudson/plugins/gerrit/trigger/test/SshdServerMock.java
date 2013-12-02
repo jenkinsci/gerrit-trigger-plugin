@@ -24,7 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.test;
 
-import hudson.util.StreamCopyThread;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
@@ -36,6 +37,7 @@ import org.apache.sshd.server.session.ServerSession;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,6 +45,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import com.jcraft.jsch.KeyPair;
+
 import java.security.PublicKey;
 import java.util.LinkedList;
 import java.util.List;
@@ -286,9 +290,10 @@ public class SshdServerMock implements CommandFactory {
      * @throws IOException          if so.
      * @throws InterruptedException if interrupted while waiting for ssh-keygen to finish.
      */
-    public static File generateKeyPair() throws IOException, InterruptedException {
-        File priv = new File("/tmp/jenkins-testkey");
-        File pub = new File("/tmp/jenkins-testkey.pub");
+    public static KeyPairFiles generateKeyPair() throws IOException, InterruptedException, JSchException {
+        File tmp = new File(System.getProperty("java.io.tmpdir"));
+        File priv = new File(tmp, "jenkins-testkey");
+        File pub = new File(tmp, "jenkins-testkey.pub");
         if (!(priv.exists() && pub.exists())) {
             if (priv.exists()) {
                 if (!priv.delete()) {
@@ -301,23 +306,39 @@ public class SshdServerMock implements CommandFactory {
                 }
             }
             System.out.println("Generating test key-pair.");
-            String[] cmd = new String[]{"ssh-keygen",
-                    "-t", "rsa",
-                    "-C", "testkey",
-                    "-f", "/tmp/jenkins-testkey",
-                    "-q", "-N", "", };
-            Process p = Runtime.getRuntime().exec(cmd);
-            new StreamCopyThread("ssh-keygen-out", p.getInputStream(), System.out, false).start();
-            new StreamCopyThread("ssh-keygen-out", p.getErrorStream(), System.err, false).start();
-            if (p.waitFor() == 0) {
-                return priv;
-            } else {
-                Thread.sleep(WAIT_FOR_ERROR_OUTPUT);
-                throw new IOException("ssh-keygen failed!");
-            }
+            JSch jsch = new JSch();
+            KeyPair kpair = KeyPair.genKeyPair(jsch, KeyPair.RSA);
+
+            kpair.writePrivateKey(new FileOutputStream(priv));
+            kpair.writePublicKey(new FileOutputStream(pub), "Test");
+            System.out.println("Finger print: " + kpair.getFingerPrint());
+            kpair.dispose();
+            return new KeyPairFiles(priv, pub);
         } else {
             System.out.println("Test key-pair seems to already exist.");
-            return priv;
+            return new KeyPairFiles(priv, pub);
+        }
+    }
+
+    /**
+     * Pointer to two key-pair files.
+     * Returned from {@link #generateKeyPair()}.
+     */
+    public static class KeyPairFiles {
+        private File privateKey;
+        private File publicKey;
+
+        private KeyPairFiles(File privateKey, File publicKey) {
+            this.privateKey = privateKey;
+            this.publicKey = publicKey;
+        }
+
+        public File getPrivateKey() {
+            return privateKey;
+        }
+
+        public File getPublicKey() {
+            return publicKey;
         }
     }
 

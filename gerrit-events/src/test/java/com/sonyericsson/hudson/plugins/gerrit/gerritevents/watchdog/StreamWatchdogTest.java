@@ -24,6 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog;
 
+import com.jcraft.jsch.JSchException;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
@@ -33,7 +34,6 @@ import org.apache.sshd.SshServer;
 import org.apache.sshd.server.Environment;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -57,11 +57,12 @@ public class StreamWatchdogTest {
      * @throws IOException if so.
      * @throws InterruptedException if so.
      * @throws NoSuchMethodException if so.
+     * @throws JSchException if so.
      */
     @Test(timeout = 2 * 60 * 60 * 1000)
-    public void testFullTimeoutFlow() throws IOException, InterruptedException, NoSuchMethodException {
+    public void testFullTimeoutFlow() throws IOException, InterruptedException, NoSuchMethodException, JSchException {
         System.out.println("====This will be a long running test ca. 2 minutes=====");
-        File sshKey = SshdServerMock.generateKeyPair();
+        SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
         SshdServerMock server = new SshdServerMock();
         SshServer sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
@@ -70,7 +71,7 @@ public class StreamWatchdogTest {
                 new Object[]{MINUTES.toMillis(5)}, new Class<?>[]{Long.class});
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         GerritConnection connection = new GerritConnection("", "localhost", SshdServerMock.GERRIT_SSH_PORT, "",
-                new Authentication(sshKey, "jenkins"), 20,
+                new Authentication(sshKey.getPrivateKey(), "jenkins"), 20,
                 new WatchTimeExceptionData(new int[0], Collections.<WatchTimeExceptionData.TimeSpan>emptyList()));
         Listen connectionListener = new Listen();
         connection.addListener(connectionListener);
