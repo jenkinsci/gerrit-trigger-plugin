@@ -23,10 +23,11 @@
  *  THE SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import net.sf.json.JSONObject;
 
 /**
