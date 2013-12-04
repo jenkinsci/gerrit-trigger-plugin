@@ -24,7 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -57,7 +57,7 @@ public class TriggerMonitorTest {
     @Test
     public void testAdd() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         assertEquals(1, monitor.getEvents().size());
         assertSame(patch, monitor.getEvents().get(0).getEvent());
@@ -70,7 +70,7 @@ public class TriggerMonitorTest {
     @Test
     public void testContains() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         assertTrue(monitor.contains(patch));
     }
@@ -83,9 +83,9 @@ public class TriggerMonitorTest {
     @Test
     public void testContainsFalse() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
-        PatchsetCreated patch2 = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch2 = Setup.createManualPatchsetCreated();
         patch2.getChange().setNumber("2");
         assertFalse(monitor.contains(patch2));
     }
@@ -97,7 +97,7 @@ public class TriggerMonitorTest {
     @Test
     public void testTriggerScanStarting() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
 
@@ -113,7 +113,7 @@ public class TriggerMonitorTest {
     @Test
     public void testTriggerScanStartingFalse() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
 
         TriggerMonitor.EventState state = monitor.getEvents().get(0);
@@ -129,7 +129,7 @@ public class TriggerMonitorTest {
     @Test
     public void testTriggerScanDone() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
         monitor.triggerScanDone(patch);
@@ -146,7 +146,7 @@ public class TriggerMonitorTest {
     @Test
     public void testTriggerScanDoneFalse() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
 
@@ -162,7 +162,7 @@ public class TriggerMonitorTest {
     @Test
     public void testProjectTriggered() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -182,7 +182,7 @@ public class TriggerMonitorTest {
     @Test
     public void testBuildStarted() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -206,7 +206,7 @@ public class TriggerMonitorTest {
     @Test
     public void testBuildCompleted() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -230,7 +230,7 @@ public class TriggerMonitorTest {
     @Test
     public void testAllBuildsCompleted() throws Exception {
         TriggerMonitor monitor = new TriggerMonitor();
-        PatchsetCreated patch = Setup.createPatchsetCreated();
+        ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);

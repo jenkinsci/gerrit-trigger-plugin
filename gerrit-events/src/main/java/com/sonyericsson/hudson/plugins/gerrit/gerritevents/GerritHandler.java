@@ -269,16 +269,6 @@ public class GerritHandler implements Coordinator, Handler {
      */
     @Override
     public void notifyListeners(GerritEvent event) {
-        //Notify lifecycle listeners.
-        if (event instanceof PatchsetCreated) {
-            try {
-                ((PatchsetCreated)event).fireTriggerScanStarting();
-            } catch (Exception ex) {
-                logger.error("Error when notifying LifecycleListeners. ", ex);
-            }
-        }
-
-        //The real deed.
         if (event instanceof CommentAdded) {
             if (ignoreEvent((CommentAdded)event)) {
                 logger.trace("CommentAdded ignored");
@@ -291,15 +281,6 @@ public class GerritHandler implements Coordinator, Handler {
             } catch (Exception ex) {
                 logger.error("When notifying listener: {} about event: {}", listener, event);
                 logger.error("Notify-error: ", ex);
-            }
-        }
-
-        ////Notify lifecycle listeners.
-        if (event instanceof PatchsetCreated) {
-            try {
-                ((PatchsetCreated)event).fireTriggerScanDone();
-            } catch (Exception ex) {
-                logger.error("Error when notifying LifecycleListeners. ", ex);
             }
         }
     }

@@ -25,18 +25,29 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.events;
 
+import java.util.LinkedList;
+import java.util.List;
+
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
+
 import net.sf.json.JSONObject;
 
 /**
  * Represents a Patchset manually selected to be built by a user.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ManualPatchsetCreated extends PatchsetCreated {
+public class ManualPatchsetCreated extends PatchsetCreated implements GerritEventLifecycle {
 
     private String userName;
+    private transient List<GerritEventLifecycleListener> listeners;
 
     /**
      * Default Constructor.
@@ -89,5 +100,127 @@ public class ManualPatchsetCreated extends PatchsetCreated {
         str.append(" PatchSet: ").append(getPatchSet());
         str.append("]");
         return str.toString();
+    }
+
+    @Override
+    public GerritEvent getEvent() {
+        return this;
+    }
+
+    @Override
+    public synchronized void addListener(GerritEventLifecycleListener listener) {
+        if (listeners == null) {
+            listeners = new LinkedList<GerritEventLifecycleListener>();
+        }
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    @Override
+    public synchronized boolean removeListener(GerritEventLifecycleListener listener) {
+        if (listeners != null) {
+            return listeners.remove(listener);
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public synchronized void fireTriggerScanStarting() {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.triggerScanStarting(event);
+            }
+        });
+    }
+
+    @Override
+    public synchronized void fireTriggerScanDone() {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.triggerScanDone(event);
+            }
+        });
+    }
+
+    @Override
+    public synchronized void fireProjectTriggered(final AbstractProject project) {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.projectTriggered(event, project);
+            }
+        });
+    }
+
+    @Override
+    public synchronized void fireBuildStarted(final AbstractBuild build) {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.buildStarted(event, build);
+            }
+        });
+    }
+
+    @Override
+    public synchronized void fireBuildCompleted(final AbstractBuild build) {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.buildCompleted(event, build);
+            }
+        });
+    }
+
+    @Override
+    public synchronized void fireAllBuildsCompleted() {
+        fireEvent(new ListenerVisitor() {
+            @Override
+            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
+                listener.allBuildsCompleted(event);
+            }
+        });
+    }
+    /**
+     * Fires an event with the help of a visitor.
+     * It iterates through all the listeners, and for each listener asks the visitor to do stuff.
+     * @param visitor the visitor that calls the correct method.
+     */
+    private synchronized void fireEvent(ListenerVisitor visitor) {
+        if (listeners != null) {
+            //Get a cloned list so we don't risk modifying it on the same thread.
+            List<GerritEventLifecycleListener> list = getListeners();
+            for (GerritEventLifecycleListener listener : list) {
+                visitor.visit(listener, this);
+            }
+        }
+    }
+
+    /**
+     * Gets a copy of the internal transient list of listeners.
+     * @return the copy of the list of listeners, or null if the origin list is null.
+     */
+    protected synchronized List<GerritEventLifecycleListener> getListeners() {
+        if (listeners != null) {
+            return new LinkedList<GerritEventLifecycleListener>(listeners);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Internal Visitor for different events.
+     */
+    private interface ListenerVisitor {
+        /**
+         * Visits the listener.
+         * @param listener the listener to visit.
+         * @param event the event.
+         */
+        void visit(GerritEventLifecycleListener listener, GerritEvent event);
     }
 }

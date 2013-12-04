@@ -22,10 +22,10 @@
  * THE SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import net.sf.json.JSONObject;
@@ -57,15 +57,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritEventLifecycleTest {
+public class ManualPatchsetCreatedTest {
     /**
-     * Tests {@link GerritEventLifecycle#addListener(GerritEventLifecycleListener)}.
+     * Tests {@link ManualPatchsetCreated#addListener(GerritEventLifecycleListener)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testAddListener() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         assertFalse(lifecycle.getListeners().isEmpty());
@@ -73,14 +73,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#removeListener(GerritEventLifecycleListener)}.
+     * Tests {@link ManualPatchsetCreated#removeListener(GerritEventLifecycleListener)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testRemoveListener() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
         assertFalse(lifecycle.getListeners().isEmpty());
         lifecycle.removeListener(listener);
@@ -88,14 +88,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireTriggerScanStarting()}.
+     * Tests {@link ManualPatchsetCreated#fireTriggerScanStarting()}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireTriggerScanStarting() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireTriggerScanStarting();
@@ -105,14 +105,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireTriggerScanDone()}.
+     * Tests {@link ManualPatchsetCreated#fireTriggerScanDone()}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireTriggerScanDone() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireTriggerScanDone();
@@ -122,14 +122,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireProjectTriggered(hudson.model.AbstractProject)}.
+     * Tests {@link ManualPatchsetCreated#fireProjectTriggered(hudson.model.AbstractProject)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireProjectTriggered() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractProject project = mock(AbstractProject.class);
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireProjectTriggered(project);
@@ -139,14 +139,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireBuildStarted(hudson.model.AbstractBuild)}.
+     * Tests {@link ManualPatchsetCreated#fireBuildStarted(hudson.model.AbstractBuild)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireBuildStarted() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractBuild build = mock(AbstractBuild.class);
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireBuildStarted(build);
@@ -156,14 +156,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireBuildCompleted(hudson.model.AbstractBuild)}.
+     * Tests {@link ManualPatchsetCreated#fireBuildCompleted(hudson.model.AbstractBuild)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireBuildCompleted() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractBuild build = mock(AbstractBuild.class);
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireBuildCompleted(build);
@@ -173,13 +173,13 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Tests {@link GerritEventLifecycle#fireAllBuildsCompleted()}.
+     * Tests {@link ManualPatchsetCreated#fireAllBuildsCompleted()}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
     public void testFireAllBuildsCompleted() throws Exception {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
-        TestableGerritEventLifecycle lifecycle = new TestableGerritEventLifecycle();
+        TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
 
         lifecycle.fireAllBuildsCompleted();
@@ -189,14 +189,14 @@ public class GerritEventLifecycleTest {
     }
 
     /**
-     * Implementation of the abstract class under test.
+     * Sub class of Manualpatchset that expose lifecycle listeners.
      */
-    static class TestableGerritEventLifecycle extends PatchsetCreated {
+    static class TestableManualPatchset extends ManualPatchsetCreated {
 
         /**
          * Default constructor with test data.
          */
-        TestableGerritEventLifecycle() {
+        TestableManualPatchset() {
             JSONObject patch = new JSONObject();
             patch.put(NUMBER, "2");
             patch.put(REVISION, "ad123456789");

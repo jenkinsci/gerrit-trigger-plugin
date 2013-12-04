@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
@@ -186,7 +187,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
@@ -214,7 +215,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();

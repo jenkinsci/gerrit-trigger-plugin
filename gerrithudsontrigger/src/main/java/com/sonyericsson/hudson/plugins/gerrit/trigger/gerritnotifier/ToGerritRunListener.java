@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -98,7 +99,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 // There won't be a trigger if this job was run through a unit test
                 GerritTrigger.getTrigger(r.getProject()).notifyBuildEnded(event);
             }
-            event.fireBuildCompleted(r);
+            if (event instanceof GerritEventLifecycle) {
+                ((GerritEventLifecycle)event).fireBuildCompleted(r);
+            }
             if (!cause.isSilentMode()) {
                 memory.completed(event, r);
 
@@ -123,7 +126,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 if (memory.isAllBuildsCompleted(event)) {
                     try {
                         logger.info("All Builds are completed for cause: {}", cause);
-                        event.fireAllBuildsCompleted();
+                        if (event instanceof GerritEventLifecycle) {
+                            ((GerritEventLifecycle)event).fireAllBuildsCompleted();
+                        }
                         NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
                     } finally {
                         memory.forget(event);
@@ -144,7 +149,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             cleanUpGerritCauses(cause, r);
             setThisBuild(r);
             if (cause.getEvent() != null) {
-                cause.getEvent().fireBuildStarted(r);
+                if (cause.getEvent() instanceof GerritEventLifecycle) {
+                    ((GerritEventLifecycle)cause.getEvent()).fireBuildStarted(r);
+                }
             }
             if (!cause.isSilentMode()) {
                 memory.started(cause.getEvent(), r);
@@ -219,7 +226,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     public synchronized void onTriggered(AbstractProject project, GerritTriggeredEvent event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
-        event.fireProjectTriggered(project);
+        if (event instanceof GerritEventLifecycle) {
+            ((GerritEventLifecycle)event).fireProjectTriggered(project);
+        }
         //Logging
         String name = null;
         if (project != null) {
@@ -239,7 +248,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                                            GerritTriggeredEvent event,
                                            List<AbstractBuild> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
-        event.fireProjectTriggered(project);
+        if (event instanceof GerritEventLifecycle) {
+            ((GerritEventLifecycle)event).fireProjectTriggered(project);
+        }
         //Logging
         String name = null;
         if (project != null) {

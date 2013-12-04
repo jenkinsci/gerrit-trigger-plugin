@@ -25,8 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -192,12 +193,12 @@ public abstract class DuplicatesUtil {
      * @param timeoutMs the maximum time in ms to wait for the build to start.
      * @return the build that started.
      */
-    public static AbstractBuild waitForBuildToStart(PatchsetCreated event, int timeoutMs) {
+    public static AbstractBuild waitForBuildToStart(ManualPatchsetCreated event, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         final AtomicReference<AbstractBuild> ref = new AtomicReference<AbstractBuild>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
-            public void buildStarted(PatchsetCreated event, AbstractBuild build) {
+            public void buildStarted(GerritEvent event, AbstractBuild build) {
                 ref.getAndSet(build);
             }
         });
