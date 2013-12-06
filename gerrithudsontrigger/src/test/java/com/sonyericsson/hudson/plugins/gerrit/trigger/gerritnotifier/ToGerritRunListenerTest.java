@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -153,7 +154,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnCompleted() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
@@ -184,7 +185,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnCompletedSilentMode() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
@@ -284,7 +285,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnStarted() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
@@ -312,7 +313,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnStartedSilentMode() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
@@ -337,7 +338,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnTriggered() throws Exception {
         AbstractProject project = mockProject("projectX");
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
@@ -356,7 +357,7 @@ public class ToGerritRunListenerTest {
     @Test
     public void testOnRetriggered() throws Exception {
         AbstractProject project = mockProject("projectX");
-        PatchsetCreated event = Setup.createPatchsetCreated();
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();

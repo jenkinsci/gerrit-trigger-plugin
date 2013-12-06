@@ -44,6 +44,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
@@ -429,7 +430,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
-                event.fireProjectTriggered(myProject);
+                if (event instanceof GerritEventLifecycle) {
+                    ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
+                }
             }
             GerritCause cause;
             if (event instanceof ManualPatchsetCreated) {
@@ -460,7 +463,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (!silentMode) {
                 ToGerritRunListener.getInstance().onTriggered(myProject, event);
             } else {
-                event.fireProjectTriggered(myProject);
+                if (event instanceof GerritEventLifecycle) {
+                    ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
+                }
             }
 
             schedule(new GerritCause(event, silentMode), event);

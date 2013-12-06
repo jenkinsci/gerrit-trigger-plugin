@@ -31,7 +31,6 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycle;
 
 
 /**
@@ -39,7 +38,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.
  *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public abstract class GerritTriggeredEvent extends GerritEventLifecycle implements GerritEvent, GerritJsonEvent {
+public abstract class GerritTriggeredEvent implements GerritEvent, GerritJsonEvent {
 
 
 

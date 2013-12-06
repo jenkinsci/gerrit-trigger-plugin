@@ -24,9 +24,11 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycleListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
+
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BallColor;
@@ -48,38 +50,36 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
      * Adds the event and a holder for its state to the list of triggered events.
      * And adds this TriggerMonitor as a listener to the event.
      * Unless it doesn't already exists in the list of events.
-     * @param event the event.
+     * @param gerritEventLifecycle the event.
      */
-    public synchronized void add(PatchsetCreated event) {
-        if (!contains(event)) {
-            event.addListener(this);
-            events.add(new EventState(event));
+    public synchronized void add(GerritEventLifecycle gerritEventLifecycle) {
+        if (!contains(gerritEventLifecycle)) {
+            gerritEventLifecycle.addListener(this);
+            events.add(new EventState(gerritEventLifecycle));
         }
     }
 
     /**
      * Checks to see if the list of triggered events and their states contains the given event.
-     * @param event the event to check.
+     * @param gerritEventLifecycle the event to check.
      * @return true if it exests in the list.
      * @see #getEvents()
      */
-    public synchronized boolean contains(PatchsetCreated event) {
-        for (EventState state : events) {
-            if (state.event != null && state.event.equals(event)) {
-                return true;
-            }
+    public synchronized boolean contains(GerritEventLifecycle gerritEventLifecycle) {
+        if (findState(gerritEventLifecycle.getEvent()) != null) {
+           return true;
         }
         return false;
     }
 
     /**
      * Finds the EventState containing the given event.
-     * @param event the event.
+     * @param gerritEvent the event.
      * @return the state, or null if there is none.
      */
-    private synchronized EventState findState(PatchsetCreated event) {
+    private synchronized EventState findState(GerritEvent gerritEvent) {
         for (EventState state : events) {
-            if (state.event != null && state.event.equals(event)) {
+            if (state.gerritEventLifecycle.getEvent().equals(gerritEvent)) {
                 return state;
             }
         }
@@ -87,7 +87,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void triggerScanStarting(PatchsetCreated event) {
+    public synchronized void triggerScanStarting(GerritEvent event) {
         EventState state = findState(event);
         if (state != null) {
             state.triggerScanStarted = true;
@@ -95,7 +95,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void triggerScanDone(PatchsetCreated event) {
+    public synchronized void triggerScanDone(GerritEvent event) {
         EventState state = findState(event);
         if (state != null) {
             state.triggerScanDone = true;
@@ -103,7 +103,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void projectTriggered(PatchsetCreated event, AbstractProject project) {
+    public synchronized void projectTriggered(GerritEvent event, AbstractProject project) {
         EventState state = findState(event);
         if (state != null) {
             state.addProject(project);
@@ -111,7 +111,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void buildStarted(PatchsetCreated event, AbstractBuild build) {
+    public synchronized void buildStarted(GerritEvent event, AbstractBuild build) {
         EventState state = findState(event);
         if (state != null) {
             state.setBuild(build);
@@ -119,22 +119,22 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void buildCompleted(PatchsetCreated event, AbstractBuild build) {
+    public synchronized void buildCompleted(GerritEvent event, AbstractBuild build) {
         EventState state = findState(event);
         if (state != null) {
             if (state.allBuildsCompleted && state.isReallyAllBuildsCompleted()) {
-                event.removeListener(this);
+                state.gerritEventLifecycle.removeListener(this);
             }
         }
     }
 
     @Override
-    public synchronized void allBuildsCompleted(PatchsetCreated event) {
+    public synchronized void allBuildsCompleted(GerritEvent event) {
         EventState state = findState(event);
         if (state != null) {
             state.allBuildsCompleted = true;
             if (state.isReallyAllBuildsCompleted()) {
-                event.removeListener(this);
+                state.gerritEventLifecycle.removeListener(this);
             }
         }
     }
@@ -160,7 +160,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
      * State information about an event.
      */
     public static class EventState {
-        private PatchsetCreated event;
+        private GerritEventLifecycle gerritEventLifecycle;
         private boolean triggerScanStarted = false;
         private boolean triggerScanDone = false;
         private boolean allBuildsCompleted = false;
@@ -168,10 +168,10 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
 
         /**
          * Standard constructor.
-         * @param event the event to track.
+         * @param gerritEventLifecycle the event to track.
          */
-        EventState(PatchsetCreated event) {
-            this.event = event;
+        EventState(GerritEventLifecycle gerritEventLifecycle) {
+            this.gerritEventLifecycle = gerritEventLifecycle;
             builds = new LinkedList<TriggeredItemEntity>();
         }
 
@@ -256,8 +256,8 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
          * The event.
          * @return the event.
          */
-        public PatchsetCreated getEvent() {
-            return event;
+        public GerritEventLifecycle getEvent() {
+            return gerritEventLifecycle;
         }
 
         /**
@@ -294,7 +294,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
 
         /**
          * Goes through the list of builds and checks if anyone is still building.
-         * Even though the event {@link TriggerMonitor#allBuildsCompleted(PatchsetCreated)}
+         * Even though the event {@link TriggerMonitor#allBuildsCompleted(GerritEvent)}
          * has been called that only applies to non silent builds, an extra check is needed.
          * @return true if all builds has completed.
          */

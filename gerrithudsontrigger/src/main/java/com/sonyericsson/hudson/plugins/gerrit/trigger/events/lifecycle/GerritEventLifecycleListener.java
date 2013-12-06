@@ -22,11 +22,12 @@
  *  THE SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 
 /**
  * Listener interface for listening in on a specific GerritEvent's lifecycle.
@@ -38,38 +39,38 @@ public interface GerritEventLifecycleListener {
      * Called before any triggers are enumerated.
      * @param event the event.
      */
-    void triggerScanStarting(PatchsetCreated event);
+    void triggerScanStarting(GerritEvent event);
 
     /**
      * Called after all triggers has been enumerated.
      * @param event the event.
      */
-    void triggerScanDone(PatchsetCreated event);
+    void triggerScanDone(GerritEvent event);
 
     /**
      * Called when the trigger of a project has decided to trigger on the event.
      * @param event the event.
      * @param project the project that was triggered.
      */
-    void projectTriggered(PatchsetCreated event, AbstractProject project);
+    void projectTriggered(GerritEvent event, AbstractProject project);
 
     /**
      * Called when a build has started.
      * @param event the event.
      * @param build the build.
      */
-    void buildStarted(PatchsetCreated event, AbstractBuild build);
+    void buildStarted(GerritEvent event, AbstractBuild build);
 
     /**
      * Called when a build is completed.
      * @param event the event.
      * @param build the build.
      */
-    void buildCompleted(PatchsetCreated event, AbstractBuild build);
+    void buildCompleted(GerritEvent event, AbstractBuild build);
 
     /**
      * Called when all builds triggered by the event are completed.
      * @param event the event.
      */
-    void allBuildsCompleted(PatchsetCreated event);
+    void allBuildsCompleted(GerritEvent event);
 }

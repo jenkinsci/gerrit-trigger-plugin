@@ -24,10 +24,11 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.lifecycle.GerritEventLifecycleListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 
 /**
  * Empty implementation of a {@link GerritEventLifecycleListener}. Useful when a test just wants to use one of the
@@ -37,32 +38,32 @@ import hudson.model.AbstractProject;
  */
 public class GerritEventLifeCycleAdaptor implements GerritEventLifecycleListener {
     @Override
-    public void triggerScanStarting(PatchsetCreated event) {
+    public void triggerScanStarting(GerritEvent event) {
 
     }
 
     @Override
-    public void triggerScanDone(PatchsetCreated event) {
+    public void triggerScanDone(GerritEvent event) {
 
     }
 
     @Override
-    public void projectTriggered(PatchsetCreated event, AbstractProject project) {
+    public void projectTriggered(GerritEvent event, AbstractProject project) {
 
     }
 
     @Override
-    public void buildStarted(PatchsetCreated event, AbstractBuild build) {
+    public void buildStarted(GerritEvent event, AbstractBuild build) {
 
     }
 
     @Override
-    public void buildCompleted(PatchsetCreated event, AbstractBuild build) {
+    public void buildCompleted(GerritEvent event, AbstractBuild build) {
 
     }
 
     @Override
-    public void allBuildsCompleted(PatchsetCreated event) {
+    public void allBuildsCompleted(GerritEvent event) {
 
     }
 }
