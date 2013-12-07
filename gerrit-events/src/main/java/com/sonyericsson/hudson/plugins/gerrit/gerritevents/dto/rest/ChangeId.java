@@ -25,11 +25,18 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 /**
  * A changeId.
  */
 public class ChangeId {
+    private static final Logger logger = LoggerFactory.getLogger(ChangeId.class);
+
     private final String projectName;
     private final String branchName;
     private final String id;
@@ -63,6 +70,32 @@ public class ChangeId {
      * @return the url part.
      */
     public String asUrlPart() {
-        return projectName + "~" + branchName + "~" + id;
+        try {
+            return encode(projectName) + "~" + encode(branchName) + "~" + id;
+        } catch (UnsupportedEncodingException e) {
+            String parameter = projectName + "~" + branchName + "~" + id;
+            logger.error("Failed to encode ChangeId {}, falling back to unencoded {}", this, parameter);
+            return parameter;
+        }
+    }
+
+    /**
+     * Encode given String for usage in URL. UTF-8 is used as per recommendation
+     * at http://www.w3.org/TR/html40/appendix/notes.html#non-ascii-chars
+     * @param s String to be encoded
+     * @return Encoded string
+     * @throws UnsupportedEncodingException if UTF-8 is unsupported, handled in caller for better log message
+     */
+    private String encode(final String s) throws UnsupportedEncodingException {
+        return URLEncoder.encode(s, "UTF-8");
+    }
+
+    @Override
+    public String toString() {
+        return "ChangeId{"
+                + "projectName='" + projectName + '\''
+                + ", branchName='" + branchName + '\''
+                + ", id='" + id + '\''
+                + '}';
     }
 }
