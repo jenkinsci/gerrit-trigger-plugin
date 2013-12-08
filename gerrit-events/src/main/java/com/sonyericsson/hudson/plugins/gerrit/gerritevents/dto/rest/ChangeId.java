@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
+import org.apache.commons.lang.CharEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +88,7 @@ public class ChangeId {
      * @throws UnsupportedEncodingException if UTF-8 is unsupported, handled in caller for better log message
      */
     private String encode(final String s) throws UnsupportedEncodingException {
-        return URLEncoder.encode(s, "UTF-8");
+        return URLEncoder.encode(s, CharEncoding.UTF_8);
     }
 
     @Override
