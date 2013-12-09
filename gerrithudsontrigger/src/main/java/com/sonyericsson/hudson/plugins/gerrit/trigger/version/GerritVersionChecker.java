@@ -105,9 +105,20 @@ public final class GerritVersionChecker {
      */
     public static boolean isCorrectVersion(Feature feature, String serverName) {
         if (PluginImpl.getInstance() != null) {
-            GerritVersionNumber gerritVersion
-                = createVersionNumber(getGerritVersion(serverName));
-            return isCorrectVersion(gerritVersion, feature);
+            if (serverName == null || serverName.isEmpty() || GerritServer.ANY_SERVER.equals(serverName)) {
+                for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                    GerritVersionNumber gerritVersion
+                            = createVersionNumber(server.getGerritVersion());
+                    if (isCorrectVersion(gerritVersion, feature)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                GerritVersionNumber gerritVersion
+                    = createVersionNumber(getGerritVersion(serverName));
+                return isCorrectVersion(gerritVersion, feature);
+            }
         } else {
             return false;
         }
