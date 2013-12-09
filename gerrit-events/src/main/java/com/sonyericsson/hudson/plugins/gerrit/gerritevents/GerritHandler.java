@@ -27,13 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.Coordinator;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritEventWork;
@@ -46,6 +40,8 @@ import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -295,25 +291,24 @@ public class GerritHandler implements Coordinator, Handler {
     private void notifyListener(GerritEventListener listener, GerritEvent event) {
         logger.trace("Notifying listener {} of event {}", listener, event);
         try {
-            if (event instanceof PatchsetCreated) {
-                listener.gerritEvent((PatchsetCreated)event);
-            } else if (event instanceof DraftPublished) {
-                listener.gerritEvent((DraftPublished)event);
-            } else if (event instanceof ChangeAbandoned) {
-                listener.gerritEvent((ChangeAbandoned)event);
-            } else if (event instanceof ChangeMerged) {
-              listener.gerritEvent((ChangeMerged)event);
-            } else if (event instanceof ChangeRestored) {
-                listener.gerritEvent((ChangeRestored)event);
-            } else if (event instanceof CommentAdded) {
-                listener.gerritEvent((CommentAdded)event);
-            } else if (event instanceof RefUpdated) {
-                listener.gerritEvent((RefUpdated)event);
-            } else {
-                listener.gerritEvent(event);
-            }
-        } catch (Exception ex) {
+            logger.trace("Reflecting closest method");
+            Method method = listener.getClass().getMethod("gerritEvent", event.getClass());
+            method.invoke(listener, event);
+        } catch (IllegalAccessException ex) {
+            logger.debug("Not allowed to invoke the reflected method. Calling default.", ex);
+            listener.gerritEvent(event);
+        } catch (IllegalArgumentException ex) {
+            logger.debug("Not allowed to invoke the reflected method with specified parameter (REFLECTION BUG). "
+               + "Calling default.", ex);
+            listener.gerritEvent(event);
+        } catch (InvocationTargetException ex) {
             logger.error("Exception thrown during event handling.", ex);
+        } catch (NoSuchMethodException ex) {
+            logger.debug("No apropriate method found during reflection. Calling default.", ex);
+            listener.gerritEvent(event);
+        } catch (SecurityException ex) {
+            logger.debug("Not allowed to reflect/invoke a method on this listener (DESIGN BUG). Calling default", ex);
+            listener.gerritEvent(event);
         }
     }
 

@@ -31,14 +31,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -393,7 +388,43 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     @Override
     public void gerritEvent(GerritEvent event) {
-        //Default should do nothing
+        logger.trace("event: {}", event);
+        if (event instanceof GerritTriggeredEvent) {
+            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
+            if (isInteresting(triggeredEvent)) {
+                logger.trace("The event is interesting.");
+                notifyOnTriggered(triggeredEvent);
+                schedule(new GerritCause(triggeredEvent, silentMode), triggeredEvent);
+            }
+        }
+    }
+
+    /**
+     * Called when a ManualPatchsetCreated event arrives.
+     *
+     * @param event the event
+     */
+    public void gerritEvent(ManualPatchsetCreated event) {
+        logger.trace("event: {}", event);
+        if (isInteresting(event)) {
+            logger.trace("The event is interesting.");
+            notifyOnTriggered(event);
+            schedule(new GerritManualCause(event, silentMode), event);
+        }
+    }
+
+    /**
+     * Notify that that build will be triggered for the event.
+     * @param event The event
+     */
+    private void notifyOnTriggered(GerritTriggeredEvent event) {
+        if (!silentMode) {
+            ToGerritRunListener.getInstance().onTriggered(myProject, event);
+        } else {
+            if (event instanceof GerritEventLifecycle) {
+                ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
+            }
+        }
     }
 
     /**
@@ -411,65 +442,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             provider.setName(serverName);
         }
         return provider;
-    }
-    /**
-     * Called when a PatchSetCreated event arrives.
-     *
-     * @param event the event
-     */
-    @Override
-    public void gerritEvent(PatchsetCreated event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            } else {
-                if (event instanceof GerritEventLifecycle) {
-                    ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
-                }
-            }
-            GerritCause cause;
-            if (event instanceof ManualPatchsetCreated) {
-                cause = new GerritManualCause((ManualPatchsetCreated)event, silentMode);
-            } else {
-                cause = new GerritCause(event, silentMode);
-            }
-
-            schedule(cause, event);
-        }
-    }
-
-    /**
-     * Called when a DraftPublished event arrives.
-     *
-     * @param event the event
-     */
-    @Override
-    public void gerritEvent(DraftPublished event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            } else {
-                if (event instanceof GerritEventLifecycle) {
-                    ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
-                }
-            }
-
-            schedule(new GerritCause(event, silentMode), event);
-        }
     }
 
     /**
@@ -770,6 +742,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if we should.
      */
     private boolean isInteresting(GerritTriggeredEvent event) {
+        if (!myProject.isBuildable()) {
+            logger.trace("Disabled.");
+            return false;
+        }
+
         if (!shouldTriggerOnEventType(event)) {
             return false;
         }
@@ -839,72 +816,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Called when a ChangeAbandoned event arrives. Should probably not be listening on this here.
-     *
-     * @param event the event.
-     */
-    @Override
-    public void gerritEvent(ChangeAbandoned event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            }
-            GerritCause cause = new GerritCause(event, silentMode);
-            schedule(cause, event);
-        }
-    }
-
-    /**
-     * Called when a ChangeMerged event arrives.
-     *
-     * @param event the event.
-     */
-    @Override
-    public void gerritEvent(ChangeMerged event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            }
-            GerritCause cause = new GerritCause(event, silentMode);
-            schedule(cause, event);
-        }
-    }
-
-    /**
-     * Called when a ChangeRestored event arrives.
-     *
-     * @param event the event.
-     */
-    @Override
-    public void gerritEvent(ChangeRestored event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            }
-            GerritCause cause = new GerritCause(event, silentMode);
-            schedule(cause, event);
-        }
-    }
-
-    /**
      * Checks if the approvals associated with this comment-added event match what
      * this trigger is configured to look for.
      *
@@ -933,46 +844,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @param event the event.
      */
-    @Override
     public void gerritEvent(CommentAdded event) {
         logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
         if (ToGerritRunListener.getInstance().isBuilding(myProject, event)) {
             logger.trace("Already building.");
             return;
         }
         if (isInteresting(event) && matchesApproval(event)) {
             logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            }
-            GerritCause cause = new GerritCause(event, silentMode);
-            schedule(cause, event);
-        }
-    }
-
-    /**
-     * Called when a RefUpdated event arrives.
-     *
-     * @param event the event.
-     */
-    @Override
-    public void gerritEvent(RefUpdated event) {
-        logger.trace("event: {}", event);
-        if (!myProject.isBuildable()) {
-            logger.trace("Disabled.");
-            return;
-        }
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onTriggered(myProject, event);
-            }
-            GerritCause cause = new GerritCause(event, silentMode);
-            schedule(cause, event);
+            notifyOnTriggered(event);
+            schedule(new GerritCause(event, silentMode), event);
         }
     }
 

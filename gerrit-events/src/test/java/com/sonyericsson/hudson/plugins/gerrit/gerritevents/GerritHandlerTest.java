@@ -50,12 +50,15 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.collection.IsIn.isIn;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-//CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
+//CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: Test data.
 
 /**
  * Tests for {@link GerritHandler}.
@@ -321,43 +324,211 @@ public class GerritHandlerTest {
         }
 
         @Override
-        public void gerritEvent(PatchsetCreated event) {
-
-        }
-
-        @Override
-        public void gerritEvent(DraftPublished event) {
-
-        }
-
-        @Override
-        public void gerritEvent(ChangeAbandoned event) {
-
-        }
-
-        @Override
-        public void gerritEvent(ChangeMerged event) {
-
-        }
-
-        @Override
-        public void gerritEvent(ChangeRestored event) {
-
-        }
-
-        @Override
-        public void gerritEvent(CommentAdded event) {
-
-        }
-
-        @Override
-        public void gerritEvent(RefUpdated event) {
-
-        }
-
-        @Override
         public int hashCode() {
             return code;
         }
     }
+
+    /**
+     * Tests that event notification using the default method.
+     */
+    @Test
+    public void testEventNotificationWithDefaultListenerImplemention() {
+        GerritEventListener listenerMock = mock(GerritEventListener.class);
+        handler.addListener(listenerMock);
+
+        ChangeAbandoned changeAbandoned = new ChangeAbandoned();
+        handler.notifyListeners(changeAbandoned);
+        verify(listenerMock, times(1)).gerritEvent(changeAbandoned);
+
+        ChangeMerged changeMerged = new ChangeMerged();
+        handler.notifyListeners(changeMerged);
+        verify(listenerMock, times(1)).gerritEvent(changeMerged);
+
+        ChangeRestored changeRestored = new ChangeRestored();
+        handler.notifyListeners(changeRestored);
+        verify(listenerMock, times(1)).gerritEvent(changeRestored);
+
+        CommentAdded commentAdded = new CommentAdded();
+        handler.notifyListeners(commentAdded);
+        verify(listenerMock, times(1)).gerritEvent(commentAdded);
+
+        DraftPublished draftPublished = new DraftPublished();
+        handler.notifyListeners(draftPublished);
+        verify(listenerMock, times(1)).gerritEvent(draftPublished);
+
+        PatchsetCreated patchsetCreated = new PatchsetCreated();
+        handler.notifyListeners(patchsetCreated);
+        verify(listenerMock, times(1)).gerritEvent(patchsetCreated);
+
+        RefUpdated refUpdated = new RefUpdated();
+        handler.notifyListeners(refUpdated);
+        verify(listenerMock, times(1)).gerritEvent(refUpdated);
+    }
+
+    /**
+     * Tests that ChangeAbandoned event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerChangeAbandonedMethodSignature() {
+        SpecificEventListener changeAbandonedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(ChangeAbandoned event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(changeAbandonedListener, new ChangeAbandoned());
+    }
+
+    /**
+     * Tests that ChangeMerged event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerChangeMergedMethodSignature() {
+        SpecificEventListener changeMergedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(ChangeMerged event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(changeMergedListener, new ChangeMerged());
+    }
+
+    /**
+     * Tests that ChangeRestored event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerChangeRestoredMethodSignature() {
+        SpecificEventListener changeRestoredListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(ChangeRestored event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(changeRestoredListener, new ChangeRestored());
+    }
+
+    /**
+     * Tests that CommentAdded event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerCommentAddedMethodSignature() {
+        SpecificEventListener commentAddedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(CommentAdded event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(commentAddedListener, new CommentAdded());
+    }
+
+    /**
+     * Tests that DraftPublished event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerDraftPublishedMethodSignature() {
+        SpecificEventListener draftPublishedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(DraftPublished event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(draftPublishedListener, new DraftPublished());
+    }
+
+    /**
+     * Tests that PatchsetCreated event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerPatchsetCreatedMethodSignature() {
+        SpecificEventListener patchsetCreatedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(PatchsetCreated event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(patchsetCreatedListener, new PatchsetCreated());
+    }
+
+    /**
+     * Tests that RefUpdated event are going in the method with
+     * that type as parameter and that other type of events are going
+     * in the default method.
+     */
+    @Test
+    public void testEventNotificationWithListenerRefUpdatedMethodSignature() {
+        SpecificEventListener refUpdatedListener = new SpecificEventListener() {
+            @SuppressWarnings("unused") //method is called by reflection
+            public void gerritEvent(RefUpdated event) {
+                specificMethodCalled = true;
+            }
+        };
+        testListenerWithSpecificSignature(refUpdatedListener, new RefUpdated());
+    }
+
+    /**
+     * Base test listener implementation.
+     */
+    private abstract static class SpecificEventListener implements GerritEventListener {
+        boolean defautMethodCalled = false;
+        boolean specificMethodCalled = false;
+        @Override
+        public void gerritEvent(GerritEvent event) {
+            defautMethodCalled = true;
+        }
+        /**
+         * Reset the listener.
+         */
+        public void reset() {
+            defautMethodCalled = false;
+            specificMethodCalled = false;
+        }
+    }
+
+    /**
+     * Test that the specific method of a listener is called for the specific
+     * type and that any the default method of the listener is called for any
+     * other type of events.
+     * @param listener the specific listener
+     * @param specificEvent the specific event
+     */
+    private void testListenerWithSpecificSignature(SpecificEventListener listener, GerritEvent specificEvent) {
+        GerritEvent[] allEvents =  new GerritEvent[]{new ChangeAbandoned(),
+                                                     new ChangeMerged(),
+                                                     new ChangeRestored(),
+                                                     new ChangeAbandoned(),
+                                                     new DraftPublished(),
+                                                     new PatchsetCreated(),
+                                                     new RefUpdated(), };
+        handler.addListener(listener);
+
+        // Validate that event was sent to the specific method
+        handler.notifyListeners(specificEvent);
+        assertFalse(listener.defautMethodCalled);
+        assertTrue(listener.specificMethodCalled);
+        listener.reset();
+
+        // Validate that other events are going in the default method
+        for (GerritEvent gerritEvent : allEvents) {
+            if (gerritEvent.getEventType() != specificEvent.getEventType()) {
+                handler.notifyListeners(gerritEvent);
+                assertTrue(listener.defautMethodCalled);
+                assertFalse(listener.specificMethodCalled);
+                listener.reset();
+            }
+        }
+    }
+
 }
