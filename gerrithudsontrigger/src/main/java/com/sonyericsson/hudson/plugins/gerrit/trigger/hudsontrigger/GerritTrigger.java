@@ -41,9 +41,11 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTrig
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
@@ -380,10 +382,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private void removeListener() {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
-            if (plugin.getServer(serverName) != null) {
-                PluginImpl.getInstance().getServer(serverName).removeListener(this);
+            if (PluginImpl.getInstance().getHandler() != null) {
+                PluginImpl.getInstance().getHandler().removeListener(this);
             } else {
-                logger.error("Could not find server {}", serverName);
+                logger.error("The Gerrit handler has not been initialized. BUG!");
             }
         } else {
        logger.error("The plugin instance could not be found");
@@ -403,14 +405,25 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private Provider initializeProvider(GerritTriggeredEvent tEvent) {
         Provider provider = tEvent.getProvider();
-        if (provider == null) {
+        if (provider == null && !isAnyServer()) {
             provider = new Provider();
             provider.setName(serverName);
-        } else if (provider.getName() == null) {
+        } else if (provider.getName() == null && !isAnyServer()) {
             provider.setName(serverName);
         }
         return provider;
     }
+
+    /**
+     * If {@link GerritServer#ANY_SERVER} is selected as {@link #serverName}.
+     * Or if serverName is null or empty.
+     *
+     * @return true if so.
+     */
+    private boolean isAnyServer() {
+        return serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName);
+    }
+
     /**
      * Called when a PatchSetCreated event arrives.
      *
@@ -521,9 +534,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
 
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
+            if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
                 getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
             }
             if (null != changeBasedEvent.getPatchSet()) {
@@ -542,6 +557,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     new Object[]{project.getName(), (build != null),
                     refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(), });
         }
+    }
+
+    /**
+     * Finds the server config for the event's provider.
+     *
+     * @param event the event
+     * @return the config or null if no server could be found.
+     * @see GerritTriggeredEvent#getProvider()
+     */
+    private IGerritHudsonTriggerConfig getServerConfig(GerritTriggeredEvent event) {
+        Provider provider = event.getProvider();
+        if (provider != null) {
+            GerritServer gerritServer = PluginImpl.getInstance().getServer(provider.getName());
+            if (gerritServer != null) {
+                return gerritServer.getConfig();
+            } else {
+                logger.warn("Could not find server config for {} - no such server.", provider.getName());
+            }
+        } else {
+            logger.warn("The event {} has no provider specified. BUG!", event);
+        }
+        return null;
     }
 
     /**
@@ -590,10 +627,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event the event.
      */
     public void notifyBuildEnded(GerritTriggeredEvent event) {
-        //Experimental feature!
-        if (event instanceof ChangeBasedEvent
-                && PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
-            getRunningJobs().remove((ChangeBasedEvent)event);
+        if (event instanceof ChangeBasedEvent) {
+            IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+            if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
+                getRunningJobs().remove((ChangeBasedEvent)event);
+            }
         }
     }
 
@@ -605,17 +643,21 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return buildScheduleDelay.
      */
     public int getBuildScheduleDelay() {
-        if (PluginImpl.getInstance().getServer(serverName) == null
+        if (isAnyServer()) {
+            int max = DEFAULT_BUILD_SCHEDULE_DELAY;
+            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                if (server.getConfig() != null) {
+                    max = Math.max(max, server.getConfig().getBuildScheduleDelay());
+                }
+            }
+            return max;
+        } else if (PluginImpl.getInstance().getServer(serverName) == null
                 || PluginImpl.getInstance().getServer(serverName).getConfig() == null) {
             return DEFAULT_BUILD_SCHEDULE_DELAY;
         } else {
             int buildScheduleDelay = PluginImpl.getInstance().getServer(serverName).getConfig()
                     .getBuildScheduleDelay();
-            if (buildScheduleDelay < DEFAULT_BUILD_SCHEDULE_DELAY) {
-                return DEFAULT_BUILD_SCHEDULE_DELAY;
-            } else {
-                return buildScheduleDelay;
-            }
+            return Math.max(buildScheduleDelay, DEFAULT_BUILD_SCHEDULE_DELAY);
         }
 
     }
@@ -682,7 +724,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Provider provider = initializeProvider(context.getEvent());
 
             // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
-            if (!PluginImpl.getInstance().containsServer(provider.getName())) {
+            if (!isAnyServer() && !PluginImpl.getInstance().containsServer(provider.getName())) {
                 provider.setName(serverName);
             }
 
@@ -792,8 +834,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                                                     changeBasedEvent.getChange().getBranch(),
                                                     changeBasedEvent.getChange().getTopic(),
                                                     changeBasedEvent.getFiles(
-                                                        new GerritQueryHandler(PluginImpl.getInstance()
-                                                                .getServer(serverName).getConfig())))) {
+                                                        new GerritQueryHandler(getServerConfig(event))))) {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
@@ -826,7 +867,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if same server name
      */
     private boolean isServerInteresting(GerritTriggeredEvent event) {
-        if (serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName)) {
+        if (isAnyServer()) {
             return true;
         }
         Provider provider = initializeProvider(event);
@@ -1237,7 +1278,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private void initializeServerName() {
         if (serverName == null) {
-            serverName = PluginImpl.DEFAULT_SERVER_NAME;
+            serverName = ANY_SERVER;
         }
     }
 
@@ -1451,9 +1492,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         triggerInformationAction.setErrorMessage("");
         try {
-
-            List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL, serverName);
-            dynamicGerritProjects = fetchedProjects;
+            if (isAnyServer()) {
+                triggerInformationAction.setErrorMessage("Dynamic trigger configuration needs "
+                        + "a specific configured server");
+            } else {
+                List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL, serverName);
+                dynamicGerritProjects = fetchedProjects;
+            }
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
@@ -1641,7 +1686,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          * @param projectName the name of the current project for better logging.
          */
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
-            if (!PluginImpl.getInstance().getServer(serverName).getConfig().isGerritBuildCurrentPatchesOnly()) {
+            IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+            if (serverConfig != null && !serverConfig.isGerritBuildCurrentPatchesOnly()) {
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
