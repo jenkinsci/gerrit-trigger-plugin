@@ -227,7 +227,7 @@
                     <dependency>
                         <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
                         <artifactId>build-config</artifactId>
-                        <version>1.3.4-SNAPSHOT</version>
+                        <version>1.3.5-SNAPSHOT</version>
                     </dependency>
                 </dependencies>
                 <configuration>
