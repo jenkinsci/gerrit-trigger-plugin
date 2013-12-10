@@ -3,7 +3,7 @@
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-events</artifactId>
     <packaging>jar</packaging>
-    <version>1.99.0-beta-2-SNAPSHOT</version> <!-- Bumps to 2.0 as soon as extraction is possible-->
+    <version>1.99.1-SNAPSHOT</version> <!-- Bumps to 2.0 as soon as extraction is possible-->
     <name>Gerrit Events</name>
 
     <parent>

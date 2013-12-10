@@ -289,7 +289,7 @@
             <dependency>
                 <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
                 <artifactId>gerrit-events</artifactId>
-                <version>1.99.0-beta-2-SNAPSHOT</version>
+                <version>1.99.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
