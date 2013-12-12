@@ -33,6 +33,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PL
 
 import hudson.Extension;
 import hudson.Functions;
+import hudson.RelativePath;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Describable;
@@ -40,6 +41,7 @@ import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,9 +93,12 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshUtil;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -527,6 +532,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * Return if the current server support replication events.
+     * @return true if replication events are supported, otherwise false
+     */
+    public boolean isReplicationEventsSupported() {
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.replicationEvents, name);
+    }
+
+    /**
      * Descriptor is only used for UI form bindings.
      */
     @Extension
@@ -658,6 +671,42 @@ public class GerritServer implements Describable<GerritServer>, Action {
                     return FormValidation.error(Messages.HttpConnectionError(statusCode));
             }
 
+        }
+
+        /**
+         * Fill the Gerrit slave dropdown with the list of slaves configured with the selected server.
+         * Expected to be called only when slave config is enabled at job level.
+         *
+         * @param serverName name of the server
+         * @return list of slaves.
+         */
+        public ListBoxModel doFillDefaultSlaveIdItems(
+            @QueryParameter("name") @RelativePath("../..") final String serverName) {
+            ListBoxModel items = new ListBoxModel();
+            logger.trace("filling default gerrit slave drop down for sever {}", serverName);
+            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            if (server == null) {
+                logger.warn(Messages.CouldNotFindServer(serverName));
+                items.add(Messages.CouldNotFindServer(serverName), "");
+                return items;
+            }
+            ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
+            if (replicationConfig == null || !replicationConfig.isEnableReplication()
+                || replicationConfig.getGerritSlaves().size() == 0) {
+                logger.trace(Messages.GerritSlaveNotDefined());
+                items.add(Messages.GerritSlaveNotDefined(), "");
+                return items;
+            }
+            for (GerritSlave slave : replicationConfig.getGerritSlaves()) {
+                boolean selected;
+                if (slave.getId().equals(replicationConfig.getDefaultSlaveId())) {
+                    selected = true;
+                } else {
+                    selected = false;
+                }
+                items.add(new ListBoxModel.Option(slave.getName(), slave.getId(), selected));
+            }
+            return items;
         }
     }
 

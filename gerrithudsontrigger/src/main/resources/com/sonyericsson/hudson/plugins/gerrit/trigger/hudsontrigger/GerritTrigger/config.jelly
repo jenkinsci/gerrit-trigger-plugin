@@ -6,6 +6,11 @@
         <f:entry title="${%Choose a server}" description="${it.description}" field="serverName">
             <f:select/>
         </f:entry>
+        <j:if test="${descriptor.isSlaveSelectionAllowedInJobs()}">
+            <f:entry title="${%Choose a slave}" field="gerritSlaveId">
+                <f:select/>
+            </f:entry>
+        </j:if>
         <f:advanced>
             <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">

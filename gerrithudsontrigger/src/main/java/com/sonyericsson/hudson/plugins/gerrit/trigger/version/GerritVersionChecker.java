@@ -51,7 +51,12 @@ public final class GerritVersionChecker {
         /**
          * Triggering on draft change published, added in Gerrit 2.5.
          */
-        triggerOnDraftPublished("Trigger on draft published", "2.5");
+        triggerOnDraftPublished("Trigger on draft published", "2.5"),
+
+        /**
+         * Replication events, added in Gerrit 2.9.
+         */
+        replicationEvents("Replication events", "2.9");
 
         private final String displayName;
         private final String version;

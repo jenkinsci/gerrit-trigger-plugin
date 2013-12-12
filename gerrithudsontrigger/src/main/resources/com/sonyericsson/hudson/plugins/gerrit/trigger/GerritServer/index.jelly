@@ -277,6 +277,55 @@
 
                         </f:optionalBlock>
                     </f:section>
+                    <j:if test="${instance.isReplicationEventsSupported()}">
+                        <f:section title="${%Replication Events}">
+                            <f:optionalBlock name="enableReplication"
+                                             title="${%Block Build Until Replication is Complete}"
+                                             checked="${it.config.replicationConfig.enableReplication}"
+                                             help="/plugin/gerrit-trigger/help-Replication.html">
+                                <f:entry title="${%Gerrit Slaves}">
+                                    <f:repeatable var="slave" items="${it.config.replicationConfig.gerritSlaves}"
+                                                  name="slaves" add="${%Add Gerrit Slave}" minimum="1"
+                                                  header="${%Gerrit Slave}">
+                                        <table>
+                                            <f:invisibleEntry>
+                                                <f:textbox name="id" value="${slave.id}"/>
+                                            </f:invisibleEntry>
+                                            <f:entry title="${%Name}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveName.html">
+                                                <f:textbox name="name" value="${slave.name}"/>
+                                            </f:entry>
+                                            <f:entry title="${%Host}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveHost.html">
+                                                <f:textbox name="host" value="${slave.host}"/>
+                                            </f:entry>
+                                            <f:entry title="${%Time-out}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveTimeout.html">
+                                                <f:textbox name="timeout"
+                                                           value="${slave.timeoutInSeconds}"
+                                                           checkUrl="'${rootURL}/${serverURL}/integerCheck?value='+escape(this.value)"/>
+                                            </f:entry>
+                                            <f:entry title="">
+                                                <div align="right">
+                                                    <f:repeatableDeleteButton />
+                                                </div>
+                                            </f:entry>
+                                        </table>
+                                    </f:repeatable>
+                                </f:entry>
+                                <f:optionalBlock name="enableSlaveSelectionInJobs"
+                                                 title="${%Allow Slave Selection in Job Configurations}"
+                                                 checked="${it.config.replicationConfig.enableSlaveSelectionInJobs}"
+                                                 help="/plugin/gerrit-trigger/help-enableSlaveSelectionInJobs.html">
+                                    <f:entry title="${%Choose a default slave}"
+                                             field="defaultSlaveId"
+                                             help="/plugin/gerrit-trigger/help-defaultSlave.html">
+                                        <f:select/>
+                                    </f:entry>
+                                </f:optionalBlock>
+                            </f:optionalBlock>
+                        </f:section>
+                    </j:if>
                     <f:section title="${%Watchdog}">
                         <f:entry title="${%Connection watchdog timeout}"
                                  help="/plugin/gerrit-trigger/help-ConnectionWatchdogTimeout.html">
