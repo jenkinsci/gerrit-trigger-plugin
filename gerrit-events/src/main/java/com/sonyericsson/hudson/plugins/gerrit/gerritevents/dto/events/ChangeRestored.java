@@ -25,14 +25,13 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.RESTORER;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
 
 /**
  * A DTO representation of the change-restored Gerrit Event.
  */
-public class ChangeRestored extends ChangeBasedEvent implements GerritJsonEvent {
+public class ChangeRestored extends ChangeBasedEvent {
 
     /**
      * The person who triggered this event.

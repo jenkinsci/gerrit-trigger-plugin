@@ -24,7 +24,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
 
@@ -35,7 +34,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author David Pursehouse &lt;david.pursehouse@sonymobile.com&gt;
  */
-public class DraftPublished extends ChangeBasedEvent implements GerritJsonEvent {
+public class DraftPublished extends ChangeBasedEvent {
 
     /* Uploader has been replaced by GerritTriggeredEvent.account.
      * This allows old builds to deserialize without warnings. */

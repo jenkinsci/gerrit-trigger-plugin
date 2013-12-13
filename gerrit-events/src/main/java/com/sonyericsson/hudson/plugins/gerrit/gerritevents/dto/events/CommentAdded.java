@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
 import net.sf.json.JSONObject;
@@ -40,7 +39,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * A DTO representation of the comment-added Gerrit Event.
  * @author James E. Blair &lt;jeblair@hp.com&gt;
  */
-public class CommentAdded extends ChangeBasedEvent implements GerritJsonEvent {
+public class CommentAdded extends ChangeBasedEvent {
     private List<Approval> approvals = new ArrayList<Approval>();
 
     @Override

@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ABANDONER;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import net.sf.json.JSONObject;
 
@@ -34,7 +33,7 @@ import net.sf.json.JSONObject;
  * A DTO representation of the change-abandoned Gerrit Event.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ChangeAbandoned extends ChangeBasedEvent implements GerritJsonEvent {
+public class ChangeAbandoned extends ChangeBasedEvent {
 
     /**
      * The person who triggered this event.
