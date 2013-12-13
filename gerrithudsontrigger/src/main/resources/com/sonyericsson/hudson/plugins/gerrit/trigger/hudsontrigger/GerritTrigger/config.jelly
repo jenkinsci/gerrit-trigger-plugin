@@ -2,9 +2,6 @@
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
-    <j:invokeStatic var="trigger" method="getTrigger" className="com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger">
-        <j:arg type="hudson.model.AbstractProject" value="${it}" />
-    </j:invokeStatic>
     <f:section title="${%Gerrit Trigger}">
         <f:entry title="${%Choose a server}" description="${it.description}" field="serverName">
             <f:select/>
