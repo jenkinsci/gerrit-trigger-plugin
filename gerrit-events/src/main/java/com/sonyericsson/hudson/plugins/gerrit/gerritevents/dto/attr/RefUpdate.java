@@ -38,6 +38,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  */
 public class RefUpdate implements GerritJsonDTO {
 
+    private static final String REFS_HEADS = "refs/heads/";
     /**
      * Project path in Gerrit.
      */
@@ -192,5 +193,16 @@ public class RefUpdate implements GerritJsonDTO {
     @Override
     public String toString() {
         return "RefUpdate: " + getNewRev() + " " + getProject() + " " + getRefName();
+    }
+
+    /**
+     * Returns the ref (refspec) representing this RefUpdate.
+     * @return the ref
+     */
+    public String getRef() {
+        if (refName != null) {
+            return REFS_HEADS + refName;
+        }
+        return null;
     }
 }
