@@ -45,7 +45,6 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.LinkedList;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -290,7 +289,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @return the list of server names as a list.
      */
-    public LinkedList<String> getServerNames() {
+    public List<String> getServerNames() {
         return PluginImpl.getInstance().getServerNames();
     }
 

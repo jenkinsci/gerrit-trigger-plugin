@@ -126,7 +126,7 @@ public class PluginImpl extends Plugin {
      *
      * @return the list as a LinkedList of GerritServers
      */
-    public synchronized LinkedList<GerritServer> getServers() {
+    public synchronized List<GerritServer> getServers() {
         if (servers == null) {
             servers = new LinkedList<GerritServer>();
         }
@@ -138,7 +138,7 @@ public class PluginImpl extends Plugin {
      *
      * @return the list of server names as a list.
      */
-    public synchronized LinkedList<String> getServerNames() {
+    public synchronized List<String> getServerNames() {
         LinkedList<String> names = new LinkedList<String>();
         for (GerritServer s : getServers()) {
             names.add(s.getName());
@@ -157,6 +157,18 @@ public class PluginImpl extends Plugin {
             if (s.getName().equals(name)) {
                 return s;
             }
+        }
+        return null;
+    }
+
+    /**
+     * Gets the first server in the server list. Or null if there are no servers.
+     *
+     * @return the server.
+     */
+    public GerritServer getFirstServer() {
+        if (servers != null && !servers.isEmpty()) {
+            return servers.getFirst();
         }
         return null;
     }

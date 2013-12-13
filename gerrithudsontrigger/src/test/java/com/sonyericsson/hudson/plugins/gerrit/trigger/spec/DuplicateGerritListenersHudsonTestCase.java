@@ -43,7 +43,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.getFormWithAction;
@@ -127,7 +127,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
      */
     public void testNewProjectCreationFirstNoConnection() throws Exception {
         @SuppressWarnings("unused")
-        LinkedList<GerritServer> servers = PluginImpl.getInstance().getServers();
+        List<GerritServer> servers = PluginImpl.getInstance().getServers();
 
         //create a server for testing
         GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);

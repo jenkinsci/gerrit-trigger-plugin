@@ -409,11 +409,23 @@ public enum GerritTriggerParameters {
      */
     private static String getURL(ChangeBasedEvent event, AbstractProject project) {
         String url = "";
-        String serverName = PluginImpl.DEFAULT_SERVER_NAME;
-        if (project != null) {
-            serverName = GerritTrigger.getTrigger(project).getServerName();
-        } else if (event.getProvider() != null) {
+        String serverName = null;
+        //Figure out what serverName to use
+        if (event.getProvider() != null) {
             serverName = event.getProvider().getName();
+        } else if (project != null) {
+            String name = GerritTrigger.getTrigger(project).getServerName();
+            if (!GerritServer.ANY_SERVER.equals(name)) {
+                serverName = name;
+            }
+        }
+        if (serverName == null && PluginImpl.getInstance().getFirstServer() != null) {
+            logger.warn("No server could be determined from event or project config, "
+                    + "defaulting to the first configured server. Event: [{}] Project: [{}]", event, project);
+            serverName = PluginImpl.getInstance().getFirstServer().getName();
+        } else if (serverName == null) {
+            //We have exhausted all possibilities, time to fail horribly
+            throw new IllegalStateException("Cannot determine a Gerrit server to link to. Have you configured one?");
         }
 
         GerritServer server = PluginImpl.getInstance().getServer(serverName);
