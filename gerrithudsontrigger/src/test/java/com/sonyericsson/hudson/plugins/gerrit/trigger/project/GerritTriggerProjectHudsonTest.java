@@ -36,7 +36,6 @@ import hudson.model.FreeStyleProject;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -51,7 +50,7 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
      */
     public void testPopulateDropDown() throws Exception {
         @SuppressWarnings("unused")
-        LinkedList<GerritServer> servers = PluginImpl.getInstance().getServers();
+        List<GerritServer> servers = PluginImpl.getInstance().getServers();
 
         //create a server for testing
         GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
@@ -88,7 +87,7 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
      */
     public void testPopulateDropDownFromTwoServers() throws Exception {
         @SuppressWarnings("unused")
-        LinkedList<GerritServer> servers = PluginImpl.getInstance().getServers();
+        List<GerritServer> servers = PluginImpl.getInstance().getServers();
 
         //create a server with default Verdict Categories
         GerritServer server1 = new GerritServer("testServer1");

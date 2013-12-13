@@ -1596,7 +1596,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         public ListBoxModel doFillServerNameItems() {
             ListBoxModel items = new ListBoxModel();
             items.add(Messages.AnyServer(), ANY_SERVER);
-            LinkedList<String> serverNames = PluginImpl.getInstance().getServerNames();
+            List<String> serverNames = PluginImpl.getInstance().getServerNames();
             for (String s : serverNames) {
                 items.add(s);
             }
