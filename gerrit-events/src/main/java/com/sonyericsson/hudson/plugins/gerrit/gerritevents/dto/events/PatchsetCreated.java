@@ -25,9 +25,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.RepositoryModifiedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import net.sf.json.JSONObject;
 
+import net.sf.json.JSONObject;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
 
 /**
@@ -35,7 +36,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class PatchsetCreated extends ChangeBasedEvent {
+public class PatchsetCreated extends ChangeBasedEvent implements RepositoryModifiedEvent {
 
     /* Uploader has been replaced by GerritTriggeredEvent.account.
      * This allows old builds to deserialize without warnings. */
@@ -63,5 +64,13 @@ public class PatchsetCreated extends ChangeBasedEvent {
     @Override
     public String toString() {
         return "PatchsetCreated: " + change + " " + patchSet;
+    }
+
+    @Override
+    public String getModifiedRef() {
+        if (patchSet != null) {
+            return patchSet.getRef();
+        }
+        return null;
     }
 }
