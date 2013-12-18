@@ -28,8 +28,17 @@
                     <h1>${%Trigger a Gerrit event manually}</h1>
                     <f:form method="post" action="gerritSearch" name="theSearch">
                         <f:section title="${%Search}">
+                            <j:set var="frontEndUrl" value="${it.getFrontEndUrl(request.session.getAttribute('selectedServer'))}"/>
+                            <j:choose>
+                                <j:when test="${empty(frontEndUrl)}">
+                                    <j:set var="helpUrl" value="https://gerrit-documentation.storage.googleapis.com/Documentation/2.8/user-search.html"/>
+                                </j:when>
+                                <j:otherwise>
+                                    <j:set var="helpUrl" value="${frontEndUrl + 'Documentation/user-search.html'}"/>
+                                </j:otherwise>
+                            </j:choose>
                             <f:description>
-                                ${%SearchDescription}
+                                ${%SearchDescription(helpUrl)}
                             </f:description>
                             <f:entry title="Select Gerrit Server">
                                 <j:set var="servers" value="${it.enabledServers}" />
@@ -40,7 +49,7 @@
                                 </select>
                             </f:entry>
                             <f:entry title="${%Query String}"
-                                     help="/plugin/gerrit-trigger/manual/help-Search.html">
+                                     help="help-Search">
                                 <f:textbox name="queryString"
                                            value="${request.session.getAttribute('queryString')}"
                                            default=""/>

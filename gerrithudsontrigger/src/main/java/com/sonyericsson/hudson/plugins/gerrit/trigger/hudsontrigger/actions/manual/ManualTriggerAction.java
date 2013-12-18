@@ -162,6 +162,28 @@ public class ManualTriggerAction implements RootAction {
         return null;
     }
 
+    /**
+     * Return the front end url of selected server, or first enabled server if
+     * selected doesn't exists (happens when serverName is null also). First
+     *
+     * @param serverName the name of the GerritServer or null.
+     * @return url to the frontend
+     */
+    @SuppressWarnings("unused")
+    //called from jelly
+    public String getFrontEndUrl(String serverName) {
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(serverName);
+        if (serverConfig != null) {
+            return serverConfig.getGerritFrontEndUrl();
+        } else {
+            ArrayList<String> enabledServers = getEnabledServers();
+            if (!enabledServers.isEmpty()) {
+                return getServerConfig(enabledServers.get(0)).getGerritFrontEndUrl();
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Returns the list of servers allowed to be queried and manually triggered.
