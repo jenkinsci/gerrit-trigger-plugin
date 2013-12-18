@@ -25,7 +25,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritJsonEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 
 import net.sf.json.JSONObject;
@@ -37,7 +36,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  *
  * @author David Pursehouse &lt;david.pursehouse@sonyericsson.com&gt;
  */
-public class ChangeMerged extends ChangeBasedEvent implements GerritJsonEvent {
+public class ChangeMerged extends ChangeBasedEvent {
 
     /**
      * Default constructor.
