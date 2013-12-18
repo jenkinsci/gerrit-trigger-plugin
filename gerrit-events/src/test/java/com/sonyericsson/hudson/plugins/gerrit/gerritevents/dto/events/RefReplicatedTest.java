@@ -34,7 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 
 /**
- * Tests {@linkcom.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated}.
+ * Tests {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated}.
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
 public class RefReplicatedTest {
