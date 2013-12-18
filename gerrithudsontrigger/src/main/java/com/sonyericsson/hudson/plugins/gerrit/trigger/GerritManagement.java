@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdmini
 
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
+import hudson.Functions;
 import hudson.model.AdministrativeMonitor;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
@@ -110,7 +111,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
         ContextMenu menu = new ContextMenu();
-        menu.add("newServer", "/images/24x24/new-package.png", Messages.AddNewServer());
+        menu.add("newServer", Functions.joinPath(Jenkins.getInstance().getRootUrl(), Functions.getResourcePath(),
+                "images", "24x24", "new-package.png"), Messages.AddNewServer());
         for (GerritServer server : getServers()) {
             menu.add(server);
         }

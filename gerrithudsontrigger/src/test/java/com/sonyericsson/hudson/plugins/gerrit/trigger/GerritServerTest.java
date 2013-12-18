@@ -15,9 +15,9 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
+
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-import hudson.Functions;
 import org.apache.sshd.SshServer;
 import org.junit.Test;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -227,8 +227,7 @@ public class GerritServerTest extends HudsonTestCase {
      */
     private void removeServer(String serverName, HtmlPage serverPage) throws IOException {
         HtmlPage currentPage = serverPage;
-        String serverLink = Functions.joinPath("/", GerritManagement.URL_NAME, "server", serverName);
-        HtmlPage configPage = currentPage.getAnchorByHref(serverLink).click();
+        HtmlPage configPage = currentPage.getAnchorByText(serverName).click();
         HtmlPage removalPage = configPage.getAnchorByHref("remove").click();
 
         int serverSize = PluginImpl.getInstance().getServers().size();
