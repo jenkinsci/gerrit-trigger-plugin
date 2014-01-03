@@ -79,7 +79,7 @@ public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
         trigger.setGerritProjects(Collections.singletonList(
                 new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
                         Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),
-                        null, null)
+                        null, null, null)
         ));
         trigger.setSilentMode(false);
         trigger.setGerritBuildSuccessfulCodeReviewValue(1);
