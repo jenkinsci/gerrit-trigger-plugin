@@ -53,7 +53,7 @@ public class GerritProject implements Describable<GerritProject> {
     private List<Branch> branches;
     private List<FilePath> filePaths;
     private List<Topic> topics;
-
+    private List<FilePath> forbiddenFilePaths;
 
     /**
      * Default empty constructor.
@@ -69,6 +69,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @param branches the branch-rules
      * @param topics the topic-rules
      * @param filePaths the file-path rules.
+     * @param forbiddenFilePaths the forbidden file-path rules.
      */
     @DataBoundConstructor
     public GerritProject(
@@ -76,13 +77,15 @@ public class GerritProject implements Describable<GerritProject> {
             String pattern,
             List<Branch> branches,
             List<Topic> topics,
-            List<FilePath> filePaths) {
+            List<FilePath> filePaths,
+            List<FilePath> forbiddenFilePaths) {
 
         this.compareType = compareType;
         this.pattern = pattern;
         this.branches = branches;
         this.topics = topics;
         this.filePaths = filePaths;
+        this.forbiddenFilePaths = forbiddenFilePaths;
     }
 
     /**
@@ -166,6 +169,22 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
+     * The list of the forbidden file-path rules.
+     * @return the forbidden file-path rules.
+     */
+    public List<FilePath> getForbiddenFilePaths() {
+        return forbiddenFilePaths;
+    }
+
+    /**
+     * The list of the forbidden file-path rules.
+     * @param forbiddenFilePaths the forbidden file-path rules.
+     */
+    public void setForbiddenFilePaths(List<FilePath> forbiddenFilePaths) {
+        this.forbiddenFilePaths = forbiddenFilePaths;
+    }
+
+    /**
      * Compares the project, branch and files to see if the rules specified is a match.
      * @param project the Gerrit project
      * @param branch the branch.
@@ -177,6 +196,13 @@ public class GerritProject implements Describable<GerritProject> {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 if (b.isInteresting(branch)) {
+                    if ( forbiddenFilePaths != null ) {
+                        for (FilePath ffp : forbiddenFilePaths) {
+                            if (ffp.isInteresting(files)) {
+                                return false;
+                            }
+                        }
+                    }
                     if (isInterestingTopic(topic) && isInterestingFile(files)) {
                         return true;
                     }
