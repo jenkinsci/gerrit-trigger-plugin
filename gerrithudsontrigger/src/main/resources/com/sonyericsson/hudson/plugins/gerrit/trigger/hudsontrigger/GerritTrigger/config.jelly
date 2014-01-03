@@ -333,6 +333,39 @@
                             </f:repeatable>
                             </td>
                         </tr>
+                         <tr>
+                            <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
+                                <f:repeatable var="ff" field="forbiddenFilePaths" add="${%Add Forbidden File path}" minimum="0" header="">
+                                <table width="100%">
+                                    <tr>
+                                        <td width="60">
+                                        ${%Forbidden File}
+                                        </td>
+                                        <td width="80">
+                                            <select class="setting-input" name="_.compareType">
+                                                <j:forEach items="${types}" var="me">
+                                                    <j:choose>
+                                                        <j:when test="${loop.getCompareType().name()==me.name()}">
+                                                            <option value="${me.name()}" selected="true">${me.getDisplayName()}</option>
+                                                        </j:when>
+                                                        <j:otherwise>
+                                                            <option value="${me.name()}">${me.getDisplayName()}</option>
+                                                        </j:otherwise>
+                                                    </j:choose>
+                                                </j:forEach>
+                                                </select>
+                                        </td>
+                                        <td minwidth="150">
+                                            <f:textbox field="pattern" value="${b.pattern}" default=""/>
+                                        </td>
+                                        <td width="65">
+                                            <f:repeatableDeleteButton/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </f:repeatable>
+                            </td>
+                        </tr>
                     </j:if>
                 </table>
             </f:repeatable>
