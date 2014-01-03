@@ -15,6 +15,10 @@
                  help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
                 <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>
             </f:entry>
+            <f:entry title="${%Delayed Approval}"  field="delayedApproval"
+                     help="/plugin/gerrit-trigger/trigger/help-DelayedApproval.html">
+                <f:checkbox name="delayedApproval" default="false" checked="${it.delayedApproval}"/>
+            </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
                 <f:entry title="${%URL to post}"
                          field="customUrl"
