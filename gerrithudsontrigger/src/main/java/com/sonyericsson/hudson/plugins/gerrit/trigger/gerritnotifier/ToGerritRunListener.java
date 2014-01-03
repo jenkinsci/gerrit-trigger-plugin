@@ -93,9 +93,10 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         GerritCause cause = getCause(r);
         logger.info("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject()) ;
             cleanUpGerritCauses(cause, r);
             GerritTriggeredEvent event = cause.getEvent();
-            if (GerritTrigger.getTrigger(r.getProject()) != null) {
+            if (trigger != null) {
                 // There won't be a trigger if this job was run through a unit test
                 GerritTrigger.getTrigger(r.getProject()).notifyBuildEnded(event);
             }
@@ -123,21 +124,32 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
 
                 updateTriggerContexts(r);
-                if (memory.isAllBuildsCompleted(event)) {
-                    try {
-                        logger.info("All Builds are completed for cause: {}", cause);
-                        if (event instanceof GerritEventLifecycle) {
-                            ((GerritEventLifecycle)event).fireAllBuildsCompleted();
-                        }
-                        NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
-                    } finally {
-                        memory.forget(event);
+                if (trigger != null){
+                    if (trigger.isDelayedApproval()){
+                        logger.info("Delayed approval set. Waiting for delayed approval for cause [{}]. Status: \n{}",
+                                cause, memory.getStatusReport(event));
+                        return;
                     }
-                } else {
-                    logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
-                            cause, memory.getStatusReport(event));
                 }
+                allBuildsCompleted(event, cause, listener);
             }
+        }
+    }
+
+    public synchronized void allBuildsCompleted(GerritTriggeredEvent event, GerritCause cause, TaskListener listener){
+        if (memory.isAllBuildsCompleted(event)) {
+            try {
+                logger.info("All Builds are completed for cause: {}", cause);
+                if (event instanceof GerritEventLifecycle) {
+                    ((GerritEventLifecycle)event).fireAllBuildsCompleted();
+                }
+                NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
+            } finally {
+                memory.forget(event);
+            }
+        } else {
+            logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
+                    cause, memory.getStatusReport(event));
         }
     }
 
