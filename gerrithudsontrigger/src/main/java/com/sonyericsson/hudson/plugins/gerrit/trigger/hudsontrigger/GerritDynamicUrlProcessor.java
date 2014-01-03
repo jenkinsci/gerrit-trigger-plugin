@@ -60,6 +60,7 @@ public final class GerritDynamicUrlProcessor {
     private static final String SHORTNAME_BRANCH = "b";
     private static final String SHORTNAME_TOPIC = "t";
     private static final String SHORTNAME_FILE = "f";
+    private static final String SHORTNAME_FORBIDDEN_FILE = "o";
     private static final int SOCKET_READ_TIMEOUT = 10000;
 
     /**
@@ -85,6 +86,7 @@ public final class GerritDynamicUrlProcessor {
               + "|" + SHORTNAME_BRANCH
               + "|" + SHORTNAME_TOPIC
               + "|" + SHORTNAME_FILE
+              + "|" + SHORTNAME_FORBIDDEN_FILE
               + ")";
       String operators = "(";
       boolean firstoperator = true;
@@ -119,6 +121,7 @@ public final class GerritDynamicUrlProcessor {
       List<Branch> branches = null;
       List<Topic> topics = null;
       List<FilePath> filePaths = null;
+      List<FilePath> forbiddenFilePaths = null;
       GerritProject dynamicGerritProject = null;
 
       String line = "";
@@ -169,7 +172,8 @@ public final class GerritDynamicUrlProcessor {
           branches = new ArrayList<Branch>();
           topics = new ArrayList<Topic>();
           filePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths);
+          forbiddenFilePaths = new ArrayList<FilePath>();
+          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths, forbiddenFilePaths);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
@@ -184,13 +188,20 @@ public final class GerritDynamicUrlProcessor {
             Topic topic = new Topic(type, text);
             topics.add(topic);
             dynamicGerritProject.setTopics(topics);
-        } else { // FilePath (because it must be an 'f')
+        } else if (SHORTNAME_FILE.equals(item)) { // FilePath
           if (filePaths == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
           }
           FilePath filePath = new FilePath(type, text);
           filePaths.add(filePath);
           dynamicGerritProject.setFilePaths(filePaths);
+        } else if (SHORTNAME_FORBIDDEN_FILE.equals(item)) { // ForbiddenFilePath
+          if (forbiddenFilePaths == null) {
+            throw new ParseException("Line " + lineNr + ": attempt to use 'ForbiddenFilePath' before 'Project'", lineNr);
+          }
+          FilePath filePath = new FilePath(type, text);
+          forbiddenFilePaths.add(filePath);
+          dynamicGerritProject.setForbiddenFilePaths(filePaths);
         }
       }
 

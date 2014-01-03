@@ -76,7 +76,8 @@ public class GerritProjectWithFilesInterestingTest {
         List<FilePath> filePaths = new LinkedList<FilePath>();
         FilePath filePath = new FilePath(CompareType.PLAIN, "test.txt");
         filePaths.add(filePath);
-        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths);
+        List<FilePath> forbiddenFilePaths = null;
+        GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths, forbiddenFilePaths);
         List<String> files = new LinkedList<String>();
         files.add("test.txt");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
@@ -90,7 +91,8 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("tests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths);
+        forbiddenFilePaths = null;
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, forbiddenFilePaths);
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "projectNumber5", "feature/mymaster", null, files, true), });
 
@@ -100,7 +102,8 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths = new LinkedList<FilePath>();
         filePath = new FilePath(CompareType.ANT, "**/*test*");
         filePaths.add(filePath);
-        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, filePaths);
+        forbiddenFilePaths = null;
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, filePaths, forbiddenFilePaths);
         files = new LinkedList<String>();
         files.add("resources/test.xml");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
@@ -114,9 +117,60 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(filePath);
         files = new LinkedList<String>();
         files.add("notintests/test.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths);
+        forbiddenFilePaths = null;
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, forbiddenFilePaths);
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "projectNumber5", "feature/mymaster", null, files, false), });
+
+        //Testing with Forbidden File Paths now
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.PLAIN, "master");
+        branches.add(branch);
+        topics = new LinkedList<Topic>();
+        filePaths = new LinkedList<FilePath>();
+        filePath = new FilePath(CompareType.PLAIN, "test.txt");
+        filePaths.add(filePath);
+        forbiddenFilePaths = new LinkedList<FilePath>();
+        FilePath forbiddenFilePath = new FilePath(CompareType.PLAIN, "test2.txt");
+        forbiddenFilePaths.add(forbiddenFilePath);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths, forbiddenFilePaths);
+        files = new LinkedList<String>();
+        files.add("test.txt");
+        files.add("test2.txt");
+        parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
+                config, "project", "master", null, files, false), });
+
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.REG_EXP, "feature/.*master");
+        branches.add(branch);
+        filePaths = new LinkedList<FilePath>();
+        filePath = new FilePath(CompareType.REG_EXP, "tests/.*");
+        filePaths.add(filePath);
+        forbiddenFilePaths = new LinkedList<FilePath>();
+        forbiddenFilePath = new FilePath(CompareType.REG_EXP, "tests/.*2.*");
+        forbiddenFilePaths.add(forbiddenFilePath);
+        files = new LinkedList<String>();
+        files.add("tests/test.txt");
+        files.add("tests/test2.txt");
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, forbiddenFilePaths);
+        parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
+                config, "projectNumber5", "feature/mymaster", null, files, false), });
+
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.ANT, "**/master");
+        branches.add(branch);
+        filePaths = new LinkedList<FilePath>();
+        filePath = new FilePath(CompareType.ANT, "**/*test*");
+        filePaths.add(filePath);
+        forbiddenFilePaths = new LinkedList<FilePath>();
+        forbiddenFilePath = new FilePath(CompareType.ANT, "**/*skip*");
+        forbiddenFilePaths.add(forbiddenFilePath);
+        config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, filePaths, forbiddenFilePaths);
+        files = new LinkedList<String>();
+        files.add("resources/test.xml");
+        files.add("files/skip.txt");
+        parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
+                config, "vendor/semc/master/project", "origin/master", null, files, false), });
 
         return parameters;
     }
