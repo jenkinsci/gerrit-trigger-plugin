@@ -39,6 +39,8 @@ import java.util.Collection;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 
+//CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: testdata.
+
 /**
  * This tests different scenarios of adding listeners to the
  * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler}
@@ -59,7 +61,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, gerritEventListeners.size());
+        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 
     /**
@@ -75,7 +77,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(2, gerritEventListeners.size());
+        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 
     /**
@@ -90,8 +92,8 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(2, gerritEventListeners.size());
+        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
         configRoundtrip((Item)p);
-        assertEquals(2, gerritEventListeners.size());
+        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 }

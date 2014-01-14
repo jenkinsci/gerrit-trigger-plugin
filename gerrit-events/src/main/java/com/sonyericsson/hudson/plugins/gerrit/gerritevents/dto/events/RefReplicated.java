@@ -40,6 +40,14 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
 public class RefReplicated extends GerritTriggeredEvent {
 
     /**
+     * Replication failed status.
+     */
+    public static final String FAILED_STATUS = "failed";
+    /**
+     * Replication succeeded status.
+     */
+    public static final String SUCCEEDED_STATUS = "succeeded";
+    /**
      * Project path in Gerrit.
      */
     private String project;

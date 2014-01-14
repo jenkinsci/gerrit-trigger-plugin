@@ -1466,6 +1466,38 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 .isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished, serverName);
     }
 
+    /**
+     * Convenience method to get the list of GerritSlave to which replication
+     * should be done before letting the build execute.
+     * @param gerritServerName The Gerrit server name
+     * @return list of GerritSlave (can be empty but never null)
+     */
+    public List<GerritSlave> gerritSlavesToWaitFor(String gerritServerName) {
+        List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(gerritServerName);
+        if (gerritServer == null) {
+            logger.warn("Could not find server: {}", serverName);
+            return gerritSlaves;
+        }
+
+        ReplicationConfig replicationConfig = gerritServer.getConfig().getReplicationConfig();
+        if (replicationConfig != null && replicationConfig.isEnableReplication()) {
+            if (replicationConfig.isEnableSlaveSelectionInJobs()) {
+                GerritSlave gerritSlave = replicationConfig.getGerritSlave(gerritSlaveId, true);
+                if (gerritSlave != null) {
+                    gerritSlaves.add(gerritSlave);
+                }
+            } else {
+                List<GerritSlave> globalSlaves = replicationConfig.getGerritSlaves();
+                if (globalSlaves != null) {
+                    gerritSlaves.addAll(globalSlaves);
+                }
+            }
+        }
+        return gerritSlaves;
+    }
+
     @Override
     public List<Action> getProjectActions() {
         List<Action> list = new LinkedList<Action>();

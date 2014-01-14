@@ -79,7 +79,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, gerritEventListeners.size());
+        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 
     /**
@@ -95,7 +95,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, gerritEventListeners.size());
+        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 
     /**
@@ -117,7 +117,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, gerritEventListeners.size());
+        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
     }
 
     /**
@@ -141,7 +141,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         assertNull(connection);
         Collection<GerritEventListener> savedEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, savedEventListeners.size());
+        assertEquals(2, savedEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
         Config config = (Config)server.getConfig();
         config.setGerritAuthKeyFile(keyFile.getPublicKey());
         config.setGerritHostName("localhost");
@@ -153,7 +153,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         handler = Whitebox.getInternalState(server, GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(1, gerritEventListeners.size());
+        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
         connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNotNull(connection);
     }
