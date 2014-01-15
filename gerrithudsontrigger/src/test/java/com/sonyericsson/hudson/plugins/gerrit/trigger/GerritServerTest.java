@@ -324,4 +324,23 @@ public class GerritServerTest extends HudsonTestCase {
         form.submit(null);
     }
 
+    /**
+     * Test triggering job with events from a Gerrit server with Pseudo mode.
+     * @throws Exception Error creating job.
+     */
+    @Test
+    public void testTriggeringFromGerritServersWithPseudoMode() throws Exception {
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName, true);
+        PluginImpl.getInstance().addServer(gerritServerOne);
+        gerritServerOne.start();
+        FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(this, projectOneName, gerritServerOneName);
+        PluginImpl.getInstance().getHandler().post(Setup.createPatchsetCreated(gerritServerOneName));
+        RunList<FreeStyleBuild> buildsOne = DuplicatesUtil.waitForBuilds(projectOne, 1, timeToBuild);
+
+        FreeStyleBuild buildOne = buildsOne.get(0);
+        assertSame(Result.SUCCESS, buildOne.getResult());
+        assertEquals(1, projectOne.getBuilds().size());
+        assertSame(gerritServerOneName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+    }
+
 }
