@@ -445,8 +445,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
         return provider;
     }
-
-    /**
+        /**
      * If {@link GerritServer#ANY_SERVER} is selected as {@link #serverName}.
      * Or if serverName is null or empty.
      *

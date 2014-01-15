@@ -15,3 +15,4 @@ generated-sources
 .checkstyle
 .idea
 hostkey.ser
+*.xml~
