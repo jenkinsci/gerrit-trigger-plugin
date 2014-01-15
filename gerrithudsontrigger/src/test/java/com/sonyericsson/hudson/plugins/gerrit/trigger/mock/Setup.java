@@ -396,7 +396,7 @@ public final class Setup {
         triggerOnEvents.add(pluginEvent);
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME,
+                true, false, true, false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME,
                 triggerOnEvents, false, false, "");
 
         if (project != null) {

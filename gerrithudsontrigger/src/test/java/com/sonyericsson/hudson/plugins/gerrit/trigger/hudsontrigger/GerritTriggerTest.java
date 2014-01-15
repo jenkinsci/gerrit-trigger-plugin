@@ -263,7 +263,7 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, "", "", "", "", "", "", null, null, null, false, false, "");
+                true, false, true, false, "", "", "", "", "", "", null, null, null, false, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNull(triggerOnEvents);
