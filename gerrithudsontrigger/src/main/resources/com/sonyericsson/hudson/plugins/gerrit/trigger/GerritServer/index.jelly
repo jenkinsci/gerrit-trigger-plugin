@@ -23,6 +23,12 @@
                                    value="${it.name}"
                                    checkUrl="'${rootURL}/${serverURL}/nameFreeCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Pseudo Mode}"
+                             help="/plugin/gerrit-trigger/help-GerritPseudoMode.html">
+                        <f:checkbox name="pseudoMode"
+                                    checked="${it.pseudoMode}"
+                                    default="false"/>
+                    </f:entry>
                     <f:entry title="${%Hostname}"
                              help="/plugin/gerrit-trigger/help-GerritHostname.html">
                         <f:textbox name="gerritHostName"

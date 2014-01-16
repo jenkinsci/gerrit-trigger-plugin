@@ -120,6 +120,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final int THREADS_FOR_TEST_CONNECTION = 1;
     private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
     private String name;
+    private boolean pseudoMode;
     private transient boolean started;
     private transient String connectionResponse = "";
     private transient GerritHandler gerritEventManager;
@@ -158,7 +159,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param name the name of the server.
      */
     public GerritServer(String name) {
+        this(name, false);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param name the name of the server.
+     * @param pseudoMode if pseudo mode or not.
+     */
+    public GerritServer(String name, boolean pseudoMode) {
         this.name = name;
+        this.pseudoMode = pseudoMode;
         config = new Config();
     }
 
@@ -187,6 +199,24 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public String getName() {
         return name;
+    }
+
+    /**
+     * If pseudo mode or not.
+     *
+     * @return true if so.
+     */
+    public boolean isPseudoMode() {
+        return pseudoMode;
+    }
+
+    /**
+     * Sets pseudo mode.
+     *
+     * @param pseudoMode true if pseudoMode connection.
+     */
+    public void setPseudoMode(boolean pseudoMode) {
+        this.pseudoMode = pseudoMode;
     }
 
     @Override
@@ -254,6 +284,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getInstance().getHandler();
 
+        if (pseudoMode) {
+            logger.info(name + " started (pseudo mode)");
+            started = true;
+            return;
+        }
+
         initializeConnectionListener();
 
         projectListUpdater = new GerritProjectListUpdater(name);
@@ -261,6 +297,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         //Starts unreviewed patches listener
         unreviewedPatchesListener = new UnreviewedPatchesListener(name);
+
         logger.info(name + " started");
         started = true;
     }
@@ -281,6 +318,13 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public void stop() {
         logger.info("Stopping GerritServer " + name);
+
+        if (pseudoMode) {
+            logger.info(name + " stopped (pseudo mode)");
+            started = false;
+            return;
+        }
+
         if (projectListUpdater != null) {
             projectListUpdater.shutdown();
             try {
@@ -356,6 +400,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public synchronized void startConnection() {
+        if (pseudoMode) {
+            gerritEventManager.setIgnoreEMail(name, config.getGerritEMail());
+            return;
+        }
+
         if (!config.hasDefaultValues()) {
             if (gerritConnection == null) {
                 logger.debug("Starting Gerrit connection...");
@@ -377,6 +426,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public synchronized void stopConnection() {
+        if (pseudoMode) {
+            gerritEventManager.setIgnoreEMail(name, null);
+            return;
+        }
+
         if (gerritConnection != null) {
             gerritConnection.shutdown(true);
             gerritConnection.removeListener(gerritConnectionListener);
@@ -385,7 +439,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
         } else {
             logger.warn("Was told to shutdown again?");
         }
-
     }
 
     /**
@@ -395,6 +448,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
 
     public synchronized boolean isConnected() {
+        if (pseudoMode) {
+            return true;
+        }
         if (gerritConnection != null) {
             return gerritConnection.isConnected();
         }
@@ -407,6 +463,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @see DescriptorImpl#doConnectionSubmit(StaplerRequest, StaplerResponse)
      */
     public void restartConnection() {
+        if (pseudoMode) {
+            return;
+        }
         stopConnection();
         startConnection();
     }
@@ -480,6 +539,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         /**
          * Tests if the provided parameters can connect to Gerrit.
+         * @param pseudoMode if pseudo mode or not.
          * @param gerritHostName the hostname
          * @param gerritSshPort the ssh-port
          * @param gerritProxy the proxy url
@@ -490,12 +550,16 @@ public class GerritServer implements Describable<GerritServer>, Action {
          *         {@link FormValidation#error(java.lang.String) } otherwise.
          */
         public FormValidation doTestConnection(
+                @QueryParameter("pseudoMode") final boolean pseudoMode,
                 @QueryParameter("gerritHostName") final String gerritHostName,
                 @QueryParameter("gerritSshPort") final int gerritSshPort,
                 @QueryParameter("gerritProxy") final String gerritProxy,
                 @QueryParameter("gerritUserName") final String gerritUserName,
                 @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
                 @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
+            if (pseudoMode) {
+                return FormValidation.ok(Messages.Success());
+            }
             if (logger.isDebugEnabled()) {
                 logger.debug("gerritHostName = {}\n"
                         + "gerritSshPort = {}\n"
@@ -612,6 +676,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             logger.debug("submit {}", req.toString());
         }
         JSONObject form = req.getSubmittedForm();
+        pseudoMode = form.getBoolean("pseudoMode");
 
         String newName = form.getString("name");
         boolean renamed = false;
