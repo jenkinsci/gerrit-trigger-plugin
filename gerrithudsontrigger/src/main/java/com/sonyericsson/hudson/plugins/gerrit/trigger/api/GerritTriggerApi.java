@@ -43,7 +43,7 @@ public class GerritTriggerApi {
      * @throws NoInstanceException if plugin instance is still not created.
      */
     public Handler getHandler() throws NoInstanceException {
-        PluginImpl plugin = Jenkins.getInstance().getPlugin(PluginImpl.class);
+        PluginImpl plugin = Jenkins.getInstance().getPluginManager().whichPlugin(PluginImpl.class);
         if (plugin == null) {
             throw new NoInstanceException();
         }
