@@ -87,6 +87,7 @@ public class PluginImpl extends Plugin {
     private static PluginImpl instance;
     private LinkedList<GerritServer> servers;
     private transient GerritHandler gerritEventManager;
+    private transient volatile boolean active = false;
 
     // the old config field is left as deprecated and transient so that data in previous format can be read in but
     // not written back into the XML.
@@ -121,6 +122,14 @@ public class PluginImpl extends Plugin {
         return instance;
     }
 
+    /**
+     * Check if this plugin is active.
+     *
+     * @return true if active.
+     */
+    public boolean isActive() {
+        return active;
+    }
     /**
      * Get the list of Gerrit servers.
      *
@@ -269,6 +278,7 @@ public class PluginImpl extends Plugin {
         for (GerritServer s : servers) {
             s.start();
         }
+        active = true;
     }
 
     @Override
@@ -320,6 +330,7 @@ public class PluginImpl extends Plugin {
 
     @Override
     public void stop() throws Exception {
+        active = false;
         for (GerritServer s : servers) {
             s.stop();
         }
