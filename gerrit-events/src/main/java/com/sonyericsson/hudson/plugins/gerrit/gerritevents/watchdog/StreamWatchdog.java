@@ -128,6 +128,8 @@ public class StreamWatchdog extends TimerTask {
      * Shuts down the watchdog timer. A new StreamWatchdog will need to be created to continue watching it.
      */
     public void shutdown() {
-        timer.cancel();
+        if (timer != null) {
+            timer.cancel();
+        }
     }
 }
