@@ -51,6 +51,17 @@ public abstract class GerritTriggeredEvent implements GerritJsonEvent {
      */
     protected Provider provider;
 
+    /**
+     * Time stamp when the event was received.
+     */
+    protected long receivedOn;
+
+    /**
+     * Standard constructor, initialize the receivedOn time stamp.
+     */
+    public GerritTriggeredEvent() {
+        receivedOn = System.currentTimeMillis();
+    }
 
     /**
      * The account that triggered the event.
@@ -86,6 +97,22 @@ public abstract class GerritTriggeredEvent implements GerritJsonEvent {
      */
     public void setProvider(Provider provider) {
         this.provider = provider;
+    }
+
+    /**
+     * Time stamp when the event was received.
+     * @return the receivedOn time stamp
+     */
+    public long getReceivedOn() {
+        return receivedOn;
+    }
+
+    /**
+     * Time stamp when the event was received.
+     * @param receivedOn the receivedOn to set
+     */
+    public void setReceivedOn(long receivedOn) {
+        this.receivedOn = receivedOn;
     }
 
     @Override

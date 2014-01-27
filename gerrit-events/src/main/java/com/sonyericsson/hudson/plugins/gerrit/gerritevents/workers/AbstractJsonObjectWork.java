@@ -27,7 +27,9 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritJsonEventFactor
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+
 import net.sf.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +38,25 @@ import org.slf4j.LoggerFactory;
  * After the conversion the work is handed over to {@link AbstractGerritEventWork}
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public abstract class AbstractJsonObjectWork extends AbstractGerritEventWork implements Work {
+public abstract class AbstractJsonObjectWork extends AbstractGerritEventWork {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractJsonObjectWork.class);
+    private final long createdOn;
+
+    /**
+     * Standard constructor, initialize the createOn time stamp.
+     */
+    public AbstractJsonObjectWork() {
+        this.createdOn = System.currentTimeMillis();
+    }
+
+    /**
+     * Time stamp when the work was created.
+     * @return the createdOn time stamp
+     */
+    public long createdOn() {
+        return createdOn;
+    }
 
     /**
      * Parses the JSONObject into a Java bean and sends the parsed {@link GerritEvent} down the inheritance chain.
@@ -51,7 +69,9 @@ public abstract class AbstractJsonObjectWork extends AbstractGerritEventWork imp
         GerritEvent event = GerritJsonEventFactory.getEvent(json);
         if (event != null) {
             if (event instanceof GerritTriggeredEvent) {
-                ((GerritTriggeredEvent)event).setProvider(provider);
+                GerritTriggeredEvent gerritTriggeredEvent = (GerritTriggeredEvent)event;
+                gerritTriggeredEvent.setProvider(provider);
+                gerritTriggeredEvent.setReceivedOn(createdOn);
             }
             logger.debug("Event is: {}", event);
             perform(event, coordinator);
