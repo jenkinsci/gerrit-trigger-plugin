@@ -25,6 +25,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.regex.Pattern;
 
 /**
@@ -123,7 +126,18 @@ public final class StringUtil {
         if (value == null) {
             return null;
         } else {
-            return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
+            String os = AccessController
+                    .doPrivileged(new PrivilegedAction<String>() {
+                        @Override
+                        public String run() {
+                            return System.getProperty("os.name");
+                        }
+                    });
+            if (os.startsWith("Windows"))
+                return QUOTES_PATTERN.matcher(value).replaceAll("\\\"\"\"");
+            else
+                return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
         }
+
     }
 }
