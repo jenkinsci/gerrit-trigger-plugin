@@ -81,6 +81,18 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>com.cloudbees.plugins</groupId>
+            <artifactId>build-flow-plugin</artifactId>
+            <version>0.10</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>1.8.5</version>
+            <scope>provided</scope> <!-- from jenkins-core -->
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>2.0</version>
@@ -224,6 +236,24 @@
                         <configuration>
                             <violationSeverity>info</violationSeverity>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>gmaven-plugin</artifactId>
+                <version>1.4</version>
+                <configuration>
+                    <providerSelection>1.8</providerSelection>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generateStubs</goal>
+                            <goal>compile</goal>
+                            <goal>generateTestStubs</goal>
+                            <goal>testCompile</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
