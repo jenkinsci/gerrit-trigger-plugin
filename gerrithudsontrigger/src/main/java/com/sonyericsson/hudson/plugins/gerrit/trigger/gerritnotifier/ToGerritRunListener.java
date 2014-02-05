@@ -120,6 +120,10 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                         logger.warn("InterruptedException while obtaining failure message for build: "
                                 + r.getDisplayName(), e);
                     }
+                    // Purge future jobs when one job fails. This improves throughput when
+                    // triggering multiple jobs where one job has lower throughput than
+                    // the others. The first failing job will purge other queued jobs.
+                    GerritTrigger.getTrigger(r.getProject()).notifyBuildEnded(event);
                 }
 
                 updateTriggerContexts(r);
