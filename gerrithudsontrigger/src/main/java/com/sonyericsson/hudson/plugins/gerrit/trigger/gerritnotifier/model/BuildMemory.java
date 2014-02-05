@@ -342,21 +342,21 @@ public class BuildMemory {
     }
 
     /**
-     * Records the failure message for the given build.
+     * Records the message for the given build.
      *
      * @param event          the event.
      * @param r              the build that caused the failure.
-     * @param failureMessage the failure message
+     * @param message        the message
      */
-    public void setEntryFailureMessage(GerritTriggeredEvent event, AbstractBuild r, String failureMessage) {
+    public void setEntryMessage(GerritTriggeredEvent event, AbstractBuild r, String message) {
         MemoryImprint pb = getMemoryImprint(event);
 
         if (pb != null) {
             Entry entry = pb.getEntry(r.getProject());
 
             if (entry != null) {
-                logger.info("Recording unsuccessful message for {}: {}", event, failureMessage);
-                entry.setUnsuccessfulMessage(failureMessage);
+                logger.info("Recording message for {}: {}", event, message);
+                entry.setMessage(message);
             }
         }
     }
@@ -679,7 +679,7 @@ public class BuildMemory {
             private AbstractProject project;
             private AbstractBuild build;
             private boolean buildCompleted;
-            private String unsuccessfulMessage;
+            private String message;
 
             /**
              * Constructor.
@@ -731,21 +731,21 @@ public class BuildMemory {
             }
 
             /**
-             * Sets the unsuccessful message for an entry.
+             * Sets the message for an entry.
              *
-             * @param unsuccessfulMessage the message.
+             * @param message the message.
              */
-            private void setUnsuccessfulMessage(String unsuccessfulMessage) {
-                this.unsuccessfulMessage = unsuccessfulMessage;
+            private void setMessage(String message) {
+                this.message = message;
             }
 
             /**
-             * Gets the unsuccessful message for an entry.
+             * Gets the message for an entry.
              *
              * @return the message.
              */
-            public String getUnsuccessfulMessage() {
-                return this.unsuccessfulMessage;
+            public String getMessage() {
+                return this.message;
             }
 
             /**

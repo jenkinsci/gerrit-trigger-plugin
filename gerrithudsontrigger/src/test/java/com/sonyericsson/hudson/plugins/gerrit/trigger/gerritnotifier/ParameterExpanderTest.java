@@ -499,9 +499,9 @@ public class ParameterExpanderTest {
         MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
 
         if (failureMessage != null && !failureMessage.isEmpty()) {
-            when(entries[0].getUnsuccessfulMessage()).thenReturn(failureMessage.trim());
+            when(entries[0].getMessage()).thenReturn(failureMessage.trim());
         } else {
-            when(entries[0].getUnsuccessfulMessage()).thenReturn(null);
+            when(entries[0].getMessage()).thenReturn(null);
         }
 
         when(memoryImprint.getEntries()).thenReturn(entries);

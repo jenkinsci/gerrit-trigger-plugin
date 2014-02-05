@@ -430,7 +430,7 @@ public final class Setup {
         when(build.getResult()).thenReturn(Result.FAILURE);
 
         GerritTrigger trigger = Setup.createGerritTrigger(build);
-        when(trigger.getBuildUnsuccessfulFilepath()).thenReturn(filepath);
+        when(trigger.getBuildMessageFilepath()).thenReturn(filepath);
 
         ToGerritRunListener toGerritRunListener = spy(new ToGerritRunListener());
         return toGerritRunListener;
