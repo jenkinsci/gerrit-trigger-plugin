@@ -32,8 +32,12 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.mapper.CannotResolveClassException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import hudson.model.Run;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -166,9 +170,9 @@ public class TriggerContextConverter implements Converter {
         }
         Class<? extends GerritTriggeredEvent> theClass = null;
         try {
-            theClass = (Class<? extends GerritTriggeredEvent>)Class.forName(clazz);
+            theClass = (Class<? extends GerritTriggeredEvent>)Run.XSTREAM2.getMapper().realClass(clazz);
             return theClass;
-        } catch (ClassNotFoundException e) {
+        } catch (CannotResolveClassException e) {
             logger.error("Failed to unmarshall event type for trigger context!", e);
         } catch (ClassCastException e) {
             logger.error("Failed to unmarshall event type for trigger context!", e);
