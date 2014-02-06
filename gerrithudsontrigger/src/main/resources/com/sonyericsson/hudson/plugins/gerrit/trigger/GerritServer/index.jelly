@@ -39,7 +39,7 @@
                              help="/plugin/gerrit-trigger/help-GerritFrontendUrl.html">
                         <f:textbox name="gerritFrontEndUrl"
                                    value="${it.config.gerritFrontEndUrl}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_FRONT_END_URL}"
                                    checkUrl="'${rootURL}/${serverURL}/urlCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%SSH Port}"

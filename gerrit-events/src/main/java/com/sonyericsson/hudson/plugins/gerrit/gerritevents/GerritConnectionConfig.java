@@ -40,4 +40,10 @@ public interface GerritConnectionConfig extends SshConnectionConfig {
      * @return the e-mail address.
      */
     String getGerritEMail();
+
+    /**
+     * The gerrit front end url.
+     * @return gerrit front end url
+     */
+    String getGerritFrontEndUrl();
 }
