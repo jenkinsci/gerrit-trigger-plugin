@@ -124,16 +124,29 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
 
                 updateTriggerContexts(r);
-                if (trigger != null) {
-                    if (trigger.isDelayedApproval()) {
-                        logger.info("Delayed approval set. Waiting for delayed approval for cause [{}]. Status: \n{}",
-                                cause, memory.getStatusReport(event));
-                        return;
-                    }
+                if (hasDelayedApproval(trigger)) {
+                    logger.info("Delayed approval set. Waiting for delayed approval for cause [{}]. Status: \n{}",
+                            cause, memory.getStatusReport(event));
+                } else {
+                    allBuildsCompleted(event, cause, listener);
                 }
-                allBuildsCompleted(event, cause, listener);
             }
         }
+    }
+
+    /**
+     * Whether the trigger has a delayed approval.
+     *
+     * @param trigger the trigger to look in.
+     * @return True only if the trigger is non null and has a delayed approval.
+     */
+    private boolean hasDelayedApproval(GerritTrigger trigger) {
+        if (trigger != null) {
+            if (trigger.isDelayedApproval()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

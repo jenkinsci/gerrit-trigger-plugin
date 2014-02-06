@@ -34,6 +34,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritDelayedApprover;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 import hudson.EnvVars;
@@ -53,12 +55,15 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+//import static junit.framework.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
@@ -79,7 +84,9 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(fullyQualifiedNames = {
         "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory",
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl"
+        "com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl",
+        "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener",
+        "com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritDelayedApprover"
 }, value = AbstractProject.class)
 public class ToGerritRunListenerTest {
 
@@ -113,9 +120,10 @@ public class ToGerritRunListenerTest {
      * Returns a mocked version of an AbstractProject, where getFullName() returns the provided name.
      *
      * @param fullName - the name of the project.
+     * @throws Exception if so.
      * @return a mock.
      */
-    private AbstractProject mockProject(String fullName) {
+    private AbstractProject mockProject(String fullName) throws Exception {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         doReturn(fullName).when(project).getFullName();
         return project;
@@ -128,10 +136,9 @@ public class ToGerritRunListenerTest {
      * @param projectFullName the project's name
      * @param buildNumber     the buildNumber.
      * @return a mock.
-     * @throws InterruptedException Bogus exception from mock
-     * @throws IOException Bogus exception from mock
+     * @throws Exception if so.
      */
-    private AbstractBuild mockBuild(String projectFullName, int buildNumber) throws IOException, InterruptedException {
+    private AbstractBuild mockBuild(String projectFullName, int buildNumber) throws Exception {
         System.out.println("mockBuild");
         AbstractProject project = mockProject(projectFullName);
         AbstractBuild build = mock(AbstractBuild.class);
@@ -141,6 +148,10 @@ public class ToGerritRunListenerTest {
 
         doReturn(envVars).when(build).getEnvironment();
         doReturn(envVars).when(build).getEnvironment(any(TaskListener.class));
+
+        Map<String, String> buildVarsMap = new HashMap<String, String>();
+        buildVarsMap.put("BUILD_NUM", Integer.toString(buildNumber));
+        when(build.getBuildVariables()).thenReturn(buildVarsMap);
 
         return build;
     }
@@ -171,6 +182,50 @@ public class ToGerritRunListenerTest {
 
 
         verify(event).fireBuildCompleted(same(build));
+        verify(event).fireAllBuildsCompleted();
+        verify(mockNotificationFactory).queueBuildCompleted(
+                any(BuildMemory.MemoryImprint.class), any(TaskListener.class));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#onCompleted(hudson.model.AbstractBuild, hudson.model.TaskListener)}. With a
+     * trigger in normal/non-silent mode, and with a delayed approval. This should therefore not report to gerrit,
+     * initially. The delayedApprover is then called, and the approval should happen.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnCompletedDelayedApproval() throws Exception {
+        AbstractBuild build = mockBuild("projectX", 2);
+        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
+        event = spy(event);
+        GerritCause cause = new GerritCause(event, false);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener toGerritRunListener = PowerMockito.spy(new ToGerritRunListener());
+        //The following stub is needed, because in a unit-test the trigger is null
+        PowerMockito.doReturn(true).when(toGerritRunListener, "hasDelayedApproval", any(GerritTrigger.class));
+        PowerMockito.doReturn(toGerritRunListener).when(ToGerritRunListener.class, "getInstance");
+        BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
+        memory.started(event, build);
+
+        toGerritRunListener.onCompleted(build, mock(TaskListener.class));
+
+        verify(event).fireBuildCompleted(same(build));
+        verify(event, never()).fireAllBuildsCompleted();
+        verify(mockNotificationFactory, never()).queueBuildCompleted(
+                any(BuildMemory.MemoryImprint.class), any(TaskListener.class));
+
+        GerritDelayedApprover approver = PowerMockito.spy(new GerritDelayedApprover("projectX", "$BUILD_NUM"));
+        //The following stub is needed to avoid having to mock Hudson.
+        PowerMockito.doReturn(build).when(approver, "locateBuild", "projectX", 2);
+        boolean performResult = approver.perform(build, null, null);
+        assertTrue(performResult);
         verify(event).fireAllBuildsCompleted();
         verify(mockNotificationFactory).queueBuildCompleted(
                 any(BuildMemory.MemoryImprint.class), any(TaskListener.class));

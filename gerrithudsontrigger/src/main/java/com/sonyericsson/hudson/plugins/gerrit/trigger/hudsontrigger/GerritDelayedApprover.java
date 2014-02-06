@@ -26,8 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.Extension;
 import hudson.Util;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.kohsuke.stapler.DataBoundConstructor;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -38,8 +38,10 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Hudson;
 import java.util.Map;
+import java.io.PrintStream;
 import hudson.Launcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 
 
 /**
@@ -50,7 +52,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 
 public class GerritDelayedApprover extends Notifier {
 
-    //private static final Logger logger = LoggerFactory.getLogger(GerritDelayedApprover.class);
+    private static final Logger logger = LoggerFactory.getLogger(GerritDelayedApprover.class);
     private String delayedJob;
     private String delayedBuildNumber;
 
@@ -135,26 +137,66 @@ public class GerritDelayedApprover extends Notifier {
      */
     public boolean perform(final AbstractBuild<?, ?> build, final Launcher launcher, final BuildListener listener)
                                         throws InterruptedException {
-        //logger.info("Running Gerrit Delayed Approval");
+        PrintStream consoleLogger = null;
+        if (listener != null) {
+            consoleLogger = listener.getLogger();
+        }
+
+        performLogger(consoleLogger, "Starting");
         Map<String, String> buildVars = build.getBuildVariables();
         String jobName = Util.replaceMacro(delayedJob, buildVars);
         String numberStr = Util.replaceMacro(delayedBuildNumber, buildVars);
-        int number = Integer.parseInt(numberStr);
-
-        //String jobName = (String) build.getBuildVariables().get(jobParameterName);
-        //int number = Integer.parseInt((String)build.getBuildVariables().get(buildNumParameterName));
-        AbstractProject initiatingJob = Hudson.getInstance().getItemByFullName(jobName, AbstractProject.class);
-        if (initiatingJob == null) {
-            return false;
+        int number;
+        try {
+            number = Integer.parseInt(numberStr);
+        } catch (NumberFormatException e) {
+            performLogger(consoleLogger, "Could not find a job with number " + numberStr);
+            return true;
         }
-        AbstractBuild initiatingBuild = (AbstractBuild)initiatingJob.getBuildByNumber(number);
+        AbstractBuild initiatingBuild = locateBuild(jobName, number);
+        if (initiatingBuild == null) {
+            performLogger(consoleLogger, "Could not find a build for job " + jobName + " with number " + numberStr);
+            return true;
+        }
         GerritCause cause = (GerritCause)initiatingBuild.getCause(GerritCause.class);
         if (cause == null) {
-            return false;
+            performLogger(consoleLogger, "Job " + jobName + " with number " + numberStr
+                        + " was not started by Gerrit, not sending a Gerrit notification.");
+            return true;
         }
+
         ToGerritRunListener thelistener = ToGerritRunListener.getInstance();
         thelistener.allBuildsCompleted(cause.getEvent(), cause, null);
         return true;
+    }
+
+    /**
+     * Logging method which will log to the build's output if possible (not possible during unit-tests).
+     * @param consoleLogger the logger to use for logging
+     * @param message the message to log
+     */
+    public void performLogger(PrintStream consoleLogger, String message) {
+        if (consoleLogger != null) {
+            consoleLogger.println("Gerrit Delayed Approver: " + message);
+        } else {
+            logger.info("Gerrit Delayed Approver: " + message);
+        }
+    }
+
+
+    /**
+     * Finds a build based on the project name and build number.
+     * @param jobName the name of the project inspected
+     * @param buildNumber the number of the build searched
+     * @return the build found (may be null)
+     */
+    public AbstractBuild locateBuild(String jobName, int buildNumber) {
+        AbstractProject project = Hudson.getInstance().getItemByFullName(jobName, AbstractProject.class);
+        if (project == null) {
+            return null;
+        }
+        AbstractBuild build = (AbstractBuild)project.getBuildByNumber(buildNumber);
+        return build;
     }
 
     /*---------------------------------*/
@@ -189,12 +231,11 @@ public class GerritDelayedApprover extends Notifier {
          */
         public GerritDelayedApproverDescriptor() {
             super(GerritDelayedApprover.class);
-            load();
         }
 
         @Override
         public String getDisplayName() {
-            return "Send a delayed Gerrit approval";
+            return Messages.SendDelayedGerritApproval();
         }
 
         @Override
