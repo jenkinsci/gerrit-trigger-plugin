@@ -47,6 +47,10 @@ public final class GerritDefaultValues {
      */
     public static final String DEFAULT_GERRIT_HOSTNAME = "";
     /**
+     * The default gerrit front end url.
+     */
+    public static final String DEFAULT_GERRIT_FRONT_END_URL = "";
+    /**
      * The default ssh port for the gerrit server.
      */
     public static final int DEFAULT_GERRIT_SSH_PORT = 29418;
