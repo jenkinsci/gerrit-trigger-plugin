@@ -53,6 +53,7 @@ import javax.servlet.ServletException;
 import jenkins.model.Jenkins;
 
 import jenkins.model.ModelObjectWithContextMenu;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.CharEncoding;
@@ -60,6 +61,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,6 +184,35 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             serverName = URLDecoder.decode(encodedServerName);
         }
         return PluginImpl.getInstance().getServer(serverName);
+    }
+
+    /**
+     * Used when getting server status from JavaScript.
+     *
+     * @return the json array of server status.
+     */
+    @JavaScriptMethod
+    public String getServerStatuses() {
+        JSONObject root = new JSONObject();
+        JSONArray array = new JSONArray();
+        JSONObject obj;
+
+        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            String status;
+            if (server.isConnected()) {
+                status ="up";
+            } else {
+                status ="down";
+            }
+            obj = new JSONObject();
+            obj.put("name", server.getName());
+            obj.put("url", server.getUrlName());
+            obj.put("status", status);
+            array.add(obj);
+        }
+
+        root.put("servers", array);
+        return root.toString();
     }
 
     /**
