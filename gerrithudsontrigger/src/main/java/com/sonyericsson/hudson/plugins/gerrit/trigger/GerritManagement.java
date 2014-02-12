@@ -199,10 +199,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         for (GerritServer server : PluginImpl.getInstance().getServers()) {
             String status;
-            if (server.isConnected()) {
-                status ="up";
+            if (server.isPseudoMode()) {
+                status = "na";
             } else {
-                status ="down";
+                if (server.isConnected()) {
+                    status ="up";
+                } else {
+                    status ="down";
+                }
             }
             obj = new JSONObject();
             obj.put("name", server.getName());
