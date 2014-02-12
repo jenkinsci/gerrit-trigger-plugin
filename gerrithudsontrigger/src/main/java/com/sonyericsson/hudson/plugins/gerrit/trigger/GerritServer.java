@@ -51,7 +51,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -119,6 +122,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public static final String ANY_SERVER = "__ANY__";
     private static final int THREADS_FOR_TEST_CONNECTION = 1;
     private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
+    private static final int RESPONSE_COUNT = 1;
+    private static final int RESPONSE_INTERVAL_MS = 1000;
+    private static final int RESPONSE_TIMEOUT_S = 10;
     private String name;
     private boolean pseudoMode;
     private transient boolean started;
@@ -818,6 +824,64 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
         }
         rsp.sendRedirect(".");
+    }
+
+    /**
+     * Start connection.
+     */
+    public void doStartConnection() {
+        try {
+            startConnection();
+
+            final CountDownLatch responseLatch = new CountDownLatch(RESPONSE_COUNT);
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (gerritConnection != null && gerritConnection.isConnected()) {
+                        responseLatch.countDown();
+                    }
+                }
+            }, RESPONSE_INTERVAL_MS, RESPONSE_INTERVAL_MS);
+
+            if(responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
+                setConnectionResponse(START_SUCCESS);
+            } else {
+                throw new InterruptedException("time out.");
+            }
+        } catch (Exception ex) {
+            setConnectionResponse(START_FAILURE);
+            logger.error("Could not start connection. ", ex);
+        }
+    }
+
+    /**
+     * Stop connection.
+     */
+    public void doStopConnection() {
+        try {
+            stopConnection();
+
+            final CountDownLatch responseLatch = new CountDownLatch(RESPONSE_COUNT);
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if (gerritConnection == null || !gerritConnection.isConnected()) {
+                        responseLatch.countDown();
+                    }
+                }
+            }, RESPONSE_INTERVAL_MS, RESPONSE_INTERVAL_MS);
+
+            if(responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
+                setConnectionResponse(STOP_SUCCESS);
+            } else {
+                throw new InterruptedException("time out.");
+            }
+        } catch (Exception ex) {
+            setConnectionResponse(STOP_FAILURE);
+            logger.error("Could not stop connection. ", ex);
+        }
     }
 
     /**
