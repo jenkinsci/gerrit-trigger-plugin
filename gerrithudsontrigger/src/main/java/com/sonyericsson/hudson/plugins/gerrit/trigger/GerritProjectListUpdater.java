@@ -78,7 +78,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         GerritServer server = PluginImpl.getInstance().getServer(serverName);
         if (server != null) {
             server.addListener(this);
-            connected = server.isConnected();
+            connected = server.isConnected() && (!server.isPseudoMode());
         } else {
             logger.error("Could not find the server {}", serverName);
         }
