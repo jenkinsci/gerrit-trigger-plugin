@@ -108,10 +108,12 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
         //Show an error if at least one server connection could not be established with the configured front end URL
         errorList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
-            GerritConnectionListener listener = s.getGerritConnectionListener();
-            boolean connected = listener != null && listener.isConnected();
-            if (!connected && !s.getConfig().hasDefaultValues()) {
-                errorList.add(listener);
+            if (!s.isPseudoMode()) {
+                GerritConnectionListener listener = s.getGerritConnectionListener();
+                boolean connected = listener != null && listener.isConnected();
+                if (!connected && !s.getConfig().hasDefaultValues()) {
+                    errorList.add(listener);
+                }
             }
         }
         return !errorList.isEmpty();
@@ -157,9 +159,11 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
     public boolean isGerritSnapshotVersion() {
         snapshotList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
-            GerritConnectionListener listener = s.getGerritConnectionListener();
-            if (listener != null && listener.isSnapShotGerrit()) {
-                snapshotList.add(listener);
+            if (!s.isPseudoMode()) {
+                GerritConnectionListener listener = s.getGerritConnectionListener();
+                if (listener != null && listener.isSnapShotGerrit()) {
+                    snapshotList.add(listener);
+                }
             }
         }
         return !snapshotList.isEmpty();
@@ -186,11 +190,13 @@ public class GerritAdministrativeMonitor extends AdministrativeMonitor {
     public boolean hasDisabledFeatures() {
         disabledFeaturesList.clear();
         for (GerritServer s : PluginImpl.getInstance().getServers()) {
-            GerritConnectionListener listener = s.getGerritConnectionListener();
-            if (listener != null) {
-                List<GerritVersionChecker.Feature> disabledFeatures = listener.getDisabledFeatures();
-                if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
-                    disabledFeaturesList.add(listener);
+            if (!s.isPseudoMode()) {
+                GerritConnectionListener listener = s.getGerritConnectionListener();
+                if (listener != null) {
+                    List<GerritVersionChecker.Feature> disabledFeatures = listener.getDisabledFeatures();
+                    if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
+                        disabledFeaturesList.add(listener);
+                    }
                 }
             }
         }
