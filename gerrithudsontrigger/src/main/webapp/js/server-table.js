@@ -87,10 +87,10 @@ function serverTable() {
         if (elButton.name == "server") {
             if (oRecord.getData("status") == "up") {
                 YAHOO.log("Stop connection.");
-                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/stopConnection", connectionCallBack);
+                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/sleep", connectionCallBack);
             } else if (oRecord.getData("status") == "down") {
                 YAHOO.log("Start connection.");
-                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/startConnection", connectionCallBack);
+                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/wakeup", connectionCallBack);
             }
         }
 
