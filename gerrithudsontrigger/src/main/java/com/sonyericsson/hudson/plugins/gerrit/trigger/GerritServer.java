@@ -702,12 +702,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (!started) {
             this.start();
         }
-        if (renamed) {
-            rsp.sendRedirect("../..");
-            return;
-        } else {
-            rsp.sendRedirect(".");
-        }
+        rsp.sendRedirect("../..");
     }
 
     /**
