@@ -192,7 +192,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return the json array of server status.
      */
     @JavaScriptMethod
-    public String getServerStatuses() {
+    public JSONObject getServerStatuses() {
         JSONObject root = new JSONObject();
         JSONArray array = new JSONArray();
         JSONObject obj;
@@ -218,7 +218,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
 
         root.put("servers", array);
-        return root.toString();
+        return root;
     }
 
     /**
