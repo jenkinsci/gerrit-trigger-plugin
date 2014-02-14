@@ -37,7 +37,11 @@ function serverTable() {
     var FrontEndLinkFormatter = function(elLiner, oRecord, oColumn, oData) {
         var serverName = oRecord.getData("name");
         var frontEndUrl = oRecord.getData("frontEndUrl");
-        elLiner.innerHTML = '<a href="' + frontEndUrl + '">' + serverName + '</a>';
+        if (frontEndUrl != '') {
+            elLiner.innerHTML = '<a href="' + frontEndUrl + '">' + serverName + '</a>';
+        } else {
+            elLiner.innerHTML = serverName;
+        }
     };
     YAHOO.widget.DataTable.Formatter.formatFrontEndLink = FrontEndLinkFormatter;
 
