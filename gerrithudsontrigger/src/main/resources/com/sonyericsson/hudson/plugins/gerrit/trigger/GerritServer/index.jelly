@@ -350,23 +350,6 @@
                     <f:submit value="${%Save}"/>
                 </f:block>
             </f:form>
-                <div style="width: 250px; border: 1px solid black; margin-top: 15px; float: center; text-align: center;"
-                     align="center">
-                    <f:form method="post" action="connectionSubmit" name="control">
-                        <f:section title="Control">
-                            <f:entry>
-                                <f:submit name="button" value="${%Start}"/>
-                                <f:submit name="button" value="${%Stop}"/>
-                                <f:submit name="button" value="${%Restart}"/>
-                            </f:entry>
-                            <f:entry>
-                                <div style="font-weight: bold; margin-bottom: 0.2em; margin-top:0.6em; text-align: center;" align="center">
-                                    ${it.connectionResponse}
-                                </div>
-                            </f:entry>
-                        </f:section>
-                    </f:form>
-                </div>
         </l:main-panel>
     </l:layout>
 </j:jelly>

@@ -787,46 +787,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     *
-     * @param req the StaplerRequest
-     * @param rsp the StaplerResponse
-     * @throws IOException if unable to send redirect.
-     */
-    public void doConnectionSubmit(StaplerRequest req, StaplerResponse rsp) throws IOException {
-
-        setConnectionResponse("");
-        if (req.getParameter("button").equals("Start")) {
-            try {
-                startConnection();
-                //TODO wait for the connection to actually be established.
-                //setConnectionResponse(START_SUCCESS);
-            } catch (Exception ex) {
-                setConnectionResponse(START_FAILURE);
-                logger.error("Could not start connection. ", ex);
-            }
-        } else if (req.getParameter("button").equals("Stop")) {
-            try {
-                stopConnection();
-                //TODO wait for the connection to actually be shutdown.
-                //setConnectionResponse(STOP_SUCCESS);
-            } catch (Exception ex) {
-                setConnectionResponse(STOP_FAILURE);
-                logger.error("Could not stop connection. ", ex);
-            }
-        } else {
-            try {
-                restartConnection();
-                //TODO wait for the connection to actually be shut down and connected again.
-                //setConnectionResponse(RESTART_SUCCESS);
-            } catch (Exception ex) {
-                setConnectionResponse(RESTART_FAILURE);
-                logger.error("Could not restart connection. ", ex);
-            }
-        }
-        rsp.sendRedirect(".");
-    }
-
-    /**
      * Wakeup server. This method returns after actual connection status is changed or timeout.
      * Used by jelly.
      *
