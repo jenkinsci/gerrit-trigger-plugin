@@ -203,9 +203,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                 status = "na";
             } else {
                 if (server.isConnected()) {
-                    status ="up";
+                    status = "up";
                 } else {
-                    status ="down";
+                    status = "down";
                 }
             }
             obj = new JSONObject();
