@@ -827,24 +827,27 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     * Start connection.
+     * Wakeup server. This method returns after actual connection status is changed or timeout.
+     * Used by jelly.
+     *
+     * @return connection status.
      */
-    public void doStartConnection() {
+    public JSONObject doWakeup() {
+        Timer timer = new Timer();
         try {
             startConnection();
 
             final CountDownLatch responseLatch = new CountDownLatch(RESPONSE_COUNT);
-            Timer timer = new Timer();
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    if (gerritConnection != null && gerritConnection.isConnected()) {
+                    if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
                         responseLatch.countDown();
                     }
                 }
             }, RESPONSE_INTERVAL_MS, RESPONSE_INTERVAL_MS);
 
-            if(responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
+            if (responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
                 setConnectionResponse(START_SUCCESS);
             } else {
                 throw new InterruptedException("time out.");
@@ -853,27 +856,41 @@ public class GerritServer implements Describable<GerritServer>, Action {
             setConnectionResponse(START_FAILURE);
             logger.error("Could not start connection. ", ex);
         }
+        timer.cancel();
+
+        JSONObject obj = new JSONObject();
+        String status = "down";
+        if (gerritConnectionListener != null) {
+            if (gerritConnectionListener.isConnected()) {
+                status = "up";
+            }
+        }
+        obj.put("status", status);
+        return obj;
     }
 
     /**
-     * Stop connection.
+     * Server to sleep. This method returns actual connection status is changed or timeout.
+     * Used by jelly.
+     *
+     * @return connection status.
      */
-    public void doStopConnection() {
+    public JSONObject doSleep() {
+        Timer timer = new Timer();
         try {
             stopConnection();
 
             final CountDownLatch responseLatch = new CountDownLatch(RESPONSE_COUNT);
-            Timer timer = new Timer();
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    if (gerritConnection == null || !gerritConnection.isConnected()) {
+                    if (gerritConnectionListener == null || !gerritConnectionListener.isConnected()) {
                         responseLatch.countDown();
                     }
                 }
             }, RESPONSE_INTERVAL_MS, RESPONSE_INTERVAL_MS);
 
-            if(responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
+            if (responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
                 setConnectionResponse(STOP_SUCCESS);
             } else {
                 throw new InterruptedException("time out.");
@@ -882,6 +899,17 @@ public class GerritServer implements Describable<GerritServer>, Action {
             setConnectionResponse(STOP_FAILURE);
             logger.error("Could not stop connection. ", ex);
         }
+        timer.cancel();
+
+        JSONObject obj = new JSONObject();
+        String status = "down";
+        if (gerritConnectionListener != null) {
+            if (gerritConnectionListener.isConnected()) {
+                status = "up";
+            }
+        }
+        obj.put("status", status);
+        return obj;
     }
 
     /**
