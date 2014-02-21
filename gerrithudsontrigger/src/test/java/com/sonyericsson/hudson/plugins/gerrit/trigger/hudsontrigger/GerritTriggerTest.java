@@ -34,15 +34,18 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -53,6 +56,7 @@ import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import net.sf.json.JSONObject;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -63,6 +67,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -103,7 +108,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE LineLength FOR NEXT 15 LINES. REASON: static import
-//CS IGNORE MagicNumber FOR NEXT 720 LINES. REASON: testdata.
+//CS IGNORE MagicNumber FOR NEXT 1600 LINES. REASON: testdata.
 
 /**
  * Tests make ref spec.
@@ -263,9 +268,10 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, false, true, false, "", "", "", "", "", "", null, null, null, false, false, "");
+                true, false, true, false, "", "", "", "", "", "", null, null, null, null, false, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
+
         assertNull(triggerOnEvents);
         doReturn(true).when(trigger).isTriggerOnDraftPublishedEnabled();
         trigger.start(project, true);
@@ -1429,5 +1435,157 @@ public class GerritTriggerTest {
                 return name + "=" + value;
             }
         }
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * return empty slave list when the Gerrit Server is not found.
+     */
+    @Test
+    public void shouldReturnEmptySlaveListWhenGerritServerNotFound() {
+        // setup
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl pluginMock = mock(PluginImpl.class);
+        when(PluginImpl.getInstance()).thenReturn(pluginMock);
+        GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
+
+        // actual test
+        List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor("unexistingServer");
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * return empty slave list when not configured.
+     */
+    @Test
+    public void shouldReturnEmptySlaveListWhenNotConfigured() {
+        IGerritHudsonTriggerConfig configMock = setupSeverConfigMock();
+        GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
+
+        // Replication config not defined
+        List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+
+        // ReplicationConfig is defined but is not configured
+        ReplicationConfig replicationConfigMock = mock(ReplicationConfig.class);
+        when(configMock.getReplicationConfig()).thenReturn(replicationConfigMock);
+        slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * return slaves configured globally, at the administrative level.
+     */
+    @Test
+    public void shouldReturnGlobalSlavesWhenConfigured() {
+        ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
+        GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
+
+        // Replication is enable but slave list is null
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(false);
+        when(replicationConfigMock.getGerritSlaves()).thenReturn(null);
+        List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+
+        // Replication is enable but slave list is empty
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(false);
+        when(replicationConfigMock.getGerritSlaves()).thenReturn(Collections.<GerritSlave> emptyList());
+        slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+
+        // ReplicationConfig is enabled and slaves are defined
+        List<GerritSlave> expectedSlaves = Arrays.asList(new GerritSlave("slave1", "slave1", 1234),
+            new GerritSlave("slave2", "slave2", 1234));
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(false);
+        when(replicationConfigMock.getGerritSlaves()).thenReturn(expectedSlaves);
+        slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(2, slaves.size());
+        assertEquals(expectedSlaves, slaves);
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * return slave configured at the job level.
+     */
+    @Test
+    public void shouldReturnSlaveSelectedInJobWhenConfigured() {
+        ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+            false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false, "");
+
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
+        GerritSlave expectedSlave = new GerritSlave("slaveUUID", "slave1", "slave1", 1234);
+        when(replicationConfigMock.getGerritSlave("slaveUUID", true)).thenReturn(expectedSlave);
+        List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(1, slaves.size());
+        assertEquals(expectedSlave, slaves.get(0));
+    }
+
+    /**
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor(String serverName)}. It should
+     * return default slave when slave configure at the job level does not exist.
+     */
+    @Test
+    public void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
+        ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+            false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false, "");
+
+        // Replication is configured at job level but slave and default no longer exist.
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
+        when(replicationConfigMock.getGerritSlave("slaveUUID", true)).thenReturn(null);
+        List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(0, slaves.size());
+
+        // Replication is configured at job level but slave no longer exist
+        when(replicationConfigMock.isEnableReplication()).thenReturn(true);
+        when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
+        GerritSlave expectedSlave = new GerritSlave("defaultSlaveUUID", "defaultSlave", "defaultSlave", 1234);
+        when(replicationConfigMock.getGerritSlave("slaveUUID", true)).thenReturn(expectedSlave);
+        slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
+        assertNotNull(slaves);
+        assertEquals(1, slaves.size());
+        assertEquals(expectedSlave, slaves.get(0));
+    }
+
+    /**
+     * Setup a ReplicationConfig mock
+     * @return the ReplicationConfig mock
+     */
+    private ReplicationConfig setupReplicationConfigMock() {
+        IGerritHudsonTriggerConfig configMock = setupSeverConfigMock();
+        ReplicationConfig replicationConfigMock = mock(ReplicationConfig.class);
+        when(configMock.getReplicationConfig()).thenReturn(replicationConfigMock);
+        return replicationConfigMock;
+    }
+
+    /**
+     * Setup a sever config mock
+     * @return the server config mock
+     */
+    private IGerritHudsonTriggerConfig setupSeverConfigMock() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl pluginMock = mock(PluginImpl.class);
+        when(PluginImpl.getInstance()).thenReturn(pluginMock);
+        GerritServer serverMock = mock(GerritServer.class);
+        when(pluginMock.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(serverMock);
+        IGerritHudsonTriggerConfig configMock = mock(IGerritHudsonTriggerConfig.class);
+        when(serverMock.getConfig()).thenReturn(configMock);
+        return configMock;
     }
 }

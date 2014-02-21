@@ -38,6 +38,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
+import hudson.model.queue.QueueTaskDispatcher;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 import org.slf4j.Logger;
@@ -279,6 +280,14 @@ public class PluginImpl extends Plugin {
             s.start();
         }
         active = true;
+    }
+
+    @Override
+    public void postInitialize() throws Exception {
+        //Call the following method for force initialization of the ReplicationQueueTaskDispatcher because
+        //it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
+        QueueTaskDispatcher.all().size();
+        super.postInitialize();
     }
 
     @Override

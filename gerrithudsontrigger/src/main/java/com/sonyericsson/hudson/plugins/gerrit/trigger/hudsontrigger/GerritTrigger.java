@@ -42,11 +42,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
@@ -134,6 +136,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private String buildUnsuccessfulFilepath;
     private String customUrl;
     private String serverName;
+    private String gerritSlaveId;
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
@@ -191,6 +194,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       unsuccessful build.
      * @param customUrl                      Custom URL to sen to Gerrit instead of build URL
      * @param serverName                     The selected server
+     * @param gerritSlaveId                  The selected slave associated to this job, if enabled in server configs
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
      * @param allowTriggeringUnreviewedPatches
@@ -223,6 +227,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             String buildUnsuccessfulFilepath,
             String customUrl,
             String serverName,
+            String gerritSlaveId,
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
             boolean allowTriggeringUnreviewedPatches,
@@ -251,6 +256,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
         this.serverName = serverName;
+        this.gerritSlaveId = gerritSlaveId;
         this.triggerOnEvents = triggerOnEvents;
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
         this.triggerConfigURL = triggerConfigURL;
@@ -290,6 +296,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setServerName(String name) {
         this.serverName = name;
+    }
+
+    /**
+     * Returns id of the gerrit slave.
+     * @return the id of the gerrit slave
+     */
+    public String getGerritSlaveId() {
+        return gerritSlaveId;
     }
 
     /**
@@ -1452,6 +1466,38 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 .isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished, serverName);
     }
 
+    /**
+     * Convenience method to get the list of GerritSlave to which replication
+     * should be done before letting the build execute.
+     * @param gerritServerName The Gerrit server name
+     * @return list of GerritSlave (can be empty but never null)
+     */
+    public List<GerritSlave> gerritSlavesToWaitFor(String gerritServerName) {
+        List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(gerritServerName);
+        if (gerritServer == null) {
+            logger.warn("Could not find server: {}", serverName);
+            return gerritSlaves;
+        }
+
+        ReplicationConfig replicationConfig = gerritServer.getConfig().getReplicationConfig();
+        if (replicationConfig != null && replicationConfig.isEnableReplication()) {
+            if (replicationConfig.isEnableSlaveSelectionInJobs()) {
+                GerritSlave gerritSlave = replicationConfig.getGerritSlave(gerritSlaveId, true);
+                if (gerritSlave != null) {
+                    gerritSlaves.add(gerritSlave);
+                }
+            } else {
+                List<GerritSlave> globalSlaves = replicationConfig.getGerritSlaves();
+                if (globalSlaves != null) {
+                    gerritSlaves.addAll(globalSlaves);
+                }
+            }
+        }
+        return gerritSlaves;
+    }
+
     @Override
     public List<Action> getProjectActions() {
         List<Action> list = new LinkedList<Action>();
@@ -1498,7 +1544,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         /**
-         * method to get list of servers configured globally.
+         * Fill the server dropdown with the list of servers configured globally.
+         *
          * @return list of servers.
          */
         public ListBoxModel doFillServerNameItems() {
@@ -1507,6 +1554,69 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             List<String> serverNames = PluginImpl.getInstance().getServerNames();
             for (String s : serverNames) {
                 items.add(s);
+            }
+            return items;
+        }
+
+        /**
+         * Whether slave selection in jobs should be allowed.
+         * If so, the user will see one more dropdown on the job config page, right under server selection dropdown.
+         * @return true if so.
+         */
+        public boolean isSlaveSelectionAllowedInJobs() {
+            //since we cannot create/remove drop down when the server is selected,
+            //as soon as one of the server allow slave selection, we must display it.
+            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
+                if (replicationConfig != null && replicationConfig.isEnableSlaveSelectionInJobs()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Fill the Gerrit slave dropdown with the list of slaves configured with the selected server.
+         * Expected to be called only when slave config is enabled at job level.
+         *
+         * @param serverName the name of the selected server.
+         * @return list of slaves.
+         */
+        public ListBoxModel doFillGerritSlaveIdItems(@QueryParameter("serverName") final String serverName) {
+            ListBoxModel items = new ListBoxModel();
+            if (ANY_SERVER.equals(serverName)) {
+                items.add(Messages.SlaveSelectionNotAllowedAnyServer(Messages.AnyServer()), "");
+                return items;
+            }
+            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            if (server == null) {
+                logger.warn(Messages.CouldNotFindServer(serverName));
+                items.add(Messages.CouldNotFindServer(serverName), "");
+                return items;
+            }
+            ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
+            if (replicationConfig == null) {
+                items.add(Messages.ReplicationNotConfigured(), "");
+                return items;
+            } else if (!replicationConfig.isEnableReplication()) {
+                items.add(Messages.ReplicationNotConfigured(), "");
+                return items;
+            } else if (!replicationConfig.isEnableSlaveSelectionInJobs()) {
+                items.add(Messages.SlaveSelectionInJobsDisabled(), "");
+                return items;
+            }
+            for (GerritSlave slave : replicationConfig.getGerritSlaves()) {
+                //if GerritTrigger.gerritSlaveId is configured, the selected value will be the good one because of
+                //the stapler/jelly magic. The problem is when job was not saved since replication was configured,
+                //we want the selected slave to be the default slave defined at admin level but I did not find a way
+                //to do this. Jelly support default value returned by a descriptor method but I did not find a way to
+                //pass the selected server to this method.
+                //To work around the issue, we always put the default slave first in the list.
+                if (slave.getId().equals(replicationConfig.getDefaultSlaveId())) {
+                    items.add(0, new ListBoxModel.Option(slave.getName(), slave.getId()));
+                } else {
+                    items.add(slave.getName(), slave.getId());
+                }
             }
             return items;
         }

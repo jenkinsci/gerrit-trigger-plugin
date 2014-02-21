@@ -227,6 +227,12 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritHttpUserName();
 
     /**
+     * The configurations related to event replication.
+     * @return the replication config.
+     */
+    ReplicationConfig getReplicationConfig();
+
+    /**
      * NumberOfSendingWorkerThreads.
      * TODO: Should be removed in future.
      *

@@ -196,7 +196,7 @@ public class GerritAdministrativeMonitorTest {
      */
     @Test
     public void testHasDisabledFeaturesNot() throws Exception {
-        String version = "2.5";
+        String version = "2.9";
         when(server.getGerritVersion()).thenReturn(version);
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         GerritConnectionListener listener = new GerritConnectionListener(server.getName());

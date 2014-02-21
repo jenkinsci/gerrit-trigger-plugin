@@ -29,7 +29,10 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+
 import net.sf.json.JSONObject;
+
 import org.apache.http.auth.Credentials;
 
 import java.io.File;
@@ -295,4 +298,8 @@ public class MockGerritHudsonTriggerConfig implements
         return null;
     }
 
+    @Override
+    public ReplicationConfig getReplicationConfig() {
+        return null;
+    }
 }

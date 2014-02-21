@@ -92,7 +92,7 @@ public abstract class DuplicatesUtil {
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, false, true, false, null, null, null, null, null, null, null,
-                serverName, null, false, false, null));
+                serverName, null, null, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
@@ -121,7 +121,7 @@ public abstract class DuplicatesUtil {
         GerritTrigger trigger = new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, false, true,
                 false, false, null, null, null, null, null, null, null, PluginImpl.DEFAULT_SERVER_NAME,
-                list, true, false, filepath);
+                null, list, true, false, filepath);
         p.addTrigger(trigger);
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
@@ -164,7 +164,7 @@ public abstract class DuplicatesUtil {
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
                 false, false, true, false, null, null, null, null, null, null, null,
-                serverName, list, false, false, null));
+                serverName, null, list, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }

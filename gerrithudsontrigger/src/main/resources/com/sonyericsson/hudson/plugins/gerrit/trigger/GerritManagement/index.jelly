@@ -29,6 +29,12 @@
                                    value="${it.pluginConfig.numberOfSendingWorkerThreads}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
                     </f:entry>
+                    <f:entry title="${%Replication Cache Expiration}"
+                             help="/plugin/gerrit-trigger/help-ReplicationCacheExpiration.html">
+                        <f:textbox name="replicationCacheExpirationInMinutes"
+                                   value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
+                    </f:entry>
                 </f:section>
                 <f:block>
                     <f:submit value="${%Save}" />

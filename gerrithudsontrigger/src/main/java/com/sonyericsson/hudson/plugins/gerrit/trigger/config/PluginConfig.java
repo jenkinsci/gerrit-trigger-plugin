@@ -23,10 +23,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritWorkersConfig;
+import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.StaplerRequest;
 
-import net.sf.json.JSONObject;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritWorkersConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache;
 
 /**
  * Configuration bean for the global plugin configuration.
@@ -46,6 +48,7 @@ public class PluginConfig implements GerritWorkersConfig {
 
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
+    private int replicationCacheExpirationInMinutes;
 
     /**
      * Constructs a config with default data.
@@ -71,6 +74,7 @@ public class PluginConfig implements GerritWorkersConfig {
     public PluginConfig(PluginConfig pluginConfig) {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
+        replicationCacheExpirationInMinutes = pluginConfig.getReplicationCacheExpirationInMinutes();
     }
 
     /**
@@ -101,6 +105,12 @@ public class PluginConfig implements GerritWorkersConfig {
                 DEFAULT_NR_OF_SENDING_WORKER_THREADS);
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
+        }
+
+        replicationCacheExpirationInMinutes = formData.optInt("replicationCacheExpirationInMinutes",
+            ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES);
+        if (replicationCacheExpirationInMinutes <= 0) {
+            replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
     }
 
@@ -146,5 +156,24 @@ public class PluginConfig implements GerritWorkersConfig {
      */
     public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
         this.numberOfSendingWorkerThreads = numberOfSendingWorkerThreads;
+    }
+
+    /**
+     * Replication cache expiration in minutes.
+     * @return the replicationCacheExpirationInMinutes
+     */
+    public int getReplicationCacheExpirationInMinutes() {
+        if (replicationCacheExpirationInMinutes <= 0) {
+            replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
+        }
+        return replicationCacheExpirationInMinutes;
+    }
+
+    /**
+     * Replication cache expiration in minutes.
+     * @param replicationCacheExpirationInMinutes expiration time to set
+     */
+    public void setReplicationCacheExpirationInMinutes(int replicationCacheExpirationInMinutes) {
+        this.replicationCacheExpirationInMinutes = replicationCacheExpirationInMinutes;
     }
 }

@@ -35,6 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRest
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -47,6 +48,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVot
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -54,7 +56,6 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
-
 import net.sf.json.JSONObject;
 
 import java.io.IOException;
@@ -66,7 +67,6 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.doReturn;
-
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
@@ -118,6 +118,17 @@ public final class Setup {
      * @return PatchsetCreated mock.
      */
     public static PatchsetCreated createPatchsetCreated(String serverName) {
+        return createPatchsetCreated(serverName, "project", "ref");
+    }
+
+    /**
+     * Create a new patchset created event with the given data.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return a pactchsetCreated event
+     */
+    public static PatchsetCreated createPatchsetCreated(String serverName, String project, String ref) {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setBranch("branch");
@@ -127,17 +138,19 @@ public final class Setup {
         account.setEmail("email@domain.com");
         account.setName("Name");
         change.setOwner(account);
-        change.setProject("project");
+        change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
         patch.setRevision("9999");
+        patch.setRef(ref);
         event.setPatchset(patch);
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
+
     /**
      * Create a new patchset created event with the given data.
      *
@@ -397,7 +410,7 @@ public final class Setup {
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, false, true, false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME,
-                triggerOnEvents, false, false, "");
+                null, triggerOnEvents, false, false, "");
 
         if (project != null) {
             trigger.start(project, true);
@@ -547,5 +560,25 @@ public final class Setup {
         when(build.getProject()).thenReturn(project);
         when(build.getEnvironment(taskListener)).thenReturn(env);
         return build;
+    }
+
+    /**
+     * Create a RefReplicated event with the specified info.
+     * @param project the project
+     * @param ref the ref
+     * @param server the server
+     * @param slave the slave
+     * @param status hte status
+     * @return a RefReplicated event
+     */
+    public static RefReplicated createRefReplicatedEvent(String project, String ref, String server, String slave,
+        String status) {
+        RefReplicated refReplicated = new RefReplicated();
+        refReplicated.setProject(project);
+        refReplicated.setProvider(new Provider(server, null, null, null, null, null));
+        refReplicated.setRef(ref);
+        refReplicated.setTargetNode(slave);
+        refReplicated.setStatus(status);
+        return refReplicated;
     }
 }

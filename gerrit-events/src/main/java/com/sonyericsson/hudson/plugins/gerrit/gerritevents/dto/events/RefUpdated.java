@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.RepositoryModifiedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.RefUpdate;
 import net.sf.json.JSONObject;
@@ -35,7 +36,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEven
  * A DTO representation of the ref-updated Gerrit Event.
  * @author jeblair
  */
-public class RefUpdated extends GerritTriggeredEvent {
+public class RefUpdated extends GerritTriggeredEvent implements RepositoryModifiedEvent {
 
     /**
      * The Gerrit ref update the event is related to.
@@ -114,5 +115,21 @@ public class RefUpdated extends GerritTriggeredEvent {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public String getModifiedProject() {
+        if (refUpdate != null) {
+            return refUpdate.getProject();
+        }
+        return null;
+    }
+
+    @Override
+    public String getModifiedRef() {
+        if (refUpdate != null) {
+            return refUpdate.getRef();
+        }
+        return null;
     }
 }
