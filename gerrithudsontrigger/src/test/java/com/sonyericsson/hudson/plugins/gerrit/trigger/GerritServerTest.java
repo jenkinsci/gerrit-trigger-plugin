@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
 
+import hudson.Functions;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
@@ -141,15 +142,13 @@ public class GerritServerTest extends HudsonTestCase {
      */
     @Test
     public void testRemoveOneServerFromTwoWithoutConfiguredJobs() throws Exception {
-        URL url = new URL(getURL(), serverURL);
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
         server.start();
         GerritServer server2 = new GerritServer(gerritServerTwoName);
         PluginImpl.getInstance().addServer(server2);
-        HtmlPage page = createWebClient().getPage(url);
 
-        removeServer(gerritServerOneName, page);
+        removeServer(gerritServerOneName);
 
         assertEquals(1, PluginImpl.getInstance().getServers().size());
         assertTrue(wrongMessageWarning, textContent.contains("Remove server"));
@@ -161,7 +160,6 @@ public class GerritServerTest extends HudsonTestCase {
      */
     @Test
     public void testRemoveServerWithConfiguredJob() throws Exception {
-        URL url = new URL(getURL(), serverURL);
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
         server.start();
@@ -169,9 +167,8 @@ public class GerritServerTest extends HudsonTestCase {
 
         GerritServer server2 = new GerritServer(gerritServerTwoName);
         PluginImpl.getInstance().addServer(server2);
-        HtmlPage page = createWebClient().getPage(url);
 
-        removeServer(gerritServerOneName, page);
+        removeServer(gerritServerOneName);
 
         assertEquals(1, PluginImpl.getInstance().getServers().size());
         assertTrue(wrongMessageWarning,
@@ -185,16 +182,13 @@ public class GerritServerTest extends HudsonTestCase {
      */
     @Test
     public void testRemoveLastServerWithConfiguredJob() throws Exception {
-        URL url = new URL(getURL(), serverURL);
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
         server.start();
 
         DuplicatesUtil.createGerritTriggeredJob(this, projectOneName, gerritServerOneName);
 
-        HtmlPage page = createWebClient().getPage(url);
-
-        removeServer(gerritServerOneName, page);
+        removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -207,12 +201,10 @@ public class GerritServerTest extends HudsonTestCase {
      */
     @Test
     public void testRemoveOneServerWithoutConfiguredJob() throws IOException {
-        URL url = new URL(getURL(), serverURL);
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
-        HtmlPage page = createWebClient().getPage(url);
 
-        removeServer(gerritServerOneName, page);
+        removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -222,13 +214,11 @@ public class GerritServerTest extends HudsonTestCase {
     /**
      * Remove Server from UI.
      * @param serverName the name of the Gerrit server you want to access.
-     * @param serverPage the current Gerrit project page.
      * @throws IOException if error removing server.
      */
-    private void removeServer(String serverName, HtmlPage serverPage) throws IOException {
-        HtmlPage currentPage = serverPage;
-        HtmlPage configPage = currentPage.getAnchorByText(serverName).click();
-        HtmlPage removalPage = configPage.getAnchorByHref("remove").click();
+    private void removeServer(String serverName) throws IOException {
+        URL url = new URL(getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
+        HtmlPage removalPage = createWebClient().getPage(url);
 
         int serverSize = PluginImpl.getInstance().getServers().size();
 
