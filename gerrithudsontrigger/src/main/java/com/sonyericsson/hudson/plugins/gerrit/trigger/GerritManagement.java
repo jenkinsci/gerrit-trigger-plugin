@@ -208,12 +208,15 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                     status = "down";
                 }
             }
+
             obj = new JSONObject();
             obj.put("name", server.getName());
             obj.put("frontEndUrl", server.getConfig().getGerritFrontEndUrl());
             obj.put("serverUrl", server.getUrlName());
             obj.put("version", server.getGerritVersion());
             obj.put("status", status);
+            obj.put("hasErrors", server.hasErrors());
+            obj.put("hasWarnings", server.hasWarnings());
             array.add(obj);
         }
 
