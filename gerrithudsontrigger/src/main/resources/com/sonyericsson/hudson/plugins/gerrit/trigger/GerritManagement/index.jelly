@@ -26,6 +26,7 @@
                     {key:"", label: "${%Remove}", formatter: "removeServer", className: "align-middle"}
                 ];
                 var imagesURL = "${imagesURL}";
+                var pluginURL = "${rootURL}/plugin/${it.urlName}";
                 YAHOO.util.Event.addListener(window, "load", function() {
                     serverTable();
                 });

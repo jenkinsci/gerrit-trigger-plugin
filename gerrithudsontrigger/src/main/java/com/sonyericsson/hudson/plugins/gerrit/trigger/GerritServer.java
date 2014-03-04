@@ -76,6 +76,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +98,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -128,6 +130,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private String name;
     private boolean pseudoMode;
     private transient boolean started;
+    private transient boolean timeoutWakeup = false;
     private transient String connectionResponse = "";
     private transient GerritHandler gerritEventManager;
     private transient GerritConnection gerritConnection;
@@ -223,6 +226,15 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public void setPseudoMode(boolean pseudoMode) {
         this.pseudoMode = pseudoMode;
+    }
+
+    /**
+     * Gets wakeup is failed by timeout or not.
+     *
+     * @return true if wakeup is failed by timeout.
+     */
+    public boolean isTimeoutWakeup() {
+        return timeoutWakeup;
     }
 
     @Override
@@ -803,8 +815,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }, RESPONSE_INTERVAL_MS, RESPONSE_INTERVAL_MS);
 
             if (responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
+                timeoutWakeup = false;
                 setConnectionResponse(START_SUCCESS);
             } else {
+                timeoutWakeup = true;
                 throw new InterruptedException("time out.");
             }
         } catch (Exception ex) {
@@ -865,6 +879,91 @@ public class GerritServer implements Describable<GerritServer>, Action {
         }
         obj.put("status", status);
         return obj;
+    }
+
+    /**
+     * This server has errors or not.
+     *
+     * @return true if this server has errors.
+     */
+    public boolean hasErrors() {
+        if (isConnectionError()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * This server has warnings or not.
+     *
+     * @return true if this server has warnings.
+     */
+    public boolean hasWarnings() {
+        if (isGerritSnapshotVersion() || hasDisabledFeatures()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * If connection could not be established.
+     *
+     * @return true if so. false otherwise.
+     */
+    @JavaScriptMethod
+    public boolean isConnectionError() {
+        if (!gerritConnectionListener.isConnected()) {
+            if (timeoutWakeup) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * If Gerrit is a snapshot version.
+     *
+     * @return true if so, false otherwise.
+     */
+    @JavaScriptMethod
+    public boolean isGerritSnapshotVersion() {
+        if (gerritConnectionListener.isConnected()) {
+            if (gerritConnectionListener.isSnapShotGerrit()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * If server with features disabled due to old Gerrit version.
+     *
+     * @return true if so, false otherwise.
+     */
+    @JavaScriptMethod
+    public boolean hasDisabledFeatures() {
+        if (gerritConnectionListener.isConnected()) {
+            List<GerritVersionChecker.Feature> disabledFeatures = gerritConnectionListener.getDisabledFeatures();
+            if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns the list of disabled features.
+     *
+     * @return the list of disabled features or empty list if listener not found
+     */
+    public List<GerritVersionChecker.Feature> getDisabledFeatures() {
+        if (gerritConnectionListener.isConnected()) {
+            List<GerritVersionChecker.Feature> features = gerritConnectionListener.getDisabledFeatures();
+            if (features != null) {
+                return features;
+            }
+        }
+        return new LinkedList<GerritVersionChecker.Feature>();
     }
 
     /**

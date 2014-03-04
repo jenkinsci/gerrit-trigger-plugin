@@ -17,6 +17,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import org.apache.sshd.SshServer;
 import org.junit.Test;
@@ -27,9 +30,11 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import hudson.Functions;
 import hudson.model.FreeStyleBuild;
@@ -39,6 +44,7 @@ import hudson.util.RunList;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -333,4 +339,136 @@ public class GerritServerTest extends HudsonTestCase {
         assertSame(gerritServerOneName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
     }
 
+    /**
+     * Tests {@link GerritServer#isGerritSnapshotVersion()} is true when it should.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIsGerritSnapshotVersion() throws Exception {
+        String version = "2.2.2.1-340-g47084d4";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        assertTrue(gerritServerOne.isGerritSnapshotVersion());
+    }
+
+    /**
+     * Tests {@link GerritServer#isGerritSnapshotVersion()} is false for an official version.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIsGerritSnapshotVersionNot() throws Exception {
+        String version = "2.2.2.1";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        assertFalse(gerritServerOne.isGerritSnapshotVersion());
+    }
+
+    /**
+     * Tests {@link GerritServer#isGerritSnapshotVersion()} is false for a RC version.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIsGerritSnapshotVersionNotRc() throws Exception {
+        String version = "2.3-rc0";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        assertFalse(gerritServerOne.isGerritSnapshotVersion());
+    }
+
+    /**
+     * Tests {@link GerritServer#getDisabledFeatures()}.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testGetDisabledFeatures() throws Exception {
+        String version = "2.2.2.1";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<GerritVersionChecker.Feature>();
+        if (gerritServerOne.hasDisabledFeatures()) {
+            disabledFeatures = gerritServerOne.getDisabledFeatures();
+        }
+        assertFalse(disabledFeatures.isEmpty());
+        boolean foundFileTrigger = false;
+        for (GerritVersionChecker.Feature feature : disabledFeatures) {
+            if (feature == GerritVersionChecker.Feature.fileTrigger) {
+                foundFileTrigger = true;
+            }
+        }
+        assertTrue("Expected to find the file trigger feature!", foundFileTrigger);
+    }
+
+    /**
+   * Tests {@link GerritServer#getDisabledFeatures()} is empty for version 2.5. TODO update this test's
+     * version check whenever we get a new feature requiring a newer version.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testGetDisabledFeaturesNone() throws Exception {
+        String version = "2.5";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        List<GerritVersionChecker.Feature> disabledFeatures = gerritServerOne.getDisabledFeatures();
+        assertTrue(disabledFeatures.isEmpty());
+    }
+
+    /**
+     * Tests {@link GerritServer#getDisabledFeatures()} is true when it should be.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testHasDisabledFeatures() throws Exception {
+        String version = "2.2.2.1";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        assertTrue(gerritServerOne.hasDisabledFeatures());
+    }
+
+    /**
+     * Tests {@link GerritServer#getDisabledFeatures()} is false when it should. TODO update this test's
+     * version check whenever we get a new feature requiring a newer version.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testHasDisabledFeaturesNot() throws Exception {
+        String version = "2.5";
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
+        when(gerritServerOne.getGerritVersion()).thenReturn(version);
+        GerritConnectionListener listener = new GerritConnectionListener(gerritServerOne.getName());
+        listener.setConnected(true);
+        listener.checkGerritVersionFeatures();
+        when(gerritServerOne.getGerritConnectionListener()).thenReturn(listener);
+        assertFalse(gerritServerOne.hasDisabledFeatures());
+    }
 }
