@@ -22,9 +22,32 @@
  *  THE SOFTWARE.
  */
 
+function setSelectedIds(ids) {
+    'use strict';
+    var input = document.getElementById('selectedIds');
+    if (input !== null) {
+        input.value = ids;
+    }
+}
+
+function buildSelectedIds() {
+    'use strict';
+    var checkboxes = document.getElementsByName("selectedRow");
+    var ids = "";
+    var i, check;
+    for (i = 0; i < checkboxes.length; i++) {
+        check = checkboxes[i];
+        if (check.checked) {
+            ids += check.value + "[]";
+        }
+    }
+    return ids;
+}
+
 function activateRow(theId) {
+    'use strict';
     var radio = document.getElementById('check' + theId);
-    if (radio != null) {
+    if (radio !== null) {
         radio.click();
     } else {
         alert("No checkbox with id: " + theId);
@@ -32,11 +55,12 @@ function activateRow(theId) {
 }
 
 function rowSelected(theId) {
+    'use strict';
     var radio = document.getElementById('check' + theId);
-    if (radio != null) {
+    if (radio !== null) {
         var row = document.getElementById('row' + theId);
-        if (row != null) {
-            if (radio.checked == true) {
+        if (row !== null) {
+            if (radio.checked === true) {
                 row.style.fontWeight = "bold";
             } else {
                 row.style.fontWeight = "normal";
@@ -48,18 +72,12 @@ function rowSelected(theId) {
     setSelectedIds(buildSelectedIds());
 }
 
-function setSelectedIds(ids) {
-    var input = document.getElementById('selectedIds');
-    if (input != null) {
-        input.value = ids;
-    }
-}
-
 function toggleDetails(theId, collapsedImg, expandedImg) {
+    'use strict';
     var img = document.getElementById('toggleImg' + theId);
     var details = document.getElementById('rowDetails' + theId);
-    if (img != null && details != null) {
-        if (details.style.display != '') {
+    if (img !== null && details !== null) {
+        if (details.style.display !== '') {
             details.style.display = '';
             img.src = expandedImg;
         } else {
@@ -67,16 +85,4 @@ function toggleDetails(theId, collapsedImg, expandedImg) {
             img.src = collapsedImg;
         }
     }
-}
-
-function buildSelectedIds() {
-    var checkboxes = document.getElementsByName("selectedRow");
-    var ids = "";
-    for (var i = 0; i < checkboxes.length; i++) {
-        var check = checkboxes[i];
-        if (check.checked) {
-            ids += check.value + "[]";
-        }
-    }
-    return ids;
 }
