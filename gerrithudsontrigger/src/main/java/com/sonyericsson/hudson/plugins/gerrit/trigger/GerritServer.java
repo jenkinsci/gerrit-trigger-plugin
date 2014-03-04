@@ -694,7 +694,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
             logger.debug("submit {}", req.toString());
         }
         JSONObject form = req.getSubmittedForm();
-        pseudoMode = form.getBoolean("pseudoMode");
+        if (isConnected()) {
+            pseudoMode = false;
+            form.put("pseudoMode", false);
+        } else {
+            pseudoMode = form.getBoolean("pseudoMode");
+        }
 
         String newName = form.getString("name");
         boolean renamed = false;
