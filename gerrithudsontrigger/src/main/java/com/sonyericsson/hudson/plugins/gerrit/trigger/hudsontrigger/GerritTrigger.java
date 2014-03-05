@@ -67,10 +67,13 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Actionable;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
+import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
@@ -80,6 +83,7 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.Util;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -93,13 +97,14 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.AncestorInPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
  * Triggers a build based on Gerrit events.
  *
@@ -128,6 +133,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private boolean delayedApproval;
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
+    private String dependencyJobsNames;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -185,6 +191,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param delayedApproval                Delayed Approval on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param noNameAndEmailParameters       Whether to create parameters containing name and email
+     * @param dependencyJobsNames            The list of jobs on which this job depends
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
@@ -219,6 +226,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             boolean delayedApproval,
             boolean escapeQuotes,
             boolean noNameAndEmailParameters,
+            String dependencyJobsNames,
             String buildStartMessage,
             String buildSuccessfulMessage,
             String buildUnstableMessage,
@@ -248,6 +256,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.delayedApproval = delayedApproval;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
+        this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -1242,6 +1251,25 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * The list of dependency jobs, ie jobs on which this job depends.
+     *
+     * @return the string of jobs, or null if this feature is not used.
+     */
+    public String getDependencyJobsNames() {
+        return dependencyJobsNames;
+    }
+
+    /**
+     * Set the list of dependency jobs.
+     *
+     * @param dependencyJobsNames
+     *         the string containing a comma-separated list of job names.
+     */
+    public void setDependencyJobsNames(String dependencyJobsNames) {
+        this.dependencyJobsNames = dependencyJobsNames;
+    }
+
+    /**
      * If silent mode is on or off. When silent mode is on there will be no communication back to Gerrit, i.e. no build
      * started/failed/successful approve messages etc. Default is false.
      *
@@ -1541,6 +1569,42 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
                 }
             }
+        }
+
+        /**
+         * Provides auto-completion candidates for dependency jobs names.
+         *
+         * @param value the value.
+         * @param self the current instance.
+         * @param container the container.
+         * @return {@link AutoCompletionCandidates}
+         */
+        public AutoCompletionCandidates doAutoCompleteDependencyJobsNames(@QueryParameter String value,
+                @AncestorInPath Item self, @AncestorInPath ItemGroup container) {
+            return AutoCompletionCandidates.ofJobNames(Job.class, value, self, container);
+        }
+
+        /**
+         * Validates that the dependency jobs are legitimate.
+         *
+         * @param value the string value.
+         * @param project the current project.
+         * @return {@link FormValidation}
+         */
+        public FormValidation doCheckDependencyJobsNames(@AncestorInPath Item project, @QueryParameter String value) {
+            StringTokenizer tokens = new StringTokenizer(Util.fixNull(value), ",");
+            while (tokens.hasMoreTokens()) {
+                String projectName = tokens.nextToken().trim();
+                if (!projectName.equals("")) {
+                    Item item = Hudson.getInstance().getItem(projectName, project, Item.class);
+                    if ((item == null) || !(item instanceof AbstractProject)) {
+                        return FormValidation.error(hudson.model.Messages.AbstractItem_NoSuchJobExists(projectName,
+                                AbstractProject.findNearest(projectName,
+                                    project.getParent()).getRelativeNameFrom(project)));
+                    }
+                 }
+             }
+             return FormValidation.ok();
         }
 
         /**
