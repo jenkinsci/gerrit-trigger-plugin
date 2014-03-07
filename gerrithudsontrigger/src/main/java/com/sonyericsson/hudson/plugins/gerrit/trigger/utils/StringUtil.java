@@ -25,6 +25,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -123,7 +125,12 @@ public final class StringUtil {
         if (value == null) {
             return null;
         } else {
-            return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
+            Matcher m = QUOTES_PATTERN.matcher(value);
+            if (m.find()) {
+                return  "\"" + m.replaceAll("\\\\\"") + "\"";
+            } else {
+                return value;
+            }
         }
     }
 }
