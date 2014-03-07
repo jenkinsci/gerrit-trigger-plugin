@@ -239,15 +239,18 @@ public enum GerritTriggerParameters {
             parameters.remove(parameter);
         }
         String stringValue;
-        if (escapeQuotes) {
-            stringValue = StringUtil.escapeQuotes(value);
+        if (value != null && value.indexOf(' ') != -1) {
+            stringValue = "\"" + StringUtil.escapeQuotes(value) + "\"";
         } else {
-            stringValue = value;
+            if (escapeQuotes) {
+                stringValue = StringUtil.escapeQuotes(value);
+            } else {
+                stringValue = value;
+            }
         }
         if (stringValue == null) {
             stringValue = "";
         }
-
         parameter = new StringParameterValue(this.name(), stringValue, description);
         parameters.add(parameter);
     }

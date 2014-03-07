@@ -93,6 +93,22 @@ public class GerritTriggerParametersTest {
 
     /**
      * Tests {@link GerritTriggerParameters#setOrCreateParameters(GerritTriggeredEvent, AbstractProject, List)}.
+     * The {@link GerritTriggerParameters#GERRIT_CHANGE_OWNER} should be escaped correctly.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void setOrCreateParametersChangeOwner() throws Exception {
+        PatchsetCreated created = Setup.createPatchsetCreated();
+        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        GerritTriggerParameters.setOrCreateParameters(created, null, parameters);
+        StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_OWNER, parameters);
+        assertNotNull(param);
+        assertTrue("\"\\\"Name\\\" <email@domain.com>\"".equals(param.value));
+    }
+
+    /**
+     * Tests {@link GerritTriggerParameters#setOrCreateParameters(GerritTriggeredEvent, AbstractProject, List)}.
      * The {@link GerritTriggerParameters#GERRIT_CHANGE_URL} should contain the base url from the project trigger.
      *
      * @throws Exception if so
