@@ -18,7 +18,7 @@ public class StringUtilTest {
 
         String valueOfParameter = "xxx\"xxx\"xxxx";
         String escapedString = StringUtil.escapeQuotes(valueOfParameter);
-        String expectedString = "xxx\\\"xxx\\\"xxxx";
+        String expectedString = "\"xxx\\\"xxx\\\"xxxx\"";
         Assert.assertEquals(expectedString, escapedString);
 
 
