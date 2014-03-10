@@ -11,12 +11,10 @@
         <l:main-panel>
             <j:set var="instance" value="${it}"/>
             <j:set var="descriptor" value="${it.descriptor}"/>
-            <j:set var="aMonitor" value="${it.getAdministrativeMonitor()}"/>
-            <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
-                <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
-            </j:if>
+            <st:include page="message.jelly" optional="true"/>
             <j:set var="serverURL" value="${it.url}"/>
             <f:form method="post" action="configSubmit" name="config">
+                <f:section title="${%Gerrit Connection Setting}">
                     <f:entry title="${%Name}"
                              help="/plugin/gerrit-trigger/help-GerritServerName.html">
                         <f:textbox name="name"
@@ -89,6 +87,7 @@
                                       progress="${%Testing...}"
                                       method="testConnection"
                                       with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
+                </f:section>
                 <f:section title="${%Gerrit Reporting Values}">
                     <tr>
                         <td></td>
@@ -399,23 +398,6 @@
                     <f:submit value="${%Save}"/>
                 </f:block>
             </f:form>
-                <div style="width: 250px; border: 1px solid black; margin-top: 15px; float: center; text-align: center;"
-                     align="center">
-                    <f:form method="post" action="connectionSubmit" name="control">
-                        <f:section title="Control">
-                            <f:entry>
-                                <f:submit name="button" value="${%Start}"/>
-                                <f:submit name="button" value="${%Stop}"/>
-                                <f:submit name="button" value="${%Restart}"/>
-                            </f:entry>
-                            <f:entry>
-                                <div style="font-weight: bold; margin-bottom: 0.2em; margin-top:0.6em; text-align: center;" align="center">
-                                    ${it.connectionResponse}
-                                </div>
-                            </f:entry>
-                        </f:section>
-                    </f:form>
-                </div>
         </l:main-panel>
     </l:layout>
 </j:jelly>

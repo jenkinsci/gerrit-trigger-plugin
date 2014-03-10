@@ -1,6 +1,37 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <l:layout title="${%Gerrit Trigger plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
+        <l:header>
+            <style>.yui-skin-sam .yui-dt td.align-middle {vertical-align:middle;}</style>
+            <l:yui module="dom"/>
+            <l:yui module="event"/>
+            <l:yui module="element"/>
+            <l:yui module="logger"/>
+            <l:yui module="connection" />
+            <l:yui module="datasource"/>
+            <l:yui module="container" />
+            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
+            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/server-table.js"/>
+            <script type="text/javascript">
+                var textMessages = {
+                    confirm: "${%Remove?}",
+                    yes: "${%Yes}",
+                    no: "${%No}",
+                };
+                var columnDefs = [
+                    {key:"name", label: "${%Server Name}", formatter: "formatFrontEndLink", className: "align-middle"},
+                    {key:"version", label: "${%Version}", formatter: "text", className: "align-middle"},
+                    {key:"status", label: "${%Status}", formatter: "controlServer", className: "align-middle"},
+                    {key:"", label: "${%Edit}", formatter: "editServer", className: "align-middle"},
+                    {key:"", label: "${%Remove}", formatter: "removeServer", className: "align-middle"}
+                ];
+                var imagesURL = "${imagesURL}";
+                var pluginURL = "${rootURL}/plugin/${it.urlName}";
+                YAHOO.util.Event.addListener(window, "load", function() {
+                    serverTable();
+                });
+            </script>
+        </l:header>
         <l:side-panel>
             <l:tasks>
                 <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
@@ -14,7 +45,6 @@
             <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
                 <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
             </j:if>
-
             <f:form method="post" action="configSubmit" name="config">
                 <f:section title="${%Global Configuration}">
                     <f:entry title="${%Nr of Receiving Worker Threads}"
@@ -42,11 +72,8 @@
             </f:form>
             <div class="gerrit-trigger-section">
                 <div class="section-header">${%Gerrit Servers}</div>
-                <ul>
-                    <j:forEach var="server" items="${it.servers}" varStatus="loop">
-                        <li> <a href="${server.urlName}"> ${server.name} </a> </li>
-                    </j:forEach>
-                </ul>
+                <p />
+                <div id="server-list"/>
             </div>
         </l:main-panel>
     </l:layout>

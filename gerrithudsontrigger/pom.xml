@@ -232,6 +232,34 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.googlecode.jslint4java</groupId>
+                <artifactId>jslint4java-maven-plugin</artifactId>
+                <version>2.0.5</version>
+                <executions>
+                    <execution>
+                        <id>lint</id>
+                        <goals>
+                            <goal>lint</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/yui/**</exclude>
+                            </excludes>
+                            <failOnError>true</failOnError>
+                            <options>
+                                <browser>true</browser>
+                                <vars>true</vars>
+                                <unparam>true</unparam>
+                                <plusplus>true</plusplus>
+                                <devel>true</devel>
+                                <predef>pluginURL,imagesURL,columnDefs,YAHOO</predef>
+                            </options>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <extensions>
             <extension>

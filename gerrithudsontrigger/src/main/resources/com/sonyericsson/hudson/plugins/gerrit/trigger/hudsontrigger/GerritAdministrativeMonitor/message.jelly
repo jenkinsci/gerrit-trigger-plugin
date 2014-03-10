@@ -1,48 +1,9 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <!--class=error or warning-->
-    <j:if test="${it.isConnectionWarning()}">
-        <j:forEach var="server" items="${it.connectionWarningServers}">
-            <div class="warning">
-                ${%ConnectionWarning(server)}
-            </div>
-            <div class="warning">
-                ${%VersionConnectionWarning(server)}
-            </div>
-        </j:forEach>
-    </j:if>
-    <j:if test="${it.isConnectionError()}">
-        <j:forEach var="server" items="${it.connectionErrorServers}">
-            <div class="error">
-                ${%ConnectionError(server)}
-            </div>
-            <div class="warning">
-                ${%VersionConnectionWarning(server)}
-            </div>
-        </j:forEach>
-    </j:if>
     <j:if test="${it.isSendQueueWarning()}">
         <div class="warning">
             ${%GerritSendQueueWarning(it.sendQueueSize)}
         </div>
-    </j:if>
-    <j:if test="${it.isGerritSnapshotVersion()}">
-        <j:forEach var="server" items="${it.snapshotServers}">
-            <div class="warning">
-                ${%SnapshotVersionWarning(server)}
-            </div>
-        </j:forEach>
-    </j:if>
-    <j:if test="${it.hasDisabledFeatures()}">
-        <j:forEach var="server" items="${it.disabledFeaturesServers}">
-            <div class="warning">
-                ${%DisabledFeaturesWarning(server)}
-                <ul>
-                    <j:forEach items="${it.getDisabledFeatures(server)}" var="feature">
-                        <li>${%SpecificVersionRequiredWarning(feature.getDisplayName(), feature.getVersion())}</li>
-                    </j:forEach>
-                </ul>
-            </div>
-        </j:forEach>
     </j:if>
 </j:jelly>
