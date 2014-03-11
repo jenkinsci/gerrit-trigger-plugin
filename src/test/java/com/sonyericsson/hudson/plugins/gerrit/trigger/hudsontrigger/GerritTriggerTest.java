@@ -97,10 +97,10 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
-import static org.mockito.Mockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.spy;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -896,7 +896,8 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a normal scenario.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * with a normal scenario.
      */
     @Test
     public void testGerritEvent() {
@@ -935,7 +936,8 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a non buildable project.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * with a non buildable project.
      */
     @Test
     public void testGerritEventNotBuildable() {
@@ -964,7 +966,8 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a non interesting change.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * with a non interesting change.
      */
     @Test
     public void testGerritEventNotInteresting() {
@@ -997,7 +1000,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a normal scenario.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
      * With a ManualPatchsetCreated event.
      */
     @Test
@@ -1037,7 +1040,8 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)} with a normal scenario, but with silentMode on.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * with a normal scenario, but with silentMode on.
      */
     @Test
     public void testGerritEventSilentMode() {
@@ -1074,7 +1078,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritEvent(PatchsetCreated)}.
+     * Tests {@link GerritTrigger#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
      * With a ManualPatchsetCreated event and silentMode on.
      */
     @Test
@@ -1438,7 +1442,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor(String)}. It should
      * return empty slave list when the Gerrit Server is not found.
      */
     @Test
@@ -1456,7 +1460,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor(String)}. It should
      * return empty slave list when not configured.
      */
     @Test
@@ -1478,7 +1482,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor(String)}. It should
      * return slaves configured globally, at the administrative level.
      */
     @Test
@@ -1515,7 +1519,7 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger#gerritSlavesToWaitFor()}. It should
+     * Tests {@link GerritTrigger#gerritSlavesToWaitFor(String)}. It should
      * return slave configured at the job level.
      */
     @Test

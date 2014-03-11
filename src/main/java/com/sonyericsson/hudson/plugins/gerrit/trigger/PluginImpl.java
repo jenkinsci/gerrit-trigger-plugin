@@ -334,6 +334,14 @@ public class PluginImpl extends Plugin {
         Run.XSTREAM2.addCompatibilityAlias(
             "com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ManualPatchsetCreated",
             ManualPatchsetCreated.class);
+
+        Items.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
+                "com.sonymobile.tools.gerrit.gerritevents");
+        Hudson.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
+                "com.sonymobile.tools.gerrit.gerritevents");
+        Run.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
+                "com.sonymobile.tools.gerrit.gerritevents");
+
         logger.trace("XStream alias registrations done.");
     }
 

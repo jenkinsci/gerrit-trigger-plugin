@@ -58,11 +58,11 @@
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter">
-                    <property name="severity" value="warning"/>
+                <property name="severity" value="warning"/>
                 <property name="tokens" value="COMMA,SEMI"/>
         </module>
         <module name="WhitespaceAround">
-                    <property name="severity" value="info"/>
+                    <property name="severity" value="warning"/>
         </module>
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
@@ -75,16 +75,17 @@
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="HiddenField">
-                 <property name="ignoreSetter" value="true"/>
-                 <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+            <property name="ignoreConstructorParameter" value="true"/>
         </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
         <module name="RedundantThrows">
-                <property name="logLoadErrors" value="true"/>
-                <property name="suppressLoadErrors" value="true"/>
+            <property name="logLoadErrors" value="true"/>
+            <property name="suppressLoadErrors" value="true"/>
+            <property name="severity" value="info"/>
         </module>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
