@@ -177,20 +177,20 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
-         * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
-         * wanted.
-         *
-         * @param commandPattern the regular expression
-         * @param cmd            the class to create the command from. The class must have a constructor where the first
-         *                       argument is a String followed by the class types provided by the types parameter.
-         * @param arguments      the other arguments to the constructor besides the command.
-         * @param types          the other class types to match the constructor against.
-         * @throws NoSuchMethodException if there is no matching constructor.
-         */
-        public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd,
-                                                  Object[] arguments, Class<?>[] types) throws NoSuchMethodException {
-            returnCommandFor(commandPattern, cmd, false, arguments, types);
-        }
+     * Specifies a command type to instantiate and give to mina when a command matching
+     * the given regular expression is wanted.
+     *
+     * @param commandPattern the regular expression
+     * @param cmd            the class to create the command from. The class must have a constructor where the first
+     *                       argument is a String followed by the class types provided by the types parameter.
+     * @param arguments      the other arguments to the constructor besides the command.
+     * @param types          the other class types to match the constructor against.
+     * @throws NoSuchMethodException if there is no matching constructor.
+     */
+    public synchronized void returnCommandFor(String commandPattern, Class<? extends CommandMock> cmd,
+                                              Object[] arguments, Class<?>[] types) throws NoSuchMethodException {
+        returnCommandFor(commandPattern, cmd, false, arguments, types);
+    }
 
     /**
      * Specifies a command type to instantiate and give to mina when a command matching the given regular expression is
@@ -249,8 +249,9 @@ public class SshdServerMock implements CommandFactory {
      * Starts a ssh server on the provided port.
      *
      * @param port the port to listen to.
-     * @return the server.
+     * @param server the server mock to start
      *
+     * @return the server.
      * @throws IOException if so.
      */
     public static SshServer startServer(int port, SshdServerMock server) throws IOException {
@@ -272,8 +273,9 @@ public class SshdServerMock implements CommandFactory {
     /**
      * Starts a ssh server on the standard Gerrit port.
      *
-     * @return the server.
+     * @param server the server mock to start
      *
+     * @return the server.
      * @throws IOException if so.
      * @see #GERRIT_SSH_PORT
      */
@@ -289,6 +291,7 @@ public class SshdServerMock implements CommandFactory {
      *
      * @throws IOException          if so.
      * @throws InterruptedException if interrupted while waiting for ssh-keygen to finish.
+     * @throws JSchException        if creation of the keys goes wrong.
      */
     public static KeyPairFiles generateKeyPair() throws IOException, InterruptedException, JSchException {
         File tmp = new File(System.getProperty("java.io.tmpdir"));
@@ -324,19 +327,33 @@ public class SshdServerMock implements CommandFactory {
      * Pointer to two key-pair files.
      * Returned from {@link #generateKeyPair()}.
      */
-    public static class KeyPairFiles {
+    public static final class KeyPairFiles {
         private File privateKey;
         private File publicKey;
 
+        /**
+         * Standard constructor.
+         *
+         * @param privateKey the private key
+         * @param publicKey the public key
+         */
         private KeyPairFiles(File privateKey, File publicKey) {
             this.privateKey = privateKey;
             this.publicKey = publicKey;
         }
 
+        /**
+         * The private key.
+         * @return file pointer to the private key
+         */
         public File getPrivateKey() {
             return privateKey;
         }
 
+        /**
+         * The public key.
+         * @return file pointer to the public key
+         */
         public File getPublicKey() {
             return publicKey;
         }
@@ -359,6 +376,9 @@ public class SshdServerMock implements CommandFactory {
         private OutputStream errorStream;
         private ExitCallback exitCallback;
         private boolean destroyed = false;
+        /**
+         * The command.
+         */
         protected String command;
 
         /**
@@ -618,6 +638,10 @@ public class SshdServerMock implements CommandFactory {
             return commandPattern.matcher(command).find();
         }
 
+        /**
+         * If this command should only be returned the first time it is called for.
+         * @return true if so
+         */
         public boolean isOneShot() {
             return oneShot;
         }

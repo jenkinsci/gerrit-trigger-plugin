@@ -10,7 +10,9 @@
 <module name="Checker">
     <property name="severity" value="error"/>
     <module name="FileLength"/>
-    <module name="FileTabCharacter"/>
+    <module name="FileTabCharacter">
+        <property name="fileExtensions" value="java,groovy,jelly,xml,html,js,css"/>
+    </module>
     <module name="RegexpSingleline">
         <property name="format" value="\s+$"/>
         <property name="minimum" value="0"/>
@@ -81,7 +83,7 @@
         <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
         <module name="RedundantThrows">
-                   <property name="logLoadErrors" value="true"/>
+                <property name="logLoadErrors" value="true"/>
                 <property name="suppressLoadErrors" value="true"/>
         </module>
         <module name="SimplifyBooleanExpression"/>
@@ -96,35 +98,37 @@
                 <property name="severity" value="warning"/>
         </module>
         <module name="VisibilityModifier">
-                  <property name="packageAllowed" value="true"/>
-                    <property name="protectedAllowed" value="true"/>
+                <property name="packageAllowed" value="true"/>
+                <property name="protectedAllowed" value="true"/>
         </module>
         <module name="ArrayTypeStyle"/>
         <module name="TodoComment">
-                    <property name="severity" value="ignore"/>
+                <property name="severity" value="ignore"/>
         </module>
         <module name="UpperEll"/>
         <module name="JavadocMethod">
-                    <property name="logLoadErrors" value="true"/>
-                    <property name="suppressLoadErrors" value="true"/>
+                <property name="logLoadErrors" value="true"/>
+                <property name="suppressLoadErrors" value="true"/>
         </module>
         <module name="JavadocStyle">
-                   <property name="scope" value="protected"/>
+                <property name="scope" value="protected"/>
         </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable">
-                   <property name="scope" value="protected"/>
+                <property name="scope" value="protected"/>
         </module>
         <module name="FileContentsHolder"/>
         <module name="MultipleVariableDeclarations" >
-                    <property name="severity" value="warning"/>
+                <property name="severity" value="warning"/>
         </module>
         <module name="ArrayTrailingComma">
                 <property name="severity" value="warning"/>
         </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
-    <module name="Translation"/>
+    <module name="Translation">
+        <property name="severity" value="info"/>
+    </module>
     <!-- Ignore generated code -->
     <module name="SuppressionCommentFilter">
         <property name="offCommentFormat" value="This file was auto-generated from WSDL"/>
