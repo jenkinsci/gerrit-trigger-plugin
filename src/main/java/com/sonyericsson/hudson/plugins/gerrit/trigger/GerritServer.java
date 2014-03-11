@@ -25,10 +25,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
+import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
+import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
+import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
+import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
 
 import hudson.Extension;
@@ -82,19 +82,19 @@ import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshAuthenticationException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshUtil;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshAuthenticationException;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectException;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshUtil;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
@@ -375,7 +375,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Adds a listener to the EventManager.  The listener will receive all events from Gerrit.
      *
      * @param listener the listener to add.
-     * @see GerritHandler#addListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
+     * @see GerritHandler#addListener(com.sonymobile.tools.gerrit.gerritevents.GerritEventListener)
      */
     public void addListener(GerritEventListener listener) {
         if (gerritEventManager != null) {
@@ -387,7 +387,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Removes a listener from the manager.
      *
      * @param listener the listener to remove.
-     * @see GerritHandler#removeListener(com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener)
+     * @see GerritHandler#removeListener(com.sonymobile.tools.gerrit.gerritevents.GerritEventListener)
      */
     public void removeListener(GerritEventListener listener) {
         if (gerritEventManager != null) {
@@ -522,7 +522,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Throws IllegalStateException if the event manager is null
      *
      * @param event the event.
-     * @see GerritHandler#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     * @see GerritHandler#triggerEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)
      */
     public void triggerEvent(GerritEvent event) {
         if (gerritEventManager != null) {

@@ -24,17 +24,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -631,7 +631,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     /**
      * getBuildScheduleDelay method will return configured buildScheduledelay value. If the value is missing or invalid
      * it the method will return default schedule delay or
-     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues#DEFAULT_BUILD_SCHEDULE_DELAY}.
      *
      * @return buildScheduleDelay.
      */

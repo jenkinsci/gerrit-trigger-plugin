@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 

@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -315,7 +315,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)
+     * @see BuildMemory#isBuilding(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent)
      */
     public boolean isBuilding(GerritTriggeredEvent event) {
         if (event == null) {

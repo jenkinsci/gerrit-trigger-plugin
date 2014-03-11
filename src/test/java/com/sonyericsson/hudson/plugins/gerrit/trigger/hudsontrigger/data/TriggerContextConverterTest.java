@@ -24,12 +24,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -273,7 +273,7 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned} event and
+     * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned} event and
      * list of "others" containing two items.
      *
      * @throws Exception if so.
@@ -319,7 +319,7 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged} event and
+     * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged} event and
      * list of "others" containing two items.
      *
      * @throws Exception if so.
@@ -365,7 +365,7 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored} event and
+     * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored} event and
      * list of "others" containing two items.
      *
      * @throws Exception if so.
@@ -445,7 +445,7 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}.
-     * With a {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished} event and
+     * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished} event and
      * list of "others" containing two items.
      *
      * @throws Exception if so.

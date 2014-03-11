@@ -24,9 +24,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.Authentication;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;

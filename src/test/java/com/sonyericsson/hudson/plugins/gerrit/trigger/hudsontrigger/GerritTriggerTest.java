@@ -24,13 +24,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -73,11 +73,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 //CS IGNORE LineLength FOR NEXT 15 LINES. REASON: static import
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REF;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NAME;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REF;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_ID;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_OWNER;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_OWNER_EMAIL;
@@ -1113,7 +1113,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests {@link GerritTrigger#createParameters(
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
      * hudson.model.AbstractProject)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
@@ -1186,7 +1186,7 @@ public class GerritTriggerTest {
 
     /**
      * Tests {@link GerritTrigger#createParameters(
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
      * hudson.model.AbstractProject)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
@@ -1259,7 +1259,7 @@ public class GerritTriggerTest {
 
     /**
      * Prepare a new Mock Object of Change for utility test
-     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change}.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change}.
      *
      * @param project     the result of calling getProject() on this mocked Object.
      * @param branch      the result of calling getBranch() on this mocked Object.
@@ -1292,7 +1292,7 @@ public class GerritTriggerTest {
 
     /**
      * Prepare a new Mock Object of PatchsetCreated for utility test
-     * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated}.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated}.
      *
      * @param change    mock the result of calling getChange() on this mock Object.
      * @param patchSet  mock the result of calling getCPatchSet() on this mock Object.

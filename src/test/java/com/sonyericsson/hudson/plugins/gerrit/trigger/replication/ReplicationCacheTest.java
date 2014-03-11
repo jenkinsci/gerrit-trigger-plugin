@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: testdata.

@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.CommentedFile;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
 import hudson.ExtensionPoint;
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;

@@ -23,13 +23,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryException;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritQueryHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryException;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -556,7 +556,7 @@ public class ManualTriggerAction implements RootAction {
      * Triggers the event by putting it into the event queue.
      *
      * @param event the event to trigger.
-     * @see PluginImpl#triggerEvent(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent)
+     * @see PluginImpl#triggerEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)
      */
     private void triggerEvent(ManualPatchsetCreated event) {
         logger.trace("Going to trigger event: {}", event);

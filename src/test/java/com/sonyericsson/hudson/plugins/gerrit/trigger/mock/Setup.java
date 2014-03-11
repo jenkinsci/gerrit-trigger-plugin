@@ -24,18 +24,18 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Approval;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Change;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -67,20 +67,20 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.doReturn;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.ID;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NAME;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.PROJECT;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REF;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
-import static com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventKeys.URL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.ID;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NAME;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.PATCH_SET;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.PROJECT;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REF;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.URL;
 
 
 /**

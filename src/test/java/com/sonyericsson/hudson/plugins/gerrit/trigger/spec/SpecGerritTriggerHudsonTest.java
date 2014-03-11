@@ -24,8 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -35,7 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Cause;
@@ -54,7 +54,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.List;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 

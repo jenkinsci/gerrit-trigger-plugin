@@ -25,7 +25,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 /**
  * Bean for holding statistics of started builds for a specific event.

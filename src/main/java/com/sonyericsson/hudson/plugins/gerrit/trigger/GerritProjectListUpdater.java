@@ -23,10 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshConnectionFactory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ssh.SshException;
+import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
+import com.sonymobile.tools.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import java.io.BufferedReader;
 import java.io.IOException;

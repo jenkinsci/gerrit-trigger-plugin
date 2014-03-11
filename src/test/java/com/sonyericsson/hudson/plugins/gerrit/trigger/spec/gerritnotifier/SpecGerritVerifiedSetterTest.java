@@ -24,8 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;

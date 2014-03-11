@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -34,14 +34,14 @@ import org.apache.sshd.SshServer;
 import org.junit.Test;
 import org.jvnet.hudson.test.HudsonTestCase;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.Handler;
+import com.sonymobile.tools.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.GerritTriggerException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 /**
  * Unit test for API which is contributed to external.

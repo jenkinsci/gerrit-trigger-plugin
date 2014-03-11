@@ -24,8 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnectionConfig2;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import net.sf.json.JSONObject;
 

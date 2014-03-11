@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.test;
+package com.sonymobile.tools.gerrit.gerritevents.mock;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;

@@ -24,7 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;

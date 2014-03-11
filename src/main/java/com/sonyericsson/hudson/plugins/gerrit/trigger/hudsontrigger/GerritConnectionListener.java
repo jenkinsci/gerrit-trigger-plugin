@@ -30,7 +30,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.ConnectionListener;
+import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionNumber;

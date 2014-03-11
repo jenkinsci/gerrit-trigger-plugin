@@ -31,7 +31,7 @@ import hudson.ExtensionList;
 import hudson.ExtensionPoint;
 import hudson.model.Result;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 
 /**

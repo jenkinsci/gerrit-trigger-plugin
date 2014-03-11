@@ -25,8 +25,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory;

@@ -23,10 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEventType;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
@@ -37,7 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;

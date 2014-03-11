@@ -24,17 +24,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewInput;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 
 /**
- * A job for the {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue} that
+ * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
  * sends a build started message.
  */
 public class BuildStartedRestCommandJob extends AbstractRestCommandJob {

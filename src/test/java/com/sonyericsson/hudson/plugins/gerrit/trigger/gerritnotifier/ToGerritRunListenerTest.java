@@ -25,8 +25,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -386,7 +386,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Tests {@link ToGerritRunListener#onTriggered(hudson.model.AbstractProject,
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
      *
      * @throws Exception if so.
      */
@@ -405,7 +405,7 @@ public class ToGerritRunListenerTest {
 
     /**
      * Tests {@link ToGerritRunListener#onRetriggered(hudson.model.AbstractProject,
-     * com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent, java.util.List)}.
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, java.util.List)}.
      *
      * @throws Exception if so.
      */

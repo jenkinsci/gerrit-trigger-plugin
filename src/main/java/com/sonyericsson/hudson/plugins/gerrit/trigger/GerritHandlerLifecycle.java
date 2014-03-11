@@ -26,8 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 
 /**

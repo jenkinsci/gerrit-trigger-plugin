@@ -25,7 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;

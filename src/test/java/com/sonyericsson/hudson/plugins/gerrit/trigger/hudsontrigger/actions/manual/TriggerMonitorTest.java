@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
 public class TriggerMonitorTest {
 
     /**
-     * Tests {@link TriggerMonitor#add(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated)}.
+     * Tests {@link TriggerMonitor#add(com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated)}.
      * @throws Exception if so.
      */
     @Test

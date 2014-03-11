@@ -27,7 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 
 /**
  * Listener interface for listening in on a specific GerritEvent's lifecycle.

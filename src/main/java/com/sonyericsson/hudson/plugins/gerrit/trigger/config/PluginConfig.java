@@ -27,7 +27,7 @@ import net.sf.json.JSONObject;
 
 import org.kohsuke.stapler.StaplerRequest;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.GerritWorkersConfig;
+import com.sonymobile.tools.gerrit.gerritevents.workers.GerritWorkersConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache;
 
 /**

@@ -24,15 +24,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.CommentedFile;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewInput;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.rest.ReviewLabel;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
 import hudson.model.TaskListener;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
-* A job for the {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue} that
+* A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
 * sends a build completed message.
 */
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {

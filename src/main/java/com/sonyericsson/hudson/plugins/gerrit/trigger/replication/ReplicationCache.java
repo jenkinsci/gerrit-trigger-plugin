@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 
 /**
  * Replication cache for RefReplicated events.

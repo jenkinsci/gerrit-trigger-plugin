@@ -25,7 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;

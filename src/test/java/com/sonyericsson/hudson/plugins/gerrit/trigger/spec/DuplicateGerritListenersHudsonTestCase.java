@@ -27,13 +27,13 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritConnection;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
@@ -52,7 +52,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
 
 /**
  * This tests different scenarios of adding listeners to the
- * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler}
+ * {@link com.sonymobile.tools.gerrit.gerritevents.GerritHandler}
  * to make sure that no duplicates are created.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;

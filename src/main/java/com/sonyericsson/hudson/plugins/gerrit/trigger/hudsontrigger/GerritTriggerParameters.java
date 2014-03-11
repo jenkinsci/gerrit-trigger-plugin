@@ -24,13 +24,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -461,7 +461,7 @@ public enum GerritTriggerParameters {
      *
      * @param account the account.
      * @return the name in the account or null if Account is null.
-     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getName()
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account#getName()
      */
     private static String getName(Account account) {
         if (account == null) {
@@ -476,7 +476,7 @@ public enum GerritTriggerParameters {
      *
      * @param account the account.
      * @return the name and email in the account or null if Account is null.
-     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getNameAndEmail()
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account#getNameAndEmail()
      */
     private static String getNameAndEmail(Account account) {
         if (account == null) {
@@ -491,7 +491,7 @@ public enum GerritTriggerParameters {
      *
      * @param account the account.
      * @return the email in the account or null if Account is null.
-     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Account#getEmail()
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account#getEmail()
      */
     private static String getEmail(Account account) {
         if (account == null) {

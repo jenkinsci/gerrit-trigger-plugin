@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 
 /**
  * Helper class for easier Jelly usage.

@@ -16,7 +16,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 import org.apache.sshd.SshServer;
 import org.junit.Test;
@@ -29,7 +29,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.test.SshdServerMock;
+import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.Functions;
 import hudson.model.FreeStyleBuild;

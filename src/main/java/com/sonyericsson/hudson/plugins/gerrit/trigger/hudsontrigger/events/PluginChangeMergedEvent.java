@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;

@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import java.util.regex.Pattern;
 
 /**
@@ -71,7 +71,7 @@ public final class StringUtil {
      * @param event the event.
      * @return the refspec.
      * @see ChangeBasedEvent#getPatchSet()
-     * @see com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.PatchSet#getRef()
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet#getRef()
      */
     public static String makeRefSpec(ChangeBasedEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {

@@ -25,8 +25,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import hudson.model.Item;
@@ -43,7 +43,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
 
 /**
  * This tests different scenarios of adding listeners to the
- * {@link com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler}
+ * {@link com.sonymobile.tools.gerrit.gerritevents.GerritHandler}
  * with a pre-loaded project configured, to make sure that no duplicates are created.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;

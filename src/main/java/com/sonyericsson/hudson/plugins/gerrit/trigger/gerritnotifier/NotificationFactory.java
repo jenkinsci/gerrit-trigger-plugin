@@ -25,11 +25,11 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritCmdRunner;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.attr.Provider;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
+import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -112,7 +112,7 @@ public class NotificationFactory {
      *
      * @param memoryImprint the memory of the builds.
      * @param listener      a listener.
-     * @see GerritSendCommandQueue#queue(com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
+     * @see GerritSendCommandQueue#queue(com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
      * @see BuildCompletedCommandJob
      */
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
@@ -186,7 +186,7 @@ public class NotificationFactory {
      * @param listener a listener.
      * @param event    the event.
      * @param stats    the started stats.
-     * @see GerritSendCommandQueue#queue(com.sonyericsson.hudson.plugins.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
+     * @see GerritSendCommandQueue#queue(com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
      * @see BuildStartedCommandJob
      */
     public void queueBuildStarted(AbstractBuild build, TaskListener listener,

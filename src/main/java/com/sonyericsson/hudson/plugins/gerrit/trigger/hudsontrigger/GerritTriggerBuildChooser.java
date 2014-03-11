@@ -26,8 +26,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;

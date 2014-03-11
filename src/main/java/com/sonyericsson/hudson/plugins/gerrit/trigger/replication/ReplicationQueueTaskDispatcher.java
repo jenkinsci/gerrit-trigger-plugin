@@ -41,11 +41,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.RepositoryModifiedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.RepositoryModifiedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;

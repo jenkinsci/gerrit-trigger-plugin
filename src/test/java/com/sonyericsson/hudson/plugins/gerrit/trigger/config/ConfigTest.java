@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -204,7 +204,7 @@ public class ConfigTest {
     //CS IGNORE LineLength FOR NEXT 17 LINES. REASON: JavaDoc
 
     /**
-     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
+     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
      * With a standard PatchsetCreated event.
      */
     @Test
@@ -216,7 +216,7 @@ public class ConfigTest {
     }
 
     /**
-     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
+     * Tests {@link Config#getGerritFrontEndUrlFor(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
      * With a standard PatchsetCreated event but missing url.
      */
     @Test

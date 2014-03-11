@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritSendCommandQueue;
+import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 
 import hudson.Extension;
 import hudson.model.AdministrativeMonitor;

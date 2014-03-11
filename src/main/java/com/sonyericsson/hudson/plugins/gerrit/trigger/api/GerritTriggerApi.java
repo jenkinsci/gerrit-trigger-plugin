@@ -25,7 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.api;
 
 import jenkins.model.Jenkins;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.Handler;
+import com.sonymobile.tools.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginNotFoundException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginStatusException;
