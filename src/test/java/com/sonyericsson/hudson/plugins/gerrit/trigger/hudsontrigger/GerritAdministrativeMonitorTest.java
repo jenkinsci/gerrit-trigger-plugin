@@ -29,6 +29,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -65,4 +66,15 @@ public class GerritAdministrativeMonitorTest {
         assertTrue(monitor.isSendQueueWarning());
     }
 
+    /**
+     * Tests {@link GerritAdministrativeMonitor#isSendQueueWarning()} is false when it should.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testIsSendQueueWarningWithUnderThreshold() throws Exception {
+        GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        when(monitor.getSendQueueSize()).thenReturn(GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD - 1);
+        assertFalse(monitor.isSendQueueWarning());
+    }
 }
