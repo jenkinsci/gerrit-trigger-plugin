@@ -34,13 +34,14 @@ but there are some kind contributors who provides win fixes every now and then.
 
 # Build
 
-This is a multi module maven project, with all the maven derpiness that follows
-with it. One of the modules _(build-config)_ contains CheckStyle configurations
-for the other modules to use and needs to be installed into your local repo so 
-the maven checkstyle plugin can find it. 
-But simplest is to run install on the entire project.
+The plugin depends on a [gerrit-events](https://github.com/sonyxperiadev/gerrit-events) component
+that used to be part of this project but later broken out. Although we will try to avoid it,
+sometimes you might need to _mvn install_ it locally if dependant changes there haven't been released yet.
 
-    mvn clean install
+The _(build-config)_ directory contains "special" CheckStyle configurations and the build will
+fail during the verification phase if you don't follow them.
+
+    mvn clean package
     
 Run findbugs for future reference
 or to make sure you haven't introduced any new warnings
@@ -51,7 +52,6 @@ or to make sure you haven't introduced any new warnings
 
 To test in a local Jenkins instance
 
-    cd gerrithudsontrigger
     mvn hpi:run
 
 
