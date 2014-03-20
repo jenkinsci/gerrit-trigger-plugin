@@ -76,6 +76,7 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
+import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
@@ -1758,7 +1759,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                         List<ParametersAction> params = a.getActions(ParametersAction.class);
                         for (ParametersAction param : params) {
                             if (param.equals(parameters)) {
-                                e.interrupt();
+                                e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
                             }
                         }
                     }
