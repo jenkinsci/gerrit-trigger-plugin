@@ -23,12 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
+import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Manages the timer that is used for each GerritTrigger TimerTask that
@@ -77,15 +79,63 @@ public final class GerritTriggerTimer {
         return instance;
     }
 
+    //CS IGNORE LineLength FOR NEXT 5 LINES. REASON: JavaDoc
+
+    /**
+     * Figures out what
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#getDynamicConfigRefreshInterval()}
+     * to use.
+     *
+     * @param timerTask the timerTask that should be scheduled.
+     *
+     * @return the refresh interval in ms.
+     * @see #calculateAverageDynamicConfigRefreshInterval()
+     */
+    private long calculateDynamicConfigRefreshInterval(GerritTriggerTimerTask timerTask) {
+        if (timerTask.getGerritTrigger().isAnyServer()) {
+            if (PluginImpl.getInstance().getServers() == null || PluginImpl.getInstance().getServers().isEmpty()) {
+                return GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
+            } else {
+                //Do an average just for giggles
+                return calculateAverageDynamicConfigRefreshInterval();
+            }
+        } else {
+            //get the actual if it exists.
+            GerritServer server = PluginImpl.getInstance().getServer(timerTask.getGerritTrigger().getServerName());
+            if (server != null) {
+                return server.getConfig().getDynamicConfigRefreshInterval();
+            } else {
+                //Do an average just for giggles
+                return calculateAverageDynamicConfigRefreshInterval();
+            }
+        }
+    }
+
+    //CS IGNORE LineLength FOR NEXT 5 LINES. REASON: JavaDoc
+
+    /**
+     * Calculates the average
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#getDynamicConfigRefreshInterval()}
+     * among the configured GerritServers.
+     *
+     * @return the average value.
+     */
+    private long calculateAverageDynamicConfigRefreshInterval() {
+        long total = 0;
+        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            total += server.getConfig().getDynamicConfigRefreshInterval();
+        }
+        long average = total / PluginImpl.getInstance().getServers().size();
+        return Math.max(GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL, average);
+    }
+
     /**
      * Schedule a TimerTask according to the two constants above.
      *
-     * @param timerTask the subclass of TimerTask to be scheduled
-     * @param serverName the name of the Gerrit server.
+     * @param timerTask the TimerTask to be scheduled
      */
-    public void schedule(TimerTask timerTask, String serverName) {
-        long timerPeriod = MILLISECONDS_PER_SECOND
-                    * PluginImpl.getInstance().getServer(serverName).getConfig().getDynamicConfigRefreshInterval();
+    public void schedule(GerritTriggerTimerTask timerTask) {
+        long timerPeriod = TimeUnit2.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(timerTask));
         try {
             timer.schedule(timerTask, DELAY_MILLISECONDS, timerPeriod);
         } catch (IllegalArgumentException iae) {
