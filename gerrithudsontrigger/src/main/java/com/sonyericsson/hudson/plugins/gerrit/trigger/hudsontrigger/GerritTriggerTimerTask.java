@@ -41,7 +41,7 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     GerritTriggerTimerTask(GerritTrigger gerritTrigger) {
         this.gerritTrigger = gerritTrigger;
-        GerritTriggerTimer.getInstance().schedule(this, gerritTrigger.getServerName());
+        GerritTriggerTimer.getInstance().schedule(this);
     }
 
     /**
@@ -50,5 +50,14 @@ public class GerritTriggerTimerTask extends TimerTask {
     @Override
     public void run() {
         gerritTrigger.updateTriggerConfigURL();
+    }
+
+    /**
+     * The {@link GerritTrigger} that created this timerTask.
+     *
+     * @return the trigger.
+     */
+    public GerritTrigger getGerritTrigger() {
+        return gerritTrigger;
     }
 }

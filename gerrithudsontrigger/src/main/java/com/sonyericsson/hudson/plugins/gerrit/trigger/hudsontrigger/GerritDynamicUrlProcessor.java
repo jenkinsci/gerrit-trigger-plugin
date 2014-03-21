@@ -104,9 +104,11 @@ public final class GerritDynamicUrlProcessor {
     }
 
     /**
-     * Read and parse the dynamic trigger configuration
+     * Read and parse the dynamic trigger configuration.
+     *
      * @param reader stream from which to read the config
-     * @param serverName the name of the Gerrit server.
+     * @param serverName the name of the Gerrit server configured in the project, could be null.
+     *
      * @return List of Gerrit projects
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors

@@ -420,7 +420,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @return true if so.
      */
-    private boolean isAnyServer() {
+    boolean isAnyServer() {
         return serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName);
     }
 
