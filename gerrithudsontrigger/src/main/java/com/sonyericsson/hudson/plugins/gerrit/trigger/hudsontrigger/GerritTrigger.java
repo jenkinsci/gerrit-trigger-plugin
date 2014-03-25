@@ -134,7 +134,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
-    private List<AbstractProject> dependencyJobs;
+    //private List<AbstractProject> dependencyJobs;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -1265,10 +1265,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *
      * @return the list of jobs, or null if this feature is not used.
      */
-    public List<AbstractProject> getDependencyJobs() {
+/*    public List<AbstractProject> getDependencyJobs() {
         return dependencyJobs;
     }
-
+*/
     /**
      * Set the list of dependency jobs.
      *
@@ -1277,22 +1277,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setDependencyJobsNames(String dependencyJobsNames) {
         this.dependencyJobsNames = dependencyJobsNames;
-        if (dependencyJobsNames == null) {
-            this.dependencyJobs = null;
-        } else {
-            this.dependencyJobs = new ArrayList<AbstractProject>();
-            StringTokenizer tokens = new StringTokenizer(Util.fixNull(dependencyJobsNames), ",");
-            while (tokens.hasMoreTokens()) {
-                String projectName = tokens.nextToken().trim();
-                if (!projectName.equals("")) {
-                    Item context = null;
-                    Item item = Hudson.getInstance().getItem(projectName, context, Item.class);
-                    if ((item != null) && (item instanceof AbstractProject)) {
-                        dependencyJobs.add((AbstractProject)item);
-                    }
-                }
-            }
-        }
     }
 
     /**
