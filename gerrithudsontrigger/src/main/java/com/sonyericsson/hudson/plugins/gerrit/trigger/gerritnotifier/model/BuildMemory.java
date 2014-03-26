@@ -285,6 +285,27 @@ public class BuildMemory {
     }
 
     /**
+     * Checks in memory if the project has been triggered for the event.
+     *
+     * @param event   the event.
+     * @param project the project.
+     * @return true if so.
+     */
+    public synchronized boolean isTriggered(GerritTriggeredEvent event, AbstractProject project) {
+        MemoryImprint pb = memory.get(event);
+        if (pb == null) {
+            return false;
+        } else {
+            for (Entry entry : pb.getEntries()) {
+                if (entry.getProject().equals(project)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /**
      * Checks in memory if the project is building the event.
      *
      * @param event   the event.

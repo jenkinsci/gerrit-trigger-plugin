@@ -174,6 +174,23 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         }
     }
 
+    /**
+     * Checks whether a project has triggered for an event but hasn't yet finished building.
+     *
+     * @param event   the Gerrit Event which is being checked.
+     * @param p   the Gerrit project being checked.
+     * @return true if so.
+     */
+    public synchronized boolean isProjectTriggeredAndIncomplete(AbstractProject p, GerritTriggeredEvent event) {
+        if (!memory.isTriggered(event, p)) {
+            return false;
+        }
+        if (memory.isBuilding(event, p)) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public synchronized void onStarted(AbstractBuild r, TaskListener listener) {
         GerritCause cause = getCause(r);
