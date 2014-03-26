@@ -57,7 +57,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
-
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 
@@ -93,10 +93,12 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
@@ -1595,7 +1597,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         /**
-         * Validates that the dependency jobs are legitimate.
+         * Validates that the dependency jobs are legitimate and do not create cycles.
          *
          * @param value the string value.
          * @param project the current project.
@@ -1603,18 +1605,52 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          */
         public FormValidation doCheckDependencyJobsNames(@AncestorInPath Item project, @QueryParameter String value) {
             StringTokenizer tokens = new StringTokenizer(Util.fixNull(value), ",");
+            // Check that all jobs are legit, actual projects.
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.equals("")) {
                     Item item = Hudson.getInstance().getItem(projectName, project, Item.class);
                     if ((item == null) || !(item instanceof AbstractProject)) {
                         return FormValidation.error(hudson.model.Messages.AbstractItem_NoSuchJobExists(projectName,
-                                AbstractProject.findNearest(projectName,
-                                    project.getParent()).getRelativeNameFrom(project)));
+                                    AbstractProject.findNearest(projectName,
+                                        project.getParent()).getRelativeNameFrom(project)));
                     }
-                 }
-             }
-             return FormValidation.ok();
+                }
+            }
+            //Check there are no cycles in the dependencies, by exploring all dependencies recursively
+            //Only way of creating a cycle is if this project is in the dependencies somewhere.
+            Set<AbstractProject> explored = new HashSet<AbstractProject>();
+            for (AbstractProject directDependency : DependencyQueueTaskDispatcher.getProjectsFromString(value)) {
+                if (directDependency == project) {
+                    return FormValidation.error(Messages.CannotAddSelfAsDependency());
+                }
+                java.util.Queue<AbstractProject> toExplore = new LinkedList<AbstractProject>();
+                toExplore.add(directDependency);
+                while (toExplore.size() > 0) {
+                    AbstractProject currentlyExploring = toExplore.remove();
+                    explored.add(currentlyExploring);
+                    GerritTrigger currentTrigger = getTrigger(currentlyExploring);
+                    if (currentTrigger == null) {
+                        continue;
+                    }
+                    String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
+                    List<AbstractProject> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
+                            currentDependenciesString);
+                    if (currentDependencies == null) {
+                        continue;
+                    }
+                    for (AbstractProject dependency : currentDependencies) {
+                        if (dependency == project) {
+                            return FormValidation.error(Messages.AddingDependentProjectWouldCreateLoop(
+                                    directDependency.getFullName(), currentlyExploring.getFullName()));
+                        }
+                        if (!explored.contains(dependency)) {
+                            toExplore.add(dependency);
+                        }
+                    }
+                }
+            }
+            return FormValidation.ok();
         }
 
         /**
