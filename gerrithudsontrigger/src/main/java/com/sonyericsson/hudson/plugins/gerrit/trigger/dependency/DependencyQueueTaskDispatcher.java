@@ -27,44 +27,28 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
+import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
+import hudson.model.Node;
 import hudson.model.Queue;
-//import hudson.model.Queue.Item;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.Util;
 
-//import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.StringTokenizer;
-//import java.util.Map;
-//import java.util.concurrent.ConcurrentHashMap;
-//import java.util.concurrent.ConcurrentMap;
-//import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritHandlerLifecycle;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.RepositoryModifiedEvent;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-//import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 
 /**
  * Blocks builds from running until the projects on which they depend have finished building.
@@ -127,7 +111,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
         if (blockingProjects.size() > 0) {
             return new BecauseDependantBuildIsBuilding(blockingProjects);
         } else {
-            //logger.info("*** No active dependencies on project: {}", p);
+            logger.info("*** No active dependencies on project: {}", p);
             return null;
         }
     }
@@ -141,19 +125,78 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
     protected List<AbstractProject> getBlockingBuildingDependencyProjects(List<AbstractProject> dependencies,
             GerritCause cause) {
         // It would have been cool to be able to use cause.getContext.getOtherBuilds, but this
-        // is only usable once the build is actually running.
+        // is only usable once the build is actually running, so after the Dispatcher has
+        // OK'd the canRun.
         List<AbstractProject> blockingProjects = new ArrayList<AbstractProject>();
-        for (AbstractProject dependency : dependencies) {
-            for (Object dependencyBuild : dependency.getBuilds()) {
-                if (dependencyBuild instanceof AbstractBuild) {
-                    if ((getGerritCause((AbstractBuild)dependencyBuild).getEvent() == cause.getEvent())
-                            && ((AbstractBuild)dependencyBuild).isBuilding()) {
-                        blockingProjects.add(dependency);
+        List<Node> allNodes = new ArrayList<Node>(Hudson.getInstance().getNodes());
+        allNodes.add((Node)Hudson.getInstance());
+
+        for (Node node : allNodes) {
+            Computer computer = node.toComputer();
+            if (computer != null) { //Not all nodes are certain to become computers, like nodes with 0 executors.
+                for (Executor e : computer.getExecutors()) {
+                    AbstractProject p = getBlockingProjectOnExecutor(e, dependencies, cause);
+                    if (p != null) {
+                        blockingProjects.add(p);
+                    }
+                }
+                for (Executor e : computer.getOneOffExecutors()) {
+                    AbstractProject p = getBlockingProjectOnExecutor(e, dependencies, cause);
+                    if (p != null) {
+                        blockingProjects.add(p);
                     }
                 }
             }
         }
+
+        /* According to https://github.com/jenkinsci/throttle-concurrent-builds-plugin/blob/master/src/main/java/hudson
+         * /plugins/throttleconcurrents/ThrottleQueueTaskDispatcher.java, this is not a reliable approach. Moreover, it
+         * is probably underperforming.
+         */
+        /*
+        for (AbstractProject dependency : dependencies) {
+            for (Object dependencyBuild : dependency.getBuilds()) {
+                if (dependencyBuild instanceof AbstractBuild) {
+                    if (isBuildFromCauseEvent(dependencyBuild, cause) {
+                        blockingProjects.add(dependency);
+                    }
+                }
+            }
+        }*/
         return blockingProjects;
+    }
+
+    /**
+     * Returns the project within the list of dependencies which is running on an executor, if it exists.
+     * Else, returns null.
+     * @param e The executor being analyzed
+     * @param dependencies The list of dependencies which could be running on the executor.
+     * @param cause The GerritCause which may be blocked.
+     * @return the blocking project, or null.
+     */
+    protected AbstractProject getBlockingProjectOnExecutor(Executor e, List<AbstractProject> dependencies,
+        GerritCause cause) {
+        Queue.Executable exec = e.getCurrentExecutable();
+        if ((exec == null) || (!(exec instanceof AbstractBuild))) {
+            return null;
+        }
+        AbstractBuild build = (AbstractBuild)exec;
+        if (dependencies.contains(build.getProject()) && isBuildFromCauseEvent(build, cause)) {
+            return build.getProject();
+        } else {
+            return null;
+        }
+    }
+
+
+    /**
+     * Whether a build shares the triggering event with a GerritCause.
+     * @param build The build to be checked
+     * @param cause The cause whose event should have also caused the build.
+     * @return blocking or not.
+     */
+    protected boolean isBuildFromCauseEvent(AbstractBuild build, GerritCause cause) {
+        return ((getGerritCause(build).getEvent() == cause.getEvent()) && build.isBuilding());
     }
 
     /**
@@ -174,7 +217,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
                     continue;
                 }
                 if ((dependencies.contains(queuedProject)) && (queuedCause.getEvent() ==  cause.getEvent())) {
-                    logger.info("*** Project should wait for project to finish building: {}", queuedProject);
+                    //logger.info("*** Project should wait for project to finish building: {}", queuedProject);
                     blockingProjects.add(queuedProject);
                 }
             }
