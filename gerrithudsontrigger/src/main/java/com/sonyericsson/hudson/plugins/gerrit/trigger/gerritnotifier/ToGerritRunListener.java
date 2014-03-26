@@ -185,6 +185,9 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
         if (!memory.isTriggered(event, p)) {
             return false;
         }
+        //misnomer: the project is considered "building", even if the build hasn't been created
+        //for that project yet. As long as the project exists, and does not have a completed
+        //build, it is "building".
         if (memory.isBuilding(event, p)) {
             return true;
         }

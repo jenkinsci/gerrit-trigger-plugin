@@ -42,10 +42,10 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 /**
  * Blocks builds from running until the projects on which they depend have finished building.
@@ -59,27 +59,48 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyQueueTaskDispatcher.class);
-    private Set<GerritEvent> currentlyScanningEvents;
-    private Set<GerritEvent> scannedEvents;
+    private Set<GerritTriggeredEvent> currentlyScanningEvents;
+    private Set<GerritTriggeredEvent> scannedEvents;
+    private static DependencyQueueTaskDispatcher instance;
 
     /**
      * Default constructor.
      */
     public DependencyQueueTaskDispatcher() {
-        this.currentlyScanningEvents = new HashSet<GerritEvent>();
-        this.scannedEvents = new HashSet<GerritEvent>();
+        this.currentlyScanningEvents = new HashSet<GerritTriggeredEvent>();
+        this.scannedEvents = new HashSet<GerritTriggeredEvent>();
+    }
+
+    /**
+     * Returns the registered instance of this class from the list of all listeners.
+     *
+     * @return the instance.
+     */
+    public static DependencyQueueTaskDispatcher getInstance() {
+        if (instance == null) {
+            for (QueueTaskDispatcher listener : all()) {
+                if (listener instanceof DependencyQueueTaskDispatcher) {
+                    instance = (DependencyQueueTaskDispatcher)listener;
+                    break;
+                }
+            }
+        }
+        if (instance == null) {
+            logger.info("*** SINGLETON NOT INITIALIZED ON TIME ***");
+        }
+        return instance;
     }
 
     @Override
     public synchronized CauseOfBlockage canRun(Queue.Item item) {
         GerritCause cause = getGerritCause(item);
-        GerritEvent event = (GerritEvent)cause.getEvent();
 
         //Not gerrit-triggered
         if (cause == null) {
             //logger.info("*** Not a gerrit cause: {}", cause);
             return null;
         }
+        GerritTriggeredEvent event = cause.getEvent();
         if (!(item.task instanceof AbstractProject)) {
             //logger.info("*** Not an abstract project: {}", item.task);
             return null;
@@ -101,7 +122,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
          * long enough in the queue  for us to not worry too much about this at this time.
          */
 
-        List<AbstractProject> blockingProjects = getBlockingDependencyProjects(dependencies, cause);
+        List<AbstractProject> blockingProjects = getBlockingDependencyProjects(dependencies, event);
 
         if (blockingProjects.size() > 0) {
             return new BecauseDependantBuildIsBuilding(blockingProjects);
@@ -112,17 +133,17 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
     }
 
     /**
-     * Gets the subset of projects which have a building element needing to complete for the same cause.
+     * Gets the subset of projects which have a building element needing to complete for the same event.
      * @param dependencies The list of projects which need to be checked
-     * @param cause The cause whose event should have also caused the blocking builds.
-     * @return the sublist of dependencies which need to be completed before this cause is resolved.
+     * @param event The event should have also caused the blocking builds.
+     * @return the sublist of dependencies which need to be completed before this event is resolved.
      */
     protected List<AbstractProject> getBlockingDependencyProjects(List<AbstractProject> dependencies,
-            GerritCause cause) {
+            GerritTriggeredEvent event) {
         List<AbstractProject> blockingProjects = new ArrayList<AbstractProject>();
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         for (AbstractProject dependency : dependencies) {
-            if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, cause.getEvent())) {
+            if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, event)) {
                 blockingProjects.add(dependency);
             }
         }
