@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
 import hudson.Extension;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Hudson;
@@ -42,10 +43,17 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritHandlerLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 /**
  * Blocks builds from running until the projects on which they depend have finished building.
@@ -56,19 +64,22 @@ import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTrig
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
 @Extension
-public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
+public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
+    implements GerritEventLifecycleListener, GerritEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyQueueTaskDispatcher.class);
-    private Set<GerritTriggeredEvent> currentlyScanningEvents;
-    private Set<GerritTriggeredEvent> scannedEvents;
+    private Set<GerritTriggeredEvent> currentlyTriggeringEvents;
+    //private Set<GerritTriggeredEvent> scannedEvents;
     private static DependencyQueueTaskDispatcher instance;
 
     /**
      * Default constructor.
      */
     public DependencyQueueTaskDispatcher() {
-        this.currentlyScanningEvents = new HashSet<GerritTriggeredEvent>();
-        this.scannedEvents = new HashSet<GerritTriggeredEvent>();
+        this.currentlyTriggeringEvents = new HashSet<GerritTriggeredEvent>();
+        //this.scannedEvents = new HashSet<GerritTriggeredEvent>();
+        GerritHandlerLifecycle handler = (GerritHandlerLifecycle)PluginImpl.getInstance().getHandler();
+        handler.addListener(this);
     }
 
     /**
@@ -86,7 +97,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
             }
         }
         if (instance == null) {
-            logger.info("*** SINGLETON NOT INITIALIZED ON TIME ***");
+            logger.error("DependencyQueueTaskDispatcher Singleton not initialized on time");
         }
         return instance;
     }
@@ -105,9 +116,13 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
             //logger.info("*** Not an abstract project: {}", item.task);
             return null;
         }
-        //Dependency projects in the build queue
         AbstractProject p = (AbstractProject)item.task;
         GerritTrigger trigger = GerritTrigger.getTrigger(p);
+        //The project being checked has no Gerrit Trigger
+        if (trigger == null) {
+            return null;
+        }
+        //Dependency projects in the build queue
         List<AbstractProject> dependencies = getProjectsFromString(trigger.getDependencyJobsNames());
         if ((dependencies.size() == 0) || (dependencies == null)) {
             logger.info("*** No dependencies on project: {}", p);
@@ -120,7 +135,14 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
          * of event notification - GerritEventLifecycle like - which is not available
          * at this time. Fortunately, triggering is near instant, and projects are kept
          * long enough in the queue  for us to not worry too much about this at this time.
+         * We can do this check for the retrigger.all action however, which does not have a quiet
+         * time, because specific code exists for it in GerritTrigger, fortunately.
          */
+        if (currentlyTriggeringEvents.contains(event)) {
+            logger.info("*** We need to wait while {} is being triggered", event);
+            return new BecauseWaitingForOtherProjectsToTrigger();
+        }
+
 
         List<AbstractProject> blockingProjects = getBlockingDependencyProjects(dependencies, event);
 
@@ -187,5 +209,99 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher {
             }
         }
         return dependencyJobs;
+    }
+
+    /**
+     * Signals this event started retriggering all its projects.
+     * In the meantime, no builds with dependencies should be allowed to start.
+     * @param event the event triggering
+     */
+    public synchronized void onTriggeringAll(GerritTriggeredEvent event) {
+        currentlyTriggeringEvents.add(event);
+        logger.info("*** Triggering all projects for {}", event);
+    }
+
+    /**
+     * Signals this event is done retriggering all its projects.
+     * Builds with dependencies may be allowed to start once their dependencies are built..
+     * @param event the event done triggering
+     */
+    public synchronized void onDoneTriggeringAll(GerritTriggeredEvent event) {
+        currentlyTriggeringEvents.remove(event);
+        logger.info("*** Done triggering all projects for {}", event);
+    }
+
+    /*
+     * GerritEventListener interface
+     */
+
+    /**
+     * Process lifecycle events. We register to these events
+     * so we can get notified of the beginning of the scanning and end of
+     * scanning.
+     * @param event the event to which we subscribe.
+     */
+    @Override
+    public void gerritEvent(GerritEvent event) {
+        //we are only interested in the ManualPatchsetCreated events for now
+        //as they are the only ones which have event scanning information.
+        logger.info("*** received event", event);
+        if (event instanceof GerritEventLifecycle) {
+            logger.info("*** registering to lifecycle");
+            // Registering to get the ScanDone event.
+            ((GerritEventLifecycle)event).addListener(this);
+            // while this is most likely a ManualPatchSetCreated, which is
+            // a GerritTriggeredEvent, we don't have a guarantee that this
+            // will necessarily be the case in the future.
+            if (event instanceof GerritTriggeredEvent) {
+                //We only can setup this "barrier" if we are certain to be able to
+                //lift it, which only happens for Lifecycle events for which we
+                //will get the ScanDone.
+                onTriggeringAll((GerritTriggeredEvent)event);
+            }
+        }
+    }
+
+
+
+    /*
+     * GerritEventLifecycleListener interface
+     */
+
+    @Override
+    public synchronized void triggerScanStarting(GerritEvent event) {
+        // While it would make sense to call the onTriggeringAll, this event (ScanStarting)
+        // is fired before the event even makes it to the gerritEvent above, meaning
+        // nothing here will execute because we aren't registered yet.
+    }
+
+    @Override
+    public synchronized void triggerScanDone(GerritEvent event) {
+        // while this is most likely a ManualPatchSetCreated, which is
+        // a GerritTriggeredEvent, we don't have a guarantee that this
+        // will necessarily be the case in the future.
+        logger.info("*** trigger scan done");
+        if (event instanceof GerritTriggeredEvent) {
+            logger.info("*** ondonetriggerall  starting");
+            onDoneTriggeringAll((GerritTriggeredEvent)event);
+        }
+        // But, we do know this is a Lifecycle because this method is for lifecyle events
+        ((GerritEventLifecycle)event).removeListener(this);
+    }
+
+    @Override
+    public synchronized void projectTriggered(GerritEvent event, AbstractProject project) {
+    }
+
+    @Override
+    public synchronized void buildStarted(GerritEvent event, AbstractBuild build) {
+    }
+
+    @Override
+    public synchronized void buildCompleted(GerritEvent event, AbstractBuild build) {
+    }
+
+    @Override
+    public synchronized void allBuildsCompleted(GerritEvent event) {
     }
 }

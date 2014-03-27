@@ -754,7 +754,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @see ToGerritRunListener#isBuilding(GerritTriggeredEvent)
      */
     public void retriggerAllBuilds(TriggerContext context) {
+        DependencyQueueTaskDispatcher dependencyQueueTaskDispatcher = DependencyQueueTaskDispatcher.getInstance();
         if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {
+            dependencyQueueTaskDispatcher.onTriggeringAll(context.getEvent());
             retrigger(context.getThisBuild().getProject(), context.getEvent());
             for (AbstractBuild build : context.getOtherBuilds()) {
                 GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
@@ -762,6 +764,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     trigger.retrigger(build.getProject(), context.getEvent());
                 }
             }
+            dependencyQueueTaskDispatcher.onDoneTriggeringAll(context.getEvent());
         }
     }
 

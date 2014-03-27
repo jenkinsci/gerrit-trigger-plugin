@@ -49,6 +49,6 @@ public class BecauseDependantBuildIsBuilding extends CauseOfBlockage {
 
     @Override
     public String getShortDescription() {
-        return Messages.DependantBuildIsBuilding(Joiner.on(", ").join(blockingProjects));
+        return Messages.DependentBuildIsBuilding(Joiner.on(", ").join(blockingProjects));
     }
 }
