@@ -35,7 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  * Build is blocked because it depends on a currently building job.
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
-public class BecauseDependantBuildIsBuilding extends CauseOfBlockage {
+public class BecauseDependentBuildIsBuilding extends CauseOfBlockage {
 
     private List<AbstractProject> blockingProjects;
 
@@ -43,7 +43,7 @@ public class BecauseDependantBuildIsBuilding extends CauseOfBlockage {
      * Standard constructor.
      * @param blockingProjects The list of dependant builds which are blocking this one.
      */
-    public BecauseDependantBuildIsBuilding(List<AbstractProject> blockingProjects) {
+    public BecauseDependentBuildIsBuilding(List<AbstractProject> blockingProjects) {
         this.blockingProjects = blockingProjects;
     }
 

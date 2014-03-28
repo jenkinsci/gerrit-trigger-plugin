@@ -147,7 +147,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         List<AbstractProject> blockingProjects = getBlockingDependencyProjects(dependencies, event);
 
         if (blockingProjects.size() > 0) {
-            return new BecauseDependantBuildIsBuilding(blockingProjects);
+            return new BecauseDependentBuildIsBuilding(blockingProjects);
         } else {
             logger.info("*** No active dependencies on project: {}", p);
             return null;
