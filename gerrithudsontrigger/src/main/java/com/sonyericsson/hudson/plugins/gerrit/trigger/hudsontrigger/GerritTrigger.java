@@ -1266,15 +1266,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * The list of dependency jobs, ie jobs on which this job depends.
-     *
-     * @return the list of jobs, or null if this feature is not used.
-     */
-/*    public List<AbstractProject> getDependencyJobs() {
-        return dependencyJobs;
-    }
-*/
-    /**
      * Set the list of dependency jobs.
      *
      * @param dependencyJobsNames
