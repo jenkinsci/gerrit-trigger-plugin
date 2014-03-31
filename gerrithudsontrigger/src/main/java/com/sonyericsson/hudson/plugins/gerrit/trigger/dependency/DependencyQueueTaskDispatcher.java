@@ -146,7 +146,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         }
         //Dependency projects in the build queue
         List<AbstractProject> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
-                (Item)p.getParent());
+                (Item)p);
         if ((dependencies == null) || (dependencies.size() == 0)) {
             logger.debug("No dependencies on project: {}", p);
             return null;
@@ -172,7 +172,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         if (blockingProjects.size() > 0) {
             return new BecauseDependentBuildIsBuilding(blockingProjects);
         } else {
-            logger.debug("No active dependencies on project: {}", p);
+            logger.info("No active dependencies on project: {} , it will now build", p);
             return null;
         }
     }

@@ -1615,7 +1615,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             //Only way of creating a cycle is if this project is in the dependencies somewhere.
             Set<AbstractProject> explored = new HashSet<AbstractProject>();
             for (AbstractProject directDependency : DependencyQueueTaskDispatcher.getProjectsFromString(value,
-                    (Item)project.getParent())) {
+                    (Item)project)) {
                 if (directDependency == project) {
                     return FormValidation.error(Messages.CannotAddSelfAsDependency());
                 }
@@ -1630,7 +1630,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     }
                     String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
                     List<AbstractProject> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
-                            currentDependenciesString, (Item)project.getParent());
+                            currentDependenciesString, (Item)project);
                     if (currentDependencies == null) {
                         continue;
                     }
