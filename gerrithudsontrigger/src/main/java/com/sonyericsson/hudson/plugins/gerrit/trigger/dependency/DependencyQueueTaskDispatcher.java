@@ -27,12 +27,12 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
-import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.Queue;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 import hudson.Util;
+import jenkins.model.Jenkins;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,17 +69,24 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyQueueTaskDispatcher.class);
     private Set<GerritTriggeredEvent> currentlyTriggeringEvents;
-    //private Set<GerritTriggeredEvent> scannedEvents;
     private static DependencyQueueTaskDispatcher instance;
 
     /**
      * Default constructor.
      */
     public DependencyQueueTaskDispatcher() {
+        this((GerritHandlerLifecycle)PluginImpl.getInstance().getHandler());
+    }
+
+    /**
+     * Constructor use by default constructor and for unit tests.
+     *
+     * @param gerritHandlerLifecycle the handler
+     */
+    DependencyQueueTaskDispatcher(GerritHandlerLifecycle gerritHandlerLifecycle) {
         this.currentlyTriggeringEvents = new HashSet<GerritTriggeredEvent>();
-        //this.scannedEvents = new HashSet<GerritTriggeredEvent>();
-        GerritHandlerLifecycle handler = (GerritHandlerLifecycle)PluginImpl.getInstance().getHandler();
-        handler.addListener(this);
+        gerritHandlerLifecycle.addListener(this);
+        logger.info("Registered to gerrit events");
     }
 
     /**
@@ -104,31 +111,47 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
     @Override
     public synchronized CauseOfBlockage canRun(Queue.Item item) {
-        GerritCause cause = getGerritCause(item);
+        //AbstractProject check
+        if (!(item.task instanceof AbstractProject)) {
+            logger.debug("Not an abstract project: {}", item.task);
+            return null;
+        }
 
+        GerritCause cause = getGerritCause(item);
         //Not gerrit-triggered
         if (cause == null) {
-            //logger.info("*** Not a gerrit cause: {}", cause);
+            logger.debug("Not a gerrit cause: {}", cause);
             return null;
         }
         GerritTriggeredEvent event = cause.getEvent();
-        if (!(item.task instanceof AbstractProject)) {
-            //logger.info("*** Not an abstract project: {}", item.task);
+        //The GerritCause should contain an event, but just in case.
+        if (event == null) {
+            logger.debug("Does not contain an event");
+            return null;
+        }
+        //we do not block an item when it reached the buildable state: a buildable item is
+        //an item for which it has already been determined it canRun, and it is only
+        //waiting for an executor. Once the executor is avail, an extra check is done, but
+        //we already determined in the previous canRun checks that its dependencies were done.
+        if (item.isBuildable()) {
+            logger.debug("Item is already buildable");
             return null;
         }
         AbstractProject p = (AbstractProject)item.task;
         GerritTrigger trigger = GerritTrigger.getTrigger(p);
         //The project being checked has no Gerrit Trigger
         if (trigger == null) {
+            logger.debug("Project does not contain a trigger");
             return null;
         }
         //Dependency projects in the build queue
-        List<AbstractProject> dependencies = getProjectsFromString(trigger.getDependencyJobsNames());
-        if ((dependencies.size() == 0) || (dependencies == null)) {
-            logger.info("*** No dependencies on project: {}", p);
+        List<AbstractProject> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
+                (Item)p.getParent());
+        if ((dependencies == null) || (dependencies.size() == 0)) {
+            logger.debug("No dependencies on project: {}", p);
             return null;
         }
-        //logger.info("*** We have dependencies on project {} : {}", p, trigger.getDependencyJobsNames());
+        //logger.debug("We have dependencies on project {} : {}", p, trigger.getDependencyJobsNames());
 
         /* we really should first check for other projects which will be triggered
          * for the same event, and haven't yet. Unfortunately, this requires some kind
@@ -139,7 +162,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
          * time, because specific code exists for it in GerritTrigger, fortunately.
          */
         if (currentlyTriggeringEvents.contains(event)) {
-            logger.info("*** We need to wait while {} is being triggered", event);
+            logger.debug("We need to wait while {} is being triggered", event);
             return new BecauseWaitingForOtherProjectsToTrigger();
         }
 
@@ -149,7 +172,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         if (blockingProjects.size() > 0) {
             return new BecauseDependentBuildIsBuilding(blockingProjects);
         } else {
-            logger.info("*** No active dependencies on project: {}", p);
+            logger.debug("No active dependencies on project: {}", p);
             return null;
         }
     }
@@ -189,9 +212,10 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     /**
      * Return a list of Abstract Projects from their string names.
      * @param projects The string containing the projects, comma-separated.
+     * @param context The context in which to read the string
      * @return the list of projects
      */
-    public static List<AbstractProject> getProjectsFromString(String projects) {
+    public static List<AbstractProject> getProjectsFromString(String projects, Item context) {
         List<AbstractProject> dependencyJobs = new ArrayList<AbstractProject>();
         if (projects == null) {
             return null;
@@ -200,10 +224,10 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.equals("")) {
-                    Item context = null;
-                    Item item = Hudson.getInstance().getItem(projectName, context, Item.class);
+                    Item item = Jenkins.getInstance().getItem(projectName, context, Item.class);
                     if ((item != null) && (item instanceof AbstractProject)) {
                         dependencyJobs.add((AbstractProject)item);
+                        logger.debug("project dependency job added : {}", (AbstractProject)item);
                     }
                 }
             }
@@ -218,7 +242,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     public synchronized void onTriggeringAll(GerritTriggeredEvent event) {
         currentlyTriggeringEvents.add(event);
-        logger.info("*** Triggering all projects for {}", event);
+        logger.debug("Triggering all projects for {}", event);
     }
 
     /**
@@ -228,7 +252,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     public synchronized void onDoneTriggeringAll(GerritTriggeredEvent event) {
         currentlyTriggeringEvents.remove(event);
-        logger.info("*** Done triggering all projects for {}", event);
+        logger.debug("Done triggering all projects for {}", event);
     }
 
     /*
@@ -245,9 +269,8 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     public void gerritEvent(GerritEvent event) {
         //we are only interested in the ManualPatchsetCreated events for now
         //as they are the only ones which have event scanning information.
-        logger.info("*** received event", event);
         if (event instanceof GerritEventLifecycle) {
-            logger.info("*** registering to lifecycle");
+            logger.debug("registering to lifecycle");
             // Registering to get the ScanDone event.
             ((GerritEventLifecycle)event).addListener(this);
             // while this is most likely a ManualPatchSetCreated, which is
@@ -280,9 +303,8 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         // while this is most likely a ManualPatchSetCreated, which is
         // a GerritTriggeredEvent, we don't have a guarantee that this
         // will necessarily be the case in the future.
-        logger.info("*** trigger scan done");
+        logger.debug("trigger scan done");
         if (event instanceof GerritTriggeredEvent) {
-            logger.info("*** ondonetriggerall  starting");
             onDoneTriggeringAll((GerritTriggeredEvent)event);
         }
         // But, we do know this is a Lifecycle because this method is for lifecyle events

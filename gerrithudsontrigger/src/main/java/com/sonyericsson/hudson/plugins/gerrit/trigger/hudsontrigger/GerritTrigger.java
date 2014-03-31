@@ -259,7 +259,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.delayedApproval = delayedApproval;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
-        this.setDependencyJobsNames(dependencyJobsNames);
+        this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
@@ -1623,7 +1623,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             //Check there are no cycles in the dependencies, by exploring all dependencies recursively
             //Only way of creating a cycle is if this project is in the dependencies somewhere.
             Set<AbstractProject> explored = new HashSet<AbstractProject>();
-            for (AbstractProject directDependency : DependencyQueueTaskDispatcher.getProjectsFromString(value)) {
+            for (AbstractProject directDependency : DependencyQueueTaskDispatcher.getProjectsFromString(value,
+                    (Item)project.getParent())) {
                 if (directDependency == project) {
                     return FormValidation.error(Messages.CannotAddSelfAsDependency());
                 }
@@ -1638,7 +1639,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     }
                     String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
                     List<AbstractProject> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
-                            currentDependenciesString);
+                            currentDependenciesString, (Item)project.getParent());
                     if (currentDependencies == null) {
                         continue;
                     }
