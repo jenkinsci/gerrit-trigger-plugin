@@ -23,10 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
-//import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-//import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -41,14 +39,12 @@ import hudson.model.AbstractProject;
 import hudson.model.CauseAction;
 import hudson.model.Item;
 import hudson.model.Queue;
-//import hudson.model.Queue.Item;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-//import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
@@ -59,15 +55,9 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritHandler;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeAbandoned;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeMerged;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.ChangeRestored;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.PatchsetCreated;
-//import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.RefReplicated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritHandlerLifecycle;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -85,7 +75,7 @@ public class DependencyQueueTaskDispatcherTest {
 
     private DependencyQueueTaskDispatcher dispatcher;
     private Queue queueMock;
-    private GerritHandlerLifecycle gerritHandlerMock;
+    private GerritHandler gerritHandlerMock;
     private GerritTrigger gerritTriggerMock;
     private AbstractProject<?, ?> abstractProjectMock;
     private AbstractProject<?, ?> abstractProjectDependencyMock;
@@ -97,7 +87,7 @@ public class DependencyQueueTaskDispatcherTest {
      */
     @Before
     public void setUp() {
-        gerritHandlerMock = mock(GerritHandlerLifecycle.class);
+        gerritHandlerMock = mock(GerritHandler.class);
         dispatcher = new DependencyQueueTaskDispatcher(gerritHandlerMock);
         gerritTriggerMock = mock(GerritTrigger.class);
         queueMock = mock(Queue.class);

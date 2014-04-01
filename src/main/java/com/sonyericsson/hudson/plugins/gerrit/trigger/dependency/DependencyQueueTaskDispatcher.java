@@ -43,16 +43,16 @@ import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritEventListener;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonyericsson.hudson.plugins.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritHandlerLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 /**
@@ -75,17 +75,17 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * Default constructor.
      */
     public DependencyQueueTaskDispatcher() {
-        this((GerritHandlerLifecycle)PluginImpl.getInstance().getHandler());
+        this(PluginImpl.getInstance().getHandler());
     }
 
     /**
      * Constructor use by default constructor and for unit tests.
      *
-     * @param gerritHandlerLifecycle the handler
+     * @param gerritHandler the handler
      */
-    DependencyQueueTaskDispatcher(GerritHandlerLifecycle gerritHandlerLifecycle) {
+    DependencyQueueTaskDispatcher(GerritHandler gerritHandler) {
         this.currentlyTriggeringEvents = new HashSet<GerritTriggeredEvent>();
-        gerritHandlerLifecycle.addListener(this);
+        gerritHandler.addListener(this);
         logger.info("Registered to gerrit events");
     }
 
