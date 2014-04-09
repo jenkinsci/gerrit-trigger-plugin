@@ -37,8 +37,9 @@ import jenkins.model.Jenkins;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +85,13 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @param gerritHandler the handler
      */
     DependencyQueueTaskDispatcher(GerritHandler gerritHandler) {
-        this.currentlyTriggeringEvents = new HashSet<GerritTriggeredEvent>();
-        gerritHandler.addListener(this);
+        this.currentlyTriggeringEvents = Collections.newSetFromMap(
+                new ConcurrentHashMap<GerritTriggeredEvent, Boolean>());
+        if (gerritHandler == null) {
+            logger.error("Gerrit Handler was not available to construct DependencyQueueTaskDispatcher");
+        } else {
+            gerritHandler.addListener(this);
+        }
         logger.info("Registered to gerrit events");
     }
 
@@ -110,7 +116,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     }
 
     @Override
-    public synchronized CauseOfBlockage canRun(Queue.Item item) {
+    public CauseOfBlockage canRun(Queue.Item item) {
         //AbstractProject check
         if (!(item.task instanceof AbstractProject)) {
             logger.debug("Not an abstract project: {}", item.task);
@@ -217,7 +223,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     public static List<AbstractProject> getProjectsFromString(String projects, Item context) {
         List<AbstractProject> dependencyJobs = new ArrayList<AbstractProject>();
-        if (projects == null) {
+        if ((projects == null) || projects.equals("")) {
             return null;
         } else {
             StringTokenizer tokens = new StringTokenizer(Util.fixNull(projects), ",");
@@ -240,7 +246,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * In the meantime, no builds with dependencies should be allowed to start.
      * @param event the event triggering
      */
-    public synchronized void onTriggeringAll(GerritTriggeredEvent event) {
+    public void onTriggeringAll(GerritTriggeredEvent event) {
         currentlyTriggeringEvents.add(event);
         logger.debug("Triggering all projects for {}", event);
     }
@@ -250,7 +256,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * Builds with dependencies may be allowed to start once their dependencies are built..
      * @param event the event done triggering
      */
-    public synchronized void onDoneTriggeringAll(GerritTriggeredEvent event) {
+    public void onDoneTriggeringAll(GerritTriggeredEvent event) {
         currentlyTriggeringEvents.remove(event);
         logger.debug("Done triggering all projects for {}", event);
     }
@@ -292,14 +298,14 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
 
     @Override
-    public synchronized void triggerScanStarting(GerritEvent event) {
+    public void triggerScanStarting(GerritEvent event) {
         // While it would make sense to call the onTriggeringAll, this event (ScanStarting)
         // is fired before the event even makes it to the gerritEvent above, meaning
         // nothing here will execute because we aren't registered yet.
     }
 
     @Override
-    public synchronized void triggerScanDone(GerritEvent event) {
+    public void triggerScanDone(GerritEvent event) {
         // while this is most likely a ManualPatchSetCreated, which is
         // a GerritTriggeredEvent, we don't have a guarantee that this
         // will necessarily be the case in the future.
@@ -312,18 +318,18 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     }
 
     @Override
-    public synchronized void projectTriggered(GerritEvent event, AbstractProject project) {
+    public void projectTriggered(GerritEvent event, AbstractProject project) {
     }
 
     @Override
-    public synchronized void buildStarted(GerritEvent event, AbstractBuild build) {
+    public void buildStarted(GerritEvent event, AbstractBuild build) {
     }
 
     @Override
-    public synchronized void buildCompleted(GerritEvent event, AbstractBuild build) {
+    public void buildCompleted(GerritEvent event, AbstractBuild build) {
     }
 
     @Override
-    public synchronized void allBuildsCompleted(GerritEvent event) {
+    public void allBuildsCompleted(GerritEvent event) {
     }
 }

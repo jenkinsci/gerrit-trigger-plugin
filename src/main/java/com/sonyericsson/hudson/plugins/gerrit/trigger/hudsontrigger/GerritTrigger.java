@@ -1615,9 +1615,14 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             //Check there are no cycles in the dependencies, by exploring all dependencies recursively
             //Only way of creating a cycle is if this project is in the dependencies somewhere.
             Set<AbstractProject> explored = new HashSet<AbstractProject>();
-            for (AbstractProject directDependency : DependencyQueueTaskDispatcher.getProjectsFromString(value,
-                    (Item)project)) {
-                if (directDependency == project) {
+            List<AbstractProject> directDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(value,
+                    project);
+            if (directDependencies == null) {
+                // no dependencies
+                return FormValidation.ok();
+            }
+            for (AbstractProject directDependency : directDependencies) {
+                if (directDependency.getFullName().equals(project.getFullName())) {
                     return FormValidation.error(Messages.CannotAddSelfAsDependency());
                 }
                 java.util.Queue<AbstractProject> toExplore = new LinkedList<AbstractProject>();
@@ -1636,7 +1641,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                         continue;
                     }
                     for (AbstractProject dependency : currentDependencies) {
-                        if (dependency == project) {
+                        if (dependency.getFullName().equals(project.getFullName())) {
                             return FormValidation.error(Messages.AddingDependentProjectWouldCreateLoop(
                                     directDependency.getFullName(), currentlyExploring.getFullName()));
                         }
