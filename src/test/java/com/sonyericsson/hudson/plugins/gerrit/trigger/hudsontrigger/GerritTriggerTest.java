@@ -35,6 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
@@ -49,12 +50,17 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
+import hudson.model.Hudson;
+import hudson.model.Item;
+import hudson.model.ItemGroup;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.junit.Test;
@@ -90,6 +96,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyListOf;
@@ -117,8 +124,16 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({AbstractProject.class, ToGerritRunListener.class, PluginImpl.class })
+@PrepareForTest({AbstractProject.class, ToGerritRunListener.class, PluginImpl.class, Hudson.class, Jenkins.class, DependencyQueueTaskDispatcher.class })
 public class GerritTriggerTest {
+    private Hudson hudsonMock;
+    private Jenkins jenkinsMock;
+    private AbstractProject downstreamProject;
+    private AbstractProject upstreamProject;
+    private AbstractProject veryUpstreamProject;
+    private GerritTrigger upstreamGerritTriggerMock;
+    private GerritTrigger veryUpstreamGerritTriggerMock;
+    private DependencyQueueTaskDispatcher dispatcherMock;
 
     /**
      * test.
@@ -268,7 +283,7 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, false, true, false, "", "", "", "", "", "", null, null, null, null, false, false, "");
+                true, false, true, false, "", "", "", "", "", "", "", null, null, null, null, false, false, "");
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
 
@@ -831,6 +846,7 @@ public class GerritTriggerTest {
     @Test
     public void testRetriggerAllBuilds() {
         mockPluginConfig();
+        mockDependencyQueueTaskDispatcherConfig();
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
@@ -893,6 +909,9 @@ public class GerritTriggerTest {
                 isA(RetriggerAction.class),
                 isA(RetriggerAllAction.class),
                 isA(Action.class));
+
+        verify(dispatcherMock, times(1)).onTriggeringAll(eq(event));
+        verify(dispatcherMock, times(1)).onDoneTriggeringAll(eq(event));
     }
 
     /**
@@ -1333,6 +1352,16 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Does a mock of {@link DependencyQueueTaskDispatcher}.
+     * And specifically the retrieval of Config and the frontendUrl.
+     */
+    private void mockDependencyQueueTaskDispatcherConfig() {
+        PowerMockito.mockStatic(DependencyQueueTaskDispatcher.class);
+        dispatcherMock = PowerMockito.mock(DependencyQueueTaskDispatcher.class);
+        PowerMockito.when(DependencyQueueTaskDispatcher.getInstance()).thenReturn(dispatcherMock);
+    }
+
+    /**
      * Convenience method for creating a {@link IsParameterActionWithStringParameterValue}. So it is easier to read.
      *
      * @param name  the name of the parameter to check.
@@ -1526,7 +1555,8 @@ public class GerritTriggerTest {
     public void shouldReturnSlaveSelectedInJobWhenConfigured() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
-            false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false, "");
+            false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false,
+            "");
 
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);
         when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
@@ -1546,7 +1576,8 @@ public class GerritTriggerTest {
     public void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
-            false, "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false, "");
+            false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null, false, false,
+            "");
 
         // Replication is configured at job level but slave and default no longer exist.
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);
@@ -1565,6 +1596,65 @@ public class GerritTriggerTest {
         assertNotNull(slaves);
         assertEquals(1, slaves.size());
         assertEquals(expectedSlave, slaves.get(0));
+    }
+
+    /**
+     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * This should check that a project with no dependencies validates; and a project with itself as a dep does not.
+     */
+    @Test
+    public void testDependencyValidationOnlyOneProjectInvolved() {
+        dependencySetUp();
+        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        assertNotNull(descriptor);
+        // No dependencies
+        assertSame(FormValidation.Kind.OK, descriptor.doCheckDependencyJobsNames(downstreamProject, "").kind);
+        // Self dependency
+        assertSame(FormValidation.Kind.ERROR,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedProject").kind);
+    }
+
+    /**
+     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
+     */
+    @Test
+    public void testDependencyValidationTwoProjectsInvolved() {
+        dependencySetUp();
+        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        assertNotNull(descriptor);
+
+        // Basic dependency value
+        assertSame(FormValidation.Kind.OK,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+        // Incorrect dependency value
+        assertSame(FormValidation.Kind.ERROR,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedDependency").kind);
+        // Two member cycle
+        when(upstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedProject");
+        assertSame(FormValidation.Kind.ERROR,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+    }
+
+    /**
+     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
+     */
+    @Test
+    public void testDependencyValidationThreeProjectsInvolved() {
+        dependencySetUp();
+        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        assertNotNull(descriptor);
+
+        //Setup dependencies: downstream on upstream, upstream on very-upstream
+        when(upstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedVeryUpstreamProject");
+        // Basic dependency chain
+        assertSame(FormValidation.Kind.OK,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+        // Three member cycle
+        when(veryUpstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedProject");
+        assertSame(FormValidation.Kind.ERROR,
+                descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
     }
 
     /**
@@ -1592,4 +1682,49 @@ public class GerritTriggerTest {
         when(serverMock.getConfig()).thenReturn(configMock);
         return configMock;
     }
+
+    /**
+     * Setup the dependency-related fixtures (for form validation).
+     */
+    public void dependencySetUp() {
+        //setup hudson / jenkins (both are needed)
+        hudsonMock = mock(Hudson.class);
+        PowerMockito.mockStatic(Hudson.class);
+        when(Hudson.getInstance()).thenReturn(hudsonMock);
+        jenkinsMock = mock(Jenkins.class);
+        PowerMockito.mockStatic(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkinsMock);
+        //setup the gerritTrigger mocks which will manage the upstream projects
+        upstreamGerritTriggerMock = mock(GerritTrigger.class);
+        veryUpstreamGerritTriggerMock = mock(GerritTrigger.class);
+        PowerMockito.mockStatic(GerritTrigger.class);
+        // Setup of three projects (needed for dependency form validation)
+        downstreamProject = PowerMockito.mock(AbstractProject.class);
+        upstreamProject = PowerMockito.mock(AbstractProject.class);
+        veryUpstreamProject = PowerMockito.mock(AbstractProject.class);
+        when(downstreamProject.getFullName()).thenReturn("MockedProject");
+        when(upstreamProject.getFullName()).thenReturn("MockedUpstreamProject");
+        when(veryUpstreamProject.getFullName()).thenReturn("MockedVeryUpstreamProject");
+        when(hudsonMock.getItem(eq("MockedProject"), any(Item.class), eq(Item.class))).
+            thenReturn(downstreamProject);
+        when(hudsonMock.getItem(eq("MockedUpstreamProject"), any(Item.class), eq(Item.class))).
+            thenReturn(upstreamProject);
+        when(hudsonMock.getItem(eq("MockedVeryUpstreamProject"), any(Item.class), eq(Item.class))).
+            thenReturn(veryUpstreamProject);
+        when(jenkinsMock.getItem(eq("MockedProject"), any(Item.class), eq(Item.class))).
+            thenReturn(downstreamProject);
+        when(jenkinsMock.getItem(eq("MockedUpstreamProject"), any(Item.class), eq(Item.class))).
+            thenReturn(upstreamProject);
+        when(jenkinsMock.getItem(eq("MockedVeryUpstreamProject"), any(Item.class), eq(Item.class))).
+            thenReturn(veryUpstreamProject);
+        when(GerritTrigger.getTrigger(upstreamProject)).thenReturn(upstreamGerritTriggerMock);
+        when(GerritTrigger.getTrigger(veryUpstreamProject)).thenReturn(veryUpstreamGerritTriggerMock);
+        //No dependencies setup initially.
+        when(upstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("");
+        when(veryUpstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("");
+        //next is only for error messages to not fail on NPE.
+        PowerMockito.mockStatic(AbstractProject.class);
+        when(AbstractProject.findNearest(any(String.class), any(ItemGroup.class))).thenReturn(downstreamProject);
+    }
+
 }

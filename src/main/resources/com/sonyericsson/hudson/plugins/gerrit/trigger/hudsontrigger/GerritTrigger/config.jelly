@@ -24,6 +24,10 @@
                      help="/plugin/gerrit-trigger/trigger/help-DelayedApproval.html">
                 <f:checkbox name="delayedApproval" default="false" checked="${it.delayedApproval}"/>
             </f:entry>
+            <f:entry field="dependencyJobsNames" title="${%Other jobs on which this job depends}"
+                 help="/plugin/gerrit-trigger/trigger/help-DependencyJobs.html">
+                <f:textbox autoCompleteDelimChar=","/>
+            </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
                 <f:entry title="${%URL to post}"
                          field="customUrl"
