@@ -259,8 +259,8 @@
                             </f:repeatable>
                         </f:entry>
                     </f:section>
-                    <f:section title="${%Rest API}">
-                        <f:optionalBlock name="useRestApi" title="${%Use rest API}" checked="${it.config.useRestApi}">
+                    <f:section title="${%REST API}">
+                        <f:optionalBlock name="useRestApi" title="${%Use REST API}" checked="${it.config.useRestApi}">
                             <f:entry title="${%Gerrit HTTP username}">
                                 <f:textbox name="gerritHttpUserName"
                                            value="${it.config.gerritHttpUserName}"/>
