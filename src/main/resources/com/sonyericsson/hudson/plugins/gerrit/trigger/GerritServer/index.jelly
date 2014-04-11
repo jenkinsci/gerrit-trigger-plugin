@@ -209,7 +209,7 @@
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'No Builds Executed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                     </f:section>
-                    <f:section title="${%Misc.}">
+                    <f:section title="${%Miscellaneous}">
                         <f:entry title="${%Build Schedule Delay}"
                                  help="/plugin/gerrit-trigger/help-BuildScheduleDelay.html">
                             <f:textbox name="buildScheduleDelay"
