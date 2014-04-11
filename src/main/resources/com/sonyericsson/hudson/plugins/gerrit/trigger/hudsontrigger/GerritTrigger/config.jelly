@@ -3,20 +3,20 @@
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
     <f:section title="${%Gerrit Trigger}">
-        <f:entry title="${%Choose a server}" description="${it.description}" field="serverName">
+        <f:entry title="${%Choose a Server}" description="${it.description}" field="serverName">
             <f:select/>
         </f:entry>
         <j:if test="${descriptor.isSlaveSelectionAllowedInJobs()}">
-            <f:entry title="${%Choose a slave}" field="gerritSlaveId">
+            <f:entry title="${%Choose a Slave}" field="gerritSlaveId">
                 <f:select/>
             </f:entry>
         </j:if>
         <f:advanced>
-            <f:entry title="${%Escape quotes in parameter values}"  field="escapeQuotes"
+            <f:entry title="${%Escape Quotes in Parameter Values}"  field="escapeQuotes"
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
-            <f:entry title="${%Do not pass compound 'name and email' parameters}" field="noNameAndEmailParameters"
+            <f:entry title="${%Do not Pass Compound 'Name And Email' Parameters}" field="noNameAndEmailParameters"
                  help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
                 <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>
             </f:entry>
@@ -41,7 +41,7 @@
                         <input type="checkbox" name="_.onUnstable" checked="${skipIt.onUnstable?'true':null}"/>
                         <label class="attach-previous">${%Unstable}</label>
                         <input type="checkbox" name="_.onNotBuilt" checked="${skipIt.onNotBuilt?'true':null}"/>
-                        <label class="attach-previous">${%Not built}</label>
+                        <label class="attach-previous">${%Not Built}</label>
                     </div>
                 </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
@@ -77,7 +77,7 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
-                <f:entry title="${%Not built}"
+                <f:entry title="${%Not Built}"
                          field="gerritBuildNotBuiltVerifiedValue"
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltVerified.html">
                     <f:textbox name="gerritBuildNotBuiltVerifiedValue"
@@ -118,7 +118,7 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
-                <f:entry title="${%Not built}"
+                <f:entry title="${%Not Built}"
                          field="gerritBuildNotBuiltCodeReviewValue"
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltCodeReview.html">
                     <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
@@ -167,7 +167,7 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Check non-reviewed patchsets}"
+        <f:entry title="${%Check Non-Reviewed Patchsets}"
                  field="allowTriggeringUnreviewedPatches"
                  help="/plugin/gerrit-trigger/trigger/help-TriggerUnreviewedPatches.html">
            <f:checkbox name="allowTriggeringUnreviewedPatches" checked="${it.allowTriggeringUnreviewedPatches}"/>

@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <l:layout title="${%Gerrit Trigger plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
+    <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
             <style>.yui-skin-sam .yui-dt td.align-middle {vertical-align:middle;}</style>
             <l:yui module="dom"/>

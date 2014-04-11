@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <l:layout title="${%Gerrit Trigger plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
+    <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
                 <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
@@ -125,7 +125,7 @@
                                    default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE}"
                                    checkUrl="'${rootURL}/${serverURL}/integerCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Not built}"
+                    <f:entry title="${%Not Built}"
                              help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltVerified.html">
                         <f:textbox name="gerritBuildNotBuiltVerifiedValue"
                                    value="${it.config.gerritBuildNotBuiltVerifiedValue}"
@@ -168,7 +168,7 @@
                                    default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE}"
                                    checkUrl="'${rootURL}/${serverURL}/integerCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Not built}"
+                    <f:entry title="${%Not Built}"
                              help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltCodeReview.html">
                         <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
                                    value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
@@ -202,7 +202,7 @@
                                        value="${it.config.gerritCmdBuildUnstable}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
-                        <f:entry title="${%Not built}"
+                        <f:entry title="${%Not Built}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildNotBuilt.html">
                             <f:textbox name="gerritVerifiedCmdBuildNotBuilt"
                                        value="${it.config.gerritCmdBuildNotBuilt}"
@@ -230,13 +230,13 @@
                                         checked="${it.config.enableManualTrigger}"
                                         default="${true}"/>
                         </f:entry>
-                        <f:entry title="${%Verdict categories}">
+                        <f:entry title="${%Verdict Categories}">
                             <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"
                                           add="${%Add Verdict Category}" minimum="0" header="">
                                 <table>
                                     <tr>
                                         <td>
-                                            ${%Verdict value}
+                                            ${%Verdict Value}
                                         </td>
                                         <td>
                                             <f:textbox name="verdictValue" value="${v.verdictValue}"/>
@@ -244,7 +244,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            ${%Verdict description}
+                                            ${%Verdict Description}
                                         </td>
                                         <td>
                                             <f:textbox name="verdictDescription" value="${v.verdictDescription}"/>
@@ -261,11 +261,11 @@
                     </f:section>
                     <f:section title="${%REST API}">
                         <f:optionalBlock name="useRestApi" title="${%Use REST API}" checked="${it.config.useRestApi}">
-                            <f:entry title="${%Gerrit HTTP username}">
+                            <f:entry title="${%Gerrit HTTP Username}">
                                 <f:textbox name="gerritHttpUserName"
                                            value="${it.config.gerritHttpUserName}"/>
                             </f:entry>
-                            <f:entry title="${%Gerrit HTTP password}">
+                            <f:entry title="${%Gerrit HTTP Password}">
                                 <f:password name="gerritHttpPassword"
                                             value="${it.config.gerritHttpPassword}"/>
                             </f:entry>
@@ -316,7 +316,7 @@
                                                  title="${%Allow Slave Selection in Job Configurations}"
                                                  checked="${it.config.replicationConfig.enableSlaveSelectionInJobs}"
                                                  help="/plugin/gerrit-trigger/help-enableSlaveSelectionInJobs.html">
-                                    <f:entry title="${%Choose a default slave}"
+                                    <f:entry title="${%Choose a Default Slave}"
                                              field="defaultSlaveId"
                                              help="/plugin/gerrit-trigger/help-defaultSlave.html">
                                         <f:select/>
@@ -326,14 +326,14 @@
                         </f:section>
                     </j:if>
                     <f:section title="${%Watchdog}">
-                        <f:entry title="${%Connection watchdog timeout}"
+                        <f:entry title="${%Connection Watchdog Timeout}"
                                  help="/plugin/gerrit-trigger/help-ConnectionWatchdogTimeout.html">
                             <f:textbox name="watchdogTimeoutMinutes"
                                        value="${it.config.watchdogTimeoutMinutes}"
                                        checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
-                        <f:optionalBlock name="watchdogExceptions" title="${%Connection watchdog exceptions}" checked="${it.config.exceptionData.enabled}">
-                            <f:entry title="${%Exception days}"
+                        <f:optionalBlock name="watchdogExceptions" title="${%Connection Watchdog Exceptions}" checked="${it.config.exceptionData.enabled}">
+                            <f:entry title="${%Exception Days}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionDays.html">
                                 <table>
                                     <j:forEach var="helper" items="${it.generateHelper()}">
@@ -350,10 +350,10 @@
                                     </j:forEach>
                                 </table>
                             </f:entry>
-                            <f:entry title="${%Exception times}"
+                            <f:entry title="${%Exception Times}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionTimes.html">
                                 <f:repeatable var="t" items="${it.config.exceptionData.timesOfDay}"
-                                              name="watchdogExceptionTimes" add="${%Add time}" minimum="0"
+                                              name="watchdogExceptionTimes" add="${%Add Time}" minimum="0"
                                               header="">
                                     <table>
                                         <tr>
