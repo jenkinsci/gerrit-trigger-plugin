@@ -138,6 +138,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
     //private List<AbstractProject> dependencyJobs;
+    private boolean readableMessage;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -195,6 +196,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param delayedApproval                Delayed Approval on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param noNameAndEmailParameters       Whether to create parameters containing name and email
+     * @param readableMessage                Human readable message or not.
      * @param dependencyJobsNames            The list of jobs on which this job depends
      * @param buildStartMessage              Message to write to Gerrit when a build begins
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
@@ -230,6 +232,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             boolean delayedApproval,
             boolean escapeQuotes,
             boolean noNameAndEmailParameters,
+            boolean readableMessage,
             String dependencyJobsNames,
             String buildStartMessage,
             String buildSuccessfulMessage,
@@ -260,6 +263,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.delayedApproval = delayedApproval;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
+        this.readableMessage = readableMessage;
         this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -1336,6 +1340,28 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setNoNameAndEmailParameters(boolean noNameAndEmailParameters) {
         this.noNameAndEmailParameters = noNameAndEmailParameters;
+    }
+
+    /**
+     * If readableMessage is on or off. When this is set on this plugin will create parameters
+     * for multiline text, e.g. commit message, as human readable message. When this is set off,
+     * it will be encoded.
+     *
+     * @return true if readableMessage is on.
+     */
+    public boolean isReadableMessage() {
+        return readableMessage;
+    }
+
+    /**
+     * Sets readableMessage to on or off. When this is set on this plugin will create parameters
+     * for multiline text, e.g. commit message, as human readable message. when this is set off,
+     * it will be encoded.
+     *
+     * @param readableMessage is true if human readable message is set.
+     */
+    public void setReadableMessage(boolean readableMessage) {
+        this.readableMessage = readableMessage;
     }
 
     /**
