@@ -1,6 +1,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
-    <l:layout title="${%Gerrit Trigger plugin configuration}" norefresh="true" permission="${it.requiredPermission}">
+    <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
             <style>.yui-skin-sam .yui-dt td.align-middle {vertical-align:middle;}</style>
             <l:yui module="dom"/>
@@ -47,13 +47,13 @@
             </j:if>
             <f:form method="post" action="configSubmit" name="config">
                 <f:section title="${%Global Configuration}">
-                    <f:entry title="${%Nr of Receiving Worker Threads}"
+                    <f:entry title="${%No. of Receiving Worker Threads}"
                              help="/plugin/gerrit-trigger/help-ReceivingEventWorkerThreads.html">
                         <f:textbox name="numberOfReceivingWorkerThreads"
                                    value="${it.pluginConfig.numberOfReceivingWorkerThreads}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS}"/>
                     </f:entry>
-                    <f:entry title="${%Nr of Sending Worker Threads}"
+                    <f:entry title="${%No. of Sending Worker Threads}"
                              help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
                         <f:textbox name="numberOfSendingWorkerThreads"
                                    value="${it.pluginConfig.numberOfSendingWorkerThreads}"
