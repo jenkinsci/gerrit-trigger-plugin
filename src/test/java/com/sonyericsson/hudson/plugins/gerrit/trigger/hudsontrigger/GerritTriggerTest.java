@@ -59,8 +59,8 @@ import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
+import hudson.model.TextParameterValue;
 import hudson.util.FormValidation;
-import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.junit.Test;
@@ -89,6 +89,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_OWNER_EMAIL;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_OWNER_NAME;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_SUBJECT;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_URL;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_PATCHSET_UPLOADER;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_PATCHSET_UPLOADER_EMAIL;
@@ -1167,9 +1168,9 @@ public class GerritTriggerTest {
         jsonAccount.put(NAME, "Bobby");
 
         Change changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
-                "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
+                "100", stringWithQuotes, "commitMessage", jsonAccount, "http://localhost:8080");
         Change changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
-                "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
+                "100", stringWithoutQuotes, "commitMessage", jsonAccount, "http://localhost:8080");
 
         PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
@@ -1239,9 +1240,9 @@ public class GerritTriggerTest {
         jsonAccount.put(NAME, "Bobby");
 
         Change changeWithQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
-                "100", stringWithQuotes, jsonAccount, "http://localhost:8080");
+                "100", stringWithQuotes, "commitMessage", jsonAccount, "http://localhost:8080");
         Change changeWithoutQuotes = prepareChangeObjForMockTest("project", "branch", "I2343434344",
-                "100", stringWithoutQuotes, jsonAccount, "http://localhost:8080");
+                "100", stringWithoutQuotes, "commitMessage", jsonAccount, "http://localhost:8080");
 
         PatchsetCreated eventWithQuotes = preparePatchsetCreatedObjForMockTest(changeWithQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
@@ -1282,17 +1283,141 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Tests {@link GerritTrigger#createParameters(
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
+     * hudson.model.AbstractProject)} with a normal scenario.
+     * this is a test case that checks that
+     * the Trigger is creating parameters having human readable message or not
+     * when the readableMessage setting is on.
+     */
+    @Test
+    public void testCreateParametersWhenTriggerWithReadableMessageOn() {
+
+        String stringReadable = "This is human readable message";
+
+        //prepare AbstractProject object
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        //prepare  PatchsetCreated object
+        JSONObject patch = new JSONObject();
+        patch.put(NUMBER, "2");
+        patch.put(REVISION, "ad123456789");
+        patch.put(REF, "refs/changes/00/100/2");
+
+        JSONObject jsonAccount = new JSONObject();
+        jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
+        jsonAccount.put(NAME, "Bobby");
+
+        Change change = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", "Subject", stringReadable, jsonAccount, "http://localhost:8080");
+
+        PatchsetCreated event = preparePatchsetCreatedObjForMockTest(change,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+        //mock the returned url
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(server.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
+        //prepare GerritTrigger object with the readableMessage setting is on.
+        GerritTrigger triggerWithReadableMessageOn = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(triggerWithReadableMessageOn);
+        triggerWithReadableMessageOn.setReadableMessage(true);
+
+        //the Trigger is creating parameters with encoded message in "commitMessage".
+        ParametersAction paremetersAction =
+                triggerWithReadableMessageOn.createParameters(event, project);
+        ParameterValue strPara =
+                new TextParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE.name(), stringReadable);
+        verify(change, times(1)).getCommitMessage();
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_COMMIT_MESSAGE.name()));
+    }
+
+    /**
+     * Tests {@link GerritTrigger#createParameters(
+     * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
+     * hudson.model.AbstractProject)} with a normal scenario.
+     * this is a test case that checks that
+     * the Trigger is creating parameters having human readable message or not
+     * when the readableMessage setting is off.
+     */
+    @Test
+    public void testCreateParametersWhenTriggerWithReadableMessageOff() {
+
+        String stringReadable = "This is human readable message";
+        String stringEncoded = "VGhpcyBpcyBodW1hbiByZWFkYWJsZSBtZXNzYWdl";
+
+        //prepare AbstractProject object
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
+        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+
+        //prepare  PatchsetCreated object
+        JSONObject patch = new JSONObject();
+        patch.put(NUMBER, "2");
+        patch.put(REVISION, "ad123456789");
+        patch.put(REF, "refs/changes/00/100/2");
+
+        JSONObject jsonAccount = new JSONObject();
+        jsonAccount.put(EMAIL, "robert.sandell@sonyericsson.com");
+        jsonAccount.put(NAME, "Bobby");
+
+        Change change = prepareChangeObjForMockTest("project", "branch", "I2343434344",
+                "100", "Subject", stringReadable, jsonAccount, "http://localhost:8080");
+
+        PatchsetCreated event = preparePatchsetCreatedObjForMockTest(change,
+                new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
+
+        //mock the returned url
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(server.getConfig()).thenReturn(config);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
+        //prepare GerritTrigger object with the escapeQuotes setting is off.
+        GerritTrigger triggerWithReadableMessageOff = Setup.createDefaultTrigger(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(triggerWithReadableMessageOff);
+
+        //the Trigger is creating parameters with escaped quote in "subject"
+        ParametersAction paremetersAction =
+                triggerWithReadableMessageOff.createParameters(event, project);
+        ParameterValue strPara =
+                new StringParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE.name(), stringEncoded);
+        verify(change, times(1)).getCommitMessage();
+        assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_COMMIT_MESSAGE.name()));
+    }
+
+    /**
      * Prepare a new Mock Object of Change for utility test
      * {@link com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change}.
      *
-     * @param project     the result of calling getProject() on this mocked Object.
-     * @param branch      the result of calling getBranch() on this mocked Object.
-     * @param id          the result of calling getId() on this mocked Object.
-     * @param number      the result of calling getNumber() on this mocked Object.
-     * @param subject     the result of calling getSubject() on this mocked Object.
-     * @param jsonAccount used for creating a Account object as the result of
-     *                    calling getOwner() on this mocked Object.
-     * @param url         the result of calling getUrl() on this mocked Object.
+     * @param project       the result of calling getProject() on this mocked Object.
+     * @param branch        the result of calling getBranch() on this mocked Object.
+     * @param id            the result of calling getId() on this mocked Object.
+     * @param number        the result of calling getNumber() on this mocked Object.
+     * @param subject       the result of calling getSubject() on this mocked Object.
+     * @param commitMessage the result of calling getCommitMessage() on this mocked Object.
+     * @param jsonAccount   used for creating a Account object as the result of
+     *                      calling getOwner() on this mocked Object.
+     * @param url           the result of calling getUrl() on this mocked Object.
      * @return a new Change Object.
      */
     private Change prepareChangeObjForMockTest(
@@ -1301,6 +1426,7 @@ public class GerritTriggerTest {
             String id,
             String number,
             String subject,
+            String commitMessage,
             JSONObject jsonAccount,
             String url) {
         Change change = PowerMockito.mock(Change.class);
@@ -1309,6 +1435,7 @@ public class GerritTriggerTest {
         doReturn(id).when(change).getId();
         doReturn(number).when(change).getNumber();
         when(change.getSubject()).thenReturn(subject);
+        doReturn(commitMessage).when(change).getCommitMessage();
         doReturn(new Account(jsonAccount)).when(change).getOwner();
         doReturn(url).when(change).getUrl();
         return change;
