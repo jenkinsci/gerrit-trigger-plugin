@@ -40,15 +40,16 @@ import java.util.Set;
 import java.util.Collections;
 import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
-
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -158,6 +159,15 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             return null;
         }
         //logger.debug("We have dependencies on project {} : {}", p, trigger.getDependencyJobsNames());
+
+        // We ensure that we wait until other jobs have been put into queue.
+        // We use the default Gerrit Build Schedule Delay value
+        long inQueueSince = item.getInQueueSince();
+        if (System.currentTimeMillis() - inQueueSince < TimeUnit.SECONDS
+                .toMillis(GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY)) {
+            logger.debug("We need to wait to ensure dependent jobs {} are in queue", event);
+            return new BecauseWaitingToEnsureOtherJobsAreInQueue();
+        }
 
         /* we really should first check for other projects which will be triggered
          * for the same event, and haven't yet. Unfortunately, this requires some kind

@@ -330,8 +330,47 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
         verify(project).scheduleBuild2(
-                //negative value will be reset into default value 3
-                eq(3),
+                //negative value will be reset to 0
+                eq(0),
+                same(gerritCause),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class),
+                isA(Action.class));
+    }
+
+    /**
+     * Tests the schedule method of GerritTrigger.
+     * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
+     * gets called with an negative buildScheduleDelay -20.
+     */
+    @Test
+    public void testScheduleWithNoBuildScheduleDelay() {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn("MockedProject");
+        when(project.getFullName()).thenReturn("MockedProject");
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        when(server.getConfig()).thenReturn(config);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(config.getBuildScheduleDelay()).thenReturn(0);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        GerritCause gerritCause = new GerritCause(event, true);
+        gerritCause = spy(gerritCause);
+        doReturn("http://mock.url").when(gerritCause).getUrl();
+        trigger.schedule(gerritCause, event);
+        verify(project).scheduleBuild2(
+                eq(0),
                 same(gerritCause),
                 isA(Action.class),
                 isA(Action.class),
