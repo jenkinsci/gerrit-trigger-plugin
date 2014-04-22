@@ -23,6 +23,7 @@ public class ChangeIdAnnotator extends ChangeLogAnnotator {
         for (SubText token : text.findTokens(CHANGE_ID)) {
             GerritCause gerritCause = build.getCause(GerritCause.class);
             if (gerritCause != null
+                && gerritCause.getEvent() != null
                 && gerritCause.getEvent().getProvider() != null
                 && gerritCause.getEvent().getProvider().getUrl() != null
                 && !gerritCause.getEvent().getProvider().getUrl().trim().isEmpty()) {
