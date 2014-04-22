@@ -61,6 +61,7 @@ import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.junit.Test;
@@ -116,7 +117,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE LineLength FOR NEXT 15 LINES. REASON: static import
-//CS IGNORE MagicNumber FOR NEXT 1600 LINES. REASON: testdata.
+//CS IGNORE MagicNumber FOR NEXT 2000 LINES. REASON: testdata.
 
 /**
  * Tests make ref spec.
