@@ -663,8 +663,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
                 @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
                 @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
+            String restUrl = gerritFrontEndUrl;
+            if (gerritFrontEndUrl != null && !gerritFrontEndUrl.endsWith("/")) {
+                restUrl = gerritFrontEndUrl + "/";
+            }
             DefaultHttpClient httpclient = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(gerritFrontEndUrl + "/a/projects/?d");
+            HttpGet httpGet = new HttpGet(restUrl + "a/projects/?d");
             httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
                     new UsernamePasswordCredentials(gerritHttpUserName,
                             gerritHttpPassword));
