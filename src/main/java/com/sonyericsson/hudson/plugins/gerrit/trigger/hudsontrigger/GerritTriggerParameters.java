@@ -39,8 +39,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
+import hudson.model.TextParameterValue;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
@@ -214,15 +216,17 @@ public enum GerritTriggerParameters {
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
     /**
-     * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
+     * Creates a {@link hudson.model.ParameterValue} and adds it to the provided list.
      * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
      * but its description will be used, unless the parameter type is something else than a StringParameterValue.
      *
      * @param parameters   the list of existing parameters.
      * @param value        the value.
      * @param escapeQuotes if quote characters should be escaped.
+     * @param clazz        the class which extends {@link hudson.model.ParameterValue}.
      */
-    public void setOrCreateStringParameterValue(List<ParameterValue> parameters, String value, boolean escapeQuotes) {
+    private void setOrCreateParameterValue(List<ParameterValue> parameters, String value, boolean escapeQuotes,
+            Class<? extends StringParameterValue> clazz) {
         ParameterValue parameter = null;
         for (ParameterValue p : parameters) {
             if (p.getName().toUpperCase().equals(this.name())) {
@@ -248,8 +252,42 @@ public enum GerritTriggerParameters {
             stringValue = "";
         }
 
-        parameter = new StringParameterValue(this.name(), stringValue, description);
-        parameters.add(parameter);
+        Class<?>[] types = { String.class, String.class, String.class };
+        Object[] args = { this.name(), stringValue, description };
+        Constructor<? extends StringParameterValue> constructor;
+        try {
+            constructor = clazz.getConstructor(types);
+            parameter = constructor.newInstance(args);
+            parameters.add(parameter);
+        } catch (Exception ex) {
+            parameter = null;
+        }
+    }
+
+    /**
+     * Creates a {@link hudson.model.StringParameterValue} and adds it to the provided list.
+     * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
+     * but its description will be used, unless the parameter type is something else than a StringParameterValue.
+     *
+     * @param parameters   the list of existing parameters.
+     * @param value        the value.
+     * @param escapeQuotes if quote characters should be escaped.
+     */
+    public void setOrCreateStringParameterValue(List<ParameterValue> parameters, String value, boolean escapeQuotes) {
+        setOrCreateParameterValue(parameters, value, escapeQuotes, StringParameterValue.class);
+    }
+
+    /**
+     * Creates a {@link hudson.model.TextParameterValue} and adds it to the provided list.
+     * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
+     * but its description will be used, unless the parameter type is something else than a StringParameterValue.
+     *
+     * @param parameters   the list of existing parameters.
+     * @param value        the value.
+     * @param escapeQuotes if quote characters should be escaped.
+     */
+    public void setOrCreateTextParameterValue(List<ParameterValue> parameters, String value, boolean escapeQuotes) {
+        setOrCreateParameterValue(parameters, value, escapeQuotes, TextParameterValue.class);
     }
 
     /**
@@ -275,11 +313,13 @@ public enum GerritTriggerParameters {
 
         boolean noNameAndEmailParameters = false;
         boolean escapeQuotes = false;
+        boolean readableMessage = false;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
                 noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
                 escapeQuotes = trigger.isEscapeQuotes();
+                readableMessage = trigger.isReadableMessage();
             }
         }
 
@@ -326,12 +366,17 @@ public enum GerritTriggerParameters {
 
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
-                try {
-                    byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
-                    GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
-                        parameters, new String(encodedBytes), escapeQuotes);
-                } catch (UnsupportedEncodingException uee) {
-                    logger.error("Failed to encode commit message as Base64: ", uee);
+                if (readableMessage) {
+                    GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateTextParameterValue(
+                            parameters, commitMessage, escapeQuotes);
+                } else {
+                    try {
+                        byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
+                        GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
+                            parameters, new String(encodedBytes), escapeQuotes);
+                    } catch (UnsupportedEncodingException uee) {
+                        logger.error("Failed to encode commit message as Base64: ", uee);
+                    }
                 }
             }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(

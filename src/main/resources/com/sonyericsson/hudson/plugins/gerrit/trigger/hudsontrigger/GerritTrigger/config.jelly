@@ -16,6 +16,10 @@
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
+            <f:entry title="${%Commit message as human readable}"  field="readableMessage"
+                 help="/plugin/gerrit-trigger/trigger/help-ReadableMessage.html">
+                <f:checkbox name="readableMessage" default="false" checked="${it.readableMessage}"/>
+            </f:entry>
             <f:entry title="${%Do not Pass Compound 'Name And Email' Parameters}" field="noNameAndEmailParameters"
                  help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
                 <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>

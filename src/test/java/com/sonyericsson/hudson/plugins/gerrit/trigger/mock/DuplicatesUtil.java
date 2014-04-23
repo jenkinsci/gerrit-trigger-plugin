@@ -91,8 +91,8 @@ public abstract class DuplicatesUtil {
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, false, true, false, null, null, null, null, null, null, null, null,
-                serverName, null, null, false, false, null));
+                false, false, true, false, false, null, null, null, null, null, null, null,
+                null, serverName, null, null, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
@@ -120,8 +120,8 @@ public abstract class DuplicatesUtil {
         String filepath = uri.toURL().toString();
         GerritTrigger trigger = new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, false, true,
-                false, false, null, null, null, null, null, null, null, null, PluginImpl.DEFAULT_SERVER_NAME,
-                null, list, true, false, filepath);
+                false, false, false, null, null, null, null, null, null, null, null,
+                PluginImpl.DEFAULT_SERVER_NAME, null, list, true, false, filepath);
         p.addTrigger(trigger);
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
@@ -163,8 +163,8 @@ public abstract class DuplicatesUtil {
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, false, true, false, null, null, null, null, null, null, null, null,
-                serverName, null, list, false, false, null));
+                false, false, true, false, false, null, null, null, null, null, null, null,
+                null, serverName, null, list, false, false, null));
         base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
