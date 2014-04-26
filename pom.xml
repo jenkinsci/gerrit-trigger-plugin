@@ -62,8 +62,7 @@
         <dependency>
             <groupId>com.sonymobile.tools.gerrit</groupId>
             <artifactId>gerrit-events</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
-            <!-- Build locally until released to central -->
+            <version>2.0.0</version>
             <!-- New source is here: https://github.com/sonyxperiadev/gerrit-events -->
         </dependency>
         <dependency>
