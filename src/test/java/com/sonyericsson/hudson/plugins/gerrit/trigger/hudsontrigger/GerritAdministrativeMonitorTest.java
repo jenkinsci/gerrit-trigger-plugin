@@ -74,6 +74,7 @@ public class GerritAdministrativeMonitorTest {
     @Test
     public void testIsSendQueueWarningWithUnderThreshold() throws Exception {
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
+        monitor = spy(monitor);
         when(monitor.getSendQueueSize()).thenReturn(GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD - 1);
         assertFalse(monitor.isSendQueueWarning());
     }

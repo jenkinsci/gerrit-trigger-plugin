@@ -61,7 +61,9 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(2, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
+        // DependencyQueueTaskDispatcher adds 1 listener
+        // ReplicationQueueTaskDispatcher adds 1 listener
+        assertEquals(3, gerritEventListeners.size());
     }
 
     /**
@@ -77,7 +79,9 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
+        // DependencyQueueTaskDispatcher adds 1 listener
+        // ReplicationQueueTaskDispatcher adds 1 listener
+        assertEquals(4, gerritEventListeners.size());
     }
 
     /**
@@ -92,8 +96,12 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
                 Whitebox.getInternalState(handler, "gerritEventListeners");
-        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
+        // DependencyQueueTaskDispatcher adds 1 listener
+        // ReplicationQueueTaskDispatcher adds 1 listener
+        assertEquals(4, gerritEventListeners.size());
         configRoundtrip((Item)p);
-        assertEquals(3, gerritEventListeners.size()); //ReplicationQueueTaskDispatcher adds 1 listener
+        // DependencyQueueTaskDispatcher adds 1 listener
+        // ReplicationQueueTaskDispatcher adds 1 listener
+        assertEquals(4, gerritEventListeners.size());
     }
 }
