@@ -92,7 +92,7 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         } else {
             gerritHandler.addListener(this);
         }
-        logger.info("Registered to gerrit events");
+        logger.debug("Registered to gerrit events");
     }
 
     /**
