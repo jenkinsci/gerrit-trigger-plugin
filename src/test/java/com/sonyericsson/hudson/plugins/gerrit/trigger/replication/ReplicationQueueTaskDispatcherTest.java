@@ -89,7 +89,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Before
     public void setUp() {
         gerritHandlerMock = mock(GerritHandler.class);
-        dispatcher = new ReplicationQueueTaskDispatcher(gerritHandlerMock, new ReplicationCache());
+        dispatcher = new ReplicationQueueTaskDispatcher(gerritHandlerMock, ReplicationCache.Factory.createCache());
         gerritTriggerMock = mock(GerritTrigger.class);
         queueMock = mock(Queue.class);
         Jenkins jenkinsMock = mock(Jenkins.class);
