@@ -83,7 +83,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         blockedItems = new ConcurrentHashMap<Integer, BlockedItem>();
         this.replicationCache = replicationCache;
         gerritHandler.addListener(this);
-        logger.info("Registered to gerrit events");
+        logger.debug("Registered to gerrit events");
     }
 
     @Override
