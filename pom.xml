@@ -84,6 +84,12 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>rabbitmq-consumer</artifactId>
+            <version>2.2</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>2.0</version>
