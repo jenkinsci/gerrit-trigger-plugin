@@ -189,7 +189,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     /**
      * Descriptor for GerritTriggerBuildChooser.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class DescriptorImpl extends BuildChooserDescriptor {
         @Override
         public String getDisplayName() {
