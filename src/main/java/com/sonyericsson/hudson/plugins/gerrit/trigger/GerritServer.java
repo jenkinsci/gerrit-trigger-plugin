@@ -130,10 +130,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Key that is used to select to trigger a build on events from any server.
      */
     public static final String ANY_SERVER = "__ANY__";
-    /**
-     * Global default for notification level.
-     */
-    public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
     private static final int THREADS_FOR_TEST_CONNECTION = 1;
     private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
     private static final int RESPONSE_COUNT = 1;

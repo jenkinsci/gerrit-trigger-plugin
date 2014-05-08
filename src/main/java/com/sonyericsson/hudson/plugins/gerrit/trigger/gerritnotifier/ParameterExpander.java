@@ -24,9 +24,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.DEFAULT_NOTIFICATION_LEVEL;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
@@ -437,13 +437,14 @@ public class ParameterExpander {
      */
     private Notify getNotificationLevel(GerritTrigger trigger) {
         String level = trigger.getNotificationLevel();
-        if (level == null || level.length() == 0) {
-            level = config.getNotificationLevel();
-        }
         if (level != null && level.length() > 0) {
             return Notify.valueOf(level);
         }
-        return DEFAULT_NOTIFICATION_LEVEL;
+        Notify serverLevel = config.getNotificationLevel();
+        if (serverLevel != null) {
+            return serverLevel;
+        }
+        return Config.DEFAULT_NOTIFICATION_LEVEL;
     }
 
     /**

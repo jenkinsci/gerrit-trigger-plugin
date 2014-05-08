@@ -43,6 +43,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -62,7 +63,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.DEFAULT_NOTIFICATION_LEVEL;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -1844,11 +1844,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             } else if (serverName != null) {
                 GerritServer server = PluginImpl.getInstance().getServer(serverName);
                 if (server != null) {
-                    String level = server.getConfig().getNotificationLevel();
-                    if (level != null && level.length() > 0) {
-                        String levelText = levelTextsById.get(Notify.valueOf(level));
+                    Notify level = server.getConfig().getNotificationLevel();
+                    if (level != null) {
+                        String levelText = levelTextsById.get(level);
                         if (levelText == null) { // new/unknown value
-                            levelText = level;
+                            levelText = level.toString();
                         }
                         return new Option(Messages.NotificationLevel_DefaultValueFromServer(levelText), "");
                     }
@@ -1856,7 +1856,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             }
 
             // fall back to global default
-            String defaultText = levelTextsById.get(DEFAULT_NOTIFICATION_LEVEL);
+            String defaultText = levelTextsById.get(Config.DEFAULT_NOTIFICATION_LEVEL);
             return new Option(Messages.NotificationLevel_DefaultValueFromServer(defaultText), "");
         }
 

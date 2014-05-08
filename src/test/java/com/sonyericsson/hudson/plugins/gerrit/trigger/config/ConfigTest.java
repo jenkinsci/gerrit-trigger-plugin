@@ -117,7 +117,7 @@ public class ConfigTest {
         assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
-        assertEquals(Notify.OWNER.toString(), config.getNotificationLevel());
+        assertEquals(Notify.OWNER, config.getNotificationLevel());
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.

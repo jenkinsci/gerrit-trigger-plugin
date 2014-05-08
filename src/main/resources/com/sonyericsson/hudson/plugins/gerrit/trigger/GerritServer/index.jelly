@@ -234,7 +234,7 @@
                                  field="notificationLevel"
                                  help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">
                             <f:select value="${it.config.notificationLevel}" 
-                                      default="ALL" />
+                                      default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_NOTIFICATION_LEVEL}" />
                         </f:entry>
                         <f:entry title="${%Verdict Categories}">
                             <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"

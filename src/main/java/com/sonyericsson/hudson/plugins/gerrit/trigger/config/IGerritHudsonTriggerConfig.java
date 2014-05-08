@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 
 import net.sf.json.JSONObject;
@@ -260,5 +261,5 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      *
      * @return the notification level value
      */
-     String getNotificationLevel();
+     Notify getNotificationLevel();
 }
