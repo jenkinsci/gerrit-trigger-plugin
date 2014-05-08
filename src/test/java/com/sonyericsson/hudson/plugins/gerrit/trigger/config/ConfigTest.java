@@ -25,9 +25,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
+
 import org.junit.Test;
 
 import java.io.File;
@@ -75,7 +78,8 @@ public class ConfigTest {
                 + "\"gerritProxy\":\"\","
                 + "\"gerritUserName\":\"gerrit\","
                 + "\"numberOfSendingWorkerThreads\":\"4\","
-                + "\"numberOfReceivingWorkerThreads\":\"6\"}";
+                + "\"numberOfReceivingWorkerThreads\":\"6\","
+                + "\"notificationLevel\":\"OWNER\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
         assertEquals("gerrit review <CHANGE>,<PATCHSET> "
@@ -113,6 +117,7 @@ public class ConfigTest {
         assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
+        assertEquals(Notify.OWNER.toString(), config.getNotificationLevel());
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.

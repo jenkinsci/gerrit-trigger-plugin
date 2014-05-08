@@ -138,6 +138,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public String getNotificationLevel() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
     public int getNumberOfReceivingWorkerThreads() {
         throw new UnsupportedOperationException("Not supported yet.");
     }

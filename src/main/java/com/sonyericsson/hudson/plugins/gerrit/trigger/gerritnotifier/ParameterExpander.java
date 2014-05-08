@@ -24,6 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.DEFAULT_NOTIFICATION_LEVEL;
+
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -32,6 +34,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
+
 import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Result;
@@ -40,6 +44,7 @@ import hudson.model.TaskListener;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -394,6 +399,51 @@ public class ParameterExpander {
             codeReview = 0;
         }
         return codeReview;
+    }
+
+    /**
+     * Returns the highest configured notification level.
+     *
+     * @param memoryImprint the memory
+     * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
+     * @return the highest configured notification level.
+     */
+    public Notify getHighestNotificationLevel(MemoryImprint memoryImprint, boolean onlyBuilt) {
+        Notify highestLevel = Notify.NONE;
+        for (Entry entry : memoryImprint.getEntries()) {
+            Result result = entry.getBuild().getResult();
+            if (onlyBuilt && result == Result.NOT_BUILT) {
+                continue;
+            }
+
+            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            if (trigger == null || shouldSkip(trigger.getSkipVote(), result)) {
+                continue;
+            }
+
+            Notify level = getNotificationLevel(trigger);
+            if (level != null && level.compareTo(highestLevel) > 0) {
+                highestLevel = level;
+            }
+        }
+        return highestLevel;
+    }
+
+    /**
+     * Returns the notification level value for the given trigger.
+     *
+     * @param trigger the trigger.
+     * @return the level value.
+     */
+    private Notify getNotificationLevel(GerritTrigger trigger) {
+        String level = trigger.getNotificationLevel();
+        if (level == null || level.length() == 0) {
+            level = config.getNotificationLevel();
+        }
+        if (level != null && level.length() > 0) {
+            return Notify.valueOf(level);
+        }
+        return DEFAULT_NOTIFICATION_LEVEL;
     }
 
     /**

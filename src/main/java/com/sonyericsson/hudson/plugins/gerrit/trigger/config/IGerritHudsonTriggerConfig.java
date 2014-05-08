@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+
 import net.sf.json.JSONObject;
 
 import java.util.List;
@@ -253,4 +254,11 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      */
     @Deprecated
     int getNumberOfSendingWorkerThreads();
+
+    /**
+     * Returns whom to notify.
+     *
+     * @return the notification level value
+     */
+     String getNotificationLevel();
 }

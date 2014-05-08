@@ -30,7 +30,6 @@ import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExcepti
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
-
 import hudson.Extension;
 import hudson.Functions;
 import hudson.RelativePath;
@@ -42,6 +41,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,10 +51,13 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -66,7 +69,6 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
-
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.CharEncoding;
@@ -75,6 +77,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.jvnet.localizer.ResourceBundleHolder;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -88,6 +91,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshAuthenticationException;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectException;
@@ -126,6 +130,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Key that is used to select to trigger a build on events from any server.
      */
     public static final String ANY_SERVER = "__ANY__";
+    /**
+     * Global default for notification level.
+     */
+    public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
     private static final int THREADS_FOR_TEST_CONNECTION = 1;
     private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
     private static final int RESPONSE_COUNT = 1;
@@ -726,9 +734,37 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
             return items;
         }
+
+        /**
+         * Fill the dropdown for notification levels.
+         *
+         * @return the values.
+         */
+        public ListBoxModel doFillNotificationLevelItems() {
+            Map<Notify, String> levelTextsById = notificationLevelTextsById();
+            ListBoxModel items = new ListBoxModel(levelTextsById.size());
+            for (Entry<Notify, String> level : levelTextsById.entrySet()) {
+                items.add(new Option(level.getValue(), level.getKey().toString()));
+            }
+            return items;
+        }
     }
 
     /**
+     * Returns localized texts for each known notification value.
+     *
+     * @return a map with level id to level text.
+     */
+    public static Map<Notify, String> notificationLevelTextsById() {
+        ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
+        Map<Notify, String> textsById = new LinkedHashMap<Notify, String>(Notify.values().length, 1);
+        for (Notify level : Notify.values()) {
+            textsById.put(level, holder.format("NotificationLevel_" + level));
+        }
+        return textsById;
+    }
+
+   /**
      * Saves the form to the configuration and disk.
      * @param req StaplerRequest
      * @param rsp StaplerResponse

@@ -31,8 +31,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessa
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
+
 import hudson.model.TaskListener;
 
 import java.util.ArrayList;
@@ -75,6 +77,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             verified = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
             codeReview = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
         }
+        Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
         List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
         Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
         if (gerritMessageProviders != null) {
@@ -91,7 +94,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
         }
         return new ReviewInput(message,
                 commentedFiles, ReviewLabel.verified(verified),
-                ReviewLabel.codeReview(codeReview)
-        );
+                ReviewLabel.codeReview(codeReview)).
+                setNotify(notificationLevel);
     }
 }

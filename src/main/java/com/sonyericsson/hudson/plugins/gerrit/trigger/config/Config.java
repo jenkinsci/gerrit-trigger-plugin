@@ -34,9 +34,11 @@ import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+
 import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.StaplerRequest;
@@ -47,7 +49,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-//CS IGNORE LineLength FOR NEXT 10 LINES. REASON: static import.
+
+//CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static import.
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
@@ -58,6 +61,7 @@ import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAU
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.DEFAULT_NOTIFICATION_LEVEL;
 
 /**
  * Configuration bean for the global configuration.
@@ -163,6 +167,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private ReplicationConfig replicationConfig;
     private int watchdogTimeoutMinutes;
     private WatchTimeExceptionData watchTimeExceptionData;
+    private String notificationLevel;
 
 
 
@@ -186,6 +191,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritProxy = config.getGerritProxy();
         gerritUserName = config.getGerritUserName();
         gerritEMail = config.getGerritEMail();
+        notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
         gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
@@ -231,6 +237,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritProxy = formData.optString("gerritProxy", DEFAULT_GERRIT_PROXY);
         gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
         gerritEMail = formData.optString("gerritEMail", "");
+        notificationLevel = formData.optString("notificationLevel", DEFAULT_NOTIFICATION_LEVEL.toString());
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -603,6 +610,11 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritEMail;
     }
 
+    @Override
+    public String getNotificationLevel() {
+        return notificationLevel;
+    }
+
     /**
      * The e-mail address for the user in gerrit.
      * Comments added from this e-mail address will be ignored.
@@ -611,6 +623,15 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritEMail(String gerritEMail) {
         this.gerritEMail = gerritEMail;
+    }
+
+    /**
+     * Sets the value for whom to notify.
+     *
+     * @param notificationLevel the notification level.
+     */
+    public void setNotificationLevel(String notificationLevel) {
+        this.notificationLevel = notificationLevel;
     }
 
     @Override
