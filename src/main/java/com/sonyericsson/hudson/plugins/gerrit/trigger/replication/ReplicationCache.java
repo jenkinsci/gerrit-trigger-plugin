@@ -44,6 +44,8 @@ public class ReplicationCache {
      * A factory class for ReplicationCache.
      */
     public static final class Factory {
+
+        private static final Logger logger = LoggerFactory.getLogger(ReplicationCache.Factory.class);
         /**
          * Constructor
          */
@@ -71,6 +73,7 @@ public class ReplicationCache {
         public static ReplicationCache createCache(long expiration, TimeUnit unit) {
             ReplicationCache cache = new ReplicationCache(expiration, unit);
             if (!cache.initialize()) {
+                logger.info("Initialized replication cache with default settings.");
                 cache = new ReplicationCache();
                 cache.initialize();
             }
@@ -102,8 +105,17 @@ public class ReplicationCache {
      * @param unit the unit that expiration is expressed in
      */
     public ReplicationCache(long expiration, TimeUnit unit) {
-        this.expiration = expiration;
-        this.unit = unit;
+        if (expiration >= 0) {
+            this.expiration = expiration;
+        } else {
+            this.expiration = DEFAULT_EXPIRATION_IN_MINUTES;
+        }
+
+        if (unit != null) {
+            this.unit = unit;
+        } else {
+            this.unit = TimeUnit.MINUTES;
+        }
     }
 
     /**
@@ -114,7 +126,7 @@ public class ReplicationCache {
         if (events == null) {
             try {
                 events = CacheBuilder.newBuilder()
-                        .expireAfterWrite(unit.toMillis(expiration), TimeUnit.MILLISECONDS)
+                        .expireAfterWrite(expiration, unit)
                         .build();
                 logger.info("initialized replication cache with expiration in {}: {}", unit, expiration);
             } catch (Exception ex) {
