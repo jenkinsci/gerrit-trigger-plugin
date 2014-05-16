@@ -302,7 +302,7 @@
                                                      help="/plugin/gerrit-trigger/help-ReplicationSlaveTimeout.html">
                                                 <f:textbox name="timeout"
                                                            value="${slave.timeoutInSeconds}"
-                                                           checkUrl="'${rootURL}/${serverURL}/integerCheck?value='+escape(this.value)"/>
+                                                           checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                                             </f:entry>
                                             <f:entry title="">
                                                 <div align="right">

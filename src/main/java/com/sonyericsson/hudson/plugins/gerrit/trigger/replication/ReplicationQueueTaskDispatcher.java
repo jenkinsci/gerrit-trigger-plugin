@@ -69,8 +69,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      */
     public ReplicationQueueTaskDispatcher() {
         this(PluginImpl.getInstance().getHandler(),
-            new ReplicationCache(PluginImpl.getInstance().getPluginConfig().getReplicationCacheExpirationInMinutes(),
-                TimeUnit.MINUTES));
+            ReplicationCache.Factory.createCache(
+                    PluginImpl.getInstance().getPluginConfig().getReplicationCacheExpirationInMinutes(),
+                    TimeUnit.MINUTES));
     }
 
     /**

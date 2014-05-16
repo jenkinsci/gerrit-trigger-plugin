@@ -41,13 +41,55 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 public class ReplicationCache {
 
     /**
+     * A factory class for ReplicationCache.
+     */
+    public static final class Factory {
+
+        private static final Logger logger = LoggerFactory.getLogger(ReplicationCache.Factory.class);
+        /**
+         * Constructor
+         */
+        private Factory() {
+        }
+
+        /**
+         * Create {@link ReplicationCache}.
+         *
+         * @return the instance of {@link ReplicationCache} or null.
+         */
+        public static ReplicationCache createCache() {
+            ReplicationCache cache = new ReplicationCache();
+            cache.initialize();
+            return cache;
+        }
+
+        /**
+         * Create {@link ReplicationCache}.
+         *
+         * @param expiration Cache expiration
+         * @param unit the unit that expiration is expressed in
+         * @return the instance of {@link ReplicationCache} or null.
+         */
+        public static ReplicationCache createCache(long expiration, TimeUnit unit) {
+            ReplicationCache cache = new ReplicationCache(expiration, unit);
+            if (!cache.initialize()) {
+                logger.info("Initialized replication cache with default settings.");
+                cache = new ReplicationCache();
+                cache.initialize();
+            }
+            return cache;
+        }
+    }
+
+    /**
      * Cache expiration in minutes.
      */
     public static final int DEFAULT_EXPIRATION_IN_MINUTES = (int)TimeUnit.HOURS.toMinutes(6);
 
     private static final Logger logger = LoggerFactory.getLogger(ReplicationCache.class);
-    private final long expirationInMilliseconds;
-    private final Cache<RefReplicatedId, RefReplicated> events;
+    private final long expiration;
+    private final TimeUnit unit;
+    private Cache<RefReplicatedId, RefReplicated> events = null;
 
     /**
      * Default constructor.
@@ -63,9 +105,36 @@ public class ReplicationCache {
      * @param unit the unit that expiration is expressed in
      */
     public ReplicationCache(long expiration, TimeUnit unit) {
-        this.expirationInMilliseconds = unit.toMillis(expiration);
-        events = CacheBuilder.newBuilder().expireAfterWrite(expirationInMilliseconds, TimeUnit.MILLISECONDS).build();
-        logger.info("initialized replication cache with expiration in {}: {}", unit, expiration);
+        if (expiration >= 0) {
+            this.expiration = expiration;
+        } else {
+            this.expiration = DEFAULT_EXPIRATION_IN_MINUTES;
+        }
+
+        if (unit != null) {
+            this.unit = unit;
+        } else {
+            this.unit = TimeUnit.MINUTES;
+        }
+    }
+
+    /**
+     * Initialize cache.
+     * @return true if success
+     */
+    public boolean initialize() {
+        if (events == null) {
+            try {
+                events = CacheBuilder.newBuilder()
+                        .expireAfterWrite(expiration, unit)
+                        .build();
+                logger.info("initialized replication cache with expiration in {}: {}", unit, expiration);
+            } catch (Exception ex) {
+                logger.warn("initialize failure in {}: {}", unit, expiration);
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -73,7 +142,9 @@ public class ReplicationCache {
      * @param refReplicated the event to cache
      */
     public void put(RefReplicated refReplicated) {
-        events.put(RefReplicatedId.fromRefReplicated(refReplicated), refReplicated);
+        if (events != null) {
+            events.put(RefReplicatedId.fromRefReplicated(refReplicated), refReplicated);
+        }
     }
 
     /**
@@ -82,7 +153,7 @@ public class ReplicationCache {
      * @return true if expired, otherwise false
      */
     public boolean isExpired(long timestamp) {
-        return (System.currentTimeMillis() - timestamp) > expirationInMilliseconds;
+        return (System.currentTimeMillis() - timestamp) > unit.toMillis(expiration);
     }
 
     /**
@@ -94,8 +165,12 @@ public class ReplicationCache {
      * @return the RefReplicated if found, otherwise null
      */
     public RefReplicated getIfPresent(String gerritServer, String gerritProject, String ref, String slaveHost) {
-        RefReplicatedId refReplicatedId = new RefReplicatedId(gerritServer, gerritProject, ref, slaveHost);
-        return events.getIfPresent(refReplicatedId);
+        if (events != null) {
+            RefReplicatedId refReplicatedId = new RefReplicatedId(gerritServer, gerritProject, ref, slaveHost);
+            return events.getIfPresent(refReplicatedId);
+        } else {
+            return null;
+        }
     }
 
     /**

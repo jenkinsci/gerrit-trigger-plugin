@@ -48,7 +48,7 @@ public class ReplicationCacheTest {
      */
     @Test
     public void shouldReturnCachedEvent() {
-        ReplicationCache replicationCache = new ReplicationCache();
+        ReplicationCache replicationCache = ReplicationCache.Factory.createCache();
         RefReplicated refReplicated = Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someServer",
             "someSlave", null);
         replicationCache.put(refReplicated);
@@ -62,7 +62,7 @@ public class ReplicationCacheTest {
      */
     @Test
     public void shouldReturnNullWhenNoCachedEventFound() {
-        ReplicationCache replicationCache = new ReplicationCache();
+        ReplicationCache replicationCache = ReplicationCache.Factory.createCache();
         assertNull(replicationCache.getIfPresent("someServer", "someProject", "refs/changes/1/1/1", "someSlave"));
     }
 
@@ -72,7 +72,7 @@ public class ReplicationCacheTest {
      */
     @Test
     public void shouldEvictExpiredEvent() throws InterruptedException {
-        ReplicationCache replicationCache = new ReplicationCache(100, TimeUnit.MILLISECONDS);
+        ReplicationCache replicationCache = ReplicationCache.Factory.createCache(100, TimeUnit.MILLISECONDS);
         RefReplicated refReplicated = Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someServer",
             "someSlave", null);
         replicationCache.put(refReplicated);
@@ -92,7 +92,7 @@ public class ReplicationCacheTest {
      */
     @Test
     public void shouldReturnIsExpired() {
-        ReplicationCache replicationCache = new ReplicationCache(100, TimeUnit.MILLISECONDS);
+        ReplicationCache replicationCache = ReplicationCache.Factory.createCache(100, TimeUnit.MILLISECONDS);
         assertFalse(replicationCache.isExpired(System.currentTimeMillis()));
         assertTrue(replicationCache.isExpired(System.currentTimeMillis() - 200));
     }
