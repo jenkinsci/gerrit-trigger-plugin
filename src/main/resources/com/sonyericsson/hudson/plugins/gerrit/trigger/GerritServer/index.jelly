@@ -230,6 +230,12 @@
                                         checked="${it.config.enableManualTrigger}"
                                         default="${true}"/>
                         </f:entry>
+                        <f:entry title="${%Notification Level}"
+                                 field="notificationLevel"
+                                 help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">
+                            <f:select value="${it.config.notificationLevel}" 
+                                      default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_NOTIFICATION_LEVEL}" />
+                        </f:entry>
                         <f:entry title="${%Verdict Categories}">
                             <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"
                                           add="${%Add Verdict Category}" minimum="0" header="">

@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -35,12 +36,14 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -58,9 +61,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
+
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
-
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
@@ -84,7 +87,9 @@ import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import hudson.Util;
+
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -98,11 +103,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.AncestorInPath;
@@ -133,6 +140,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildNotBuiltVerifiedValue;
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
+    private String notificationLevel;
     private boolean delayedApproval;
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
@@ -213,6 +221,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param allowTriggeringUnreviewedPatches
      *                                       Is automatic patch checking allowed when connection is established
      * @param triggerConfigURL               Where to fetch the configuration file from
+     * @param notificationLevel              Whom to notify.
      */
     @DataBoundConstructor
     public GerritTrigger(
@@ -246,7 +255,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
             boolean allowTriggeringUnreviewedPatches,
-            String triggerConfigURL) {
+            String triggerConfigURL,
+            String notificationLevel) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -280,6 +290,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
         this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
+        this.notificationLevel = notificationLevel;
     }
 
     /**
@@ -1292,6 +1303,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * Returns whom to notify.
+     *
+     * @return the notification level value
+     */
+    public String getNotificationLevel() {
+        return notificationLevel;
+    }
+
+    /**
      * If delayed approval is on or off. When delayed approval is on there will be no automatic result of the build
      * sent back to Gerrit. This will have to be sent using a different mechanism. Default is false.
      *
@@ -1427,6 +1447,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * Sets the value for whom to notify.
+     *
+     * @param notificationLevel the notification level.
+     */
+    public void setNotificationLevel(String notificationLevel) {
+        this.notificationLevel = notificationLevel;
     }
 
     /**
@@ -1781,6 +1810,54 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             } catch (java.net.URISyntaxException e) {
                 return FormValidation.error(Messages.BadUrlError());
             }
+        }
+
+        /**
+         * Fill the dropdown for notification levels.
+         * @param serverName the server name.
+         * @return the values.
+         */
+        public ListBoxModel doFillNotificationLevelItems(@QueryParameter("serverName") final String serverName) {
+            Map<Notify, String> levelTextsById = GerritServer.notificationLevelTextsById();
+            ListBoxModel items = new ListBoxModel(levelTextsById.size() + 1);
+            items.add(getOptionForNotificationLevelDefault(serverName, levelTextsById));
+            for (Entry<Notify, String> level : levelTextsById.entrySet()) {
+                items.add(new Option(level.getValue(), level.getKey().toString()));
+            }
+            return items;
+        }
+
+        /**
+         * Reads the default option for the notification level, usually from the server config.
+         *
+         * @param serverName the server name.
+         * @param levelTextsById a map with the localized level texts.
+         * @return the default option.
+         */
+        private static Option getOptionForNotificationLevelDefault(
+                final String serverName, Map<Notify, String> levelTextsById) {
+            if (ANY_SERVER.equals(serverName)) {
+                // We do not know which server is selected, so we cannot tell the
+                // currently active default value.  It might be the global default,
+                // but also a different value.
+                return new Option(Messages.NotificationLevel_DefaultValue(), "");
+            } else if (serverName != null) {
+                GerritServer server = PluginImpl.getInstance().getServer(serverName);
+                if (server != null) {
+                    Notify level = server.getConfig().getNotificationLevel();
+                    if (level != null) {
+                        String levelText = levelTextsById.get(level);
+                        if (levelText == null) { // new/unknown value
+                            levelText = level.toString();
+                        }
+                        return new Option(Messages.NotificationLevel_DefaultValueFromServer(levelText), "");
+                    }
+                }
+            }
+
+            // fall back to global default
+            String defaultText = levelTextsById.get(Config.DEFAULT_NOTIFICATION_LEVEL);
+            return new Option(Messages.NotificationLevel_DefaultValueFromServer(defaultText), "");
         }
 
         /**

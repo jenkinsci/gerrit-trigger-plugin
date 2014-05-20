@@ -286,7 +286,7 @@ public class GerritTriggerTest {
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, false, true, false, false, "", "", "", "", "", "", "", null, null, null,
-                null, false, false, "");
+                null, false, false, "", null);
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
 
@@ -1685,7 +1685,7 @@ public class GerritTriggerTest {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
             false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
-            false, false, "");
+            false, false, "", null);
 
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);
         when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
@@ -1706,7 +1706,7 @@ public class GerritTriggerTest {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
             false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
-            false, false, "");
+            false, false, "", null);
 
         // Replication is configured at job level but slave and default no longer exist.
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);

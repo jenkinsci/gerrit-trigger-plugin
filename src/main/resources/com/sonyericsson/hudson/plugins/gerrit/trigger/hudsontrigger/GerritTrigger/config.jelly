@@ -32,6 +32,11 @@
                  help="/plugin/gerrit-trigger/trigger/help-DependencyJobs.html">
                 <f:textbox autoCompleteDelimChar=","/>
             </f:entry>
+            <f:entry title="${%Notification Level}"
+                     field="notificationLevel"
+                     help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">
+                <f:select />
+            </f:entry>
             <f:section title="${%Gerrit Reporting Values}">
                 <f:entry title="${%URL to post}"
                          field="customUrl"

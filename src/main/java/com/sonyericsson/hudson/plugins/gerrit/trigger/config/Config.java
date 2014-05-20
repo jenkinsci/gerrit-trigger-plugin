@@ -29,14 +29,17 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+
 import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.StaplerRequest;
@@ -47,7 +50,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-//CS IGNORE LineLength FOR NEXT 10 LINES. REASON: static import.
+
+
+
+//CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static import.
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE;
@@ -124,6 +130,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
 
+    /**
+     * Global default for notification level.
+     */
+    public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
+
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
@@ -163,7 +174,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private ReplicationConfig replicationConfig;
     private int watchdogTimeoutMinutes;
     private WatchTimeExceptionData watchTimeExceptionData;
-
+    private Notify notificationLevel;
 
 
     /**
@@ -186,6 +197,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritProxy = config.getGerritProxy();
         gerritUserName = config.getGerritUserName();
         gerritEMail = config.getGerritEMail();
+        notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
         gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
@@ -231,6 +243,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritProxy = formData.optString("gerritProxy", DEFAULT_GERRIT_PROXY);
         gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
         gerritEMail = formData.optString("gerritEMail", "");
+        notificationLevel = Notify.valueOf(formData.optString("notificationLevel",
+                Config.DEFAULT_NOTIFICATION_LEVEL.toString()));
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -603,6 +617,11 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritEMail;
     }
 
+    @Override
+    public Notify getNotificationLevel() {
+        return notificationLevel;
+    }
+
     /**
      * The e-mail address for the user in gerrit.
      * Comments added from this e-mail address will be ignored.
@@ -611,6 +630,15 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritEMail(String gerritEMail) {
         this.gerritEMail = gerritEMail;
+    }
+
+    /**
+     * Sets the value for whom to notify.
+     *
+     * @param notificationLevel the notification level.
+     */
+    public void setNotificationLevel(Notify notificationLevel) {
+        this.notificationLevel = notificationLevel;
     }
 
     @Override
