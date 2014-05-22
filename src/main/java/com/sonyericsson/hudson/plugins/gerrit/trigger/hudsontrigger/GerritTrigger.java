@@ -24,8 +24,33 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
-
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -37,35 +62,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
-
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 import hudson.Extension;
 import hudson.ExtensionList;
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -88,8 +87,6 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
-import hudson.Util;
-
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -109,10 +106,10 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
-
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.AncestorInPath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -120,7 +117,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritTrigger extends Trigger<AbstractProject> implements GerritEventListener {
+public class GerritTrigger extends Trigger<AbstractProject> {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     //! Association between patches and the jobs that we're running for them
@@ -368,7 +365,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
             if (handler != null) {
-                handler.addListener(this);
+                handler.addListener(new ListenerImpl(project));
             } else {
                 logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
                         project.getFullDisplayName());
@@ -427,7 +424,9 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             if (PluginImpl.getInstance().getHandler() != null) {
-                PluginImpl.getInstance().getHandler().removeListener(this);
+                if (job != null) {
+                    PluginImpl.getInstance().getHandler().removeListener(new ListenerImpl(job));
+                }
             } else {
                 logger.error("The Gerrit handler has not been initialized. BUG!");
             }
@@ -436,8 +435,31 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
     }
 
-    @Override
-    public void gerritEvent(GerritEvent event) {
+    private static final class ListenerImpl implements GerritEventListener {
+        private final String job;
+        ListenerImpl(AbstractProject job) {
+            this.job = job.getFullName();
+        }
+        @Override public void gerritEvent(GerritEvent event) {
+            AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
+            if (p == null) {
+                return;
+            }
+            GerritTrigger t = (GerritTrigger) p.getTrigger(GerritTrigger.class);
+            if (t == null) {
+                return;
+            }
+            t.gerritEvent(event);
+        }
+        @Override public int hashCode() {
+            return job.hashCode();
+        }
+        @Override public boolean equals(Object obj) {
+            return obj instanceof ListenerImpl && ((ListenerImpl) obj).job.equals(job);
+        }
+    }
+
+    private void gerritEvent(GerritEvent event) {
         logger.trace("event: {}", event);
         if (event instanceof GerritTriggeredEvent) {
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
