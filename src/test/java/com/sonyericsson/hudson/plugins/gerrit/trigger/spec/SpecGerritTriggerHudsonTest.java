@@ -55,6 +55,11 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import java.util.List;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.netbeans.insane.live.LiveReferences;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 
@@ -106,6 +111,37 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
         FreeStyleBuild build = builds.get(0);
         assertSame(Result.SUCCESS, build.getResult());
+        // JENKINS-23152
+        WeakReference<FreeStyleProject> old = new WeakReference<FreeStyleProject>(project);
+        project = null;
+        builds = null;
+        build = null;
+        gerritServer = null;
+        jenkins.reload();
+        assertGC(old);
+        project = jenkins.getItemByFullName("projectX", FreeStyleProject.class);
+        assertEquals(1, project.getBuilds().size());
+        gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
+    }
+    // TODO use version from MemoryAssert in 1.519+
+    private static void assertGC(WeakReference<?> reference) {
+        assertTrue(true); reference.get(); // preload any needed classes!
+        Set<Object[]> objects = new HashSet<Object[]>();
+        while (true) {
+            try {
+                objects.add(new Object[1024]);
+            } catch (OutOfMemoryError ignore) {
+                break;
+            }
+        }
+        objects = null;
+        System.gc();
+        Object obj = reference.get();
+        if (obj != null) {
+            fail(LiveReferences.fromRoots(Collections.singleton(obj)).toString());
+        }
     }
 
     /**
