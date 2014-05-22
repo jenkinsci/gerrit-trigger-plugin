@@ -292,6 +292,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.notificationLevel = notificationLevel;
     }
 
+    AbstractProject getJob() {
+        return job;
+    }
+
     /**
      * Converts old trigger configs when only patchset created was available as event
      * and when jobs were not associated to Gerrit servers.
