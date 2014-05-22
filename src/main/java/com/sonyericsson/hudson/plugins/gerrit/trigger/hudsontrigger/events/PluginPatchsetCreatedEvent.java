@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
@@ -39,11 +40,22 @@ import java.io.Serializable;
 public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Serializable {
     private static final long serialVersionUID = 970946986242309088L;
 
+    private boolean excludeDrafts = false;
+
+    /**
+     * Default constructor.
+     */
+    public PluginPatchsetCreatedEvent() {
+        this(false);
+    }
+
     /**
      * Standard DataBoundConstructor.
+     * @param excludeDrafts if drafts should be excluded or not.
      */
     @DataBoundConstructor
-    public PluginPatchsetCreatedEvent() {
+    public PluginPatchsetCreatedEvent(boolean excludeDrafts) {
+        this.excludeDrafts = excludeDrafts;
     }
 
     /**
@@ -57,6 +69,25 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     @Override
     public Class getCorrespondingEventClass() {
         return PatchsetCreated.class;
+    }
+
+    /**
+     * Getter for the excludeDrafts field.
+     * @return excludeDrafts
+     */
+    public boolean isExcludeDrafts() {
+        return excludeDrafts;
+    }
+
+    @Override
+    public boolean shouldTriggerOn(GerritTriggeredEvent event) {
+        if (!super.shouldTriggerOn(event)) {
+            return false;
+        }
+        if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
+            return false;
+        }
+        return true;
     }
 
     /**

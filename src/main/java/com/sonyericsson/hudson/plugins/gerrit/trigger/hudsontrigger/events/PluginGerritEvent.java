@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 
@@ -33,12 +34,23 @@ import hudson.model.Descriptor;
  */
 public abstract class PluginGerritEvent extends AbstractDescribableImpl<PluginGerritEvent> {
 
-       /**
+    /**
      * Getter for the corresponding gerrit event class.
      * @return the gerrit event class.
      */
     public abstract Class getCorrespondingEventClass();
 
+    /**
+     * Return if it should trigger build for the specified event.
+     * Default implementation only check if the specified event is an instance of the corresponding event class.
+     * Sub class can override to add additional validation.
+     *
+     * @param event The event to validate.
+     * @return true if it should trigger on the specified event, otherwise false.
+     */
+    public boolean shouldTriggerOn(GerritTriggeredEvent event) {
+        return getCorrespondingEventClass().isInstance(event);
+    }
 
     /**
      * The Descriptor for the PluginGerritEvent.

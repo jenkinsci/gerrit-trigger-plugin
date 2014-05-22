@@ -21,5 +21,9 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<j:jelly xmlns:j="jelly:core">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%Exclude Drafts}"
+             field="excludeDrafts">
+        <f:checkbox/>
+    </f:entry>
 </j:jelly>
