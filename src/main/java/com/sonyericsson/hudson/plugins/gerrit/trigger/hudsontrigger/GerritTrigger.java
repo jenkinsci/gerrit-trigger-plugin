@@ -125,7 +125,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
-    private transient AbstractProject myProject;
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
     private SkipVote skipVote;
@@ -349,7 +348,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void cancelTimer() {
         if (gerritTriggerTimerTask != null) {
-            logger.trace("GerritTrigger.cancelTimer(): {0}", myProject.getName());
+            logger.trace("GerritTrigger.cancelTimer(): {0}", job.getName());
             gerritTriggerTimerTask.cancel();
             gerritTriggerTimerTask = null;
         }
@@ -382,7 +381,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         super.start(project, newInstance);
         initializeServerName();
         initializeTriggerOnEvents();
-        this.myProject = project;
         try {
             addThisTriggerAsListener(project);
         } catch (IllegalStateException e) {
@@ -467,10 +465,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private void notifyOnTriggered(GerritTriggeredEvent event) {
         if (!silentMode) {
-            ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            ToGerritRunListener.getInstance().onTriggered(job, event);
         } else {
             if (event instanceof GerritEventLifecycle) {
-                ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
+                ((GerritEventLifecycle)event).fireProjectTriggered(job);
             }
         }
     }
@@ -520,13 +518,13 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * Schedules a build with parameters from the event. With {@link #myProject} as the project to build.
+     * Schedules a build with parameters from the event. With {@link #job} as the project to build.
      *
      * @param cause the cause of the build.
      * @param event the event.
      */
     protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
-        schedule(cause, event, myProject);
+        schedule(cause, event, job);
     }
 
     /**
@@ -805,10 +803,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     @Override
     public int hashCode() {
-        if (myProject == null) {
+        if (job == null) {
             return super.hashCode();
         } else {
-            return myProject.getFullName().hashCode();
+            return job.getFullName().hashCode();
         }
     }
 
@@ -816,10 +814,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     public boolean equals(Object obj) {
         if (obj instanceof GerritTrigger) {
             GerritTrigger that = (GerritTrigger)obj;
-            if (myProject == null || that.myProject == null) {
+            if (job == null || that.job == null) {
                 return super.equals(obj);
             } else {
-                return myProject.getFullName().equals(that.myProject.getFullName());
+                return job.getFullName().equals(that.job.getFullName());
             }
         }
         return false;
@@ -832,7 +830,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @return true if we should.
      */
     private boolean isInteresting(GerritTriggeredEvent event) {
-        if (!myProject.isBuildable()) {
+        if (!job.isBuildable()) {
             logger.trace("Disabled.");
             return false;
         }
@@ -883,7 +881,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 }
             } catch (PatternSyntaxException pse) {
                 logger.error(MessageFormat.format("Exception caught for project {0} and pattern {1}, message: {2}",
-                       new Object[]{myProject.getName(), p.getPattern(), pse.getMessage()}));
+                       new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
             }
         }
         logger.trace("Nothing interesting here, move along folks!");
@@ -935,7 +933,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void gerritEvent(CommentAdded event) {
         logger.trace("event: {}", event);
-        if (ToGerritRunListener.getInstance().isBuilding(myProject, event)) {
+        if (ToGerritRunListener.getInstance().isBuilding(job, event)) {
             logger.trace("Already building.");
             return;
         }
@@ -1515,7 +1513,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
-                    new Object[]{myProject.getName(), triggerConfigURL, pe.getMessage()});
+                    new Object[]{job.getName(), triggerConfigURL, pe.getMessage()});
             logger.error(logErrorMessage, pe);
             String triggerInformationMessage = MessageFormat.format(
                     "ParseException when fetching dynamic trigger url: {0}", pe.getMessage());
@@ -1523,7 +1521,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (MalformedURLException mue) {
             String logErrorMessage = MessageFormat.format(
                     "MalformedURLException for project: {0} and URL: {1} Message: {2}",
-                    new Object[]{myProject.getName(), triggerConfigURL, mue.getMessage()});
+                    new Object[]{job.getName(), triggerConfigURL, mue.getMessage()});
             logger.error(logErrorMessage, mue);
             String triggerInformationMessage = MessageFormat.format(
                     "MalformedURLException when fetching dynamic trigger url: {0}", mue.getMessage());
@@ -1531,7 +1529,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (SocketTimeoutException ste) {
             String logErrorMessage = MessageFormat.format(
                     "SocketTimeoutException for project: {0} and URL: {1} Message: {2}",
-                    new Object[]{myProject.getName(), triggerConfigURL, ste.getMessage()});
+                    new Object[]{job.getName(), triggerConfigURL, ste.getMessage()});
             logger.error(logErrorMessage, ste);
             String triggerInformationMessage = MessageFormat.format(
                     "SocketTimeoutException when fetching dynamic trigger url: {0}", ste.getMessage());
@@ -1540,7 +1538,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } catch (IOException ioe) {
             String logErrorMessage = MessageFormat.format(
                     "IOException for project: {0} and URL: {1} Message: {2}",
-                    new Object[]{myProject.getName(), triggerConfigURL, ioe.getMessage()});
+                    new Object[]{job.getName(), triggerConfigURL, ioe.getMessage()});
             logger.error(logErrorMessage, ioe);
             String triggerInformationMessage = MessageFormat.format(
                     "IOException when fetching dynamic trigger url: {0}", ioe.getMessage());
@@ -1955,7 +1953,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
          */
         private void cancelJob(ParametersAction parameters) {
             // Remove any jobs in the build queue.
-            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(myProject);
+            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(job);
             for (hudson.model.Queue.Item item  : itemsInQueue) {
                 List<ParametersAction> params = item.getActions(ParametersAction.class);
                 for (ParametersAction param : params) {
