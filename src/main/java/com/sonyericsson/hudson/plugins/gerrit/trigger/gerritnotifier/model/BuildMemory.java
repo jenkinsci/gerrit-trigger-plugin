@@ -24,25 +24,25 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+import javax.annotation.CheckForNull;
+import jenkins.model.Jenkins;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
@@ -697,8 +697,8 @@ public class BuildMemory {
          */
         public static class Entry {
 
-            private AbstractProject project;
-            private AbstractBuild build;
+            private String project;
+            private String build;
             private boolean buildCompleted;
             private String unsuccessfulMessage;
 
@@ -709,8 +709,8 @@ public class BuildMemory {
              * @param build   the build.
              */
             private Entry(AbstractProject project, AbstractBuild build) {
-                this.project = project;
-                this.build = build;
+                this.project = project.getFullName();
+                this.build = build.getId();
                 buildCompleted = false;
             }
 
@@ -720,7 +720,7 @@ public class BuildMemory {
              * @param project the project.
              */
             private Entry(AbstractProject project) {
-                this.project = project;
+                this.project = project.getFullName();
                 buildCompleted = false;
             }
 
@@ -729,8 +729,8 @@ public class BuildMemory {
              *
              * @return the project.
              */
-            public AbstractProject getProject() {
-                return project;
+            public @CheckForNull AbstractProject getProject() {
+                return Jenkins.getInstance().getItemByFullName(project, AbstractProject.class);
             }
 
             /**
@@ -738,8 +738,9 @@ public class BuildMemory {
              *
              * @return the build.
              */
-            public AbstractBuild getBuild() {
-                return build;
+            public @CheckForNull AbstractBuild getBuild() {
+                AbstractProject p = getProject();
+                return p != null ? p.getBuild(build) : null;
             }
 
             /**
@@ -748,7 +749,7 @@ public class BuildMemory {
              * @param build the build.
              */
             private void setBuild(AbstractBuild build) {
-                this.build = build;
+                this.build = build.getId();
             }
 
             /**
