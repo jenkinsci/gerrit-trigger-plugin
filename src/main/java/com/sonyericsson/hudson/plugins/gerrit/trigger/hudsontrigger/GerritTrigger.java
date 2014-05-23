@@ -459,7 +459,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         }
     }
 
-    private void gerritEvent(GerritEvent event) {
+    public void gerritEvent(GerritEvent event) {
         logger.trace("event: {}", event);
         if (event instanceof GerritTriggeredEvent) {
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
