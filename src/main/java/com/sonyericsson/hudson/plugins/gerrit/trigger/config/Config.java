@@ -200,6 +200,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
         gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
+        useRestApi = config.isUseRestApi();
+        gerritHttpUserName = config.getGerritHttpUserName();
+        gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
