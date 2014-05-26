@@ -512,7 +512,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             return false;
         }
         for (PluginGerritEvent e : triggerOnEvents) {
-            if (e.getCorrespondingEventClass().isInstance(event)) {
+            if (e.shouldTriggerOn(event)) {
                 return true;
             }
         }
