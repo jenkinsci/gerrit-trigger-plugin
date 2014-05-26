@@ -933,7 +933,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritHttpPassword() {
-        return Secret.toString(gerritHttpPassword);
+        if (gerritHttpPassword != null) {
+            return Secret.toString(gerritHttpPassword);
+        } else {
+            return "";
+        }
     }
 
     /**
