@@ -200,6 +200,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
         gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
+        useRestApi = config.isUseRestApi();
+        gerritHttpUserName = config.getGerritHttpUserName();
+        gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
@@ -930,7 +933,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritHttpPassword() {
-        return Secret.toString(gerritHttpPassword);
+        if (gerritHttpPassword == null) {
+            return "";
+        } else {
+            return gerritHttpPassword.getPlainText();
+        }
     }
 
     /**
@@ -960,7 +967,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Credentials getHttpCredentials() {
-        return new UsernamePasswordCredentials(gerritHttpUserName, Secret.toString(gerritHttpPassword));
+        if (gerritHttpPassword == null) {
+            return new UsernamePasswordCredentials(gerritHttpUserName, "");
+        } else {
+            return new UsernamePasswordCredentials(gerritHttpUserName, gerritHttpPassword.getPlainText());
+        }
     }
 
 }

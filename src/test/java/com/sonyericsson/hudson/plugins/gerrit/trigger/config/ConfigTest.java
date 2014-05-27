@@ -31,7 +31,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
 
@@ -42,6 +44,13 @@ import static org.junit.Assert.assertEquals;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class ConfigTest {
+
+    /**
+     * Jenkins rule instance.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
@@ -77,6 +86,7 @@ public class ConfigTest {
                 + "\"gerritSshPort\":\"1337\","
                 + "\"gerritProxy\":\"\","
                 + "\"gerritUserName\":\"gerrit\","
+                + "\"useRestApi\":{\"gerritHttpUserName\":\"httpgerrit\",\"gerritHttpPassword\":\"httppass\"},"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\","
                 + "\"notificationLevel\":\"OWNER\"}";
@@ -115,6 +125,9 @@ public class ConfigTest {
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("", config.getGerritProxy());
         assertEquals("gerrit", config.getGerritUserName());
+        assertEquals(true, config.isUseRestApi());
+        assertEquals("httpgerrit", config.getGerritHttpUserName());
+        assertEquals("httppass", config.getGerritHttpPassword());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
         assertEquals(Notify.OWNER, config.getNotificationLevel());
@@ -154,6 +167,7 @@ public class ConfigTest {
                 + "\"gerritSshPort\":\"1337\","
                 + "\"gerritProxy\":\"\","
                 + "\"gerritUserName\":\"gerrit\","
+                + "\"useRestApi\":{\"gerritHttpUserName\":\"httpgerrit\",\"gerritHttpPassword\":\"httppass\"},"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
@@ -192,6 +206,9 @@ public class ConfigTest {
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("", config.getGerritProxy());
         assertEquals("gerrit", config.getGerritUserName());
+        assertEquals(true, config.isUseRestApi());
+        assertEquals("httpgerrit", config.getGerritHttpUserName());
+        assertEquals("httppass", config.getGerritHttpPassword());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
     }
