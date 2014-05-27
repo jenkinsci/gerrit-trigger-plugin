@@ -215,7 +215,7 @@
                             <f:textbox name="buildScheduleDelay"
                                        value="${it.config.buildScheduleDelay}"
                                        default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
-                                       checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"/>
+                                       checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
                         <f:entry title="${%Dynamic Config Refresh Interval}"
                                  help="/plugin/gerrit-trigger/help-DynamicTriggerConfigRefreshInterval.html">

@@ -666,7 +666,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public int getBuildScheduleDelay() {
         if (isAnyServer()) {
-            int max = DEFAULT_BUILD_SCHEDULE_DELAY;
+            int max = 0;
             for (GerritServer server : PluginImpl.getInstance().getServers()) {
                 if (server.getConfig() != null) {
                     max = Math.max(max, server.getConfig().getBuildScheduleDelay());
@@ -679,7 +679,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         } else {
             int buildScheduleDelay = PluginImpl.getInstance().getServer(serverName).getConfig()
                     .getBuildScheduleDelay();
-            return Math.max(buildScheduleDelay, DEFAULT_BUILD_SCHEDULE_DELAY);
+            //check if less than zero
+            return Math.max(0, buildScheduleDelay);
         }
 
     }

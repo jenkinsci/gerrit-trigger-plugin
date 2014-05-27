@@ -45,6 +45,7 @@ import hudson.model.queue.CauseOfBlockage;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
@@ -55,6 +56,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -70,7 +72,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, ToGerritRunListener.class })
+@PrepareForTest({ Jenkins.class, ToGerritRunListener.class, WaitingItem.class })
 public class DependencyQueueTaskDispatcherTest {
 
     private DependencyQueueTaskDispatcher dispatcher;
@@ -287,9 +289,12 @@ public class DependencyQueueTaskDispatcherTest {
         abstractProjectDependencyMock = mock(AbstractProject.class);
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         when(gerritTriggerMock.getDependencyJobsNames()).thenReturn(dependency);
-        /*doReturn(abstractProjectDependencyMock).when(jenkinsMock).getItem(eq("upstream"), any(Item.class),
-                Item.class);*/
         when(jenkinsMock.getItem(eq("upstream"), any(Item.class), Item.class)).thenReturn(abstractProjectDependencyMock);
-        return new WaitingItem(Calendar.getInstance(), abstractProjectMock, actions);
+        WaitingItem waitingItem = PowerMockito.spy(new WaitingItem(Calendar.getInstance(),
+                abstractProjectMock, actions));
+        when(waitingItem.getInQueueSince()).thenReturn(System.currentTimeMillis()
+                - TimeUnit.SECONDS.toMillis(GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY));
+        return waitingItem;
     }
+
 }

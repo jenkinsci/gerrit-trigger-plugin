@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 import net.sf.json.JSONObject;
@@ -118,6 +119,7 @@ public class ConfigTest {
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
         assertEquals(Notify.OWNER, config.getNotificationLevel());
+        assertEquals(GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY, config.getBuildScheduleDelay());
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
@@ -155,6 +157,7 @@ public class ConfigTest {
                 + "\"gerritProxy\":\"\","
                 + "\"gerritUserName\":\"gerrit\","
                 + "\"numberOfSendingWorkerThreads\":\"4\","
+                + "\"buildScheduleDelay\":\"0\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config initialConfig = new Config(form);
@@ -194,6 +197,7 @@ public class ConfigTest {
         assertEquals("gerrit", config.getGerritUserName());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
+        assertEquals(0, config.getBuildScheduleDelay());
     }
 
     /**

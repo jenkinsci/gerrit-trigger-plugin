@@ -338,8 +338,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         buildScheduleDelay = formData.optInt(
                 "buildScheduleDelay",
                 DEFAULT_BUILD_SCHEDULE_DELAY);
-        if (buildScheduleDelay <= DEFAULT_BUILD_SCHEDULE_DELAY) {
-            buildScheduleDelay = DEFAULT_BUILD_SCHEDULE_DELAY;
+        if (buildScheduleDelay < 0) {
+            buildScheduleDelay = 0;
         }
         dynamicConfigRefreshInterval = formData.optInt(
                 "dynamicConfigRefreshInterval",

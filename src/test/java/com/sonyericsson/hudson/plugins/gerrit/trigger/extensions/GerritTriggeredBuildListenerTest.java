@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.extensions;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
@@ -101,11 +102,59 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
     }
 
     /**
+     * Tests that {@link GrritTriggeredBuildListener} can listen triggered build with no build schedule.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testListenTriggeredBuildWithNoBuildScheduleDelay() throws Exception {
+        ExtensionList<GerritTriggeredBuildListener> list =
+                Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
+        assertTrue("Listener has not been registered", list.size() > 0);
+
+        buildListenerLatch = new CountDownLatch(2);
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+
+        Config config = (Config)gerritServer.getConfig();
+        config.setBuildScheduleDelay(0);
+
+        gerritServer.setConfig(config);
+
+        DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+
+        assertTrue("Time out", buildListenerLatch.await(15, TimeUnit.SECONDS));
+    }
+
+    /**
      * A {@link GrritTriggeredBuildListener} implementation class.
      * This would be automatically registered to system by @TestExtension annotation.
      */
     @TestExtension("testListenTriggeredBuild")
     public static class GerritTriggeredBuildListenerImpl extends GerritTriggeredBuildListener {
+
+        @Override
+        public void onStarted(GerritTriggeredEvent event, String command) {
+            System.out.println("onStarted: [event] " + event.getEventType() + " [command] " + command);
+            buildListenerLatch.countDown();
+        }
+
+        @Override
+        public void onCompleted(Result result, GerritTriggeredEvent event, String command) {
+            System.out.println("onStarted: [event] " + event.getEventType()
+                    + " [result] " + result.toString()
+                    + " [command] " + command);
+            buildListenerLatch.countDown();
+        }
+    }
+
+    /**
+     * A {@link GrritTriggeredBuildListener} implementation class.
+     * This would be automatically registered to system by @TestExtension annotation.
+     */
+    @TestExtension("testListenTriggeredBuildWithNoBuildScheduleDelay")
+    public static class GerritTriggeredBuildListenerImpl2 extends GerritTriggeredBuildListener {
 
         @Override
         public void onStarted(GerritTriggeredEvent event, String command) {
