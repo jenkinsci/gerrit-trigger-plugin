@@ -26,9 +26,13 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -38,7 +42,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -50,7 +53,15 @@ import static org.powermock.api.mockito.PowerMockito.spy;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(PluginImpl.class)
+@PowerMockIgnore({"javax.crypto.*" })
 public class GerritServerTest {
+
+    /**
+     * Jenkins rule instance.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     private final String gerritServerOneName = "testServer1";
     private GerritServer gerritServerOne;
