@@ -28,12 +28,17 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -54,7 +59,15 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({AbstractProject.class, PluginImpl.class })
+@PowerMockIgnore({"javax.crypto.*" })
 public class GerritTriggerParametersTest {
+
+    /**
+     * Jenkins rule instance.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     private MockGerritHudsonTriggerConfig config;
 
