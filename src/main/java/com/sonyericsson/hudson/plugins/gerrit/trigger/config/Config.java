@@ -141,7 +141,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritUserName;
     private String gerritEMail;
     private File gerritAuthKeyFile;
-    private String gerritAuthKeyFilePassword;
+    private Secret gerritAuthKeyFilePassword;
     private boolean useRestApi;
     private String gerritHttpUserName;
     private Secret gerritHttpPassword;
@@ -199,7 +199,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritEMail = config.getGerritEMail();
         notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
-        gerritAuthKeyFilePassword = config.getGerritAuthKeyFilePassword();
+        gerritAuthKeyFilePassword = Secret.fromString(config.getGerritAuthKeyFilePassword());
         useRestApi = config.isUseRestApi();
         gerritHttpUserName = config.getGerritHttpUserName();
         gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
@@ -254,11 +254,11 @@ public class Config implements IGerritHudsonTriggerConfig {
         } else {
             gerritAuthKeyFile = DEFAULT_GERRIT_AUTH_KEY_FILE;
         }
-        gerritAuthKeyFilePassword = formData.optString(
+        gerritAuthKeyFilePassword = Secret.fromString(formData.optString(
                 "gerritAuthKeyFilePassword",
-                DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD);
+                DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
 
-        if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() <= 0) {
+        if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.getPlainText().length() <= 0) {
             gerritAuthKeyFilePassword = null;
         }
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
@@ -477,7 +477,11 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritAuthKeyFilePassword() {
-        return gerritAuthKeyFilePassword;
+        if (gerritAuthKeyFilePassword == null) {
+            return "";
+        } else {
+            return gerritAuthKeyFilePassword.getPlainText();
+        }
     }
 
     /**
@@ -487,7 +491,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @see #getGerritAuthKeyFilePassword()
      */
     public void setGerritAuthKeyFilePassword(String gerritAuthKeyFilePassword) {
-        this.gerritAuthKeyFilePassword = gerritAuthKeyFilePassword;
+        this.gerritAuthKeyFilePassword = Secret.fromString(gerritAuthKeyFilePassword);
     }
 
     /**
@@ -874,7 +878,14 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Authentication getGerritAuthentication() {
-        return new Authentication(gerritAuthKeyFile, gerritUserName, gerritAuthKeyFilePassword);
+        Authentication authentication;
+        if (gerritAuthKeyFilePassword == null) {
+            authentication = new Authentication(gerritAuthKeyFile, gerritUserName, "");
+        } else {
+            authentication = new Authentication(
+                    gerritAuthKeyFile, gerritUserName, gerritAuthKeyFilePassword.getPlainText());
+        }
+        return authentication;
     }
 
     @Override

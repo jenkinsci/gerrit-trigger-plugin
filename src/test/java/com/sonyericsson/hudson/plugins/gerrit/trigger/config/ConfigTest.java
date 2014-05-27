@@ -36,6 +36,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import hudson.util.Secret;
+
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
@@ -252,5 +254,18 @@ public class ConfigTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         event.getChange().setUrl(null);
         assertEquals("http://gerrit/1000", config.getGerritFrontEndUrlFor(event));
+    }
+
+    /**
+     * Tests {@link Config#getGerritAuthKeyFilePassword()}.
+     * With a encrypted string as password.
+     */
+    @Test
+    public void testGetGerritAuthKeyFilePasswordFromEncryptedString() {
+        Secret pass = Secret.fromString("gerritpass");
+        String formString = "{\"gerritAuthKeyFilePassword\":\"" + pass.getEncryptedValue() + "\"}";
+        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
+        Config config = new Config(form);
+        assertEquals("gerritpass", config.getGerritAuthKeyFilePassword());
     }
 }
