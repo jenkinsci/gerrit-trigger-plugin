@@ -36,6 +36,8 @@ import net.sf.json.JSONObject;
 
 import org.apache.http.auth.Credentials;
 
+import hudson.util.Secret;
+
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
@@ -105,6 +107,11 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public String getGerritAuthKeyFilePassword() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public Secret getGerritAuthKeyFileSecretPassword() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

@@ -261,11 +261,42 @@ public class ConfigTest {
      * With a encrypted string as password.
      */
     @Test
-    public void testGetGerritAuthKeyFilePasswordFromEncryptedString() {
-        Secret pass = Secret.fromString("gerritpass");
-        String formString = "{\"gerritAuthKeyFilePassword\":\"" + pass.getEncryptedValue() + "\"}";
-        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
-        Config config = new Config(form);
-        assertEquals("gerritpass", config.getGerritAuthKeyFilePassword());
+    public void testGetGerritAuthKeyFilePassword() {
+        String formString;
+        JSONObject form;
+        Config config;
+
+        // plain text
+        formString = "{\"gerritAuthKeyFilePassword\":\"plainpass\"}";
+        form = (JSONObject)JSONSerializer.toJSON(formString);
+        config = new Config(form);
+        assertEquals("plainpass", config.getGerritAuthKeyFilePassword());
+
+        // encrypted string
+        Secret pass = Secret.fromString("encryptpass");
+        formString = "{\"gerritAuthKeyFilePassword\":\"" + pass.getEncryptedValue() + "\"}";
+        form = (JSONObject)JSONSerializer.toJSON(formString);
+        config = new Config(form);
+        assertEquals("encryptpass", config.getGerritAuthKeyFilePassword());
+
+        // empty
+        formString = "{\"gerritAuthKeyFilePassword\":\"\"}";
+        form = (JSONObject)JSONSerializer.toJSON(formString);
+        config = new Config(form);
+        assertEquals("Empty check", "", config.getGerritAuthKeyFilePassword());
+
+        // null
+        config = new Config();
+        assertEquals("Null check", "", config.getGerritAuthKeyFilePassword());
+    }
+
+    /**
+     * Tests {@link Config#getGerritAuthKeyFileSecretPassword()}.
+     */
+    @Test
+    public void testGetGerritAuthkeyFileSecretPassword() {
+        Config config = new Config();
+        config.setGerritAuthKeyFilePassword("secretpass");
+        assertEquals(Secret.fromString("secretpass"), config.getGerritAuthKeyFileSecretPassword());
     }
 }

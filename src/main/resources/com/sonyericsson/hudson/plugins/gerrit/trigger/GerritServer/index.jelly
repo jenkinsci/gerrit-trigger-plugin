@@ -74,7 +74,7 @@
                     <f:entry title="${%SSH Keyfile Password}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
                         <f:password name="gerritAuthKeyFilePassword"
-                                    value="${it.config.gerritAuthKeyFilePassword}"
+                                    value="${it.config.gerritAuthKeyFileSecretPassword}"
                                     default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
                     </f:entry>
                     <f:entry title="${%Build Current Patches Only}"
@@ -233,7 +233,7 @@
                         <f:entry title="${%Notification Level}"
                                  field="notificationLevel"
                                  help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">
-                            <f:select value="${it.config.notificationLevel}" 
+                            <f:select value="${it.config.notificationLevel}"
                                       default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_NOTIFICATION_LEVEL}" />
                         </f:entry>
                         <f:entry title="${%Verdict Categories}">
