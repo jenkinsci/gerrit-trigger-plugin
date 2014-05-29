@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
@@ -21,7 +22,7 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldFireOnAllTypeOfPatchset() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -36,13 +37,45 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnDraftPatchsetWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
         //should fire only on regular patchset (no drafts)
         assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
         patchsetCreated.getPatchSet().setDraft(true);
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+    }
+
+    /**
+     * Tests that it should not fire on trivial rebase when they are excluded.
+     * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
+     */
+    @Test
+    public void shouldNotFireOnTrivialRebaseWhenExcluded() {
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, true, false);
+        PatchsetCreated patchsetCreated = new PatchsetCreated();
+        patchsetCreated.setPatchset(new PatchSet());
+
+        //should fire only on regular patchset (no drafts)
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+        patchsetCreated.getPatchSet().setKind(GerritChangeKind.TRIVIAL_REBASE);
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+    }
+
+    /**
+     * Tests that it should not fire on no code changes when they are excluded.
+     * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
+     */
+    @Test
+    public void shouldNotFireOnNoCodeChangeWhenExcluded() {
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, true);
+        PatchsetCreated patchsetCreated = new PatchsetCreated();
+        patchsetCreated.setPatchset(new PatchSet());
+
+        //should fire only on regular patchset (no drafts)
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+        patchsetCreated.getPatchSet().setKind(GerritChangeKind.NO_CODE_CHANGE);
         assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
     }
 }
