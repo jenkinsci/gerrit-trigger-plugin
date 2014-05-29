@@ -258,9 +258,6 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
 
-        if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.getPlainText().length() <= 0) {
-            gerritAuthKeyFilePassword = null;
-        }
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
                 "gerritBuildCurrentPatchesOnly",
                 DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
@@ -879,7 +876,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Authentication getGerritAuthentication() {
-        return new Authentication(gerritAuthKeyFile, gerritUserName, Secret.toString(gerritAuthKeyFilePassword));
+        return new Authentication(gerritAuthKeyFile, gerritUserName, getGerritAuthKeyFilePassword());
     }
 
     @Override
@@ -937,6 +934,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public Secret getGerritHttpSecretPassword() {
+        return gerritHttpPassword;
+    }
+
+    @Override
     public String getGerritHttpPassword() {
         return Secret.toString(gerritHttpPassword);
     }
@@ -968,7 +970,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Credentials getHttpCredentials() {
-        return new UsernamePasswordCredentials(gerritHttpUserName, Secret.toString(gerritHttpPassword));
+        return new UsernamePasswordCredentials(gerritHttpUserName, getGerritHttpPassword());
     }
 
 }

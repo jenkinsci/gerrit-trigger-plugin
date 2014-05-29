@@ -299,4 +299,14 @@ public class ConfigTest {
         config.setGerritAuthKeyFilePassword("secretpass");
         assertEquals(Secret.fromString("secretpass"), config.getGerritAuthKeyFileSecretPassword());
     }
+
+    /**
+     * Tests {@link Config#getGerritHttpSecretPassword()}.
+     */
+    @Test
+    public void testGetGerritHttpSecretPassword() {
+        Config config = new Config();
+        config.setGerritHttpPassword("secretpass");
+        assertEquals(Secret.fromString("secretpass"), config.getGerritHttpSecretPassword());
+    }
 }

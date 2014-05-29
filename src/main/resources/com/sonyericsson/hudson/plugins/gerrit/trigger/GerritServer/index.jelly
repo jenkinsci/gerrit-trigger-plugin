@@ -273,7 +273,7 @@
                             </f:entry>
                             <f:entry title="${%Gerrit HTTP Password}">
                                 <f:password name="gerritHttpPassword"
-                                            value="${it.config.gerritHttpPassword}"/>
+                                            value="${it.config.gerritHttpSecretPassword}"/>
                             </f:entry>
                             <f:validateButton title="${%Test REST Connection}"
                                               progress="${%Testing...}"

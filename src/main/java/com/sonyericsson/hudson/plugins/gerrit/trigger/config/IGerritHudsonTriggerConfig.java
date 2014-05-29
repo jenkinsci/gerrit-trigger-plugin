@@ -216,6 +216,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     boolean isUseRestApi();
 
     /**
+     * The instance of {@link Secret} which has a password for the HTTP REST API, or null if there is none.
+     *
+     * @return the instance of {@link Secret}.
+     */
+    Secret getGerritHttpSecretPassword();
+
+    /**
      * The password for the HTTP REST API.
      *
      * @return the password

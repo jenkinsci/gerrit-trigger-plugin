@@ -297,6 +297,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public Secret getGerritHttpSecretPassword() {
+        return null;
+    }
+
+    @Override
     public String getGerritHttpPassword() {
         return "";
     }
