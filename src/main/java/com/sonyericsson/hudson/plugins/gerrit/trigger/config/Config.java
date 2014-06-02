@@ -258,9 +258,6 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
 
-        if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.getPlainText().length() <= 0) {
-            gerritAuthKeyFilePassword = null;
-        }
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
                 "gerritBuildCurrentPatchesOnly",
                 DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
@@ -477,11 +474,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public String getGerritAuthKeyFilePassword() {
-        if (gerritAuthKeyFilePassword == null) {
-            return "";
-        } else {
-            return gerritAuthKeyFilePassword.getPlainText();
-        }
+        return Secret.toString(gerritAuthKeyFilePassword);
     }
 
     /**
@@ -492,6 +485,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritAuthKeyFilePassword(String gerritAuthKeyFilePassword) {
         this.gerritAuthKeyFilePassword = Secret.fromString(gerritAuthKeyFilePassword);
+    }
+
+    @Override
+    public Secret getGerritAuthKeyFileSecretPassword() {
+        return gerritAuthKeyFilePassword;
     }
 
     /**
@@ -878,14 +876,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Authentication getGerritAuthentication() {
-        Authentication authentication;
-        if (gerritAuthKeyFilePassword == null) {
-            authentication = new Authentication(gerritAuthKeyFile, gerritUserName, "");
-        } else {
-            authentication = new Authentication(
-                    gerritAuthKeyFile, gerritUserName, gerritAuthKeyFilePassword.getPlainText());
-        }
-        return authentication;
+        return new Authentication(gerritAuthKeyFile, gerritUserName, getGerritAuthKeyFilePassword());
     }
 
     @Override
@@ -943,12 +934,13 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public Secret getGerritHttpSecretPassword() {
+        return gerritHttpPassword;
+    }
+
+    @Override
     public String getGerritHttpPassword() {
-        if (gerritHttpPassword == null) {
-            return "";
-        } else {
-            return gerritHttpPassword.getPlainText();
-        }
+        return Secret.toString(gerritHttpPassword);
     }
 
     /**
@@ -978,11 +970,7 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Credentials getHttpCredentials() {
-        if (gerritHttpPassword == null) {
-            return new UsernamePasswordCredentials(gerritHttpUserName, "");
-        } else {
-            return new UsernamePasswordCredentials(gerritHttpUserName, gerritHttpPassword.getPlainText());
-        }
+        return new UsernamePasswordCredentials(gerritHttpUserName, getGerritHttpPassword());
     }
 
 }

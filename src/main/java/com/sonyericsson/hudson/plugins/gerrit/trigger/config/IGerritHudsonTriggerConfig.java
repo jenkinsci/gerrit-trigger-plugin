@@ -30,6 +30,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 
 import net.sf.json.JSONObject;
+import hudson.util.Secret;
 
 import java.util.List;
 
@@ -215,6 +216,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     boolean isUseRestApi();
 
     /**
+     * The instance of {@link Secret} which has a password for the HTTP REST API, or null if there is none.
+     *
+     * @return the instance of {@link Secret}.
+     */
+    Secret getGerritHttpSecretPassword();
+
+    /**
      * The password for the HTTP REST API.
      *
      * @return the password
@@ -262,4 +270,11 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return the notification level value
      */
      Notify getNotificationLevel();
+
+     /**
+      * The instance of {@link Secret} which has a password for the private key, or null if there is none.
+      *
+      * @return the instance of {@link Secret}.
+      */
+     Secret getGerritAuthKeyFileSecretPassword();
 }
