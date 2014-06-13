@@ -34,6 +34,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
 import hudson.model.AbstractProject;
@@ -280,7 +281,7 @@ public enum GerritTriggerParameters {
     /**
      * Creates a {@link hudson.model.TextParameterValue} and adds it to the provided list.
      * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
-     * but its description will be used, unless the parameter type is something else than a StringParameterValue.
+     * but its description will be used, unless the parameter type is something else than a TextParameterValue.
      *
      * @param parameters   the list of existing parameters.
      * @param value        the value.
@@ -288,6 +289,23 @@ public enum GerritTriggerParameters {
      */
     public void setOrCreateTextParameterValue(List<ParameterValue> parameters, String value, boolean escapeQuotes) {
         setOrCreateParameterValue(parameters, value, escapeQuotes, TextParameterValue.class);
+    }
+
+    /**
+     * Creates a {@link Base64EncodedStringParameterValue} and adds it to the provided list.
+     * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
+     * but its description will be used, unless the parameter type is something else
+     * than a Base64EncodedStringParameterValue.
+     *
+     * @param parameters   the list of existing parameters.
+     * @param value        the value.
+     * @param escapeQuotes if quote characters should be escaped.
+     */
+    public void setOrCreateBase64EncodedStringParameterValue(
+            List<ParameterValue> parameters,
+            String value,
+            boolean escapeQuotes) {
+        setOrCreateParameterValue(parameters, value, escapeQuotes, Base64EncodedStringParameterValue.class);
     }
 
     /**
@@ -372,7 +390,7 @@ public enum GerritTriggerParameters {
                 } else {
                     try {
                         byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
-                        GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateStringParameterValue(
+                        GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateBase64EncodedStringParameterValue(
                             parameters, new String(encodedBytes), escapeQuotes);
                     } catch (UnsupportedEncodingException uee) {
                         logger.error("Failed to encode commit message as Base64: ", uee);
