@@ -44,6 +44,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
@@ -78,6 +79,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
 
 //CS IGNORE LineLength FOR NEXT 15 LINES. REASON: static import
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
@@ -1440,7 +1442,7 @@ public class GerritTriggerTest {
         ParametersAction paremetersAction =
                 triggerWithReadableMessageOff.createParameters(event, project);
         ParameterValue strPara =
-                new StringParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE.name(), stringEncoded);
+                new Base64EncodedStringParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE.name(), stringEncoded);
         verify(change, times(1)).getCommitMessage();
         assertEquals(strPara, paremetersAction.getParameter(GERRIT_CHANGE_COMMIT_MESSAGE.name()));
     }
