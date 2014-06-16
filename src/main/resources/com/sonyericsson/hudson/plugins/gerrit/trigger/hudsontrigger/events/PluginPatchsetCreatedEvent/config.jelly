@@ -26,4 +26,14 @@
              field="excludeDrafts">
         <f:checkbox/>
     </f:entry>
+    <f:entry title="${%Exclude Trivial Rebase}"
+             field="excludeTrivialRebase"
+             help="/plugin/gerrit-trigger/trigger/help-ExcludeTrivialRebase.html">
+        <f:checkbox/>
+    </f:entry>
+    <f:entry title="${%Exclude No Code Change}"
+             field="excludeNoCodeChange"
+             help="/plugin/gerrit-trigger/trigger/help-ExcludeNoCodeChange.html">
+        <f:checkbox/>
+    </f:entry>
 </j:jelly>

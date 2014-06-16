@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -41,21 +42,29 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private static final long serialVersionUID = 970946986242309088L;
 
     private boolean excludeDrafts = false;
+    private boolean excludeTrivialRebase = false;
+    private boolean excludeNoCodeChange = false;
 
     /**
      * Default constructor.
      */
     public PluginPatchsetCreatedEvent() {
-        this(false);
+        this(false, false, false);
     }
 
     /**
      * Standard DataBoundConstructor.
      * @param excludeDrafts if drafts should be excluded or not.
+     * @param excludeTrivialRebase if trivial rebases should be excluded or not.
+     * @param excludeNoCodeChange if message-only changes should be excluded.
      */
     @DataBoundConstructor
-    public PluginPatchsetCreatedEvent(boolean excludeDrafts) {
+    public PluginPatchsetCreatedEvent(boolean excludeDrafts,
+        boolean excludeTrivialRebase,
+        boolean excludeNoCodeChange) {
         this.excludeDrafts = excludeDrafts;
+        this.excludeTrivialRebase = excludeTrivialRebase;
+        this.excludeNoCodeChange = excludeNoCodeChange;
     }
 
     /**
@@ -79,12 +88,36 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         return excludeDrafts;
     }
 
+    /**
+     * Getter for the excludeTrivialRebase field.
+     * @return excludeTrivialRebase
+     */
+    public boolean isExcludeTrivialRebase() {
+        return excludeTrivialRebase;
+    }
+
+    /**
+     * Getter for the excludeNoCodeChange field.
+     * @return excludeNoCodeChange
+     */
+    public boolean isExcludeNoCodeChange() {
+        return excludeNoCodeChange;
+    }
+
     @Override
     public boolean shouldTriggerOn(GerritTriggeredEvent event) {
         if (!super.shouldTriggerOn(event)) {
             return false;
         }
         if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
+            return false;
+        }
+        if (excludeTrivialRebase
+            && GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+            return false;
+        }
+        if (excludeNoCodeChange
+            && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
             return false;
         }
         return true;
