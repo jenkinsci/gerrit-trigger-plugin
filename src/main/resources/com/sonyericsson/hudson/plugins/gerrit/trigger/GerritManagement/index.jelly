@@ -65,6 +65,12 @@
                                    value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
                     </f:entry>
+                    <f:entry title="${%Enable Delayed Approval Feature}"
+                             help="/plugin/gerrit-trigger/help-EnableDelayedApprovalFeature.html">
+                        <f:checkbox name="delayedApprovalFeatureEnabledFlag"
+                                   checked="${it.pluginConfig.delayedApprovalFeatureEnabledFlag}"
+                                   default="true"/>
+                    </f:entry>
                 </f:section>
                 <f:block>
                     <f:submit value="${%Save}" />
