@@ -287,7 +287,7 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, false, true, false, false, "", "", "", "", "", "", "", null, null, null,
+                true, true, false, false, "", "", "", "", "", "", "", null, null, null,
                 null, false, false, "", null);
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
@@ -1724,7 +1724,7 @@ public class GerritTriggerTest {
     @Test
     public void shouldReturnSlaveSelectedInJobWhenConfigured() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
-        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
             false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
             false, false, "", null);
 
@@ -1745,7 +1745,7 @@ public class GerritTriggerTest {
     @Test
     public void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
-        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
             false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
             false, false, "", null);
 

@@ -127,9 +127,9 @@
         </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
-    <module name="Translation">
+    <!--<module name="Translation">
         <property name="severity" value="info"/>
-    </module>
+    </module> Translations are lagging behind anyways-->
     <!-- Ignore generated code -->
     <module name="SuppressionCommentFilter">
         <property name="offCommentFormat" value="This file was auto-generated from WSDL"/>

@@ -141,7 +141,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private String notificationLevel;
-    private boolean delayedApproval;
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
@@ -201,7 +200,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       Job specific Gerrit code review vote when a build is not built, null means
      *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
-     * @param delayedApproval                Delayed Approval on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param noNameAndEmailParameters       Whether to create parameters containing name and email
      * @param readableMessage                Human readable message or not.
@@ -238,7 +236,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildNotBuiltVerifiedValue,
             Integer gerritBuildNotBuiltCodeReviewValue,
             boolean silentMode,
-            boolean delayedApproval,
             boolean escapeQuotes,
             boolean noNameAndEmailParameters,
             boolean readableMessage,
@@ -270,7 +267,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
         this.silentMode = silentMode;
-        this.delayedApproval = delayedApproval;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
         this.readableMessage = readableMessage;
@@ -1313,16 +1309,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
-     * If delayed approval is on or off. When delayed approval is on there will be no automatic result of the build
-     * sent back to Gerrit. This will have to be sent using a different mechanism. Default is false.
-     *
-     * @return true if delayed approval is on.
-     */
-    public boolean isDelayedApproval() {
-        return delayedApproval;
-    }
-
-    /**
      * if escapeQuotes is on or off. When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter
      * string Default is true
      *
@@ -1457,16 +1443,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setNotificationLevel(String notificationLevel) {
         this.notificationLevel = notificationLevel;
-    }
-
-    /**
-     * Sets delayed approval to on or off. When delayed approval is on there will be no automatic result of the
-     * build sent back to Gerrit. This will have to be sent using a different mechanism. Default is false.
-     *
-     * @param delayedApproval true if delayed approval should be on.
-     */
-    public void setDelayedApproval(boolean delayedApproval) {
-        this.delayedApproval = delayedApproval;
     }
 
     /**
