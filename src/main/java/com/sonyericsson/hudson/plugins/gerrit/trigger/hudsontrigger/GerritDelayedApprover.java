@@ -42,6 +42,8 @@ import java.io.PrintStream;
 import hudson.Launcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 
 
 /**
@@ -140,6 +142,12 @@ public class GerritDelayedApprover extends Notifier {
         PrintStream consoleLogger = null;
         if (listener != null) {
             consoleLogger = listener.getLogger();
+        }
+        //there won't be a PluginConfig if in a unit test, in which case, we assume the feature is enabled.
+        PluginConfig config = PluginImpl.getInstance().getPluginConfig();
+        if ((config != null) && !config.getDelayedApprovalFeatureEnabledFlag()) {
+            performLogger(consoleLogger, "Delayed Approval is disabled, will not send the delayed approval");
+            return true;
         }
 
         performLogger(consoleLogger, "Starting");
@@ -240,7 +248,8 @@ public class GerritDelayedApprover extends Notifier {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return true;
+            PluginConfig config = PluginImpl.getInstance().getPluginConfig();
+            return (config == null) || config.getDelayedApprovalFeatureEnabledFlag();
         }
 
         /*@Override

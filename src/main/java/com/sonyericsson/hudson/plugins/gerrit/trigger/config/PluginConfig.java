@@ -49,6 +49,7 @@ public class PluginConfig implements GerritWorkersConfig {
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
     private int replicationCacheExpirationInMinutes;
+    private boolean delayedApprovalFeatureEnabledFlag;
 
     /**
      * Constructs a config with default data.
@@ -75,6 +76,7 @@ public class PluginConfig implements GerritWorkersConfig {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
         replicationCacheExpirationInMinutes = pluginConfig.getReplicationCacheExpirationInMinutes();
+        delayedApprovalFeatureEnabledFlag = pluginConfig.getDelayedApprovalFeatureEnabledFlag();
     }
 
     /**
@@ -112,6 +114,8 @@ public class PluginConfig implements GerritWorkersConfig {
         if (replicationCacheExpirationInMinutes <= 0) {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
+        delayedApprovalFeatureEnabledFlag = formData.optBoolean("delayedApprovalFeatureEnabledFlag",
+            false);
     }
 
     /**
@@ -175,5 +179,21 @@ public class PluginConfig implements GerritWorkersConfig {
      */
     public void setReplicationCacheExpirationInMinutes(int replicationCacheExpirationInMinutes) {
         this.replicationCacheExpirationInMinutes = replicationCacheExpirationInMinutes;
+    }
+
+    /**
+     * Whether the delayed approval feature is enabled or not.
+     * @return the delayedApprovalFeatureEnabledFlag
+     */
+    public boolean getDelayedApprovalFeatureEnabledFlag() {
+        return delayedApprovalFeatureEnabledFlag;
+    }
+
+    /**
+     * Activation of the delayed approval feature.
+     * @param delayedApprovalFeatureEnabledFlag whether to enable the feature.
+     */
+    public void setDelayedApprovalFeatureEnabledFlag(boolean delayedApprovalFeatureEnabledFlag) {
+        this.delayedApprovalFeatureEnabledFlag = delayedApprovalFeatureEnabledFlag;
     }
 }

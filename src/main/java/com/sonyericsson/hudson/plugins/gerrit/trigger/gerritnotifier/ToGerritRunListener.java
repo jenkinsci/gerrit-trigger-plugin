@@ -25,11 +25,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -124,7 +126,13 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
 
                 updateTriggerContexts(r);
-                if (hasDelayedApproval(trigger)) {
+                boolean delayedApprovalFeatureEnabledFlag = true;
+                PluginConfig config = PluginImpl.getInstance().getPluginConfig();
+                if (config != null) {
+                    // There won't be a config if this job was run through a unit test
+                    delayedApprovalFeatureEnabledFlag = config.getDelayedApprovalFeatureEnabledFlag();
+                }
+                if (hasDelayedApproval(trigger) && delayedApprovalFeatureEnabledFlag) {
                     logger.info("Delayed approval set. Waiting for delayed approval for cause [{}]. Status: \n{}",
                             cause, memory.getStatusReport(event));
                 } else {
