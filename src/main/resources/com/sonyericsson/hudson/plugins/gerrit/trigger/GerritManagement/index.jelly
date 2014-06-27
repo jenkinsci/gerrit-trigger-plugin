@@ -69,7 +69,7 @@
                              help="/plugin/gerrit-trigger/help-EnableDelayedApprovalFeature.html">
                         <f:checkbox name="delayedApprovalFeatureEnabledFlag"
                                    checked="${it.pluginConfig.delayedApprovalFeatureEnabledFlag}"
-                                   default="true"/>
+                                   default="false"/>
                     </f:entry>
                 </f:section>
                 <f:block>

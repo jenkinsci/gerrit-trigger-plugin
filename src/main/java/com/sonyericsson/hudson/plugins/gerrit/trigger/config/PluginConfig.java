@@ -115,7 +115,7 @@ public class PluginConfig implements GerritWorkersConfig {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
         delayedApprovalFeatureEnabledFlag = formData.optBoolean("delayedApprovalFeatureEnabledFlag",
-            true);
+            false);
     }
 
     /**

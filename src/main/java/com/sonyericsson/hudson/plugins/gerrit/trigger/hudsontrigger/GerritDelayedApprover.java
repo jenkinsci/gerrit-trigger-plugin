@@ -248,7 +248,8 @@ public class GerritDelayedApprover extends Notifier {
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return true;
+            PluginConfig config = PluginImpl.getInstance().getPluginConfig();
+            return (config == null) || config.getDelayedApprovalFeatureEnabledFlag();
         }
 
         /*@Override

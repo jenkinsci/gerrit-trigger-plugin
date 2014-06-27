@@ -23,9 +23,7 @@
  *  THE SOFTWARE.
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
-
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
-
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -45,6 +43,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
@@ -61,7 +60,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
-
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
 import hudson.Extension;
@@ -89,7 +87,6 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
 import hudson.Util;
-
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -109,7 +106,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.AncestorInPath;
@@ -145,7 +141,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
-    //private List<AbstractProject> dependencyJobs;
     private boolean readableMessage;
     private String buildStartMessage;
     private String buildFailureMessage;
@@ -308,7 +303,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Returns name of server.
-     *
      * @return the server name
      *
      */
@@ -318,7 +312,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Set the selected server.
-     *
      * @param name the name of the newly selected server.
      *
      */
@@ -1741,6 +1734,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 }
             }
             return false;
+        }
+
+        /**
+         * Whether Delayed Approval feature is enabled at the global level in the admin page.
+         * @return true if so.
+         */
+        public boolean isDelayedApprovalFeatureEnabled() {
+            PluginConfig config = PluginImpl.getInstance().getPluginConfig();
+            return (config == null) || config.getDelayedApprovalFeatureEnabledFlag();
         }
 
         /**
