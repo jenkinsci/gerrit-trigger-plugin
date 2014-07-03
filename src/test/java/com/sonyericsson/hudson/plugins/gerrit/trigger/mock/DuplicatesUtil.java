@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2011, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -86,7 +85,7 @@ public abstract class DuplicatesUtil {
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, true, false, false, null, null, null, null, null, null, null,
+                false, false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, null, false, false, null, null));
         rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
@@ -114,7 +113,7 @@ public abstract class DuplicatesUtil {
         URI uri = file.toURI();
         String filepath = uri.toURL().toString();
         GerritTrigger trigger = new GerritTrigger(projects, null,
-                null, null, null, null, null, null, null, null, null, null, false,
+                null, null, null, null, null, null, null, null, null, null, false, false,
                 false, false, false, null, null, null, null, null, null, null, null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, list, true, false, filepath, null);
         p.addTrigger(trigger);
@@ -158,7 +157,7 @@ public abstract class DuplicatesUtil {
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,
-                false, true, false, false, null, null, null, null, null, null, null,
+                false, false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, list, false, false, null, null));
         rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;

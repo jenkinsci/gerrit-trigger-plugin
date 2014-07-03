@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -142,6 +141,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private String notificationLevel;
+    private boolean silentStartMode;
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
@@ -201,6 +201,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      *                                       Job specific Gerrit code review vote when a build is not built, null means
      *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
+     * @param silentStartMode                Silent Start Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param noNameAndEmailParameters       Whether to create parameters containing name and email
      * @param readableMessage                Human readable message or not.
@@ -212,7 +213,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
-     * @param customUrl                      Custom URL to sen to Gerrit instead of build URL
+     * @param customUrl                      Custom URL to send to Gerrit instead of build URL
      * @param serverName                     The selected server
      * @param gerritSlaveId                  The selected slave associated to this job, if enabled in server configs
      * @param triggerOnEvents                The list of event types to trigger on.
@@ -237,6 +238,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             Integer gerritBuildNotBuiltVerifiedValue,
             Integer gerritBuildNotBuiltCodeReviewValue,
             boolean silentMode,
+            boolean silentStartMode,
             boolean escapeQuotes,
             boolean noNameAndEmailParameters,
             boolean readableMessage,
@@ -268,6 +270,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
         this.silentMode = silentMode;
+        this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
         this.readableMessage = readableMessage;
@@ -405,7 +408,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
-                removeListener();
+            removeListener();
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
@@ -415,8 +418,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
     /**
      * Removes listener from the server.
-     *
-     *
      */
     private void removeListener() {
         PluginImpl plugin = PluginImpl.getInstance();
@@ -427,7 +428,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 logger.error("The Gerrit handler has not been initialized. BUG!");
             }
         } else {
-       logger.error("The plugin instance could not be found");
+            logger.error("The plugin instance could not be found");
         }
     }
 
@@ -717,7 +718,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (paramDefProp == null) {
             return defValues;
         }
-
         /* Scan for all parameters with an associated default value */
         for (ParameterDefinition paramDefinition : paramDefProp.getParameterDefinitions()) {
             ParameterValue defaultValue = paramDefinition.getDefaultParameterValue();
@@ -1336,6 +1336,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
     }
 
     /**
+     * If silent start mode is on or off. When silent start mode is on there will be no 'build started' message back
+     * to Gerrit. Default is false.
+     *
+     * @return true if silent start mode is on.
+     */
+    public boolean isSilentStartMode() {
+        return silentStartMode;
+    }
+
+    /**
      * Returns whom to notify.
      *
      * @return the notification level value
@@ -1470,6 +1480,16 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * Sets silent start mode to on or off. When silent start mode is on there will be no 'silent start' message
+     * back to Gerrit. Default is false.
+     *
+     * @param silentStartMode true if silent start mode should be on.
+     */
+    public void setSilentStartMode(boolean silentStartMode) {
+        this.silentStartMode = silentStartMode;
     }
 
     /**
@@ -1813,7 +1833,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             if (value == null || value.isEmpty()) {
                 return FormValidation.error(Messages.EmptyError());
             }
-
             try {
                 URL url = new URL(value); // Check for protocol errors
                 url.toURI(); // Perform some extra checking
@@ -1977,7 +1996,6 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     }
                 }
             }
-
             // Interrupt any currently running jobs.
             for (Computer c : Hudson.getInstance().getComputers()) {
                 List<Executor> executors = new ArrayList<Executor>();

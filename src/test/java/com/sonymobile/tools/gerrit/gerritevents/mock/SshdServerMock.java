@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
- * Copyright 2013 Sony Mobile Communications AB. All rights reserved.
+ * Copyright (c) 2011, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -148,6 +147,15 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
+     * Get the command history.
+     *
+     * @return the command history.
+     */
+    public List<CommandMock> getCommandHistory() {
+        return commandHistory;
+    }
+
+    /**
      * Gets the first running command that matches the given regular expression.
      *
      * @param commandSearch the regular expression to match.
@@ -163,6 +171,25 @@ public class SshdServerMock implements CommandFactory {
             }
         }
         return null;
+    }
+
+    /**
+     * Gets the number of commands that match the given regular expression from the command history.
+     *
+     * @param commandSearch the regular expression to match.
+     * @return number of found commands.
+     */
+    public synchronized int getNrCommandsHistory(String commandSearch) {
+        int matches = 0;
+        if (commandHistory != null) {
+            Pattern p = Pattern.compile(commandSearch);
+            for (CommandMock command : commandHistory) {
+                if (p.matcher(command.getCommand()).find()) {
+                    matches++;
+                }
+            }
+        }
+        return matches;
     }
 
     /**
@@ -246,6 +273,33 @@ public class SshdServerMock implements CommandFactory {
         } while (command == null);
         System.out.println("Found it!!! " + command.getCommand());
         return command;
+    }
+
+    /**
+     * Waits for number of commands matching the provided regular expression to appear in the command history.
+     *
+     * @param commandSearch a regular expression.
+     * @param need          the number of occurrences to wait for.
+     * @param timeout       the maximum time to wait for the command in ms.
+     * @return true if the nr of needed commands was found.
+     */
+    public boolean waitForNrCommands(String commandSearch, int need, int timeout) {
+        long startTime = System.currentTimeMillis();
+        int got = 0;
+        do {
+            if (System.currentTimeMillis() - startTime >= timeout) {
+                throw new RuntimeException("Timeout!");
+            }
+            got = getNrCommandsHistory(commandSearch);
+            if (got != need) {
+                try {
+                    Thread.sleep(MIN_SLEEP);
+                    //CS IGNORE EmptyBlock FOR NEXT 2 LINES. REASON: not needed.
+                } catch (InterruptedException e) {
+                }
+            }
+        } while (got != need);
+        return true;
     }
 
     /**

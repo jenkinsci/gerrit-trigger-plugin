@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -524,9 +523,11 @@ public final class Setup {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
+        boolean silentMode = true;
+        boolean silentStart = false;
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, false, "", "", "", "", "", "", "", null,
+                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, false, "", null);
 
         if (project != null) {
