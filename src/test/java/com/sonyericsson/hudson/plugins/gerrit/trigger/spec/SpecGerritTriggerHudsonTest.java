@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +44,7 @@ import hudson.model.Item;
 import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
+import hudson.model.TopLevelItem;
 import hudson.util.RunList;
 import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -80,6 +80,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
     }
@@ -89,6 +90,88 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         super.tearDown();
         sshd.stop(true);
         sshd = null;
+    }
+
+    /**
+     * Tests that a triggered build in silent start mode does not emit any build started messages.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredSilentStartModeBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentStartMode(true);
+
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        waitForDynamicTimer(project, 5000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+
+        List<SshdServerMock.CommandMock> commands = server.getCommandHistory();
+        for (int i = 0; i < commands.size(); i++) {
+            String command = commands.get(i).getCommand();
+            assertFalse(command.toLowerCase().contains("build started"));
+        }
+    }
+
+    /**
+     * Tests that a triggered build without silent start mode does emit build started messages.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredNoSilentStartModeBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentStartMode(false);
+
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        waitForDynamicTimer(project, 5000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+
+        try {
+            server.waitForNrCommands("Build Started", 1, 5000);
+        } catch (Exception e) {
+            System.out.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            fail("Should not throw exception.");
+        }
+    }
+
+    /**
+     * Trigger several builds and test that the one in silent start mode does not emit any build started messages
+     * while the ones without silent start mode does.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredSilentStartModeMixedBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(3);
+        final int nrOfJobs = 3;
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        project.getBuildersList().add(new SleepBuilder(1000));
+        project.save();
+        for (int i = 0; i < nrOfJobs; i++) {
+            String name = String.format("project%d", i);
+            FreeStyleProject copyProject = (FreeStyleProject)jenkins.copy((TopLevelItem)project, name);
+            boolean mode = (i & 1) == 0; // true for even numbers
+            copyProject.getTrigger(GerritTrigger.class).setSilentStartMode(mode);
+        }
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        try {
+            server.waitForNrCommands("Build Started", 2, nrOfJobs * 5000);
+        } catch (Exception e) {
+            System.out.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            fail("Should not throw exception.");
+        }
     }
 
     /**
@@ -176,7 +259,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     }
 
     /**
-     * Tests that a build for a patch set of the gets canceled when a new patch set of the same change arrives.
+     * Tests that a build for a patch set gets cancelled when a new patch set of the same change arrives.
      *
      * @throws Exception if so.
      */

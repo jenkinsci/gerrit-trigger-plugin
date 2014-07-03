@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -280,14 +279,15 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests that initalizeTriggerOnEvents is run correctly by the start method.
+     * Tests that initializeTriggerOnEvents is run correctly by the start method.
      */
     @Test
     public void testInitializeTriggerOnEvents() {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
+        boolean silentStartMode = false;
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, false, "", "", "", "", "", "", "", null, null, null,
+                true, silentStartMode, true, false, false, "", "", "", "", "", "", "", null, null, null,
                 null, false, false, "", null);
         trigger = spy(trigger);
         Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
@@ -1724,9 +1724,9 @@ public class GerritTriggerTest {
     @Test
     public void shouldReturnSlaveSelectedInJobWhenConfigured() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
-        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-            false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
-            false, false, "", null);
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+                false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
+                false, false, "", null);
 
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);
         when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(true);
@@ -1745,9 +1745,9 @@ public class GerritTriggerTest {
     @Test
     public void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
-        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, true,
-            false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
-            false, false, "", null);
+        GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
+                false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
+                false, false, "", null);
 
         // Replication is configured at job level but slave and default no longer exist.
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);

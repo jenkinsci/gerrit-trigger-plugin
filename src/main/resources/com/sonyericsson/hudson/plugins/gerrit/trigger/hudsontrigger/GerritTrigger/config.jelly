@@ -12,6 +12,12 @@
             </f:entry>
         </j:if>
         <f:advanced>
+            <f:entry title="${%Silent Start Mode}"
+                     field="silentStartMode"
+                     help="/plugin/gerrit-trigger/trigger/help-SilentStartMode.html">
+               <f:checkbox name="silentStartMode"
+                           checked="${it.silentStartMode}"/>
+            </f:entry>
             <f:entry title="${%Escape Quotes in Parameter Values}"  field="escapeQuotes"
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
