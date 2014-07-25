@@ -56,7 +56,13 @@ public final class GerritVersionChecker {
         /**
          * Replication events, added in Gerrit 2.9.
          */
-        replicationEvents("Replication events", "2.9");
+        replicationEvents("Replication events", "2.9"),
+
+        /**
+         * 'notify' parameter for SSH review command, added in Gerrit 2.9.
+         * Note that 'notify' in REST API was added in Gerrit 2.8 already.
+         */
+        notifyParameterInSSH("'notify' SSH parameter", "2.9");
 
         private final String displayName;
         private final String version;
@@ -92,8 +98,6 @@ public final class GerritVersionChecker {
             return version;
         }
     }
-
-    ;
 
     /**
      * Private constructor to prevent instantiation of the util class.

@@ -20,4 +20,14 @@
             </ul>
         </div>
     </j:if>
+    <j:if test="${it.hasVersionWarnings()}">
+        <div class="warning">
+            ${%VersionWarning}
+            <ul>
+                <j:forEach items="${it.getVersionWarnings()}" var="warning">
+                    <li>${warning}</li>
+                </j:forEach>
+            </ul>
+        </div>
+    </j:if>
 </j:jelly>

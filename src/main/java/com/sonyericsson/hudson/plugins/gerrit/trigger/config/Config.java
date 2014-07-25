@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 
 
 
+
 //CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static import.
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
@@ -838,6 +839,14 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (event instanceof ChangeBasedEvent) {
             str.append(((ChangeBasedEvent)event).getChange().getNumber());
         }
+        return str.toString();
+    }
+
+    @Override
+    public String getGerritFrontEndUrlForDocumentation(String pathInDocumentation) {
+        StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
+        str.append("Documentation/");
+        str.append(pathInDocumentation);
         return str.toString();
     }
 

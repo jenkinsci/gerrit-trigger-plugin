@@ -166,6 +166,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritFrontEndUrlFor(GerritTriggeredEvent event);
 
     /**
+     * Creates a URL to the provided documentation document.
+     * @param pathInDocumentation the path below the 'Documentation' URL
+     * @return the documentation URL
+     */
+    String getGerritFrontEndUrlForDocumentation(String pathInDocumentation);
+
+    /**
      * Get the list of available VerdictCategories.
      * @return the list.
      */

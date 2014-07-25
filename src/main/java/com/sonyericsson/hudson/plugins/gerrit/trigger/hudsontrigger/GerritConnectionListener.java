@@ -49,6 +49,7 @@ public class GerritConnectionListener implements ConnectionListener {
     private boolean connected;
     private boolean gerritSnapshotVersion;
     private List<GerritVersionChecker.Feature> disabledFeatures;
+    private List<GerritVersionChecker.Feature> enabledFeatures;
 
     /**
      * Default constructor.
@@ -105,6 +106,16 @@ public class GerritConnectionListener implements ConnectionListener {
     }
 
     /**
+     * Whether the given feature is supported by the Gerrit version denoted by this connection.
+     *
+     * @param feature the feature in question
+     * @return supported or not
+     */
+    public boolean supportsFeature(GerritVersionChecker.Feature feature) {
+        return enabledFeatures.contains(feature);
+    }
+
+    /**
      * @see ConnectionListener#connectionEstablished()
      */
     @Override
@@ -145,13 +156,17 @@ public class GerritConnectionListener implements ConnectionListener {
         if (connected) {
             GerritVersionNumber version =
                     GerritVersionChecker.createVersionNumber(getVersionString());
-            List<GerritVersionChecker.Feature> list = new LinkedList<GerritVersionChecker.Feature>();
+            List<GerritVersionChecker.Feature> disabled = new LinkedList<GerritVersionChecker.Feature>();
+            List<GerritVersionChecker.Feature> enabled = new LinkedList<GerritVersionChecker.Feature>();
             for (GerritVersionChecker.Feature f : GerritVersionChecker.Feature.values()) {
-                if (!GerritVersionChecker.isCorrectVersion(version, f)) {
-                    list.add(f);
+                if (GerritVersionChecker.isCorrectVersion(version, f)) {
+                    enabled.add(f);
+                } else {
+                    disabled.add(f);
                 }
             }
-            disabledFeatures = list;
+            enabledFeatures = enabled;
+            disabledFeatures = disabled;
             gerritSnapshotVersion = version.isSnapshot();
         } else {
             disabledFeatures = null;
