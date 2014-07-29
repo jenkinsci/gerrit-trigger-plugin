@@ -44,6 +44,7 @@ import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 
+import com.rabbitmq.client.impl.LongStringHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.GerritTriggerApi;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginNotFoundException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginStatusException;
@@ -95,11 +96,11 @@ public class RabbitMQMessageListenerImplTest {
         Whitebox.setInternalState(listener, GerritTriggerApi.class, apiMock);
 
         Map<String, Object> header = new HashMap<String, Object>();
-        header.put("gerrit-name", "gerrit1");
-        header.put("gerrit-host", "gerrit1.localhost");
-        header.put("gerrit-port", "29418");
-        header.put("gerrit-scheme", "ssh");
-        header.put("gerrit-front-url", "http://gerrit1.localhost");
+        header.put("gerrit-name", LongStringHelper.asLongString("gerrit1"));
+        header.put("gerrit-host", LongStringHelper.asLongString("gerrit1.localhost"));
+        header.put("gerrit-port", LongStringHelper.asLongString("29418"));
+        header.put("gerrit-scheme", LongStringHelper.asLongString("ssh"));
+        header.put("gerrit-front-url", LongStringHelper.asLongString("http://gerrit1.localhost"));
         header.put("gerrit-version", "2.8.4");
 
         listener.onBind("TEST");
@@ -107,12 +108,12 @@ public class RabbitMQMessageListenerImplTest {
         verify(handlerMock).post(
                 "test message",
                 new Provider(
-                        (String)header.get("gerrit-name"),
-                        (String)header.get("gerrit-host"),
-                        (String)header.get("gerrit-port"),
-                        (String)header.get("gerrit-scheme"),
-                        (String)header.get("gerrit-front-url"),
-                        (String)header.get("gerrit-version")));
+                        header.get("gerrit-name").toString(),
+                        header.get("gerrit-host").toString(),
+                        header.get("gerrit-port").toString(),
+                        header.get("gerrit-scheme").toString(),
+                        header.get("gerrit-front-url").toString(),
+                        header.get("gerrit-version").toString()));
     }
 
     /**

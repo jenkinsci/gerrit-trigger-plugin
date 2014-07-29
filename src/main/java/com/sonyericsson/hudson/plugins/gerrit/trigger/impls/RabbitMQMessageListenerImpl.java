@@ -90,22 +90,22 @@ public class RabbitMQMessageListenerImpl extends MessageQueueListener {
             Provider provider = new Provider();
             if (headers != null) {
                 if (headers.containsKey(GERRIT_NAME)) {
-                    provider.setName((String)headers.get(GERRIT_NAME));
+                    provider.setName(headers.get(GERRIT_NAME).toString());
                 }
                 if (headers.containsKey(GERRIT_HOST)) {
-                    provider.setHost((String)headers.get(GERRIT_HOST));
+                    provider.setHost(headers.get(GERRIT_HOST).toString());
                 }
                 if (headers.containsKey(GERRIT_SCHEME)) {
-                    provider.setScheme((String)headers.get(GERRIT_SCHEME));
+                    provider.setScheme(headers.get(GERRIT_SCHEME).toString());
                 }
                 if (headers.containsKey(GERRIT_PORT)) {
-                    provider.setPort((String)headers.get(GERRIT_PORT));
+                    provider.setPort(headers.get(GERRIT_PORT).toString());
                 }
                 if (headers.containsKey(GERRIT_FRONT_URL)) {
-                    provider.setUrl((String)headers.get(GERRIT_FRONT_URL));
+                    provider.setUrl(headers.get(GERRIT_FRONT_URL).toString());
                 }
                 if (headers.containsKey(GERRIT_VERSION)) {
-                    provider.setVersion((String)headers.get(GERRIT_VERSION));
+                    provider.setVersion(headers.get(GERRIT_VERSION).toString());
                 }
             }
 
