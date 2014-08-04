@@ -138,6 +138,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private String name;
     @Deprecated
     private boolean pseudoMode;
+    private boolean noConnectionOnBootup;
     private transient boolean started;
     private transient boolean timeoutWakeup = false;
     private transient String connectionResponse = "";
@@ -184,11 +185,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Constructor.
      *
      * @param name the name of the server.
-     * @param pseudoMode if pseudo mode or not.
+     * @param noConnectionOnBootup if noConnectionOnBootup or not.
      */
-    public GerritServer(String name, boolean pseudoMode) {
+    public GerritServer(String name, boolean noConnectionOnBootup) {
         this.name = name;
-        this.pseudoMode = pseudoMode;
+        this.pseudoMode = false;
+        this.noConnectionOnBootup = noConnectionOnBootup;
         config = new Config();
     }
 
@@ -237,6 +239,24 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Deprecated
     public void setPseudoMode(boolean pseudoMode) {
         this.pseudoMode = pseudoMode;
+    }
+
+    /**
+     * If no connection on bootup or not.
+     *
+     * @return true if so.
+     */
+    public boolean isNoConnectionOnBootup() {
+        return noConnectionOnBootup;
+    }
+
+    /**
+     * Sets connect on bootup.
+     *
+     * @param noConnectionOnBootup true if connect on bootup.
+     */
+    public void setNoConnectionOnBootup(boolean noConnectionOnBootup) {
+        this.noConnectionOnBootup = noConnectionOnBootup;
     }
 
     /**
@@ -757,6 +777,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             rename(newName);
             renamed = true;
         }
+        noConnectionOnBootup = form.getBoolean("noConnectionOnBootup");
         config.setValues(form);
 
         PluginImpl.getInstance().save();

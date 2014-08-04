@@ -314,4 +314,16 @@ public class GerritServerHudsonTest extends HudsonTestCase {
 
         form.submit(null);
     }
+
+    /**
+     * Test not conect to Gerrit on startup.
+     * @throws Exception Error creating job.
+     */
+    @Test
+    public void testConnectOnStartup() throws Exception {
+        GerritServer gerritServerOne = new GerritServer(gerritServerOneName, true);
+        PluginImpl.getInstance().addServer(gerritServerOne);
+        gerritServerOne.start();
+        assertEquals(true, gerritServerOne.isNoConnectionOnBootup());
+    }
 }
