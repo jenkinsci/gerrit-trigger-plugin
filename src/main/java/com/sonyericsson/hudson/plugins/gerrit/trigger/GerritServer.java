@@ -136,6 +136,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final int RESPONSE_INTERVAL_MS = 1000;
     private static final int RESPONSE_TIMEOUT_S = 10;
     private String name;
+    @Deprecated
     private boolean pseudoMode;
     private transient boolean started;
     private transient boolean timeoutWakeup = false;
@@ -223,6 +224,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return true if so.
      */
+    @Deprecated
     public boolean isPseudoMode() {
         return pseudoMode;
     }
@@ -232,6 +234,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @param pseudoMode true if pseudoMode connection.
      */
+    @Deprecated
     public void setPseudoMode(boolean pseudoMode) {
         this.pseudoMode = pseudoMode;
     }
@@ -310,12 +313,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getInstance().getHandler();
 
-        if (pseudoMode) {
-            logger.info(name + " started (pseudo mode)");
-            started = true;
-            return;
-        }
-
         initializeConnectionListener();
 
         projectListUpdater = new GerritProjectListUpdater(name);
@@ -344,12 +341,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public void stop() {
         logger.info("Stopping GerritServer " + name);
-
-        if (pseudoMode) {
-            logger.info(name + " stopped (pseudo mode)");
-            started = false;
-            return;
-        }
 
         if (projectListUpdater != null) {
             projectListUpdater.shutdown();
@@ -425,11 +416,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public synchronized void startConnection() {
-        if (pseudoMode) {
-            gerritEventManager.setIgnoreEMail(name, config.getGerritEMail());
-            return;
-        }
-
         if (!config.hasDefaultValues()) {
             if (gerritConnection == null) {
                 logger.debug("Starting Gerrit connection...");
@@ -450,11 +436,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public synchronized void stopConnection() {
-        if (pseudoMode) {
-            gerritEventManager.setIgnoreEMail(name, null);
-            return;
-        }
-
         if (gerritConnection != null) {
             gerritConnection.shutdown(true);
             gerritConnection.removeListener(gerritConnectionListener);
@@ -472,9 +453,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
 
     public synchronized boolean isConnected() {
-        if (pseudoMode) {
-            return true;
-        }
         if (gerritConnection != null) {
             return gerritConnection.isConnected();
         }
@@ -486,9 +464,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public void restartConnection() {
-        if (pseudoMode) {
-            return;
-        }
         stopConnection();
         startConnection();
     }
@@ -570,7 +545,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         /**
          * Tests if the provided parameters can connect to Gerrit.
-         * @param pseudoMode if pseudo mode or not.
          * @param gerritHostName the hostname
          * @param gerritSshPort the ssh-port
          * @param gerritProxy the proxy url
@@ -581,16 +555,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
          *         {@link FormValidation#error(java.lang.String) } otherwise.
          */
         public FormValidation doTestConnection(
-                @QueryParameter("pseudoMode") final boolean pseudoMode,
                 @QueryParameter("gerritHostName") final String gerritHostName,
                 @QueryParameter("gerritSshPort") final int gerritSshPort,
                 @QueryParameter("gerritProxy") final String gerritProxy,
                 @QueryParameter("gerritUserName") final String gerritUserName,
                 @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
                 @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
-            if (pseudoMode) {
-                return FormValidation.ok(Messages.Success());
-            }
             if (logger.isDebugEnabled()) {
                 logger.debug("gerritHostName = {}\n"
                         + "gerritSshPort = {}\n"
@@ -775,12 +745,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
             logger.debug("submit {}", req.toString());
         }
         JSONObject form = req.getSubmittedForm();
-        if (isConnected()) {
-            pseudoMode = false;
-            form.put("pseudoMode", false);
-        } else {
-            pseudoMode = form.getBoolean("pseudoMode");
-        }
 
         String newName = form.getString("name");
         boolean renamed = false;
