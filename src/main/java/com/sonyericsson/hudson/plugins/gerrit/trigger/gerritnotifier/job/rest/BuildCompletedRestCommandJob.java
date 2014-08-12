@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
@@ -41,15 +42,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+
 /**
 * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
 * sends a build completed message.
 */
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
+    private static final String LABEL_CODEREVIEW = "Code-Review";
+    private static final String LABEL_VERIFIED   = "Verified";
+
     private final BuildMemory.MemoryImprint memoryImprint;
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
+    private final Collection<VerdictCategory> categories;
 
     /**
      * Constructor.
@@ -65,17 +71,26 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
         this.memoryImprint = memoryImprint;
         this.listener = listener;
         parameterExpander = new ParameterExpander(config);
+        this.categories = config.getCategories();
     }
 
     @Override
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
 
-        int verified = 0;
-        int codeReview = 0;
+        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
         if (memoryImprint.getEvent().isScorable()) {
-            verified = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
-            codeReview = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
+            for (VerdictCategory cat : categories) {
+                if (LABEL_CODEREVIEW.equals(cat.getVerdictDescription())) {
+                    scoredLabels.add(new ReviewLabel(
+                            cat.getVerdictDescription(),
+                            parameterExpander.getMinimumCodeReviewValue(memoryImprint, true)));
+                } else if (LABEL_VERIFIED.equals(cat.getVerdictDescription())) {
+                    scoredLabels.add(new ReviewLabel(
+                            cat.getVerdictDescription(),
+                            parameterExpander.getMinimumVerifiedValue(memoryImprint, true)));
+                }
+            }
         }
         Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
         List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
@@ -92,9 +107,6 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                 }
             }
         }
-        return new ReviewInput(message,
-                commentedFiles, ReviewLabel.verified(verified),
-                ReviewLabel.codeReview(codeReview)).
-                setNotify(notificationLevel);
+        return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
     }
 }

@@ -75,6 +75,19 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
     }
 
     /**
+     * Converts old serialized data to newer construct.
+     *
+     * @return itself
+     */
+    @SuppressWarnings("unused")
+    private Object readResolve() {
+        if ("Code Review".equals(verdictDescription)) {
+            verdictDescription = "Code-Review";
+        }
+        return this;
+    }
+
+    /**
      * The Descriptor for a VerdictCategory.
      */
     @Extension
