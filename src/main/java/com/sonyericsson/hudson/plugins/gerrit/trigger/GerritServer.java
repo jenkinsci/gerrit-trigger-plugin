@@ -138,7 +138,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private String name;
     @Deprecated
     private transient boolean pseudoMode;
-    private boolean noConnectionOnBootup;
+    private boolean noConnectionOnStartup;
     private transient boolean started;
     private transient boolean timeoutWakeup = false;
     private transient String connectionResponse = "";
@@ -185,12 +185,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Constructor.
      *
      * @param name the name of the server.
-     * @param noConnectionOnBootup if noConnectionOnBootup or not.
+     * @param noConnectionOnStartup if noConnectionOnStartup or not.
      */
-    public GerritServer(String name, boolean noConnectionOnBootup) {
+    public GerritServer(String name, boolean noConnectionOnStartup) {
         this.name = name;
         this.pseudoMode = false;
-        this.noConnectionOnBootup = noConnectionOnBootup;
+        this.noConnectionOnStartup = noConnectionOnStartup;
         config = new Config();
     }
 
@@ -242,21 +242,21 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     * If no connection on bootup or not.
+     * If no connection on startup or not.
      *
      * @return true if so.
      */
-    public boolean isNoConnectionOnBootup() {
-        return noConnectionOnBootup;
+    public boolean isNoConnectionOnStartup() {
+        return noConnectionOnStartup;
     }
 
     /**
-     * Sets connect on bootup.
+     * Sets connect on startup.
      *
-     * @param noConnectionOnBootup true if connect on bootup.
+     * @param noConnectionOnStartup true if connect on startup.
      */
-    public void setNoConnectionOnBootup(boolean noConnectionOnBootup) {
-        this.noConnectionOnBootup = noConnectionOnBootup;
+    public void setNoConnectionOnStartup(boolean noConnectionOnStartup) {
+        this.noConnectionOnStartup = noConnectionOnStartup;
     }
 
     /**
@@ -777,7 +777,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             rename(newName);
             renamed = true;
         }
-        noConnectionOnBootup = form.getBoolean("noConnectionOnBootup");
+        noConnectionOnStartup = form.getBoolean("noConnectionOnStartup");
         config.setValues(form);
 
         PluginImpl.getInstance().save();

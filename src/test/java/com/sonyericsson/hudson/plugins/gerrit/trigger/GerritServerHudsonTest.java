@@ -324,6 +324,6 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName, true);
         PluginImpl.getInstance().addServer(gerritServerOne);
         gerritServerOne.start();
-        assertEquals(true, gerritServerOne.isNoConnectionOnBootup());
+        assertEquals(true, gerritServerOne.isNoConnectionOnStartup());
     }
 }

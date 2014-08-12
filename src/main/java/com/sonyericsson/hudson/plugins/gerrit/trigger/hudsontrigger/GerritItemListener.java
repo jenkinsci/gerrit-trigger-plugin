@@ -77,7 +77,7 @@ public class GerritItemListener extends ItemListener {
     public void onLoaded() {
         if (PluginImpl.getInstance() != null) {
             for (GerritServer s : PluginImpl.getInstance().getServers()) {
-                if (!s.isNoConnectionOnBootup()) {
+                if (!s.isNoConnectionOnStartup()) {
                     s.startConnection();
                 }
             }
