@@ -137,7 +137,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final int RESPONSE_TIMEOUT_S = 10;
     private String name;
     @Deprecated
-    private boolean pseudoMode;
+    private transient boolean pseudoMode;
     private boolean noConnectionOnBootup;
     private transient boolean started;
     private transient boolean timeoutWakeup = false;
