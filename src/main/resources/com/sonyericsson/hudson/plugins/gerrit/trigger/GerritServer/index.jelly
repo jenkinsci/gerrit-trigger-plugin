@@ -21,10 +21,10 @@
                                    value="${it.name}"
                                    checkUrl="'${rootURL}/${serverURL}/nameFreeCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <f:entry title="${%Pseudo Mode}"
-                             help="/plugin/gerrit-trigger/help-GerritPseudoMode.html">
-                        <f:checkbox name="pseudoMode"
-                                    checked="${it.pseudoMode}"
+                    <f:entry title="${%No Connection On Startup}"
+                             help="/plugin/gerrit-trigger/help-GerritNoConnectionOnStartup.html">
+                        <f:checkbox name="noConnectionOnStartup"
+                                    checked="${it.noConnectionOnStartup}"
                                     default="false"/>
                     </f:entry>
                     <f:entry title="${%Hostname}"
