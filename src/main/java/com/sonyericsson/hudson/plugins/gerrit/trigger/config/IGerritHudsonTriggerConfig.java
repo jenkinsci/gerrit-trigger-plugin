@@ -230,6 +230,19 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritHttpPassword();
 
     /**
+     * If Code-Review label should be provided to REST API for ReviewInput.
+     *
+     * @return true if so.
+     */
+    boolean isRestCodeReview();
+
+    /**
+     * If Verified label should be provided to REST API for ReviewInput.
+     *
+     * @return true if so.
+     */
+    boolean isRestVerified();
+    /**
      * The user name for the HTTP REST API.
      *
      * @return username
