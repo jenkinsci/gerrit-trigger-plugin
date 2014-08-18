@@ -279,7 +279,16 @@
                                               progress="${%Testing...}"
                                               method="testRestConnection"
                                               with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
-
+                            <f:entry title="${%Enable Code-Review}">
+                                <f:checkbox name="restCodeReview"
+                                            checked="${is.config.restCodeReview}"
+                                            default="true" />
+                            </f:entry>
+                            <f:entry title="${%Enable Verified}">
+                                <f:checkbox name="restVerified"
+                                            checked="${it.config.restVerified}"
+                                            default="true" />
+                            </f:entry>
                         </f:optionalBlock>
                     </f:section>
                     <j:if test="${instance.isReplicationEventsSupported()}">

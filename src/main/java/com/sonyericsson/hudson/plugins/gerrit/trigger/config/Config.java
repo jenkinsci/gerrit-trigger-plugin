@@ -53,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 
 
 
+
 //CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static import.
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
@@ -145,6 +146,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean useRestApi;
     private String gerritHttpUserName;
     private Secret gerritHttpPassword;
+    private boolean restCodeReview;
+    private boolean restVerified;
     private boolean gerritBuildCurrentPatchesOnly;
     @Deprecated
     private transient int numberOfWorkerThreads;
@@ -203,6 +206,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         useRestApi = config.isUseRestApi();
         gerritHttpUserName = config.getGerritHttpUserName();
         gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
+        restCodeReview = config.isRestCodeReview();
+        restVerified = config.isRestVerified();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
@@ -363,6 +368,8 @@ public class Config implements IGerritHudsonTriggerConfig {
             JSONObject restApi = formData.getJSONObject("useRestApi");
             gerritHttpUserName = restApi.optString("gerritHttpUserName", "");
             gerritHttpPassword = Secret.fromString(restApi.optString("gerritHttpPassword", ""));
+            restCodeReview = restApi.optBoolean("restCodeReview", true);
+            restVerified = restApi.optBoolean("restVerified", true);
         } else {
             useRestApi = false;
         }
@@ -971,6 +978,32 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Credentials getHttpCredentials() {
         return new UsernamePasswordCredentials(gerritHttpUserName, getGerritHttpPassword());
+    }
+
+    @Override
+    public boolean isRestCodeReview() {
+        return restCodeReview;
+    }
+
+    /**
+     * Sets restCodeReview.
+     * @param restCodeReview true if include Code-Review label to REST API for ReviewInput.
+     */
+    public void setRestCodeReview(boolean restCodeReview) {
+        this.restCodeReview = restCodeReview;
+    }
+
+    @Override
+    public boolean isRestVerified() {
+        return restVerified;
+    }
+
+    /**
+     * Sets restVerified.
+     * @param restVerified true if include Verified label to REST API for ReviewInput.
+     */
+    public void setRestVerified(boolean restVerified) {
+        this.restVerified = restVerified;
     }
 
 }

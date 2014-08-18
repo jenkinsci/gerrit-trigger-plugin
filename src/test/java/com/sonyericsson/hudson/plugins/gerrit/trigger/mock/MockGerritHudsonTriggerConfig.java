@@ -320,4 +320,14 @@ public class MockGerritHudsonTriggerConfig implements
     public ReplicationConfig getReplicationConfig() {
         return null;
     }
+
+    @Override
+    public boolean isRestCodeReview() {
+        return true;
+    }
+
+    @Override
+    public boolean isRestVerified() {
+        return true;
+    }
 }
