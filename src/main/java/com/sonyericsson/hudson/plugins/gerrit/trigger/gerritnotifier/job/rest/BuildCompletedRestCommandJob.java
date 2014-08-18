@@ -48,7 +48,7 @@ import java.util.List;
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     private static final String LABEL_CODEREVIEW = "Code-Review";
-    private static final String LABEL_VERIFIED   = "VERIFIED";
+    private static final String LABEL_VERIFIED   = "Verified";
 
     private final BuildMemory.MemoryImprint memoryImprint;
     private final TaskListener listener;
