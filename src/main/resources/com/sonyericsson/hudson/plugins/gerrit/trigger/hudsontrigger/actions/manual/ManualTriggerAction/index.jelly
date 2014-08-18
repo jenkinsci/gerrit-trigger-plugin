@@ -51,7 +51,7 @@
                             <f:entry title="${%Query String}"
                                      help="help-Search">
                                 <f:textbox name="queryString"
-                                           value=""
+                                           value="${request.session.getAttribute('queryString')}"
                                            default="status:open"/>
                             </f:entry>
                             <f:block>
