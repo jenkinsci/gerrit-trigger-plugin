@@ -51,8 +51,8 @@
                             <f:entry title="${%Query String}"
                                      help="help-Search">
                                 <f:textbox name="queryString"
-                                           value="status:open"
-                                           default=""/>
+                                           value=""
+                                           default="status:open"/>
                             </f:entry>
                             <f:block>
                                 <f:submit value="${%Search}"/>
