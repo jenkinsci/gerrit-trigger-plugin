@@ -52,7 +52,7 @@
                                      help="help-Search">
                                 <f:textbox name="queryString"
                                            value="${request.session.getAttribute('queryString')}"
-                                           default=""/>
+                                           default="status:open"/>
                             </f:entry>
                             <f:block>
                                 <f:submit value="${%Search}"/>
