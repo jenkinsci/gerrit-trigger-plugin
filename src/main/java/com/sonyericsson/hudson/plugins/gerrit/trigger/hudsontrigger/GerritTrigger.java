@@ -55,6 +55,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedContainsEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
@@ -908,7 +909,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param event the event.
      * @return true if the event matches the approval category and value configured.
      */
-    private boolean matchesApproval(CommentAdded event) {
+    private boolean commentAddedMatch(CommentAdded event) {
         PluginCommentAddedEvent commentAdded = null;
         for (PluginGerritEvent e : triggerOnEvents) {
             if (e instanceof PluginCommentAddedEvent) {
@@ -919,6 +920,11 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                         || ("+" + approval.getValue()).equals(commentAdded.getCommentAddedTriggerApprovalValue()))) {
                     return true;
                     }
+                }
+            }
+            if (e instanceof PluginCommentAddedContainsEvent) {
+                if (((PluginCommentAddedContainsEvent)e).match(event)) {
+                    return true;
                 }
             }
         }
@@ -936,8 +942,8 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             logger.trace("Already building.");
             return;
         }
-        if (isInteresting(event) && matchesApproval(event)) {
-            logger.trace("The event is interesting.");
+        if (isInteresting(event) && commentAddedMatch(event)) {
+            logger.info("The event is interesting.");
             notifyOnTriggered(event);
             schedule(new GerritCause(event, silentMode), event);
         }
