@@ -943,7 +943,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             return;
         }
         if (isInteresting(event) && commentAddedMatch(event)) {
-            logger.info("The event is interesting.");
+            logger.trace("The event is interesting.");
             notifyOnTriggered(event);
             schedule(new GerritCause(event, silentMode), event);
         }
