@@ -2,6 +2,7 @@
  *  The MIT License
  *
  *  Copyright 2013 Joel Huttunen. All rights reserved.
+ *  Copyright (c) 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -72,6 +73,24 @@ public class GerritProjectListTest {
      * @param gerritProjects the list of Gerrit projects.
      * @param unreviewed is check unreviewed patches property allowed.
      * @param silentMode is silentMode allowed.
+     * @param silentStartMode is silentStartMode allowed.
+     * @return GerritTrigger the created trigger.
+     */
+    private GerritTrigger createGerritTrigger(
+            List<GerritProject> gerritProjects, boolean unreviewed, boolean silentMode, boolean silentStartMode) {
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        trigger.setGerritProjects(gerritProjects);
+        trigger.setAllowTriggeringUnreviewedPatches(unreviewed);
+        trigger.setSilentMode(silentMode);
+        trigger.setSilentStartMode(silentStartMode);
+        return trigger;
+    }
+
+    /**
+     * Creates GerritTrigger.
+     * @param gerritProjects the list of Gerrit projects.
+     * @param unreviewed is check unreviewed patches property allowed.
+     * @param silentMode is silentMode allowed.
      * @return GerritTrigger the created trigger.
      */
     private GerritTrigger createGerritTrigger(
@@ -80,6 +99,7 @@ public class GerritProjectListTest {
         trigger.setGerritProjects(gerritProjects);
         trigger.setAllowTriggeringUnreviewedPatches(unreviewed);
         trigger.setSilentMode(silentMode);
+        trigger.setSilentStartMode(false);
         return trigger;
     }
 
