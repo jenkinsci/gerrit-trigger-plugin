@@ -55,6 +55,11 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import java.util.List;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import org.netbeans.insane.live.LiveReferences;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
 
@@ -69,17 +74,17 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
     private SshServer sshd;
     private SshdServerMock.KeyPairFiles sshKey;
-    private SshdServerMock server;
+    private SshdServerMock serverMock;
 
     @Override
     protected void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(server);
-        server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
-        server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
-        server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
-        server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        serverMock = new SshdServerMock();
+        sshd = SshdServerMock.startServer(serverMock);
+        serverMock.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
+        serverMock.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
+        serverMock.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
+        serverMock.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
     }
@@ -100,12 +105,46 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
         FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
         FreeStyleBuild build = builds.get(0);
         assertSame(Result.SUCCESS, build.getResult());
+        // JENKINS-23152
+        WeakReference<FreeStyleProject> old = new WeakReference<FreeStyleProject>(project);
+        project = null;
+        builds = null;
+        build = null;
+        gerritServer = null;
+        server.stop(); // clear out any BoundObjectTable references from config screen
+        jenkins.reload();
+        /* TODO https://netbeans.org/bugzilla/show_bug.cgi?id=244668 blocking further progress this way:
+        assertGC(old);
+        */
+        project = jenkins.getItemByFullName("projectX", FreeStyleProject.class);
+        assertEquals(1, project.getBuilds().size());
+        gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
+    }
+    // TODO use version from MemoryAssert in 1.519+
+    private static void assertGC(WeakReference<?> reference) {
+        assertTrue(true); reference.get(); // preload any needed classes!
+        Set<Object[]> objects = new HashSet<Object[]>();
+        while (true) {
+            try {
+                objects.add(new Object[1024]);
+            } catch (OutOfMemoryError ignore) {
+                break;
+            }
+        }
+        objects = null;
+        System.gc();
+        Object obj = reference.get();
+        if (obj != null) {
+            fail(LiveReferences.fromRoots(Collections.singleton(obj)).toString());
+        }
     }
 
     /**
@@ -117,7 +156,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     public void testDoubleTriggeredBuild() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
@@ -146,7 +185,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
     public void testDoubleTriggeredBuildsOfDifferentChange() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
         patchsetCreated.getChange().setNumber("2000");
@@ -186,7 +225,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         ((Config)gerritServer.getConfig()).setGerritBuildCurrentPatchesOnly(true);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
@@ -214,7 +253,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         ((Config)gerritServer.getConfig()).setGerritBuildCurrentPatchesOnly(false);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
         AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
@@ -241,7 +280,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
         RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 10000);
@@ -260,7 +299,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
