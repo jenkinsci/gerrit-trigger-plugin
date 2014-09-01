@@ -326,6 +326,21 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     /**
+     * Checks the memory if the project is triggered by the event.
+     *
+     * @param project the project.
+     * @param event the event.
+     * @return true if so.
+     */
+    public boolean isTriggered(AbstractProject project, GerritTriggeredEvent event) {
+        if (project == null || event == null) {
+            return false;
+        } else {
+            return memory.isTriggered(event, project);
+        }
+    }
+
+    /**
      * Finds the GerritCause for a build if there is one.
      *
      * @param build the build to look in.
