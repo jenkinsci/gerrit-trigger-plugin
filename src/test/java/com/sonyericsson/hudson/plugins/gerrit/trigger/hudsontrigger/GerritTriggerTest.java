@@ -1057,7 +1057,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyZeroInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
         verify(project).isBuildable();
         verifyNoMoreInteractions(project);
     }
@@ -1129,7 +1129,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyNoMoreInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
 
         verify(project).scheduleBuild2(
                 anyInt(),
@@ -1167,7 +1167,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyNoMoreInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
 
         verify(project).scheduleBuild2(
                 anyInt(),
