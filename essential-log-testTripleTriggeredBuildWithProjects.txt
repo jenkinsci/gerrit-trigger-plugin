@@ -1,0 +1,29 @@
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: FOR projectX
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: EVENT HASH -57019379
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: PB - com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@196b700a
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onTriggered
+INFO: Project [projectX] triggered by Gerrit: [PatchsetCreated: Change: 1000 PatchSet: 1]
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger schedule
+INFO: Project projectX Build Scheduled: true By event: 1000/1
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker createVersionNumber
+SEVERE: Gerrit version number is null or the empty string.
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: FOR projectY
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: EVENT HASH -57019379
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onTriggered
+INFO: Project [projectY] triggered by Gerrit: [PatchsetCreated: Change: 1000 PatchSet: 1]
+Sep 02, 2014 7:52:16 PM com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger schedule
+INFO: Project projectY Build Scheduled: true By event: 1000/1
+SLEEP 1
+Sep 02, 2014 7:52:17 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: FOR projectY
+Sep 02, 2014 7:52:17 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: EVENT HASH -57019379
+Sep 02, 2014 7:52:17 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+WARNING: Build started without being registered first.
+Sep 02, 2014 7:52:17 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: PB - com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@40d9129c

@@ -836,10 +836,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         if (ToGerritRunListener.getInstance().isProjectTriggeredAndIncomplete(myProject, event)) {
-            logger.trace("Already triggered and imcompleted.");
+            logger.warn("Already triggered and imcompleted.");
             return false;
         } else if (ToGerritRunListener.getInstance().isTriggered(myProject, event)) {
-            logger.trace("Already triggered.");
+            logger.warn("Already triggered.");
             return false;
         }
 

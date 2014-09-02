@@ -41,6 +41,7 @@ import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +147,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
                 NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
             } finally {
+                logger.info("Forget event");
                 memory.forget(event);
             }
         } else {
