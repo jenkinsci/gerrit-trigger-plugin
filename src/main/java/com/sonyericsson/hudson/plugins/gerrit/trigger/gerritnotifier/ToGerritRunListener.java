@@ -41,6 +41,7 @@ import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,6 +147,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
                 }
                 NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
             } finally {
+                logger.info("Forget event");
                 memory.forget(event);
             }
         } else {
@@ -322,6 +324,21 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             return false;
         } else {
             return memory.isBuilding(event);
+        }
+    }
+
+    /**
+     * Checks the memory if the project is triggered by the event.
+     *
+     * @param project the project.
+     * @param event the event.
+     * @return true if so.
+     */
+    public boolean isTriggered(AbstractProject project, GerritTriggeredEvent event) {
+        if (project == null || event == null) {
+            return false;
+        } else {
+            return memory.isTriggered(event, project);
         }
     }
 

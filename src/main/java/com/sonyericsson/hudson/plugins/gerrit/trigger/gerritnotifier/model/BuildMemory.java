@@ -153,6 +153,7 @@ public class BuildMemory {
         if (pb == null) {
             //Shoudn't happen but just in case, keep the memory.
             pb = new MemoryImprint(event);
+            logger.info("PB - {}", pb);
             memory.put(event, pb);
         }
         pb.set(build.getProject(), build, true);
@@ -165,11 +166,14 @@ public class BuildMemory {
      * @param build the build.
      */
     public synchronized void started(GerritTriggeredEvent event, AbstractBuild build) {
+        logger.info("FOR {}", build.getProject().getName());
+        logger.info("EVENT HASH {}", event.hashCode());
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //A build should not start for a job that hasn't been registered. Keep the memory anyway.
             pb = new MemoryImprint(event);
             logger.warn("Build started without being registered first.");
+            logger.info("PB - {}", pb);
             memory.put(event, pb);
         }
         pb.set(build.getProject(), build);
@@ -182,9 +186,12 @@ public class BuildMemory {
      * @param project the project that was triggered.
      */
     public synchronized void triggered(GerritTriggeredEvent event, AbstractProject project) {
+        logger.info("FOR {}", project.getName());
+        logger.info("EVENT HASH {}", event.hashCode());
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
+            logger.info("PB - {}", pb);
             memory.put(event, pb);
         }
         pb.set(project);
@@ -206,6 +213,7 @@ public class BuildMemory {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
+            logger.info("PB - {}", pb);
             memory.put(event, pb);
             if (otherBuilds != null) {
                 //It is a new memory so it wasn't building, let's populate with old build info
@@ -223,7 +231,7 @@ public class BuildMemory {
      * @param event the event.
      */
     public synchronized void forget(GerritTriggeredEvent event) {
-        memory.remove(event);
+        logger.info("FORGET {}", memory.remove(event));
     }
 
     /**
@@ -317,6 +325,7 @@ public class BuildMemory {
         if (pb == null) {
             return false;
         } else {
+            logger.info("CHECK {}", pb);
             for (Entry entry : pb.getEntries()) {
                 if (entry.getProject().equals(project)) {
                     if (entry.getBuild() != null) {
@@ -326,6 +335,7 @@ public class BuildMemory {
                     }
                 }
             }
+            logger.info("CHECK 8");
             return false;
         }
     }
