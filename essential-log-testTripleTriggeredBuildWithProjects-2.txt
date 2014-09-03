@@ -1,0 +1,43 @@
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: projectX: [HASH] BUILDMEMORY 2110639804 EVENT -1580253862
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: MEMORY {}
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: PB - com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@1a7e0c82
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onTriggered
+INFO: Project [projectX] triggered by Gerrit: [PatchsetCreated: Change: 1000 PatchSet: 1]
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger schedule
+INFO: Project projectX Build Scheduled: true By event: 1000/1
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker createVersionNumber
+SEVERE: Gerrit version number is null or the empty string.
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: projectY: [HASH] BUILDMEMORY 2110639804 EVENT -1580253862
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory triggered
+INFO: MEMORY {PatchsetCreated: Change: 1000 PatchSet: 1=com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@1a7e0c82}
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onTriggered
+INFO: Project [projectY] triggered by Gerrit: [PatchsetCreated: Change: 1000 PatchSet: 1]
+Sep 03, 2014 12:06:51 PM com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger schedule
+INFO: Project projectY Build Scheduled: true By event: 1000/1
+SLEEP 1
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: projectY: [HASH] BUILDMEMORY 1635826714 EVENT -1580253862
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: MEMORY {}
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+WARNING: Build started without being registered first.
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: PB - com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@5f5e401d
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onStarted
+INFO: Gerrit build [projectY #1] Started for cause: [GerritCause: PatchsetCreated: Change: 1000 PatchSet: 1 silent: false].
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onStarted
+INFO: MemoryStatus:
+  Project/Build: [projectY]: [#1: null] Completed: false
+
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: projectX: [HASH] BUILDMEMORY 1635826714 EVENT -1580253862
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory started
+INFO: MEMORY {PatchsetCreated: Change: 1000 PatchSet: 1=com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory$MemoryImprint@5f5e401d}
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier buildStarted
+INFO: Notifying BuildStarted to gerrit: gerrit approve 1000,1 --message 'Build Started nulljob/projectY/1/ ' --verified 0 --code-review 0
+Sep 03, 2014 12:06:52 PM com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener onStarted
+INFO: Gerrit build [projectX #1] Started for cause: [GerritCause: PatchsetCreated: Change: 1000 PatchSet: 1 silent: false].

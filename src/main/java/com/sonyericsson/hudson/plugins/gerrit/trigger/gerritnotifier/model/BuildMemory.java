@@ -166,8 +166,9 @@ public class BuildMemory {
      * @param build the build.
      */
     public synchronized void started(GerritTriggeredEvent event, AbstractBuild build) {
-        logger.info("FOR {}", build.getProject().getName());
-        logger.info("EVENT HASH {}", event.hashCode());
+        logger.info("{}: [HASH] BUILDMEMORY {} EVENT {}",
+                new Object[] {build.getProject().getName(), this.hashCode(), event.hashCode()});
+        logger.info("MEMORY {}", memory.toString());
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //A build should not start for a job that hasn't been registered. Keep the memory anyway.
@@ -186,8 +187,9 @@ public class BuildMemory {
      * @param project the project that was triggered.
      */
     public synchronized void triggered(GerritTriggeredEvent event, AbstractProject project) {
-        logger.info("FOR {}", project.getName());
-        logger.info("EVENT HASH {}", event.hashCode());
+        logger.info("{}: [HASH] BUILDMEMORY {} EVENT {}",
+                new Object[] {project.getName(), this.hashCode(), event.hashCode()});
+        logger.info("MEMORY {}", memory.toString());
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
