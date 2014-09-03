@@ -61,16 +61,7 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      */
     public static final int ORDINAL = 10003;
     private static final Logger logger = LoggerFactory.getLogger(ToGerritRunListener.class);
-    private static ToGerritRunListener instance;
-    private transient BuildMemory memory;
-
-    /**
-     * Default Constructor.
-     */
-    public ToGerritRunListener() {
-        super(AbstractBuild.class);
-        memory = new BuildMemory();
-    }
+    private transient BuildMemory memory = new BuildMemory();
 
     /**
      * Returns the registered instance of this class from the list of all listeners.
@@ -78,15 +69,12 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @return the instance.
      */
     public static ToGerritRunListener getInstance() {
-        if (instance == null) {
-            for (RunListener listener : all()) {
-                if (listener instanceof ToGerritRunListener) {
-                    instance = (ToGerritRunListener)listener;
-                    break;
-                }
+        for (RunListener listener : all()) {
+            if (listener instanceof ToGerritRunListener) {
+                return (ToGerritRunListener)listener;
             }
         }
-        return instance;
+        return null;
     }
 
     @Override
