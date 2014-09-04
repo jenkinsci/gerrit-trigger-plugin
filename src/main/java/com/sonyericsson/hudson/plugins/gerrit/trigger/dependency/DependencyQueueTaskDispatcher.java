@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
@@ -66,12 +67,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
 @Extension
-public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
+public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     implements GerritEventLifecycleListener, GerritEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(DependencyQueueTaskDispatcher.class);
     private Set<GerritTriggeredEvent> currentlyTriggeringEvents;
-    private static DependencyQueueTaskDispatcher instance;
 
     /**
      * Default constructor.
@@ -102,18 +102,12 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @return the instance.
      */
     public static DependencyQueueTaskDispatcher getInstance() {
-        if (instance == null) {
-            for (QueueTaskDispatcher listener : all()) {
-                if (listener instanceof DependencyQueueTaskDispatcher) {
-                    instance = (DependencyQueueTaskDispatcher)listener;
-                    break;
-                }
-            }
+        ExtensionList<DependencyQueueTaskDispatcher> dispatchers =
+                Jenkins.getInstance().getExtensionList(DependencyQueueTaskDispatcher.class);
+        if (dispatchers == null) {
+            return null;
         }
-        if (instance == null) {
-            logger.error("DependencyQueueTaskDispatcher Singleton not initialized on time");
-        }
-        return instance;
+        return dispatchers.get(0);
     }
 
     @Override
@@ -203,9 +197,11 @@ public class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             GerritTriggeredEvent event) {
         List<AbstractProject> blockingProjects = new ArrayList<AbstractProject>();
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
-        for (AbstractProject dependency : dependencies) {
-            if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, event)) {
-                blockingProjects.add(dependency);
+        if (toGerritRunListener != null) {
+            for (AbstractProject dependency : dependencies) {
+                if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, event)) {
+                    blockingProjects.add(dependency);
+                }
             }
         }
         return blockingProjects;
