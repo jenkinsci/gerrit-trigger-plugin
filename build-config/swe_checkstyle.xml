@@ -9,7 +9,10 @@
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
     <property name="severity" value="error"/>
-    <module name="FileLength"/>
+    <module name="FileLength">
+        <!-- TODO: Need refactoring -->
+        <property name="max" value="2500"/>
+    </module>
     <module name="FileTabCharacter">
         <property name="fileExtensions" value="java,groovy,jelly,xml,html,js,css"/>
     </module>
