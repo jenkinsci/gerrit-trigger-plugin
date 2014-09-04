@@ -75,6 +75,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
         ExtensionList<ToGerritRunListener> listeners =
                 Jenkins.getInstance().getExtensionList(ToGerritRunListener.class);
         if (listeners == null || listeners.isEmpty()) {
+            logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
             return null;
         }
         return listeners.get(0);

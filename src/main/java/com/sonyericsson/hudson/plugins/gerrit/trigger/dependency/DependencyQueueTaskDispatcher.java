@@ -105,6 +105,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         ExtensionList<DependencyQueueTaskDispatcher> dispatchers =
                 Jenkins.getInstance().getExtensionList(DependencyQueueTaskDispatcher.class);
         if (dispatchers == null || dispatchers.isEmpty()) {
+            logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
             return null;
         }
         return dispatchers.get(0);
