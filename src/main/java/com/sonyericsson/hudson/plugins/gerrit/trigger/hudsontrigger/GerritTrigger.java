@@ -464,7 +464,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     private void notifyOnTriggered(GerritTriggeredEvent event) {
         if (!silentMode) {
-            ToGerritRunListener.getInstance().onTriggered(myProject, event);
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener != null) {
+                listener.onTriggered(myProject, event);
+            }
         } else {
             if (event instanceof GerritEventLifecycle) {
                 ((GerritEventLifecycle)event).fireProjectTriggered(myProject);
@@ -737,25 +740,30 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      * @param context the previous context.
      */
     public void retriggerThisBuild(TriggerContext context) {
-        if (context.getThisBuild().getProject().isBuildable()
-                && !ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
+        if (context.getThisBuild().getProject().isBuildable()) {
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener != null) {
+                if (!listener.isBuilding(context.getThisBuild().getProject(),
                         context.getEvent())) {
 
-            Provider provider = initializeProvider(context.getEvent());
+                    Provider provider = initializeProvider(context.getEvent());
 
-            // If serverName in event no longer exists, server may have been renamed/removed, so use current serverName
-            if (!isAnyServer() && !PluginImpl.getInstance().containsServer(provider.getName())) {
-                provider.setName(serverName);
-            }
+                    // If serverName in event no longer exists, server may have been renamed/removed,
+                    // so use current serverName
+                    if (!isAnyServer() && !PluginImpl.getInstance().containsServer(provider.getName())) {
+                        provider.setName(serverName);
+                    }
 
-            if (!silentMode) {
-                ToGerritRunListener.getInstance().onRetriggered(
-                        context.getThisBuild().getProject(),
-                        context.getEvent(),
-                        context.getOtherBuilds());
+                    if (!silentMode) {
+                        listener.onRetriggered(
+                                context.getThisBuild().getProject(),
+                                context.getEvent(),
+                                context.getOtherBuilds());
+                    }
+                    final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
+                    schedule(cause, context.getEvent(), context.getThisBuild().getProject());
+                }
             }
-            final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
-            schedule(cause, context.getEvent(), context.getThisBuild().getProject());
         }
     }
 
@@ -770,16 +778,21 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void retriggerAllBuilds(TriggerContext context) {
         DependencyQueueTaskDispatcher dependencyQueueTaskDispatcher = DependencyQueueTaskDispatcher.getInstance();
-        if (!ToGerritRunListener.getInstance().isBuilding(context.getEvent())) {
-            dependencyQueueTaskDispatcher.onTriggeringAll(context.getEvent());
-            retrigger(context.getThisBuild().getProject(), context.getEvent());
-            for (AbstractBuild build : context.getOtherBuilds()) {
-                GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
-                if (trigger != null) {
-                    trigger.retrigger(build.getProject(), context.getEvent());
+        if (dependencyQueueTaskDispatcher != null) {
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener != null) {
+                if (!listener.isBuilding(context.getEvent())) {
+                    dependencyQueueTaskDispatcher.onTriggeringAll(context.getEvent());
+                    retrigger(context.getThisBuild().getProject(), context.getEvent());
+                    for (AbstractBuild build : context.getOtherBuilds()) {
+                        GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
+                        if (trigger != null) {
+                            trigger.retrigger(build.getProject(), context.getEvent());
+                        }
+                    }
+                    dependencyQueueTaskDispatcher.onDoneTriggeringAll(context.getEvent());
                 }
             }
-            dependencyQueueTaskDispatcher.onDoneTriggeringAll(context.getEvent());
         }
     }
 
@@ -794,7 +807,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         if (project.isBuildable()) {
             initializeProvider(event);
             if (!silentMode) {
-                ToGerritRunListener.getInstance().onRetriggered(project, event, null);
+                ToGerritRunListener listener = ToGerritRunListener.getInstance();
+                if (listener != null) {
+                    listener.onRetriggered(project, event, null);
+                }
             }
             GerritUserCause cause = new GerritUserCause(event, silentMode);
             schedule(cause, event, project);
@@ -835,12 +851,15 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
             return false;
         }
 
-        if (ToGerritRunListener.getInstance().isProjectTriggeredAndIncomplete(myProject, event)) {
-            logger.trace("Already triggered and imcompleted.");
-            return false;
-        } else if (ToGerritRunListener.getInstance().isTriggered(myProject, event)) {
-            logger.trace("Already triggered.");
-            return false;
+        ToGerritRunListener listener = ToGerritRunListener.getInstance();
+        if (listener != null) {
+            if (listener.isProjectTriggeredAndIncomplete(myProject, event)) {
+                logger.trace("Already triggered and imcompleted.");
+                return false;
+            } else if (listener.isTriggered(myProject, event)) {
+                logger.trace("Already triggered.");
+                return false;
+            }
         }
 
         if (!shouldTriggerOnEventType(event)) {
@@ -946,9 +965,12 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
      */
     public void gerritEvent(CommentAdded event) {
         logger.trace("event: {}", event);
-        if (ToGerritRunListener.getInstance().isBuilding(myProject, event)) {
-            logger.trace("Already building.");
-            return;
+        ToGerritRunListener listener = ToGerritRunListener.getInstance();
+        if (listener != null) {
+            if (listener.isBuilding(myProject, event)) {
+                logger.trace("Already building.");
+                return;
+            }
         }
         if (isInteresting(event) && commentAddedMatch(event)) {
             logger.trace("The event is interesting.");
