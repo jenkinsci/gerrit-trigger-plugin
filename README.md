@@ -14,7 +14,7 @@ Each job can be configured with one Gerrit server.
 ## Maintainers
 
 * Robert Sandell
-  - robert.sandell@sonymobile.com
+  - robert.sandell@cloudbees.com
   - sandell.robert@gmail.com
 
 * Tomas Westling

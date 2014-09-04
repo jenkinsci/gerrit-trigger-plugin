@@ -30,8 +30,8 @@
         <developer>
             <id>rsandell</id>
             <name>Robert Sandell</name>
-            <email>robert.sandell@sonymobile.com</email>
-            <organization>Sony Mobile Communications</organization>
+            <email>robert.sandell@cloudbees.com</email>
+            <organization>CloudBees Inc.</organization>
             <url>http://www.linkedin.com/in/robertsandell</url>
             <roles>
                 <role>architect</role>
