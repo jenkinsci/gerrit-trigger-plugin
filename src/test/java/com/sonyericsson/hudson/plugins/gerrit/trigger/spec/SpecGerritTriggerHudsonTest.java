@@ -82,6 +82,7 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
+        server.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         super.setUp();
@@ -245,6 +246,67 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
             size++;
         }
         assertEquals(2, size);
+    }
+
+    /**
+     * Tests to trigger a build from a project with the same patch set twice.
+     * Expecting one build to be scheduled with one cause.
+     * And builds are not triggered if build is not building but other builds triggered by a event is building.
+     *
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTripleTriggeredBuildWithProjects() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        FreeStyleProject project1 = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        FreeStyleProject project2 = DuplicatesUtil.createGerritTriggeredJob(this, "projectY");
+        project1.getBuildersList().add(new SleepBuilder(5000));
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        boolean started = false;
+
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        while (!started) {
+            if (project1.isBuilding()) {
+                started = true;
+            } else {
+                Thread.sleep(1000);
+            }
+        }
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        while (project1.isBuilding() || project1.isInQueue()) {
+            Thread.sleep(1000);
+        }
+
+        started = false;
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        while (!started) {
+            if (project1.isBuilding()) {
+                started = true;
+            } else {
+                Thread.sleep(1000);
+            }
+        }
+        while (project1.isBuilding() || project1.isInQueue()) {
+            Thread.sleep(1000);
+        }
+
+        int size = 0;
+        for (FreeStyleProject project : Arrays.asList(project1, project2)) {
+            for (FreeStyleBuild build : project.getBuilds()) {
+                assertSame(Result.SUCCESS, build.getResult());
+                int count = 0;
+                for (Cause cause : build.getCauses()) {
+                    if (cause instanceof GerritCause) {
+                        count++;
+                        assertNotNull(((GerritCause)cause).getContext());
+                        assertNotNull(((GerritCause)cause).getEvent());
+                    }
+                }
+                assertEquals(1, count);
+                size++;
+            }
+        }
+        assertEquals(4, size);
     }
 
     /**
