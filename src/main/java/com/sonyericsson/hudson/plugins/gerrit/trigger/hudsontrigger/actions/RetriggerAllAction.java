@@ -108,8 +108,12 @@ public class RetriggerAllAction implements Action {
      */
     private boolean isBuilding() {
         if (context != null) {
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener == null) {
+                return context.getThisBuild().getBuild().isBuilding();
+            }
             return context.getThisBuild().getBuild().isBuilding()
-                    || ToGerritRunListener.getInstance().isBuilding(context.getEvent());
+                    || listener.isBuilding(context.getEvent());
         } else {
             //The correct answer here should be null, but hasPermission takes care of a more "correct" answer.
             return false;

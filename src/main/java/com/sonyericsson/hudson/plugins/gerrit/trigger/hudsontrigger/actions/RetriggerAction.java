@@ -95,9 +95,12 @@ public class RetriggerAction implements Action {
         if (context == null || context.getThisBuild() == null || context.getEvent() == null) {
             return false;
         } else {
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener == null) {
+                return context.getThisBuild().getBuild().isBuilding();
+            }
             return context.getThisBuild().getBuild().isBuilding()
-                    || ToGerritRunListener.getInstance().isBuilding(context.getThisBuild().getProject(),
-                                                                context.getEvent());
+                    || listener.isBuilding(context.getThisBuild().getProject(), context.getEvent());
         }
     }
 
