@@ -104,7 +104,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     public static DependencyQueueTaskDispatcher getInstance() {
         ExtensionList<DependencyQueueTaskDispatcher> dispatchers =
                 Jenkins.getInstance().getExtensionList(DependencyQueueTaskDispatcher.class);
-        if (dispatchers == null) {
+        if (dispatchers == null || dispatchers.isEmpty()) {
             return null;
         }
         return dispatchers.get(0);

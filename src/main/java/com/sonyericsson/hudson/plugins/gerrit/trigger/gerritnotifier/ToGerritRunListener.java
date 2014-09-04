@@ -74,7 +74,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
     public static ToGerritRunListener getInstance() {
         ExtensionList<ToGerritRunListener> listeners =
                 Jenkins.getInstance().getExtensionList(ToGerritRunListener.class);
-        if (listeners == null) {
+        if (listeners == null || listeners.isEmpty()) {
             return null;
         }
         return listeners.get(0);
