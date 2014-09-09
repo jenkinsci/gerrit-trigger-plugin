@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+
 import hudson.Extension;
 import hudson.model.Hudson;
 import hudson.model.ParameterValue;
@@ -44,6 +45,7 @@ import hudson.model.RootAction;
 import hudson.security.Permission;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -55,6 +57,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.servlet.http.HttpSession;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
@@ -283,7 +287,12 @@ public class ManualTriggerAction implements RootAction {
         @QueryParameter("selectedServer") final String selectedServer, StaplerRequest request,
                                StaplerResponse response) throws IOException {
 
-        request.getSession(true).setAttribute("selectedServer", selectedServer);
+        HttpSession session = request.getSession();
+        // Create session if nothing.
+        if (session == null) {
+            session = request.getSession(true);
+        }
+        session.setAttribute("selectedServer", selectedServer);
         if (!isServerEnabled(selectedServer)) {
             response.sendRedirect2(".");
             return;
@@ -293,20 +302,20 @@ public class ManualTriggerAction implements RootAction {
 
         if (config != null) {
             GerritQueryHandler handler = new GerritQueryHandler(config);
-            clearSessionData(request);
-            request.getSession(true).setAttribute("queryString", queryString);
+            clearSessionData(session);
+            session.setAttribute("queryString", queryString);
 
             try {
                 List<JSONObject> json = handler.queryJava(queryString, true, true, false);
-                request.getSession(true).setAttribute(SESSION_RESULT, json);
+                session.setAttribute(SESSION_RESULT, json);
                 //TODO Implement some smart default selection.
                 //That can notice that a specific revision is searched or that there is only one result etc.
             } catch (GerritQueryException gqe) {
                 logger.debug("Bad query. ", gqe);
-                request.getSession(true).setAttribute(SESSION_SEARCH_ERROR, gqe);
+                session.setAttribute(SESSION_SEARCH_ERROR, gqe);
             } catch (Exception ex) {
                 logger.warn("Could not query Gerrit for [" + queryString + "]", ex);
-                request.getSession(true).setAttribute(SESSION_SEARCH_ERROR, ex);
+                session.setAttribute(SESSION_SEARCH_ERROR, ex);
             }
             response.sendRedirect2(".");
         } else {
@@ -327,28 +336,37 @@ public class ManualTriggerAction implements RootAction {
     public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
                         StaplerResponse response) throws IOException {
 
-        String selectedServer = (String)request.getSession().getAttribute("selectedServer");
+        HttpSession session = request.getSession();
+        if (session == null) {
+            logger.debug("Session alreay closed.");
+            session = request.getSession(true);
+            session.setAttribute(SESSION_BUILD_ERROR, Messages.ErrorSessionAlreadyClosed());
+            response.sendRedirect2(".");
+            return;
+        }
+
+        String selectedServer = (String)session.getAttribute("selectedServer");
         if (!isServerEnabled(selectedServer)) {
             response.sendRedirect2(".");
             return;
         }
         Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
 
-        request.getSession(true).removeAttribute(SESSION_BUILD_ERROR);
+        session.removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
         if (selectedIds != null && selectedIds.length() > 0) {
             selectedRows = selectedIds.split("\\[\\]");
         }
         if (selectedRows == null || selectedRows.length <= 0) {
             logger.debug("No builds selected.");
-            request.getSession(true).setAttribute(SESSION_BUILD_ERROR, Messages.ErrorSelectSomethingToBuild());
+            session.setAttribute(SESSION_BUILD_ERROR, Messages.ErrorSelectSomethingToBuild());
             response.sendRedirect2(".");
         } else {
             logger.debug("Something to build.");
-            List<JSONObject> result = (List<JSONObject>)request.getSession(true).getAttribute(SESSION_RESULT);
+            List<JSONObject> result = (List<JSONObject>)session.getAttribute(SESSION_RESULT);
             TriggerMonitor monitor = new TriggerMonitor();
             logger.trace("Putting monitor into session.");
-            request.getSession(true).setAttribute(SESSION_TRIGGER_MONITOR, monitor);
+            session.setAttribute(SESSION_TRIGGER_MONITOR, monitor);
             logger.trace("Calling to index the search result.");
             HashMap<String, JSONObject> indexed = indexResult(result);
             logger.debug("Creating and triggering events.");
@@ -372,13 +390,13 @@ public class ManualTriggerAction implements RootAction {
     /**
      * Clears the HTTP session from search and manual-trigger related data.
      *
-     * @param request the request with the HTTP session.
+     * @param session the HTTP session.
      */
-    private void clearSessionData(StaplerRequest request) {
-        request.getSession(true).removeAttribute(SESSION_SEARCH_ERROR);
-        request.getSession(true).removeAttribute(SESSION_BUILD_ERROR);
-        request.getSession(true).removeAttribute(SESSION_RESULT);
-        request.getSession(true).removeAttribute(SESSION_TRIGGER_MONITOR);
+    private void clearSessionData(HttpSession session) {
+        session.removeAttribute(SESSION_SEARCH_ERROR);
+        session.removeAttribute(SESSION_BUILD_ERROR);
+        session.removeAttribute(SESSION_RESULT);
+        session.removeAttribute(SESSION_TRIGGER_MONITOR);
     }
 
     /**
