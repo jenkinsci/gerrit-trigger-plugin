@@ -104,7 +104,8 @@ public class ParameterExpander {
         String gerritCmd = config.getGerritCmdBuildStarted();
         Map<String, String> parameters = createStandardParameters(r, event,
                 getBuildStartedCodeReviewValue(r),
-                getBuildStartedVerifiedValue(r));
+                getBuildStartedVerifiedValue(r),
+                Notify.ALL.name());
         StringBuilder startedStats = new StringBuilder();
         if (stats.getTotalBuildsToStart() > 1) {
             startedStats.append(stats.toString());
@@ -206,15 +207,17 @@ public class ParameterExpander {
      *  <li><strong>BUILDURL</strong>: The URL to the build.</li>
      *  <li><strong>VERIFIED</strong>: The verified vote.</li>
      *  <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
+     *  <li><strong>NOTIFICATION_LEVEL</strong>: The notification level.</li>
      * </ul>
      * @param r the build.
      * @param gerritEvent the event.
      * @param codeReview the code review vote.
      * @param verified the verified vote.
+     * @param notifyLevel the notify level.
      * @return the parameters and their values.
      */
     private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent gerritEvent,
-            int codeReview, int verified) {
+            int codeReview, int verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
         if (gerritEvent instanceof ChangeBasedEvent) {
@@ -234,6 +237,7 @@ public class ParameterExpander {
         }
         map.put("VERIFIED", String.valueOf(verified));
         map.put("CODE_REVIEW", String.valueOf(codeReview));
+        map.put("NOTIFICATION_LEVEL", notifyLevel);
 
         return map;
     }
@@ -476,12 +480,15 @@ public class ParameterExpander {
 
         int verified = 0;
         int codeReview = 0;
+        Notify notifyLevel = Notify.ALL;
         if (memoryImprint.getEvent().isScorable()) {
             verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
             codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
+            notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
 
-        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), codeReview, verified);
+        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(),
+                codeReview, verified, notifyLevel.name());
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
 
         AbstractBuild build = null;

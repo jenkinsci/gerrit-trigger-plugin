@@ -56,6 +56,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " PATCHSET=<PATCHSET>"
                 + " VERIFIED=<VERIFIED>"
                 + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
                 + " REFSPEC=<REFSPEC> MSG=I started a build."
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
@@ -73,6 +74,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " PATCHSET=<PATCHSET>"
                 + " VERIFIED=<VERIFIED>"
                 + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
                 + " REFSPEC=<REFSPEC> MSG='Your friendly butler says OK. BS=<BUILDS_STATS>'"
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
@@ -147,7 +149,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public Notify getNotificationLevel() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Notify.ALL;
     }
 
     @Override
