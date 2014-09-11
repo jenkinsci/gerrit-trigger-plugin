@@ -1980,7 +1980,10 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
 
             // Interrupt any currently running jobs.
             for (Computer c : Hudson.getInstance().getComputers()) {
-                for (Executor e : c.getExecutors()) {
+                List<Executor> executors = new ArrayList<Executor>();
+                executors.addAll(c.getOneOffExecutors());
+                executors.addAll(c.getExecutors());
+                for (Executor e : executors) {
                     if (e.getCurrentExecutable() instanceof Actionable) {
                         Actionable a = (Actionable)e.getCurrentExecutable();
                         List<ParametersAction> params = a.getActions(ParametersAction.class);
