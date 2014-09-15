@@ -849,6 +849,14 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public String getGerritFrontEndUrlForDocumentation(String pathInDocumentation) {
+        StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
+        str.append("Documentation/");
+        str.append(pathInDocumentation);
+        return str.toString();
+    }
+
+    @Override
     public List<VerdictCategory> getCategories() {
         return categories;
     }

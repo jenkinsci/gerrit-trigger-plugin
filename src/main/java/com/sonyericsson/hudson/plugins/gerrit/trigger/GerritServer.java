@@ -51,6 +51,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,6 +108,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPa
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker.Feature;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -1035,6 +1037,64 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
         }
         return new LinkedList<GerritVersionChecker.Feature>();
+    }
+
+    /**
+     * @return whether any version-related warnings exist
+     */
+    public boolean hasVersionWarnings() {
+        return warnAboutMissingNotifyParameter();
+    }
+
+    /**
+     * @return the list for version-related warnings
+     */
+    public List<String> getVersionWarnings() {
+        if (warnAboutMissingNotifyParameter()) {
+            return Collections.singletonList(Messages.NotificationSshParameterMissing(
+                    Feature.notifyParameterInSSH.getDisplayName(), "--notify ALL",
+                    getConfig().getGerritFrontEndUrlForDocumentation("cmd-review.html")));
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Returns whether we should warn about the 'notify' SSH parameter not being present in
+     * the review commands.  Its absence will lead to no emails being sent in Gerrit 2.9 and above.
+     *
+     * @return whether there should be a warning
+     */
+    private boolean warnAboutMissingNotifyParameter() {
+        if (gerritConnectionListener.isConnected()
+                && gerritConnectionListener.supportsFeature(Feature.notifyParameterInSSH)) {
+            IGerritHudsonTriggerConfig cfg = getConfig();
+            // presence of 'notify' in at least one command indicates the user has already taken action,
+            // so only warn if it doesn't appear in neither command
+            if (!atLeastOneContains("--notify",
+                    cfg.getGerritCmdBuildStarted(),
+                    cfg.getGerritCmdBuildSuccessful(),
+                    cfg.getGerritCmdBuildUnstable(),
+                    cfg.getGerritCmdBuildNotBuilt(),
+                    cfg.getGerritCmdBuildFailed())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns if any of the given strings contains the query string.
+     * @param query the string to look for
+     * @param strings the strings to search in
+     * @return true if any of the strings contains the query string
+     */
+    private static boolean atLeastOneContains(String query, String... strings) {
+        for (String string : strings) {
+            if (string.contains(query)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
