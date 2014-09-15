@@ -67,6 +67,13 @@
                         </div>
                     </j:if>
                     <j:if test="${!empty(request.session.getAttribute('result'))}">
+                        <j:if test="${!empty(request.session.getAttribute('error_build'))}">
+                            <f:block>
+                                <p class="error">
+                                    ${request.session.getAttribute('error_build')}
+                                </p>
+                            </f:block>
+                        </j:if>
                         <f:form method="post" action="build" name="theBuild">
                             <f:section title="${%Search Result}">
                                 <f:description>
@@ -247,18 +254,9 @@
                                     -->
                                 </f:block>
                             </f:section>
-                            <f:section title="${%Trigger}">
-                                <j:if test="${!empty(request.session.getAttribute('error_build'))}">
-                                    <f:block>
-                                        <p class="error">
-                                            ${request.session.getAttribute('error_build')}
-                                        </p>
-                                    </f:block>
-                                </j:if>
-                                <f:block>
-                                    <f:submit value="${%Trigger Selected}"/>
-                                </f:block>
-                            </f:section>
+                            <f:bottomButtonBar>
+                                <f:submit value="${%Trigger Selected}"/>
+                            </f:bottomButtonBar>
                         </f:form>
                     </j:if>
                 </j:otherwise>
