@@ -54,6 +54,12 @@
                                            value="${request.session.getAttribute('queryString')}"
                                            default="status:open"/>
                             </f:entry>
+                            <f:entry title="${%Include All Patchsets}"
+                                     help="help-allPatchSets">
+                                <f:checkbox name="allPatchSets"
+                                            checked="${request.session.getAttribute('allPatchSets')}"
+                                            default="false"/>
+                            </f:entry>
                             <f:block>
                                 <f:submit value="${%Search}"/>
                             </f:block>

@@ -278,13 +278,15 @@ public class ManualTriggerAction implements RootAction {
      * @param queryString the query to send to Gerrit.
      * @param request     the request.
      * @param selectedServer the selected Gerrit server.
+     * @param allPatchSets if the result includes all patchsets in a change.
      * @param response    the response.
      * @throws IOException if the query fails.
      */
     @SuppressWarnings("unused")
     //Called from jelly
     public void doGerritSearch(@QueryParameter("queryString") final String queryString,
-        @QueryParameter("selectedServer") final String selectedServer, StaplerRequest request,
+        @QueryParameter("selectedServer") final String selectedServer,
+        @QueryParameter("allPatchSets") final boolean allPatchSets, StaplerRequest request,
                                StaplerResponse response) throws IOException {
 
         HttpSession session = request.getSession();
@@ -292,6 +294,7 @@ public class ManualTriggerAction implements RootAction {
         if (session == null) {
             session = request.getSession(true);
         }
+        session.setAttribute("allPatchSets", allPatchSets);
         session.setAttribute("selectedServer", selectedServer);
         if (!isServerEnabled(selectedServer)) {
             response.sendRedirect2(".");
@@ -306,7 +309,17 @@ public class ManualTriggerAction implements RootAction {
             session.setAttribute("queryString", queryString);
 
             try {
-                List<JSONObject> json = handler.queryJava(queryString, true, true, false);
+                List<JSONObject> json = handler.queryJava(queryString, allPatchSets, true, false);
+                if (!allPatchSets) {
+                    for (JSONObject j : json) {
+                        if (j.containsKey("id")) {
+                            JSONArray jsonArray = new JSONArray();
+                            jsonArray.add(j.getJSONObject("currentPatchSet"));
+                            j.put("patchSets", jsonArray);
+                            j.remove("currentPatchSet");
+                        }
+                    }
+                }
                 session.setAttribute(SESSION_RESULT, json);
                 //TODO Implement some smart default selection.
                 //That can notice that a specific revision is searched or that there is only one result etc.
