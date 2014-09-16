@@ -80,13 +80,12 @@
                                 </p>
                             </f:block>
                         </j:if>
-                        <f:form method="post" action="build" name="theBuild">
+                        <f:form method="" action="" name="">
                             <f:section title="${%Search Result}">
                                 <f:description>
                                     ${%SearchResultDescription}
                                 </f:description>
                                 <f:block>
-                                    <input type="hidden" id="selectedIds" name="selectedIds" value=""/>
 
                                     <j:set var="result" value="${request.session.getAttribute('result')}"/>
                                     <table width="100%" border="1" cellpadding="2" cellspacing="0"
@@ -260,6 +259,9 @@
                                     -->
                                 </f:block>
                             </f:section>
+                        </f:form>
+                        <f:form method="post" action="build" name="theBuild">
+                            <input type="hidden" id="selectedIds" name="selectedIds" value=""/>
                             <f:bottomButtonBar>
                                 <f:submit value="${%Trigger Selected}"/>
                             </f:bottomButtonBar>
