@@ -28,6 +28,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
@@ -214,6 +215,9 @@ public class GerritTriggerBuildChooser extends BuildChooser {
                 GerritTriggeredEvent event = cause.getEvent();
                 if (event instanceof ChangeBasedEvent) {
                     return ((ChangeBasedEvent)event).getPatchSet().getRevision();
+                }
+                if (event instanceof RefUpdated) {
+                    return ((RefUpdated)event).getRefUpdate().getNewRev();
                 }
             }
             return null;
