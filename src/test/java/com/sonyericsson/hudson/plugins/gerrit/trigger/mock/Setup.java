@@ -29,6 +29,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.RefUpdate;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -36,6 +37,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -60,6 +62,7 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -121,6 +124,30 @@ public final class Setup {
         return createPatchsetCreated(serverName, "project", "ref");
     }
 
+    /**
+     * Create a new RefUpdated event with given data.
+     * @param serverName The server name.
+     * @param project The project.
+     * @param ref The ref.
+     * @return a RefUpdated event
+     */
+    public static RefUpdated createRefUpdated(String serverName, String project, String ref) {
+        RefUpdated event = new RefUpdated();
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        event.setAccount(account);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+
+        RefUpdate refUpdate = new RefUpdate();
+        refUpdate.setNewRev("2");
+        refUpdate.setOldRev("1");
+        refUpdate.setProject(project);
+        refUpdate.setRefName(ref);
+        event.setRefUpdate(refUpdate);
+
+        return event;
+    }
     /**
      * Create a new patchset created event with the given data.
      * @param serverName The server name
@@ -191,6 +218,8 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        patch.setRef("ref");
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
 
@@ -221,6 +250,17 @@ public final class Setup {
 
     /**
      * Gives you a ChangeMerged mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return ChangeMerged mock.
+     */
+    public static ChangeMerged createChangeMerged(String serverName, String project, String ref) {
+        return createChangeMergedWithPatchSetDate(serverName, project, ref, new Date());
+    }
+
+    /**
+     * Gives you a ChangeMerged mock.
      * @return ChangeMerged mock.
      */
     public static ChangeMerged createChangeMerged() {
@@ -244,6 +284,38 @@ public final class Setup {
         return event;
     }
 
+    /**
+     * Gives you a ChangeMerged mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @param date The patchset's createdOn date
+     * @return ChangeMerged mock.
+     */
+    public static ChangeMerged createChangeMergedWithPatchSetDate(String serverName, String project,
+            String ref, Date date) {
+        ChangeMerged event = new ChangeMerged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject(project);
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        patch.setRef(ref);
+        patch.setCreatedOn(date);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        return event;
+    }
     /**
      * Gives you a ChangeRestored mock.
      * @return ChangeRestored mock.
@@ -503,9 +575,9 @@ public final class Setup {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(Result result,
-                                                                       int resultsCodeReviewVote,
-                                                                       int resultsVerifiedVote,
-                                                                       boolean shouldSkip) {
+            int resultsCodeReviewVote,
+            int resultsVerifiedVote,
+            boolean shouldSkip) {
         GerritTrigger trigger = mock(GerritTrigger.class);
         SkipVote skipVote = null;
         if (result == Result.SUCCESS) {
@@ -572,7 +644,7 @@ public final class Setup {
      * @return a RefReplicated event
      */
     public static RefReplicated createRefReplicatedEvent(String project, String ref, String server, String slave,
-        String status) {
+            String status) {
         RefReplicated refReplicated = new RefReplicated();
         refReplicated.setProject(project);
         refReplicated.setProvider(new Provider(server, null, null, null, null, null));
