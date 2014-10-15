@@ -42,6 +42,7 @@ import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +63,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
@@ -82,6 +84,8 @@ public class ReplicationQueueTaskDispatcherTest {
     private GerritHandler gerritHandlerMock;
     private GerritTrigger gerritTriggerMock;
     private AbstractProject<?, ?> abstractProjectMock;
+
+    private static final int HOURSBEFORECHANGEMERGEDFORPATCHSET = -8;
 
     /**
      * Create ReplicationQueueTaskDispatcher with a mocked GerritHandler.
@@ -115,19 +119,20 @@ public class ReplicationQueueTaskDispatcherTest {
     }
 
     /**
+     * Test that it should not block item caused by DraftPublished.
+     */
+    @Test
+    public void shouldNotBlockItemCausedByDraftPublished() {
+        assertNull("Build should not be blocked",
+                dispatcher.canRun(createItemWithOneSlave(Setup.createDraftPublished())));
+    }
+
+    /**
      * Test that it should not block item caused by ChangeAbandoned.
      */
     @Test
     public void shouldNotBlockItemCausedByChangeAbandoned() {
         assertNull("Build should not be blocked", dispatcher.canRun(createItemWithOneSlave(new ChangeAbandoned())));
-    }
-
-    /**
-     * Test that it should not block item caused by ChangeMerged.
-     */
-    @Test
-    public void shouldNotBlockItemCausedByChangeMerged() {
-        assertNull("Build should not be blocked", dispatcher.canRun(createItemWithOneSlave(new ChangeMerged())));
     }
 
     /**
@@ -152,7 +157,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockItemCausedByManualPatchsetCreated() {
         assertNull("Build should not be blocked",
-            dispatcher.canRun(createItemWithOneSlave(new ManualPatchsetCreated())));
+                dispatcher.canRun(createItemWithOneSlave(new ManualPatchsetCreated())));
     }
 
     /**
@@ -182,7 +187,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockItemWhenNotConfiguredToWaitForSlaves() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, null);
         assertNull("Build should not be blocked", dispatcher.canRun(item));
     }
@@ -198,7 +203,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockBuildableItem() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB", "slaveC"});
 
         CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem((WaitingItem)item));
@@ -213,14 +218,14 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldBlockedItemUntilPatchsetIsReplicatedToSlave() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA"});
 
         //item is blocked
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("The item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
 
         //send an unrelated event (not RefReplicated)
@@ -229,39 +234,116 @@ public class ReplicationQueueTaskDispatcherTest {
 
         //send an unrelated replication event (other server)
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1",
-            "someOtherGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "someOtherGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS));
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send an unrelated replication event (other project)
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someOtherProject", "refs/changes/1/1/1",
-            "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS));
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send an unrelated replication event (other ref)
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/2/2/2", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send an unrelated replication event (other slave)
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send a malformed replication event (missing provider)
         RefReplicated refReplicated = Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1",
-            "someGerritServer", "slaveB", RefReplicated.SUCCEEDED_STATUS);
+                "someGerritServer", "slaveB", RefReplicated.SUCCEEDED_STATUS);
         refReplicated.setProvider(null);
         dispatcher.gerritEvent(refReplicated);
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send the proper replication event
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         assertNull("Item should not be blocked", dispatcher.canRun(item));
         assertNull("Item should not be tagged with replicationFailedAction",
-            item.getAction(ReplicationFailedAction.class));
+                item.getAction(ReplicationFailedAction.class));
         verify(queueMock, times(1)).maintain();
+    }
+
+    /**
+     * Test that it should NOT block item if patchset has expired compared to
+     * when the Change Merged event is received.
+     */
+    @Test
+    public void shouldNotBlockItemSinceChangeMergedIsReplicatedViaExpiredPatchset() {
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(new Date());
+        cal.add(Calendar.HOUR, HOURSBEFORECHANGEMERGEDFORPATCHSET);
+        Date dateBefore8Hours = cal.getTime();
+
+        ChangeMerged changeMerged = Setup.createChangeMergedWithPatchSetDate("someGerritServer", "someProject",
+                "refs/changes/1/1/1", dateBefore8Hours);
+        Item item = createItem(changeMerged, new String[] {"slaveA"});
+
+        // item is NOT blocked since patchset createdOn date is older than cache
+        // we assume it was
+        CauseOfBlockage cause = dispatcher.canRun(item);
+        assertNull("The item should NOT be blocked", cause);
+
+    }
+
+    /**
+     * Test that it should block item if patchset is replicated to a slave
+     * After the Change Merged event is received.
+     */
+    @Test
+    public void shouldBlockItemUntilIfPatchSetIsReplicatedToOneSlaveAfterChangeMerged() {
+
+        ChangeMerged changeMerged = Setup.createChangeMerged("someGerritServer", "someProject",
+                "refs/changes/1/1/1");
+        Item item = createItem(changeMerged, new String[] {"slaveA"});
+
+        //item is blocked
+        CauseOfBlockage cause = dispatcher.canRun(item);
+        assertNotNull("The item should be blocked", cause);
+        assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
+                cause instanceof WaitingForReplication);
+        assertTrue(cause.getShortDescription().contains("slaveA"));
+
+        //send an unrelated event (not RefReplicated)
+        dispatcher.gerritEvent(new ChangeAbandoned());
+        assertNotNull("the item should be blocked", dispatcher.canRun(item));
+
+        //send the proper replication event
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+
+        assertNull("Item should not be blocked", dispatcher.canRun(item));
+        assertNull("Item should not be tagged with replicationFailedAction",
+                item.getAction(ReplicationFailedAction.class));
+        verify(queueMock, times(1)).maintain();
+
+    }
+
+    /**
+     * Test that it should block item if patchset is replicated to a slave
+     * Before the Change Merged event is received.
+     */
+    @Test
+    public void shouldBlockItemUntilIfPatchSetIsReplicatedToOneSlaveBeforeChangeMerged() {
+
+        //send the replication event before change merged event
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+
+        ChangeMerged changeMerged = Setup.createChangeMerged("someGerritServer", "someProject",
+                "refs/changes/1/1/1");
+        Item item = createItem(changeMerged, new String[] {"slaveA"});
+
+        assertNull("Item should not be blocked", dispatcher.canRun(item));
+        assertNull("Item should not be tagged with replicationFailedAction",
+                item.getAction(ReplicationFailedAction.class));
+
     }
 
     /**
@@ -272,51 +354,51 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldBlockItemUntilPatchsetIsReplicatedToAllSlaves() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB", "slaveC"});
 
         //item is blocked
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
         assertTrue(cause.getShortDescription().contains("slaveB"));
         assertTrue(cause.getShortDescription().contains("slaveC"));
 
         //send replication event for slaveB
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
 
         //item is still blocked
         cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
         assertFalse(cause.getShortDescription().contains("slaveB"));
         assertTrue(cause.getShortDescription().contains("slaveC"));
 
         //send replication event for slaveA
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         //item is still blocked
         cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertFalse(cause.getShortDescription().contains("slaveA"));
         assertFalse(cause.getShortDescription().contains("slaveB"));
         assertTrue(cause.getShortDescription().contains("slaveC"));
 
         //send replication event for slaveC
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveC", RefReplicated.SUCCEEDED_STATUS));
+                "slaveC", RefReplicated.SUCCEEDED_STATUS));
 
         assertNull("Item should not be blocked", dispatcher.canRun(item));
         assertNull("Item should not be tagged with replicationFailedAction",
-            item.getAction(ReplicationFailedAction.class));
+                item.getAction(ReplicationFailedAction.class));
         verify(queueMock, times(1)).maintain();
     }
 
@@ -327,7 +409,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldBlockItemUntilSlaveReplicationTimeoutIsReached() throws InterruptedException {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, null);
         //setup slaves to have one with timeout
         List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
@@ -339,7 +421,7 @@ public class ReplicationQueueTaskDispatcherTest {
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slave1"));
         assertTrue(cause.getShortDescription().contains("slave2"));
 
@@ -361,38 +443,38 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldBlockItemUntilReplicationFails() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB", "slaveC"});
 
         //item is blocked
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
         assertTrue(cause.getShortDescription().contains("slaveB"));
         assertTrue(cause.getShortDescription().contains("slaveC"));
 
         //send replication event for slaveB
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
 
         //item is still blocked
         cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
         assertFalse(cause.getShortDescription().contains("slaveB"));
         assertTrue(cause.getShortDescription().contains("slaveC"));
 
         //send failed replication event for slaveA
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveA", RefReplicated.FAILED_STATUS));
+                "slaveA", RefReplicated.FAILED_STATUS));
 
         //send replication event for slaveC
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveC", RefReplicated.SUCCEEDED_STATUS));
+                "slaveC", RefReplicated.SUCCEEDED_STATUS));
 
         //item is no longer blocked and is tagged to fail
         cause = dispatcher.canRun(item);
@@ -414,16 +496,16 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockItemWhenReplicationIsCompletedBeforeDispatcherIsCalled() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB"});
 
         //send replication event for slaveB
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
 
         //send replication event for slaveA
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         assertNull("Item should not be blocked", dispatcher.canRun(item));
         verify(queueMock, times(0)).maintain();
@@ -433,34 +515,34 @@ public class ReplicationQueueTaskDispatcherTest {
      * Test that it should block item until the proper replication event is received.A proper replication event
      * is one that its timestamp is after the event timestamp.
      *
-     * This scenario is unlikely to happen for PatchsetCreated since each patchset has its own ref but for RefUpdated
-     * event, this is likely to happen getting subsequent refReplicated event for the same ref (e.g. /refs/heads/master).
+     * This scenario is only likely to happen for RefUpdated event, for example, getting subsequent refReplicated
+     * events for the same ref (e.g. /refs/heads/master).
      */
     @Test
     public void shouldBlockItemUntilProperReplicationEventIsReceived() {
         //send replication events created before the actual event
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "rrefs/heads/master", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
-        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/heads/master");
-        Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB"});
+        RefUpdated refUpdated = Setup.createRefUpdated("someGerritServer", "someProject",
+                "master");
+        Item item = createItem(refUpdated, new String[] {"slaveA", "slaveB"});
 
         //item is blocked since the cached replication events are time stamped before the actual event
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         assertTrue(cause.getShortDescription().contains("slaveA"));
         assertTrue(cause.getShortDescription().contains("slaveB"));
 
         //send replication events created after the actual event
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-            "slaveB", RefReplicated.SUCCEEDED_STATUS));
+                "slaveB", RefReplicated.SUCCEEDED_STATUS));
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         assertNull("Item should not be blocked", dispatcher.canRun(item));
         verify(queueMock, times(1)).maintain();
@@ -477,9 +559,9 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockItemWhenElapsedTimeIsGreaterThenCacheExpirationTime() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/heads/master");
+                "refs/heads/master");
         patchsetCreated.setReceivedOn(System.currentTimeMillis()
-            - TimeUnit.MINUTES.toMillis(ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES));
+                - TimeUnit.MINUTES.toMillis(ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES));
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB"});
         assertNull("Item should not be blocked", dispatcher.canRun(item));
         verify(queueMock, times(0)).maintain();
@@ -494,7 +576,7 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldFireQueueMaintenanceMaximumOneTimePerReplicationEventReceived() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
-            "refs/changes/1/1/1");
+                "refs/changes/1/1/1");
         Item item1 = createItem(patchsetCreated, new String[] {"slaveA"});
         Item item2 = createItem(patchsetCreated, new String[] {"slaveA"});
 
@@ -502,23 +584,23 @@ public class ReplicationQueueTaskDispatcherTest {
         CauseOfBlockage cause = dispatcher.canRun(item1);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
         cause = dispatcher.canRun(item2);
         assertNotNull("the item should be blocked", cause);
         assertTrue("Should have returned a WaitingForReplication as CauseOfBlockage",
-            cause instanceof WaitingForReplication);
+                cause instanceof WaitingForReplication);
 
         //send replication event for slaveA
         dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
-            "slaveA", RefReplicated.SUCCEEDED_STATUS));
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
 
         assertNull("Item should not be blocked", dispatcher.canRun(item1));
         assertNull("Item should not be tagged with replicationFailedAction",
-            item1.getAction(ReplicationFailedAction.class));
+                item1.getAction(ReplicationFailedAction.class));
         assertNull("Item should not be blocked", dispatcher.canRun(item2));
         assertNull("Item should not be tagged with replicationFailedAction",
-            item2.getAction(ReplicationFailedAction.class));
+                item2.getAction(ReplicationFailedAction.class));
         verify(queueMock, times(1)).maintain();
     }
 
