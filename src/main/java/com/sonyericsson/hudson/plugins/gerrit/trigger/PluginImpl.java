@@ -35,6 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 
 import hudson.Plugin;
 import hudson.model.AbstractProject;
+import hudson.model.Api;
 import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
@@ -42,6 +43,8 @@ import hudson.model.queue.QueueTaskDispatcher;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +62,7 @@ import jenkins.model.Jenkins;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
+@ExportedBean
 public class PluginImpl extends Plugin {
 
     /**
@@ -111,6 +115,14 @@ public class PluginImpl extends Plugin {
     public static final String TEST_SSH_KEYFILE_LOCATION_PROPERTY = PluginImpl.class.getName() + "_test_ssh_key_file";
 
     /**
+     * Gets api.
+     * @return the api.
+     */
+    public Api getApi() {
+        return new Api(this);
+    }
+
+    /**
      * Returns the instance of this class.
      *
      * @return the instance.
@@ -132,6 +144,7 @@ public class PluginImpl extends Plugin {
      *
      * @return the list of GerritServers
      */
+    @Exported
     public List<GerritServer> getServers() {
         return servers;
     }
