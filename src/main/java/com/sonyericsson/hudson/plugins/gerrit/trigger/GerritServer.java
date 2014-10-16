@@ -120,7 +120,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
-@ExportedBean(defaultVisibility=2)
+@ExportedBean(defaultVisibility = 2)
 public class GerritServer implements Describable<GerritServer>, Action {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
