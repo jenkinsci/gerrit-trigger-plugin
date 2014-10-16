@@ -41,6 +41,7 @@ import hudson.model.Run;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+
+import jenkins.model.Jenkins;
 
 
 /**
@@ -85,7 +88,6 @@ public class PluginImpl extends Plugin {
             AbstractProject.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
-    private static PluginImpl instance;
     private LinkedList<GerritServer> servers;
     private transient GerritHandler gerritEventManager;
     private transient volatile boolean active = false;
@@ -108,19 +110,12 @@ public class PluginImpl extends Plugin {
     public static final String TEST_SSH_KEYFILE_LOCATION_PROPERTY = PluginImpl.class.getName() + "_test_ssh_key_file";
 
     /**
-     * Constructor.
-     */
-    public PluginImpl() {
-        instance = this;
-    }
-
-    /**
-     * Returns this singleton instance.
+     * Returns the instance of this class.
      *
-     * @return the singleton.
+     * @return the instance.
      */
     public static PluginImpl getInstance() {
-        return instance;
+        return Jenkins.getInstance().getPlugin(PluginImpl.class);
     }
 
     /**

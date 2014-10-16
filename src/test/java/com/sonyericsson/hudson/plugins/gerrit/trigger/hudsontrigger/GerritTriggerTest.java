@@ -256,6 +256,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testProjectRename() throws Exception {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         // we'll make AbstractProject return different names over time
         final String[] name = new String[1];
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -284,6 +287,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testInitializeTriggerOnEvents() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
