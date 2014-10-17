@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
+
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -89,6 +90,7 @@ public class ReplicationCache {
     private static final Logger logger = LoggerFactory.getLogger(ReplicationCache.class);
     private final long expiration;
     private final TimeUnit unit;
+    private long creationTime;
     private Cache<RefReplicatedId, RefReplicated> events = null;
 
     /**
@@ -116,6 +118,14 @@ public class ReplicationCache {
         } else {
             this.unit = TimeUnit.MINUTES;
         }
+    }
+
+    /**
+     * Set creation time for Replication Cache.
+     * @param time when cache was created
+     */
+    public void setCreationTime(long time) {
+        this.creationTime = time;
     }
 
     /**
@@ -149,11 +159,15 @@ public class ReplicationCache {
 
     /**
      * Returns if the specified time stamp is expired.
+     * Note that we also need to check if the event would
+     * have been received before the cache was even created
+     * as would be the case of a Jenkins restart.
      * @param timestamp the time stamp to check.
      * @return true if expired, otherwise false
      */
     public boolean isExpired(long timestamp) {
-        return (System.currentTimeMillis() - timestamp) > unit.toMillis(expiration);
+        return (System.currentTimeMillis() - timestamp) > unit.toMillis(expiration)
+                || timestamp < creationTime;
     }
 
     /**
@@ -263,7 +277,7 @@ public class ReplicationCache {
                 gerritServer = refReplicated.getProvider().getName();
             }
             return new RefReplicatedId(gerritServer, refReplicated.getProject(), refReplicated.getRef(),
-                refReplicated.getTargetNode());
+                    refReplicated.getTargetNode());
         }
     }
 }
