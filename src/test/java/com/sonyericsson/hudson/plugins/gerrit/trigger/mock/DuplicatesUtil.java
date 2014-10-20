@@ -34,11 +34,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+
 import hudson.model.AbstractBuild;
-import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.util.RunList;
-import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -47,6 +45,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -63,29 +63,29 @@ public abstract class DuplicatesUtil {
     /**
      * Creates a {@link FreeStyleProject} with a gerrit-trigger configured.
      *
-     * @param base the test case that is doing the current testing.
+     * @param rule the instance of JenkinsRule.
      * @param projectName the name of the new job.
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritTriggeredJob(HudsonTestCase base, String projectName) throws Exception {
-        return createGerritTriggeredJob(base, projectName, PluginImpl.DEFAULT_SERVER_NAME);
+    public static FreeStyleProject createGerritTriggeredJob(JenkinsRule rule, String projectName) throws Exception {
+        return createGerritTriggeredJob(rule, projectName, PluginImpl.DEFAULT_SERVER_NAME);
     }
 
     /**
      * Creates a {@link FreeStyleProject} with a gerrit-trigger configured for a specific server name.
      *
-     * @param base the test case that is doing the current testing.
+     * @param rule the instance of JenkinsRule.
      * @param projectName the name of the new job.
      * @param serverName of your server
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritTriggeredJob(HudsonTestCase base,
+    public static FreeStyleProject createGerritTriggeredJob(JenkinsRule rule,
             String projectName, String serverName) throws Exception {
-        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, projectName);
+        FreeStyleProject p = rule.createFreeStyleProject(projectName);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null));
@@ -93,21 +93,21 @@ public abstract class DuplicatesUtil {
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, null, false, false, null, null));
-        base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
+        rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
 
     /**
      * Creates a {@link FreeStyleProject} with a gerrit-trigger dynamically configured.
      *
-     * @param base the test case that is doing the current testing.
+     * @param rule the instance of JenkinsRule.
      * @param name the name of the new job.
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritDynamicTriggeredJob(HudsonTestCase base, String name) throws Exception {
-        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
+    public static FreeStyleProject createGerritDynamicTriggeredJob(JenkinsRule rule, String name) throws Exception {
+        FreeStyleProject p = rule.createFreeStyleProject(name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
 
         File file = File.createTempFile("dynamic", "txt");
@@ -123,38 +123,38 @@ public abstract class DuplicatesUtil {
                 false, false, false, null, null, null, null, null, null, null, null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, list, true, false, filepath, null);
         p.addTrigger(trigger);
-        base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
+        rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
 
     /**
      * Creates a {@link FreeStyleProject} with a gerrit-trigger configured for Code Review +1.
      *
-     * @param base the test case that is doing the current testing.
+     * @param rule the instance of JenkinsRule.
      * @param name the name of the new job.
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(HudsonTestCase base, String name)
+    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(JenkinsRule rule, String name)
             throws Exception {
-        return createGerritTriggeredJobForCommentAdded(base, name, PluginImpl.DEFAULT_SERVER_NAME);
+        return createGerritTriggeredJobForCommentAdded(rule, name, PluginImpl.DEFAULT_SERVER_NAME);
     }
 
     /**
      * Creates a {@link FreeStyleProject} with a gerrit-trigger configured with a specific server and Code Review +1.
      *
-     * @param base the test case that is doing the current testing.
+     * @param rule the instance of JenkinsRule.
      * @param name the name of the new job.
      * @param serverName the name of the GerritServer
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(HudsonTestCase base,
+    public static FreeStyleProject createGerritTriggeredJobForCommentAdded(JenkinsRule rule,
             String name, String serverName)
             throws Exception {
-        FreeStyleProject p = base.hudson.createProject(FreeStyleProject.class, name);
+        FreeStyleProject p = rule.createFreeStyleProject(name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null));
@@ -165,7 +165,7 @@ public abstract class DuplicatesUtil {
                 null, null, null, null, null, null, null, null, null, null,
                 false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, list, false, false, null, null));
-        base.submit(base.createWebClient().getPage(p, "configure").getFormByName("config"));
+        rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
 
@@ -220,13 +220,12 @@ public abstract class DuplicatesUtil {
      * Utility method that returns when the expected number of builds are done, or the timeout has expired.
      *
      * @param project   the project to check
-     * @param number    the number of builds to wait for.
+     * @param number    the build number to wait for.
      * @param timeoutMs the timeout in ms.
-     * @return the builds.
      */
-    public static RunList<FreeStyleBuild> waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
+    public static void waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
         long startTime = System.currentTimeMillis();
-        while (project.getBuilds().size() < number) {
+        while (project.getLastCompletedBuild() == null || project.getLastCompletedBuild().getNumber() != number) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {
                 throw new RuntimeException("Timeout!");
             }
@@ -236,27 +235,5 @@ public abstract class DuplicatesUtil {
                 System.err.println("Interrupted while waiting!");
             }
         }
-        boolean allDone = false;
-        do {
-            boolean thisTime = true;
-            for (AbstractBuild b : project.getBuilds()) {
-                if (b.isBuilding()) {
-                    thisTime = false;
-                }
-            }
-            if (thisTime) {
-                allDone = true;
-            } else {
-                if (System.currentTimeMillis() - startTime >= timeoutMs) {
-                    throw new RuntimeException("Timeout!");
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    System.err.println("Interrupted while waiting!");
-                }
-            }
-        } while (!allDone);
-        return project.getBuilds();
     }
 }
