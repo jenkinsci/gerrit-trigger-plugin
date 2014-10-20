@@ -33,16 +33,28 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 
 import hudson.model.FreeStyleProject;
 
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.Rule;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.JenkinsRule.WebClient;
 
 import java.util.Iterator;
 import java.util.List;
+
+
+//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
+import static org.junit.Assert.*;
 
 /**
  * Tests for the project setup for a Gerrit triggered project.
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
-public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
+public class GerritTriggerProjectHudsonTest {
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule j = new JenkinsRule();
 
     /**
      * Tests that the dropdown list for comment added is populated with the correct values.
@@ -57,8 +69,8 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
         servers.add(server);
         server.start();
 
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "myGerritProject");
-        WebClient wc = createWebClient();
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "myGerritProject");
+        WebClient wc = j.createWebClient();
         HtmlPage page = wc.goTo("/job/myGerritProject/configure");
         List<HtmlElement> elements = page.getDocumentElement().getElementsByAttribute("td", "class", "setting-name");
         HtmlElement tr = null;
@@ -100,9 +112,9 @@ public class GerritTriggerProjectHudsonTest extends HudsonTestCase {
         server2.getConfig().getCategories().add(new VerdictCategory("Code-Review", "Code Review For Gerrit 2.6+"));
         server2.getConfig().getCategories().add(new VerdictCategory("Verified", "Verified For Gerrit 2.6+"));
 
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(this, "myGerritProject",
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "myGerritProject",
                 GerritServer.ANY_SERVER);
-        WebClient wc = createWebClient();
+        WebClient wc = j.createWebClient();
         HtmlPage page = wc.goTo("/job/myGerritProject/configure");
         List<HtmlElement> elements = page.getDocumentElement().getElementsByAttribute("td", "class", "setting-name");
         HtmlElement tr = null;
