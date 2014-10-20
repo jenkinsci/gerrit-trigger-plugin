@@ -28,7 +28,6 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.util.RunList;
 
 import org.apache.sshd.SshServer;
 import org.junit.Test;
@@ -96,11 +95,11 @@ public class GerritTriggerApiTest extends HudsonTestCase {
         }
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gerritServerName));
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, timeToBuild);
+        DuplicatesUtil.waitForBuilds(project, 1, timeToBuild);
 
-        FreeStyleBuild buildOne = builds.get(0);
+        FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
-        assertEquals(1, project.getBuilds().size());
+        assertEquals(1, project.getLastCompletedBuild().getNumber());
         assertSame(gerritServerName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
     }
 }

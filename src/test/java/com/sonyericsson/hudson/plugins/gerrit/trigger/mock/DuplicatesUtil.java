@@ -35,9 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import hudson.model.AbstractBuild;
-import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.util.RunList;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.io.File;
@@ -220,13 +218,12 @@ public abstract class DuplicatesUtil {
      * Utility method that returns when the expected number of builds are done, or the timeout has expired.
      *
      * @param project   the project to check
-     * @param number    the number of builds to wait for.
+     * @param number    the build number to wait for.
      * @param timeoutMs the timeout in ms.
-     * @return the builds.
      */
-    public static RunList<FreeStyleBuild> waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
+    public static void waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
         long startTime = System.currentTimeMillis();
-        while (project.getBuilds().size() < number) {
+        while (project.getLastCompletedBuild() == null || project.getLastCompletedBuild().getNumber() != number) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {
                 throw new RuntimeException("Timeout!");
             }
@@ -236,27 +233,5 @@ public abstract class DuplicatesUtil {
                 System.err.println("Interrupted while waiting!");
             }
         }
-        boolean allDone = false;
-        do {
-            boolean thisTime = true;
-            for (AbstractBuild b : project.getBuilds()) {
-                if (b.isBuilding()) {
-                    thisTime = false;
-                }
-            }
-            if (thisTime) {
-                allDone = true;
-            } else {
-                if (System.currentTimeMillis() - startTime >= timeoutMs) {
-                    throw new RuntimeException("Timeout!");
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    System.err.println("Interrupted while waiting!");
-                }
-            }
-        } while (!allDone);
-        return project.getBuilds();
     }
 }

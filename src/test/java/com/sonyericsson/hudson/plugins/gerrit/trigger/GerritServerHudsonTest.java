@@ -35,7 +35,6 @@ import hudson.Functions;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.util.RunList;
 
 import java.io.IOException;
 import java.net.URL;
@@ -123,17 +122,17 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(this, projectTwoName, gerritServerTwoName);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
-        RunList<FreeStyleBuild> buildsOne = DuplicatesUtil.waitForBuilds(projectOne, 1, timeToBuild);
-        RunList<FreeStyleBuild> buildsTwo = DuplicatesUtil.waitForBuilds(projectTwo, 1, timeToBuild);
+        DuplicatesUtil.waitForBuilds(projectOne, 1, timeToBuild);
+        DuplicatesUtil.waitForBuilds(projectTwo, 1, timeToBuild);
 
-        FreeStyleBuild buildOne = buildsOne.get(0);
+        FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
-        assertEquals(1, projectOne.getBuilds().size());
+        assertEquals(1, projectOne.getLastCompletedBuild().getNumber());
         assertSame(gerritServerOneName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
 
-        FreeStyleBuild buildTwo = buildsTwo.get(0);
+        FreeStyleBuild buildTwo = projectTwo.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildTwo.getResult());
-        assertEquals(1, projectTwo.getBuilds().size());
+        assertEquals(1, projectTwo.getLastCompletedBuild().getNumber());
         assertSame(gerritServerTwoName, buildTwo.getCause(GerritCause.class).getEvent().getProvider().getName());
     }
 

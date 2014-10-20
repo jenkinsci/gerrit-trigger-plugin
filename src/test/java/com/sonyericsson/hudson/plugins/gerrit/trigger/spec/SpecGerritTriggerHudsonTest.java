@@ -46,7 +46,6 @@ import hudson.model.Item;
 import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
-import hudson.util.RunList;
 
 import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
@@ -107,8 +106,8 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 5000);
-        FreeStyleBuild build = builds.get(0);
+        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+        FreeStyleBuild build = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, build.getResult());
     }
 
@@ -329,11 +328,11 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
-        assertEquals(2, builds.size());
+        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.ABORTED, firstBuild.getResult());
-        assertSame(Result.ABORTED, builds.getFirstBuild().getResult());
-        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+        assertSame(Result.ABORTED, project.getFirstBuild().getResult());
+        assertSame(Result.SUCCESS, project.getLastBuild().getResult());
     }
 
     /**
@@ -357,11 +356,11 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 2, 10000);
-        assertEquals(2, builds.size());
+        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, firstBuild.getResult());
-        assertSame(Result.SUCCESS, builds.getFirstBuild().getResult());
-        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+        assertSame(Result.SUCCESS, project.getFirstBuild().getResult());
+        assertSame(Result.SUCCESS, project.getLastBuild().getResult());
     }
 
     /**
@@ -378,9 +377,9 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 10000);
-        assertEquals(1, builds.size());
-        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        assertEquals(1, project.getLastCompletedBuild().getNumber());
+        assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }
 
     /**
@@ -398,9 +397,9 @@ public class SpecGerritTriggerHudsonTest extends HudsonTestCase {
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
-        RunList<FreeStyleBuild> builds = DuplicatesUtil.waitForBuilds(project, 1, 10000);
-        assertEquals(1, builds.size());
-        assertSame(Result.SUCCESS, builds.getLastBuild().getResult());
+        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        assertEquals(1, project.getLastCompletedBuild().getNumber());
+        assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }
 
     /**
