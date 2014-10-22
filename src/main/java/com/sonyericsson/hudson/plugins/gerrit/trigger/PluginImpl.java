@@ -35,12 +35,16 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 
 import hudson.Plugin;
 import hudson.model.AbstractProject;
+import hudson.model.Api;
 import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
+
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +52,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import jenkins.model.Jenkins;
 
 
 /**
@@ -55,6 +62,7 @@ import java.util.List;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
+@ExportedBean
 public class PluginImpl extends Plugin {
 
     /**
@@ -85,8 +93,7 @@ public class PluginImpl extends Plugin {
             AbstractProject.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
-    private static PluginImpl instance;
-    private LinkedList<GerritServer> servers;
+    private final List<GerritServer> servers = new CopyOnWriteArrayList<GerritServer>();
     private transient GerritHandler gerritEventManager;
     private transient volatile boolean active = false;
 
@@ -108,19 +115,20 @@ public class PluginImpl extends Plugin {
     public static final String TEST_SSH_KEYFILE_LOCATION_PROPERTY = PluginImpl.class.getName() + "_test_ssh_key_file";
 
     /**
-     * Constructor.
+     * Gets api.
+     * @return the api.
      */
-    public PluginImpl() {
-        instance = this;
+    public Api getApi() {
+        return new Api(this);
     }
 
     /**
-     * Returns this singleton instance.
+     * Returns the instance of this class.
      *
-     * @return the singleton.
+     * @return the instance.
      */
     public static PluginImpl getInstance() {
-        return instance;
+        return Jenkins.getInstance().getPlugin(PluginImpl.class);
     }
 
     /**
@@ -134,12 +142,10 @@ public class PluginImpl extends Plugin {
     /**
      * Get the list of Gerrit servers.
      *
-     * @return the list as a LinkedList of GerritServers
+     * @return the list of GerritServers
      */
-    public synchronized List<GerritServer> getServers() {
-        if (servers == null) {
-            servers = new LinkedList<GerritServer>();
-        }
+    @Exported
+    public List<GerritServer> getServers() {
         return servers;
     }
 
@@ -148,7 +154,7 @@ public class PluginImpl extends Plugin {
      *
      * @return the list of server names as a list.
      */
-    public synchronized List<String> getServerNames() {
+    public List<String> getServerNames() {
         LinkedList<String> names = new LinkedList<String>();
         for (GerritServer s : getServers()) {
             names.add(s.getName());
@@ -162,7 +168,7 @@ public class PluginImpl extends Plugin {
      * @param name the name of the server to get.
      * @return the GerritServer object to get, or null if no server has this name.
      */
-    public synchronized GerritServer getServer(String name) {
+    public GerritServer getServer(String name) {
         for (GerritServer s : servers) {
             if (s.getName().equals(name)) {
                 return s;
@@ -177,8 +183,8 @@ public class PluginImpl extends Plugin {
      * @return the server.
      */
     public GerritServer getFirstServer() {
-        if (servers != null && !servers.isEmpty()) {
-            return servers.getFirst();
+        if (!servers.isEmpty()) {
+            return servers.get(0);
         }
         return null;
     }
@@ -188,8 +194,11 @@ public class PluginImpl extends Plugin {
      *
      * @param servers the list to be set.
      */
-    public synchronized void setServers(LinkedList<GerritServer> servers) {
-        this.servers = servers;
+    public void setServers(List<GerritServer> servers) {
+        if (this.servers != servers) {
+            this.servers.clear();
+            this.servers.addAll(servers);
+        }
     }
 
     /**
@@ -198,7 +207,7 @@ public class PluginImpl extends Plugin {
      * @param s the server to be added.
      * @return the list after adding the server.
      */
-    public synchronized LinkedList<GerritServer> addServer(GerritServer s) {
+    public List<GerritServer> addServer(GerritServer s) {
         servers.add(s);
         return servers;
     }
@@ -209,7 +218,7 @@ public class PluginImpl extends Plugin {
      * @param s the server to be removed.
      * @return the list after removing the server.
      */
-    public synchronized LinkedList<GerritServer> removeServer(GerritServer s) {
+    public List<GerritServer> removeServer(GerritServer s) {
         servers.remove(s);
         return servers;
     }
@@ -301,14 +310,12 @@ public class PluginImpl extends Plugin {
             }
             pluginConfig = conf;
         }
-        if (servers == null || servers.isEmpty()) {
-            servers = new LinkedList<GerritServer>();
+        if (servers.isEmpty()) {
             if (config != null) { //have loaded data in old format, so add a new server with the old config to the list.
                 GerritServer defaultServer = new GerritServer(DEFAULT_SERVER_NAME);
                 defaultServer.setConfig(config);
                 servers.add(defaultServer);
             }
-            setServers(servers);
             save();
         }
         //For unit/integration testing only...
@@ -357,6 +364,7 @@ public class PluginImpl extends Plugin {
             gerritEventManager = null;
         }
         GerritSendCommandQueue.shutdown();
+        servers.clear();
     }
 
 }
