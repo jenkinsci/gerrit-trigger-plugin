@@ -24,10 +24,15 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -38,6 +43,7 @@ import java.io.Serializable;
  */
 public class PluginDraftPublishedEvent extends PluginGerritEvent implements Serializable {
     private static final long serialVersionUID = -8543595301119872587L;
+
 
     /**
      * Standard DataBoundConstructor.
@@ -64,6 +70,22 @@ public class PluginDraftPublishedEvent extends PluginGerritEvent implements Seri
      */
     @Extension
     public static class PluginDraftPublishedEventDescriptor extends PluginGerritEventDescriptor {
+
+        /**
+         * Whether replication is enabled.
+         * If so, the user will see a warning to read the help regarding replication
+         * @return true if so.
+         */
+        public boolean isReplicationEnabled() {
+            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
+                if (replicationConfig != null) {
+                    return replicationConfig.isEnableReplication();
+                }
+            }
+            return false;
+        }
+
 
         @Override
         public String getDisplayName() {

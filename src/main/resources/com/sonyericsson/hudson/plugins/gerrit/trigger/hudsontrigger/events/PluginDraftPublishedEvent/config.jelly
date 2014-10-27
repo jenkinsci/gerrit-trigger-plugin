@@ -21,5 +21,16 @@
   ~ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   ~ THE SOFTWARE.
   -->
-<j:jelly xmlns:j="jelly:core">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+   <j:choose>
+        <j:when test="${descriptor.isReplicationEnabled()}">
+            <f:entry
+                title=""
+                help="/plugin/gerrit-trigger/trigger/help-DraftPublished.html">
+                <div class="warning">Please see important note in Help on Replication</div>
+            </f:entry>
+        </j:when>
+        <j:otherwise>
+        </j:otherwise>
+    </j:choose>
 </j:jelly>
