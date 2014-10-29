@@ -23,7 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import hudson.model.AbstractProject;
 import java.util.TimerTask;
+import javax.annotation.CheckForNull;
+import jenkins.model.Jenkins;
 
 /**
  * TimerTasks that are created from a GerritTrigger and periodically calls
@@ -32,7 +35,7 @@ import java.util.TimerTask;
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
 public class GerritTriggerTimerTask extends TimerTask {
-    private GerritTrigger gerritTrigger;
+    private final String job;
 
     /**
      * Constructor
@@ -40,7 +43,7 @@ public class GerritTriggerTimerTask extends TimerTask {
      * @param gerritTrigger the GerritTrigger that created this timerTask
      */
     GerritTriggerTimerTask(GerritTrigger gerritTrigger) {
-        this.gerritTrigger = gerritTrigger;
+        job = gerritTrigger.getJob().getFullName();
         GerritTriggerTimer.getInstance().schedule(this);
     }
 
@@ -49,6 +52,10 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     @Override
     public void run() {
+        GerritTrigger gerritTrigger = getGerritTrigger();
+        if (gerritTrigger == null) {
+            return;
+        }
         gerritTrigger.updateTriggerConfigURL();
     }
 
@@ -57,7 +64,11 @@ public class GerritTriggerTimerTask extends TimerTask {
      *
      * @return the trigger.
      */
-    public GerritTrigger getGerritTrigger() {
-        return gerritTrigger;
+    public @CheckForNull GerritTrigger getGerritTrigger() {
+        AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
+        if (p == null) {
+            return null;
+        }
+        return (GerritTrigger) p.getTrigger(GerritTrigger.class);
     }
 }
