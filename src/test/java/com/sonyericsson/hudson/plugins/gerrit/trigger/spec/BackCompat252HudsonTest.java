@@ -199,7 +199,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
         int number = project.getLastBuild().getNumber() + 1;
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME).triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, number, 20000);
+        DuplicatesUtil.waitForBuilds(project, number, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         //3 old builds + the new one.
         assertEquals(number, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());

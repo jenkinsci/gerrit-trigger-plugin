@@ -66,7 +66,7 @@ public class GerritTriggerApiTest {
 
     private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
-    private final int timeToBuild = 5000;
+    private final int timeToBuild = DuplicatesUtil.DEFAULT_WAIT_BUILD_MS;
     private final int port = 29418;
 
     private SshdServerMock server;

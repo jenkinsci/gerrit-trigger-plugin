@@ -78,7 +78,7 @@ public class GerritServerHudsonTest {
     private final String radioButtonDefaultConfigValue = "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer";
     private final String radioButtonCopyValue = "copy";
 
-    private final int timeToBuild = 5000;
+    private final int timeToBuild = DuplicatesUtil.DEFAULT_WAIT_BUILD_MS;
     private final int badRequestErrorCode = 400;
     private final int portOne = 29418;
     private final int portTwo = 29419;

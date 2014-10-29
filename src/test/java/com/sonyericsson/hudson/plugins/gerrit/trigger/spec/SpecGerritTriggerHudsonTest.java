@@ -127,7 +127,7 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+        DuplicatesUtil.waitForBuilds(project, 1, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         FreeStyleBuild build = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, build.getResult());
     }
@@ -343,13 +343,14 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
+        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(
+                firstEvent, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        DuplicatesUtil.waitForBuilds(project, 2, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.ABORTED, firstBuild.getResult());
         assertSame(Result.ABORTED, project.getFirstBuild().getResult());
@@ -371,13 +372,14 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
+        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(
+                firstEvent, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        DuplicatesUtil.waitForBuilds(project, 2, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, firstBuild.getResult());
         assertSame(Result.SUCCESS, project.getFirstBuild().getResult());
@@ -398,7 +400,7 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
-        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        DuplicatesUtil.waitForBuilds(project, 1, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         assertEquals(1, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }
@@ -418,7 +420,7 @@ public class SpecGerritTriggerHudsonTest {
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
-        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        DuplicatesUtil.waitForBuilds(project, 1, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
         assertEquals(1, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }
