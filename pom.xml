@@ -222,7 +222,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Craziness:
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -253,7 +252,6 @@
                     </execution>
                 </executions>
             </plugin>
-            -->
             <plugin>
                 <groupId>com.googlecode.jslint4java</groupId>
                 <artifactId>jslint4java-maven-plugin</artifactId>
