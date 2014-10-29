@@ -729,7 +729,8 @@ public class BuildMemory {
              *
              * @return the project.
              */
-            public @CheckForNull AbstractProject getProject() {
+            @CheckForNull
+            public AbstractProject getProject() {
                 return Jenkins.getInstance().getItemByFullName(project, AbstractProject.class);
             }
 
@@ -738,9 +739,14 @@ public class BuildMemory {
              *
              * @return the build.
              */
-            public @CheckForNull AbstractBuild getBuild() {
+            @CheckForNull
+            public AbstractBuild getBuild() {
                 AbstractProject p = getProject();
-                return p != null ? p.getBuild(build) : null;
+                if (p != null) {
+                    return p.getBuild(build);
+                } else {
+                    return null;
+                }
             }
 
             /**

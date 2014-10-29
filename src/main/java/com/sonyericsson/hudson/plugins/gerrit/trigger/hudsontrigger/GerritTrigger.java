@@ -284,6 +284,10 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         this.notificationLevel = notificationLevel;
     }
 
+    /**
+     * Provides package access to the internal {@link #job} reference.
+     * @return the job
+     */
     AbstractProject getJob() {
         return job;
     }

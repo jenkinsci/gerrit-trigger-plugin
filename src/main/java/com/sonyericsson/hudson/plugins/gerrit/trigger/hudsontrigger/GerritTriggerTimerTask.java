@@ -35,6 +35,7 @@ import jenkins.model.Jenkins;
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
 public class GerritTriggerTimerTask extends TimerTask {
+    //TODO possible need to handle renames
     private final String job;
 
     /**
@@ -64,11 +65,12 @@ public class GerritTriggerTimerTask extends TimerTask {
      *
      * @return the trigger.
      */
-    public @CheckForNull GerritTrigger getGerritTrigger() {
+    @CheckForNull
+    public GerritTrigger getGerritTrigger() {
         AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
         if (p == null) {
             return null;
         }
-        return (GerritTrigger) p.getTrigger(GerritTrigger.class);
+        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
     }
 }

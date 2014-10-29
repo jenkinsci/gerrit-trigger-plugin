@@ -70,7 +70,7 @@ import org.powermock.reflect.Whitebox;
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
 import static org.junit.Assert.*;
 
-//CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -154,6 +154,12 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         //builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
     }
+
+    /**
+     * Forces GC by causing an OOM and then verifies the given {@link WeakReference} has been garbage collected.
+     * @param reference object used to verify garbage collection.
+     */
+    @SuppressWarnings("DLS_DEAD_LOCAL_STORE_OF_NULL")
     // TODO use version from MemoryAssert in 1.519+
     private static void assertGC(WeakReference<?> reference) {
         assertTrue(true); reference.get(); // preload any needed classes!
@@ -495,7 +501,7 @@ public class SpecGerritTriggerHudsonTest {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
 
         project.renameTo("anotherName");
-        j.configRoundtrip((Item) project);
+        j.configRoundtrip((Item)project);
 
         assertEquals(0, h.countTrigger);
 

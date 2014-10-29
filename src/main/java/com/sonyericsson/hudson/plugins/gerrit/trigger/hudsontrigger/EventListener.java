@@ -44,6 +44,7 @@ import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -62,6 +63,11 @@ final class EventListener implements GerritEventListener {
 
     private final String job;
 
+    /**
+     * Standard constructor.
+     *
+     * @param job the job to handle.
+     */
     EventListener(AbstractProject job) {
         this.job = job.getFullName();
     }
@@ -75,7 +81,7 @@ final class EventListener implements GerritEventListener {
             return;
         }
         if (event instanceof GerritTriggeredEvent) {
-            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent) event;
+            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
             if (t.isInteresting(triggeredEvent)) {
                 logger.trace("The event is interesting.");
                 notifyOnTriggered(t, triggeredEvent);
@@ -132,6 +138,7 @@ final class EventListener implements GerritEventListener {
     /**
      * Schedules a build with parameters from the event. With {@link #job} as the project to build.
      *
+     * @param t the trigger config
      * @param cause the cause of the build.
      * @param event the event.
      */
@@ -142,6 +149,7 @@ final class EventListener implements GerritEventListener {
     /**
      * Schedules a build with parameters from the event.
      *
+     * @param t       the trigger config
      * @param cause   the cause of the build.
      * @param event   the event.
      * @param project the project to build.
@@ -169,7 +177,7 @@ final class EventListener implements GerritEventListener {
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
 
         if (event instanceof ChangeBasedEvent) {
-            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent) event;
+            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
             if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
                 t.getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
             }
@@ -177,17 +185,17 @@ final class EventListener implements GerritEventListener {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
                         new Object[]{project.getName(), (build != null),
                                 changeBasedEvent.getChange().getNumber() + "/"
-                                        + changeBasedEvent.getPatchSet().getNumber(),});
+                                        + changeBasedEvent.getPatchSet().getNumber(), });
             } else {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
                         new Object[]{project.getName(), (build != null),
-                                changeBasedEvent.getChange().getNumber(),});
+                                changeBasedEvent.getChange().getNumber(), });
             }
         } else if (event instanceof RefUpdated) {
-            RefUpdated refUpdated = (RefUpdated) event;
+            RefUpdated refUpdated = (RefUpdated)event;
             logger.info("Project {} Build Scheduled: {} By event: {}",
                     new Object[]{project.getName(), (build != null),
-                            refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(),});
+                            refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(), });
         }
     }
 
@@ -214,7 +222,7 @@ final class EventListener implements GerritEventListener {
      */
     private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
         ParametersDefinitionProperty paramDefProp =
-                (ParametersDefinitionProperty) project.getProperty(ParametersDefinitionProperty.class);
+                (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
         List<ParameterValue> defValues = new ArrayList<ParameterValue>();
 
         /*
@@ -239,6 +247,7 @@ final class EventListener implements GerritEventListener {
     /**
      * Notify that that build will be triggered for the event.
      *
+     * @param t the trigger config
      * @param event The event
      */
     private void notifyOnTriggered(GerritTrigger t, GerritTriggeredEvent event) {
@@ -249,17 +258,23 @@ final class EventListener implements GerritEventListener {
             }
         } else {
             if (event instanceof GerritEventLifecycle) {
-                ((GerritEventLifecycle) event).fireProjectTriggered(t.getJob());
+                ((GerritEventLifecycle)event).fireProjectTriggered(t.getJob());
             }
         }
     }
 
+    /**
+     * Utility method for finding the {@link GerritTrigger} instance in {@link #job}.
+     *
+     * @return the trigger or null if job is gone or doesn't have a trigger.
+     */
+    @CheckForNull
     private GerritTrigger getTrigger() {
         AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
         if (p == null) {
             return null;
         }
-        return (GerritTrigger) p.getTrigger(GerritTrigger.class);
+        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
     }
 
     @Override
@@ -269,6 +284,6 @@ final class EventListener implements GerritEventListener {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof EventListener && ((EventListener) obj).job.equals(job);
+        return obj instanceof EventListener && ((EventListener)obj).job.equals(job);
     }
 }
