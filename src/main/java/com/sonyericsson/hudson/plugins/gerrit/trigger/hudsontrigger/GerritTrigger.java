@@ -3,6 +3,7 @@
  *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2014, CloudBees, Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +26,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
@@ -33,13 +36,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.setOrCreateParameters;
+
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
@@ -51,11 +52,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
-import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
-import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -77,10 +78,7 @@ import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
-import hudson.model.ParameterDefinition;
-import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
-import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.triggers.Trigger;
@@ -88,6 +86,7 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
+
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -105,9 +104,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
-import jenkins.model.Jenkins;
+
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -362,7 +360,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
             if (handler != null) {
-                handler.addListener(new ListenerImpl(project));
+                handler.addListener(new EventListener(project));
             } else {
                 logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
                         project.getFullDisplayName());
@@ -414,88 +412,19 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
     /**
      * Removes listener from the server.
-     *
-     *
      */
     private void removeListener() {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             if (PluginImpl.getInstance().getHandler() != null) {
                 if (job != null) {
-                    PluginImpl.getInstance().getHandler().removeListener(new ListenerImpl(job));
+                    PluginImpl.getInstance().getHandler().removeListener(new EventListener(job));
                 }
             } else {
                 logger.error("The Gerrit handler has not been initialized. BUG!");
             }
         } else {
        logger.error("The plugin instance could not be found");
-        }
-    }
-
-    private static final class ListenerImpl implements GerritEventListener {
-        private final String job;
-        ListenerImpl(AbstractProject job) {
-            this.job = job.getFullName();
-        }
-        @Override public void gerritEvent(GerritEvent event) {
-            AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
-            if (p == null) {
-                return;
-            }
-            GerritTrigger t = (GerritTrigger) p.getTrigger(GerritTrigger.class);
-            if (t == null) {
-                return;
-            }
-            t.gerritEvent(event);
-        }
-        @Override public int hashCode() {
-            return job.hashCode();
-        }
-        @Override public boolean equals(Object obj) {
-            return obj instanceof ListenerImpl && ((ListenerImpl) obj).job.equals(job);
-        }
-    }
-
-    public void gerritEvent(GerritEvent event) {
-        logger.trace("event: {}", event);
-        if (event instanceof GerritTriggeredEvent) {
-            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
-            if (isInteresting(triggeredEvent)) {
-                logger.trace("The event is interesting.");
-                notifyOnTriggered(triggeredEvent);
-                schedule(new GerritCause(triggeredEvent, silentMode), triggeredEvent);
-            }
-        }
-    }
-
-    /**
-     * Called when a ManualPatchsetCreated event arrives.
-     *
-     * @param event the event
-     */
-    public void gerritEvent(ManualPatchsetCreated event) {
-        logger.trace("event: {}", event);
-        if (isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            notifyOnTriggered(event);
-            schedule(new GerritManualCause(event, silentMode), event);
-        }
-    }
-
-    /**
-     * Notify that that build will be triggered for the event.
-     * @param event The event
-     */
-    private void notifyOnTriggered(GerritTriggeredEvent event) {
-        if (!silentMode) {
-            ToGerritRunListener listener = ToGerritRunListener.getInstance();
-            if (listener != null) {
-                listener.onTriggered(job, event);
-            }
-        } else {
-            if (event instanceof GerritEventLifecycle) {
-                ((GerritEventLifecycle)event).fireProjectTriggered(job);
-            }
         }
     }
 
@@ -548,9 +477,12 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      *
      * @param cause the cause of the build.
      * @param event the event.
+     * @deprecated
+     *    moved to {@link EventListener#schedule(GerritTrigger, GerritCause, GerritTriggeredEvent)}
      */
+    @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
-        schedule(cause, event, job);
+        new EventListener(job).schedule(this, cause, event, job);
     }
 
     /**
@@ -559,73 +491,28 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param cause   the cause of the build.
      * @param event   the event.
      * @param project the project to build.
+     * @deprecated
+     *    moved to {@link EventListener#schedule(GerritTrigger, GerritCause, GerritTriggeredEvent, AbstractProject)}
      */
+    @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
-        BadgeAction badgeAction = new BadgeAction(event);
-            //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
-        int projectbuildDelay = getBuildScheduleDelay();
-        if (cause instanceof GerritUserCause) {
-            // it's a manual trigger, no need for a quiet period
-            projectbuildDelay = 0;
-        } else if (project.getHasCustomQuietPeriod()
-                && project.getQuietPeriod() > projectbuildDelay) {
-            projectbuildDelay = project.getQuietPeriod();
-        }
-        ParametersAction parameters = createParameters(event, project);
-        Future build = project.scheduleBuild2(
-                projectbuildDelay,
-                cause,
-                badgeAction,
-                new RetriggerAction(cause.getContext()),
-                new RetriggerAllAction(cause.getContext()),
-                parameters);
-
-        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-
-        if (event instanceof ChangeBasedEvent) {
-            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
-                getRunningJobs().scheduled(changeBasedEvent, parameters, project.getName());
-            }
-            if (null != changeBasedEvent.getPatchSet()) {
-                logger.info("Project {} Build Scheduled: {} By event: {}",
-                        new Object[]{project.getName(), (build != null),
-                            changeBasedEvent.getChange().getNumber() + "/"
-                            + changeBasedEvent.getPatchSet().getNumber(), });
-            } else {
-                logger.info("Project {} Build Scheduled: {} By event: {}",
-                        new Object[]{project.getName(), (build != null),
-                            changeBasedEvent.getChange().getNumber(), });
-            }
-        } else if (event instanceof RefUpdated) {
-            RefUpdated refUpdated = (RefUpdated)event;
-            logger.info("Project {} Build Scheduled: {} By event: {}",
-                    new Object[]{project.getName(), (build != null),
-                    refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(), });
-        }
+        new EventListener(job).schedule(this, cause, event, project);
     }
 
     /**
-     * Finds the server config for the event's provider.
+     * Creates a ParameterAction and fills it with the project's default parameters + the Standard Gerrit parameters.
      *
-     * @param event the event
-     * @return the config or null if no server could be found.
-     * @see GerritTriggeredEvent#getProvider()
+     * @param event   the event.
+     * @param project the project.
+     * @return the ParameterAction.
+     * @deprecated
+     *     moved to {@link EventListener#createParameters(GerritTriggeredEvent, AbstractProject)}
      */
-    private IGerritHudsonTriggerConfig getServerConfig(GerritTriggeredEvent event) {
-        Provider provider = event.getProvider();
-        if (provider != null) {
-            GerritServer gerritServer = PluginImpl.getInstance().getServer(provider.getName());
-            if (gerritServer != null) {
-                return gerritServer.getConfig();
-            } else {
-                logger.warn("Could not find server config for {} - no such server.", provider.getName());
-            }
-        } else {
-            logger.warn("The event {} has no provider specified. BUG!", event);
-        }
-        return null;
+    @Deprecated
+    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
+        return new EventListener(job).createParameters(event, project);
     }
+
 
     /**
      * Get the list of verdict categories available on the selected GerritServer.
@@ -659,7 +546,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      *
      * @return the store of running jobs.
      */
-    private synchronized RunningJobs getRunningJobs() {
+    /*package*/ synchronized RunningJobs getRunningJobs() {
         if (runningJobs == null) {
             runningJobs = new RunningJobs();
         }
@@ -707,51 +594,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             return Math.max(0, buildScheduleDelay);
         }
 
-    }
-
-    /**
-     * Creates a ParameterAction and fills it with the project's default parameters + the Standard Gerrit parameters.
-     *
-     * @param event   the event.
-     * @param project the project.
-     * @return the ParameterAction.
-     */
-    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
-        List<ParameterValue> parameters = getDefaultParametersValues(project);
-        setOrCreateParameters(event, project, parameters);
-        return new ParametersAction(parameters);
-    }
-
-    /**
-     * Retrieves all default parameter values for a project.
-     * Copied from {@link AbstractProject#getDefaultParametersValues()}
-     * version 1.362. TODO: This is not a good way to solve the problem.
-     *
-     * @param project the project.
-     * @return the default parameter values.
-     */
-    private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
-        ParametersDefinitionProperty paramDefProp =
-                (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
-        List<ParameterValue> defValues = new ArrayList<ParameterValue>();
-
-        /*
-         * This check is made ONLY if someone calls this method even if isParametrized() is false.
-         */
-        if (paramDefProp == null) {
-            return defValues;
-        }
-
-        /* Scan for all parameters with an associated default value */
-        for (ParameterDefinition paramDefinition : paramDefProp.getParameterDefinitions()) {
-            ParameterValue defaultValue = paramDefinition.getDefaultParameterValue();
-
-            if (defaultValue != null) {
-                defValues.add(defaultValue);
-            }
-        }
-
-        return defValues;
     }
 
     /**
@@ -869,7 +711,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param event the event
      * @return true if we should.
      */
-    private boolean isInteresting(GerritTriggeredEvent event) {
+    /*package*/ boolean isInteresting(GerritTriggeredEvent event) {
         if (!job.isBuildable()) {
             logger.trace("Disabled.");
             return false;
@@ -878,7 +720,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         ToGerritRunListener listener = ToGerritRunListener.getInstance();
         if (listener != null) {
             if (listener.isProjectTriggeredAndIncomplete(job, event)) {
-                logger.trace("Already triggered and imcompleted.");
+                logger.trace("Already triggered and incomplete.");
                 return false;
             } else if (listener.isTriggered(job, event)) {
                 logger.trace("Already triggered.");
@@ -960,7 +802,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param event the event.
      * @return true if the event matches the approval category and value configured.
      */
-    private boolean commentAddedMatch(CommentAdded event) {
+    /*package*/ boolean commentAddedMatch(CommentAdded event) {
         PluginCommentAddedEvent commentAdded = null;
         for (PluginGerritEvent e : triggerOnEvents) {
             if (e instanceof PluginCommentAddedEvent) {
@@ -982,26 +824,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         return false;
     }
 
-    /**
-     * Called when a CommentAdded event arrives.
-     *
-     * @param event the event.
-     */
-    public void gerritEvent(CommentAdded event) {
-        logger.trace("event: {}", event);
-        ToGerritRunListener listener = ToGerritRunListener.getInstance();
-        if (listener != null) {
-            if (listener.isBuilding(job, event)) {
-                logger.trace("Already building.");
-                return;
-            }
-        }
-        if (isInteresting(event) && commentAddedMatch(event)) {
-            logger.trace("The event is interesting.");
-            notifyOnTriggered(event);
-            schedule(new GerritCause(event, silentMode), event);
-        }
-    }
+
 
     /**
      * The list of GerritProject triggering rules.
