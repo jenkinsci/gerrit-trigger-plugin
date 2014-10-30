@@ -49,11 +49,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 public abstract class DuplicatesUtil {
 
     /**
-     * Default build wait time in ms.
-     */
-    public static final int DEFAULT_WAIT_BUILD_MS = 30000;
-
-    /**
      * Utility constructor.
      */
     private DuplicatesUtil() {
