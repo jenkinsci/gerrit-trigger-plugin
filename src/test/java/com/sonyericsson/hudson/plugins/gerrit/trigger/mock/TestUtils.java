@@ -1,6 +1,8 @@
 /*
  *  The MIT License
  *
+ *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *  Copyright 2014 rinrinne All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
