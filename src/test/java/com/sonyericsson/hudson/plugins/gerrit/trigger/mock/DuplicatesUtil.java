@@ -24,10 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -35,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 
-import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleProject;
 
 import java.io.File;
@@ -44,7 +40,6 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -172,73 +167,5 @@ public abstract class DuplicatesUtil {
                 null, serverName, null, list, false, false, null, null));
         rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
-    }
-
-    /**
-     * Finds the form in the html document that performs the provided action.
-     *
-     * @param action the action to search for.
-     * @param forms  the html forms in the document.
-     * @return the form, or null of there is none.
-     */
-    public static HtmlForm getFormWithAction(String action, List<HtmlForm> forms) {
-        for (HtmlForm f : forms) {
-            if (f.getActionAttribute().equalsIgnoreCase(action)) {
-                return f;
-            }
-        }
-        return null;
-    }
-
-    //CS IGNORE MagicNumber FOR NEXT 50 LINES. REASON: Testdata.
-    /**
-     * Waits for a build to start for the specified event.
-     *
-     * @param event     the event to monitor.
-     * @param timeoutMs the maximum time in ms to wait for the build to start.
-     * @return the build that started.
-     */
-    public static AbstractBuild waitForBuildToStart(ManualPatchsetCreated event, int timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        final AtomicReference<AbstractBuild> ref = new AtomicReference<AbstractBuild>();
-        event.addListener(new GerritEventLifeCycleAdaptor() {
-            @Override
-            public void buildStarted(GerritEvent event, AbstractBuild build) {
-                ref.getAndSet(build);
-            }
-        });
-        while (ref.get() == null) {
-            if (System.currentTimeMillis() - startTime >= timeoutMs) {
-                throw new RuntimeException("Timeout!");
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                System.err.println("Interrupted while waiting!");
-            }
-        }
-        return ref.get();
-    }
-
-    //CS IGNORE MagicNumber FOR NEXT 50 LINES. REASON: Testdata.
-    /**
-     * Utility method that returns when the expected number of builds are done, or the timeout has expired.
-     *
-     * @param project   the project to check
-     * @param number    the build number to wait for.
-     * @param timeoutMs the timeout in ms.
-     */
-    public static void waitForBuilds(FreeStyleProject project, int number, int timeoutMs) {
-        long startTime = System.currentTimeMillis();
-        while (project.getLastCompletedBuild() == null || project.getLastCompletedBuild().getNumber() != number) {
-            if (System.currentTimeMillis() - startTime >= timeoutMs) {
-                throw new RuntimeException("Timeout!");
-            }
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                System.err.println("Interrupted while waiting!");
-            }
-        }
     }
 }

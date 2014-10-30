@@ -48,7 +48,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.getFormWithAction;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils.getFormWithAction;
 
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
 import static org.junit.Assert.*;

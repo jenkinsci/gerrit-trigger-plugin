@@ -35,9 +35,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.Retr
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
+
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;
@@ -48,6 +49,7 @@ import hudson.model.Item;
 import hudson.model.Result;
 import hudson.model.TopLevelItem;
 import hudson.util.RunList;
+
 import org.apache.sshd.SshServer;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -199,7 +201,7 @@ public class BackCompat252HudsonTest extends HudsonTestCase {
         int number = project.getLastBuild().getNumber() + 1;
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME).triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, number, DuplicatesUtil.DEFAULT_WAIT_BUILD_MS);
+        TestUtils.waitForBuilds(project, number);
         //3 old builds + the new one.
         assertEquals(number, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
