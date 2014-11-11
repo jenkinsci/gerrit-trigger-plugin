@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -40,11 +41,14 @@ import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+
+import jenkins.model.Jenkins;
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
@@ -52,23 +56,14 @@ import java.util.List;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension(ordinal = ToGerritRunListener.ORDINAL)
-public class ToGerritRunListener extends RunListener<AbstractBuild> {
+public final class ToGerritRunListener extends RunListener<AbstractBuild> {
 
     /**
      * The ordering of this extension.
      */
     public static final int ORDINAL = 10003;
     private static final Logger logger = LoggerFactory.getLogger(ToGerritRunListener.class);
-    private static ToGerritRunListener instance;
-    private transient BuildMemory memory;
-
-    /**
-     * Default Constructor.
-     */
-    public ToGerritRunListener() {
-        super(AbstractBuild.class);
-        memory = new BuildMemory();
-    }
+    private final transient BuildMemory memory = new BuildMemory();
 
     /**
      * Returns the registered instance of this class from the list of all listeners.
@@ -76,15 +71,13 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @return the instance.
      */
     public static ToGerritRunListener getInstance() {
-        if (instance == null) {
-            for (RunListener listener : all()) {
-                if (listener instanceof ToGerritRunListener) {
-                    instance = (ToGerritRunListener)listener;
-                    break;
-                }
-            }
+        ExtensionList<ToGerritRunListener> listeners =
+                Jenkins.getInstance().getExtensionList(ToGerritRunListener.class);
+        if (listeners == null || listeners.isEmpty()) {
+            logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
+            return null;
         }
-        return instance;
+        return listeners.get(0);
     }
 
     @Override
@@ -328,6 +321,21 @@ public class ToGerritRunListener extends RunListener<AbstractBuild> {
             return false;
         } else {
             return memory.isBuilding(event);
+        }
+    }
+
+    /**
+     * Checks the memory if the project is triggered by the event.
+     *
+     * @param project the project.
+     * @param event the event.
+     * @return true if so.
+     */
+    public boolean isTriggered(AbstractProject project, GerritTriggeredEvent event) {
+        if (project == null || event == null) {
+            return false;
+        } else {
+            return memory.isTriggered(event, project);
         }
     }
 

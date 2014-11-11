@@ -33,8 +33,12 @@ import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.ExtensionList;
 import hudson.model.Result;
+
 import org.apache.sshd.SshServer;
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 
@@ -42,8 +46,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
-
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+
+//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
+import static org.junit.Assert.*;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
 
@@ -52,7 +58,13 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
+public class GerritTriggeredBuildListenerTest {
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule j = new JenkinsRule();
 
     private SshServer sshd;
     @SuppressWarnings("unused")
@@ -61,8 +73,13 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
 
     private static CountDownLatch buildListenerLatch;
 
-    @Override
-    protected void setUp() throws Exception {
+    /**
+     * Runs before test method.
+     *
+     * @throws Exception throw if so.
+     */
+    @Before
+    public void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
@@ -71,12 +88,15 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
-        super.setUp();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    /**
+     * Runs after test method.
+     *
+     * @throws Exception throw if so.
+     */
+    @After
+    public void tearDown() throws Exception {
         sshd.stop(true);
         sshd = null;
     }
@@ -94,7 +114,7 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
 
         buildListenerLatch = new CountDownLatch(2);
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
@@ -120,7 +140,7 @@ public class GerritTriggeredBuildListenerTest extends HudsonTestCase {
 
         gerritServer.setConfig(config);
 
-        DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 

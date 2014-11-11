@@ -31,13 +31,18 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
-import org.jvnet.hudson.test.HudsonTestCase;
+
+import org.junit.Rule;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
 import java.util.Collection;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
+
+//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
+import static org.junit.Assert.*;
 
 //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: testdata.
 
@@ -48,7 +53,13 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends HudsonTestCase {
+public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule j = new JenkinsRule();
 
     /**
      * Tests that the trigger is added as a listener during startup of the server.
@@ -74,7 +85,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
     @LocalData
     public void testCreateNewProject() throws Exception {
         @SuppressWarnings("unused")
-        FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
+        FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
@@ -91,7 +102,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
      */
     @LocalData
     public void testReconfigureNewProject() throws Exception {
-        FreeStyleProject p = createGerritTriggeredJob(this, "testing1");
+        FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
@@ -99,7 +110,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase extends Huds
         // DependencyQueueTaskDispatcher adds 1 listener
         // ReplicationQueueTaskDispatcher adds 1 listener
         assertEquals(4, gerritEventListeners.size());
-        configRoundtrip((Item)p);
+        j.configRoundtrip((Item)p);
         // DependencyQueueTaskDispatcher adds 1 listener
         // ReplicationQueueTaskDispatcher adds 1 listener
         assertEquals(4, gerritEventListeners.size());

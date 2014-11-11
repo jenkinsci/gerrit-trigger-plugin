@@ -92,7 +92,10 @@ public class Topic extends AbstractDescribableImpl<Topic> {
      * @return true if the topic match.
      */
     public boolean isInteresting(String topic) {
-        if (topic != null && compareType.matches(pattern, topic)) {
+        if (topic == null) {
+            topic = "";
+        }
+        if (compareType.matches(pattern, topic)) {
             return true;
         }
         return false;

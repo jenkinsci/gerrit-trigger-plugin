@@ -82,6 +82,8 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,6 +120,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
+@ExportedBean(defaultVisibility = 2)
 public class GerritServer implements Describable<GerritServer>, Action {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
@@ -217,8 +220,59 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return name the name of the server.
      */
+    @Exported
     public String getName() {
         return name;
+    }
+
+    /**
+     * Get hostname of the server.
+     *
+     * @return the hostname of the server.
+     */
+    @Exported
+    public String getHostName() {
+        return config.getGerritHostName();
+    }
+
+    /**
+     * Get ssh port of the server.
+     *
+     * @return the ssh port of the server.
+     */
+    @Exported
+    public int getSshPort() {
+        return config.getGerritSshPort();
+    }
+
+    /**
+     * Get username of the server.
+     *
+     * @return the username of the server.
+     */
+    @Exported
+    public String getUserName() {
+        return config.getGerritUserName();
+    }
+
+    /**
+     * Get HTTP username of the server.
+     *
+     * @return HTTP username of the server.
+     */
+    @Exported
+    public String getHttpUserName() {
+        return config.getGerritHttpUserName();
+    }
+
+    /**
+     * Get frontend url of the server.
+     *
+     * @return the frontend url of the server.
+     */
+    @Exported
+    public String getFrontEndUrl() {
+        return config.getGerritFrontEndUrl();
     }
 
     /**
@@ -246,6 +300,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return true if so.
      */
+    @Exported
     public boolean isNoConnectionOnStartup() {
         return noConnectionOnStartup;
     }
@@ -264,6 +319,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return true if wakeup is failed by timeout.
      */
+    @Exported
     public boolean isTimeoutWakeup() {
         return timeoutWakeup;
     }
@@ -471,7 +527,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return true if so.
      */
-
+    @Exported
     public synchronized boolean isConnected() {
         if (gerritConnection != null) {
             return gerritConnection.isConnected();

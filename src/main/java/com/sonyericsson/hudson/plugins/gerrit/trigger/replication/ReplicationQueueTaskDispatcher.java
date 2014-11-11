@@ -31,6 +31,7 @@ import hudson.model.Queue.Item;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,10 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.RepositoryModifiedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -69,9 +73,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      */
     public ReplicationQueueTaskDispatcher() {
         this(PluginImpl.getInstance().getHandler(),
-            ReplicationCache.Factory.createCache(
-                    PluginImpl.getInstance().getPluginConfig().getReplicationCacheExpirationInMinutes(),
-                    TimeUnit.MINUTES));
+                ReplicationCache.Factory.createCache(
+                        PluginImpl.getInstance().getPluginConfig().getReplicationCacheExpirationInMinutes(),
+                        TimeUnit.MINUTES));
     }
 
     /**
@@ -84,12 +88,12 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         blockedItems = new ConcurrentHashMap<Integer, BlockedItem>();
         this.replicationCache = replicationCache;
         gerritHandler.addListener(this);
+        this.replicationCache.setCreationTime(new Date().getTime());
         logger.debug("Registered to gerrit events");
     }
 
     @Override
     public CauseOfBlockage canRun(Item item) {
-        logger.trace("Evaluating in item id {} can run", item.id);
         //we do not block item when it reached the buildable state, a buildable item is an item that
         //passed the waiting and the blocked state.
         if (item.isBuildable()) {
@@ -101,12 +105,17 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             if (blockedItem.canRunWithTimeoutCheck()) {
                 if (blockedItem.replicationFailedMessage != null) {
                     item.addAction(new ReplicationFailedAction(blockedItem.replicationFailedMessage));
+                    logger.trace("{} -> {}", blockedItem.getEventDescription(), blockedItem.replicationFailedMessage);
+                } else {
+                    logger.trace("{} can now run with no timeout check.", blockedItem.getEventDescription());
                 }
                 blockedItems.remove(itemId);
                 return null;
             } else {
-                logger.trace("item id {} is still waiting replication to {} gerrit slaves, ", itemId,
-                    blockedItem.slavesWaitingFor.size());
+                logger.trace(blockedItem.getEventDescription()
+                        + " (item id {}) is still waiting replication to {} gerrit slaves (waiting "
+                        + item.getInQueueForString() + ")", itemId,
+                        blockedItem.slavesWaitingFor.size());
                 return new WaitingForReplication(blockedItem.slavesWaitingFor.values());
             }
         } else {
@@ -118,6 +127,8 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 // later without having to iterate through all the builds in the queue
                 blockedItems.put(itemId, blockedItem);
                 return canRun(item);
+            } else {
+                logger.debug("blockedItem null for {}!", item.id);
             }
         }
         return null;
@@ -131,14 +142,30 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         Iterator<GerritSlave> it = blockedItem.slavesWaitingFor.values().iterator();
         while (it.hasNext()) {
             RefReplicated refReplicated = replicationCache.getIfPresent(blockedItem.gerritServer,
-                blockedItem.gerritProject, blockedItem.ref, it.next().getHost());
+                    blockedItem.gerritProject, blockedItem.ref, it.next().getHost());
             if (refReplicated != null) {
                 blockedItem.processRefReplicatedEvent(refReplicated);
-                logger.trace("processed a replication event from the cache, remaining number of events waiting for: "
-                    + blockedItem.slavesWaitingFor.size());
+                logger.trace("processed a replication event from the cache, remaining number of events waiting for: {}"
+                        , blockedItem.slavesWaitingFor.size());
             }
         }
     }
+
+    /**
+     * Get event description from RepositoryModifiedEvent
+     * @param evt Event to be described
+     * @return actual description
+     */
+    private String getEventDescription(GerritEvent evt) {
+        String eventType = evt.getEventType().name();
+        String projAndRef = "";
+        if (evt instanceof RepositoryModifiedEvent) {
+            projAndRef = " => " + ((RepositoryModifiedEvent)evt).getModifiedProject() + " -> "
+                    + ((RepositoryModifiedEvent)evt).getModifiedRef();
+        }
+        return "Event " + eventType + projAndRef;
+    }
+
     /**
      * Return the blocked item if caused by a gerritEvent that must wait
      * for replication and if replication is configured.
@@ -148,17 +175,15 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
     private BlockedItem getBlockedItem(Item item) {
         GerritCause gerritCause = getGerritCause(item);
         if (gerritCause == null) {
+            logger.trace("Gerrit Cause null for item: {} !", item.id);
             return null;
         }
         if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent
-            && item.task instanceof AbstractProject<?, ?>) {
-
-            if (replicationCache.isExpired(gerritCause.getEvent().getReceivedOn())) {
-                return null;
-            }
+                && item.task instanceof AbstractProject<?, ?>) {
 
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger((AbstractProject<?, ?>)item.task);
             if (gerritTrigger == null) {
+                logger.trace("Gerrit Trigger null for item: {} !", item.id);
                 return null;
             }
 
@@ -167,20 +192,57 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 gerritServer = gerritCause.getEvent().getProvider().getName();
             }
             if (gerritServer == null) {
+                logger.trace("Gerrit Server null for item: {} !", item.id);
+                return null;
+            }
+
+            RepositoryModifiedEvent repositoryModifiedEvent = (RepositoryModifiedEvent)gerritCause.getEvent();
+            String eventDesc = getEventDescription(gerritCause.getEvent());
+            logger.debug(eventDesc);
+            Date createdOnDate = null;
+            if (repositoryModifiedEvent instanceof ChangeBasedEvent) {
+                PatchSet patchset = ((ChangeBasedEvent)repositoryModifiedEvent).getPatchSet();
+                if (patchset != null) {
+                    createdOnDate = patchset.getCreatedOn();
+                }
+            }
+
+            if (replicationCache.isExpired(gerritCause.getEvent().getReceivedOn())) {
+                logger.trace(eventDesc + " has expired");
                 return null;
             }
 
             List<GerritSlave> slaves = gerritTrigger.gerritSlavesToWaitFor(gerritServer);
             if (!slaves.isEmpty()) {
-                RepositoryModifiedEvent repositoryModifiedEvent = (RepositoryModifiedEvent)gerritCause.getEvent();
-                if (repositoryModifiedEvent.getModifiedProject() != null
-                    && repositoryModifiedEvent.getModifiedRef() != null) {
-                    return new BlockedItem(repositoryModifiedEvent.getModifiedProject(),
+
+                if (repositoryModifiedEvent.getModifiedProject() == null
+                        || repositoryModifiedEvent.getModifiedRef() == null) {
+                    return null;
+                }
+
+                if (createdOnDate != null && replicationCache.isExpired(createdOnDate.getTime())) {
+                    logger.trace("{} has expired compared to createdOn date of patchset", eventDesc);
+                    return null;
+                }
+
+                boolean useTimestampWhenProcessingRefReplicatedEvent = false;
+                // we only need to perform a timestamp check if
+                // we are looking at a RefUpdated event.
+                // The reason for this is due to the fact that the ref
+                // is not unique for RefUpdated events and we therefore
+                // *need* to compare timestamps to ensure we use the
+                // correct event.
+                if (gerritCause.getEvent() instanceof RefUpdated) {
+                    useTimestampWhenProcessingRefReplicatedEvent = true;
+                }
+                logger.debug(eventDesc + " is blocked");
+                return new BlockedItem(repositoryModifiedEvent.getModifiedProject(),
                         repositoryModifiedEvent.getModifiedRef(),
                         gerritServer,
                         slaves,
-                        gerritCause.getEvent().getReceivedOn());
-                }
+                        gerritCause.getEvent().getReceivedOn(),
+                        eventDesc,
+                        useTimestampWhenProcessingRefReplicatedEvent);
             }
         }
         return null;
@@ -202,7 +264,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
 
     @Override
     public void gerritEvent(GerritEvent event) {
-       //not interested in the other events, only RefReplicated
+        //not interested in the other events, only RefReplicated
     }
 
     /**
@@ -237,7 +299,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         private ConcurrentMap<String, GerritSlave> slavesWaitingFor;
         private boolean canRun = false;
         private long eventTimeStamp;
+        private String eventDescription;
         private String replicationFailedMessage;
+        private boolean useTimestampWhenProcessingRefReplicatedEvent = false;
 
         /**
          * Standard constructor.
@@ -246,9 +310,13 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
          * @param gerritServer The gerrit server
          * @param gerritSlaves The gerrit slaves
          * @param eventTimeStamp The original event time stamp.
+         * @param eventDescription description of event
+         * @param useTimestampWhenProcessingRefReplicatedEvent Enable use of timestamp for deciding to
+         * process refreplicated event.
          */
         public BlockedItem(String gerritProject, String ref, String gerritServer, List<GerritSlave> gerritSlaves,
-            long eventTimeStamp) {
+                long eventTimeStamp, String eventDescription,
+                boolean useTimestampWhenProcessingRefReplicatedEvent) {
             this.gerritProject = gerritProject;
             this.ref = ref;
             this.gerritServer = gerritServer;
@@ -257,6 +325,16 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 slavesWaitingFor.put(gerritSlave.getHost(), gerritSlave);
             }
             this.eventTimeStamp = eventTimeStamp;
+            this.eventDescription = eventDescription;
+            this.useTimestampWhenProcessingRefReplicatedEvent = useTimestampWhenProcessingRefReplicatedEvent;
+        }
+
+        /**
+         * Return description of the event that is blocked
+         * @return Description of the event
+         */
+        public String getEventDescription() {
+            return eventDescription;
         }
 
         /**
@@ -275,7 +353,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             // check if any Gerrit Slave reached its timeout
             for (GerritSlave slave : slavesWaitingFor.values()) {
                 if (slave.getTimeoutInSeconds() != GerritSlave.DISABLED_TIMEOUT_VALUE
-                    && TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - eventTimeStamp) > slave
+                        && TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - eventTimeStamp) > slave
                         .getTimeoutInSeconds()) {
                     replicationFailedMessage = Messages.WaitingForReplicationTimeout(ref, slave.getName());
                     return true;
@@ -293,20 +371,26 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             if (canRun || refReplicated.getProvider() == null) {
                 return;
             }
+
             if (gerritProject.equals(refReplicated.getProject())
-                && gerritServer.equals(refReplicated.getProvider().getName())
-                && ref.equals(refReplicated.getRef())
-                && slavesWaitingFor.containsKey(refReplicated.getTargetNode())
-                && eventTimeStamp < refReplicated.getReceivedOn()) {
-                if (refReplicated.getStatus().equals(RefReplicated.FAILED_STATUS)) {
-                    replicationFailedMessage = Messages.ReplicationFailed(ref,
-                        slavesWaitingFor.get(refReplicated.getTargetNode()).getName());
-                    slavesWaitingFor.clear();
-                } else {
+                    && gerritServer.equals(refReplicated.getProvider().getName())
+                    && ref.equals(refReplicated.getRef())
+                    && slavesWaitingFor.containsKey(refReplicated.getTargetNode())) {
+
+                if (useTimestampWhenProcessingRefReplicatedEvent
+                        && (!(eventTimeStamp < refReplicated.getReceivedOn()))) {
+                    logger.trace("Using timestamp and event tstamp is: {}"
+                            + " and ref-event tstamp is: {}. Ignoring", eventTimeStamp, refReplicated.getReceivedOn());
+                    return;
+                }
+                if (refReplicated.getStatus().equals(RefReplicated.SUCCEEDED_STATUS)) {
+                    logger.debug("Received successful refReplicated event for {} for slave {}"
+                            , getEventDescription(), refReplicated.getTargetNode());
                     slavesWaitingFor.remove(refReplicated.getTargetNode());
                 }
 
                 if (slavesWaitingFor.size() == 0) {
+                    logger.debug("No more slaves to wait for ({})", getEventDescription());
                     canRun = true;
                 }
             }

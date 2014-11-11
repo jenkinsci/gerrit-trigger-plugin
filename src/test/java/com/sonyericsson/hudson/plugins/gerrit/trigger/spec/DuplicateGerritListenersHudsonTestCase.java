@@ -38,7 +38,9 @@ import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.Before;
+import org.junit.Rule;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
 
@@ -46,7 +48,10 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.getFormWithAction;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils.getFormWithAction;
+
+//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
+import static org.junit.Assert.*;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test data.
 
@@ -57,14 +62,24 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
+public class DuplicateGerritListenersHudsonTestCase {
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule j = new JenkinsRule();
 
     private SshdServerMock.KeyPairFiles keyFile;
 
-    @Override
-    protected void setUp() throws Exception {
+    /**
+     * Runs before test method.
+     *
+     * @throws Exception throw if so.
+     */
+    @Before
+    public void setUp() throws Exception {
         keyFile = SshdServerMock.generateKeyPair();
-        super.setUp();
     }
 
     /**
@@ -74,7 +89,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
      */
     @LocalData
     public void testNewProjectCreation() throws Exception {
-        createGerritTriggeredJob(this, "testJob1");
+        createGerritTriggeredJob(j, "testJob1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
@@ -91,8 +106,8 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
      */
     @LocalData
     public void testNewProjectCreationWithReSave() throws Exception {
-        FreeStyleProject p = createGerritTriggeredJob(this, "testJob2");
-        configRoundtrip((Item)p);
+        FreeStyleProject p = createGerritTriggeredJob(j, "testJob2");
+        j.configRoundtrip((Item)p);
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
             getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
         Collection<GerritEventListener> gerritEventListeners =
@@ -109,12 +124,12 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
      */
     @LocalData
     public void testNewProjectCreationWithReName() throws Exception {
-        FreeStyleProject p = createGerritTriggeredJob(this, "testJob3");
+        FreeStyleProject p = createGerritTriggeredJob(j, "testJob3");
 
-        HtmlForm form = createWebClient().getPage(p, "configure").getFormByName("config");
+        HtmlForm form = j.createWebClient().getPage(p, "configure").getFormByName("config");
         form.getInputByName("name").setValueAttribute("testJob33");
-        HtmlPage confirmPage = submit(form);
-        submit(getFormWithAction("doRename", confirmPage.getForms()));
+        HtmlPage confirmPage = j.submit(form);
+        j.submit(getFormWithAction("doRename", confirmPage.getForms()));
         //configRoundtrip(p);
         assertEquals("testJob33", p.getName());
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
@@ -140,7 +155,7 @@ public class DuplicateGerritListenersHudsonTestCase extends HudsonTestCase {
         servers.add(server);
         server.start();
 
-        FreeStyleProject p = createGerritTriggeredJob(this, "testJob4");
+        createGerritTriggeredJob(j, "testJob4");
         GerritHandler handler = Whitebox.getInternalState(server, GerritHandler.class);
         assertNotNull(handler);
         GerritConnection connection = Whitebox.getInternalState(server, GerritConnection.class);

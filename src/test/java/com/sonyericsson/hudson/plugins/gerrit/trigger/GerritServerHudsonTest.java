@@ -19,8 +19,11 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 import org.apache.sshd.SshServer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.jvnet.hudson.test.JenkinsRule;
 
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -29,17 +32,23 @@ import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.Functions;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.util.RunList;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+
+
+
+//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
+import static org.junit.Assert.*;
+
 
 /**
  * Provide Html unit tests for server management and triggering from UI.
@@ -47,7 +56,13 @@ import java.util.List;
  * @author Anthony Wei-Wing Chin &lt;anthony.a.chin@ericsson.com&gt;
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  */
-public class GerritServerHudsonTest extends HudsonTestCase {
+public class GerritServerHudsonTest {
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule j = new JenkinsRule();
 
     private final String gerritServerOneName = "testServer1";
     private final String gerritServerTwoName = "testServer2";
@@ -65,7 +80,6 @@ public class GerritServerHudsonTest extends HudsonTestCase {
     private final String radioButtonDefaultConfigValue = "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer";
     private final String radioButtonCopyValue = "copy";
 
-    private final int timeToBuild = 5000;
     private final int badRequestErrorCode = 400;
     private final int portOne = 29418;
     private final int portTwo = 29419;
@@ -80,8 +94,14 @@ public class GerritServerHudsonTest extends HudsonTestCase {
     private SshServer sshdOne;
     private SshServer sshdTwo;
 
-    @Override
-    protected void setUp() throws Exception {
+
+    /**
+     * Runs before test method.
+     *
+     * @throws Exception throw if so.
+     */
+    @Before
+    public void setUp() throws Exception {
         SshdServerMock.generateKeyPair();
         serverOne = new SshdServerMock();
         serverTwo = new SshdServerMock();
@@ -95,12 +115,15 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         serverTwo.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverTwo.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         serverTwo.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
-        super.setUp();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    /**
+     * Runs after test method.
+     *
+     * @throws Exception throw if so.
+     */
+    @After
+    public void tearDown() throws Exception {
         sshdOne.stop(true);
         sshdTwo.stop(true);
         sshdOne = null;
@@ -119,21 +142,21 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().addServer(gerritServerTwo);
         gerritServerOne.start();
         gerritServerTwo.start();
-        FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(this, projectOneName, gerritServerOneName);
-        FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(this, projectTwoName, gerritServerTwoName);
+        FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
+        FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(j, projectTwoName, gerritServerTwoName);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
-        RunList<FreeStyleBuild> buildsOne = DuplicatesUtil.waitForBuilds(projectOne, 1, timeToBuild);
-        RunList<FreeStyleBuild> buildsTwo = DuplicatesUtil.waitForBuilds(projectTwo, 1, timeToBuild);
+        TestUtils.waitForBuilds(projectOne, 1);
+        TestUtils.waitForBuilds(projectTwo, 1);
 
-        FreeStyleBuild buildOne = buildsOne.get(0);
+        FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
-        assertEquals(1, projectOne.getBuilds().size());
+        assertEquals(1, projectOne.getLastCompletedBuild().getNumber());
         assertSame(gerritServerOneName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
 
-        FreeStyleBuild buildTwo = buildsTwo.get(0);
+        FreeStyleBuild buildTwo = projectTwo.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildTwo.getResult());
-        assertEquals(1, projectTwo.getBuilds().size());
+        assertEquals(1, projectTwo.getLastCompletedBuild().getNumber());
         assertSame(gerritServerTwoName, buildTwo.getCause(GerritCause.class).getEvent().getProvider().getName());
     }
 
@@ -164,7 +187,7 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
         server.start();
-        DuplicatesUtil.createGerritTriggeredJob(this, projectOneName, gerritServerOneName);
+        DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
 
         GerritServer server2 = new GerritServer(gerritServerTwoName);
         PluginImpl.getInstance().addServer(server2);
@@ -187,7 +210,7 @@ public class GerritServerHudsonTest extends HudsonTestCase {
         PluginImpl.getInstance().addServer(server);
         server.start();
 
-        DuplicatesUtil.createGerritTriggeredJob(this, projectOneName, gerritServerOneName);
+        DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
 
         removeServer(gerritServerOneName);
 
@@ -218,8 +241,8 @@ public class GerritServerHudsonTest extends HudsonTestCase {
      * @throws IOException if error removing server.
      */
     private void removeServer(String serverName) throws IOException {
-        URL url = new URL(getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
-        HtmlPage removalPage = createWebClient().getPage(url);
+        URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
+        HtmlPage removalPage = j.createWebClient().getPage(url);
 
         int serverSize = PluginImpl.getInstance().getServers().size();
 
@@ -267,8 +290,8 @@ public class GerritServerHudsonTest extends HudsonTestCase {
      * @throws IOException if error getting URL or getting page from URL.
      */
     private void addNewServerWithDefaultConfigs(String serverName) throws IOException {
-        URL url = new URL(getURL(), newServerURL);
-        HtmlPage page = createWebClient().getPage(url);
+        URL url = new URL(j.getURL(), newServerURL);
+        HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
 
         form.getInputByName(inputFormName).setValueAttribute(serverName);
@@ -294,8 +317,8 @@ public class GerritServerHudsonTest extends HudsonTestCase {
      * @throws IOException if error getting URL or getting page from URL.
      */
     private void addNewServerByCopyingConfig(String newServerName, String fromServerName) throws IOException {
-        URL url = new URL(getURL(), newServerURL);
-        HtmlPage page = createWebClient().getPage(url);
+        URL url = new URL(j.getURL(), newServerURL);
+        HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
 
         form.getInputByName(inputFormName).setValueAttribute(newServerName);

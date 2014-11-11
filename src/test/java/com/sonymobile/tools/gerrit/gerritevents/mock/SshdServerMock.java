@@ -25,14 +25,16 @@ package com.sonymobile.tools.gerrit.gerritevents.mock;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+
 import org.apache.sshd.SshServer;
+import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.PublickeyAuthenticator;
+import org.apache.sshd.server.UserAuth;
+import org.apache.sshd.server.auth.UserAuthNone;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.session.ServerSession;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,9 +46,10 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+
 import com.jcraft.jsch.KeyPair;
 
-import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -312,12 +315,9 @@ public class SshdServerMock implements CommandFactory {
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
-        sshd.setPublickeyAuthenticator(new PublickeyAuthenticator() {
-            @Override
-            public boolean authenticate(String s, PublicKey publicKey, ServerSession serverSession) {
-                return true;
-            }
-        });
+        List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+        userAuthFactories.add(new UserAuthNone.Factory());
+        sshd.setUserAuthFactories(userAuthFactories);
         sshd.setCommandFactory(server);
         sshd.start();
         return sshd;

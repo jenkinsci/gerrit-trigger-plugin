@@ -52,7 +52,13 @@
                                      help="help-Search">
                                 <f:textbox name="queryString"
                                            value="${request.session.getAttribute('queryString')}"
-                                           default=""/>
+                                           default="status:open"/>
+                            </f:entry>
+                            <f:entry title="${%Include All Patchsets}"
+                                     help="help-allPatchSets">
+                                <f:checkbox name="allPatchSets"
+                                            checked="${request.session.getAttribute('allPatchSets')}"
+                                            default="false"/>
                             </f:entry>
                             <f:block>
                                 <f:submit value="${%Search}"/>
@@ -67,13 +73,19 @@
                         </div>
                     </j:if>
                     <j:if test="${!empty(request.session.getAttribute('result'))}">
-                        <f:form method="post" action="build" name="theBuild">
+                        <j:if test="${!empty(request.session.getAttribute('error_build'))}">
+                            <f:block>
+                                <p class="error">
+                                    ${request.session.getAttribute('error_build')}
+                                </p>
+                            </f:block>
+                        </j:if>
+                        <f:form method="" action="" name="">
                             <f:section title="${%Search Result}">
                                 <f:description>
                                     ${%SearchResultDescription}
                                 </f:description>
                                 <f:block>
-                                    <input type="hidden" id="selectedIds" name="selectedIds" value=""/>
 
                                     <j:set var="result" value="${request.session.getAttribute('result')}"/>
                                     <table width="100%" border="1" cellpadding="2" cellspacing="0"
@@ -247,18 +259,12 @@
                                     -->
                                 </f:block>
                             </f:section>
-                            <f:section title="${%Trigger}">
-                                <j:if test="${!empty(request.session.getAttribute('error_build'))}">
-                                    <f:block>
-                                        <p class="error">
-                                            ${request.session.getAttribute('error_build')}
-                                        </p>
-                                    </f:block>
-                                </j:if>
-                                <f:block>
-                                    <f:submit value="${%Trigger Selected}"/>
-                                </f:block>
-                            </f:section>
+                        </f:form>
+                        <f:form method="post" action="build" name="theBuild">
+                            <input type="hidden" id="selectedIds" name="selectedIds" value=""/>
+                            <f:bottomButtonBar>
+                                <f:submit value="${%Trigger Selected}"/>
+                            </f:bottomButtonBar>
                         </f:form>
                     </j:if>
                 </j:otherwise>

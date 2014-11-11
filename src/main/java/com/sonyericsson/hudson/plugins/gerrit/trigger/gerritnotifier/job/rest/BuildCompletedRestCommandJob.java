@@ -47,9 +47,13 @@ import java.util.List;
 */
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
+    private static final String LABEL_CODEREVIEW = "Code-Review";
+    private static final String LABEL_VERIFIED   = "Verified";
+
     private final BuildMemory.MemoryImprint memoryImprint;
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
+    private final IGerritHudsonTriggerConfig config;
 
     /**
      * Constructor.
@@ -64,18 +68,25 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
         super(config, (listener != null ? listener.getLogger() : null), (ChangeBasedEvent)memoryImprint.getEvent());
         this.memoryImprint = memoryImprint;
         this.listener = listener;
-        parameterExpander = new ParameterExpander(config);
+        this.parameterExpander = new ParameterExpander(config);
+        this.config = config;
     }
 
     @Override
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
-
-        int verified = 0;
-        int codeReview = 0;
+        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
         if (memoryImprint.getEvent().isScorable()) {
-            verified = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
-            codeReview = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
+            if (config.isRestCodeReview()) {
+                scoredLabels.add(new ReviewLabel(
+                        LABEL_CODEREVIEW,
+                        parameterExpander.getMinimumCodeReviewValue(memoryImprint, true)));
+            }
+            if (config.isRestVerified()) {
+                scoredLabels.add(new ReviewLabel(
+                        LABEL_VERIFIED,
+                        parameterExpander.getMinimumVerifiedValue(memoryImprint, true)));
+            }
         }
         Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
         List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
@@ -92,9 +103,6 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                 }
             }
         }
-        return new ReviewInput(message,
-                commentedFiles, ReviewLabel.verified(verified),
-                ReviewLabel.codeReview(codeReview)).
-                setNotify(notificationLevel);
+        return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
     }
 }

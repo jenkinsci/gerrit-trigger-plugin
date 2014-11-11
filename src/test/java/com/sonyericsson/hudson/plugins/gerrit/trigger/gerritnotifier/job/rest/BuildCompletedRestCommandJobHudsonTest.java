@@ -69,6 +69,8 @@ public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
         config.setUseRestApi(true);
         config.setGerritHttpUserName("user");
         config.setGerritHttpPassword("passwd");
+        config.setRestCodeReview(true);
+        config.setRestVerified(true);
 
         server1.start();
 

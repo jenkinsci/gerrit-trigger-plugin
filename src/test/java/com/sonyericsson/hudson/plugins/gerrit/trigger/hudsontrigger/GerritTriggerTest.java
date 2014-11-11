@@ -255,6 +255,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testProjectRename() throws Exception {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         // we'll make AbstractProject return different names over time
         final String[] name = new String[1];
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -283,6 +286,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testInitializeTriggerOnEvents() {
+        PowerMockito.mockStatic(PluginImpl.class);
+        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         boolean silentStartMode = false;
@@ -1057,7 +1063,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyZeroInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
         verify(project).isBuildable();
         verifyNoMoreInteractions(project);
     }
@@ -1129,7 +1135,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyNoMoreInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
 
         verify(project).scheduleBuild2(
                 anyInt(),
@@ -1167,7 +1173,7 @@ public class GerritTriggerTest {
 
         trigger.gerritEvent(event);
 
-        verifyNoMoreInteractions(listener);
+        verify(listener, never()).onTriggered(same(project), same(event));
 
         verify(project).scheduleBuild2(
                 anyInt(),

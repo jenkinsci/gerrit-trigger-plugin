@@ -108,6 +108,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
         assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
+        assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
         assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
@@ -274,7 +275,7 @@ public class ParameterExpanderTest {
                 "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
-   /**
+    /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeAbandoned event instead.
      *
      * @throws IOException IOException
@@ -356,7 +357,8 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeMerged(), 0, 0);
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
+                Setup.createChangeMerged(), 0, 0);
     }
 
     /**
@@ -385,9 +387,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulEvent(String customUrl, String expectedBuildsStats,
-                                                           GerritTriggeredEvent event, int expectedVerifiedVote,
-                                                           int expectedCodeReviewVote)
-            throws IOException, InterruptedException {
+            GerritTriggeredEvent event, int expectedVerifiedVote,
+            int expectedCodeReviewVote)
+                    throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
@@ -439,6 +441,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=" + expectedVerifiedVote) >= 0);
         assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=" + expectedCodeReviewVote) >= 0);
+        assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
         assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
         assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
