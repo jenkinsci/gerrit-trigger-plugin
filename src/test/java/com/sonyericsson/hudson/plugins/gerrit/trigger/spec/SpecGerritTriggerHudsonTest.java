@@ -47,7 +47,6 @@ import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
 import hudson.model.TopLevelItem;
-import hudson.util.RunList;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -66,7 +65,7 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
 import static org.junit.Assert.*;
 
-//CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -126,7 +125,7 @@ public class SpecGerritTriggerHudsonTest {
     public void testTriggeredSilentStartModeBuild() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
-        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
 
         GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
         trigger.setSilentStartMode(true);
@@ -134,7 +133,7 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+        TestUtils.waitForBuilds(project, 1, 5000);
 
         List<SshdServerMock.CommandMock> commands = server.getCommandHistory();
         for (int i = 0; i < commands.size(); i++) {
@@ -151,7 +150,7 @@ public class SpecGerritTriggerHudsonTest {
     public void testTriggeredNoSilentStartModeBuild() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
-        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(this, "projectX");
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
 
         GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
         trigger.setSilentStartMode(false);
@@ -159,7 +158,7 @@ public class SpecGerritTriggerHudsonTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+        TestUtils.waitForBuilds(project, 1, 5000);
 
         try {
             server.waitForNrCommands("Build Started", 1, 5000);
@@ -180,12 +179,12 @@ public class SpecGerritTriggerHudsonTest {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         gerritServer.getConfig().setNumberOfSendingWorkerThreads(3);
         final int nrOfJobs = 3;
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(this, "projectX");
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(1000));
         project.save();
         for (int i = 0; i < nrOfJobs; i++) {
             String name = String.format("project%d", i);
-            FreeStyleProject copyProject = (FreeStyleProject)jenkins.copy((TopLevelItem)project, name);
+            FreeStyleProject copyProject = (FreeStyleProject)j.jenkins.copy((TopLevelItem)project, name);
             boolean mode = (i & 1) == 0; // true for even numbers
             copyProject.getTrigger(GerritTrigger.class).setSilentStartMode(mode);
         }
