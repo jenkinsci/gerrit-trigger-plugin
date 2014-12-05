@@ -10,6 +10,11 @@
             ${%SnapshotVersionWarning}
         </div>
     </j:if>
+    <j:if test="${!it.isGerritMissedEventsSupported()}">
+        <div class="warning">
+            ${%MissedEventsPlaybackNotSupportedWarning}
+        </div>
+    </j:if>
     <j:if test="${it.hasDisabledFeatures()}">
         <div class="warning">
             ${%DisabledFeaturesWarning}

@@ -26,6 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+
+import java.util.concurrent.TimeUnit;
+
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
@@ -145,7 +148,10 @@ public class LockedDownGerritEventTest {
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
         TestUtils.waitForBuilds(project, 1);
-        assertEquals(server.getNrCommandsHistory("gerrit review.*"), 2);
+        //wait until command is registered
+        // CS IGNORE MagicNumber FOR NEXT 2 LINES. REASON: ConstantsNotNeeded
+        Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+        assertEquals(2, server.getNrCommandsHistory("gerrit review.*"));
 
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
