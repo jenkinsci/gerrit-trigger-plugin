@@ -320,7 +320,7 @@ public class BuildMemory {
             return false;
         } else {
             for (Entry entry : pb.getEntries()) {
-                if (entry.getProject().equals(project)) {
+                if (entry.isProject(project)) {
                     if (entry.getBuild() != null) {
                         return !entry.isBuildCompleted();
                     } else {
@@ -757,7 +757,11 @@ public class BuildMemory {
              * @param build the build.
              */
             private void setBuild(AbstractBuild build) {
-                this.build = build.getId();
+                if (build != null) {
+                    this.build = build.getId();
+                } else {
+                    this.build = null;
+                }
             }
 
             /**
@@ -810,6 +814,23 @@ public class BuildMemory {
                 return s;
             }
 
+            /**
+             * If the provided project is the same as this entry is referencing.
+             * It does so by checking the fullName for equality.
+             *
+             * @param other the other project to check
+             * @return true if so.
+             * @see #getProject()
+             */
+            public boolean isProject(AbstractProject other) {
+                if (this.project != null && other != null) {
+                    return this.project.equals(other.getFullName());
+                } else if(this.project == null && other == null) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
     }
 }

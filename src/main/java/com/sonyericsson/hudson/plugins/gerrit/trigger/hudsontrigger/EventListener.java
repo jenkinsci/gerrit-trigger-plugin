@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -68,7 +69,7 @@ final class EventListener implements GerritEventListener {
      *
      * @param job the job to handle.
      */
-    EventListener(AbstractProject job) {
+    EventListener(@Nonnull AbstractProject job) {
         this.job = job.getFullName();
     }
 

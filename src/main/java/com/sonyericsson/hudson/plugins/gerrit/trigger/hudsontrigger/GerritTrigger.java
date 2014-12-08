@@ -652,7 +652,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                                 context.getOtherBuilds());
                     }
                     final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
-                    schedule(cause, context.getEvent(), context.getThisBuild().getProject());
+                    createListener().schedule(this, cause, context.getEvent(), context.getThisBuild().getProject());
                 }
             }
         }
