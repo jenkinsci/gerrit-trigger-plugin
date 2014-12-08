@@ -25,7 +25,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -33,15 +32,18 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
-import hudson.model.AbstractBuild;
-import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import hudson.model.AbstractBuild;
+import hudson.model.Hudson;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -517,6 +519,11 @@ public class ParameterExpander {
 
         Entry[] entries = memoryImprint.getEntries();
 
+        /* Sort entries with worst results first so the attention is drawn on them.
+         * Otherwise users may e.g. miss an UNSTABLE result because they see SUCCESS first.
+         */
+        Arrays.sort(entries, EntryByBuildResultComparator.DESCENDING);
+
         // In Gerrit, all lines before the first empty line are used as the summary.
         // For the summary all single linefeeds will be removed (only in Gerrit, not sent mails).
         // Hence, for the multi-builds, we will add a double linefeed before actually listing
@@ -637,4 +644,42 @@ public class ParameterExpander {
         }
         return fromMessage.substring(messageStart.length(), endIndex);
     }
+
+    /**
+     * Sorts build entries along their results.
+     */
+    private static final class EntryByBuildResultComparator implements Comparator<Entry> {
+        /**
+         * Sorts with worse results first.
+         */
+        static final EntryByBuildResultComparator DESCENDING = new EntryByBuildResultComparator(true);
+
+        private boolean descending;
+        /**
+         * Creates a comparator
+         *
+         * @param descending <code>true</code> for worst results first,
+         *         <code>false</code> for best results first
+         */
+        private EntryByBuildResultComparator(boolean descending) {
+            this.descending = descending;
+        }
+
+        @Override
+        public int compare(Entry e1, Entry e2) {
+            AbstractBuild b1 = e1.getBuild();
+            AbstractBuild b2 = e2.getBuild();
+            if (b1 != null && b2 != null) {
+                int o1 = b1.getResult().ordinal;
+                int o2 = b2.getResult().ordinal;
+                if (descending) {
+                    return o2 - o1;
+                } else {
+                    return o1 - o2;
+                }
+            }
+            return 0;
+        }
+    }
+
 }

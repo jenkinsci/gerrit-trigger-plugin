@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.model.AbstractBuild;
@@ -46,7 +46,7 @@ import hudson.model.Item;
 import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
-
+import hudson.model.TopLevelItem;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -58,6 +58,7 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 import java.lang.ref.WeakReference;
@@ -107,6 +108,7 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         serverMock.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
     }
 
@@ -122,6 +124,88 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
+     * Tests that a triggered build in silent start mode does not emit any build started messages.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredSilentStartModeBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentStartMode(true);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        waitForDynamicTimer(project, 5000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        TestUtils.waitForBuilds(project, 1, 5000);
+
+        List<SshdServerMock.CommandMock> commands = serverMock.getCommandHistory();
+        for (int i = 0; i < commands.size(); i++) {
+            String command = commands.get(i).getCommand();
+            assertFalse(command.toLowerCase().contains("build started"));
+        }
+    }
+
+    /**
+     * Tests that a triggered build without silent start mode does emit build started messages.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredNoSilentStartModeBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentStartMode(false);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        waitForDynamicTimer(project, 5000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        TestUtils.waitForBuilds(project, 1, 5000);
+
+        try {
+            serverMock.waitForNrCommands("Build Started", 1, 5000);
+        } catch (Exception e) {
+            System.out.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            fail("Should not throw exception.");
+        }
+    }
+
+    /**
+     * Trigger several builds and test that the one in silent start mode does not emit any build started messages
+     * while the ones without silent start mode does.
+     * @throws Exception if so.
+     */
+    @LocalData
+    public void testTriggeredSilentStartModeMixedBuild() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(3);
+        final int nrOfJobs = 3;
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
+        project.getBuildersList().add(new SleepBuilder(1000));
+        project.save();
+        for (int i = 0; i < nrOfJobs; i++) {
+            String name = String.format("project%d", i);
+            FreeStyleProject copyProject = (FreeStyleProject)j.jenkins.copy((TopLevelItem)project, name);
+            boolean mode = (i & 1) == 0; // true for even numbers
+            copyProject.getTrigger(GerritTrigger.class).setSilentStartMode(mode);
+        }
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        try {
+            serverMock.waitForNrCommands("Build Started", 2, nrOfJobs * 5000);
+        } catch (Exception e) {
+            System.out.println(e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+            fail("Should not throw exception.");
+        }
+    }
+
+    /**
      * Tests to trigger a build with a dynamic configuration.
      * @throws Exception if so.
      */
@@ -133,7 +217,7 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        DuplicatesUtil.waitForBuilds(project, 1, 5000);
+        TestUtils.waitForBuilds(project, 1);
         FreeStyleBuild build = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, build.getResult());
         // JENKINS-23152
@@ -377,7 +461,7 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
-     * Tests that a build for a patch set of the gets canceled when a new patch set of the same change arrives.
+     * Tests that a build for a patch set gets cancelled when a new patch set of the same change arrives.
      *
      * @throws Exception if so.
      */
@@ -389,14 +473,15 @@ public class SpecGerritTriggerHudsonTest {
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
+        AtomicReference<AbstractBuild> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
+        AbstractBuild firstBuild = TestUtils.waitForBuildToStart(firstBuildRef);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        TestUtils.waitForBuilds(project, 2);
         assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.ABORTED, firstBuild.getResult());
         assertSame(Result.ABORTED, project.getFirstBuild().getResult());
@@ -417,14 +502,15 @@ public class SpecGerritTriggerHudsonTest {
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
+        AtomicReference<AbstractBuild> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = DuplicatesUtil.waitForBuildToStart(firstEvent, 5000);
+        AbstractBuild firstBuild = TestUtils.waitForBuildToStart(firstBuildRef);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        DuplicatesUtil.waitForBuilds(project, 2, 10000);
+        TestUtils.waitForBuilds(project, 2);
         assertEquals(2, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, firstBuild.getResult());
         assertSame(Result.SUCCESS, project.getFirstBuild().getResult());
@@ -445,7 +531,7 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
-        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        TestUtils.waitForBuilds(project, 1);
         assertEquals(1, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }
@@ -465,7 +551,7 @@ public class SpecGerritTriggerHudsonTest {
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
-        DuplicatesUtil.waitForBuilds(project, 1, 10000);
+        TestUtils.waitForBuilds(project, 1);
         assertEquals(1, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());
     }

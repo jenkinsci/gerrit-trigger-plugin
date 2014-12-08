@@ -42,7 +42,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
+
 
 
 
@@ -66,7 +68,6 @@ public class GerritTriggerApiTest {
 
     private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
-    private final int timeToBuild = 5000;
     private final int port = 29418;
 
     private SshdServerMock server;
@@ -119,7 +120,7 @@ public class GerritTriggerApiTest {
         }
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gerritServerName));
-        DuplicatesUtil.waitForBuilds(project, 1, timeToBuild);
+        TestUtils.waitForBuilds(project, 1);
 
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());

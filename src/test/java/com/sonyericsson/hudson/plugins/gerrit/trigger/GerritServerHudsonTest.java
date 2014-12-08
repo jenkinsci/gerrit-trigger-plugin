@@ -32,6 +32,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.Functions;
@@ -42,6 +43,7 @@ import hudson.model.Result;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+
 
 
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
@@ -78,7 +80,6 @@ public class GerritServerHudsonTest {
     private final String radioButtonDefaultConfigValue = "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer";
     private final String radioButtonCopyValue = "copy";
 
-    private final int timeToBuild = 5000;
     private final int badRequestErrorCode = 400;
     private final int portOne = 29418;
     private final int portTwo = 29419;
@@ -145,8 +146,8 @@ public class GerritServerHudsonTest {
         FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(j, projectTwoName, gerritServerTwoName);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
-        DuplicatesUtil.waitForBuilds(projectOne, 1, timeToBuild);
-        DuplicatesUtil.waitForBuilds(projectTwo, 1, timeToBuild);
+        TestUtils.waitForBuilds(projectOne, 1);
+        TestUtils.waitForBuilds(projectTwo, 1);
 
         FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());

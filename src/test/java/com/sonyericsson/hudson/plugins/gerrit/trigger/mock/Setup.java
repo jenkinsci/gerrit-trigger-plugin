@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -260,6 +259,17 @@ public final class Setup {
     }
 
     /**
+     * Gives you a DraftPublished mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return DraftPublished mock.
+     */
+    public static DraftPublished createDraftPublished(String serverName, String project, String ref) {
+        return createDraftPublishedWithPatchSetDate(serverName, project, ref, new Date());
+    }
+
+    /**
      * Gives you a ChangeMerged mock.
      * @return ChangeMerged mock.
      */
@@ -316,6 +326,40 @@ public final class Setup {
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         return event;
     }
+
+    /**
+     * Gives you a DraftPublished mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @param date The patchset's createdOn date
+     * @return DraftPublished mock.
+     */
+    public static DraftPublished createDraftPublishedWithPatchSetDate(String serverName, String project,
+            String ref, Date date) {
+        DraftPublished event = new DraftPublished();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject(project);
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        patch.setRef(ref);
+        patch.setCreatedOn(date);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        return event;
+    }
+
     /**
      * Gives you a ChangeRestored mock.
      * @return ChangeRestored mock.
@@ -479,9 +523,11 @@ public final class Setup {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
+        boolean silentMode = true;
+        boolean silentStart = false;
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                true, true, false, false, "", "", "", "", "", "", "", null,
+                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, false, "", null);
 
         if (project != null) {

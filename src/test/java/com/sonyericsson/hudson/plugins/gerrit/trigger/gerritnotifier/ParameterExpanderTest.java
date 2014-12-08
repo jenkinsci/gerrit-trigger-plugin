@@ -24,9 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -34,22 +31,32 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+
 import hudson.EnvVars;
+import hudson.model.Result;
+import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
-import hudson.model.Result;
-import hudson.model.TaskListener;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
-
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -57,7 +64,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-//CS IGNORE MagicNumber FOR NEXT 450 LINES. REASON: Mocks tests.
+//CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: Mocks tests.
 
 /**
  * Tests for {@link ParameterExpander}.
@@ -321,6 +328,24 @@ public class ParameterExpanderTest {
         tryGetBuildCompletedCommandSuccessfulChangeRestored("${BUILD_URL}console",
                 "\n\nhttp://localhost/test/console : SUCCESS");
     }
+
+    /**
+     * Test for message ordering in case of multiple build entries.
+     *
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
+    @Test
+    public void testGetBuildCompletedCommandMulipleBuildsMessageOrder() throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandEventWithResults("",
+                new String[] { // messages must be in order
+                    "\n\nhttp://localhost/test/ : FAILURE",
+                    "\n\nhttp://localhost/test/ : UNSTABLE",
+                    "\n\nhttp://localhost/test/ : SUCCESS", },
+                new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
+                Setup.createPatchsetCreated(), -1, 0);
+    }
+
     /**
      * Sub test for {@link #testGetBuildCompletedCommandSuccessful()}.
      *
@@ -390,6 +415,29 @@ public class ParameterExpanderTest {
             GerritTriggeredEvent event, int expectedVerifiedVote,
             int expectedCodeReviewVote)
                     throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
+                new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
+                Setup.createChangeRestored(), 0, 0);
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessful()} and
+     * {@link #testGetBuildCompletedCommandSuccessfulChangeMerged()}.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @param expectedBuildResults the expected build outcomes
+     * @param expectedMessage the expected message
+     * @param event the event.
+     * @param expectedVerifiedVote what to expect in the final verified vote even if 1 is calculated
+     * @param expectedCodeReviewVote what to expect in the final code review vote even if 32 is calculated
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
+            Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
+            int expectedVerifiedVote, int expectedCodeReviewVote)
+                    throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
@@ -405,20 +453,23 @@ public class ParameterExpanderTest {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
-        EnvVars env = Setup.createEnvVars();
-        AbstractBuild r = Setup.createBuild(project, taskListener, env);
-        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
-
-        when(r.getResult()).thenReturn(Result.SUCCESS);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[expectedBuildResults.length];
+        for (int i = 0; i < expectedBuildResults.length; i++) {
+            EnvVars env = Setup.createEnvVars();
+            AbstractBuild r = Setup.createBuild(project, taskListener, env);
+            env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+            when(r.getResult()).thenReturn(expectedBuildResults[i]);
+            entries[i] = Setup.createImprintEntry(project, r);
+        }
 
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         when(memoryImprint.getEvent()).thenReturn(event);
 
-        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(true);
-        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(false);
-        when(memoryImprint.wereAnyBuildsUnstable()).thenReturn(false);
+        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(allAreOfType(Result.SUCCESS, expectedBuildResults));
+        when(memoryImprint.wereAllBuildsNotBuilt()).thenReturn(allAreOfType(Result.NOT_BUILT, expectedBuildResults));
+        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(anyIsOfType(Result.FAILURE, expectedBuildResults));
+        when(memoryImprint.wereAnyBuildsUnstable()).thenReturn(anyIsOfType(Result.UNSTABLE, expectedBuildResults));
 
-        MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         assertThat("Event should be a ChangeBasedEvent", event, instanceOf(ChangeBasedEvent.class));
@@ -435,19 +486,19 @@ public class ParameterExpanderTest {
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertTrue("Missing OK message", result.indexOf(" MSG='Your friendly butler says OK.") >= 0);
-        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildsStats) >= 0);
-        assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
-        assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
-        assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=" + expectedVerifiedVote) >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=" + expectedCodeReviewVote) >= 0);
-        assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
-        assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
-        assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
-        assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGES", result.indexOf("CUSTOM_MESSAGE_BUILD_COMPLETED") >= 0);
+        assertThat("Missing message", result, containsString(" MSG=" + expectedMessage));
+        assertThat("Missing BS", result, containsStrings(expectedBuildsStats));
+        assertThat("Missing CHANGE_ID", result, containsString("CHANGE_ID=Iddaaddaa123456789"));
+        assertThat("Missing PATCHSET", result, containsString("PATCHSET=1"));
+        assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
+        assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
+        assertThat("Missing NOTIFICATION_LEVEL", result, containsString("NOTIFICATION_LEVEL=ALL"));
+        assertThat("Missing REFSPEC", result, containsString("REFSPEC=" + expectedRefSpec));
+        assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
+        assertThat("Missing ENV_CHANGE", result, containsString("ENV_CHANGE=1000"));
+        assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
+        assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
+        assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
     }
 
 
@@ -524,6 +575,33 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Whether all of the given results equal to the given result.
+     *
+     * @param query the result to check
+     * @param all all results
+     * @return true if all are the same
+     */
+    private static boolean allAreOfType(Result query, Result[] all) {
+        for (Result result : all) {
+            if (!result.equals(query)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Whether any of the given results equals to the given result.
+     *
+     * @param query the result to check
+     * @param all all results
+     * @return true if any is the same
+     */
+    private static boolean anyIsOfType(Result query, Result[] all) {
+        return Arrays.asList(all).contains(query);
+    }
+
+    /**
      * Extension implementing GerritMessageProvider to provide a custom build message.
      */
     public static class GerritMessageProviderExtension extends GerritMessageProvider {
@@ -556,4 +634,54 @@ public class ParameterExpanderTest {
             return null;
         }
     }
+
+    /**
+     * Creates a matcher for multiple substring containment
+     *
+     * @param substrings the substrings
+     * @return the matcher
+     */
+    private static Matcher<String> containsStrings(String... substrings) {
+        return new SubstringMatcher(substrings);
+    }
+
+    /**
+     * Checks containment of multiple strings in another string.
+     */
+    public static final class SubstringMatcher extends TypeSafeMatcher<String> {
+
+        private final String[] substrings;
+
+        /**
+         * Creates a matcher.
+         *
+         * @param substrings the substrings to check
+         */
+        public SubstringMatcher(final String... substrings) {
+            this.substrings = substrings;
+        }
+
+        @Override
+        public boolean matchesSafely(String s) {
+            int i = 0;
+            for (String substring : substrings) {
+                i = s.indexOf(substring, i);
+                if (i < 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public void describeMismatchSafely(String item, Description mismatchDescription) {
+          mismatchDescription.appendText("was \"").appendText(item).appendText("\"");
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("a string containing strings ").appendValue(Arrays.toString(substrings));
+        }
+    }
+
 }

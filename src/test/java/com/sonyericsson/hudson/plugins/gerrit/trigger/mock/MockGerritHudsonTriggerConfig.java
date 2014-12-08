@@ -24,23 +24,23 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
-
-import net.sf.json.JSONObject;
-
-import org.apache.http.auth.Credentials;
 
 import hudson.util.Secret;
 
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+
+import net.sf.json.JSONObject;
+
+import org.apache.http.auth.Credentials;
 
 /**
  * Mock class of a Config.
@@ -87,13 +87,38 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public String getGerritCmdBuildFailed() {
-        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=-1 MSG=A disappointed butler says not OK.<BUILDURL>";
+        return "CHANGE=<CHANGE>"
+                + " CHANGE_ID=<CHANGE_ID>"
+                + " PATCHSET=<PATCHSET>"
+                + " VERIFIED=-1"
+                + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+                + " REFSPEC=<REFSPEC> MSG='A disappointed butler says not OK. BS=<BUILDS_STATS>'"
+                + " BUILDURL=<BUILDURL>"
+                + " STARTED_STATS=<STARTED_STATS>"
+                + " ENV_BRANCH=$BRANCH"
+                + " ENV_CHANGE=$CHANGE"
+                + " ENV_PATCHSET=$PATCHSET"
+                + " ENV_REFSPEC=$REFSPEC"
+                + " ENV_CHANGEURL=$CHANGE_URL";
     }
 
     @Override
     public String getGerritCmdBuildUnstable() {
-        // TODO Auto-generated method stub
-        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=0 MSG=The build is Unstable";
+        return "CHANGE=<CHANGE>"
+                + " CHANGE_ID=<CHANGE_ID>"
+                + " PATCHSET=<PATCHSET>"
+                + " VERIFIED=<VERIFIED>"
+                + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+                + " REFSPEC=<REFSPEC> MSG='The build is Unstable. BS=<BUILDS_STATS>'"
+                + " BUILDURL=<BUILDURL>"
+                + " STARTED_STATS=<STARTED_STATS>"
+                + " ENV_BRANCH=$BRANCH"
+                + " ENV_CHANGE=$CHANGE"
+                + " ENV_PATCHSET=$PATCHSET"
+                + " ENV_REFSPEC=$REFSPEC"
+                + " ENV_CHANGEURL=$CHANGE_URL";
     }
 
     @Override

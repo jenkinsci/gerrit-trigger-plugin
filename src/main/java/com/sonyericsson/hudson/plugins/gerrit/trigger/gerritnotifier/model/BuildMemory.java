@@ -28,21 +28,23 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import jenkins.model.Jenkins;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import javax.annotation.CheckForNull;
-import jenkins.model.Jenkins;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
@@ -792,6 +794,20 @@ public class BuildMemory {
              */
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
+            }
+
+            @Override
+            public String toString() {
+                String s;
+                if (getBuild() != null) {
+                    s = getBuild().toString();
+                } else {
+                    s = getProject().getName();
+                }
+                if (isBuildCompleted()) {
+                    s += " (completed)";
+                }
+                return s;
             }
 
         }

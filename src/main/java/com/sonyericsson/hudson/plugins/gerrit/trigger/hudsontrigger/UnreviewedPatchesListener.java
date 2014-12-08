@@ -189,8 +189,9 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      */
     public void triggerUnreviewedPatches(GerritTrigger trigger) {
         if (trigger != null && trigger.isAllowTriggeringUnreviewedPatches()) {
+            EventListener listener = trigger.createListener();
             for (PatchsetCreated event : this.events) {
-                trigger.gerritEvent(event);
+                listener.gerritEvent(event);
             }
         }
     }

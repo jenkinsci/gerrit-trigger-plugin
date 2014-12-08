@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *  Copyright (c) 2014, CloudBees, Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -136,6 +135,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private String notificationLevel;
+    private boolean silentStartMode;
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
@@ -195,6 +195,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      *                                       Job specific Gerrit code review vote when a build is not built, null means
      *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
+     * @param silentStartMode                Silent Start Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
      * @param noNameAndEmailParameters       Whether to create parameters containing name and email
      * @param readableMessage                Human readable message or not.
@@ -206,7 +207,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
-     * @param customUrl                      Custom URL to sen to Gerrit instead of build URL
+     * @param customUrl                      Custom URL to send to Gerrit instead of build URL
      * @param serverName                     The selected server
      * @param gerritSlaveId                  The selected slave associated to this job, if enabled in server configs
      * @param triggerOnEvents                The list of event types to trigger on.
@@ -231,6 +232,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             Integer gerritBuildNotBuiltVerifiedValue,
             Integer gerritBuildNotBuiltCodeReviewValue,
             boolean silentMode,
+            boolean silentStartMode,
             boolean escapeQuotes,
             boolean noNameAndEmailParameters,
             boolean readableMessage,
@@ -262,6 +264,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
         this.silentMode = silentMode;
+        this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
         this.readableMessage = readableMessage;
@@ -364,7 +367,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
             if (handler != null) {
-                handler.addListener(new EventListener(project));
+                handler.addListener(createListener(project));
             } else {
                 logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
                         project.getFullDisplayName());
@@ -373,6 +376,24 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
                     project.getFullDisplayName());
         }
+    }
+
+    /**
+     * Creates an {@link EventListener} for the provided project.
+     * @param project the project
+     * @return a new listener instance
+     */
+    /*package*/ static EventListener createListener(AbstractProject project) {
+        return new EventListener(project);
+    }
+
+    /**
+     * Creates an {@link EventListener} for this trigger's job.
+     * @return a new listener instance.
+     * @see #createListener(hudson.model.AbstractProject)
+     */
+    /*package*/ EventListener createListener() {
+        return createListener(job);
     }
 
     @Override
@@ -406,7 +427,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
-                removeListener();
+            removeListener();
         } catch (IllegalStateException e) {
             logger.error("I am too late!", e);
         }
@@ -422,13 +443,13 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         if (plugin != null) {
             if (PluginImpl.getInstance().getHandler() != null) {
                 if (job != null) {
-                    PluginImpl.getInstance().getHandler().removeListener(new EventListener(job));
+                    PluginImpl.getInstance().getHandler().removeListener(createListener());
                 }
             } else {
                 logger.error("The Gerrit handler has not been initialized. BUG!");
             }
         } else {
-       logger.error("The plugin instance could not be found");
+            logger.error("The plugin instance could not be found");
         }
     }
 
@@ -486,7 +507,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
-        new EventListener(job).schedule(this, cause, event, job);
+        createListener().schedule(this, cause, event, job);
     }
 
     /**
@@ -500,7 +521,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
-        new EventListener(job).schedule(this, cause, event, project);
+        createListener().schedule(this, cause, event, project);
     }
 
     /**
@@ -514,7 +535,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     @Deprecated
     protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
-        return new EventListener(job).createParameters(event, project);
+        return createListener().createParameters(event, project);
     }
 
 
@@ -1187,6 +1208,16 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     }
 
     /**
+     * If silent start mode is on or off. When silent start mode is on there will be no 'build started' message back
+     * to Gerrit. Default is false.
+     *
+     * @return true if silent start mode is on.
+     */
+    public boolean isSilentStartMode() {
+        return silentStartMode;
+    }
+
+    /**
      * Returns whom to notify.
      *
      * @return the notification level value
@@ -1321,6 +1352,16 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * Sets silent start mode to on or off. When silent start mode is on there will be no 'silent start' message
+     * back to Gerrit. Default is false.
+     *
+     * @param silentStartMode true if silent start mode should be on.
+     */
+    public void setSilentStartMode(boolean silentStartMode) {
+        this.silentStartMode = silentStartMode;
     }
 
     /**
@@ -1664,7 +1705,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             if (value == null || value.isEmpty()) {
                 return FormValidation.error(Messages.EmptyError());
             }
-
             try {
                 URL url = new URL(value); // Check for protocol errors
                 url.toURI(); // Perform some extra checking
@@ -1828,7 +1868,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                     }
                 }
             }
-
             // Interrupt any currently running jobs.
             for (Computer c : Hudson.getInstance().getComputers()) {
                 List<Executor> executors = new ArrayList<Executor>();
