@@ -24,15 +24,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
-import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.EnvVars;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
@@ -44,21 +44,18 @@ import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
@@ -68,7 +65,12 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Hudson.class, Jenkins.class, GerritMessageProvider.class, AbstractProject.class, GerritTriggeredBuildListener.class })
+@PrepareForTest({
+        Hudson.class,
+        Jenkins.class,
+        GerritMessageProvider.class,
+        AbstractProject.class,
+        GerritTriggeredBuildListener.class })
 public class SpecGerritVerifiedSetterTest {
 
     private TaskListener taskListener;
@@ -80,6 +82,11 @@ public class SpecGerritVerifiedSetterTest {
     private GerritTrigger trigger;
     private Jenkins jenkins;
 
+    /**
+     * Prepare all the mocks.
+     *
+     * @throws Exception if so
+     */
     @Before
     public void setUp() throws Exception {
         hudson = PowerMockito.mock(Hudson.class);

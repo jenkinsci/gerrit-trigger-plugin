@@ -36,7 +36,7 @@ import jenkins.model.Jenkins;
  */
 public class GerritTriggerTimerTask extends TimerTask {
     //TODO possible need to handle renames
-    private final String job;
+    private String job;
 
     /**
      * Constructor
@@ -53,11 +53,11 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     @Override
     public void run() {
-        GerritTrigger gerritTrigger = getGerritTrigger();
-        if (gerritTrigger == null) {
+        GerritTrigger trigger = getGerritTrigger();
+        if (trigger == null) {
             return;
         }
-        gerritTrigger.updateTriggerConfigURL();
+        trigger.updateTriggerConfigURL();
     }
 
     /**
@@ -67,10 +67,26 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     @CheckForNull
     public GerritTrigger getGerritTrigger() {
+        if (gerritTrigger != null) {
+            //We are loading an older instance, check if start has been called yet so we can "convert"
+            //So far it should be the correct instance.
+            //This can't unfortunately be done in readResolve since the job name is discovered when start is called.
+            if (gerritTrigger.getJob() != null) {
+                //We are in luck!, lets forget our old ways.
+                job = gerritTrigger.getJob().getFullName();
+                gerritTrigger = null;
+            } else {
+                //Still needs to cling to our old ways I guess, for a few more ms.
+                return gerritTrigger;
+            }
+        }
         AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
         if (p == null) {
             return null;
         }
         return (GerritTrigger)p.getTrigger(GerritTrigger.class);
     }
+
+    @Deprecated
+    private transient GerritTrigger gerritTrigger;
 }

@@ -825,10 +825,8 @@ public class BuildMemory {
             public boolean isProject(AbstractProject other) {
                 if (this.project != null && other != null) {
                     return this.project.equals(other.getFullName());
-                } else if(this.project == null && other == null) {
-                    return true;
                 } else {
-                    return false;
+                    return this.project == null && other == null;
                 }
             }
         }

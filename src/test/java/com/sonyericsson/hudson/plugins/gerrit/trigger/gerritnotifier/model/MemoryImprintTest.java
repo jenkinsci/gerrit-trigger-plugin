@@ -27,19 +27,67 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import jenkins.model.Jenkins;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+
 
 /**
  * Tests {@link BuildMemory.MemoryImprint}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Jenkins.class, AbstractProject.class })
 public class MemoryImprintTest {
+
+    private static int nameCount = 0;
+    private AbstractProject project;
+    private AbstractBuild build;
+    private Jenkins jenkins;
+
+    /**
+     * Setup the mocks, specifically {@link #jenkins}.
+     *
+     * @see #setup()
+     */
+    @Before
+    public void fullSetup() {
+        jenkins = mock(Jenkins.class);
+        mockStatic(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+        setup();
+    }
+
+    /**
+     * Sets up the {@link #project} and {@link #build} mocks.
+     *
+     * This is called from {@link #fullSetup()} but can also
+     * be called several times during a test to create more instances.
+     */
+    void setup() {
+        String name = "MockProject" + (nameCount++);
+        String buildId = "b" + nameCount;
+        project = mock(AbstractProject.class);
+        doReturn(name).when(project).getFullName();
+        build = mock(AbstractBuild.class);
+        doReturn(buildId).when(build).getId();
+        when(build.getProject()).thenReturn(project);
+        doReturn(build).when(project).getBuild(eq(buildId));
+        when(jenkins.getItemByFullName(eq(name), same(AbstractProject.class))).thenReturn(project);
+    }
 
     /**
      * Tests the reset method of the class {@link BuildMemory.MemoryImprint}.
@@ -48,7 +96,6 @@ public class MemoryImprintTest {
     @Test
     public void testResetNoPreviousProject() {
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated());
-        AbstractProject project = mock(AbstractProject.class);
         imprint.reset(project);
         assertEquals(1, imprint.getEntries().length);
         assertEquals(project, imprint.getEntries()[0].getProject());
@@ -60,7 +107,6 @@ public class MemoryImprintTest {
      */
     @Test
     public void testResetPreviousProject() {
-        AbstractProject project = mock(AbstractProject.class);
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated(), project);
         imprint.reset(project);
         assertEquals(1, imprint.getEntries().length);
@@ -73,13 +119,9 @@ public class MemoryImprintTest {
      */
     @Test
     public void testResetPreviousBuild() {
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated());
         imprint.set(project, build);
         assertEquals(1, imprint.getEntries().length);
-
         imprint.reset(project);
         assertEquals(1, imprint.getEntries().length);
         assertEquals(project, imprint.getEntries()[0].getProject());
@@ -93,12 +135,13 @@ public class MemoryImprintTest {
      */
     @Test
     public void testResetTwoPreviousProjects() {
-        AbstractProject project = mock(AbstractProject.class);
+        AbstractProject project1 = project;
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated(), project);
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
+        AbstractProject project2 = project;
         imprint.set(project2);
         assertEquals(2, imprint.getEntries().length);
-        imprint.reset(project);
+        imprint.reset(project1);
         assertEquals(2, imprint.getEntries().length);
     }
 
@@ -108,14 +151,14 @@ public class MemoryImprintTest {
      */
     @Test
     public void testResetTwoPreviousBuilds() {
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-        AbstractProject project2 = mock(AbstractProject.class);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        AbstractProject project1 = project;
+        AbstractBuild build1 = build;
+        setup();
+        AbstractProject project2 = project;
+        AbstractBuild build2 = build;
+
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated());
-        imprint.set(project, build);
+        imprint.set(project1, build1);
         imprint.set(project2, build2);
         assertEquals(2, imprint.getEntries().length);
 

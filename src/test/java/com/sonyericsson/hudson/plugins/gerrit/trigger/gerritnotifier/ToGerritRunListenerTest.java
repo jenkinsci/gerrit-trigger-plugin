@@ -44,6 +44,7 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,14 +64,16 @@ import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.mockito.Mockito.never;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.verifyZeroInteractions;
+import static org.powermock.api.mockito.PowerMockito.when;
+
 
 /**
  * Tests for {@link ToGerritRunListener}.
@@ -78,18 +81,21 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = {
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory",
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl",
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener",
-        "com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritDelayedApprover"
-}, value = AbstractProject.class)
+@PrepareForTest({
+        Jenkins.class,
+        AbstractProject.class,
+        NotificationFactory.class,
+        PluginImpl.class,
+        ToGerritRunListener.class,
+
+})
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
     private NotificationFactory mockNotificationFactory;
     private PluginImpl plugin;
     private GerritServer server;
+    private Jenkins jenkins;
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -98,16 +104,20 @@ public class ToGerritRunListenerTest {
      */
     @Before
     public void setup() throws Exception {
-        PowerMockito.mockStatic(NotificationFactory.class);
-        PowerMockito.mockStatic(PluginImpl.class);
+        jenkins = mock(Jenkins.class);
+        mockStatic(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+
+        mockStatic(NotificationFactory.class);
+        mockStatic(PluginImpl.class);
         mockNotificationFactory = mock(NotificationFactory.class);
         plugin = mock(PluginImpl.class);
         mockNotifier = mock(GerritNotifier.class);
         server = mock(GerritServer.class);
         doReturn(mockNotifier).when(mockNotificationFactory)
                 .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
-        PowerMockito.when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
-        PowerMockito.when(PluginImpl.class, "getInstance").thenReturn(plugin);
+        when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
+        when(PluginImpl.class, "getInstance").thenReturn(plugin);
         when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
     }
@@ -122,6 +132,7 @@ public class ToGerritRunListenerTest {
     private AbstractProject mockProject(String fullName) throws Exception {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         doReturn(fullName).when(project).getFullName();
+        when(jenkins.getItemByFullName(eq(fullName), same(AbstractProject.class))).thenReturn(project);
         return project;
     }
 
@@ -135,10 +146,14 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     private AbstractBuild mockBuild(String projectFullName, int buildNumber) throws Exception {
-        System.out.println("mockBuild");
+
         AbstractProject project = mockProject(projectFullName);
+
+        String buildId = projectFullName + "#" + buildNumber;
         AbstractBuild build = mock(AbstractBuild.class);
+        doReturn(buildId).when(build).getId();
         when(build.getProject()).thenReturn(project);
+        doReturn(build).when(project).getBuild(eq(buildId));
         when(build.getNumber()).thenReturn(buildNumber);
         EnvVars envVars = Setup.createEnvVars();
 

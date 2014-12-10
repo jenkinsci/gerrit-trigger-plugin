@@ -46,7 +46,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -61,7 +60,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, AbstractProject.class})
+@PrepareForTest({Jenkins.class, AbstractProject.class })
 public class BuildMemoryTest {
 
     private static int nameCount = 0;
@@ -69,6 +68,11 @@ public class BuildMemoryTest {
     private AbstractBuild build;
     private Jenkins jenkins;
 
+    /**
+     * Setup the mocks, specifically {@link #jenkins}.
+     *
+     * @see #setup()
+     */
     @Before
     public void setupFull() {
         jenkins = mock(Jenkins.class);
@@ -77,6 +81,12 @@ public class BuildMemoryTest {
         setup();
     }
 
+    /**
+     * Sets up the {@link #project} and {@link #build} mocks.
+     *
+     * This is called from {@link #setupFull()} but can also
+     * be called several times during a test to create more instances.
+     */
     public void setup() {
         String name = "MockProject" + (nameCount++);
         String buildId = "b" + nameCount;
