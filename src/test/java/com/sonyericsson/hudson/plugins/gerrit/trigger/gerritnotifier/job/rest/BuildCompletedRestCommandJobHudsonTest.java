@@ -24,7 +24,6 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -33,10 +32,16 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.FreeStyleProject;
+import hudson.model.RootAction;
 import hudson.util.IOUtils;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -44,15 +49,22 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 /**
  * Tests {@link BuildCompletedRestCommandJob}.
  *
  * @author <a href="mailto:robert.sandell@sonymobile.com">Robert Sandell</a>
  */
-public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
+public class BuildCompletedRestCommandJobHudsonTest {
 
-    private String lastPath;
-    private String lastContent;
+    /**
+     * An instance of Jenkins Rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public JenkinsRule j = new JenkinsRule();
 
     /**
      * The test.
@@ -60,12 +72,13 @@ public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
      * @throws IOException          if so
      * @throws InterruptedException if so.
      */
+    @Test
     public void testIt() throws IOException, InterruptedException {
-        jenkins.setCrumbIssuer(null);
+        j.jenkins.setCrumbIssuer(null);
         GerritServer server1 = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         PluginImpl.getInstance().addServer(server1);
         Config config = (Config)server1.getConfig();
-        config.setGerritFrontEndURL(this.getURL().toString() + "gerrit/");
+        config.setGerritFrontEndURL(j.getURL().toString() + "gerrit/");
         config.setUseRestApi(true);
         config.setGerritHttpUserName("user");
         config.setGerritHttpPassword("passwd");
@@ -76,7 +89,7 @@ public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
 
         PatchsetCreated event = Setup.createPatchsetCreated(server1.getName());
 
-        FreeStyleProject project = createFreeStyleProject();
+        FreeStyleProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setGerritProjects(Collections.singletonList(
                 new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
@@ -99,41 +112,72 @@ public class BuildCompletedRestCommandJobHudsonTest extends HudsonTestCase {
             Thread.sleep(1000);
         }
 
-        System.out.println("Path: " + lastPath);
-        System.out.println("Content: " + lastContent);
+        FakeHttpGerrit g = getGerrit();
+        System.out.println("Path: " + g.lastPath);
+        System.out.println("Content: " + g.lastContent);
 
-        assertNotNull(lastPath);
-        assertNotNull(lastContent);
-        assertEquals("/a/changes/project~branch~Iddaaddaa123456789/revisions/9999/review", lastPath);
-        JSONObject json = JSONObject.fromObject(lastContent);
+        assertNotNull(g.lastPath);
+        assertNotNull(g.lastContent);
+        assertEquals("/a/changes/project~branch~Iddaaddaa123456789/revisions/9999/review", g.lastPath);
+        JSONObject json = JSONObject.fromObject(g.lastContent);
 
 
-        assertStringContains(json.getString("message"), "Build Successful");
+        j.assertStringContains(json.getString("message"), "Build Successful");
         JSONObject labels = json.getJSONObject("labels");
         assertEquals(1, labels.getInt("Code-Review"));
         assertEquals(1, labels.getInt("Verified"));
 
     }
 
-    @Override
-    public String getUrlName() {
-        return "gerrit";
+    /**
+     * Finds the registered {@link FakeHttpGerrit}.
+     *
+     * @return the root action
+     */
+    private FakeHttpGerrit getGerrit() {
+        return Jenkins.getInstance().getExtensionList(FakeHttpGerrit.class).get(0);
     }
 
     /**
-     * Retrieves the Gerrit command.
-     *
-     * @param request  the request
-     * @param response the response
-     * @throws IOException if so.
+     * Acts as a fake REST endpoint to receive the REST commands from the command job.
      */
-    public void doDynamic(StaplerRequest request, StaplerResponse response) throws IOException {
-        lastPath = request.getRestOfPath();
-        lastContent = IOUtils.toString(request.getReader());
+    @TestExtension
+    public static class FakeHttpGerrit implements RootAction {
 
-        response.setContentType("application/json");
-        PrintWriter writer = response.getWriter();
-        writer.write(new JSONObject(true).toString());
-        writer.flush();
+        String lastPath;
+        String lastContent;
+
+        @Override
+        public String getIconFileName() {
+            return "gear2.png";
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Gerrit";
+        }
+
+        @Override
+        public String getUrlName() {
+            return "gerrit";
+        }
+
+        /**
+         * Retrieves the Gerrit command.
+         *
+         * @param request  the request
+         * @param response the response
+         * @throws IOException if so.
+         */
+        public void doDynamic(StaplerRequest request, StaplerResponse response) throws IOException {
+            lastPath = request.getRestOfPath();
+            lastContent = IOUtils.toString(request.getReader());
+
+            response.setContentType("application/json");
+            PrintWriter writer = response.getWriter();
+            writer.write(new JSONObject(true).toString());
+            writer.flush();
+        }
     }
+
 }

@@ -40,6 +40,7 @@ import hudson.model.FreeStyleProject;
 
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.powermock.reflect.Whitebox;
@@ -88,6 +89,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      * @throws Exception if so.
      */
     @LocalData
+    @Test
     public void testNewProjectCreation() throws Exception {
         createGerritTriggeredJob(j, "testJob1");
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
@@ -105,6 +107,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      * @throws Exception if so.
      */
     @LocalData
+    @Test
     public void testNewProjectCreationWithReSave() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob2");
         j.configRoundtrip((Item)p);
@@ -123,6 +126,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      * @throws Exception id so.
      */
     @LocalData
+    @Test
     public void testNewProjectCreationWithReName() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob3");
 
@@ -146,6 +150,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      *
      * @throws Exception if so.
      */
+    @Test
     public void testNewProjectCreationFirstNoConnection() throws Exception {
         @SuppressWarnings("unused")
         List<GerritServer> servers = PluginImpl.getInstance().getServers();
@@ -182,6 +187,4 @@ public class DuplicateGerritListenersHudsonTestCase {
         connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNotNull(connection);
     }
-
-
 }
