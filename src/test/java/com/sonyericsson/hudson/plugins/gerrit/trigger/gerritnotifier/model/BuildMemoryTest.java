@@ -32,7 +32,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
+import jenkins.model.Jenkins;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
 
@@ -42,8 +47,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.same;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: test-data.
 
@@ -51,7 +59,45 @@ import static org.mockito.Mockito.when;
  * JUnit 4 tests of {@link BuildMemory}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Jenkins.class, AbstractProject.class })
 public class BuildMemoryTest {
+
+    private static int nameCount = 0;
+    AbstractProject project;
+    private AbstractBuild build;
+    private Jenkins jenkins;
+
+    /**
+     * Setup the mocks, specifically {@link #jenkins}.
+     *
+     * @see #setup()
+     */
+    @Before
+    public void setupFull() {
+        jenkins = mock(Jenkins.class);
+        mockStatic(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+        setup();
+    }
+
+    /**
+     * Sets up the {@link #project} and {@link #build} mocks.
+     *
+     * This is called from {@link #setupFull()} but can also
+     * be called several times during a test to create more instances.
+     */
+    public void setup() {
+        String name = "MockProject" + (nameCount++);
+        String buildId = "b" + nameCount;
+        project = mock(AbstractProject.class);
+        doReturn(name).when(project).getFullName();
+        build = mock(AbstractBuild.class);
+        doReturn(buildId).when(build).getId();
+        when(build.getProject()).thenReturn(project);
+        doReturn(build).when(project).getBuild(eq(buildId));
+        when(jenkins.getItemByFullName(eq(name), same(AbstractProject.class))).thenReturn(project);
+    }
 
     /**
      * test.
@@ -62,7 +108,7 @@ public class BuildMemoryTest {
 
         BuildMemory instance = new BuildMemory();
         PatchsetCreated event = Setup.createPatchsetCreated();
-        final AbstractProject project = mock(AbstractProject.class);
+
         instance.triggered(event, project);
 
         MemoryImprint result = instance.getMemoryImprint(event);
@@ -80,14 +126,10 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         instance.completed(event, build);
 
-        project = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        setup();
+
         instance.completed(event, build);
 
         boolean expResult = true;
@@ -104,14 +146,10 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         instance.started(event, build);
 
-        project = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        setup();
+        //New build instance to be completed, old one still started
         instance.completed(event, build);
 
         boolean expResult = false;
@@ -128,14 +166,11 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+
         instance.completed(event, build);
 
-        project = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        setup();
+
         instance.completed(event, build);
 
         boolean expResult = true;
@@ -152,12 +187,11 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
+
         instance.triggered(event, project);
 
-        project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        setup();
+
         instance.completed(event, build);
 
         boolean expResult = false;
@@ -175,19 +209,16 @@ public class BuildMemoryTest {
         BuildMemory instance = new BuildMemory();
         PatchsetCreated event = Setup.createPatchsetCreated();
 
-        instance.triggered(event, mock(AbstractProject.class));
+        instance.triggered(event, project);
 
-        AbstractBuild mock = mock(AbstractBuild.class);
-        AbstractProject project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        setup();
+        instance.started(event, build);
 
-        instance.triggered(event, mock(AbstractProject.class));
+        setup();
+        instance.triggered(event, project);
 
-        mock = mock(AbstractBuild.class);
-        project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        setup();
+        instance.started(event, build);
 
         BuildsStartedStats result = instance.getBuildsStartedStats(event);
         assertEquals(event, result.getEvent());
@@ -206,15 +237,10 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractBuild mock = mock(AbstractBuild.class);
-        AbstractProject project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        instance.started(event, build);
 
-        mock = mock(AbstractBuild.class);
-        project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        setup();
+        instance.started(event, build);
 
         boolean expResult = true;
         boolean result = instance.isAllBuildsStarted(event);
@@ -230,17 +256,13 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractBuild mock = mock(AbstractBuild.class);
-        AbstractProject project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        instance.started(event, build);
 
-        instance.triggered(event, mock(AbstractProject.class));
+        setup();
+        instance.triggered(event, project);
 
-        mock = mock(AbstractBuild.class);
-        project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        setup();
+        instance.started(event, build);
 
         boolean expResult = false;
         boolean result = instance.isAllBuildsStarted(event);
@@ -256,15 +278,11 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractBuild mock = mock(AbstractBuild.class);
-        AbstractProject project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
 
-        mock = mock(AbstractBuild.class);
-        project = mock(AbstractProject.class);
-        when(mock.getProject()).thenReturn(project);
-        instance.started(event, mock);
+        instance.started(event, build);
+
+        setup();
+        instance.started(event, build);
 
         boolean expResult = true;
         boolean result = instance.isAllBuildsStarted(event);
@@ -279,10 +297,6 @@ public class BuildMemoryTest {
         System.out.println("completed");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-
         BuildMemory instance = new BuildMemory();
         instance.completed(event, build);
         assertTrue(instance.isAllBuildsCompleted(event));
@@ -295,10 +309,6 @@ public class BuildMemoryTest {
     public void testStarted() {
         System.out.println("started");
         PatchsetCreated event = Setup.createPatchsetCreated();
-
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
 
         BuildMemory instance = new BuildMemory();
         instance.started(event, build);
@@ -313,8 +323,6 @@ public class BuildMemoryTest {
     public void testTriggered() {
         System.out.println("triggered");
         PatchsetCreated event = Setup.createPatchsetCreated();
-
-        AbstractProject project = mock(AbstractProject.class);
 
         BuildMemory instance = new BuildMemory();
         instance.triggered(event, project);
@@ -331,10 +339,6 @@ public class BuildMemoryTest {
         System.out.println("forget");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-
         BuildMemory instance = new BuildMemory();
         instance.completed(event, build);
 
@@ -350,10 +354,6 @@ public class BuildMemoryTest {
     public void testIsBuildingTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-
         BuildMemory instance = new BuildMemory();
         instance.started(event, build);
         assertTrue(instance.isBuilding(event));
@@ -368,16 +368,13 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+
         instance.started(event, build);
 
         PatchsetCreated event2 = Setup.createPatchsetCreated();
         event2.getChange().setNumber(event.getChange().getNumber() + 34);
-        project = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+
+        setup();
         instance.started(event2, build);
         assertTrue(instance.isBuilding(event));
         assertTrue(instance.isBuilding(event2));
@@ -406,9 +403,6 @@ public class BuildMemoryTest {
         PatchsetCreated event2 = Setup.createPatchsetCreated();
         event2.getChange().setNumber(event.getChange().getNumber() + 34);
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         instance.started(event2, build);
 
         assertFalse(instance.isBuilding(event));
@@ -423,9 +417,6 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         instance.started(event, build);
         instance.forget(event);
         assertFalse(instance.isBuilding(event));
@@ -438,10 +429,6 @@ public class BuildMemoryTest {
     @Test
     public void testIsBuildingProjectTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
-
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
 
         BuildMemory instance = new BuildMemory();
         instance.started(event, build);
@@ -456,26 +443,22 @@ public class BuildMemoryTest {
     public void testIsBuildingProjectTrue2() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-
         BuildMemory instance = new BuildMemory();
+        AbstractProject project1 = project;
+
         instance.started(event, build);
 
         PatchsetCreated event2 = Setup.createPatchsetCreated();
         event2.getChange().setNumber(event.getChange().getNumber() + 34);
-        AbstractProject project2 = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project2);
+        setup();
+        AbstractProject project2 = project;
         instance.started(event2, build);
 
-        AbstractProject project3 = mock(AbstractProject.class);
-        build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project3);
+        setup();
+        AbstractProject project3 = project;
         instance.started(event2, build);
 
-        assertTrue(instance.isBuilding(event, project));
+        assertTrue(instance.isBuilding(event, project1));
         assertTrue(instance.isBuilding(event2, project2));
         assertTrue(instance.isBuilding(event2, project3));
     }
@@ -488,7 +471,6 @@ public class BuildMemoryTest {
     public void testIsBuildingProjectFalse() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
         assertFalse(instance.isBuilding(event, project));
     }
 
@@ -500,7 +482,6 @@ public class BuildMemoryTest {
     public void testIsBuildingProjectTriggeredTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
         instance.triggered(event, project);
         assertTrue(instance.isBuilding(event, project));
     }
@@ -513,9 +494,6 @@ public class BuildMemoryTest {
     public void testIsBuildingProjectCompletedFalse() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.completed(event, build);
         assertFalse(instance.isBuilding(event, project));
@@ -529,7 +507,7 @@ public class BuildMemoryTest {
     public void testRetriggeredNoMemoryOneProject() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
+
         instance.retriggered(event, project, Collections.EMPTY_LIST);
         MemoryImprint memory = instance.getMemoryImprint(event);
         assertNotNull(memory);
@@ -546,7 +524,7 @@ public class BuildMemoryTest {
     public void testRetriggeredNoMemoryOneProjectNullOthers() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
-        AbstractProject project = mock(AbstractProject.class);
+
         instance.retriggered(event, project, null);
         MemoryImprint memory = instance.getMemoryImprint(event);
         assertNotNull(memory);
@@ -564,17 +542,16 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
-        AbstractProject project2 = mock(AbstractProject.class);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
-        AbstractProject project3 = mock(AbstractProject.class);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
+        AbstractProject project1 = project;
+        AbstractBuild build1 = build;
+        setup();
+        AbstractProject project2 = project;
+        AbstractBuild build2 = build;
+        setup();
+        AbstractProject project3 = project;
+        AbstractBuild build3 = build;
 
-        instance.started(event, build);
+        instance.started(event, build1);
         instance.completed(event, build2);
         instance.started(event, build3);
 
@@ -585,7 +562,7 @@ public class BuildMemoryTest {
 
         MemoryImprint.Entry entry = null;
         for (MemoryImprint.Entry e : memory.getEntries()) {
-            if (e.getProject().equals(project2)) {
+            if (e.getProject() == project2) {
                 entry = e;
                 break;
             }
@@ -605,37 +582,33 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
+        AbstractBuild build1 = build;
         SkipVote skipVote = new SkipVote(false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
+        AbstractBuild build2 = build;
+        when(build.getResult()).thenReturn(Result.SUCCESS);
         skipVote = new SkipVote(false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
-        when(build2.getResult()).thenReturn(Result.SUCCESS);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
         instance.started(event, build2);
 
-        AbstractProject project3 = mock(AbstractProject.class);
+        setup();
+        AbstractBuild build3 = build;
+        when(build.getResult()).thenReturn(Result.UNSTABLE);
         skipVote = new SkipVote(false, false, true, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
-        when(build3.getResult()).thenReturn(Result.UNSTABLE);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
         instance.started(event, build3);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
         instance.completed(event, build3);
 
@@ -654,37 +627,33 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build2);
 
-        AbstractProject project3 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, true, true, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.FAILURE);
         instance.started(event, build3);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
         instance.completed(event, build3);
 
@@ -703,37 +672,33 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, true, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
 
-        AbstractProject project3 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, true, true, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.FAILURE);
         instance.started(event, build3);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
         instance.completed(event, build3);
 
@@ -754,37 +719,33 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
 
-        AbstractProject project3 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(true, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build3);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
         instance.completed(event, build3);
 
@@ -807,37 +768,33 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(true, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
 
-        AbstractProject project3 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project3.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build3 = mock(AbstractBuild.class);
-        when(build3.getProject()).thenReturn(project3);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build3);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
         instance.completed(event, build3);
 
@@ -857,13 +814,10 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(true, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
@@ -885,13 +839,10 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(false, false, true, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
 
@@ -914,27 +865,24 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(true, false, true, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(false, false, true, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
 
         MemoryImprint memoryImprint = instance.getMemoryImprint(event);
@@ -953,27 +901,24 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        AbstractProject project = mock(AbstractProject.class);
         SkipVote skipVote = new SkipVote(true, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getProject()).thenReturn(project);
+        AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
-        AbstractProject project2 = mock(AbstractProject.class);
+        setup();
         skipVote = new SkipVote(true, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
-        when(project2.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
-        AbstractBuild build2 = mock(AbstractBuild.class);
-        when(build2.getProject()).thenReturn(project2);
+        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build2);
 
-        instance.completed(event, build);
+        instance.completed(event, build1);
         instance.completed(event, build2);
 
         MemoryImprint memoryImprint = instance.getMemoryImprint(event);

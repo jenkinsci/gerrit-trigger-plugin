@@ -23,7 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import hudson.model.AbstractProject;
 import java.util.TimerTask;
+import javax.annotation.CheckForNull;
+import jenkins.model.Jenkins;
 
 /**
  * TimerTasks that are created from a GerritTrigger and periodically calls
@@ -32,7 +35,8 @@ import java.util.TimerTask;
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
 public class GerritTriggerTimerTask extends TimerTask {
-    private GerritTrigger gerritTrigger;
+    //TODO possible need to handle renames
+    private String job;
 
     /**
      * Constructor
@@ -40,7 +44,7 @@ public class GerritTriggerTimerTask extends TimerTask {
      * @param gerritTrigger the GerritTrigger that created this timerTask
      */
     GerritTriggerTimerTask(GerritTrigger gerritTrigger) {
-        this.gerritTrigger = gerritTrigger;
+        job = gerritTrigger.getJob().getFullName();
         GerritTriggerTimer.getInstance().schedule(this);
     }
 
@@ -49,7 +53,11 @@ public class GerritTriggerTimerTask extends TimerTask {
      */
     @Override
     public void run() {
-        gerritTrigger.updateTriggerConfigURL();
+        GerritTrigger trigger = getGerritTrigger();
+        if (trigger == null) {
+            return;
+        }
+        trigger.updateTriggerConfigURL();
     }
 
     /**
@@ -57,7 +65,28 @@ public class GerritTriggerTimerTask extends TimerTask {
      *
      * @return the trigger.
      */
+    @CheckForNull
     public GerritTrigger getGerritTrigger() {
-        return gerritTrigger;
+        if (gerritTrigger != null) {
+            //We are loading an older instance, check if start has been called yet so we can "convert"
+            //So far it should be the correct instance.
+            //This can't unfortunately be done in readResolve since the job name is discovered when start is called.
+            if (gerritTrigger.getJob() != null) {
+                //We are in luck!, lets forget our old ways.
+                job = gerritTrigger.getJob().getFullName();
+                gerritTrigger = null;
+            } else {
+                //Still needs to cling to our old ways I guess, for a few more ms.
+                return gerritTrigger;
+            }
+        }
+        AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
+        if (p == null) {
+            return null;
+        }
+        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
     }
+
+    @Deprecated
+    private transient GerritTrigger gerritTrigger;
 }

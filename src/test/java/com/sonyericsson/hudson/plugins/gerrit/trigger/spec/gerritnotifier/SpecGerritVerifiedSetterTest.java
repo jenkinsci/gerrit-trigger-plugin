@@ -24,20 +24,24 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
-import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.EnvVars;
+import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -46,9 +50,14 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 
-import static org.mockito.Mockito.mock;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
  * Scenario tests.
@@ -56,8 +65,64 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Hudson.class, GerritMessageProvider.class })
+@PrepareForTest({
+        Hudson.class,
+        Jenkins.class,
+        GerritMessageProvider.class,
+        AbstractProject.class,
+        GerritTriggeredBuildListener.class })
 public class SpecGerritVerifiedSetterTest {
+
+    private TaskListener taskListener;
+    private GerritCmdRunner mockGerritCmdRunner;
+    private Hudson hudson;
+    private AbstractBuild build;
+    private EnvVars env;
+    private AbstractProject project;
+    private GerritTrigger trigger;
+    private Jenkins jenkins;
+
+    /**
+     * Prepare all the mocks.
+     *
+     * @throws Exception if so
+     */
+    @Before
+    public void setUp() throws Exception {
+        hudson = PowerMockito.mock(Hudson.class);
+        when(hudson.getRootUrl()).thenReturn("http://localhost/");
+
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        when(GerritMessageProvider.all()).thenReturn(null);
+
+        taskListener = mock(TaskListener.class);
+
+        mockGerritCmdRunner = mock(GerritCmdRunner.class);
+
+        build = mock(AbstractBuild.class);
+
+        env = Setup.createEnvVars();
+        when(build.getEnvironment(taskListener)).thenReturn(env);
+        project = mock(AbstractProject.class);
+        doReturn("MockProject").when(project).getFullName();
+        when(build.getProject()).thenReturn(project);
+        doReturn(build).when(project).getBuild(anyString());
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(null);
+        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
+        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
+        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+
+        mockStatic(Jenkins.class);
+        jenkins = mock(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(jenkins.getItemByFullName(eq("MockProject"), same(AbstractProject.class))).thenReturn(project);
+
+        mockStatic(GerritTriggeredBuildListener.class);
+        when(GerritTriggeredBuildListener.all()).thenReturn(mock(ExtensionList.class));
+    }
 
     /**
      * A test.
@@ -69,27 +134,7 @@ public class SpecGerritVerifiedSetterTest {
     public void shouldCallGerritWithVerifiedOkFlagWhenBuildWasSuccessful()
             throws IOException, InterruptedException {
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        when(GerritMessageProvider.all()).thenReturn(null);
-
-        TaskListener taskListener = mock(TaskListener.class);
-
-        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
-
-        AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.SUCCESS);
-        EnvVars env = Setup.createEnvVars();
-        when(build.getEnvironment(taskListener)).thenReturn(env);
-        AbstractProject project = mock(AbstractProject.class);
-        when(build.getProject()).thenReturn(project);
-
-        GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -120,31 +165,10 @@ public class SpecGerritVerifiedSetterTest {
     public void shouldCallGerritWithVerifiedRejectFlagWhenBuildWasNotSuccessful()
             throws IOException, InterruptedException {
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        when(GerritMessageProvider.all()).thenReturn(null);
-
-        TaskListener taskListener = mock(TaskListener.class);
-
-        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
-
-        AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.FAILURE);
-        EnvVars env = Setup.createEnvVars();
-        when(build.getEnvironment(taskListener)).thenReturn(env);
-        AbstractProject project = mock(AbstractProject.class);
-        when(build.getProject()).thenReturn(project);
-
-        GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-
         PatchsetCreated event = Setup.createPatchsetCreated();
-
         BuildMemory memory = new BuildMemory();
+
         memory.completed(event, build);
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
@@ -170,27 +194,8 @@ public class SpecGerritVerifiedSetterTest {
     @Test
     public void shouldCallGerritWithVerifiedFailedFlagWhenBuildOneBuildFailedAndAnotherSuccessful()
             throws IOException, InterruptedException {
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
 
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        when(GerritMessageProvider.all()).thenReturn(null);
-
-        TaskListener taskListener = mock(TaskListener.class);
-
-        GerritCmdRunner mockGerritCmdRunner = mock(GerritCmdRunner.class);
-
-        AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(Result.SUCCESS);
-        EnvVars env = Setup.createEnvVars();
-        when(build.getEnvironment(taskListener)).thenReturn(env);
-        AbstractProject project = mock(AbstractProject.class);
-        when(build.getProject()).thenReturn(project);
-
-        GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -202,7 +207,10 @@ public class SpecGerritVerifiedSetterTest {
         env = Setup.createEnvVars();
         when(build.getEnvironment(taskListener)).thenReturn(env);
         project = mock(AbstractProject.class);
+        doReturn("MockProject2").when(project).getFullName();
+        doReturn(build).when(project).getBuild(anyString());
         when(build.getProject()).thenReturn(project);
+        when(jenkins.getItemByFullName(eq("MockProject2"), same(AbstractProject.class))).thenReturn(project);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);

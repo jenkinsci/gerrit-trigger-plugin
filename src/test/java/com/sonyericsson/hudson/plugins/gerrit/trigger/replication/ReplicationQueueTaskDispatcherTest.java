@@ -27,11 +27,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import hudson.ExtensionList;
 import hudson.model.Action;
 import hudson.model.AbstractProject;
 import hudson.model.CauseAction;
@@ -42,12 +45,15 @@ import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
+import jenkins.model.TransientActionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,6 +107,10 @@ public class ReplicationQueueTaskDispatcherTest {
         queueMock = mock(Queue.class);
         Jenkins jenkinsMock = mock(Jenkins.class);
         when(jenkinsMock.getQueue()).thenReturn(queueMock);
+        ExtensionList<TransientActionFactory> list = mock(ExtensionList.class);
+        Iterator<TransientActionFactory> iterator = Collections.emptyIterator();
+        when(list.iterator()).thenReturn(iterator);
+        when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
         PowerMockito.mockStatic(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkinsMock);
     }

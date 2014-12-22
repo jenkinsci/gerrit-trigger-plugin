@@ -33,6 +33,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Plugin;
 import hudson.model.AbstractProject;
 import hudson.model.Api;
@@ -238,6 +240,28 @@ public class PluginImpl extends Plugin {
             }
         }
         return contains;
+    }
+
+    /**
+     * Finds the server config for the event's provider.
+     *
+     * @param event the event
+     * @return the config or null if no server could be found.
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent#getProvider()
+     */
+    public static IGerritHudsonTriggerConfig getServerConfig(GerritTriggeredEvent event) {
+        Provider provider = event.getProvider();
+        if (provider != null) {
+            GerritServer gerritServer = getInstance().getServer(provider.getName());
+            if (gerritServer != null) {
+                return gerritServer.getConfig();
+            } else {
+                logger.warn("Could not find server config for {} - no such server.", provider.getName());
+            }
+        } else {
+            logger.warn("The event {} has no provider specified. BUG!", event);
+        }
+        return null;
     }
 
     /**

@@ -29,20 +29,20 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-
-import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
+import jenkins.model.Jenkins;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
@@ -320,7 +320,7 @@ public class BuildMemory {
             return false;
         } else {
             for (Entry entry : pb.getEntries()) {
-                if (entry.getProject().equals(project)) {
+                if (entry.isProject(project)) {
                     if (entry.getBuild() != null) {
                         return !entry.isBuildCompleted();
                     } else {
@@ -699,8 +699,8 @@ public class BuildMemory {
          */
         public static class Entry {
 
-            private AbstractProject project;
-            private AbstractBuild build;
+            private String project;
+            private String build;
             private boolean buildCompleted;
             private String unsuccessfulMessage;
 
@@ -711,8 +711,8 @@ public class BuildMemory {
              * @param build   the build.
              */
             private Entry(AbstractProject project, AbstractBuild build) {
-                this.project = project;
-                this.build = build;
+                this.project = project.getFullName();
+                this.build = build.getId();
                 buildCompleted = false;
             }
 
@@ -722,7 +722,7 @@ public class BuildMemory {
              * @param project the project.
              */
             private Entry(AbstractProject project) {
-                this.project = project;
+                this.project = project.getFullName();
                 buildCompleted = false;
             }
 
@@ -731,8 +731,9 @@ public class BuildMemory {
              *
              * @return the project.
              */
+            @CheckForNull
             public AbstractProject getProject() {
-                return project;
+                return Jenkins.getInstance().getItemByFullName(project, AbstractProject.class);
             }
 
             /**
@@ -740,8 +741,14 @@ public class BuildMemory {
              *
              * @return the build.
              */
+            @CheckForNull
             public AbstractBuild getBuild() {
-                return build;
+                AbstractProject p = getProject();
+                if (p != null) {
+                    return p.getBuild(build);
+                } else {
+                    return null;
+                }
             }
 
             /**
@@ -750,7 +757,11 @@ public class BuildMemory {
              * @param build the build.
              */
             private void setBuild(AbstractBuild build) {
-                this.build = build;
+                if (build != null) {
+                    this.build = build.getId();
+                } else {
+                    this.build = null;
+                }
             }
 
             /**
@@ -803,6 +814,21 @@ public class BuildMemory {
                 return s;
             }
 
+            /**
+             * If the provided project is the same as this entry is referencing.
+             * It does so by checking the fullName for equality.
+             *
+             * @param other the other project to check
+             * @return true if so.
+             * @see #getProject()
+             */
+            public boolean isProject(AbstractProject other) {
+                if (this.project != null && other != null) {
+                    return this.project.equals(other.getFullName());
+                } else {
+                    return this.project == null && other == null;
+                }
+            }
         }
     }
 }

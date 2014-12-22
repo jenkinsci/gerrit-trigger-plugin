@@ -28,6 +28,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.Exported;
 
 /**
@@ -90,7 +91,7 @@ public class GerritUserCause extends GerritCause {
      */
     public GerritUserCause(GerritTriggeredEvent event, boolean silentMode) {
         super(event, silentMode);
-        this.authenticationName = Hudson.getAuthentication().getName();
+        this.authenticationName = Jenkins.getAuthentication().getName();
     }
 
     //CS IGNORE MagicNumber FOR NEXT 9 LINES. REASON: As it should be.

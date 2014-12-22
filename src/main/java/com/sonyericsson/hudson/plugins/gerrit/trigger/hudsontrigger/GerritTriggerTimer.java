@@ -92,16 +92,20 @@ public final class GerritTriggerTimer {
      * @see #calculateAverageDynamicConfigRefreshInterval()
      */
     private long calculateDynamicConfigRefreshInterval(GerritTriggerTimerTask timerTask) {
-        if (timerTask.getGerritTrigger().isAnyServer()) {
+        GerritTrigger trigger = timerTask.getGerritTrigger();
+        if (trigger != null && trigger.isAnyServer()) {
             if (PluginImpl.getInstance().getServers() == null || PluginImpl.getInstance().getServers().isEmpty()) {
                 return GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
             } else {
                 //Do an average just for giggles
                 return calculateAverageDynamicConfigRefreshInterval();
             }
+        } else if (trigger == null) {
+            //Something is wrong in the loading of things, but we shouldn't fail.
+            return calculateAverageDynamicConfigRefreshInterval();
         } else {
             //get the actual if it exists.
-            GerritServer server = PluginImpl.getInstance().getServer(timerTask.getGerritTrigger().getServerName());
+            GerritServer server = PluginImpl.getInstance().getServer(trigger.getServerName());
             if (server != null) {
                 return server.getConfig().getDynamicConfigRefreshInterval();
             } else {
@@ -125,7 +129,7 @@ public final class GerritTriggerTimer {
         for (GerritServer server : PluginImpl.getInstance().getServers()) {
             total += server.getConfig().getDynamicConfigRefreshInterval();
         }
-        long average = total / PluginImpl.getInstance().getServers().size();
+        long average = total / Math.max(1, PluginImpl.getInstance().getServers().size()); //Avoid division by 0
         return Math.max(GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL, average);
     }
 
