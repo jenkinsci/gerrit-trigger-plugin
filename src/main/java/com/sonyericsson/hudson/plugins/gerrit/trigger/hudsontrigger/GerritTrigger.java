@@ -72,6 +72,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Actionable;
 import hudson.model.AutoCompletionCandidates;
+import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Hudson;
@@ -83,6 +84,7 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import hudson.model.Queue;
+import hudson.model.Run;
 import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
@@ -99,6 +101,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1944,7 +1947,7 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                     if (((ChangeBasedEvent)pairs.getKey()).getChange().equals(event.getChange())) {
                         logger.debug("Cancelling build for " + pairs.getKey());
                         try {
-                            cancelJob(pairs.getValue());
+                            cancelJob(pairs.getKey());
                         } catch (Exception e) {
                             // Ignore any problems with canceling the job.
                             logger.error("Error canceling job", e);
@@ -1958,23 +1961,27 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
         }
 
         /**
-         * Tries to cancel any jobs with the specified parameters. We look in
-         * both the build queue and currently executing jobs. This extra work is
-         * required due to race conditions when calling Future.cancel() - see
+         * Tries to cancel any job, which was triggered by the given change event.
+         * <p>
+         * Since the event is always noted in the build cause, it is easy to
+         * identify which specific builds shall be cancelled, without having
+         * to dig down into the parameters, which might've been mutated by the
+         * build while it was running. (This was the previous implementation)
+         * <p>
+         * We look in both the build queue and currently executing jobs.
+         * This extra work is required due to race conditions when calling
+         * Future.cancel() - see
          * https://issues.jenkins-ci.org/browse/JENKINS-13829
          *
-         * @param parameters
-         *            The parameters to match against.
+         * @param event
+         *            The event that originally triggered the build.
          */
-        private void cancelJob(ParametersAction parameters) {
+        private void cancelJob(GerritTriggeredEvent event) {
             // Remove any jobs in the build queue.
             List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(myProject);
-            for (hudson.model.Queue.Item item  : itemsInQueue) {
-                List<ParametersAction> params = item.getActions(ParametersAction.class);
-                for (ParametersAction param : params) {
-                    if (param.equals(parameters)) {
-                        Queue.getInstance().cancel(item);
-                    }
+            for (hudson.model.Queue.Item item : itemsInQueue) {
+                if (checkCausedByGerrit(event, item.getCauses())) {
+                    Queue.getInstance().cancel(item);
                 }
             }
 
@@ -1984,18 +1991,40 @@ public class GerritTrigger extends Trigger<AbstractProject> implements GerritEve
                 executors.addAll(c.getOneOffExecutors());
                 executors.addAll(c.getExecutors());
                 for (Executor e : executors) {
-                    if (e.getCurrentExecutable() instanceof Actionable) {
-                        Actionable a = (Actionable)e.getCurrentExecutable();
-                        List<ParametersAction> params = a.getActions(ParametersAction.class);
-                        for (ParametersAction param : params) {
-                            if (param.equals(parameters)) {
-                                e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
-                            }
+                    if (e.getCurrentExecutable() instanceof Run<?,?>) {
+                        Run<?,?> run = (Run<?,?>) e.getCurrentExecutable();
+                        if (checkCausedByGerrit(event, run.getCauses())) {
+                            e.interrupt(
+                                    Result.ABORTED,
+                                    new NewPatchSetInterruption()
+                            );
                         }
                     }
                 }
             }
         }
+        
+        /**
+         * Checks if any of the given causes references the given event.
+         * 
+         * @param event The event to check for. Checks for <i>identity</i>, not
+         * <i>equality</i>!
+         * @param causes the list of causes. Only {@link GerritCause}s are considered.
+         * @return
+         */
+        private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
+            for (Cause c : causes) {
+                if (!(c instanceof GerritCause)) {
+                    continue;
+                }
+                GerritCause gc = (GerritCause) c;
+                if (gc.getEvent() == event) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
 
         /**
          * Removes any reference to the current build for this change.
