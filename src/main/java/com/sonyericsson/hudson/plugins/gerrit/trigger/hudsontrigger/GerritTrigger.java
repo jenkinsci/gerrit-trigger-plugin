@@ -63,6 +63,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
+
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.Util;
@@ -107,6 +108,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.PatternSyntaxException;
+
+import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -1869,14 +1872,14 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          */
         private void cancelJob(GerritTriggeredEvent event) {
             // Remove any jobs in the build queue.
-            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(myProject);
+            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(getJob());
             for (hudson.model.Queue.Item item : itemsInQueue) {
                 if (checkCausedByGerrit(event, item.getCauses())) {
                     Queue.getInstance().cancel(item);
                 }
             }
             // Interrupt any currently running jobs.
-            for (Computer c : Hudson.getInstance().getComputers()) {
+            for (Computer c : Jenkins.getInstance().getComputers()) {
                 List<Executor> executors = new ArrayList<Executor>();
                 executors.addAll(c.getOneOffExecutors());
                 executors.addAll(c.getExecutors());
