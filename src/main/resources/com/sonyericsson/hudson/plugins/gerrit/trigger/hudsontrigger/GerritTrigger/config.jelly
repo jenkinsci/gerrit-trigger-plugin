@@ -3,7 +3,7 @@
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
     <f:section title="${%Gerrit Trigger}">
-        <f:entry title="${%Choose a Server}" description="${it.description}" field="serverName">
+        <f:entry title="${%Choose a Server}" field="serverName">
             <f:select/>
         </f:entry>
         <j:if test="${descriptor.isSlaveSelectionAllowedInJobs()}">
