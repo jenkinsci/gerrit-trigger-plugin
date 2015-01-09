@@ -70,7 +70,6 @@ import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
-import hudson.model.Actionable;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Cause;
 import hudson.model.Computer;
@@ -1884,8 +1883,8 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 executors.addAll(c.getOneOffExecutors());
                 executors.addAll(c.getExecutors());
                 for (Executor e : executors) {
-                    if (e.getCurrentExecutable() instanceof Run<?,?>) {
-                        Run<?,?> run = (Run<?,?>) e.getCurrentExecutable();
+                    if (e.getCurrentExecutable() instanceof Run<?, ?>) {
+                        Run<?, ?> run = (Run<?, ?>)e.getCurrentExecutable();
                         if (checkCausedByGerrit(event, run.getCauses())) {
                             e.interrupt(
                                     Result.ABORTED,
@@ -1896,28 +1895,28 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 }
             }
         }
-        
+
         /**
          * Checks if any of the given causes references the given event.
-         * 
+         *
          * @param event The event to check for. Checks for <i>identity</i>, not
          * <i>equality</i>!
          * @param causes the list of causes. Only {@link GerritCause}s are considered.
-         * @return
+         * @return true if the list of causes contains a {@link GerritCause}.
          */
         private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
             for (Cause c : causes) {
                 if (!(c instanceof GerritCause)) {
                     continue;
                 }
-                GerritCause gc = (GerritCause) c;
+                GerritCause gc = (GerritCause)c;
                 if (gc.getEvent() == event) {
                     return true;
                 }
             }
             return false;
         }
-        
+
 
         /**
          * Removes any reference to the current build for this change.

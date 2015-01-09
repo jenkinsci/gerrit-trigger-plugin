@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.FreeStyleProject;
 import hudson.model.RootAction;
@@ -102,15 +103,10 @@ public class BuildCompletedRestCommandJobHudsonTest {
 
         PluginImpl.getInstance().getHandler().post(event);
 
-        //CS IGNORE MagicNumber FOR NEXT 9 LINES. REASON: TestData
-        long startedWait = System.currentTimeMillis();
-        while (project.getLastCompletedBuild() == null) {
-            if (System.currentTimeMillis() - startedWait > 10000) {
-                throw new RuntimeException("Timeout!");
-            }
-            System.out.println("waiting for build to complete...");
-            Thread.sleep(1000);
-        }
+        TestUtils.waitForBuilds(project, 1);
+        //CS IGNORE MagicNumber FOR NEXT 3 LINES. REASON: TestData
+        System.out.println("waiting for post build notification...");
+        Thread.sleep(3000);
 
         FakeHttpGerrit g = getGerrit();
         System.out.println("Path: " + g.lastPath);
