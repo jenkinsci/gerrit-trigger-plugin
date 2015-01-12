@@ -185,7 +185,7 @@ public class GerritCause extends SCMTriggerCause {
     private String getUrlFromEvent() {
         if (tEvent.getProvider() != null) {
             String serverName = tEvent.getProvider().getName();
-            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            GerritServer server = PluginImpl.getServer_(serverName);
             if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
                 if (config != null) {

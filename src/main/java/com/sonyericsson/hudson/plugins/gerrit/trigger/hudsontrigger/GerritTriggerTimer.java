@@ -30,6 +30,7 @@ import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Timer;
 
 /**
@@ -94,7 +95,8 @@ public final class GerritTriggerTimer {
     private long calculateDynamicConfigRefreshInterval(GerritTriggerTimerTask timerTask) {
         GerritTrigger trigger = timerTask.getGerritTrigger();
         if (trigger != null && trigger.isAnyServer()) {
-            if (PluginImpl.getInstance().getServers() == null || PluginImpl.getInstance().getServers().isEmpty()) {
+            List<GerritServer> servers = PluginImpl.getServers_();
+            if (servers.isEmpty()) {
                 return GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
             } else {
                 //Do an average just for giggles
@@ -105,7 +107,7 @@ public final class GerritTriggerTimer {
             return calculateAverageDynamicConfigRefreshInterval();
         } else {
             //get the actual if it exists.
-            GerritServer server = PluginImpl.getInstance().getServer(trigger.getServerName());
+            GerritServer server = PluginImpl.getServer_(trigger.getServerName());
             if (server != null) {
                 return server.getConfig().getDynamicConfigRefreshInterval();
             } else {
@@ -126,10 +128,10 @@ public final class GerritTriggerTimer {
      */
     private long calculateAverageDynamicConfigRefreshInterval() {
         long total = 0;
-        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+        for (GerritServer server : PluginImpl.getServers_()) {
             total += server.getConfig().getDynamicConfigRefreshInterval();
         }
-        long average = total / Math.max(1, PluginImpl.getInstance().getServers().size()); //Avoid division by 0
+        long average = total / Math.max(1, PluginImpl.getServers_().size()); //Avoid division by 0
         return Math.max(GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL, average);
     }
 

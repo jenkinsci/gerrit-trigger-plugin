@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -241,11 +242,15 @@ public class BuildMemory {
         TriggerContext context = cause.getContext();
         context.setThisBuild(r);
         for (MemoryImprint.Entry entry : imprint.getEntries()) {
-            if (entry.getBuild() != null && !entry.getBuild().equals(r)) {
-                context.addOtherBuild(entry.getBuild());
+            AbstractBuild build = entry.getBuild();
+            if (build != null && !build.equals(r)) {
+                context.addOtherBuild(build);
                 updateTriggerContext(entry, imprint);
-            } else if (entry.getBuild() == null && !entry.getProject().equals(r.getProject())) {
-                context.addOtherProject(entry.getProject());
+            } else {
+                AbstractProject project = entry.getProject();
+                if (build == null && project != null && !project.equals(r.getProject())) {
+                    context.addOtherProject(project);
+                }
             }
         }
         if (!r.hasntStartedYet() && !r.isBuilding()) {
@@ -263,23 +268,28 @@ public class BuildMemory {
      * @param entryToUpdate the entry to update.
      * @param imprint       the information for the update.
      */
-    private synchronized void updateTriggerContext(Entry entryToUpdate, MemoryImprint imprint) {
-        if (entryToUpdate.getBuild() != null) {
-            GerritCause cause = (GerritCause)entryToUpdate.getBuild().getCause(GerritCause.class);
+    private synchronized void updateTriggerContext(@Nonnull Entry entryToUpdate, @Nonnull MemoryImprint imprint) {
+        AbstractBuild build = entryToUpdate.getBuild();
+        if (build != null) {
+            GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
             if (cause != null) {
                 TriggerContext context = cause.getContext();
                 for (MemoryImprint.Entry ent : imprint.getEntries()) {
-                    if (ent.getBuild() != null && !ent.getBuild().equals(entryToUpdate.getBuild())) {
-                        context.addOtherBuild(ent.getBuild());
-                    } else if (ent.getBuild() == null && !ent.getProject().equals(entryToUpdate.getProject())) {
-                        context.addOtherProject(ent.getProject());
+                    AbstractBuild entBuild = ent.getBuild();
+                    if (entBuild != null && !entBuild.equals(build)) {
+                        context.addOtherBuild(entBuild);
+                    } else {
+                        AbstractProject entProject = ent.getProject();
+                        if (entBuild == null && entProject != null && !entProject.equals(entryToUpdate.getProject())) {
+                            context.addOtherProject(entProject);
+                        }
                     }
                 }
-                if (!entryToUpdate.getBuild().hasntStartedYet() && !entryToUpdate.getBuild().isBuilding()) {
+                if (!build.hasntStartedYet() && !build.isBuilding()) {
                     try {
-                        entryToUpdate.getBuild().save();
+                        build.save();
                     } catch (IOException ex) {
-                        logger.error("Could not save state for build " + entryToUpdate.getBuild(), ex);
+                        logger.error("Could not save state for build " + build, ex);
                     }
                 }
             }
@@ -293,13 +303,13 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isTriggered(GerritTriggeredEvent event, AbstractProject project) {
+    public synchronized boolean isTriggered(@Nonnull GerritTriggeredEvent event, @Nonnull AbstractProject project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
         } else {
             for (Entry entry : pb.getEntries()) {
-                if (entry.getProject().equals(project)) {
+                if (project.equals(entry.getProject())) {
                     return true;
                 }
             }
@@ -533,12 +543,17 @@ public class BuildMemory {
         public synchronized String getStatusReport() {
             StringBuilder str = new StringBuilder("");
             for (Entry entry : list) {
-                if (entry.getProject() != null) {
-                    str.append("  Project/Build: [").append(entry.getProject().getName()).append("]");
+                if (entry == null) {
+                    continue;
+                }
+                AbstractProject project = entry.getProject();
+                if (project != null) {
+                    str.append("  Project/Build: [").append(project.getName()).append("]");
                     str.append(": [#");
-                    if (entry.getBuild() != null) {
-                        str.append(entry.getBuild().getNumber());
-                        str.append(": ").append(entry.getBuild().getResult());
+                    AbstractBuild build = entry.getBuild();
+                    if (build != null) {
+                        str.append(build.getNumber());
+                        str.append(": ").append(build.getResult());
                     } else {
                         str.append("XX: NULL");
                     }
@@ -555,11 +570,11 @@ public class BuildMemory {
          * Searches the internal list for an entry with the specified project.
          *
          * @param project the project.
-         * @return the entry or null if nothis is found.
+         * @return the entry or null if nothing is found.
          */
-        private Entry getEntry(AbstractProject project) {
+        private Entry getEntry(@Nonnull AbstractProject project) {
             for (Entry entry : list) {
-                if (entry.getProject().equals(project)) {
+                if (entry != null && project.equals(entry.getProject())) {
                     return entry;
                 }
             }
@@ -589,12 +604,16 @@ public class BuildMemory {
          */
         public synchronized boolean areAllBuildResultsSkipped() {
             for (Entry entry : list) {
-                if (entry.getBuild() == null) {
+                if (entry == null) {
+                    continue;
+                }
+                AbstractBuild build = entry.getBuild();
+                if (build == null) {
                     return false;
                 } else if (!entry.isBuildCompleted()) {
                     return false;
                 }
-                Result buildResult = entry.getBuild().getResult();
+                Result buildResult = build.getResult();
                 GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
                 if (!shouldSkip(trigger.getSkipVote(), buildResult)) {
                     return false;
@@ -612,24 +631,32 @@ public class BuildMemory {
         public synchronized boolean wereAllBuildsSuccessful() {
             if (areAllBuildResultsSkipped()) {
                 for (Entry entry : list) {
-                    if (entry.getBuild() == null) {
+                    if (entry == null) {
+                        continue;
+                    }
+                    AbstractBuild build = entry.getBuild();
+                    if (build == null) {
                         return false;
                     } else if (!entry.isBuildCompleted()) {
                         return false;
                     }
-                    Result buildResult = entry.getBuild().getResult();
+                    Result buildResult = build.getResult();
                     if (buildResult != Result.SUCCESS) {
                         return false;
                     }
                 }
             } else {
                 for (Entry entry : list) {
-                    if (entry.getBuild() == null) {
+                    if (entry == null) {
+                        continue;
+                    }
+                    AbstractBuild build = entry.getBuild();
+                    if (build == null) {
                         return false;
                     } else if (!entry.isBuildCompleted()) {
                         return false;
                     }
-                    Result buildResult = entry.getBuild().getResult();
+                    Result buildResult = build.getResult();
                     if (buildResult != Result.SUCCESS) {
                         GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
                         if (!shouldSkip(trigger.getSkipVote(), buildResult)) {
@@ -648,8 +675,12 @@ public class BuildMemory {
          */
         public synchronized boolean wereAnyBuildsFailed() {
             for (Entry entry : list) {
-                if (entry.getBuild() != null && entry.isBuildCompleted()
-                        && entry.getBuild().getResult() == Result.FAILURE) {
+                if (entry == null) {
+                    continue;
+                }
+                AbstractBuild build = entry.getBuild();
+                if (build != null && entry.isBuildCompleted()
+                        && build.getResult() == Result.FAILURE) {
                     return true;
                 }
             }
@@ -663,8 +694,12 @@ public class BuildMemory {
          */
         public synchronized boolean wereAnyBuildsUnstable() {
             for (Entry entry : list) {
-                if (entry.getBuild() != null && entry.isBuildCompleted()
-                        && entry.getBuild().getResult() == Result.UNSTABLE) {
+                if (entry == null) {
+                    continue;
+                }
+                AbstractBuild build = entry.getBuild();
+                if (build != null && entry.isBuildCompleted()
+                        && build.getResult() == Result.UNSTABLE) {
                     return true;
                 }
             }
@@ -679,12 +714,16 @@ public class BuildMemory {
          */
         public synchronized boolean wereAllBuildsNotBuilt() {
             for (Entry entry : list) {
-                if (entry.getBuild() == null) {
+                if (entry == null) {
+                    continue;
+                }
+                AbstractBuild build = entry.getBuild();
+                if (build == null) {
                     return false;
                 } else if (!entry.isBuildCompleted()) {
                     return false;
                 }
-                Result buildResult = entry.getBuild().getResult();
+                Result buildResult = build.getResult();
                 if (buildResult != Result.NOT_BUILT) {
                     return false;
                 }
@@ -733,7 +772,12 @@ public class BuildMemory {
              */
             @CheckForNull
             public AbstractProject getProject() {
-                return Jenkins.getInstance().getItemByFullName(project, AbstractProject.class);
+                Jenkins jenkins = Jenkins.getInstance();
+                if (jenkins != null) {
+                    return jenkins.getItemByFullName(project, AbstractProject.class);
+                } else {
+                    return null;
+                }
             }
 
             /**
@@ -802,11 +846,15 @@ public class BuildMemory {
 
             @Override
             public String toString() {
-                String s;
-                if (getBuild() != null) {
-                    s = getBuild().toString();
+                String s = "";
+                AbstractBuild theBuild = getBuild();
+                if (theBuild != null) {
+                    s = theBuild.toString();
                 } else {
-                    s = getProject().getName();
+                    AbstractProject theProject = getProject();
+                    if (theProject != null) {
+                        s = theProject.getName();
+                    }
                 }
                 if (isBuildCompleted()) {
                     s += " (completed)";

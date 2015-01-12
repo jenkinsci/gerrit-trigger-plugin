@@ -80,7 +80,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Add this patches listener to the GerritServer object to which it is associated.
      */
     private void addThisAsListener() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             server.addListener(this);
         } else {
@@ -103,7 +103,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * Shutdown the listener.
      */
     public void shutdown() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             server.removeListener(this);
         } else {
@@ -169,7 +169,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      * @return the server config or null if not found.
      */
     private IGerritHudsonTriggerConfig getConfig() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
             if (config != null) {
@@ -233,7 +233,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      */
     private boolean hasUserReviewedChange(JSONObject changeSet, String userName) {
         if (changeSet == null) {
-            logger.warn("Invalid changeSet: " + changeSet);
+            logger.warn("No provided changeSet!");
             return true;
         }
         List<String> names = this.changeSets.get(changeSet);

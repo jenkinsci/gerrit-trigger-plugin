@@ -45,7 +45,9 @@ public final class GerritTriggerApi {
      * @throws PluginStatusException if plugin is inactive.
      */
     private PluginImpl getActivePlugin() throws PluginNotFoundException, PluginStatusException {
-        PluginImpl plugin = Jenkins.getInstance().getPlugin(PluginImpl.class);
+        Jenkins jenkins = Jenkins.getInstance();
+        assert jenkins != null;
+        PluginImpl plugin = jenkins.getPlugin(PluginImpl.class);
         if (plugin == null) {
             throw new PluginNotFoundException();
         }

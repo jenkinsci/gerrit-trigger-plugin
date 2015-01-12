@@ -33,6 +33,8 @@ import com.google.common.collect.Collections2;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 
+import javax.annotation.Nullable;
+
 /**
  * Build is blocked because replication is not completed to slave(s).
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
@@ -61,8 +63,12 @@ public class WaitingForReplication extends CauseOfBlockage {
     private static enum ToGerritSlaveName implements Function<GerritSlave, String> {
         INSTANCE; //enum singleton pattern
         @Override
-        public String apply(GerritSlave gerritStave) {
-            return gerritStave.getName();
+        public String apply(@Nullable GerritSlave gerritSlave) {
+            if (gerritSlave != null) {
+                return gerritSlave.getName();
+            } else {
+                return null;
+            }
         }
     }
 }

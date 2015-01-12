@@ -80,7 +80,11 @@ public class GerritTriggerTimerTask extends TimerTask {
                 return gerritTrigger;
             }
         }
-        AbstractProject p = Jenkins.getInstance().getItemByFullName(job, AbstractProject.class);
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            return null;
+        }
+        AbstractProject p = jenkins.getItemByFullName(job, AbstractProject.class);
         if (p == null) {
             return null;
         }

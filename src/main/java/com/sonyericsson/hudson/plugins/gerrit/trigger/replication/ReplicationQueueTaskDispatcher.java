@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import hudson.Extension;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
@@ -56,6 +57,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 /**
  * Block builds until replication is completed if configured to wait for replication.
  *
@@ -72,10 +76,26 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * Default constructor.
      */
     public ReplicationQueueTaskDispatcher() {
-        this(PluginImpl.getInstance().getHandler(),
-                ReplicationCache.Factory.createCache(
-                        PluginImpl.getInstance().getPluginConfig().getReplicationCacheExpirationInMinutes(),
-                        TimeUnit.MINUTES));
+        this(PluginImpl.getHandler_(),
+                createDefaultCache());
+    }
+
+    /**
+     * Creates a {@link ReplicationCache} with configured default settings.
+     *
+     * @return the cache.
+     * @see #ReplicationQueueTaskDispatcher()
+     */
+    @Nonnull
+    private static ReplicationCache createDefaultCache() {
+        PluginConfig config = PluginImpl.getPluginConfig_();
+        int expiration = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
+        if (config != null) {
+            expiration = config.getReplicationCacheExpirationInMinutes();
+        }
+        return ReplicationCache.Factory.createCache(
+                expiration,
+                TimeUnit.MINUTES);
     }
 
     /**
@@ -84,10 +104,14 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * @param gerritHandler the handler
      * @param replicationCache the replication cache
      */
-    ReplicationQueueTaskDispatcher(GerritHandler gerritHandler, ReplicationCache replicationCache) {
+    ReplicationQueueTaskDispatcher(@CheckForNull GerritHandler gerritHandler,
+                                   @Nonnull ReplicationCache replicationCache) {
         blockedItems = new ConcurrentHashMap<Integer, BlockedItem>();
         this.replicationCache = replicationCache;
-        gerritHandler.addListener(this);
+        if (gerritHandler != null) {
+            logger.warn("No GerritHandler was specified, won't register as event listener, so no function.");
+            gerritHandler.addListener(this);
+        }
         this.replicationCache.setCreationTime(new Date().getTime());
         logger.debug("Registered to gerrit events");
     }

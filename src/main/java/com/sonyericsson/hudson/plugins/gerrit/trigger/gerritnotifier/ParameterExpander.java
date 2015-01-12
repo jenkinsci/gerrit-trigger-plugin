@@ -363,7 +363,14 @@ public class ParameterExpander {
     public int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
-            Result result = entry.getBuild().getResult();
+            if (entry == null) {
+                continue;
+            }
+            AbstractBuild build = entry.getBuild();
+            if (build == null) {
+                continue;
+            }
+            Result result = build.getResult();
             if (onlyBuilt && result == Result.NOT_BUILT) {
                 continue;
             }
@@ -390,7 +397,11 @@ public class ParameterExpander {
     public int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
-            Result result = entry.getBuild().getResult();
+            AbstractBuild build = entry.getBuild();
+            if (build == null) {
+                continue;
+            }
+            Result result = build.getResult();
             if (onlyBuilt && result == Result.NOT_BUILT) {
                 continue;
             }
@@ -417,7 +428,14 @@ public class ParameterExpander {
     public Notify getHighestNotificationLevel(MemoryImprint memoryImprint, boolean onlyBuilt) {
         Notify highestLevel = Notify.NONE;
         for (Entry entry : memoryImprint.getEntries()) {
-            Result result = entry.getBuild().getResult();
+            if (entry == null) {
+                continue;
+            }
+            AbstractBuild build = entry.getBuild();
+            if (build == null) {
+                continue;
+            }
+            Result result = build.getResult();
             if (onlyBuilt && result == Result.NOT_BUILT) {
                 continue;
             }
@@ -530,10 +548,16 @@ public class ParameterExpander {
         // the build results.
         if (entries.length > 0) {
             for (Entry entry : entries) {
+                if (entry == null) {
+                    continue;
+                }
                 AbstractBuild build = entry.getBuild();
                 if (build != null) {
                     GerritTrigger trigger = GerritTrigger.getTrigger(build.getProject());
                     Result res = build.getResult();
+                    if (res == null) {
+                        res = Result.NOT_BUILT;
+                    }
                     String customMessage = null;
 
                     /* Gerrit comments cannot contain single-newlines, as they will be joined
@@ -544,7 +568,7 @@ public class ParameterExpander {
                     str.append("\n\n");
 
                     if (trigger.getCustomUrl() == null || trigger.getCustomUrl().isEmpty()) {
-                        str.append(rootUrl).append(entry.getBuild().getUrl());
+                        str.append(rootUrl).append(build.getUrl());
                     } else {
                         str.append(expandParameters(trigger.getCustomUrl(), build, listener, parameters));
                     }
@@ -667,11 +691,25 @@ public class ParameterExpander {
 
         @Override
         public int compare(Entry e1, Entry e2) {
+            if (e1 == null) {
+                throw new NullPointerException("e1");
+            }
+            if (e2 == null) {
+                throw new NullPointerException("e2");
+            }
             AbstractBuild b1 = e1.getBuild();
             AbstractBuild b2 = e2.getBuild();
             if (b1 != null && b2 != null) {
-                int o1 = b1.getResult().ordinal;
-                int o2 = b2.getResult().ordinal;
+                Result r1 = b1.getResult();
+                Result r2 = b2.getResult();
+                int o1 = 0;
+                if (r1 != null) {
+                    o1 = r1.ordinal;
+                }
+                int o2 = 0;
+                if (r2 != null) {
+                    o2 = r2.ordinal;
+                }
                 if (descending) {
                     return o2 - o1;
                 } else {

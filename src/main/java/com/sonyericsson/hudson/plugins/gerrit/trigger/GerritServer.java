@@ -337,8 +337,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Override
     public String getUrlName() {
         //Lets make an absolute url to circumvent some buggy things in core
-        if (Jenkins.getInstance().getRootUrl() != null) {
-            return Functions.joinPath(Jenkins.getInstance().getRootUrl(),
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null && jenkins.getRootUrl() != null) {
+            return Functions.joinPath(jenkins.getRootUrl(),
                     getParentUrl(), "server", getUrlEncodedName());
         } else {
             return Functions.joinPath("/", getParentUrl(), "server", getUrlEncodedName());
@@ -367,7 +368,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @return whether it is the last one;
      */
     public boolean isLastServer() {
-        return PluginImpl.getInstance().getServers().size() == 1;
+        return PluginImpl.getServers_().size() == 1;
     }
 
     /**
@@ -387,7 +388,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             categories.add(new VerdictCategory("VRIF", "Verified"));
         }
         config.setCategories(categories);
-        gerritEventManager = PluginImpl.getInstance().getHandler();
+        gerritEventManager = PluginImpl.getHandler_();
 
         initializeConnectionListener();
 
@@ -752,7 +753,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             @QueryParameter("name") @RelativePath("../..") final String serverName) {
             ListBoxModel items = new ListBoxModel();
             logger.trace("filling default gerrit slave drop down for sever {}", serverName);
-            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            GerritServer server = PluginImpl.getServer_(serverName);
             if (server == null) {
                 logger.warn(Messages.CouldNotFindServer(serverName));
                 items.add(Messages.CouldNotFindServer(serverName), "");
@@ -825,7 +826,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         String newName = form.getString("name");
         boolean renamed = false;
         if (!name.equals(newName)) {
-            if (PluginImpl.getInstance().containsServer(newName)) {
+            if (PluginImpl.containsServer_(newName)) {
                 throw new Failure("A server already exists with the name '" + newName + "'");
             } else if (ANY_SERVER.equals(newName)) {
                 throw new Failure("Illegal name '" + newName + "'");
@@ -836,7 +837,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         noConnectionOnStartup = form.getBoolean("noConnectionOnStartup");
         config.setValues(form);
 
-        PluginImpl.getInstance().save();
+        PluginImpl.save_();
 
         if (!started) {
             this.start();
@@ -874,7 +875,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @return the list of jobs configured with this server.
      */
     public List<AbstractProject> getConfiguredJobs() {
-        return PluginImpl.getInstance().getConfiguredJobs(name);
+        return PluginImpl.getConfiguredJobs_(name);
     }
 
     /**
@@ -883,16 +884,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param oldName the old name of the Gerrit server
      */
     private void changeSelectedServerInJobs(String oldName) {
-        for (AbstractProject job : PluginImpl.getInstance().getConfiguredJobs(oldName)) {
+        for (AbstractProject job : PluginImpl.getConfiguredJobs_(oldName)) {
             GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
-            try {
-                trigger.setServerName(name);
-                trigger.start(job, false);
-                job.addTrigger(trigger);
-                job.save();
-            } catch (IOException e) {
-                logger.error("Error saving Gerrit Trigger configurations for job [" + job.getName()
-                        + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
+            if (trigger != null) {
+                try {
+                    trigger.setServerName(name);
+                    trigger.start(job, false);
+                    job.addTrigger(trigger);
+                    job.save();
+                } catch (IOException e) {
+                    logger.error("Error saving Gerrit Trigger configurations for job [" + job.getName()
+                            + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
+                }
             }
         }
     }
@@ -1125,10 +1128,15 @@ public class GerritServer implements Describable<GerritServer>, Action {
         stop();
         PluginImpl plugin = PluginImpl.getInstance();
         removeGerritTriggerInJobs();
-        plugin.removeServer(this);
-        plugin.save();
+        if (plugin != null) {
+            plugin.removeServer(this);
+            plugin.save();
+        }
 
-        rsp.sendRedirect(Jenkins.getInstance().getRootUrl() + GerritManagement.get().getUrlName());
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null) {
+            rsp.sendRedirect(jenkins.getRootUrl() + GerritManagement.get().getUrlName());
+        }
     }
 
     /**
@@ -1310,7 +1318,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             @QueryParameter("value")
             final String value) {
         if (!value.equals(name)) {
-            if (PluginImpl.getInstance().containsServer(value)) {
+            if (PluginImpl.containsServer_(value)) {
                 return FormValidation.error("The server name " + value + " is already in use!");
             } else if (ANY_SERVER.equals(value)) {
                 return FormValidation.error("Illegal name " + value + "!");

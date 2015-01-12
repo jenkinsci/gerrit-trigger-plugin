@@ -73,7 +73,7 @@ public class NotificationFactory {
      * @return the server-config.
      */
     public IGerritHudsonTriggerConfig getConfig(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             return server.getConfig();
         } else {

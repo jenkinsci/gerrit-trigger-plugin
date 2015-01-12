@@ -105,7 +105,7 @@ public class BadgeAction implements BuildBadgeAction {
             provider.setName(PluginImpl.DEFAULT_SERVER_NAME);
             tEvent.setProvider(provider);
         }
-        GerritServer server = PluginImpl.getInstance().getServer(provider.getName());
+        GerritServer server = PluginImpl.getServer_(provider.getName());
         //TODO: investigate the case where server == null:
         if (server != null) {
             return server.getConfig().getGerritFrontEndUrlFor(tEvent);

@@ -482,16 +482,17 @@ public enum GerritTriggerParameters {
                 serverName = name;
             }
         }
-        if (serverName == null && PluginImpl.getInstance().getFirstServer() != null) {
+        GerritServer firstServer = PluginImpl.getFirstServer_();
+        if (serverName == null && firstServer != null) {
             logger.warn("No server could be determined from event or project config, "
                     + "defaulting to the first configured server. Event: [{}] Project: [{}]", event, project);
-            serverName = PluginImpl.getInstance().getFirstServer().getName();
+            serverName = firstServer.getName();
         } else if (serverName == null) {
             //We have exhausted all possibilities, time to fail horribly
             throw new IllegalStateException("Cannot determine a Gerrit server to link to. Have you configured one?");
         }
 
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
             if (config != null) {

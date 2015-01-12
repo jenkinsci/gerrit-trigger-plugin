@@ -115,6 +115,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+
 /**
  * Triggers a build based on Gerrit events.
  *
@@ -347,7 +350,10 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param project the project.
      * @return the trigger if there is one, null otherwise.
      */
-    public static GerritTrigger getTrigger(AbstractProject project) {
+    public static GerritTrigger getTrigger(@Nullable AbstractProject project) {
+        if (project == null) {
+            return null;
+        }
         return (GerritTrigger)project.getTrigger(GerritTrigger.class);
     }
 
@@ -444,17 +450,13 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * Removes listener from the server.
      */
     private void removeListener() {
-        PluginImpl plugin = PluginImpl.getInstance();
-        if (plugin != null) {
-            if (PluginImpl.getInstance().getHandler() != null) {
-                if (job != null) {
-                    PluginImpl.getInstance().getHandler().removeListener(createListener());
-                }
-            } else {
-                logger.error("The Gerrit handler has not been initialized. BUG!");
+        GerritHandler handler = PluginImpl.getHandler_();
+        if (handler != null) {
+            if (job != null) {
+                handler.removeListener(createListener());
             }
         } else {
-            logger.error("The plugin instance could not be found");
+            logger.error("The Gerrit handler has not been initialized. BUG!");
         }
     }
 
@@ -550,8 +552,9 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @return the list of verdict categories, or an empty linkedlist if server not found.
      */
     private List<VerdictCategory> getVerdictCategoriesList() {
-         if (PluginImpl.getInstance().getServer(serverName) != null) {
-            return PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+        GerritServer server = PluginImpl.getServer_(serverName);
+        if (server != null) {
+            return server.getConfig().getCategories();
          } else {
             logger.error("Could not find server {}", serverName);
             return new LinkedList<VerdictCategory>();
@@ -608,20 +611,21 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     public int getBuildScheduleDelay() {
         if (isAnyServer()) {
             int max = 0;
-            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            for (GerritServer server : PluginImpl.getServers_()) {
                 if (server.getConfig() != null) {
                     max = Math.max(max, server.getConfig().getBuildScheduleDelay());
                 }
             }
             return max;
-        } else if (PluginImpl.getInstance().getServer(serverName) == null
-                || PluginImpl.getInstance().getServer(serverName).getConfig() == null) {
-            return DEFAULT_BUILD_SCHEDULE_DELAY;
         } else {
-            int buildScheduleDelay = PluginImpl.getInstance().getServer(serverName).getConfig()
-                    .getBuildScheduleDelay();
-            //check if less than zero
-            return Math.max(0, buildScheduleDelay);
+            GerritServer server = PluginImpl.getServer_(serverName);
+            if (server == null || server.getConfig() == null) {
+                return DEFAULT_BUILD_SCHEDULE_DELAY;
+            } else {
+                int buildScheduleDelay = server.getConfig().getBuildScheduleDelay();
+                //check if less than zero
+                return Math.max(0, buildScheduleDelay);
+            }
         }
 
     }
@@ -646,7 +650,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
                     // If serverName in event no longer exists, server may have been renamed/removed,
                     // so use current serverName
-                    if (!isAnyServer() && !PluginImpl.getInstance().containsServer(provider.getName())) {
+                    if (!isAnyServer() && !PluginImpl.containsServer_(provider.getName())) {
                         provider.setName(serverName);
                     }
 
@@ -1476,7 +1480,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     public List<GerritSlave> gerritSlavesToWaitFor(String gerritServerName) {
         List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
 
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(gerritServerName);
+        GerritServer gerritServer = PluginImpl.getServer_(gerritServerName);
         if (gerritServer == null) {
             logger.warn("Could not find server: {}", serverName);
             return gerritSlaves;
@@ -1570,11 +1574,22 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.equals("")) {
-                    Item item = Hudson.getInstance().getItem(projectName, project, Item.class);
+                    Jenkins jenkins = Jenkins.getInstance();
+                    assert jenkins != null;
+                    Item item = jenkins.getItem(projectName, project, Item.class);
                     if ((item == null) || !(item instanceof AbstractProject)) {
-                        return FormValidation.error(hudson.model.Messages.AbstractItem_NoSuchJobExists(projectName,
-                                    AbstractProject.findNearest(projectName,
-                                        project.getParent()).getRelativeNameFrom(project)));
+                        AbstractProject nearest = AbstractProject.findNearest(
+                                projectName,
+                                project.getParent()
+                        );
+                        String path = "<null>";
+                        if (nearest != null) {
+                            path = nearest.getRelativeNameFrom(project);
+                        }
+                        return FormValidation.error(
+                                hudson.model.Messages.AbstractItem_NoSuchJobExists(
+                                        projectName,
+                                        path));
                     }
                 }
             }
@@ -1628,7 +1643,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         public ListBoxModel doFillServerNameItems() {
             ListBoxModel items = new ListBoxModel();
             items.add(Messages.AnyServer(), ANY_SERVER);
-            List<String> serverNames = PluginImpl.getInstance().getServerNames();
+            List<String> serverNames = PluginImpl.getServerNames_();
             for (String s : serverNames) {
                 items.add(s);
             }
@@ -1643,7 +1658,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         public boolean isSlaveSelectionAllowedInJobs() {
             //since we cannot create/remove drop down when the server is selected,
             //as soon as one of the server allow slave selection, we must display it.
-            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            for (GerritServer server : PluginImpl.getServers_()) {
                 ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
                 if (replicationConfig != null && replicationConfig.isEnableSlaveSelectionInJobs()) {
                     return true;
@@ -1665,7 +1680,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 items.add(Messages.SlaveSelectionNotAllowedAnyServer(Messages.AnyServer()), "");
                 return items;
             }
-            GerritServer server = PluginImpl.getInstance().getServer(serverName);
+            GerritServer server = PluginImpl.getServer_(serverName);
             if (server == null) {
                 logger.warn(Messages.CouldNotFindServer(serverName));
                 items.add(Messages.CouldNotFindServer(serverName), "");
@@ -1751,7 +1766,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 // but also a different value.
                 return new Option(Messages.NotificationLevel_DefaultValue(), "");
             } else if (serverName != null) {
-                GerritServer server = PluginImpl.getInstance().getServer(serverName);
+                GerritServer server = PluginImpl.getServer_(serverName);
                 if (server != null) {
                     Notify level = server.getConfig().getNotificationLevel();
                     if (level != null) {
@@ -1878,13 +1893,16 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 }
             }
             // Interrupt any currently running jobs.
-            for (Computer c : Jenkins.getInstance().getComputers()) {
+            Jenkins jenkins = Jenkins.getInstance();
+            assert jenkins != null;
+            for (Computer c : jenkins.getComputers()) {
                 List<Executor> executors = new ArrayList<Executor>();
                 executors.addAll(c.getOneOffExecutors());
                 executors.addAll(c.getExecutors());
                 for (Executor e : executors) {
-                    if (e.getCurrentExecutable() instanceof Run<?, ?>) {
-                        Run<?, ?> run = (Run<?, ?>)e.getCurrentExecutable();
+                    Queue.Executable currentExecutable = e.getCurrentExecutable();
+                    if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
+                        Run<?, ?> run = (Run<?, ?>)currentExecutable;
                         if (checkCausedByGerrit(event, run.getCauses())) {
                             e.interrupt(
                                     Result.ABORTED,

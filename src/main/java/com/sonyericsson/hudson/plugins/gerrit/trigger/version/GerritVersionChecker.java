@@ -111,7 +111,7 @@ public final class GerritVersionChecker {
     public static boolean isCorrectVersion(Feature feature, String serverName) {
         if (PluginImpl.getInstance() != null) {
             if (serverName == null || serverName.isEmpty() || GerritServer.ANY_SERVER.equals(serverName)) {
-                for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                for (GerritServer server : PluginImpl.getServers_()) {
                     GerritVersionNumber gerritVersion
                             = createVersionNumber(server.getGerritVersion());
                     if (isCorrectVersion(gerritVersion, feature)) {
@@ -135,13 +135,13 @@ public final class GerritVersionChecker {
      *@return the current Gerrit version as a String if connected, or null otherwise.
     */
     private static String getGerritVersion(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             String version = server.getGerritVersion();
             if (version != null) {
                 return version;
             } else {
-                logger.error("Could not find the Gerrit version {}", version);
+                logger.error("Could not find the Gerrit version for {}", serverName);
             }
         } else {
             logger.error("Could not find the server {}", serverName);
