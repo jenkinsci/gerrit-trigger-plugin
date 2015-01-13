@@ -468,11 +468,13 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     private Provider initializeProvider(GerritTriggeredEvent tEvent) {
         Provider provider = tEvent.getProvider();
-        if (provider == null && !isAnyServer()) {
-            provider = new Provider();
-            provider.setName(serverName);
-        } else if (provider.getName() == null && !isAnyServer()) {
-            provider.setName(serverName);
+        if (!isAnyServer()) {
+            if (provider == null) {
+                provider = new Provider();
+                provider.setName(serverName);
+            } else if (provider.getName() == null) {
+                provider.setName(serverName);
+            }
         }
         return provider;
     }

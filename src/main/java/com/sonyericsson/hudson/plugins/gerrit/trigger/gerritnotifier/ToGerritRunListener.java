@@ -86,10 +86,10 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     @Override
-    public synchronized void onCompleted(AbstractBuild r, @Nonnull TaskListener listener) {
+    public synchronized void onCompleted(@Nonnull AbstractBuild r, @Nonnull TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Completed. Build: {} Cause: {}", r, cause);
-        if (r != null && cause != null) {
+        if (cause != null) {
             cleanUpGerritCauses(cause, r);
             GerritTriggeredEvent event = cause.getEvent();
             GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
