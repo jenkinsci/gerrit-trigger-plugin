@@ -141,7 +141,7 @@ public class PluginImpl extends Plugin {
         if (jenkins != null) {
             return jenkins.getPlugin(PluginImpl.class);
         } else {
-            logger.error("INITIALIZATION Error, Jenkins could not be found, so no plugin!");
+            logger.debug("Error, Jenkins could not be found, so no plugin!");
             return null;
         }
     }
@@ -176,7 +176,7 @@ public class PluginImpl extends Plugin {
     public static List<GerritServer> getServers_() {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("PluginImpl instance not found!");
+            logger.debug("PluginImpl instance not found!");
             return Collections.emptyList();
         }
         return plugin.getServers();
@@ -206,7 +206,7 @@ public class PluginImpl extends Plugin {
     public static List<String> getServerNames_() {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("PluginImpl instance not found!");
+            logger.debug("PluginImpl instance not found!");
             return Collections.emptyList();
         }
         return plugin.getServerNames();
@@ -241,7 +241,7 @@ public class PluginImpl extends Plugin {
     public static GerritServer getServer_(String name) {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return null;
         }
         return plugin.getServer(name);
@@ -270,7 +270,7 @@ public class PluginImpl extends Plugin {
     public static GerritServer getFirstServer_() {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return null;
         }
         return plugin.getFirstServer();
@@ -336,7 +336,7 @@ public class PluginImpl extends Plugin {
     public static boolean containsServer_(String serverName) {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return false;
         }
         return plugin.containsServer(serverName);
@@ -384,7 +384,7 @@ public class PluginImpl extends Plugin {
     public static PluginConfig getPluginConfig_() {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return null;
         }
         return plugin.getPluginConfig();
@@ -399,7 +399,7 @@ public class PluginImpl extends Plugin {
     public static void save_() throws IOException {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return;
         }
         plugin.save();
@@ -424,7 +424,7 @@ public class PluginImpl extends Plugin {
     public static GerritHandler getHandler_() {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return null;
         }
         return plugin.getHandler();
@@ -461,7 +461,7 @@ public class PluginImpl extends Plugin {
     public static List<AbstractProject> getConfiguredJobs_(String serverName) {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
-            logger.error("INITIALIZATION Error, plugin instance could not be found!");
+            logger.debug("Error, plugin instance could not be found!");
             return Collections.emptyList();
         }
         return plugin.getConfiguredJobs(serverName);
