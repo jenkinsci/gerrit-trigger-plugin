@@ -23,43 +23,31 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
-import static org.mockito.Matchers.eq;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 /**
  * Tests for {@link GerritTriggerParameters}.
  *
  * @author <a href="robert.sandell@sonymobile.com">Robert Sandell</a>
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({AbstractProject.class, PluginImpl.class })
-@PowerMockIgnore({"javax.crypto.*" })
 public class GerritTriggerParametersTest {
 
     /**
@@ -76,15 +64,12 @@ public class GerritTriggerParametersTest {
      */
     @Before
     public void setup() {
-        mockStatic(PluginImpl.class);
-        PluginImpl plugin = mock(PluginImpl.class);
-        when(PluginImpl.getInstance()).thenReturn(plugin);
-
         config = Setup.createConfig();
         GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         server.setConfig(config);
-        when(plugin.getServer(eq(PluginImpl.DEFAULT_SERVER_NAME))).thenReturn(server);
-        when(plugin.getFirstServer()).thenReturn(server);
+        PluginImpl plugin = PluginImpl.getInstance();
+        assertNotNull(plugin);
+        plugin.setServers(Arrays.asList(server));
     }
 
     /**
@@ -96,7 +81,7 @@ public class GerritTriggerParametersTest {
     @Test
     public void setOrCreateParametersProviderUrl() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
-        AbstractProject project = mock(AbstractProject.class);
+        AbstractProject project = j.createFreeStyleProject();
         LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
@@ -114,9 +99,8 @@ public class GerritTriggerParametersTest {
     public void setOrCreateParametersUrlNoProvider() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         created.setProvider(null);
-        AbstractProject project = mock(AbstractProject.class);
-        GerritTrigger trigger = Setup.createDefaultTrigger(null);
-        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        AbstractProject project = j.createFreeStyleProject();
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
@@ -134,10 +118,9 @@ public class GerritTriggerParametersTest {
     public void setOrCreateParametersUrlNoProviderAnyServer() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         created.setProvider(null);
-        AbstractProject project = mock(AbstractProject.class);
-        GerritTrigger trigger = Setup.createDefaultTrigger(null);
+        AbstractProject project = j.createFreeStyleProject();
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setServerName(GerritServer.ANY_SERVER);
-        when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
         LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
@@ -148,7 +131,7 @@ public class GerritTriggerParametersTest {
     /**
      * Finds the given parameter in the list.
      *
-     * @param name the parameter to find.
+     * @param name       the parameter to find.
      * @param parameters the list
      * @return the value or null if none was found
      */

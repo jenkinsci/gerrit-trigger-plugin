@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -124,7 +125,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
             Collection<VerdictCategory> list = null;
             if (ANY_SERVER.equals(serverName)) { //list all configured VCs in all servers
                 Map<String, VerdictCategory> map = new HashMap<String, VerdictCategory>();
-                for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                for (GerritServer server : PluginImpl.getServers_()) {
                     for (VerdictCategory vc : server.getConfig().getCategories()) {
                         if (!map.containsKey(vc.getVerdictValue())) {
                             map.put(vc.getVerdictValue(), vc);
@@ -133,7 +134,13 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
                 }
                 list = map.values();
             } else {
-                list = PluginImpl.getInstance().getServer(serverName).getConfig().getCategories();
+                GerritServer server = PluginImpl.getServer_(serverName);
+                if (server != null) {
+                    IGerritHudsonTriggerConfig config = server.getConfig();
+                    if (config != null) {
+                        list = config.getCategories();
+                    }
+                }
             }
             if (list != null && !list.isEmpty()) {
                 for (VerdictCategory v : list) {

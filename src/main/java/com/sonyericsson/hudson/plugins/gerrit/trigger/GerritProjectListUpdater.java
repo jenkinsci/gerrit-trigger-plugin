@@ -75,7 +75,11 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * Add the current list updater as a listener to the GerritServer object.
      */
     private void addThisAsListener() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return;
+        }
+        GerritServer server = plugin.getServer(serverName);
         if (server != null) {
             server.addListener(this);
             connected = server.isConnected();
@@ -133,7 +137,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 break;
             }
         }
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
              server.removeListener(this);
         } else {
@@ -146,16 +150,19 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * @return the server config or null if config not found.
      */
     private IGerritHudsonTriggerConfig getConfig() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
-        if (server != null) {
-            IGerritHudsonTriggerConfig config = server.getConfig();
-            if (config != null) {
-                return config;
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            GerritServer server = plugin.getServer(serverName);
+            if (server != null) {
+                IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    return config;
+                } else {
+                    logger.error("Could not find the server config");
+                }
             } else {
-                logger.error("Could not find the server config");
+                logger.error("Could not find server {}", serverName);
             }
-        } else {
-            logger.error("Could not find server {}", serverName);
         }
         return null;
     }

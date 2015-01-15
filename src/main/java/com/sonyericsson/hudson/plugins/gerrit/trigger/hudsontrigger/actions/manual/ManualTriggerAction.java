@@ -122,7 +122,7 @@ public class ManualTriggerAction implements RootAction {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#isEnableManualTrigger()
      */
     public boolean hasEnabledServers() {
-        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+        for (GerritServer s : PluginImpl.getServers_()) {
             if (s.getConfig().isEnableManualTrigger()) {
                 return true;
             }
@@ -152,7 +152,7 @@ public class ManualTriggerAction implements RootAction {
      * @return the config of the server or null if config not found.
      */
     private IGerritHudsonTriggerConfig getServerConfig(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
             if (config != null) {
@@ -197,7 +197,7 @@ public class ManualTriggerAction implements RootAction {
      */
     public ArrayList<String> getEnabledServers() {
         ArrayList<String> enabledServers = new ArrayList<String>();
-        for (GerritServer s : PluginImpl.getInstance().getServers()) {
+        for (GerritServer s : PluginImpl.getServers_()) {
             if (s.getConfig().isEnableManualTrigger()) {
                 enabledServers.add(s.getName());
             }
@@ -468,7 +468,7 @@ public class ManualTriggerAction implements RootAction {
      * @return the Provider with info from the GerritServer, or an empty provider if server not found
      */
     private Provider createProviderFromGerritServer(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             return new Provider(
                     server.getName(),
@@ -587,12 +587,12 @@ public class ManualTriggerAction implements RootAction {
      * Triggers the event by putting it into the event queue.
      *
      * @param event the event to trigger.
-     * @see PluginImpl#triggerEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)
+     * @see GerritServer#triggerEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)
      */
     private void triggerEvent(ManualPatchsetCreated event) {
         logger.trace("Going to trigger event: {}", event);
         String serverName = event.getProvider().getName(); //null handled by caller method doBuild
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             server.triggerEvent(event);
         } else {

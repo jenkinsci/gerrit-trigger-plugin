@@ -291,11 +291,14 @@ public class GerritProject implements Describable<GerritProject> {
 
             if (serverName != null && !serverName.isEmpty()) {
                 if (ANY_SERVER.equals(serverName)) {
-                    for (GerritServer server : PluginImpl.getInstance().getServers()) {
+                    for (GerritServer server : PluginImpl.getServers_()) {
                         projects.addAll(server.getGerritProjects());
                     }
                 } else {
-                    projects.addAll(PluginImpl.getInstance().getServer(serverName).getGerritProjects());
+                    GerritServer server = PluginImpl.getServer_(serverName);
+                    if (server != null) {
+                        projects.addAll(server.getGerritProjects());
+                    }
                 }
             }
             return new ComboBoxModel(projects);

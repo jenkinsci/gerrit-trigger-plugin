@@ -77,7 +77,7 @@ public class PluginDraftPublishedEvent extends PluginGerritEvent implements Seri
          * @return true if so.
          */
         public boolean isReplicationEnabled() {
-            for (GerritServer server : PluginImpl.getInstance().getServers()) {
+            for (GerritServer server : PluginImpl.getServers_()) {
                 ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
                 if (replicationConfig != null) {
                     return replicationConfig.isEnableReplication();

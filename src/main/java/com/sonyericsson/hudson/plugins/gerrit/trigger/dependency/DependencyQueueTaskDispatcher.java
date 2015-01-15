@@ -32,7 +32,6 @@ import hudson.model.Item;
 import hudson.model.Queue;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
-import hudson.Util;
 import jenkins.model.Jenkins;
 
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * Default constructor.
      */
     public DependencyQueueTaskDispatcher() {
-        this(PluginImpl.getInstance().getHandler());
+        this(PluginImpl.getHandler_());
     }
 
     /**
@@ -102,8 +101,13 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @return the instance.
      */
     public static DependencyQueueTaskDispatcher getInstance() {
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            logger.error("INITIALIZATION ERROR? Could not find the Jenkins instance.");
+            return null;
+        }
         ExtensionList<DependencyQueueTaskDispatcher> dispatchers =
-                Jenkins.getInstance().getExtensionList(DependencyQueueTaskDispatcher.class);
+                jenkins.getExtensionList(DependencyQueueTaskDispatcher.class);
         if (dispatchers == null || dispatchers.isEmpty()) {
             logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
             return null;
@@ -122,7 +126,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         GerritCause cause = getGerritCause(item);
         //Not gerrit-triggered
         if (cause == null) {
-            logger.debug("Not a gerrit cause: {}", cause);
+            logger.debug("Not Gerrit cause");
             return null;
         }
         GerritTriggeredEvent event = cause.getEvent();
@@ -233,11 +237,13 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         if ((projects == null) || projects.equals("")) {
             return null;
         } else {
-            StringTokenizer tokens = new StringTokenizer(Util.fixNull(projects), ",");
+            Jenkins jenkins = Jenkins.getInstance();
+            assert jenkins != null;
+            StringTokenizer tokens = new StringTokenizer(projects, ",");
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.equals("")) {
-                    Item item = Jenkins.getInstance().getItem(projectName, context, Item.class);
+                    Item item = jenkins.getItem(projectName, context, Item.class);
                     if ((item != null) && (item instanceof AbstractProject)) {
                         dependencyJobs.add((AbstractProject)item);
                         logger.debug("project dependency job added : {}", (AbstractProject)item);

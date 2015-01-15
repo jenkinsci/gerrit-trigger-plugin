@@ -23,6 +23,7 @@
  */
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
+
 import static org.mockito.Mockito.any;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -52,7 +53,7 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(fullyQualifiedNames = "com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl")
+@PrepareForTest(PluginImpl.class)
 public class ManualTriggerActionTest {
 
     /**
@@ -264,6 +265,7 @@ public class ManualTriggerActionTest {
         PluginImpl plugin = mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
         when(plugin.getServer(any(String.class))).thenReturn(server);
+        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
         when(server.getConfig()).thenReturn(Setup.createConfig());
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
 

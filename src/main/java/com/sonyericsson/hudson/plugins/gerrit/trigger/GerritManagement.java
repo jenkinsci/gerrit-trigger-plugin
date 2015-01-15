@@ -46,8 +46,10 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.List;
 
+import javax.annotation.CheckForNull;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
@@ -112,8 +114,10 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+        Jenkins jenkins = Jenkins.getInstance();
+        assert jenkins != null;
         ContextMenu menu = new ContextMenu();
-        menu.add("newServer", Functions.joinPath(Jenkins.getInstance().getRootUrl(), Functions.getResourcePath(),
+        menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
                 "images", "24x24", "new-package.png"), Messages.AddNewServer());
         for (GerritServer server : getServers()) {
             menu.add(server);
@@ -138,7 +142,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return the list of descriptors containing GerritServer's descriptor.
          */
         public static DescriptorExtensionList<GerritServer, GerritServer.DescriptorImpl> serverDescriptorList() {
-            return Jenkins.getInstance()
+            Jenkins jenkins = Jenkins.getInstance();
+            assert jenkins != null;
+            return jenkins
                     .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
         }
 
@@ -151,9 +157,12 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value) {
             final AutoCompletionCandidates r = new AutoCompletionCandidates();
 
-            for (String s : PluginImpl.getInstance().getServerNames()) {
-                if (s.startsWith(value)) {
-                    r.add(s);
+            PluginImpl plugin = PluginImpl.getInstance();
+            if (plugin != null) {
+                for (String s : plugin.getServerNames()) {
+                    if (s.startsWith(value)) {
+                        r.add(s);
+                    }
                 }
             }
             return r;
@@ -167,7 +176,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     */
     @SuppressWarnings("unused") //Called from Jelly
     public List<GerritServer> getServers() {
-        return PluginImpl.getInstance().getServers();
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return Collections.emptyList();
+        }
+        return plugin.getServers();
     }
 
     /**
@@ -183,7 +196,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         } catch (Exception ex) {
             serverName = URLDecoder.decode(encodedServerName);
         }
-        return PluginImpl.getInstance().getServer(serverName);
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return null;
+        }
+        return plugin.getServer(serverName);
     }
 
     /**
@@ -197,7 +214,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         JSONArray array = new JSONArray();
         JSONObject obj;
 
-        for (GerritServer server : PluginImpl.getInstance().getServers()) {
+        for (GerritServer server : PluginImpl.getServers_()) {
             String status;
             if (server.isConnected()) {
                 status = "up";
@@ -231,13 +248,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
         String serverName = req.getParameter("name");
         PluginImpl plugin = PluginImpl.getInstance();
+        assert plugin != null;
         if (plugin.containsServer(serverName)) {
             throw new Failure("A server already exists with the name '" + serverName + "'");
         } else if (GerritServer.ANY_SERVER.equals(serverName)) {
             throw new Failure("Illegal server name '" + serverName + "'");
         }
         GerritServer server = new GerritServer(serverName);
-        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
+        PluginConfig pluginConfig = plugin.getPluginConfig();
         server.getConfig().setNumberOfSendingWorkerThreads(pluginConfig.getNumberOfSendingWorkerThreads());
 
         String mode = req.getParameter("mode");
@@ -285,8 +303,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @return the plugin config.
      */
+    @CheckForNull
     public static PluginConfig getPluginConfig() {
-        return PluginImpl.getInstance().getPluginConfig();
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return null;
+        }
+        return plugin.getPluginConfig();
     }
 
     /**
@@ -297,7 +320,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @see GerritServer#getConfig()
      */
     public static IGerritHudsonTriggerConfig getConfig(String serverName) {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             return server.getConfig();
         } else {
@@ -328,7 +351,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return the list of server names as a list.
      */
     public List<String> getServerNames() {
-        return PluginImpl.getInstance().getServerNames();
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return Collections.emptyList();
+        }
+        return plugin.getServerNames();
     }
 
     /**
@@ -338,7 +365,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return ok or error.
      */
     public FormValidation doNameFreeCheck(@QueryParameter("value") final String value) {
-        if (PluginImpl.getInstance().containsServer(value)) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        assert plugin != null;
+        if (plugin.containsServer(value)) {
             return FormValidation.error("The server name " + value + " is already in use!");
         } else if (GerritServer.ANY_SERVER.equals(value)) {
             return FormValidation.error("Illegal name " + value + "!");
@@ -363,10 +392,12 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             logger.debug("submit {}", req.toString());
         }
         JSONObject form = req.getSubmittedForm();
-        PluginConfig pluginConfig = PluginImpl.getInstance().getPluginConfig();
-        pluginConfig.setValues(form);
-        PluginImpl.getInstance().save();
-        GerritSendCommandQueue.configure(pluginConfig);
+        PluginConfig pluginConfig = PluginImpl.getPluginConfig_();
+        if (pluginConfig != null) {
+            pluginConfig.setValues(form);
+            PluginImpl.save_();
+            GerritSendCommandQueue.configure(pluginConfig);
+        }
         //TODO reconfigure the incoming worker threads as well
 
         rsp.sendRedirect(".");

@@ -50,6 +50,9 @@ import java.util.List;
 
 import jenkins.model.Jenkins;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
  *
@@ -71,8 +74,10 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @return the instance.
      */
     public static ToGerritRunListener getInstance() {
+        Jenkins jenkins = Jenkins.getInstance();
+        assert jenkins != null;
         ExtensionList<ToGerritRunListener> listeners =
-                Jenkins.getInstance().getExtensionList(ToGerritRunListener.class);
+                jenkins.getExtensionList(ToGerritRunListener.class);
         if (listeners == null || listeners.isEmpty()) {
             logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
             return null;
@@ -81,7 +86,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     @Override
-    public synchronized void onCompleted(AbstractBuild r, TaskListener listener) {
+    public synchronized void onCompleted(@Nonnull AbstractBuild r, @Nonnull TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
@@ -98,7 +103,8 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
             if (!cause.isSilentMode()) {
                 memory.completed(event, r);
 
-                if (r.getResult().isWorseThan(Result.SUCCESS)) {
+                Result result = r.getResult();
+                if (result != null && result.isWorseThan(Result.SUCCESS)) {
                     try {
                         // Attempt to record the failure message, if applicable
                         String failureMessage = this.obtainFailureMessage(event, r, listener);
@@ -358,8 +364,12 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @throws IOException if an error occurs while reading the workspace
      * @throws InterruptedException if an error occurs while reading the workspace
      */
-    protected FilePath[] getMatchingWorkspaceFiles(FilePath ws, String filepath)
+    @Nonnull
+    protected FilePath[] getMatchingWorkspaceFiles(@Nullable FilePath ws, @Nonnull String filepath)
             throws IOException, InterruptedException {
+        if (ws == null) {
+            return new FilePath[0];
+        }
         return ws.list(filepath);
     }
 
@@ -391,7 +401,9 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @throws IOException In case of an error communicating with the {@link FilePath} or {@link EnvVars Environment}
      * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
      */
-    private String obtainFailureMessage(GerritTriggeredEvent event, AbstractBuild build, TaskListener listener)
+    private String obtainFailureMessage(@Nullable GerritTriggeredEvent event,
+                                        @Nonnull AbstractBuild build,
+                                        @Nullable TaskListener listener)
             throws IOException, InterruptedException {
         AbstractProject project = build.getProject();
         String content = null;

@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionNumber;
+
+import javax.annotation.CheckForNull;
 
 /**
  * Every instance of this class is a connection listener to a specific Gerrit server.
@@ -127,9 +130,16 @@ public class GerritConnectionListener implements ConnectionListener {
      *
      * @return the Gerrit version as a String, or null if server not found.
      */
+    @CheckForNull
     private String getVersionString() {
-        if (PluginImpl.getInstance().getServer(serverName) != null) {
-            return PluginImpl.getInstance().getServer(serverName).getGerritVersion();
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            logger.error("INITIALIZATION Error, the plugin instance couldn't be found!");
+            return null;
+        }
+        GerritServer server = plugin.getServer(serverName);
+        if (server != null) {
+            return server.getGerritVersion();
         } else {
             logger.error("server does not exist");
             return null;

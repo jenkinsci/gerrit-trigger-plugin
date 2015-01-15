@@ -52,11 +52,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 
 /**
@@ -126,11 +130,20 @@ public class PluginImpl extends Plugin {
 
     /**
      * Returns the instance of this class.
+     * If {@link jenkins.model.Jenkins#getInstance()} isn't available
+     * or the plugin class isn't registered null will be returned.
      *
      * @return the instance.
      */
+    @CheckForNull
     public static PluginImpl getInstance() {
-        return Jenkins.getInstance().getPlugin(PluginImpl.class);
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null) {
+            return jenkins.getPlugin(PluginImpl.class);
+        } else {
+            logger.debug("Error, Jenkins could not be found, so no plugin!");
+            return null;
+        }
     }
 
     /**
@@ -152,6 +165,25 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Get the list of Gerrit servers.
+     * Static shorthand for {@link #getServers()}.
+     * If the plugin instance is not available, and empty list is returned.
+     *
+     * @return the list of GerritServers
+     */
+    @Nonnull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static List<GerritServer> getServers_() {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("PluginImpl instance not found!");
+            return Collections.emptyList();
+        }
+        return plugin.getServers();
+    }
+
+
+    /**
      * Get the list of Gerrit server names.
      *
      * @return the list of server names as a list.
@@ -162,6 +194,22 @@ public class PluginImpl extends Plugin {
             names.add(s.getName());
         }
         return names;
+    }
+
+    /**
+     * Static shorthand for {@link #getServerNames()}.
+     *
+     * @return the list of server names.
+     */
+    @Nonnull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static List<String> getServerNames_() {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("PluginImpl instance not found!");
+            return Collections.emptyList();
+        }
+        return plugin.getServerNames();
     }
 
     /**
@@ -180,15 +228,52 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Get a GerritServer object by its name.
+     *
+     * Static short for {@link #getServer(String)}.
+     *
+     * @param name the name of the server to get.
+     * @return the GerritServer object to get, or null if no server has this name.
+     * @see #getServer(String)
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static GerritServer getServer_(String name) {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return null;
+        }
+        return plugin.getServer(name);
+    }
+
+    /**
      * Gets the first server in the server list. Or null if there are no servers.
      *
      * @return the server.
      */
+    @CheckForNull
     public GerritServer getFirstServer() {
         if (!servers.isEmpty()) {
             return servers.get(0);
         }
         return null;
+    }
+
+    /**
+     * Static shorthand for {@link #getFirstServer()}.
+     *
+     * @return the server if any.
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static GerritServer getFirstServer_() {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return null;
+        }
+        return plugin.getFirstServer();
     }
 
     /**
@@ -243,6 +328,21 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Static shorthand for {@link #containsServer(String)}.
+     * @param serverName to check.
+     * @return whether the list contains a server with the given name.
+     */
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static boolean containsServer_(String serverName) {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return false;
+        }
+        return plugin.containsServer(serverName);
+    }
+
+    /**
      * Finds the server config for the event's provider.
      *
      * @param event the event
@@ -252,7 +352,7 @@ public class PluginImpl extends Plugin {
     public static IGerritHudsonTriggerConfig getServerConfig(GerritTriggeredEvent event) {
         Provider provider = event.getProvider();
         if (provider != null) {
-            GerritServer gerritServer = getInstance().getServer(provider.getName());
+            GerritServer gerritServer = getServer_(provider.getName());
             if (gerritServer != null) {
                 return gerritServer.getConfig();
             } else {
@@ -274,12 +374,60 @@ public class PluginImpl extends Plugin {
     }
 
     /**
+     * Gets the global config.
+     * Static short hand for {@link #getPluginConfig()}.
+     *
+     * @return the config.
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static PluginConfig getPluginConfig_() {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return null;
+        }
+        return plugin.getPluginConfig();
+    }
+
+    /**
+     * Static shorthand for {@link hudson.Plugin#save()}.
+     *
+     * @throws IOException if save does so.
+     */
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static void save_() throws IOException {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return;
+        }
+        plugin.save();
+    }
+
+    /**
      * Returns the GerritHandler object.
      *
      * @return gerritEventManager
      */
     public GerritHandler getHandler() {
         return gerritEventManager;
+    }
+
+    /**
+     * Static shorthand for {@link #getHandler()}.
+     *
+     * @return gerritEventManager
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static GerritHandler getHandler_() {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return null;
+        }
+        return plugin.getHandler();
     }
 
     /**
@@ -299,6 +447,24 @@ public class PluginImpl extends Plugin {
             }
         }
         return configuredJobs;
+    }
+
+    /**
+     * Static shorthand for {@link #getConfiguredJobs(String)}.
+     * Will return an empty list if plugin instance is null.
+     *
+     * @param serverName the name of the Gerrit server.
+     * @return the list of jobs configured with this server.
+     */
+    @Nonnull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static List<AbstractProject> getConfiguredJobs_(String serverName) {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return Collections.emptyList();
+        }
+        return plugin.getConfiguredJobs(serverName);
     }
 
     @Override
