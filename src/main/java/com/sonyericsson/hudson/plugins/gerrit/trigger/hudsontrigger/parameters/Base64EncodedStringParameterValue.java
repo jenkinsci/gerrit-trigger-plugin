@@ -39,7 +39,7 @@ public class Base64EncodedStringParameterValue extends StringParameterValue {
     private static final int ABBREVIATE_LENGTH = 10;
 
     /**
-     * Default constractor.
+     * Default constructor.
      *
      * @param name the name.
      * @param value the value.
@@ -50,7 +50,7 @@ public class Base64EncodedStringParameterValue extends StringParameterValue {
     }
 
     /**
-     * Default constractor.
+     * Default constructor.
      * @param name the name.
      * @param value the value.
      * @param description the description.
