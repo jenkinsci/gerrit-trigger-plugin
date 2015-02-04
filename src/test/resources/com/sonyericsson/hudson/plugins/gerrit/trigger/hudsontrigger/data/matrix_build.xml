@@ -86,9 +86,6 @@
         </hudson.model.Cause_-UpstreamCause>
       </causes>
     </hudson.model.CauseAction>
-    <com.sonyericsson.rebuild.RebuildAction>
-      <rebuildurl>../buildWithParameters?GERRIT_BRANCH=master&amp;GERRIT_CHANGE_ID=Icbd12345&amp;GERRIT_CHANGE_NUMBER=38506&amp;GERRIT_CHANGE_SUBJECT=Removing the obsolete graphics&amp;GERRIT_CHANGE_URL=http://gerrit/38506&amp;GERRIT_PATCHSET_NUMBER=1&amp;GERRIT_PATCHSET_REVISION=cbd12345&amp;GERRIT_PROJECT=platform/project&amp;GERRIT_REFSPEC=refs/changes/06/38506/1</rebuildurl>
-    </com.sonyericsson.rebuild.RebuildAction>
   </actions>
   <number>102</number>
   <result>FAILURE</result>
