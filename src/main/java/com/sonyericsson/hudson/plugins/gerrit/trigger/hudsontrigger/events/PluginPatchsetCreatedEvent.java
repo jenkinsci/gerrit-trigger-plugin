@@ -27,9 +27,12 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -108,6 +111,10 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     public boolean shouldTriggerOn(GerritTriggeredEvent event) {
         if (!super.shouldTriggerOn(event)) {
             return false;
+        }
+        // if it was a manually triggered event, always honor it
+        if (event instanceof ManualPatchsetCreated) {
+            return true;
         }
         if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
             return false;
