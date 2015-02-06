@@ -28,29 +28,43 @@ import org.slf4j.LoggerFactory;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.workers.EventThread;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 
 /**
- * Specialization of GerritHandler that supports gerrit event's lifecycle.
- * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
+ * Specialization of GerritHandler that supports gerrit event's
+ * lifecycle and takes care of custom EventThread creation.
  *
+ * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class GerritHandlerLifecycle extends GerritHandler {
+public class JenkinsAwareGerritHandler extends GerritHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(GerritHandlerLifecycle.class);
+    private static final Logger logger = LoggerFactory.getLogger(JenkinsAwareGerritHandler.class);
 
     /**
      * Standard Constructor.
      *
-     * @param numberOfWorkerThreads the number of event threads.
+     * @param numberOfWorkerThreads
+     *            the number of event threads.
      */
-    public GerritHandlerLifecycle(int numberOfWorkerThreads) {
+    public JenkinsAwareGerritHandler(int numberOfWorkerThreads) {
         super(numberOfWorkerThreads);
+    }
+
+    /**
+     * Here we override the EventThread creation with
+     * one that impersonates System.
+     * @param threadName name of thread.
+     * @return new EventThread.
+     */
+    @Override
+    protected EventThread createEventThread(String threadName) {
+        return new SystemEventThread(this, threadName);
     }
 
     @Override
     public void notifyListeners(GerritEvent event) {
-        //Notify lifecycle listeners.
+        // Notify lifecycle listeners.
         if (event instanceof GerritEventLifecycle) {
             try {
                 ((GerritEventLifecycle)event).fireTriggerScanStarting();
@@ -59,10 +73,10 @@ public class GerritHandlerLifecycle extends GerritHandler {
             }
         }
 
-        //The read deal
+        // The read deal
         super.notifyListeners(event);
 
-        ////Notify lifecycle listeners.
+        // //Notify lifecycle listeners.
         if (event instanceof GerritEventLifecycle) {
             try {
                 ((GerritEventLifecycle)event).fireTriggerScanDone();

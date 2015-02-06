@@ -42,24 +42,24 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEve
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 /**
- * Tests for {@link GerritHandlerLifecycle}.
+ * Tests for {@link JenkinsAwareGerritHandler}.
  *
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class GerritHandlerLifecycleTest {
+public class JenkinsAwareGerritHandlerTest {
 
-    private GerritHandlerLifecycle gerritHandler;
+    private JenkinsAwareGerritHandler gerritHandler;
 
     /**
-     * Creates a GerritHandlerLifecycle.
+     * Creates a JenkinsAwareGerritHandler.
      */
     @Before
     public void setUp() {
-        gerritHandler = new GerritHandlerLifecycle(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
+        gerritHandler = new JenkinsAwareGerritHandler(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
-     * Shuts down the GerritHandlerLifecycle.
+     * Shuts down the JenkinsAwareGerritHandler.
      */
     @After
     public void shutDown() {
@@ -70,7 +70,7 @@ public class GerritHandlerLifecycleTest {
     }
 
     /**
-     * Tests that gerritHandleLifecycle Notifies GerritEventListener.
+     * Tests that JenkinsAwareGerritHandler Notifies GerritEventListener.
      */
     @Test
     public void shouldNotifyGerritEventListener() {
@@ -84,7 +84,7 @@ public class GerritHandlerLifecycleTest {
     }
 
     /**
-     * Tests that gerritHandleLifecycle Notifies GerritEventLifecycleListener.
+     * Tests that JenkinsAwareGerritHandler Notifies GerritEventLifecycleListener.
      */
     @Test
     public void shouldNotifyLifecycleListener() {

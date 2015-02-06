@@ -474,7 +474,7 @@ public class PluginImpl extends Plugin {
         logger.trace("Loading configs");
         load();
         GerritSendCommandQueue.initialize(pluginConfig);
-        gerritEventManager = new GerritHandlerLifecycle(pluginConfig.getNumberOfReceivingWorkerThreads());
+        gerritEventManager = new JenkinsAwareGerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
         for (GerritServer s : servers) {
             s.start();
         }
