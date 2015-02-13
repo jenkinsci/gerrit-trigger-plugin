@@ -25,12 +25,17 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh;
 
+import org.acegisecurity.context.SecurityContext;
+import org.acegisecurity.context.SecurityContextHolder;
+
 import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+
 import hudson.model.TaskListener;
+import hudson.security.ACL;
 
 /**
  * A send-command-job that calculates and sends the builds completed command.
@@ -59,8 +64,13 @@ public class BuildCompletedCommandJob extends AbstractSendCommandJob {
 
     @Override
     public void run() {
-        GerritNotifier notifier = NotificationFactory.getInstance()
+        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
+        try {
+            GerritNotifier notifier = NotificationFactory.getInstance()
                 .createGerritNotifier((IGerritHudsonTriggerConfig)getConfig(), this);
-        notifier.buildCompleted(memoryImprint, listener);
+            notifier.buildCompleted(memoryImprint, listener);
+        } finally {
+            SecurityContextHolder.setContext(old);
+        }
     }
 }
