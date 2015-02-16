@@ -47,7 +47,7 @@ public class Base64EncodedStringParameterProvider extends RebuildParameterProvid
     public RebuildParameterPage getRebuildPage(ParameterValue value) {
         if (value instanceof Base64EncodedStringParameterValue) {
             return new RebuildParameterPage(Base64EncodedStringParameterValue.class,
-                "Base64EncodedStringParameterValue.jelly");
+                "rebuild.jelly");
         }
 
         return null;
