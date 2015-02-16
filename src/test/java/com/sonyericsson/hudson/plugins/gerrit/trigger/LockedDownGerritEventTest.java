@@ -40,7 +40,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
@@ -62,12 +64,14 @@ public class LockedDownGerritEventTest {
     @Rule
     public final JenkinsRule j = new JenkinsRule();
 
-    private final String gerritServerName = "testServer";
+    //private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
     private final int port = 29418;
+    private static final int NUMBEROFSENDERTHREADS = 1;
 
     private SshdServerMock server;
     private SshServer sshd;
+    private SshdServerMock.KeyPairFiles sshKey;
 
     /**
      * Runs before test method.
@@ -76,7 +80,8 @@ public class LockedDownGerritEventTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.generateKeyPair();
+        sshKey = SshdServerMock.generateKeyPair();
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(port, server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
@@ -124,21 +129,29 @@ public class LockedDownGerritEventTest {
      */
     @Test
     public void testTriggerWithLockedDownInstance() throws Exception {
-        GerritServer gerritServer = new GerritServer(gerritServerName);
-        PluginImpl.getInstance().addServer(gerritServer);
-        gerritServer.start();
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gerritServerName);
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName);
 
         lockDown();
 
-        GerritServer gerritServer2 = PluginImpl.getInstance().getServer(gerritServerName);
-        gerritServer2.triggerEvent(Setup.createPatchsetCreated(gerritServerName));
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentStartMode(false);
+
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
         TestUtils.waitForBuilds(project, 1);
+        assertEquals(server.getNrCommandsHistory("gerrit review.*"), 2);
 
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
         assertEquals(1, project.getLastCompletedBuild().getNumber());
-        assertSame(gerritServerName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+        assertSame(PluginImpl.DEFAULT_SERVER_NAME,
+            buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+
     }
 }
