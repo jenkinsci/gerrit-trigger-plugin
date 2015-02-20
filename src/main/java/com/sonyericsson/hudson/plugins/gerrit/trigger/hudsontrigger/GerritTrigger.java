@@ -35,6 +35,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
@@ -1846,15 +1847,22 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          */
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-            if (serverConfig != null && !serverConfig.isGerritBuildCurrentPatchesOnly()) {
+            if (serverConfig != null && !serverConfig.isGerritBuildCurrentPatchesOnly()
+                    || event instanceof ManualPatchsetCreated) {
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
             while (it.hasNext()) {
                 Entry<GerritTriggeredEvent, ParametersAction> pairs = it.next();
                 // Find all entries in runningJobs with the same Change #.
+                // Ignore all manual patchsets and don't cancel builds due to
+                // a retrigger of an older build.
                 if (pairs.getKey() instanceof ChangeBasedEvent) {
-                    if (((ChangeBasedEvent)pairs.getKey()).getChange().equals(event.getChange())) {
+                    ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
+                    if (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
+                            && runningChangeBasedEvent.getChange().equals(event.getChange())
+                            && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+                            < Integer.parseInt(event.getPatchSet().getNumber())) {
                         logger.debug("Cancelling build for " + pairs.getKey());
                         try {
                             cancelJob(pairs.getKey());
