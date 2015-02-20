@@ -58,7 +58,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  */
-final class EventListener implements GerritEventListener {
+public final class EventListener implements GerritEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(EventListener.class);
 
