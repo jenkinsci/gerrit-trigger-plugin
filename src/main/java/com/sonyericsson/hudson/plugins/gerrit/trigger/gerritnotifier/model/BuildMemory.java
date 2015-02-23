@@ -788,7 +788,7 @@ public class BuildMemory {
             @CheckForNull
             public AbstractBuild getBuild() {
                 AbstractProject p = getProject();
-                if (p != null) {
+                if (p != null && build != null) {
                     return p.getBuild(build);
                 } else {
                     return null;
