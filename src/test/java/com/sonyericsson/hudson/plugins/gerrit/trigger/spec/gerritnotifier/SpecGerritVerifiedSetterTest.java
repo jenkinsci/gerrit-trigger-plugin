@@ -103,6 +103,7 @@ public class SpecGerritVerifiedSetterTest {
 
         env = Setup.createEnvVars();
         when(build.getEnvironment(taskListener)).thenReturn(env);
+        when(build.getId()).thenReturn("1");
         project = mock(AbstractProject.class);
         doReturn("MockProject").when(project).getFullName();
         when(build.getProject()).thenReturn(project);
@@ -206,6 +207,7 @@ public class SpecGerritVerifiedSetterTest {
         when(build.getResult()).thenReturn(Result.FAILURE);
         env = Setup.createEnvVars();
         when(build.getEnvironment(taskListener)).thenReturn(env);
+        when(build.getId()).thenReturn("1");
         project = mock(AbstractProject.class);
         doReturn("MockProject2").when(project).getFullName();
         doReturn(build).when(project).getBuild(anyString());
