@@ -202,6 +202,7 @@ public class ParameterExpander {
      *  <li><strong>GERRIT_NAME</strong>: The Gerrit project name.</li>
      *  <li><strong>CHANGE_ID</strong>: The Gerrit change-id (SHA-1).</li>
      *  <li><strong>BRANCH</strong>: The branch of the project.</li>
+     *  <li><strong>TOPIC</strong>: Topic name for change series.</li>
      *  <li><strong>CHANGE</strong>: The change number.</li>
      *  <li><strong>PATCHSET</strong>: The patchset number.</li>
      *  <li><strong>PATCHSET_REVISION</strong>: The patchset revision.</li>
@@ -227,6 +228,9 @@ public class ParameterExpander {
             map.put("GERRIT_NAME", event.getChange().getProject());
             map.put("CHANGE_ID", event.getChange().getId());
             map.put("BRANCH", event.getChange().getBranch());
+            if(null != event.getChange().getTopic()) {
+                map.put("TOPIC", event.getChange().getTopic());
+            }
             map.put("CHANGE", event.getChange().getNumber());
             if (null != event.getPatchSet()) {
                 map.put("PATCHSET", event.getPatchSet().getNumber());
