@@ -226,7 +226,7 @@ public class ParameterExpander {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             map.put("GERRIT_NAME", event.getChange().getProject());
             map.put("CHANGE_ID", event.getChange().getId());
-            map.put("BRANCH", event.getChange().getProject());
+            map.put("BRANCH", event.getChange().getBranch());
             map.put("CHANGE", event.getChange().getNumber());
             if (null != event.getPatchSet()) {
                 map.put("PATCHSET", event.getPatchSet().getNumber());
