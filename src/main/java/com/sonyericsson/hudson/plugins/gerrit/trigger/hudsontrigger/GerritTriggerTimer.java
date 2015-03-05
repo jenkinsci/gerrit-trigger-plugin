@@ -42,10 +42,6 @@ import java.util.Timer;
 public final class GerritTriggerTimer {
 
     /**
-     * Average number of milliseconds in a second.
-     */
-    private static final long MILLISECONDS_PER_SECOND = 1000;
-    /**
      * Wait this many milliseconds before the first call to a TimerTask
      */
     private static final long DELAY_MILLISECONDS  =  5000;
