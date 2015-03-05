@@ -36,7 +36,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -73,24 +72,6 @@ public class GerritProjectListTest {
      * @param gerritProjects the list of Gerrit projects.
      * @param unreviewed is check unreviewed patches property allowed.
      * @param silentMode is silentMode allowed.
-     * @param silentStartMode is silentStartMode allowed.
-     * @return GerritTrigger the created trigger.
-     */
-    private GerritTrigger createGerritTrigger(
-            List<GerritProject> gerritProjects, boolean unreviewed, boolean silentMode, boolean silentStartMode) {
-        GerritTrigger trigger = Setup.createDefaultTrigger(null);
-        trigger.setGerritProjects(gerritProjects);
-        trigger.setAllowTriggeringUnreviewedPatches(unreviewed);
-        trigger.setSilentMode(silentMode);
-        trigger.setSilentStartMode(silentStartMode);
-        return trigger;
-    }
-
-    /**
-     * Creates GerritTrigger.
-     * @param gerritProjects the list of Gerrit projects.
-     * @param unreviewed is check unreviewed patches property allowed.
-     * @param silentMode is silentMode allowed.
      * @return GerritTrigger the created trigger.
      */
     private GerritTrigger createGerritTrigger(
@@ -101,16 +82,6 @@ public class GerritProjectListTest {
         trigger.setSilentMode(silentMode);
         trigger.setSilentStartMode(false);
         return trigger;
-    }
-
-    /**
-     * Creates empty GerritTrigger.
-     * @param unreviewed is check unreviewed patches property allowed.
-     * @param silentMode is silentMode allowed.
-     * @return GerritTrigger the created trigger.
-     */
-    private GerritTrigger createGerritTrigger(boolean unreviewed, boolean silentMode) {
-        return createGerritTrigger(Collections.EMPTY_LIST, unreviewed, silentMode);
     }
 
     /**

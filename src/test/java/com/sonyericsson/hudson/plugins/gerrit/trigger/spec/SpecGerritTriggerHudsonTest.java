@@ -62,10 +62,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import org.netbeans.insane.live.LiveReferences;
 import org.powermock.reflect.Whitebox;
 
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
@@ -237,30 +233,6 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         //builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
-    }
-
-    /**
-     * Forces GC by causing an OOM and then verifies the given {@link WeakReference} has been garbage collected.
-     * @param reference object used to verify garbage collection.
-     */
-    @SuppressWarnings("DLS_DEAD_LOCAL_STORE_OF_NULL")
-    // TODO use version from MemoryAssert in 1.519+
-    private static void assertGC(WeakReference<?> reference) {
-        assertTrue(true); reference.get(); // preload any needed classes!
-        Set<Object[]> objects = new HashSet<Object[]>();
-        while (true) {
-            try {
-                objects.add(new Object[1024]);
-            } catch (OutOfMemoryError ignore) {
-                break;
-            }
-        }
-        objects = null;
-        System.gc();
-        Object obj = reference.get();
-        if (obj != null) {
-            fail(LiveReferences.fromRoots(Collections.singleton(obj)).toString());
-        }
     }
 
     /**
