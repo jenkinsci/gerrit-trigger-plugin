@@ -75,8 +75,11 @@ import org.apache.commons.lang.CharEncoding;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClients;
 import org.jvnet.localizer.ResourceBundleHolder;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -718,11 +721,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
             if (gerritFrontEndUrl != null && !gerritFrontEndUrl.endsWith("/")) {
                 restUrl = gerritFrontEndUrl + "/";
             }
-            DefaultHttpClient httpclient = new DefaultHttpClient();
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(null, -1),
+                new UsernamePasswordCredentials(gerritHttpUserName,
+                        gerritHttpPassword));
+            HttpClient httpclient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider)
+                .build();
             HttpGet httpGet = new HttpGet(restUrl + "a/projects/?d");
-            httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
-                    new UsernamePasswordCredentials(gerritHttpUserName,
-                            gerritHttpPassword));
             HttpResponse execute;
             try {
                 execute = httpclient.execute(httpGet);
