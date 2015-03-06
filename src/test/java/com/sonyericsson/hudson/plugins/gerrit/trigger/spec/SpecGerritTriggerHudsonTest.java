@@ -226,6 +226,7 @@ public class SpecGerritTriggerHudsonTest {
         Whitebox.getInternalState(j, org.mortbay.jetty.Server.class).stop();
         j.jenkins.reload();
         /* TODO https://netbeans.org/bugzilla/show_bug.cgi?id=244668 blocking further progress this way:
+           TODO use version from MemoryAssert in 1.519+
         assertGC(old);
         */
         project = j.jenkins.getItemByFullName("projectX", FreeStyleProject.class);
