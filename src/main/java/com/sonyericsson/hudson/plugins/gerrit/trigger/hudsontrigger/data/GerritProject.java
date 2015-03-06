@@ -287,7 +287,7 @@ public class GerritProject implements Describable<GerritProject> {
          */
         public ComboBoxModel doFillPatternItems(@QueryParameter("serverName")
                 @RelativePath("..") final String serverName) {
-            Collection<String> projects = new HashSet<String>();
+            Collection<String> projects = new HashSet<>();
 
             if (serverName != null && !serverName.isEmpty()) {
                 if (ANY_SERVER.equals(serverName)) {

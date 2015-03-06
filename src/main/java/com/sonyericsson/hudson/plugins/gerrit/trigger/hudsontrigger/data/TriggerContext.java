@@ -156,7 +156,7 @@ public class TriggerContext {
      */
     public synchronized void addOtherBuild(AbstractBuild build) {
         if (others == null) {
-            others = new LinkedList<TriggeredItemEntity>();
+            others = new LinkedList<>();
         }
         TriggeredItemEntity other = findOtherBuild(build);
         if (other == null) {
@@ -177,7 +177,7 @@ public class TriggerContext {
      */
     public synchronized void addOtherProject(AbstractProject project) {
         if (others == null) {
-            others = new LinkedList<TriggeredItemEntity>();
+            others = new LinkedList<>();
         }
         if (findOtherProject(project) == null) {
             others.add(new TriggeredItemEntity(project));
@@ -232,7 +232,7 @@ public class TriggerContext {
      * @return a list of builds from this context.
      */
     public synchronized List<AbstractBuild> getOtherBuilds() {
-        List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+        List<AbstractBuild> list = new LinkedList<>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getBuild() != null) {
@@ -249,7 +249,7 @@ public class TriggerContext {
      * @return a list of projects from this context.
      */
     public synchronized List<AbstractProject> getOtherProjects() {
-        List<AbstractProject> list = new LinkedList<AbstractProject>();
+        List<AbstractProject> list = new LinkedList<>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getProject() != null) {

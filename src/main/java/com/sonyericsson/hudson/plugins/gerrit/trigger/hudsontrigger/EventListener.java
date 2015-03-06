@@ -224,7 +224,7 @@ public final class EventListener implements GerritEventListener {
     private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
         ParametersDefinitionProperty paramDefProp =
                 (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
-        List<ParameterValue> defValues = new ArrayList<ParameterValue>();
+        List<ParameterValue> defValues = new ArrayList<>();
 
         /*
          * This check is made ONLY if someone calls this method even if isParametrized() is false.

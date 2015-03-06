@@ -505,7 +505,7 @@ public class ReplicationQueueTaskDispatcherTest {
                 "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, null);
         //setup slaves to have one with timeout
-        List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+        List<GerritSlave> gerritSlaves = new ArrayList<>();
         gerritSlaves.add(new GerritSlave("slave1", "host1", 0));
         gerritSlaves.add(new GerritSlave("slave2", "host2", 1)); // slave timeout is 1 second
         when(gerritTriggerMock.gerritSlavesToWaitFor("someGerritServer")).thenReturn(gerritSlaves);
@@ -749,13 +749,13 @@ public class ReplicationQueueTaskDispatcherTest {
      * @return the queue item
      */
     private Item createItem(GerritCause gerritCause, String[] slaves) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(gerritCause));
 
         abstractProjectMock = mock(AbstractProject.class);
         when(abstractProjectMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         if (slaves != null && slaves.length > 0) {
-            List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+            List<GerritSlave> gerritSlaves = new ArrayList<>();
             for (String slave : slaves) {
                 gerritSlaves.add(new GerritSlave(slave + " display name", slave , 0));
             }

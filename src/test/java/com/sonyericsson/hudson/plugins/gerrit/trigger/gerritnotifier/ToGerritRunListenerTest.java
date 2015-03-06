@@ -160,7 +160,7 @@ public class ToGerritRunListenerTest {
         doReturn(envVars).when(build).getEnvironment();
         doReturn(envVars).when(build).getEnvironment(any(TaskListener.class));
 
-        Map<String, String> buildVarsMap = new HashMap<String, String>();
+        Map<String, String> buildVarsMap = new HashMap<>();
         buildVarsMap.put("BUILD_NUM", Integer.toString(buildNumber));
         when(build.getBuildVariables()).thenReturn(buildVarsMap);
 
@@ -403,7 +403,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         when(causeAction.getCauses()).thenReturn(causes);
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
@@ -428,7 +428,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(cause);
         causes.add(cause);
@@ -455,7 +455,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(new GerritCause(event, true));
         causes.add(new GerritCause(event, true));
@@ -485,7 +485,7 @@ public class ToGerritRunListenerTest {
         manualCause.setEvent(event);
         manualCause.setSilentMode(true);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(manualCause);
         causes.add(cause);

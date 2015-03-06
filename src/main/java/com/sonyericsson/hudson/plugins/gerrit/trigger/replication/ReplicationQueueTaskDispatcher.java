@@ -106,7 +106,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      */
     ReplicationQueueTaskDispatcher(@CheckForNull GerritHandler gerritHandler,
                                    @Nonnull ReplicationCache replicationCache) {
-        blockedItems = new ConcurrentHashMap<Integer, BlockedItem>();
+        blockedItems = new ConcurrentHashMap<>();
         this.replicationCache = replicationCache;
         if (gerritHandler != null) {
             logger.warn("No GerritHandler was specified, won't register as event listener, so no function.");
@@ -344,7 +344,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             this.gerritProject = gerritProject;
             this.ref = ref;
             this.gerritServer = gerritServer;
-            this.slavesWaitingFor = new ConcurrentHashMap<String, GerritSlave>(gerritSlaves.size());
+            this.slavesWaitingFor = new ConcurrentHashMap<>(gerritSlaves.size());
             for (GerritSlave gerritSlave : gerritSlaves) {
                 slavesWaitingFor.put(gerritSlave.getHost(), gerritSlave);
             }

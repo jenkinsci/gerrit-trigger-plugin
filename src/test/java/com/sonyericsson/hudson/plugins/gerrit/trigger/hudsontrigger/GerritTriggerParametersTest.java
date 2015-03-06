@@ -82,7 +82,7 @@ public class GerritTriggerParametersTest {
     public void setOrCreateParametersProviderUrl() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         AbstractProject project = j.createFreeStyleProject();
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);
@@ -101,7 +101,7 @@ public class GerritTriggerParametersTest {
         created.setProvider(null);
         AbstractProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);
@@ -121,7 +121,7 @@ public class GerritTriggerParametersTest {
         AbstractProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setServerName(GerritServer.ANY_SERVER);
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);

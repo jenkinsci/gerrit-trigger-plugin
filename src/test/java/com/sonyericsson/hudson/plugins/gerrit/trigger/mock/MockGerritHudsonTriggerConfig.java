@@ -260,7 +260,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public List<VerdictCategory> getCategories() {
-        return new LinkedList<VerdictCategory>();
+        return new LinkedList<>();
     }
 
     @Override

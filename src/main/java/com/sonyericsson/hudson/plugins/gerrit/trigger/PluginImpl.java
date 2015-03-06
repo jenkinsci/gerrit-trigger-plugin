@@ -99,7 +99,7 @@ public class PluginImpl extends Plugin {
             AbstractProject.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
-    private final List<GerritServer> servers = new CopyOnWriteArrayList<GerritServer>();
+    private final List<GerritServer> servers = new CopyOnWriteArrayList<>();
     private transient GerritHandler gerritEventManager;
     private transient volatile boolean active = false;
 
@@ -189,7 +189,7 @@ public class PluginImpl extends Plugin {
      * @return the list of server names as a list.
      */
     public List<String> getServerNames() {
-        LinkedList<String> names = new LinkedList<String>();
+        LinkedList<String> names = new LinkedList<>();
         for (GerritServer s : getServers()) {
             names.add(s.getName());
         }
@@ -437,7 +437,7 @@ public class PluginImpl extends Plugin {
      * @return the list of jobs configured with this server.
      */
     public List<AbstractProject> getConfiguredJobs(String serverName) {
-        LinkedList<AbstractProject> configuredJobs = new LinkedList<AbstractProject>();
+        LinkedList<AbstractProject> configuredJobs = new LinkedList<>();
         for (AbstractProject<?, ?> project : Hudson.getInstance().getItems(AbstractProject.class)) { //get the jobs
             GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
 

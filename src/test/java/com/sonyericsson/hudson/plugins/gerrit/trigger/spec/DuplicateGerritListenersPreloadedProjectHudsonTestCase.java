@@ -329,7 +329,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      * @throws URISyntaxException if so
      */
     List<String> javaCliJarCmd(String... cmd) throws IOException, URISyntaxException {
-        List<String> commands = new ArrayList<String>(cmd.length + 5);
+        List<String> commands = new ArrayList<>(cmd.length + 5);
         commands.add(String.format("%s/bin/java", System.getProperty("java.home")));
         commands.add("-jar");
         commands.add(new File(j.jenkins.getJnlpJars("jenkins-cli.jar").getURL().toURI()).getAbsolutePath());

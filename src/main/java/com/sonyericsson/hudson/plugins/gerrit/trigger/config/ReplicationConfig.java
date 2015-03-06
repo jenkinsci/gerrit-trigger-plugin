@@ -78,7 +78,7 @@ public class ReplicationConfig {
     public ReplicationConfig(ReplicationConfig config) {
         enableReplication = config.isEnableReplication();
         if (config.getGerritSlaves() != null) {
-            slaves = new LinkedList<GerritSlave>();
+            slaves = new LinkedList<>();
             for (GerritSlave slave : config.getGerritSlaves()) {
                 GerritSlave slaveCopy = new GerritSlave(slave.getName(), slave.getHost(), slave.getTimeoutInSeconds());
                 slaves.add(slaveCopy);
@@ -155,7 +155,7 @@ public class ReplicationConfig {
      */
     public static ReplicationConfig createReplicationConfigFromJSON(JSONObject formData) {
         ReplicationConfig replicationConfig;
-        List<GerritSlave> slaves = new LinkedList<GerritSlave>();
+        List<GerritSlave> slaves = new LinkedList<>();
 
         boolean enableReplication = formData.has(ENABLE_REPLICATION_JSON_KEY);
         if (enableReplication) {

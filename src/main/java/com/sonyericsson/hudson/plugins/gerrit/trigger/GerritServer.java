@@ -381,7 +381,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
         List<VerdictCategory> categories = config.getCategories();
         if (categories == null) {
-            categories = new LinkedList<VerdictCategory>();
+            categories = new LinkedList<>();
         }
         if (categories.isEmpty()) {
             categories.add(new VerdictCategory("CRVW", "Code Review"));
@@ -568,7 +568,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (projectListUpdater != null) {
             return projectListUpdater.getGerritProjects();
         } else {
-            return new ArrayList<String>();
+            return new ArrayList<>();
         }
     }
 
@@ -800,7 +800,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public static Map<Notify, String> notificationLevelTextsById() {
         ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
-        Map<Notify, String> textsById = new LinkedHashMap<Notify, String>(Notify.values().length, 1);
+        Map<Notify, String> textsById = new LinkedHashMap<>(Notify.values().length, 1);
         for (Notify level : Notify.values()) {
             textsById.put(level, holder.format("NotificationLevel_" + level));
         }
@@ -1093,7 +1093,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 return features;
             }
         }
-        return new LinkedList<GerritVersionChecker.Feature>();
+        return new LinkedList<>();
     }
 
     /**
@@ -1337,7 +1337,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public List<ExceptionDataHelper> generateHelper() {
         WatchTimeExceptionData data = config.getExceptionData();
-        List<ExceptionDataHelper> list = new LinkedList<ExceptionDataHelper>();
+        List<ExceptionDataHelper> list = new LinkedList<>();
         list.add(new ExceptionDataHelper(Messages.MondayDisplayName(), Calendar.MONDAY, data));
         list.add(new ExceptionDataHelper(Messages.TuesdayDisplayName(), Calendar.TUESDAY, data));
         list.add(new ExceptionDataHelper(Messages.WednesdayDisplayName(), Calendar.WEDNESDAY, data));

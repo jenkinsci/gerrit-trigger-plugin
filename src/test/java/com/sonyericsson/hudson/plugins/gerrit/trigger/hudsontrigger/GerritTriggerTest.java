@@ -452,7 +452,7 @@ public class GerritTriggerTest {
         when(project.getFullDisplayName()).thenReturn("MockedProject");
         when(project.getFullName()).thenReturn("MockedProject");
         ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        List<ParameterDefinition> list = new LinkedList<ParameterDefinition>();
+        List<ParameterDefinition> list = new LinkedList<>();
         list.add(new StringParameterDefinition("MOCK_PARAM", "mock_value"));
         when(parameters.getParameterDefinitions()).thenReturn(list);
         when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);

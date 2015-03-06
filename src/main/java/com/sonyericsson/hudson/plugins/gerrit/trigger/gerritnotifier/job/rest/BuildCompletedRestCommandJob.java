@@ -75,7 +75,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
     @Override
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
-        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
+        Collection<ReviewLabel> scoredLabels = new ArrayList<>();
         if (memoryImprint.getEvent().isScorable()) {
             if (config.isRestCodeReview()) {
                 scoredLabels.add(new ReviewLabel(
@@ -90,7 +90,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
         }
         Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
         List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
-        Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
+        Collection<CommentedFile> commentedFiles = new ArrayList<>();
         if (gerritMessageProviders != null) {
             for (GerritMessageProvider gerritMessageProvider : gerritMessageProviders) {
                 for (BuildMemory.MemoryImprint.Entry e : memoryImprint.getEntries()) {

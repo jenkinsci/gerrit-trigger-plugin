@@ -92,7 +92,7 @@ public class ParameterExpanderSkipVoteParameterTest {
      */
     @Parameterized.Parameters
     public static Collection getParameters() {
-        List<TestParameter[]> parameters = new LinkedList<TestParameter[]>();
+        List<TestParameter[]> parameters = new LinkedList<>();
 
         parameters.add(createParameter(+1, +2,
                 Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),

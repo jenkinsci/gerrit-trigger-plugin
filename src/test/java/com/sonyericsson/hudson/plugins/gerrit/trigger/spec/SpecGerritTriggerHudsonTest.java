@@ -221,7 +221,7 @@ public class SpecGerritTriggerHudsonTest {
         FreeStyleBuild build = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, build.getResult());
         // JENKINS-23152
-        WeakReference<FreeStyleProject> old = new WeakReference<FreeStyleProject>(project);
+        WeakReference<FreeStyleProject> old = new WeakReference<>(project);
         project = null;
         //builds = null;
         build = null;

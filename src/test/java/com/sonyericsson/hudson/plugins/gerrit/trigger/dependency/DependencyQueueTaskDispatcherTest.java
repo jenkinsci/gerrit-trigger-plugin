@@ -124,7 +124,7 @@ public class DependencyQueueTaskDispatcherTest {
      */
     @Test
     public void shouldNotBlockNonAbstractProjects() {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         Queue.Item item = new WaitingItem(Calendar.getInstance(), null, actions);
         CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem((WaitingItem)item));
         assertNull("Build should not be blocked", cause);
@@ -290,7 +290,7 @@ public class DependencyQueueTaskDispatcherTest {
      * @return the queue item
      */
     private Queue.Item createItem(GerritCause gerritCause, String dependency) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(gerritCause));
 
         abstractProjectMock = mock(AbstractProject.class);

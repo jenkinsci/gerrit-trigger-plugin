@@ -69,8 +69,7 @@ public class BuildMemory {
     }
 
     private TreeMap<GerritTriggeredEvent, MemoryImprint> memory =
-            new TreeMap<GerritTriggeredEvent, MemoryImprint>(
-                    new GerritTriggeredEventComparator());
+            new TreeMap<>(new GerritTriggeredEventComparator());
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
 
     /**
@@ -362,7 +361,7 @@ public class BuildMemory {
     public synchronized List<AbstractBuild> getBuilds(GerritTriggeredEvent event) {
         MemoryImprint pb = memory.get(event);
         if (pb != null) {
-            List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+            List<AbstractBuild> list = new LinkedList<>();
             for (Entry entry : pb.getEntries()) {
                 if (entry.getBuild() != null) {
                     list.add(entry.getBuild());
@@ -400,7 +399,7 @@ public class BuildMemory {
     public static class MemoryImprint {
 
         private GerritTriggeredEvent event;
-        private List<Entry> list = new ArrayList<Entry>();
+        private List<Entry> list = new ArrayList<>();
 
         /**
          * Constructor.

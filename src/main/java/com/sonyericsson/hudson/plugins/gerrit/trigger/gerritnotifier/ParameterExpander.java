@@ -221,7 +221,7 @@ public class ParameterExpander {
     private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent gerritEvent,
             int codeReview, int verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
-        Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
+        Map<String, String> map = new HashMap<>(DEFAULT_PARAMETERS_COUNT);
         if (gerritEvent instanceof ChangeBasedEvent) {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             map.put("GERRIT_NAME", event.getChange().getProject());

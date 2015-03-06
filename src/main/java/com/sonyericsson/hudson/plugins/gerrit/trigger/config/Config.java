@@ -232,7 +232,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         buildScheduleDelay = config.getBuildScheduleDelay();
         dynamicConfigRefreshInterval = config.getDynamicConfigRefreshInterval();
         if (config.getCategories() != null) {
-            categories = new LinkedList<VerdictCategory>();
+            categories = new LinkedList<>();
             for (VerdictCategory cat : config.getCategories()) {
                 categories.add(new VerdictCategory(cat.getVerdictValue(), cat.getVerdictDescription()));
             }
@@ -349,7 +349,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         dynamicConfigRefreshInterval = formData.optInt(
                 "dynamicConfigRefreshInterval",
                 DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL);
-        categories = new LinkedList<VerdictCategory>();
+        categories = new LinkedList<>();
         if (formData.has("verdictCategories")) {
             Object cat = formData.get("verdictCategories");
             if (cat instanceof JSONArray) {
@@ -384,8 +384,8 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @return the WatchTimeExceptionData
      */
     private WatchTimeExceptionData addWatchTimeExceptionData(JSONObject formData) {
-        List<Integer> days = new LinkedList<Integer>();
-        List<TimeSpan> exceptionTimes = new LinkedList<TimeSpan>();
+        List<Integer> days = new LinkedList<>();
+        List<TimeSpan> exceptionTimes = new LinkedList<>();
         int[] daysAsInt = new int[]{};
         if (formData.has("watchdogExceptions")) {
             JSONObject jsonObject = formData.getJSONObject(("watchdogExceptions"));
@@ -434,7 +434,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private WatchTimeExceptionData addWatchTimeExceptionData(WatchTimeExceptionData data) {
         if (data != null) {
             int[] daysAsInt = data.getDaysOfWeek();
-            List<TimeSpan> exceptionTimes = new LinkedList<TimeSpan>();
+            List<TimeSpan> exceptionTimes = new LinkedList<>();
             for (TimeSpan s : data.getTimesOfDay()) {
                 Time newFromTime = new Time(s.getFrom().getHour(), s.getFrom().getMinute());
                 Time newToTime = new Time(s.getTo().getHour(), s.getTo().getMinute());

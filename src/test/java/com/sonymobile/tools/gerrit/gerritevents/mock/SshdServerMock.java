@@ -131,7 +131,7 @@ public class SshdServerMock implements CommandFactory {
     protected synchronized CommandMock setCurrentCommand(CommandMock command) {
         currentCommand = command;
         if (commandHistory == null) {
-            commandHistory = new LinkedList<CommandMock>();
+            commandHistory = new LinkedList<>();
         }
         commandHistory.add(0, command);
         return currentCommand;
@@ -242,7 +242,7 @@ public class SshdServerMock implements CommandFactory {
         Constructor<? extends CommandMock> constructor = cmd.getConstructor(argumentTypes);
         if (constructor != null) {
             if (commandLookups == null) {
-                commandLookups = new LinkedList<CommandLookup>();
+                commandLookups = new LinkedList<>();
             }
             commandLookups.add(new CommandLookup(cmd, commandPattern, oneShot, constructor, arguments));
         }
@@ -315,7 +315,7 @@ public class SshdServerMock implements CommandFactory {
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
-        List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+        List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<>();
         userAuthFactories.add(new UserAuthNone.Factory());
         sshd.setUserAuthFactories(userAuthFactories);
         sshd.setCommandFactory(server);
