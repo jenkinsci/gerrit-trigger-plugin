@@ -69,29 +69,29 @@ public class GerritProjectInterestingTest {
     @Parameters
     public static Collection getParameters() {
 
-        List<InterestingScenario[]> parameters = new LinkedList<InterestingScenario[]>();
+        List<InterestingScenario[]> parameters = new LinkedList<>();
 
-        List<Branch> branches = new LinkedList<Branch>();
-        List<Topic> topics = new LinkedList<Topic>();
+        List<Branch> branches = new LinkedList<>();
+        List<Topic> topics = new LinkedList<>();
         Branch branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
         GerritProject config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config,
                 "project", "origin/master", null, true), });
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
@@ -99,7 +99,7 @@ public class GerritProjectInterestingTest {
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", null, true)});
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.PLAIN, "olstorp");
         branches.add(branch);
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
@@ -108,30 +108,30 @@ public class GerritProjectInterestingTest {
         parameters.add(new InterestingScenario[]{new InterestingScenario(config,
                 "project", "feature/mymaster", null, true), });
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.ANT, "**/master");
         branches.add(branch);
         config = new GerritProject(CompareType.ANT, "vendor/**/project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config,
                 "vendor/semc/master/project", "origin/master", null, true), });
 
-        branches = new LinkedList<Branch>();
+        branches = new LinkedList<>();
         branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
-        topics = new LinkedList<Topic>();
+        topics = new LinkedList<>();
         Topic topic = new Topic(CompareType.PLAIN, "topic");
         topics.add(topic);
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config, "project", "master", "topic", true)});
 
-        topics = new LinkedList<Topic>();
+        topics = new LinkedList<>();
         topic = new Topic(CompareType.ANT, "**/topic");
         topics.add(topic);
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config,
                 "project", "master", "team/topic", true), });
 
-        topics = new LinkedList<Topic>();
+        topics = new LinkedList<>();
         topic = new Topic(CompareType.REG_EXP, ".*_topic");
         topics.add(topic);
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null);

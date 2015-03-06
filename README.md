@@ -23,7 +23,7 @@ Each job can be configured with one Gerrit server.
 
 # Environments
 * `linux`
-    * `java-1.6`
+    * `java-1.7`
         * `maven-3.0.4`
 
 You should have no problem running the plugin on a Windows server.

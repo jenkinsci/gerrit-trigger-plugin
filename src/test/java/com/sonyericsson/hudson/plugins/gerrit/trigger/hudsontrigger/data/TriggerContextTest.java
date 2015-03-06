@@ -311,7 +311,7 @@ public class TriggerContextTest {
      */
     @Test
     public void testGetOtherBuildsOne() {
-        List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
+        List<TriggeredItemEntity> bah = new LinkedList<>();
         bah.add(new TriggeredItemEntity(mockBuild("p2", 3)));
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, bah);
         List<AbstractBuild> others = context.getOtherBuilds();

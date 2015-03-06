@@ -142,7 +142,7 @@ public class TriggerContextConverter implements Converter {
                 TriggeredItemEntity entity = unmarshalItemEntity(reader, context);
                 tc.setThisBuild(entity);
             } else if ("others".equalsIgnoreCase(reader.getNodeName())) {
-                List<TriggeredItemEntity> list = new LinkedList<TriggeredItemEntity>();
+                List<TriggeredItemEntity> list = new LinkedList<>();
                 while (reader.hasMoreChildren()) {
                     reader.moveDown();
                     TriggeredItemEntity entity = unmarshalItemEntity(reader, context);

@@ -559,7 +559,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             return server.getConfig().getCategories();
          } else {
             logger.error("Could not find server {}", serverName);
-            return new LinkedList<VerdictCategory>();
+            return new LinkedList<>();
          }
     }
 
@@ -767,7 +767,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         if (!shouldTriggerOnEventType(event)) {
             return false;
         }
-        List<GerritProject> allGerritProjects = new LinkedList<GerritProject>();
+        List<GerritProject> allGerritProjects = new LinkedList<>();
         if (gerritProjects != null) {
             allGerritProjects.addAll(gerritProjects);
         }
@@ -1113,7 +1113,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     private void initializeTriggerOnEvents() {
         if (triggerOnEvents == null) {
-            triggerOnEvents = new LinkedList<PluginGerritEvent>();
+            triggerOnEvents = new LinkedList<>();
         }
         if (triggerOnEvents.isEmpty()) {
             triggerOnEvents.add(new PluginPatchsetCreatedEvent());
@@ -1480,7 +1480,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @return list of GerritSlave (can be empty but never null)
      */
     public List<GerritSlave> gerritSlavesToWaitFor(String gerritServerName) {
-        List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+        List<GerritSlave> gerritSlaves = new ArrayList<>();
 
         GerritServer gerritServer = PluginImpl.getServer_(gerritServerName);
         if (gerritServer == null) {
@@ -1507,7 +1507,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
     @Override
     public List<Action> getProjectActions() {
-        List<Action> list = new LinkedList<Action>();
+        List<Action> list = new LinkedList<>();
         list.add(triggerInformationAction);
         return list;
     }
@@ -1597,7 +1597,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             }
             //Check there are no cycles in the dependencies, by exploring all dependencies recursively
             //Only way of creating a cycle is if this project is in the dependencies somewhere.
-            Set<AbstractProject> explored = new HashSet<AbstractProject>();
+            Set<AbstractProject> explored = new HashSet<>();
             List<AbstractProject> directDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(value,
                     project);
             if (directDependencies == null) {
@@ -1608,7 +1608,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 if (directDependency.getFullName().equals(project.getFullName())) {
                     return FormValidation.error(Messages.CannotAddSelfAsDependency());
                 }
-                java.util.Queue<AbstractProject> toExplore = new LinkedList<AbstractProject>();
+                java.util.Queue<AbstractProject> toExplore = new LinkedList<>();
                 toExplore.add(directDependency);
                 while (toExplore.size() > 0) {
                     AbstractProject currentlyExploring = toExplore.remove();
@@ -1834,7 +1834,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     public class RunningJobs {
         private final HashMap<GerritTriggeredEvent, ParametersAction> runningJobs =
-                new HashMap<GerritTriggeredEvent, ParametersAction>();
+                new HashMap<>();
 
         /**
          * Does the needful after a build has been scheduled.
@@ -1898,7 +1898,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             Jenkins jenkins = Jenkins.getInstance();
             assert jenkins != null;
             for (Computer c : jenkins.getComputers()) {
-                List<Executor> executors = new ArrayList<Executor>();
+                List<Executor> executors = new ArrayList<>();
                 executors.addAll(c.getOneOffExecutors());
                 executors.addAll(c.getExecutors());
                 for (Executor e : executors) {

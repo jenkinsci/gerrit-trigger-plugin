@@ -53,7 +53,7 @@ public enum CompareType {
      * @return a list of available displaynames.
      */
     public static List<String> getDisplayNames() {
-        List<String> list = new LinkedList<String>();
+        List<String> list = new LinkedList<>();
         for (CompareType t : values()) {
             list.add(t.getDisplayName());
         }

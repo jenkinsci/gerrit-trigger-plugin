@@ -47,7 +47,7 @@ public class WaitingForReplicationTest {
      */
     @Test
     public void shouldReturnADescriptionWithAllSlaves() {
-        List<GerritSlave> slaves = new ArrayList<GerritSlave>();
+        List<GerritSlave> slaves = new ArrayList<>();
         slaves.add(new GerritSlave("slaveA", null, 1234));
 
         WaitingForReplication waitingForReplication = new WaitingForReplication(slaves);

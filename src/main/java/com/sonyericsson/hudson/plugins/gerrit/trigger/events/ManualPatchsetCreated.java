@@ -110,7 +110,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
     @Override
     public synchronized void addListener(GerritEventLifecycleListener listener) {
         if (listeners == null) {
-            listeners = new LinkedList<GerritEventLifecycleListener>();
+            listeners = new LinkedList<>();
         }
         if (!listeners.contains(listener)) {
             listeners.add(listener);
@@ -206,7 +206,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
      */
     protected synchronized List<GerritEventLifecycleListener> getListeners() {
         if (listeners != null) {
-            return new LinkedList<GerritEventLifecycleListener>(listeners);
+            return new LinkedList<>(listeners);
         } else {
             return null;
         }

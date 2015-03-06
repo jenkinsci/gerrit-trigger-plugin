@@ -133,7 +133,7 @@ public class GerritServerTest {
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
-        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<GerritVersionChecker.Feature>();
+        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<>();
         if (gerritServerOne.hasDisabledFeatures()) {
             disabledFeatures = gerritServerOne.getDisabledFeatures();
         }

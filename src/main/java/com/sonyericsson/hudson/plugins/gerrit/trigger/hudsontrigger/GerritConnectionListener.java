@@ -155,7 +155,7 @@ public class GerritConnectionListener implements ConnectionListener {
         if (connected) {
             GerritVersionNumber version =
                     GerritVersionChecker.createVersionNumber(getVersionString());
-            List<GerritVersionChecker.Feature> list = new LinkedList<GerritVersionChecker.Feature>();
+            List<GerritVersionChecker.Feature> list = new LinkedList<>();
             for (GerritVersionChecker.Feature f : GerritVersionChecker.Feature.values()) {
                 if (!GerritVersionChecker.isCorrectVersion(version, f)) {
                     list.add(f);

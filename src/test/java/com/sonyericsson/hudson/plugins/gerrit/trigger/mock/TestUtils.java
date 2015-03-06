@@ -79,7 +79,7 @@ public final class TestUtils {
      * @return the reference of future build to start.
      */
     public static AtomicReference<AbstractBuild> getFutureBuildToStart(GerritEventLifecycle event) {
-        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+        final AtomicReference<AbstractBuild> reference = new AtomicReference<>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
             public void buildStarted(GerritEvent event, AbstractBuild build) {

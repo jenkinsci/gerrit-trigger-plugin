@@ -124,7 +124,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
 
             Collection<VerdictCategory> list = null;
             if (ANY_SERVER.equals(serverName)) { //list all configured VCs in all servers
-                Map<String, VerdictCategory> map = new HashMap<String, VerdictCategory>();
+                Map<String, VerdictCategory> map = new HashMap<>();
                 for (GerritServer server : PluginImpl.getServers_()) {
                     for (VerdictCategory vc : server.getConfig().getCategories()) {
                         if (!map.containsKey(vc.getVerdictValue())) {

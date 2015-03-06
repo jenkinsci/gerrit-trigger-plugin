@@ -86,7 +86,7 @@ public class ParameterExpanderParameterizedTest {
      */
     @Parameters
     public static Collection getParameters() {
-        List<TestParameters[]> list = new LinkedList<TestParameters[]>();
+        List<TestParameters[]> list = new LinkedList<>();
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 

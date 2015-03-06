@@ -62,8 +62,8 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      *
      * changeSet : [list of reviewers]
      */
-    private Map<JSONObject, List<String>> changeSets = new HashMap<JSONObject, List<String>>();
-    private List<PatchsetCreated> events = new ArrayList<PatchsetCreated>();
+    private Map<JSONObject, List<String>> changeSets = new HashMap<>();
+    private List<PatchsetCreated> events = new ArrayList<>();
     private String serverName;
 
     /**
@@ -124,7 +124,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
             }
 
             JSONObject currentPatchSet = (JSONObject)patchSetObj;
-            List<String> usernames = new ArrayList<String>();
+            List<String> usernames = new ArrayList<>();
             if (currentPatchSet.has("approvals")) {
                 JSONArray approvals = currentPatchSet.getJSONArray("approvals");
                 if (approvals == null) {
@@ -151,7 +151,7 @@ public class UnreviewedPatchesListener implements ConnectionListener {
      */
     private List<JSONObject> getCurrentPatchesFromGerrit(String project) throws IOException {
         final String queryString = "project:" + project + " is:open";
-        List<JSONObject> changeList = new ArrayList<JSONObject>();
+        List<JSONObject> changeList = new ArrayList<>();
         try {
             IGerritHudsonTriggerConfig config = getConfig();
             GerritQueryHandler handler = new GerritQueryHandler(config);

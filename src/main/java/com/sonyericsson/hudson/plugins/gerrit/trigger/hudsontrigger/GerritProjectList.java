@@ -50,7 +50,7 @@ public final class GerritProjectList {
      * projectList data structure has Gerrit project's pattern as key value
      * and as content a ArrayList of Jenkins jobs related to that Gerrit project.
      */
-    private Map<String, ArrayList<GerritTrigger>> projectList = new HashMap<String, ArrayList<GerritTrigger>>();
+    private Map<String, ArrayList<GerritTrigger>> projectList = new HashMap<>();
 
     /**
      * A private Constructor prevents any other class from instantiating.

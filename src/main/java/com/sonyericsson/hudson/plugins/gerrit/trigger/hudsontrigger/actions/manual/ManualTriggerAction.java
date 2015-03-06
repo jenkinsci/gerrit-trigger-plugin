@@ -196,7 +196,7 @@ public class ManualTriggerAction implements RootAction {
      *
      */
     public ArrayList<String> getEnabledServers() {
-        ArrayList<String> enabledServers = new ArrayList<String>();
+        ArrayList<String> enabledServers = new ArrayList<>();
         for (GerritServer s : PluginImpl.getServers_()) {
             if (s.getConfig().isEnableManualTrigger()) {
                 enabledServers.add(s.getName());
@@ -443,7 +443,7 @@ public class ManualTriggerAction implements RootAction {
      * @see #generateTheId(net.sf.json.JSONObject, net.sf.json.JSONObject)
      */
     private HashMap<String, JSONObject> indexResult(List<JSONObject> result) {
-        HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
+        HashMap<String, JSONObject> map = new HashMap<>();
         for (JSONObject res : result) {
             if (!res.has("type")) {
                 String changeId = generateTheId(res, null);

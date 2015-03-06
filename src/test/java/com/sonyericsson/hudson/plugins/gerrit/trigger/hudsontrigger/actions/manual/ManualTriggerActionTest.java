@@ -225,7 +225,7 @@ public class ManualTriggerActionTest {
 
         change.put("patchSets", patchSets);
 
-        List<JSONObject> result = new LinkedList<JSONObject>();
+        List<JSONObject> result = new LinkedList<>();
         result.add(change);
 
         JSONObject type = new JSONObject();

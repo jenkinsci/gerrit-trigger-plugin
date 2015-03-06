@@ -119,7 +119,7 @@ public final class GerritDynamicUrlProcessor {
             throws IOException, ParseException {
       Pattern linePattern = buildLinePattern();
 
-      List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
+      List<GerritProject> dynamicGerritProjects = new ArrayList<>();
       List<Branch> branches = null;
       List<Topic> topics = null;
       List<FilePath> filePaths = null;
@@ -171,10 +171,10 @@ public final class GerritDynamicUrlProcessor {
             dynamicGerritProjects.add(dynamicGerritProject);
           }
 
-          branches = new ArrayList<Branch>();
-          topics = new ArrayList<Topic>();
-          filePaths = new ArrayList<FilePath>();
-          forbiddenFilePaths = new ArrayList<FilePath>();
+          branches = new ArrayList<>();
+          topics = new ArrayList<>();
+          filePaths = new ArrayList<>();
+          forbiddenFilePaths = new ArrayList<>();
           dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths, forbiddenFilePaths);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {

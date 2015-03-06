@@ -188,7 +188,7 @@ public class TriggerContextConverterTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -232,7 +232,7 @@ public class TriggerContextConverterTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(null);
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
@@ -286,7 +286,7 @@ public class TriggerContextConverterTest {
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -332,7 +332,7 @@ public class TriggerContextConverterTest {
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -378,7 +378,7 @@ public class TriggerContextConverterTest {
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -458,7 +458,7 @@ public class TriggerContextConverterTest {
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);

@@ -95,7 +95,7 @@ public class RabbitMQMessageListenerImplTest {
         RabbitMQMessageListenerImpl listener = new RabbitMQMessageListenerImpl();
         Whitebox.setInternalState(listener, GerritTriggerApi.class, apiMock);
 
-        Map<String, Object> header = new HashMap<String, Object>();
+        Map<String, Object> header = new HashMap<>();
         header.put("gerrit-name", LongStringHelper.asLongString("gerrit1"));
         header.put("gerrit-host", LongStringHelper.asLongString("gerrit1.localhost"));
         header.put("gerrit-port", LongStringHelper.asLongString("29418"));

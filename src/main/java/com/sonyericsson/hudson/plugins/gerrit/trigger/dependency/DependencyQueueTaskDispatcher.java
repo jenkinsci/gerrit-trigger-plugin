@@ -200,7 +200,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     protected List<AbstractProject> getBlockingDependencyProjects(List<AbstractProject> dependencies,
             GerritTriggeredEvent event) {
-        List<AbstractProject> blockingProjects = new ArrayList<AbstractProject>();
+        List<AbstractProject> blockingProjects = new ArrayList<>();
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         if (toGerritRunListener != null) {
             for (AbstractProject dependency : dependencies) {
@@ -233,7 +233,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @return the list of projects
      */
     public static List<AbstractProject> getProjectsFromString(String projects, Item context) {
-        List<AbstractProject> dependencyJobs = new ArrayList<AbstractProject>();
+        List<AbstractProject> dependencyJobs = new ArrayList<>();
         if ((projects == null) || projects.equals("")) {
             return null;
         } else {

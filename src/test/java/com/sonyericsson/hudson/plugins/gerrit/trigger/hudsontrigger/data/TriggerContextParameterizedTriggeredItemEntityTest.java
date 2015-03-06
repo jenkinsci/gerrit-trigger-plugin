@@ -76,7 +76,7 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
      */
     @Parameters
     public static final Collection getParameters() {
-        List<TestParameter[]> parameters = new LinkedList<TestParameter[]>();
+        List<TestParameter[]> parameters = new LinkedList<>();
 
         parameters.add(new TestParameter[]{new TestParameter(
                     new TriggeredItemEntity(0, "project"),

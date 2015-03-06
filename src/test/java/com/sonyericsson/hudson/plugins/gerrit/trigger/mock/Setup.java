@@ -408,7 +408,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        List<Approval> approvals = new LinkedList<Approval>();
+        List<Approval> approvals = new LinkedList<>();
         Approval approval = new Approval();
         approval.setType("CRVW");
         approval.setValue("1");
@@ -521,7 +521,7 @@ public final class Setup {
      */
     public static GerritTrigger createDefaultTrigger(AbstractProject project) {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<>();
         triggerOnEvents.add(pluginEvent);
         boolean silentMode = true;
         boolean silentStart = false;
@@ -573,7 +573,7 @@ public final class Setup {
      */
     public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
         VerdictCategory cat = new VerdictCategory("CRVW", "Code review");
-        List<VerdictCategory> list = new LinkedList<VerdictCategory>();
+        List<VerdictCategory> list = new LinkedList<>();
         list.add(cat);
         return list;
     }

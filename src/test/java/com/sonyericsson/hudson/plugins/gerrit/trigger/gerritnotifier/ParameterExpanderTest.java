@@ -99,7 +99,7 @@ public class ParameterExpanderTest {
         when(hudson.getRootUrl()).thenReturn("http://localhost/");
 
         PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
         messageProviderExtensionList.add(new GerritMessageProviderExtension());
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
@@ -476,7 +476,7 @@ public class ParameterExpanderTest {
         final String expectedRefSpec = StringUtil.makeRefSpec((ChangeBasedEvent)event);
 
         PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
         messageProviderExtensionList.add(new GerritMessageProviderExtension());
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
@@ -561,7 +561,7 @@ public class ParameterExpanderTest {
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
         messageProviderExtensionList.add(new GerritMessageProviderExtension());
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);

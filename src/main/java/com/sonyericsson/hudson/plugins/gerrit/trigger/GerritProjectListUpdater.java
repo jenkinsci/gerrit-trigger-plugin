@@ -174,7 +174,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * @throws IOException if something unfortunate happens.
      */
     public static List<String> readProjects(Reader commandReader) throws IOException {
-        List<String> projects = new ArrayList<String>();
+        List<String> projects = new ArrayList<>();
         BufferedReader br = new BufferedReader(commandReader);
         String line = br.readLine();
 
@@ -213,7 +213,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     public synchronized List<String> getGerritProjects() {
         if (gerritProjects == null) {
-            gerritProjects = new ArrayList<String>();
+            gerritProjects = new ArrayList<>();
         }
         return gerritProjects;
     }
