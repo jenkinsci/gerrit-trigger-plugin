@@ -1,6 +1,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
-import junit.framework.Assert;
+import static com.google.common.truth.Truth.assertThat;
 import org.junit.Test;
 
 /**
@@ -19,8 +19,6 @@ public class StringUtilTest {
         String valueOfParameter = "xxx\"xxx\"xxxx";
         String escapedString = StringUtil.escapeQuotes(valueOfParameter);
         String expectedString = "xxx\\\"xxx\\\"xxxx";
-        Assert.assertEquals(expectedString, escapedString);
-
-
+        assertThat(escapedString).isEqualTo(expectedString);
     }
 }

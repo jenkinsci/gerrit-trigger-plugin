@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 /**
  * Test class for the GerritProjectListUpdater.
@@ -56,11 +56,9 @@ public class GerritProjectListUpdaterTest {
         stringBuilder.append("tools/gerrit\n");
 
         List<String> projects = GerritProjectListUpdater.readProjects(new StringReader(stringBuilder.toString()));
-
-        assertArrayEquals(projects.toArray(), new String[] {
+        assertThat(projects).containsExactly(
             "tools/somepath/someproject",
             "tools/hello/jenkins",
-            "tools/gerrit",
-        });
+            "tools/gerrit");
     }
 }

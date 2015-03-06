@@ -1,10 +1,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import hudson.MarkupText;
 import hudson.model.AbstractBuild;
-import junit.framework.Assert;
 
 import org.junit.Test;
 
@@ -58,6 +58,6 @@ public class ChangeIdAnnotatorTest {
         MarkupText t = new MarkupText(plain);
         new ChangeIdAnnotator().annotate(b, null, t);
         System.out.println(t.toString(true));
-        Assert.assertEquals(expected, t.toString(true));
+        assertThat(t.toString(true)).isEqualTo(expected);
     }
 }
