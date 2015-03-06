@@ -44,10 +44,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-
-
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 
 
 /**
@@ -150,14 +148,16 @@ public class GerritServerHudsonTest {
         TestUtils.waitForBuilds(projectTwo, 1);
 
         FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
-        assertSame(Result.SUCCESS, buildOne.getResult());
-        assertEquals(1, projectOne.getLastCompletedBuild().getNumber());
-        assertSame(gerritServerOneName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+        assertThat(buildOne.getResult()).isEqualTo(Result.SUCCESS);
+        assertThat(projectOne.getLastCompletedBuild().getNumber()).is(1);
+        assertThat(buildOne.getCause(GerritCause.class).getEvent()
+            .getProvider().getName()).isEqualTo(gerritServerOneName);
 
         FreeStyleBuild buildTwo = projectTwo.getLastCompletedBuild();
-        assertSame(Result.SUCCESS, buildTwo.getResult());
-        assertEquals(1, projectTwo.getLastCompletedBuild().getNumber());
-        assertSame(gerritServerTwoName, buildTwo.getCause(GerritCause.class).getEvent().getProvider().getName());
+        assertThat(buildTwo.getResult()).isEqualTo(Result.SUCCESS);
+        assertThat(projectTwo.getLastCompletedBuild().getNumber()).is(1);
+        assertThat(buildTwo.getCause(GerritCause.class).getEvent()
+            .getProvider().getName()).isEqualTo(gerritServerTwoName);
     }
 
     /**
@@ -174,8 +174,9 @@ public class GerritServerHudsonTest {
 
         removeServer(gerritServerOneName);
 
-        assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertTrue(wrongMessageWarning, textContent.contains("Remove server"));
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(1);
+        assert_().withFailureMessage(wrongMessageWarning).that(
+            textContent).contains("Remove server");
     }
 
     /**
@@ -194,10 +195,10 @@ public class GerritServerHudsonTest {
 
         removeServer(gerritServerOneName);
 
-        assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertTrue(wrongMessageWarning,
-                textContent.contains("Disable Gerrit Trigger in the following jobs and remove server \""
-                                    + gerritServerOneName + "\"?"));
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(1);
+        assert_().withFailureMessage(wrongMessageWarning).that(textContent).contains(
+            "Disable Gerrit Trigger in the following jobs and remove server \""
+            + gerritServerOneName + "\"?");
     }
 
     /**
@@ -214,9 +215,9 @@ public class GerritServerHudsonTest {
 
         removeServer(gerritServerOneName);
 
-        assertEquals(false, buttonFound);
-        assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertEquals(removeLastServerWarning, textContent);
+        assertThat(buttonFound).isFalse();
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(1);
+        assertThat(textContent).isEqualTo(removeLastServerWarning);
     }
 
     /**
@@ -230,9 +231,9 @@ public class GerritServerHudsonTest {
 
         removeServer(gerritServerOneName);
 
-        assertEquals(false, buttonFound);
-        assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertEquals(removeLastServerWarning, textContent);
+        assertThat(buttonFound).isFalse();
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(1);
+        assertThat(textContent).isEqualTo(removeLastServerWarning);
     }
 
     /**
@@ -268,19 +269,19 @@ public class GerritServerHudsonTest {
     @Test
     public void testAddServer() throws IOException {
         addNewServerWithDefaultConfigs(gerritServerOneName);
-        assertEquals(1, PluginImpl.getInstance().getServers().size());
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(1);
 
         addNewServerByCopyingConfig(gerritServerTwoName, gerritServerOneName);
-        assertEquals(2, PluginImpl.getInstance().getServers().size());
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(2);
 
         //try add server with same name:
         try {
             addNewServerWithDefaultConfigs(gerritServerOneName);
         } catch (FailingHttpStatusCodeException e) {
-            assertEquals(badRequestErrorCode, e.getStatusCode());
+            assertThat(e.getStatusCode()).isEqualTo(badRequestErrorCode);
         }
         //make sure the server has not been added.
-        assertEquals(2, PluginImpl.getInstance().getServers().size());
+        assertThat(PluginImpl.getInstance().getServers()).hasSize(2);
     }
 
     /**
@@ -304,7 +305,9 @@ public class GerritServerHudsonTest {
                 radioButtonDefaultConfig.setChecked(true);
             }
         }
-        assertTrue("Failed to choose 'GerritServer with Default Configurations'", radioButtonDefaultConfig.isChecked());
+        assert_().withFailureMessage(
+            "Failed to choose 'GerritServer with Default Configurations'")
+            .that(radioButtonDefaultConfig.isChecked()).isTrue();
 
         form.submit(null);
     }
@@ -331,7 +334,9 @@ public class GerritServerHudsonTest {
                 radioButtonCopy.setChecked(true);
             }
         }
-        assertTrue("Failed to choose 'Copy from Existing Server Configurations'", radioButtonCopy.isChecked());
+        assert_().withFailureMessage(
+            "Failed to choose 'Copy from Existing Server Configurations'")
+            .that(radioButtonCopy.isChecked()).isTrue();
 
         form.getInputByName(fromInputFormName).setValueAttribute(fromServerName);
 
@@ -339,7 +344,7 @@ public class GerritServerHudsonTest {
     }
 
     /**
-     * Test not conect to Gerrit on startup.
+     * Test not connect to Gerrit on startup.
      * @throws Exception Error creating job.
      */
     @Test
@@ -347,6 +352,6 @@ public class GerritServerHudsonTest {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName, true);
         PluginImpl.getInstance().addServer(gerritServerOne);
         gerritServerOne.start();
-        assertEquals(true, gerritServerOne.isNoConnectionOnStartup());
+        assertThat(gerritServerOne.isNoConnectionOnStartup()).isTrue();
     }
 }

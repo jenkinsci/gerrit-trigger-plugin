@@ -24,8 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static com.google.common.truth.Truth.assertThat;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Hudson;
@@ -145,13 +144,13 @@ public class LockedDownGerritEventTest {
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
         TestUtils.waitForBuilds(project, 1);
-        assertEquals(server.getNrCommandsHistory("gerrit review.*"), 2);
+        assertThat(server.getNrCommandsHistory("gerrit review.*")).is(2);
 
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
-        assertSame(Result.SUCCESS, buildOne.getResult());
-        assertEquals(1, project.getLastCompletedBuild().getNumber());
-        assertSame(PluginImpl.DEFAULT_SERVER_NAME,
-            buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+        assertThat(buildOne.getResult()).isEqualTo(Result.SUCCESS);
+        assertThat(project.getLastCompletedBuild().getNumber()).is(1);
+        assertThat(buildOne.getCause(GerritCause.class).getEvent().getProvider().getName())
+            .isEqualTo(PluginImpl.DEFAULT_SERVER_NAME);
 
     }
 }

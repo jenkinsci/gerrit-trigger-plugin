@@ -23,7 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import junit.framework.Assert;
+import static com.google.common.truth.Truth.assertThat;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,7 +57,8 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
      */
     @Test
     public void testEquals() {
-        Assert.assertEquals(parameter.equal, parameter.wrap1.equals(parameter.wrap2));
+        assertThat(parameter.equal).isEqualTo(
+            parameter.wrap1.equals(parameter.wrap2));
     }
 
     /**
@@ -66,7 +68,8 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
     @Test
     public void testHashCode() {
         if (parameter.wrap2 != null) {
-            Assert.assertEquals(parameter.equal, parameter.wrap1.hashCode() == parameter.wrap2.hashCode());
+            assertThat(parameter.equal).isEqualTo(
+                parameter.wrap1.hashCode() == parameter.wrap2.hashCode());
         }
     }
 

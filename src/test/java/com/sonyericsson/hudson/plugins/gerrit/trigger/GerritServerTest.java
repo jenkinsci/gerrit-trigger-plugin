@@ -40,8 +40,8 @@ import org.powermock.reflect.Whitebox;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -93,7 +93,7 @@ public class GerritServerTest {
         String version = "2.2.2.1-340-g47084d4";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
-        assertTrue(gerritServerOne.isGerritSnapshotVersion());
+        assertThat(gerritServerOne.isGerritSnapshotVersion()).isTrue();
     }
 
     /**
@@ -106,7 +106,7 @@ public class GerritServerTest {
         String version = "2.2.2.1";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
-        assertFalse(gerritServerOne.isGerritSnapshotVersion());
+        assertThat(gerritServerOne.isGerritSnapshotVersion()).isFalse();
     }
 
     /**
@@ -119,7 +119,7 @@ public class GerritServerTest {
         String version = "2.3-rc0";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
-        assertFalse(gerritServerOne.isGerritSnapshotVersion());
+        assertThat(gerritServerOne.isGerritSnapshotVersion()).isFalse();
     }
 
     /**
@@ -137,14 +137,15 @@ public class GerritServerTest {
         if (gerritServerOne.hasDisabledFeatures()) {
             disabledFeatures = gerritServerOne.getDisabledFeatures();
         }
-        assertFalse(disabledFeatures.isEmpty());
+        assertThat(disabledFeatures.isEmpty()).isFalse();
         boolean foundFileTrigger = false;
         for (GerritVersionChecker.Feature feature : disabledFeatures) {
             if (feature == GerritVersionChecker.Feature.fileTrigger) {
                 foundFileTrigger = true;
             }
         }
-        assertTrue("Expected to find the file trigger feature!", foundFileTrigger);
+        assert_().withFailureMessage("Expected to find the file trigger feature!")
+            .that(foundFileTrigger).isTrue();
     }
 
     /**
@@ -160,7 +161,7 @@ public class GerritServerTest {
         listener.checkGerritVersionFeatures();
 
         List<GerritVersionChecker.Feature> disabledFeatures = gerritServerOne.getDisabledFeatures();
-        assertTrue(disabledFeatures.isEmpty());
+        assertThat(disabledFeatures).isEmpty();
     }
 
     /**
@@ -174,7 +175,7 @@ public class GerritServerTest {
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
-        assertTrue(gerritServerOne.hasDisabledFeatures());
+        assertThat(gerritServerOne.hasDisabledFeatures()).isTrue();
     }
 
     /**
@@ -189,6 +190,6 @@ public class GerritServerTest {
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
-        assertFalse(gerritServerOne.hasDisabledFeatures());
+        assertThat(gerritServerOne.hasDisabledFeatures()).isFalse();
     }
 }
