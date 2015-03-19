@@ -51,6 +51,7 @@ import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
@@ -465,6 +466,7 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testBuildLatestPatchsetOnly() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
@@ -481,10 +483,18 @@ public class SpecGerritTriggerHudsonTest {
             secondEvent.getPatchSet().setNumber("2");
         }
         gerritServer.triggerEvent(secondEvent);
-        TestUtils.waitForBuilds(project, 2);
-        assertEquals(2, project.getLastCompletedBuild().getNumber());
-        assertSame(Result.ABORTED, firstBuild.getResult());
-        assertSame(Result.ABORTED, project.getFirstBuild().getResult());
+        //No good way to wait for a non-manual patchset created.
+        Thread.sleep(3000);
+        PatchsetCreated thirdEvent = Setup.createPatchsetCreated();
+        if (null != thirdEvent.getPatchSet()) {
+            thirdEvent.getPatchSet().setNumber("3");
+        }
+        gerritServer.triggerEvent(thirdEvent);
+        TestUtils.waitForBuilds(project, 3);
+        assertEquals(3, project.getLastCompletedBuild().getNumber());
+        assertSame(Result.SUCCESS, firstBuild.getResult());
+        assertSame(Result.SUCCESS, project.getFirstBuild().getResult());
+        assertSame(Result.ABORTED, project.getBuildByNumber(2).getResult());
         assertSame(Result.SUCCESS, project.getLastBuild().getResult());
     }
 
