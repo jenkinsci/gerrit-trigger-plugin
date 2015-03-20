@@ -130,6 +130,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
+    /**
+     * Default value for {@link #isGerritAbortRunningBuilds()}.
+     */
+    public static final boolean DEFAULT_ABORT_RUNNING_BUILDS = true;
 
     /**
      * Global default for notification level.
@@ -149,6 +153,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean restCodeReview;
     private boolean restVerified;
     private boolean gerritBuildCurrentPatchesOnly;
+    private boolean gerritAbortRunningBuilds;
     @Deprecated
     private transient int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -209,6 +214,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         restCodeReview = config.isRestCodeReview();
         restVerified = config.isRestVerified();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
+        gerritAbortRunningBuilds = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
         gerritBuildStartedVerifiedValue = config.getGerritBuildStartedVerifiedValue();
@@ -266,6 +272,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
                 "gerritBuildCurrentPatchesOnly",
                 DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
+
+        gerritAbortRunningBuilds = formData.optBoolean(
+                "gerritAbortRunningBuilds",
+                DEFAULT_ABORT_RUNNING_BUILDS);
 
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -509,6 +519,16 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
     }
 
+    /**
+     * GerritAbortRunningBuilds.
+     *
+     * @param gerritAbortRunningBuilds whether to aborted already started builds
+     * @see #isGerritBuildCurrentPatchesOnly()
+     */
+    public void setGerritAbortRunningBuilds(boolean gerritAbortRunningBuilds) {
+        this.gerritAbortRunningBuilds = gerritAbortRunningBuilds;
+    }
+
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -691,6 +711,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return gerritBuildCurrentPatchesOnly;
+    }
+
+    @Override
+    public boolean isGerritAbortRunningBuilds() {
+        return gerritAbortRunningBuilds;
     }
 
     @Override
