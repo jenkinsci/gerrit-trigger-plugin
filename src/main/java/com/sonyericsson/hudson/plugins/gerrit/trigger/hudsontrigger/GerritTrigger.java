@@ -344,6 +344,18 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         return gerritSlaveId;
     }
 
+    void onJobRenamed(String oldFullName, String newFullName) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            GerritHandler handler = plugin.getHandler();
+            if (handler != null) {
+                handler.removeListener(new EventListener(oldFullName));
+                handler.addListener(createListener());
+            }
+        }
+    }
+
+
     /**
      * Finds the GerritTrigger in a project.
      *
