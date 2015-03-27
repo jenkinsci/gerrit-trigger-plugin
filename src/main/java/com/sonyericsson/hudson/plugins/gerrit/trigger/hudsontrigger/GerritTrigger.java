@@ -426,10 +426,11 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
         GerritProjectList.removeTriggerFromProjectList(this);
         if (allowTriggeringUnreviewedPatches) {
-            if (gerritProjects != null)
+            if (gerritProjects != null) {
                 for (GerritProject p : gerritProjects) {
                     GerritProjectList.addProject(p, this);
                 }
+            }
         }
     }
 
