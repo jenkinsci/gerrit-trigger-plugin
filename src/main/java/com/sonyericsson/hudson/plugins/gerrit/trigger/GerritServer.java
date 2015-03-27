@@ -1188,6 +1188,23 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * Checks that the provided parameter is an integer, not negative.
+     *
+     * @param value the value.
+     * @return {@link FormValidation#validatePositiveInteger(String)}
+     */
+    public FormValidation doProjectListRefreshIntervalCheck(
+            @QueryParameter("value")
+            final String value) {
+
+        FormValidation validatePositive = FormValidation.validateNonNegativeInteger(value);
+        if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
+            return validatePositive;
+        }
+        return FormValidation.ok();
+    }
+
+    /**
      * Checks that the provided parameter is an integer.
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}

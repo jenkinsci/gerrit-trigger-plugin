@@ -230,6 +230,31 @@
                                         checked="${it.config.enableManualTrigger}"
                                         default="${true}"/>
                         </f:entry>
+                        <f:entry title="${%Fetch Project List Settings}"
+                                 help="/plugin/gerrit-trigger/help-GerritFetchProjectList.html">
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Load Project List on Startup}
+                                </div>
+                                <div style="display: inline">
+                                    <f:checkbox name="loadProjectListOnStartup"
+                                         checked="${it.config.loadProjectListOnStartup}"
+                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP}"/>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Refresh Project List Interval} (seconds)
+                                </div>
+                                <div style="display: inline;">
+                                     <f:textbox name="projectListRefreshInterval"
+                                        value="${it.config.projectListRefreshInterval}"
+                                        default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL}"
+                                        checkUrl="'${rootURL}/${serverURL}/projectListRefreshIntervalCheck?value='+escape(this.value)"
+                                        style="max-width: 100px;"/>
+                                </div>
+                            </div>
+                        </f:entry>
                         <f:entry title="${%Notification Level}"
                                  field="notificationLevel"
                                  help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">

@@ -115,6 +115,14 @@ public class Config implements IGerritHudsonTriggerConfig {
     public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE = 0;
 
     /**
+     * Default value indicating if the project list should be fetched on startup.
+     */
+    public static final boolean DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP = true;
+    /**
+     * Default value showing how often the project list should be updated.
+     */
+    public static final int DEFAULT_PROJECT_LIST_REFRESH_INTERVAL = 3600;
+    /**
      * Default timeout value in minutes for the connection watchdog.
      */
     public static final int DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES = 0;
@@ -173,6 +181,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private transient int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
+    private boolean loadProjectListOnStartup;
+    private int projectListRefreshInterval;
     private List<VerdictCategory> categories;
     private ReplicationConfig replicationConfig;
     private int watchdogTimeoutMinutes;
@@ -231,6 +241,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         enablePluginMessages = config.isEnablePluginMessages();
         buildScheduleDelay = config.getBuildScheduleDelay();
         dynamicConfigRefreshInterval = config.getDynamicConfigRefreshInterval();
+        loadProjectListOnStartup = config.isLoadProjectListOnStartup();
+        projectListRefreshInterval = config.getProjectListRefreshInterval();
         if (config.getCategories() != null) {
             categories = new LinkedList<VerdictCategory>();
             for (VerdictCategory cat : config.getCategories()) {
@@ -349,6 +361,15 @@ public class Config implements IGerritHudsonTriggerConfig {
         dynamicConfigRefreshInterval = formData.optInt(
                 "dynamicConfigRefreshInterval",
                 DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL);
+
+        projectListRefreshInterval = formData.optInt(
+                "projectListRefreshInterval",
+                DEFAULT_PROJECT_LIST_REFRESH_INTERVAL);
+
+        loadProjectListOnStartup = formData.optBoolean(
+                "isLoadProjectListOnStartup",
+                DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP);
+
         categories = new LinkedList<VerdictCategory>();
         if (formData.has("verdictCategories")) {
             Object cat = formData.get("verdictCategories");
@@ -598,6 +619,12 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         return dynamicConfigRefreshInterval;
     }
+
+    @Override
+    public int getProjectListRefreshInterval() { return projectListRefreshInterval; }
+
+    @Override
+    public boolean isLoadProjectListOnStartup() { return loadProjectListOnStartup; }
 
     /**
      * Setting dynamicConfigRefreshInterval.

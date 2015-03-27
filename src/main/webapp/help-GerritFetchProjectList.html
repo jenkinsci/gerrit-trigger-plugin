@@ -1,0 +1,16 @@
+Defines when and how the project list is fetched from Gerrit.
+<p/>
+This list is used for project auto completion in the project configuration.
+<p/>
+<b>Load Project List on Startup</b>
+<p/>
+If checked, Gerrit will be queried for the project list as early as possible.
+<p/>
+If unchecked, the project list will not be fetched until the first duration period has passed.
+Note: Auto-completion in the project configuration will not be availible during this period.
+<p/>
+<b>Refresh project list interval</b>
+<p/>
+The interval between fetches of the project list. A value of 0 disables the fetching altogether,
+which also means no project name auto-completion will be available for users configuring Jenkins
+projects.
