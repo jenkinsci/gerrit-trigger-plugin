@@ -27,6 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
@@ -111,6 +113,10 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         }
         if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
             return false;
+        }
+        if (event instanceof ManualPatchsetCreated) {
+            // always trigger build when the build is triggered manually
+            return true;
         }
         if (excludeTrivialRebase
             && GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()) {
