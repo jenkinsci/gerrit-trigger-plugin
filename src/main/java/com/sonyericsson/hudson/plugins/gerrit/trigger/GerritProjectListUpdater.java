@@ -138,7 +138,15 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
 
             try {
                 synchronized (this) {
-                    wait(TimeUnit.SECONDS.toMillis(getConfig().getProjectListRefreshInterval()));
+                    long startTime = System.nanoTime();
+                    // Continuously refetching the refresh interval allows us to pick up configuration
+                    // changes on the fly, keeping us from getting stuck on accidentally entered very
+                    // high values.
+                    while (System.nanoTime() - startTime
+                            < TimeUnit.SECONDS.toNanos(getConfig().getProjectListRefreshInterval())
+                            && !shutdown) {
+                        wait(TimeUnit.SECONDS.toMillis(1));
+                    }
                 }
             } catch (InterruptedException ex) {
                 logger.warn("InterruptedException: ", ex);
