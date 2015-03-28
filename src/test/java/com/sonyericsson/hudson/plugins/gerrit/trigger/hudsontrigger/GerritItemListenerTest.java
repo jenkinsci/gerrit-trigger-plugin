@@ -23,9 +23,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import hudson.model.FreeStyleProject;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,6 +39,9 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+
+import static org.powermock.api.mockito.PowerMockito.*;
+
 
 /**
  * Tests for {@link GerritItemListener}.
@@ -92,4 +96,28 @@ public class GerritItemListenerTest {
         listener.onLoaded();
         Mockito.verify(gerritServer, Mockito.times(0)).startConnection();
     }
+
+    @Test
+    public void testOnJobRenamed() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("MyJob");
+        PatchsetCreated event = Setup.createManualPatchsetCreated();
+
+        GerritTrigger trigger = spy(new GerritTrigger(
+                null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, true, true, false, false, "", "", "", "", "", "", "", null, null, null,
+                null, false, false, "", null));
+
+        doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
+        job.addTrigger(trigger);
+        trigger.start(job, true);
+
+        when(trigger.isInteresting(event)).thenReturn(true);
+        job.renameTo("MyJobRenamed");
+        GerritItemListener listener = new GerritItemListener();
+        listener.onLocationChanged(job, "MyJob", "MyJobRenamed");
+        PluginImpl.getInstance().getHandler().notifyListeners(event);
+        Thread.sleep(100);
+        Assert.assertNotNull(job.getLastBuild());
+    }
+
 }
