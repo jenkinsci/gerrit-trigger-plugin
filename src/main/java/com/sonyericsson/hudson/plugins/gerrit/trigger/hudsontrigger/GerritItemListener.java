@@ -76,14 +76,14 @@ public class GerritItemListener extends ItemListener {
      * stop/start the trigger, so we end up with misconfigured EventListener.
      *
      * Also see JENKINS-22936
-     * @param item
-     * @param oldFullName
-     * @param newFullName
+     * @param item an item whose absolute position is now different
+     * @param oldFullName the former {@link Item#getFullName}
+     * @param newFullName the current {@link Item#getFullName}
      */
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
         if (item instanceof AbstractProject<?, ?>) {
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
+            AbstractProject<?, ?> project = (AbstractProject<?, ?>)item;
             GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
             if (gerritTrigger != null) {
                 gerritTrigger.onJobRenamed(oldFullName, newFullName);

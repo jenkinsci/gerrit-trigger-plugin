@@ -344,6 +344,11 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         return gerritSlaveId;
     }
 
+    /**
+     * Notify trigger for job being renamed
+     * @param oldFullName the former {@link Item#getFullName}
+     * @param newFullName the current {@link Item#getFullName}
+     */
     void onJobRenamed(String oldFullName, String newFullName) {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
@@ -438,10 +443,11 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
         GerritProjectList.removeTriggerFromProjectList(this);
         if (allowTriggeringUnreviewedPatches) {
-            if (gerritProjects != null)
+            if (gerritProjects != null) {
                 for (GerritProject p : gerritProjects) {
                     GerritProjectList.addProject(p, this);
                 }
+            }
         }
     }
 

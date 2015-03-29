@@ -26,11 +26,13 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.FreeStyleProject;
+import jenkins.model.Jenkins;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -40,7 +42,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
-import static org.powermock.api.mockito.PowerMockito.*;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 
 
 /**
@@ -72,7 +77,7 @@ public class GerritItemListenerTest {
     }
 
     /**
-     * Tests {@link GerritItemListener#onLoad()} gets connection.
+     * Tests {@link GerritItemListener#onLoaded()} gets connection.
      *
      * @throws Exception if so.
      */
@@ -85,7 +90,7 @@ public class GerritItemListenerTest {
     }
 
     /**
-     * Tests {@link GerritItemListener#onLoad()} does not get connection.
+     * Tests {@link GerritItemListener#onLoaded()} does not get connection.
      *
      * @throws Exception if so.
      */
@@ -97,7 +102,13 @@ public class GerritItemListenerTest {
         Mockito.verify(gerritServer, Mockito.times(0)).startConnection();
     }
 
+    /**
+     * Test {@link GerritItemListener#onLocationChanged(hudson.model.Item, String, String)} do handle renamed job.
+     *
+     * @throws Exception if so.
+     */
     @Test
+    @Issue("JENKINS-27651")
     public void testOnJobRenamed() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("MyJob");
         PatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -116,8 +127,12 @@ public class GerritItemListenerTest {
         GerritItemListener listener = new GerritItemListener();
         listener.onLocationChanged(job, "MyJob", "MyJobRenamed");
         PluginImpl.getInstance().getHandler().notifyListeners(event);
-        Thread.sleep(100);
+        Jenkins.getInstance().getQueue().maintain();
+        Thread.sleep(DELAY);
         Assert.assertNotNull(job.getLastBuild());
     }
+
+    /** some delay to ensure the job is ran after being scheduled. */
+    public static final int DELAY = 100;
 
 }
