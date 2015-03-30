@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.FreeStyleProject;
-import jenkins.model.Jenkins;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -124,15 +123,9 @@ public class GerritItemListenerTest {
 
         when(trigger.isInteresting(event)).thenReturn(true);
         job.renameTo("MyJobRenamed");
-        GerritItemListener listener = new GerritItemListener();
-        listener.onLocationChanged(job, "MyJob", "MyJobRenamed");
         PluginImpl.getInstance().getHandler().notifyListeners(event);
-        Jenkins.getInstance().getQueue().maintain();
-        Thread.sleep(DELAY);
+        j.waitUntilNoActivity();
         Assert.assertNotNull(job.getLastBuild());
     }
-
-    /** some delay to ensure the job is ran after being scheduled. */
-    public static final int DELAY = 100;
 
 }
