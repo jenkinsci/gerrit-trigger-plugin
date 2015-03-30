@@ -24,9 +24,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.FreeStyleProject;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +42,8 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
@@ -110,6 +113,7 @@ public class GerritItemListenerTest {
     @Issue("JENKINS-27651")
     public void testOnJobRenamed() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("MyJob");
+        GerritHandler handler = PluginImpl.getInstance().getHandler();
         PatchsetCreated event = Setup.createManualPatchsetCreated();
 
         GerritTrigger trigger = spy(new GerritTrigger(
@@ -120,12 +124,14 @@ public class GerritItemListenerTest {
         doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
         job.addTrigger(trigger);
         trigger.start(job, true);
+        int before = handler.getEventListenersCount();
 
         when(trigger.isInteresting(event)).thenReturn(true);
         job.renameTo("MyJobRenamed");
-        PluginImpl.getInstance().getHandler().notifyListeners(event);
-        j.waitUntilNoActivity();
-        Assert.assertNotNull(job.getLastBuild());
+        assertEquals("We leak some listeners", before, handler.getEventListenersCount());
+        handler.notifyListeners(event);
+        TestUtils.waitForBuilds(job, 1);
+        assertNotNull(job.getLastBuild());
     }
 
 }
