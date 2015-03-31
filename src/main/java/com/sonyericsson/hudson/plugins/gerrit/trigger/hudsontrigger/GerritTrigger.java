@@ -1848,21 +1848,24 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
             if (serverConfig != null && !serverConfig.isGerritBuildCurrentPatchesOnly()
-                    || event instanceof ManualPatchsetCreated) {
+                    || (event instanceof ManualPatchsetCreated && !serverConfig.isGerritAbortManualPatchsets())) {
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
             while (it.hasNext()) {
                 Entry<GerritTriggeredEvent, ParametersAction> pairs = it.next();
                 // Find all entries in runningJobs with the same Change #.
-                // Ignore all manual patchsets and don't cancel builds due to
+                // Optionally, ignore all manual patchsets and don't cancel builds due to
                 // a retrigger of an older build.
                 if (pairs.getKey() instanceof ChangeBasedEvent) {
                     ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
-                    if (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
-                            && runningChangeBasedEvent.getChange().equals(event.getChange())
-                            && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
-                            < Integer.parseInt(event.getPatchSet().getNumber())) {
+                    boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
+                            && serverConfig.isGerritAbortManualPatchsets())
+                            || !(runningChangeBasedEvent instanceof ManualPatchsetCreated);
+                    boolean shouldCancelPatchsetNumber = serverConfig.isGerritAbortNewPatchsets()
+                            || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+                            < Integer.parseInt(event.getPatchSet().getNumber());
+                    if (shouldCancelManual && shouldCancelPatchsetNumber) {
                         logger.debug("Cancelling build for " + pairs.getKey());
                         try {
                             cancelJob(pairs.getKey());

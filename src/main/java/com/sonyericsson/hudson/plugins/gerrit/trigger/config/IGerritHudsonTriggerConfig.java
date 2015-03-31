@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010, 2015 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -45,6 +44,22 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return true if so.
      */
     boolean isGerritBuildCurrentPatchesOnly();
+
+    /**
+     * If enabled, then builds of newer patch sets will be aborted by
+     * older patch sets that are retriggered.
+     *
+     * @return true if so.
+     */
+    boolean isGerritAbortNewPatchsets();
+
+    /**
+     * If enabled, then builds of manually triggered patch sets will be aborted
+     * by new patch sets. Also, manual triggers will abort other running builds.
+     *
+     * @return true if so.
+     */
+    boolean isGerritAbortManualPatchsets();
 
     /**
      * Base URL for the Gerrit UI.

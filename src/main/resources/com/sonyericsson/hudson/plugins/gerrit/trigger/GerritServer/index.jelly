@@ -264,6 +264,18 @@
                                 </table>
                             </f:repeatable>
                         </f:entry>
+                        <f:entry title="${%Abort new patch sets}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
+                            <f:checkbox name="gerritAbortNewPatchsets"
+                                        checked="${it.config.gerritAbortNewPatchsets}"
+                                        default="true"/>
+                        </f:entry>
+                        <f:entry title="${%Abort manual patch sets}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
+                            <f:checkbox name="gerritAbortManualPatchsets"
+                                        checked="${it.config.gerritAbortManualPatchsets}"
+                                        default="true"/>
+                        </f:entry>
                     </f:section>
                     <f:section title="${%REST API}">
                         <f:optionalBlock name="useRestApi" title="${%Use REST API}" checked="${it.config.useRestApi}">

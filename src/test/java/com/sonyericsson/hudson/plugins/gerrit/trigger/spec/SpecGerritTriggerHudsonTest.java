@@ -471,6 +471,8 @@ public class SpecGerritTriggerHudsonTest {
     public void testBuildLatestPatchsetOnly() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         ((Config)gerritServer.getConfig()).setGerritBuildCurrentPatchesOnly(true);
+        ((Config)gerritServer.getConfig()).setGerritAbortManualPatchsets(false);
+        ((Config)gerritServer.getConfig()).setGerritAbortNewPatchsets(false);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);

@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010, 2015 Sony Mobile Communications Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -295,6 +294,16 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
+        return true;
+    }
+
+    @Override
+    public boolean isGerritAbortNewPatchsets() {
+        return true;
+    }
+
+    @Override
+    public boolean isGerritAbortManualPatchsets() {
         return true;
     }
 

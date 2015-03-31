@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010, 2015 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -136,6 +135,16 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
 
+    /**
+     * Default value for {@link #isGerritAbortNewPatchsets()}.
+     */
+    public static final boolean DEFAULT_ABORT_NEW_PATCHSETS = true;
+
+    /**
+     * Default value for {@link #isGerritAbortManualPatchsets()}.
+     */
+    private static final boolean DEFAULT_ABORT_MANUAL_PATCHSETS = true;
+
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
@@ -149,6 +158,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private boolean restCodeReview;
     private boolean restVerified;
     private boolean gerritBuildCurrentPatchesOnly;
+    private boolean gerritAbortNewPatchsets;
+    private boolean gerritAbortManualPatchsets;
     @Deprecated
     private transient int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -209,6 +220,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         restCodeReview = config.isRestCodeReview();
         restVerified = config.isRestVerified();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
+        gerritAbortNewPatchsets = config.isGerritAbortNewPatchsets();
+        gerritAbortManualPatchsets = config.isGerritAbortManualPatchsets();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
         gerritBuildStartedVerifiedValue = config.getGerritBuildStartedVerifiedValue();
@@ -266,6 +279,15 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritBuildCurrentPatchesOnly = formData.optBoolean(
                 "gerritBuildCurrentPatchesOnly",
                 DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
+
+        gerritAbortNewPatchsets = formData.optBoolean(
+                "gerritAbortNewPatchsets",
+                DEFAULT_ABORT_NEW_PATCHSETS);
+
+        gerritAbortManualPatchsets = formData.optBoolean(
+                "gerritAbortManualPatchsets",
+                DEFAULT_ABORT_MANUAL_PATCHSETS);
+
 
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -509,6 +531,29 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
     }
 
+    /**
+     * GerritAbortNewPatchsets.
+     *
+     * @param gerritAbortNewPatchsets whether to abort builds of patch sets when an older patch set gets retriggered.
+     *
+     * @see #isGerritAbortNewPatchsets()
+     */
+    public void setGerritAbortNewPatchsets(boolean gerritAbortNewPatchsets) {
+        this.gerritAbortNewPatchsets = gerritAbortNewPatchsets;
+    }
+
+    /**
+     * GerritAbortManualPatchsets.
+     *
+     * @param gerritAbortManualPatchsets whether to abort builds when a patch set is manually triggered.
+     *                                   Also, whether builds of manually triggered patch sets should be cancelled
+     *                                   when another patch set comes in.
+     * @see #isGerritAbortManualPatchsets()
+     */
+    public void setGerritAbortManualPatchsets(boolean gerritAbortManualPatchsets) {
+        this.gerritAbortManualPatchsets = gerritAbortManualPatchsets;
+    }
+
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -691,6 +736,16 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return gerritBuildCurrentPatchesOnly;
+    }
+
+    @Override
+    public boolean isGerritAbortNewPatchsets() {
+        return gerritAbortNewPatchsets;
+    }
+
+    @Override
+    public boolean isGerritAbortManualPatchsets() {
+        return gerritAbortManualPatchsets;
     }
 
     @Override
