@@ -43,11 +43,15 @@ fail during the verification phase if you don't follow them.
 
     mvn clean package
     
-Run findbugs for future reference
-or to make sure you haven't introduced any new warnings
+Run findbugs for future reference or to make sure you haven't introduced any
+new warnings
 
     mvn findbugs:findbugs
-    
+
+Run checkstyle
+
+    mvn checkstyle:checkstyle
+
 # Test local instance
 
 To test in a local Jenkins instance
