@@ -345,6 +345,23 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     }
 
     /**
+     * Notify trigger for job being renamed
+     * @param oldFullName the former {@link Item#getFullName}
+     * @param newFullName the current {@link Item#getFullName}
+     */
+    void onJobRenamed(String oldFullName, String newFullName) {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            GerritHandler handler = plugin.getHandler();
+            if (handler != null) {
+                handler.removeListener(new EventListener(oldFullName));
+                handler.addListener(createListener());
+            }
+        }
+    }
+
+
+    /**
      * Finds the GerritTrigger in a project.
      *
      * @param project the project.

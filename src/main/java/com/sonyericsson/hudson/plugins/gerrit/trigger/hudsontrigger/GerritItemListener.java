@@ -71,6 +71,27 @@ public class GerritItemListener extends ItemListener {
     }
 
     /**
+     * trigger get stopped/started when a job is configured, but rename is a special operation
+     * and uses a two phase confirmation, the second one doing the actual rename does not
+     * stop/start the trigger, so we end up with misconfigured EventListener.
+     *
+     * Also see JENKINS-22936
+     * @param item an item whose absolute position is now different
+     * @param oldFullName the former {@link Item#getFullName}
+     * @param newFullName the current {@link Item#getFullName}
+     */
+    @Override
+    public void onLocationChanged(Item item, String oldFullName, String newFullName) {
+        if (item instanceof AbstractProject<?, ?>) {
+            AbstractProject<?, ?> project = (AbstractProject<?, ?>)item;
+            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
+            if (gerritTrigger != null) {
+                gerritTrigger.onJobRenamed(oldFullName, newFullName);
+            }
+        }
+    }
+
+    /**
      * Called by Jenkins when all items are loaded.
      */
     @Override

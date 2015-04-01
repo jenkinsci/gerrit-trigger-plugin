@@ -70,7 +70,16 @@ public final class EventListener implements GerritEventListener {
      * @param job the job to handle.
      */
     EventListener(@Nonnull AbstractProject job) {
-        this.job = job.getFullName();
+        this(job.getFullName());
+    }
+
+    /**
+     * Standard constructor.
+     *
+     * @param fullName the job to handle full name.
+     */
+    EventListener(@Nonnull String fullName) {
+        this.job = fullName;
     }
 
     @Override
