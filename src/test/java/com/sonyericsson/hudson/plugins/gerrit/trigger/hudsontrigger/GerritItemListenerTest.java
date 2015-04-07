@@ -23,13 +23,16 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
+import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import hudson.model.FreeStyleProject;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
@@ -38,6 +41,14 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+
 
 /**
  * Tests for {@link GerritItemListener}.
@@ -68,7 +79,7 @@ public class GerritItemListenerTest {
     }
 
     /**
-     * Tests {@link GerritItemListener#onLoad()} gets connection.
+     * Tests {@link GerritItemListener#onLoaded()} gets connection.
      *
      * @throws Exception if so.
      */
@@ -81,7 +92,7 @@ public class GerritItemListenerTest {
     }
 
     /**
-     * Tests {@link GerritItemListener#onLoad()} does not get connection.
+     * Tests {@link GerritItemListener#onLoaded()} does not get connection.
      *
      * @throws Exception if so.
      */
@@ -92,4 +103,35 @@ public class GerritItemListenerTest {
         listener.onLoaded();
         Mockito.verify(gerritServer, Mockito.times(0)).startConnection();
     }
+
+    /**
+     * Test {@link GerritItemListener#onLocationChanged(hudson.model.Item, String, String)} do handle renamed job.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @Issue("JENKINS-27651")
+    public void testOnJobRenamed() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("MyJob");
+        GerritHandler handler = PluginImpl.getInstance().getHandler();
+        PatchsetCreated event = Setup.createManualPatchsetCreated();
+
+        GerritTrigger trigger = spy(new GerritTrigger(
+                null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, true, true, false, false, "", "", "", "", "", "", "", null, null, null,
+                null, false, false, "", null));
+
+        doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
+        job.addTrigger(trigger);
+        trigger.start(job, true);
+        int before = handler.getEventListenersCount();
+
+        when(trigger.isInteresting(event)).thenReturn(true);
+        job.renameTo("MyJobRenamed");
+        assertEquals("We leak some listeners", before, handler.getEventListenersCount());
+        handler.notifyListeners(event);
+        TestUtils.waitForBuilds(job, 1);
+        assertNotNull(job.getLastBuild());
+    }
+
 }
