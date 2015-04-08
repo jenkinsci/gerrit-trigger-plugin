@@ -228,7 +228,7 @@ public class ParameterExpander {
             map.put("GERRIT_NAME", event.getChange().getProject());
             map.put("CHANGE_ID", event.getChange().getId());
             map.put("BRANCH", event.getChange().getBranch());
-            if(null != event.getChange().getTopic()) {
+            if (null != event.getChange().getTopic()) {
                 map.put("TOPIC", event.getChange().getTopic());
             }
             map.put("CHANGE", event.getChange().getNumber());
