@@ -196,6 +196,18 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     int getDynamicConfigRefreshInterval();
 
     /**
+     * Returns the projectListRefreshInterval.
+     * @return the value.
+     */
+    int getProjectListRefreshInterval();
+
+    /**
+     * If the Project List should be fetched from Gerrit on startup.
+     * @return true if so.
+     */
+    boolean isLoadProjectListOnStartup();
+
+    /**
      * If the plugin still has default values for hostname and frontendurl.
      * @return true if so.
      */

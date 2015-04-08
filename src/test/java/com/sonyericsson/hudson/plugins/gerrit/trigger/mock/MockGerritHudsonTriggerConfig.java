@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -286,6 +287,16 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public int getDynamicConfigRefreshInterval() {
         return 30;
+    }
+
+    @Override
+    public int getProjectListRefreshInterval() {
+        return Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL;
+    }
+
+    @Override
+    public boolean isLoadProjectListOnStartup() {
+        return Config.DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP;
     }
 
     @Override

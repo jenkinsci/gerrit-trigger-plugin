@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,10 +51,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
 
-    /**
-     * Time to wait between refresh attempts
-     */
-    private static final int UPDATE_DELAY = 3600 * 1000;
     private boolean connected = false;
     private boolean shutdown = false;
     private static final Logger logger = LoggerFactory.getLogger(GerritProjectListUpdater.class);
@@ -109,18 +107,28 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
 
     @Override
     public void run() {
+        // Zero or negative value, never query this Gerrit-server for project list
+        if (getConfig().getProjectListRefreshInterval() <= 0) {
+            return;
+        }
+
+        boolean loadProjectList = getConfig().isLoadProjectListOnStartup();
         while (!shutdown) {
             try {
-                if (isConnected()) {
-                    IGerritHudsonTriggerConfig activeConfig = getConfig();
-                    SshConnection sshConnection = SshConnectionFactory.getConnection(
-                            activeConfig.getGerritHostName(),
-                            activeConfig.getGerritSshPort(),
-                            activeConfig.getGerritProxy(),
-                            activeConfig.getGerritAuthentication()
-                    );
-                    setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
-                    sshConnection.disconnect();
+                if (loadProjectList) {
+                    if (isConnected()) {
+                        IGerritHudsonTriggerConfig activeConfig = getConfig();
+                        SshConnection sshConnection = SshConnectionFactory.getConnection(
+                                activeConfig.getGerritHostName(),
+                                activeConfig.getGerritSshPort(),
+                                activeConfig.getGerritProxy(),
+                                activeConfig.getGerritAuthentication()
+                        );
+                        setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
+                        sshConnection.disconnect();
+                    }
+                } else {
+                    loadProjectList = true;
                 }
             } catch (SshException ex) {
                  logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);
@@ -130,7 +138,15 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
 
             try {
                 synchronized (this) {
-                    wait(UPDATE_DELAY);
+                    long startTime = System.nanoTime();
+                    // Continuously refetching the refresh interval allows us to pick up configuration
+                    // changes on the fly, keeping us from getting stuck on accidentally entered very
+                    // high values.
+                    while (System.nanoTime() - startTime
+                            < TimeUnit.SECONDS.toNanos(getConfig().getProjectListRefreshInterval())
+                            && !shutdown) {
+                        wait(TimeUnit.SECONDS.toMillis(1));
+                    }
                 }
             } catch (InterruptedException ex) {
                 logger.warn("InterruptedException: ", ex);
