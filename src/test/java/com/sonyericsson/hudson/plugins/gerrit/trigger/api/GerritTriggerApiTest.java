@@ -45,12 +45,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
-
-
-
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
 
 /**
  * Unit test for API which is contributed to external.

@@ -64,8 +64,11 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
 import java.lang.ref.WeakReference;
 import org.powermock.reflect.Whitebox;
 
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 //CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: Testdata.
 

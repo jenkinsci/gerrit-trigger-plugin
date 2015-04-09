@@ -51,8 +51,10 @@ import java.util.List;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils.getFormWithAction;
 
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test data.
 

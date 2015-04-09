@@ -48,8 +48,7 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
 
