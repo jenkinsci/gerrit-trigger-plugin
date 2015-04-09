@@ -40,9 +40,9 @@ import org.jvnet.hudson.test.JenkinsRule.WebClient;
 import java.util.Iterator;
 import java.util.List;
 
-
-//CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for the project setup for a Gerrit triggered project.
