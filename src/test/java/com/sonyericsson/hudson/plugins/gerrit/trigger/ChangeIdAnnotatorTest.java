@@ -4,8 +4,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import hudson.MarkupText;
 import hudson.model.AbstractBuild;
-import junit.framework.Assert;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
