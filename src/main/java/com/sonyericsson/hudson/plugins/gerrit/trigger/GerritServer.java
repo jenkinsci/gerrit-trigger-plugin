@@ -130,8 +130,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final String START_FAILURE = "Error establising conection";
     private static final String STOP_SUCCESS = "Connection stopped";
     private static final String STOP_FAILURE = "Error terminating connection";
-    private static final String RESTART_SUCCESS = "Connection restarted";
-    private static final String RESTART_FAILURE = "Error restarting connection";
     /**
      * Key that is used to select to trigger a build on events from any server.
      */
