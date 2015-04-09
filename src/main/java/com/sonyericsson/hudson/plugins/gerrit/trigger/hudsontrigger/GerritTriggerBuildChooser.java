@@ -29,6 +29,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
@@ -42,6 +43,7 @@ import hudson.plugins.git.util.BuildChooserContext;
 import hudson.plugins.git.util.BuildChooserDescriptor;
 import hudson.plugins.git.util.BuildData;
 import hudson.remoting.VirtualChannel;
+
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
@@ -158,6 +160,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      * @throws InterruptedException if the repository handling gets interrupted
      * @throws IOException in case of communication errors.
      */
+    @SuppressWarnings("serial")
     private ObjectId getFirstParent(final ObjectId id, GitClient git)
             throws GitException, IOException, InterruptedException {
         return git.withRepository(new RepositoryCallback<ObjectId>() {
@@ -208,6 +211,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      */
     private static class GetGerritEventRevision
             implements BuildChooserContext.ContextCallable<AbstractBuild<?, ?>, String> {
+        static final long serialVersionUID = 0L;
         @Override
         public String invoke(AbstractBuild<?, ?> build, VirtualChannel channel) {
             GerritCause cause = (GerritCause)build.getCause(GerritCause.class);

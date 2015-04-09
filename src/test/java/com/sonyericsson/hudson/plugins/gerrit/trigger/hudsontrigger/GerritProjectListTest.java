@@ -132,6 +132,7 @@ public class GerritProjectListTest {
     public void testAddProject() throws Exception {
 
         //CS IGNORE MagicNumberCheck FOR NEXT 15 LINES. REASON: test input
+        @SuppressWarnings("serial")
         Map<String, Integer> projectNumbers = new HashMap<String, Integer>() {
             {
                put("test/project1", 4);
@@ -167,6 +168,7 @@ public class GerritProjectListTest {
         projects = GerritProjectList.getGerritProjects();
         assertEquals(projects.size(), 2);
 
+        @SuppressWarnings("serial")
         Map<String, Integer> projectNumbers = new HashMap<String, Integer>() {
             {
                put("test/project1", 2);
@@ -202,6 +204,7 @@ public class GerritProjectListTest {
         GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(2));
         projects = GerritProjectList.getGerritProjects();
         assertEquals(3, projects.size());
+        @SuppressWarnings("serial")
         Map<String, Integer> projectNumbers = new HashMap<String, Integer>() {
             {
                 put("test/project1", 3);
