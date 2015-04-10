@@ -126,6 +126,16 @@ import javax.annotation.Nullable;
 public class GerritTrigger extends Trigger<AbstractProject> {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
+
+    /**
+     * Default 'true'.
+     *
+     * As a workaround for https://issues.jenkins-ci.org/browse/JENKINS-17116 it is
+     * possible to only remove pending jobs from the queue, but not to
+     * abort running jobs by setting this to 'false'.
+     */
+    public static final String JOB_ABORT = GerritTrigger.class.getName() + "_job_abort";
+
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
     private List<GerritProject> gerritProjects;
@@ -1913,6 +1923,12 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                     Queue.getInstance().cancel(item);
                 }
             }
+
+            String workaround = System.getProperty(JOB_ABORT);
+            if ((workaround != null) && workaround.equals("false")) {
+                return;
+            }
+
             // Interrupt any currently running jobs.
             Jenkins jenkins = Jenkins.getInstance();
             assert jenkins != null;
