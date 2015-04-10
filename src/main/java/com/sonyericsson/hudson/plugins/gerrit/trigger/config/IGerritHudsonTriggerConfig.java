@@ -47,6 +47,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     boolean isGerritBuildCurrentPatchesOnly();
 
     /**
+     * If enabled, then old patch revision builds will be canceled, if false,
+     * then only reviews in a queue will be removed.
+     * @return true if so.
+     */
+    boolean isGerritAbortRunningBuilds();
+
+    /**
      * Base URL for the Gerrit UI.
      * @return the gerrit front end URL. Always ends with '/'
      */

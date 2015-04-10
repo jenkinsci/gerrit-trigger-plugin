@@ -310,6 +310,11 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public boolean isGerritAbortRunningBuilds() {
+        return true;
+    }
+
+    @Override
     public boolean isEnablePluginMessages() {
         return true;
     }

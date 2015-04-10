@@ -83,6 +83,12 @@
                                     checked="${it.config.gerritBuildCurrentPatchesOnly}"
                                     default="true"/>
                     </f:entry>
+                    <f:entry title="${%Abort Running Builds}"
+                             help="/plugin/gerrit-trigger/help-AbortRunningBuilds.html">
+                        <f:checkbox name="gerritAbortRunningBuilds"
+                                    checked="${it.config.gerritAbortRunningBuilds}"
+                                    default="true"/>
+                    </f:entry>
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"

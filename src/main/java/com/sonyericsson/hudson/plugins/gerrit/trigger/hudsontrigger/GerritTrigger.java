@@ -1876,7 +1876,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                     if (((ChangeBasedEvent)pairs.getKey()).getChange().equals(event.getChange())) {
                         logger.debug("Cancelling build for " + pairs.getKey());
                         try {
-                            cancelJob(pairs.getKey());
+                            cancelJob(pairs.getKey(), serverConfig.isGerritAbortRunningBuilds());
                         } catch (Exception e) {
                             // Ignore any problems with canceling the job.
                             logger.error("Error canceling job", e);
@@ -1902,16 +1902,22 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          * Future.cancel() - see
          * https://issues.jenkins-ci.org/browse/JENKINS-13829
          *
+         * @param abortRunningBuilds
+         *            if true, then abort currently running builds too
          * @param event
          *            The event that originally triggered the build.
          */
-        private void cancelJob(GerritTriggeredEvent event) {
+        private void cancelJob(GerritTriggeredEvent event,
+                boolean abortRunningBuilds) {
             // Remove any jobs in the build queue.
             List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(getJob());
             for (hudson.model.Queue.Item item : itemsInQueue) {
                 if (checkCausedByGerrit(event, item.getCauses())) {
                     Queue.getInstance().cancel(item);
                 }
+            }
+            if (!abortRunningBuilds) {
+                return;
             }
             // Interrupt any currently running jobs.
             Jenkins jenkins = Jenkins.getInstance();
