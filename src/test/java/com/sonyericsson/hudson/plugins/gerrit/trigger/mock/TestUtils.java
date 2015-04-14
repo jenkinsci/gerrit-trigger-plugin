@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2011, 2015 Sony Mobile Communications Inc. All rights reserved.
  *  Copyright 2014 rinrinne All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,15 +24,20 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import hudson.model.Cause;
+import hudson.model.Run;
 
 /**
  * A utility class for test.
@@ -90,6 +94,23 @@ public final class TestUtils {
     }
 
     /**
+     * Get the future build to start as reference.
+     *
+     * @param event the event to monitor.
+     * @return the reference of future build to start.
+     */
+    public static AtomicReference<AbstractBuild> getFutureBuildToStart2(GerritEventLifecycle event) {
+        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+        event.addListener(new GerritEventLifeCycleAdaptor() {
+            @Override
+            public void buildStarted(GerritEvent event, AbstractBuild build) {
+                reference.getAndSet(build);
+            }
+        });
+        return reference;
+    }
+
+    /**
      * Waits until the build is started, or the default timeout has expired.
      *
      * @param reference the reference of future build to start.
@@ -120,6 +141,43 @@ public final class TestUtils {
             }
         }
         return reference.get();
+    }
+
+    /**
+     * Waits until a build has started, which is Gerrit-triggered but not manually triggered.
+     *
+     * @param project the project which is to be built.
+     * @param cbe the event that shall be triggered.
+     * @param timeoutMs the timeout in ms for how long to wait.
+     * @return The build that has started, or null if it hasn't started yet.
+     */
+    public static AbstractBuild waitForNonManualBuildToStart(AbstractProject project, ChangeBasedEvent cbe,
+                                                             int timeoutMs) {
+        AbstractBuild returnBuild = null;
+        long startTime = System.currentTimeMillis();
+        while (returnBuild == null) {
+            if (System.currentTimeMillis() - startTime >= timeoutMs) {
+                throw new RuntimeException("Timeout!");
+            }
+            try {
+                Thread.sleep(SLEEP_DURATION);
+            } catch (InterruptedException e) {
+                System.err.println("Interrupted while waiting!");
+            }
+            final Iterator<Run> iterator = project._getRuns().iterator();
+            while (iterator.hasNext()) {
+                final Run next = iterator.next();
+                Cause cause = next.getCause(GerritCause.class);
+                if (cause != null && cause instanceof GerritCause) {
+                    if (cbe.equals(((GerritCause)cause).getEvent())) {
+                        if (next.isBuilding()) {
+                            returnBuild = (AbstractBuild)next;
+                        }
+                    }
+                }
+            }
+        }
+        return returnBuild;
     }
 
     /**

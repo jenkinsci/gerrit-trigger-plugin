@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
@@ -46,20 +47,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     boolean isGerritBuildCurrentPatchesOnly();
 
     /**
-     * If enabled, then builds of newer patch sets will be aborted by
-     * older patch sets that are retriggered.
+     * The object containing information regarding if old builds should
+     * be cancelled when new builds are triggered.
      *
-     * @return true if so.
+     * @return the BuildCancellationPolicy
      */
-    boolean isGerritAbortNewPatchsets();
 
-    /**
-     * If enabled, then builds of manually triggered patch sets will be aborted
-     * by new patch sets. Also, manual triggers will abort other running builds.
-     *
-     * @return true if so.
-     */
-    boolean isGerritAbortManualPatchsets();
+    BuildCancellationPolicy getBuildCurrentPatchesOnly();
 
     /**
      * Base URL for the Gerrit UI.

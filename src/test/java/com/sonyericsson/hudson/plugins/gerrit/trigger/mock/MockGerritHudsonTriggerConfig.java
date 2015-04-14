@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -298,13 +299,8 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public boolean isGerritAbortNewPatchsets() {
-        return true;
-    }
-
-    @Override
-    public boolean isGerritAbortManualPatchsets() {
-        return true;
+    public BuildCancellationPolicy getBuildCurrentPatchesOnly() {
+        return new BuildCancellationPolicy();
     }
 
     @Override

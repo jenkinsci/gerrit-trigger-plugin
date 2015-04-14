@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.google.common.primitives.Ints;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -135,16 +136,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
 
-    /**
-     * Default value for {@link #isGerritAbortNewPatchsets()}.
-     */
-    public static final boolean DEFAULT_ABORT_NEW_PATCHSETS = true;
-
-    /**
-     * Default value for {@link #isGerritAbortManualPatchsets()}.
-     */
-    private static final boolean DEFAULT_ABORT_MANUAL_PATCHSETS = true;
-
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
@@ -157,9 +148,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Secret gerritHttpPassword;
     private boolean restCodeReview;
     private boolean restVerified;
-    private boolean gerritBuildCurrentPatchesOnly;
-    private boolean gerritAbortNewPatchsets;
-    private boolean gerritAbortManualPatchsets;
+    @Deprecated
+    private transient boolean gerritBuildCurrentPatchesOnly;
     @Deprecated
     private transient int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -189,6 +179,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int watchdogTimeoutMinutes;
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
+    private BuildCancellationPolicy buildCurrentPatchesOnly;
 
 
     /**
@@ -220,8 +211,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         restCodeReview = config.isRestCodeReview();
         restVerified = config.isRestVerified();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
-        gerritAbortNewPatchsets = config.isGerritAbortNewPatchsets();
-        gerritAbortManualPatchsets = config.isGerritAbortManualPatchsets();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
         gerritBuildStartedVerifiedValue = config.getGerritBuildStartedVerifiedValue();
@@ -276,18 +265,12 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
 
-        gerritBuildCurrentPatchesOnly = formData.optBoolean(
-                "gerritBuildCurrentPatchesOnly",
-                DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
-
-        gerritAbortNewPatchsets = formData.optBoolean(
-                "gerritAbortNewPatchsets",
-                DEFAULT_ABORT_NEW_PATCHSETS);
-
-        gerritAbortManualPatchsets = formData.optBoolean(
-                "gerritAbortManualPatchsets",
-                DEFAULT_ABORT_MANUAL_PATCHSETS);
-
+        if (formData.has("buildCurrentPatchesOnly")) {
+            JSONObject currentPatchesOnly = formData.getJSONObject("buildCurrentPatchesOnly");
+            buildCurrentPatchesOnly = BuildCancellationPolicy.createPolicyFromJSON(currentPatchesOnly);
+        } else {
+            buildCurrentPatchesOnly = new BuildCancellationPolicy();
+        }
 
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -521,39 +504,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritAuthKeyFilePassword;
     }
 
-    /**
-     * GerritBuildCurrentPatchesOnly.
-     *
-     * @param gerritBuildCurrentPatchesOnly whether to only build the current patch set
-     * @see #isGerritBuildCurrentPatchesOnly()
-     */
-    public void setGerritBuildCurrentPatchesOnly(boolean gerritBuildCurrentPatchesOnly) {
-        this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
-    }
-
-    /**
-     * GerritAbortNewPatchsets.
-     *
-     * @param gerritAbortNewPatchsets whether to abort builds of patch sets when an older patch set gets retriggered.
-     *
-     * @see #isGerritAbortNewPatchsets()
-     */
-    public void setGerritAbortNewPatchsets(boolean gerritAbortNewPatchsets) {
-        this.gerritAbortNewPatchsets = gerritAbortNewPatchsets;
-    }
-
-    /**
-     * GerritAbortManualPatchsets.
-     *
-     * @param gerritAbortManualPatchsets whether to abort builds when a patch set is manually triggered.
-     *                                   Also, whether builds of manually triggered patch sets should be cancelled
-     *                                   when another patch set comes in.
-     * @see #isGerritAbortManualPatchsets()
-     */
-    public void setGerritAbortManualPatchsets(boolean gerritAbortManualPatchsets) {
-        this.gerritAbortManualPatchsets = gerritAbortManualPatchsets;
-    }
-
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -735,17 +685,12 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
-        return gerritBuildCurrentPatchesOnly;
+        return this.buildCurrentPatchesOnly.isEnabled();
     }
 
     @Override
-    public boolean isGerritAbortNewPatchsets() {
-        return gerritAbortNewPatchsets;
-    }
-
-    @Override
-    public boolean isGerritAbortManualPatchsets() {
-        return gerritAbortManualPatchsets;
+    public BuildCancellationPolicy getBuildCurrentPatchesOnly() {
+        return this.buildCurrentPatchesOnly;
     }
 
     @Override
@@ -1060,5 +1005,22 @@ public class Config implements IGerritHudsonTriggerConfig {
     public void setRestVerified(boolean restVerified) {
         this.restVerified = restVerified;
     }
+
+    /**
+     * When upgrading from an older version where buildCurrentPatchesOnly doesn't exist,
+     * get the value from the now deprecated gerritBuildCurrentPatchesOnly.
+     * @return the resolved instance.
+     */
+    Object readResolve() {
+        if (this.buildCurrentPatchesOnly == null) {
+            this.buildCurrentPatchesOnly = new BuildCancellationPolicy();
+            this.buildCurrentPatchesOnly.setEnabled(gerritBuildCurrentPatchesOnly);
+            this.buildCurrentPatchesOnly.setAbortManualPatchsets(true);
+            this.buildCurrentPatchesOnly.setAbortNewPatchsets(true);
+        }
+        return this;
+    }
+
+
 
 }

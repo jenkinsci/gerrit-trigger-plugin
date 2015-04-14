@@ -41,11 +41,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedContainsEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
@@ -1847,8 +1848,9 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          */
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-            if (serverConfig != null && !serverConfig.isGerritBuildCurrentPatchesOnly()
-                    || (event instanceof ManualPatchsetCreated && !serverConfig.isGerritAbortManualPatchsets())) {
+            BuildCancellationPolicy buildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
+            if (serverConfig != null && !buildCurrentPatchesOnly.isEnabled()
+                    || (event instanceof ManualPatchsetCreated && !buildCurrentPatchesOnly.isAbortManualPatchsets())) {
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
@@ -1860,9 +1862,9 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 if (pairs.getKey() instanceof ChangeBasedEvent) {
                     ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
                     boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
-                            && serverConfig.isGerritAbortManualPatchsets())
-                            || !(runningChangeBasedEvent instanceof ManualPatchsetCreated);
-                    boolean shouldCancelPatchsetNumber = serverConfig.isGerritAbortNewPatchsets()
+                            && buildCurrentPatchesOnly.isAbortManualPatchsets()
+                            || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
+                    boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
                             || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                             < Integer.parseInt(event.getPatchSet().getNumber());
                     if (shouldCancelManual && shouldCancelPatchsetNumber) {
