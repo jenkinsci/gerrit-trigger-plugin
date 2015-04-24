@@ -1848,9 +1848,14 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          */
         public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+            if (serverConfig == null) {
+                runningJobs.put(event, parameters);
+                return;
+            }
             BuildCancellationPolicy buildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
-            if (serverConfig != null && !buildCurrentPatchesOnly.isEnabled()
+            if (!buildCurrentPatchesOnly.isEnabled()
                     || (event instanceof ManualPatchsetCreated && !buildCurrentPatchesOnly.isAbortManualPatchsets())) {
+                runningJobs.put(event, parameters);
                 return;
             }
             Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
