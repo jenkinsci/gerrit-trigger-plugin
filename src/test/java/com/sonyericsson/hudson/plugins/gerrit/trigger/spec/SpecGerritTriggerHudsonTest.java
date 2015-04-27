@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -51,6 +52,7 @@ import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.TestExtension;
@@ -437,43 +439,112 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
-     * Tests that a build for a patch set gets cancelled when a new patch set of the same change arrives.
+     * Tests the behavior of the "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is true.
+     *  - Abort new patch sets is false.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyAbortManual() throws Exception {
+        buildLatestPatchsetOnlyAndReport(true, false, Result.ABORTED, Result.SUCCESS, Result.SUCCESS);
+    }
+
+
+    /**
+     * Tests the behavior of the "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is true.
+     *  - Abort new patch sets is true.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyAbortManualAndNew() throws Exception {
+        buildLatestPatchsetOnlyAndReport(true, true, Result.ABORTED, Result.ABORTED, Result.SUCCESS);
+    }
+
+    /**
+     * Tests the behavior of the "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is false.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyAbortNeitherManualNorNew() throws Exception {
+        buildLatestPatchsetOnlyAndReport(false, false, Result.SUCCESS, Result.SUCCESS, Result.SUCCESS);
+    }
+
+    /**
+     * Tests the behavior of the "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is true.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyAbortNew() throws Exception {
+        buildLatestPatchsetOnlyAndReport(false, true, Result.SUCCESS, Result.ABORTED, Result.SUCCESS);
+    }
+
+    /**
+     * Helper method to test the behavior of the "Build Current Patches Only" functionality.
+     * Parameterized so that the different combinations can be tested.
+     * @param abortManual true if manual patchsets should be cancelled and be able to cancel builds, false if not.
+     * @param abortNew true if new patchsets should be cancelled when older patchsets are retriggered, false if not.
+     * @param firstExpected expected result for the first build.
+     * @param secondExpected expected result for the second build.
+     * @param thirdExpected expected result for the third build
      *
      * @throws Exception if so.
      */
     @LocalData
-    public void testBuildLatestPatchsetOnly() throws Exception {
+    public void buildLatestPatchsetOnlyAndReport(boolean abortManual, boolean abortNew, Result firstExpected,
+                                                 Result secondExpected, Result thirdExpected) throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        ((Config)gerritServer.getConfig()).setGerritBuildCurrentPatchesOnly(true);
+        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+        policy.setAbortManualPatchsets(abortManual);
+        policy.setAbortNewPatchsets(abortNew);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
+        firstEvent.getPatchSet().setNumber("1");
         AtomicReference<AbstractBuild> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = TestUtils.waitForBuildToStart(firstBuildRef);
+        TestUtils.waitForBuildToStart(firstBuildRef);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
-            secondEvent.getPatchSet().setNumber("2");
+            secondEvent.getPatchSet().setNumber("3");
         }
         gerritServer.triggerEvent(secondEvent);
-        TestUtils.waitForBuilds(project, 2);
-        assertEquals(2, project.getLastCompletedBuild().getNumber());
-        assertSame(Result.ABORTED, firstBuild.getResult());
-        assertSame(Result.ABORTED, project.getFirstBuild().getResult());
-        assertSame(Result.SUCCESS, project.getLastBuild().getResult());
+        TestUtils.waitForNonManualBuildToStart(project, secondEvent, 10000);
+        PatchsetCreated thirdEvent = Setup.createPatchsetCreated();
+        if (null != thirdEvent.getPatchSet()) {
+            thirdEvent.getPatchSet().setNumber("2");
+        }
+        gerritServer.triggerEvent(thirdEvent);
+        TestUtils.waitForBuilds(project, 3);
+        assertEquals(3, project.getLastCompletedBuild().getNumber());
+        assertSame(firstExpected, project.getFirstBuild().getResult());
+        assertSame(secondExpected, project.getBuildByNumber(2).getResult());
+        assertSame(thirdExpected, project.getBuildByNumber(3).getResult());
     }
 
     /**
-     * Same test logic as {@link #testBuildLatestPatchsetOnly()}
-     * except the trigger is configured to not cancel the previous build.
+     * Tests that builds are not aborted when "build current patch sets only" is set to false.
      *
      * @throws Exception if so.
      */
     @LocalData
     public void testNotBuildLatestPatchsetOnly() throws Exception {
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        ((Config)gerritServer.getConfig()).setGerritBuildCurrentPatchesOnly(false);
+        ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly().setEnabled(false);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);

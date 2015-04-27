@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010, 2015 Sony Mobile Communications Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +27,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -307,6 +307,11 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
         return true;
+    }
+
+    @Override
+    public BuildCancellationPolicy getBuildCurrentPatchesOnly() {
+        return new BuildCancellationPolicy();
     }
 
     @Override

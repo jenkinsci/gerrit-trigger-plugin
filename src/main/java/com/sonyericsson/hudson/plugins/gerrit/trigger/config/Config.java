@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012, 2013 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010, 2015 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.google.common.primitives.Ints;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -156,7 +156,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Secret gerritHttpPassword;
     private boolean restCodeReview;
     private boolean restVerified;
-    private boolean gerritBuildCurrentPatchesOnly;
+    @Deprecated
+    private transient boolean gerritBuildCurrentPatchesOnly;
     @Deprecated
     private transient int numberOfWorkerThreads;
     private String gerritVerifiedCmdBuildSuccessful;
@@ -188,6 +189,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int watchdogTimeoutMinutes;
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
+    private BuildCancellationPolicy buildCurrentPatchesOnly;
 
 
     /**
@@ -275,9 +277,12 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
 
-        gerritBuildCurrentPatchesOnly = formData.optBoolean(
-                "gerritBuildCurrentPatchesOnly",
-                DEFAULT_BUILD_CURRENT_PATCHES_ONLY);
+        if (formData.has("buildCurrentPatchesOnly")) {
+            JSONObject currentPatchesOnly = formData.getJSONObject("buildCurrentPatchesOnly");
+            buildCurrentPatchesOnly = BuildCancellationPolicy.createPolicyFromJSON(currentPatchesOnly);
+        } else {
+            buildCurrentPatchesOnly = new BuildCancellationPolicy();
+        }
 
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
@@ -520,16 +525,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritAuthKeyFilePassword;
     }
 
-    /**
-     * GerritBuildCurrentPatchesOnly.
-     *
-     * @param gerritBuildCurrentPatchesOnly whether to only build the current patch set
-     * @see #isGerritBuildCurrentPatchesOnly()
-     */
-    public void setGerritBuildCurrentPatchesOnly(boolean gerritBuildCurrentPatchesOnly) {
-        this.gerritBuildCurrentPatchesOnly = gerritBuildCurrentPatchesOnly;
-    }
-
     @Override
     public String getGerritFrontEndUrl() {
         String url = gerritFrontEndUrl;
@@ -717,7 +712,12 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
-        return gerritBuildCurrentPatchesOnly;
+        return this.buildCurrentPatchesOnly.isEnabled();
+    }
+
+    @Override
+    public BuildCancellationPolicy getBuildCurrentPatchesOnly() {
+        return this.buildCurrentPatchesOnly;
     }
 
     @Override
@@ -1032,5 +1032,22 @@ public class Config implements IGerritHudsonTriggerConfig {
     public void setRestVerified(boolean restVerified) {
         this.restVerified = restVerified;
     }
+
+    /**
+     * When upgrading from an older version where buildCurrentPatchesOnly doesn't exist,
+     * get the value from the now deprecated gerritBuildCurrentPatchesOnly.
+     * @return the resolved instance.
+     */
+    Object readResolve() {
+        if (this.buildCurrentPatchesOnly == null) {
+            this.buildCurrentPatchesOnly = new BuildCancellationPolicy();
+            this.buildCurrentPatchesOnly.setEnabled(gerritBuildCurrentPatchesOnly);
+            this.buildCurrentPatchesOnly.setAbortManualPatchsets(true);
+            this.buildCurrentPatchesOnly.setAbortNewPatchsets(true);
+        }
+        return this;
+    }
+
+
 
 }
