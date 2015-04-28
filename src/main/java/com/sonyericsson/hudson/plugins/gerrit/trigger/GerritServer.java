@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2010 Sony Mobile Communications Inc. All rights reserved.
  *  Copyright 2013 Ericsson.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -407,7 +406,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         initializeConnectionListener();
 
-        projectListUpdater = new GerritProjectListUpdater(name);
+        projectListUpdater =
+                new GerritProjectListUpdater(
+                        name, isProjectCreatedEventsSupported());
         projectListUpdater.start();
 
         //Starts unreviewed patches listener
@@ -635,6 +636,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public boolean isReplicationEventsSupported() {
         return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.replicationEvents, name);
+    }
+
+    /**
+     * Checks whether the current server support project-created events or not.
+     * @return true if project-created events are supported, otherwise false
+     */
+    public boolean isProjectCreatedEventsSupported() {
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.projectCreatedEvents, name);
     }
 
     /**
@@ -1237,7 +1246,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
      */
-    public FormValidation doProjectListRefreshIntervalCheck(
+    public FormValidation doProjectListFetchDelayCheck(
             @QueryParameter("value")
             final String value) {
 

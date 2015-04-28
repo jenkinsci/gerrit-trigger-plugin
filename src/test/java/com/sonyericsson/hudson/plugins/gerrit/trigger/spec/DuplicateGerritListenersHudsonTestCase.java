@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
- * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ * Copyright 2011 Sony Mobile Communications Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -94,13 +93,8 @@ public class DuplicateGerritListenersHudsonTestCase {
     @Test
     public void testNewProjectCreation() throws Exception {
         createGerritTriggeredJob(j, "testJob1");
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
-            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
-        Collection<GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(3, gerritEventListeners.size());
+        assertNbrOfGerritEventListeners(
+                PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
     /**
@@ -113,13 +107,8 @@ public class DuplicateGerritListenersHudsonTestCase {
     public void testNewProjectCreationWithReSave() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob2");
         j.configRoundtrip((Item)p);
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
-            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
-        Collection<GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(3, gerritEventListeners.size());
+        assertNbrOfGerritEventListeners(
+                PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
     /**
@@ -138,13 +127,8 @@ public class DuplicateGerritListenersHudsonTestCase {
         j.submit(getFormWithAction("doRename", confirmPage.getForms()));
         //configRoundtrip(p);
         assertEquals("testJob33", p.getName());
-        GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
-            getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
-        Collection<GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(3, gerritEventListeners.size());
+        assertNbrOfGerritEventListeners(
+                PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
     /**
@@ -163,15 +147,9 @@ public class DuplicateGerritListenersHudsonTestCase {
         server.start();
 
         createGerritTriggeredJob(j, "testJob4");
-        GerritHandler handler = Whitebox.getInternalState(server, GerritHandler.class);
-        assertNotNull(handler);
         GerritConnection connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNull(connection);
-        Collection<GerritEventListener> savedEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(3, savedEventListeners.size());
+        assertNbrOfGerritEventListeners(server);
         Config config = (Config)server.getConfig();
         config.setGerritAuthKeyFile(keyFile.getPublicKey());
         config.setGerritHostName("localhost");
@@ -180,13 +158,28 @@ public class DuplicateGerritListenersHudsonTestCase {
         config.setGerritProxy("");
         server.startConnection();
 
-        handler = Whitebox.getInternalState(server, GerritHandler.class);
-        Collection<GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(3, gerritEventListeners.size());
+        assertNbrOfGerritEventListeners(server);
         connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNotNull(connection);
+    }
+
+    /**
+     * Asserts that the number of GerritEventListeners for server is as expected.
+     * @param server the Gerrit server to check.
+     */
+    private void assertNbrOfGerritEventListeners(GerritServer server) {
+        GerritHandler handler = Whitebox.getInternalState(server, GerritHandler.class);
+        assertNotNull(handler);
+        Collection<GerritEventListener> gerritEventListeners =
+                Whitebox.getInternalState(handler, "gerritEventListeners");
+        int nbrOfListeners = 0;
+        nbrOfListeners++; // EventListener adds 1 listener
+        nbrOfListeners++; // DependencyQueueTaskDispatcher adds 1 listener
+        nbrOfListeners++; // ReplicationQueueTaskDispatcher adds 1 listener
+        if (server.isConnected() && server.getConfig().isEnableProjectAutoCompletion()
+                && server.isProjectCreatedEventsSupported()) {
+            nbrOfListeners++; // GerritProjectListUpdater adds 1 listener
+        }
+        assertEquals(nbrOfListeners, gerritEventListeners.size());
     }
 }

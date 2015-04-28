@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010, 2015 Sony Mobile Communications Inc. All rights reserved.
+ *  Copyright 2010 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -205,16 +205,22 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     int getDynamicConfigRefreshInterval();
 
     /**
-     * Returns the projectListRefreshInterval.
+     * Returns the projectListFetchDelay.
+     * @return the value.
+     */
+    int getProjectListFetchDelay();
+
+    /**
+     * Returns the projectListFetchDelay.
      * @return the value.
      */
     int getProjectListRefreshInterval();
 
     /**
-     * If the Project List should be fetched from Gerrit on startup.
+     * If this Gerrit server should be used to fetch project names for auto completion.
      * @return true if so.
      */
-    boolean isLoadProjectListOnStartup();
+    boolean isEnableProjectAutoCompletion();
 
     /**
      * If the plugin still has default values for hostname and frontendurl.

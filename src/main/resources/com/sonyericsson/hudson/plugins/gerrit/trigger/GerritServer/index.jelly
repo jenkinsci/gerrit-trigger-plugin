@@ -245,23 +245,35 @@
                                  help="/plugin/gerrit-trigger/help-GerritFetchProjectList.html">
                             <div>
                                 <div style="width: 200px; display: inline-block;">
-                                    ${%Load Project List on Startup}
+                                    ${%Enable project Auto Completion}
                                 </div>
                                 <div style="display: inline">
-                                    <f:checkbox name="loadProjectListOnStartup"
-                                         checked="${it.config.loadProjectListOnStartup}"
-                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP}"/>
+                                    <f:checkbox name="enableProjectAutoCompletion"
+                                         checked="${it.config.enableProjectAutoCompletion}"
+                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION}"/>
                                 </div>
                             </div>
                             <div>
                                 <div style="width: 200px; display: inline-block;">
-                                    ${%Refresh Project List Interval} (seconds)
+                                    ${%Project list fetch delay} (seconds)
+                                </div>
+                                <div style="display: inline;">
+                                     <f:textbox name="projectListFetchDelay"
+                                        value="${it.config.projectListFetchDelay}"
+                                        default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_FETCH_DELAY}"
+                                        checkUrl="'${rootURL}/${serverURL}/projectListFetchDelayCheck?value='+escape(this.value)"
+                                        style="max-width: 100px;"/>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Project list fetch interval} (seconds)
                                 </div>
                                 <div style="display: inline;">
                                      <f:textbox name="projectListRefreshInterval"
                                         value="${it.config.projectListRefreshInterval}"
                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL}"
-                                        checkUrl="'${rootURL}/${serverURL}/projectListRefreshIntervalCheck?value='+escape(this.value)"
+                                        checkUrl="'${rootURL}/${serverURL}/projectListFetchDelayCheck?value='+escape(this.value)"
                                         style="max-width: 100px;"/>
                                 </div>
                             </div>

@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications.
+ *  Copyright 2010 Sony Mobile Communications Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,9 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ProjectCreated;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshException;
@@ -45,11 +48,12 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gustaf Lundh &lt;Gustaf.Lundh@sonyericsson.com&gt;
  */
-public class GerritProjectListUpdater extends Thread implements ConnectionListener {
+public class GerritProjectListUpdater extends Thread implements ConnectionListener, GerritEventListener {
     /**
      * The command for fetching projects.
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
+    private boolean useIncrementalUpdate;
 
     private boolean connected = false;
     private boolean shutdown = false;
@@ -58,11 +62,12 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     private String serverName;
 
     /**
-     * Standard constructor.
-     *
+     * Default constructor.
      * @param serverName the name of the Gerrit server.
+     * @param hasProjectCreatedEvents true if Gerrit server has project-created events.
      */
-    public GerritProjectListUpdater(String serverName) {
+    public GerritProjectListUpdater(String serverName, boolean hasProjectCreatedEvents) {
+        this.useIncrementalUpdate = hasProjectCreatedEvents;
         this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
         this.serverName = serverName;
@@ -79,12 +84,24 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         }
         GerritServer server = plugin.getServer(serverName);
         if (server != null) {
-            server.addListener(this);
+            server.addListener(this.connectionListener());
             connected = server.isConnected();
         } else {
             logger.error("Could not find the server {}", serverName);
         }
     }
+
+    /**
+     * This as ConnectionListener.
+     * @return This as ConnectionListener.
+     */
+    private ConnectionListener connectionListener() { return this; }
+
+    /**
+     * This as GerritEventListener.
+     * @return This as GerritEventListener.
+     */
+    private GerritEventListener gerritEventListener() { return this; }
 
     @Override
     public synchronized void connectionEstablished() {
@@ -97,6 +114,18 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         setConnected(false);
     }
 
+    @Override
+    public void gerritEvent(GerritEvent gerritEvent) {
+    }
+
+    /**
+     * OverLoaded gerritEvent(GerritEvent gerritEvent).
+     * @param gerritEvent the event.
+     */
+    public void gerritEvent(ProjectCreated gerritEvent) {
+            addGerritProject(gerritEvent.getProjectName());
+    }
+
     /**
      * Shutdown the thread.
      */
@@ -107,57 +136,100 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
 
     @Override
     public void run() {
-        // Zero or negative value, never query this Gerrit-server for project list
-        if (getConfig().getProjectListRefreshInterval() <= 0) {
+        // Never query this Gerrit-server for project list.
+        if (!getConfig().isEnableProjectAutoCompletion()) {
             return;
         }
+        if (getConfig().getProjectListFetchDelay() == 0) {
+            tryLoadProjectList();
+        } else {
+            waitFor(getConfig().getProjectListFetchDelay());
+            tryLoadProjectList();
+        }
+        if (useIncrementalUpdate) {
+            listenToProjectCreatedEvents();
 
-        boolean loadProjectList = getConfig().isLoadProjectListOnStartup();
-        while (!shutdown) {
-            try {
-                if (loadProjectList) {
-                    if (isConnected()) {
-                        IGerritHudsonTriggerConfig activeConfig = getConfig();
-                        SshConnection sshConnection = SshConnectionFactory.getConnection(
-                                activeConfig.getGerritHostName(),
-                                activeConfig.getGerritSshPort(),
-                                activeConfig.getGerritProxy(),
-                                activeConfig.getGerritAuthentication()
-                        );
-                        setGerritProjects(readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS)));
-                        sshConnection.disconnect();
-                    }
-                } else {
-                    loadProjectList = true;
-                }
-            } catch (SshException ex) {
-                 logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);
-            } catch (IOException ex) {
-                logger.error("Could not read stream with Gerrit projects: ", ex);
-            }
-
-            try {
-                synchronized (this) {
-                    long startTime = System.nanoTime();
-                    // Continuously refetching the refresh interval allows us to pick up configuration
-                    // changes on the fly, keeping us from getting stuck on accidentally entered very
-                    // high values.
-                    while (System.nanoTime() - startTime
-                            < TimeUnit.SECONDS.toNanos(getConfig().getProjectListRefreshInterval())
-                            && !shutdown) {
-                        wait(TimeUnit.SECONDS.toMillis(1));
-                    }
-                }
-            } catch (InterruptedException ex) {
-                logger.warn("InterruptedException: ", ex);
-                break;
+        } else {
+            while (!shutdown) {
+                waitFor(getConfig().getProjectListRefreshInterval());
+                tryLoadProjectList();
             }
         }
-        GerritServer server = PluginImpl.getServer_(serverName);
-        if (server != null) {
-             server.removeListener(this);
-        } else {
-            logger.error("Could not find server {}", serverName);
+    }
+
+    /**
+     * Add this as GerritEventListener.
+     */
+    private void listenToProjectCreatedEvents() {
+        // Listen to project-created events.
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            GerritServer server = plugin.getServer(serverName);
+            if (server != null) {
+                // If run was called before.
+                server.removeListener(this.gerritEventListener());
+                server.addListener(this.gerritEventListener());
+            } else {
+                logger.error("Could not find the server {} to add GerritEventListener.", serverName);
+            }
+        }
+    }
+
+    /**
+     * Wait for 'delay' seconds.
+     * @param delay seconds to wait.
+     */
+    private void waitFor(int delay) {
+        try {
+            synchronized (this) {
+                long startTime = System.nanoTime();
+                // Continuously refetching the refresh interval allows us to pick up configuration
+                // changes on the fly, keeping us from getting stuck on accidentally entered very
+                // high values.
+                while (System.nanoTime() - startTime
+                        < TimeUnit.SECONDS.toNanos(delay)
+                        && !shutdown) {
+                    wait(TimeUnit.SECONDS.toMillis(1));
+                }
+            }
+        } catch (InterruptedException ex) {
+            logger.warn("InterruptedException: ", ex);
+        }
+    }
+
+    /**
+     * Try to load entire project list from Gerrit server.
+     */
+    private void tryLoadProjectList() {
+        int interval = 1;
+        while (!isConnected() && !shutdown) {
+            logger.info("Not connected to {}, waiting for {} second(s)", serverName, interval);
+            waitFor(interval);
+            interval = interval * 2;
+        }
+        try {
+            logger.info("Trying to load project list.");
+            if (isConnected()) {
+                IGerritHudsonTriggerConfig activeConfig = getConfig();
+                SshConnection sshConnection = SshConnectionFactory.getConnection(
+                        activeConfig.getGerritHostName(),
+                        activeConfig.getGerritSshPort(),
+                        activeConfig.getGerritProxy(),
+                        activeConfig.getGerritAuthentication()
+                );
+                List<String> projects = readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
+                if (projects.size() > 0) {
+                    setGerritProjects(projects);
+                    logger.info("Project list from {} contains {} entries", serverName, projects.size());
+                } else {
+                    logger.warn("Project list from {} contains 0 projects", serverName);
+                }
+                sshConnection.disconnect();
+            }
+        } catch (SshException ex) {
+            logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);
+        } catch (IOException ex) {
+            logger.error("Could not read stream with Gerrit projects: ", ex);
         }
     }
 
@@ -213,6 +285,14 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     public synchronized void setConnected(boolean connected) {
         this.connected = connected;
+    }
+
+    /**
+     * Adds a Gerrit project to this.gerritProjects.
+     * @param gerritProject the Gerrit project to add.
+     */
+    public synchronized void addGerritProject(String gerritProject) {
+        gerritProjects.add(gerritProject);
     }
 
     /**
