@@ -1201,11 +1201,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             @QueryParameter("value")
             final String value) {
 
-        FormValidation validatePositive = FormValidation.validateNonNegativeInteger(value);
-        if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
-            return validatePositive;
-        }
-        return FormValidation.ok();
+        return FormValidation.validateNonNegativeInteger(value);
     }
 
     /**
