@@ -8,14 +8,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
- * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.GerritTriggeredEventComparator}.
+ * Tests {@link BuildMemory.GerritTriggeredEventComparator}.
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  */
@@ -27,7 +26,13 @@ public class GerritTriggeredEventComparatorTest {
     private final int expected;
     private final Comparator<GerritTriggeredEvent> comparator;
 
-    @Parameterized.Parameters(name= "{index}: {0}, {1} == {2}")
+    /**
+     * The different scenarios.
+     *
+     * @return a list of parameters to the constructor.
+     * @see Parameterized
+     */
+    @Parameterized.Parameters(name = "{index}: {0}, {1} == {2}")
     public static Iterable<Object[]> permutations() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         ChangeMerged merged = Setup.createChangeMerged();
@@ -37,10 +42,16 @@ public class GerritTriggeredEventComparatorTest {
                 {event, null, 1},
                 {event, event, 0},
                 {event, merged, new Integer(event.hashCode()).compareTo(merged.hashCode())},
-                {merged, event, new Integer(merged.hashCode()).compareTo(event.hashCode())}
+                {merged, event, new Integer(merged.hashCode()).compareTo(event.hashCode()), },
         });
     }
 
+    /**
+     * Constructor.
+     * @param o1 first argument
+     * @param o2 second argument
+     * @param expected the expected result
+     */
     public GerritTriggeredEventComparatorTest(GerritTriggeredEvent o1, GerritTriggeredEvent o2, int expected) {
         this.o1 = o1;
         this.o2 = o2;
@@ -48,6 +59,12 @@ public class GerritTriggeredEventComparatorTest {
         comparator = new BuildMemory.GerritTriggeredEventComparator();
     }
 
+    /**
+     * Tests the scenario on
+     * {@link BuildMemory.GerritTriggeredEventComparator#compare(GerritTriggeredEvent, GerritTriggeredEvent)}.
+     *
+     * @throws Exception if so
+     */
     @Test
     public void testCompare() throws Exception {
         assertEquals(expected, comparator.compare(o1, o2));
