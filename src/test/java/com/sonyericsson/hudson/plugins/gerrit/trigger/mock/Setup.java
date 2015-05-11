@@ -144,6 +144,7 @@ public final class Setup {
         refUpdate.setProject(project);
         refUpdate.setRefName(ref);
         event.setRefUpdate(refUpdate);
+        event.setEventCreatedOn("1418133772");
 
         return event;
     }
@@ -174,6 +175,7 @@ public final class Setup {
         patch.setRef(ref);
         event.setPatchset(patch);
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -191,6 +193,7 @@ public final class Setup {
         event.getChange().setOwner(owner);
         event.getPatchSet().setUploader(uploader);
         event.setAccount(account);
+        event.setEventCreatedOn("1418133772");
 
         return event;
     }
@@ -219,6 +222,7 @@ public final class Setup {
         event.setPatchset(patch);
         patch.setRef("ref");
         event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -244,6 +248,7 @@ public final class Setup {
         event.setPatchset(patch);
         Account abandoner = new Account("Name1", "email@domain1.com");
         event.setAbandoner(abandoner);
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -291,6 +296,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -324,6 +330,7 @@ public final class Setup {
         patch.setRef(ref);
         patch.setCreatedOn(date);
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -357,6 +364,7 @@ public final class Setup {
         patch.setRef(ref);
         patch.setCreatedOn(date);
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -382,6 +390,7 @@ public final class Setup {
         event.setPatchset(patch);
         Account restorer = new Account("Name1", "email@domain1.com");
         event.setRestorer(restorer);
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -414,6 +423,7 @@ public final class Setup {
         approval.setValue("1");
         approvals.add(approval);
         event.setApprovals(approvals);
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 
@@ -447,6 +457,7 @@ public final class Setup {
 
         event.put(PATCH_SET, patchSet);
         event.put(UPLOADER, account);
+
         return event;
     }
 
@@ -474,6 +485,7 @@ public final class Setup {
         event.setPatchset(patch);
         event.setUserName("Bobby");
         event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
         return event;
     }
 

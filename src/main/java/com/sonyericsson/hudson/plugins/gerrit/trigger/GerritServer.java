@@ -111,6 +111,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnec
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 /**
@@ -152,6 +153,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private transient UnreviewedPatchesListener unreviewedPatchesListener;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
+    private transient GerritMissedEventsPlaybackManager missedEventsPlaybackManager;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -159,6 +161,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * Returns the Missed Events playback manager.
+     * @return GerritMissedEventsPlaybackManager
+     */
+    public GerritMissedEventsPlaybackManager getMissedEventsPlaybackManager() {
+        return missedEventsPlaybackManager;
+    }
+
+     /**
      * Convenience method for jelly to get url of the server list's page relative to root.
      * @link {@link GerritManagement#getUrlName()}.
      *
@@ -391,6 +401,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getHandler_();
 
+        if (missedEventsPlaybackManager == null) {
+            missedEventsPlaybackManager = new GerritMissedEventsPlaybackManager(name);
+        }
+
         initializeConnectionListener();
 
         projectListUpdater = new GerritProjectListUpdater(name);
@@ -398,6 +412,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         //Starts unreviewed patches listener
         unreviewedPatchesListener = new UnreviewedPatchesListener(name);
+
+        if (missedEventsPlaybackManager.isSupported()) {
+            addListener((GerritEventListener)missedEventsPlaybackManager);
+        }
 
         logger.info(name + " started");
         started = true;
@@ -433,6 +451,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (unreviewedPatchesListener != null) {
             unreviewedPatchesListener.shutdown();
             unreviewedPatchesListener = null;
+        }
+
+        if (missedEventsPlaybackManager != null) {
+            missedEventsPlaybackManager.shutdown();
         }
 
         if (gerritConnection != null) {
@@ -502,6 +524,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
+                if (missedEventsPlaybackManager == null) {
+                    missedEventsPlaybackManager = new GerritMissedEventsPlaybackManager(name);
+                }
+                gerritConnection.addListener(missedEventsPlaybackManager);
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");
@@ -517,6 +543,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (gerritConnection != null) {
             gerritConnection.shutdown(true);
             gerritConnection.removeListener(gerritConnectionListener);
+            gerritConnection.removeListener(missedEventsPlaybackManager);
             gerritConnection = null;
             gerritEventManager.setIgnoreEMail(name, null);
         } else {
@@ -1065,6 +1092,19 @@ public class GerritServer implements Describable<GerritServer>, Action {
             if (gerritConnectionListener.isSnapShotGerrit()) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    /**
+     * If Gerrit Missed Events Playback is supported.
+     *
+     * @return true if so, false otherwise.
+     */
+    @JavaScriptMethod
+    public boolean isGerritMissedEventsSupported() {
+        if (gerritConnectionListener.isConnected()) {
+            return missedEventsPlaybackManager.isSupported();
         }
         return false;
     }
