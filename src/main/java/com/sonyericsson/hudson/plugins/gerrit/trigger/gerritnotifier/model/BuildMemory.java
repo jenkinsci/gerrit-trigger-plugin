@@ -60,11 +60,19 @@ public class BuildMemory {
      *
      * @author James E. Blair &lt;jeblair@hp.com&gt;
      */
-    private class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
+    static class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
         @Override
         public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
-            return new Integer(((java.lang.Object)o1).hashCode()).compareTo(
-                    new Integer(((java.lang.Object)o2).hashCode()));
+            if (o1 == null && o2 == null) {
+                return 0;
+            }
+            if (o1 != null && o2 == null) {
+                return 1;
+            }
+            if (o1 == null && o2 != null) {
+                return -1;
+            }
+            return new Integer(o1.hashCode()).compareTo(o2.hashCode());
         }
     }
 
