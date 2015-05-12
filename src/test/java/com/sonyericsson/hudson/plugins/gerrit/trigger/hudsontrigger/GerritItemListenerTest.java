@@ -119,7 +119,7 @@ public class GerritItemListenerTest {
         GerritTrigger trigger = spy(new GerritTrigger(
                 null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, true, true, false, false, "", "", "", "", "", "", "", null, null, null,
-                null, false, false, "", null));
+                null, false, "", null));
 
         doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
         job.addTrigger(trigger);

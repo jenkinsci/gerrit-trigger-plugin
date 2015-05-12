@@ -182,11 +182,6 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Check Non-Reviewed Patchsets}"
-                 field="allowTriggeringUnreviewedPatches"
-                 help="/plugin/gerrit-trigger/trigger/help-TriggerUnreviewedPatches.html">
-           <f:checkbox name="allowTriggeringUnreviewedPatches" checked="${it.allowTriggeringUnreviewedPatches}"/>
-        </f:entry>
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">
             <f:hetero-list descriptors="${descriptor.getGerritEventDescriptors()}" items="${instance.triggerOnEvents}" name="triggerOnEvents" hasHeader="true"/>

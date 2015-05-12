@@ -70,15 +70,13 @@ public class GerritProjectListTest {
     /**
      * Creates GerritTrigger.
      * @param gerritProjects the list of Gerrit projects.
-     * @param unreviewed is check unreviewed patches property allowed.
      * @param silentMode is silentMode allowed.
      * @return GerritTrigger the created trigger.
      */
     private GerritTrigger createGerritTrigger(
-            List<GerritProject> gerritProjects, boolean unreviewed, boolean silentMode) {
+            List<GerritProject> gerritProjects, boolean silentMode) {
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
         trigger.setGerritProjects(gerritProjects);
-        trigger.setAllowTriggeringUnreviewedPatches(unreviewed);
         trigger.setSilentMode(silentMode);
         trigger.setSilentStartMode(false);
         return trigger;
@@ -96,9 +94,9 @@ public class GerritProjectListTest {
         GerritProject gP4 = createGerritProject("test/project4", CompareType.PLAIN);
         GerritProject gP5 = createGerritProject("test/project5", CompareType.PLAIN);
 
-        GerritTrigger trigger1 = createGerritTrigger(Arrays.asList(gP1, gP2, gP1), true, false);
-        GerritTrigger trigger2 = createGerritTrigger(Arrays.asList(gP2, gP1, gP5), true, false);
-        GerritTrigger trigger3 = createGerritTrigger(Arrays.asList(gP1, gP3, gP2, gP5), true, false);
+        GerritTrigger trigger1 = createGerritTrigger(Arrays.asList(gP1, gP2, gP1), false);
+        GerritTrigger trigger2 = createGerritTrigger(Arrays.asList(gP2, gP1, gP5), false);
+        GerritTrigger trigger3 = createGerritTrigger(Arrays.asList(gP1, gP3, gP2, gP5), false);
 
         for (GerritProject p : trigger1.getGerritProjects()) {
             GerritProjectList.addProject(p, trigger1);
