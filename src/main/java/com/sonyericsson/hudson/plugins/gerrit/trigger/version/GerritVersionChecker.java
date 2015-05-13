@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2012 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2012 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +55,12 @@ public final class GerritVersionChecker {
         /**
          * Replication events, added in Gerrit 2.9.
          */
-        replicationEvents("Replication events", "2.9");
+        replicationEvents("Replication events", "2.9"),
+
+        /**
+         * Project created events, added in Gerrit 2.12.
+         */
+        projectCreatedEvents("Project created events", "2.12");
 
         private final String displayName;
         private final String version;

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ * Copyright 2012 Sony Mobile Communications Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -155,7 +155,7 @@ public class GerritServerTest {
      */
     @Test
     public void testGetDisabledFeaturesNone() throws Exception {
-        String version = "2.9";
+        String version = "2.12";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
@@ -185,7 +185,7 @@ public class GerritServerTest {
      */
     @Test
     public void testHasDisabledFeaturesNot() throws Exception {
-        String version = "2.9";
+        String version = "2.12";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 

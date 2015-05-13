@@ -1,8 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2011 Sony Ericsson Mobile Communications. All rights reserved.
- * Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ * Copyright 2011 Sony Mobile Communications Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +29,7 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebRequestSettings;
 import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
@@ -105,7 +105,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     @Test
     @LocalData
     public void testProject() throws Exception {
-        assertNrOfEventListeners(3);
+        assertNrOfEventListeners(0);
     }
 
     /**
@@ -118,9 +118,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     public void testCreateNewProject() throws Exception {
         @SuppressWarnings("unused")
         FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertNrOfEventListeners(4);
+        assertNrOfEventListeners(1);
     }
 
     /**
@@ -133,11 +131,9 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     public void testReconfigureNewProject() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
 
-        assertNrOfEventListeners(4);
+        assertNrOfEventListeners(1);
         j.configRoundtrip((Item)p);
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertNrOfEventListeners(4);
+        assertNrOfEventListeners(1);
     }
 
     /**
@@ -149,7 +145,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     @Test
     @LocalData
     public void testReconfigureUsingRestApi() throws Exception {
-        assertNrOfEventListeners(3);
+        assertNrOfEventListeners(0);
         TopLevelItem testProj = j.jenkins.getItem("testProj");
         String gerritProjectPattern = "someotherproject";
         XmlPage xmlPage = loadConfigXmlViaHttp(testProj);
@@ -161,7 +157,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
         j.jenkins.setCrumbIssuer(null);
         Page page = j.createWebClient().getPage(request);
         j.assertGoodStatus(page);
-        assertNrOfEventListeners(3);
+        assertNrOfEventListeners(0);
         assertEventListenerWithSomeOtherProjectSet(gerritProjectPattern);
     }
 
@@ -174,7 +170,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     @Test
     @LocalData
     public void testReconfigureUsingCli() throws Exception {
-        assertNrOfEventListeners(3);
+        assertNrOfEventListeners(0);
         TopLevelItem testProj = j.jenkins.getItem("testProj");
         String gerritProjectPattern = "someotherproject";
         Document document = loadConfigXmlViaCli(testProj);
@@ -188,7 +184,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
         String response = IOUtils.toString(process.getInputStream());
         System.out.println(response);
         assertEquals(0, process.waitFor());
-        assertNrOfEventListeners(3);
+        assertNrOfEventListeners(0);
         assertEventListenerWithSomeOtherProjectSet(gerritProjectPattern);
     }
 
@@ -355,13 +351,20 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     /**
      * Checks the size of the listeners collection retrieved by {@link #getGerritEventListeners()}.
      *
-     * @param number the number to assert.
+     * @param extra number of added listeners, other than the default.
      */
-    void assertNrOfEventListeners(int number) {
+    void assertNrOfEventListeners(int extra) {
         Collection<GerritEventListener> gerritEventListeners = getGerritEventListeners();
-        // DependencyQueueTaskDispatcher adds 1 listener
-        // ReplicationQueueTaskDispatcher adds 1 listener
-        assertEquals(number, gerritEventListeners.size());
+        int nbrOfListeners = extra;
+        nbrOfListeners++; // EventListener adds 1 listener
+        nbrOfListeners++; // DependencyQueueTaskDispatcher adds 1 listener
+        nbrOfListeners++; // ReplicationQueueTaskDispatcher adds 1 listener
+        GerritServer server = PluginImpl.getServer_(PluginImpl.DEFAULT_SERVER_NAME);
+        if (server.isConnected() && server.getConfig().isEnableProjectAutoCompletion()
+                && server.isProjectCreatedEventsSupported()) {
+            nbrOfListeners++; // GerritProjectListUpdater adds 1 listener//
+        }
+        assertEquals(nbrOfListeners, gerritEventListeners.size());
     }
 
     /**

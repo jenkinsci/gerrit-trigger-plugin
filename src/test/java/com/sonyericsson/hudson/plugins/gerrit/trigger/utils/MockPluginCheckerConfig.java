@@ -332,7 +332,10 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public boolean isLoadProjectListOnStartup() {
+    public boolean isEnableProjectAutoCompletion() {
         return false;
     }
+
+    @Override
+    public int getProjectListFetchDelay() { return 0; }
 }

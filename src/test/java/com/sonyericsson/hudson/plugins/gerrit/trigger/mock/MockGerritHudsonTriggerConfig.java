@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010, 2015 Sony Mobile Communications Inc.
+ *  Copyright 2010 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -290,13 +290,16 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public int getProjectListRefreshInterval() {
-        return Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL;
+    public int getProjectListFetchDelay() {
+        return Config.DEFAULT_PROJECT_LIST_FETCH_DELAY;
     }
 
     @Override
-    public boolean isLoadProjectListOnStartup() {
-        return Config.DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP;
+    public int getProjectListRefreshInterval() { return Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL; }
+
+    @Override
+    public boolean isEnableProjectAutoCompletion() {
+        return Config.DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION;
     }
 
     @Override

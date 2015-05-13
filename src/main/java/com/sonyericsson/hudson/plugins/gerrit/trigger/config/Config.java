@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010, 2015 Sony Mobile Communications Inc. All rights reserved.
+ *  Copyright 2010 Sony Mobile Communications Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -115,11 +115,16 @@ public class Config implements IGerritHudsonTriggerConfig {
     public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE = 0;
 
     /**
-     * Default value indicating if the project list should be fetched on startup.
+     * Default value indicating if the Gerrit server should be used to fetch project names.
      */
-    public static final boolean DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP = true;
+    public static final boolean DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION = true;
     /**
-     * Default value showing how often the project list should be updated.
+     * Default value showing how many seconds between startup and initial project list fetch.
+     */
+    public static final int DEFAULT_PROJECT_LIST_FETCH_DELAY = 0;
+    /**
+     * Default value showing how many seconds between project list fetches.
+     * <p>Only used for Gerrit servers with version &lt; 2.12</p>
      */
     public static final int DEFAULT_PROJECT_LIST_REFRESH_INTERVAL = 3600;
     /**
@@ -182,15 +187,15 @@ public class Config implements IGerritHudsonTriggerConfig {
     private transient int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
     private int dynamicConfigRefreshInterval;
-    private boolean loadProjectListOnStartup;
+    private boolean enableProjectAutoCompletion;
     private int projectListRefreshInterval;
+    private int projectListFetchDelay;
     private List<VerdictCategory> categories;
     private ReplicationConfig replicationConfig;
     private int watchdogTimeoutMinutes;
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
-
 
     /**
      * Constructor.
@@ -243,7 +248,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         enablePluginMessages = config.isEnablePluginMessages();
         buildScheduleDelay = config.getBuildScheduleDelay();
         dynamicConfigRefreshInterval = config.getDynamicConfigRefreshInterval();
-        loadProjectListOnStartup = config.isLoadProjectListOnStartup();
+        enableProjectAutoCompletion = config.isEnableProjectAutoCompletion();
+        projectListFetchDelay = config.getProjectListFetchDelay();
         projectListRefreshInterval = config.getProjectListRefreshInterval();
         if (config.getCategories() != null) {
             categories = new LinkedList<VerdictCategory>();
@@ -367,13 +373,16 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "dynamicConfigRefreshInterval",
                 DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL);
 
+        projectListFetchDelay = formData.optInt(
+                "projectListFetchDelay",
+                DEFAULT_PROJECT_LIST_FETCH_DELAY);
+
         projectListRefreshInterval = formData.optInt(
                 "projectListRefreshInterval",
                 DEFAULT_PROJECT_LIST_REFRESH_INTERVAL);
-
-        loadProjectListOnStartup = formData.optBoolean(
-                "isLoadProjectListOnStartup",
-                DEFAULT_LOAD_PROJECT_LIST_ON_STARTUP);
+        enableProjectAutoCompletion = formData.optBoolean(
+                "isEnableProjectAutoCompletion",
+                DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION);
 
         categories = new LinkedList<VerdictCategory>();
         if (formData.has("verdictCategories")) {
@@ -616,10 +625,13 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public int getProjectListFetchDelay() { return projectListFetchDelay; }
+
+    @Override
     public int getProjectListRefreshInterval() { return projectListRefreshInterval; }
 
     @Override
-    public boolean isLoadProjectListOnStartup() { return loadProjectListOnStartup; }
+    public boolean isEnableProjectAutoCompletion() { return enableProjectAutoCompletion; }
 
     /**
      * Setting dynamicConfigRefreshInterval.
@@ -1047,7 +1059,4 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         return this;
     }
-
-
-
 }
