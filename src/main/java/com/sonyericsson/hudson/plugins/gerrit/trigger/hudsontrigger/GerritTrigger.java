@@ -1897,6 +1897,9 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                     continue;
                 }
                 ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
+                if (!runningChangeBasedEvent.getChange().equals(event.getChange())) {
+                    continue;
+                }
                 boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
                             && buildCurrentPatchesOnly.isAbortManualPatchsets()
                             || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
