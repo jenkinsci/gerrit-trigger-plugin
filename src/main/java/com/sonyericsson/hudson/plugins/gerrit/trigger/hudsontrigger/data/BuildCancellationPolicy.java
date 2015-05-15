@@ -32,8 +32,8 @@ import net.sf.json.JSONObject;
  */
 public class BuildCancellationPolicy {
     private boolean enabled = false;
-    private boolean abortNewPatchsets = true;
-    private boolean abortManualPatchsets = true;
+    private boolean abortNewPatchsets = false;
+    private boolean abortManualPatchsets = false;
 
     /**
      * Getter for if build cancellation is turned off or on.
