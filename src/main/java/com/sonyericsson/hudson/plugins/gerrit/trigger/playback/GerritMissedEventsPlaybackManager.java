@@ -312,7 +312,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
             logger.debug("found line: {}", line);
-            JSONObject jsonObject = JSONObject.fromObject(line);
+            JSONObject jsonObject = null;
+            try {
+                jsonObject = GerritJsonEventFactory.getJsonObjectIfInterestingAndUsable(line);
+                if (jsonObject == null) {
+                    continue;
+                }
+            } catch (Exception ex) {
+                logger.warn("Unanticipated error when creating DTO representation of JSON string.", ex);
+                continue;
+            }
             GerritEvent evt = GerritJsonEventFactory.getEvent(jsonObject);
             if (evt instanceof ChangeBasedEvent) {
                 Provider provider = new Provider();
