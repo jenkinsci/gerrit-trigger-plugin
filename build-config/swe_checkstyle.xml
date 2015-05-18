@@ -85,11 +85,6 @@
         <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
-        <module name="RedundantThrows">
-            <property name="logLoadErrors" value="true"/>
-            <property name="suppressLoadErrors" value="true"/>
-            <property name="severity" value="info"/>
-        </module>
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
         <module name="CovariantEquals"/>
