@@ -1866,24 +1866,33 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 // Optionally, ignore all manual patchsets and don't cancel builds due to
                 // a retrigger of an older build.
                 if (pairs.getKey() instanceof ChangeBasedEvent) {
-                    ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
-                    boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
+                    continue;
+                }
+                ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
+                if (!runningChangeBasedEvent.getChange().equals(event.getChange())) {
+                    continue;
+                }
+                boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
                             && buildCurrentPatchesOnly.isAbortManualPatchsets()
                             || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
-                    boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
-                            || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
-                            < Integer.parseInt(event.getPatchSet().getNumber());
-                    if (shouldCancelManual && shouldCancelPatchsetNumber) {
-                        logger.debug("Cancelling build for " + pairs.getKey());
-                        try {
-                            cancelJob(pairs.getKey());
-                        } catch (Exception e) {
-                            // Ignore any problems with canceling the job.
-                            logger.error("Error canceling job", e);
-                        }
-                        it.remove();
-                    }
+                if (!shouldCancelManual) {
+                    continue;
                 }
+                boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
+                        || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+                        < Integer.parseInt(event.getPatchSet().getNumber());
+                if (!shouldCancelPatchsetNumber) {
+                    continue;
+                }
+
+                logger.debug("Cancelling build for " + pairs.getKey());
+                try {
+                    cancelJob(pairs.getKey());
+                } catch (Exception e) {
+                    // Ignore any problems with canceling the job.
+                    logger.error("Error canceling job", e);
+                }
+                it.remove();
             }
             // add our new job
             runningJobs.put(event, parameters);
