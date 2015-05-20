@@ -48,6 +48,7 @@ import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
 import hudson.model.TopLevelItem;
+
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -60,10 +61,13 @@ import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+
 import java.lang.ref.WeakReference;
+
 import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.assertEquals;
@@ -72,7 +76,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-//CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -492,6 +496,83 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
+     * Test the behaviour of "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is true.
+     *  - 2 changes with different branches trigger builds.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyNonRelatedChangeCannotAbort() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+        policy.setAbortManualPatchsets(false);
+        policy.setAbortNewPatchsets(false);
+        Random rand = new Random();
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "project" + rand.nextInt());
+        project.getBuildersList().add(new SleepBuilder(2000));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME,
+                "gerrit-project-1", "refabc");
+        gerritServer.triggerEvent(firstEvent);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME,
+                "gerrit-project-2", "refabc");
+        gerritServer.triggerEvent(secondEvent);
+        TestUtils.waitForBuilds(project, 2);
+
+        //both should succeed since gerrit project not the same
+        assertEquals(Result.SUCCESS, project.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, project.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Test the behaviour of "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is false.
+     *  - 2 changes with same gerrit project BUT different branches trigger builds.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testBuildLatestPatchsetOnlyNonRelatedChangeDifferentBranchCannotAbort() throws Exception {
+        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+        policy.setAbortManualPatchsets(false);
+        policy.setAbortNewPatchsets(false);
+        Random rand = new Random();
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "project" + rand.nextInt());
+        project.getBuildersList().add(new SleepBuilder(2000));
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentMode(true);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setBranch("abc");
+        gerritServer.triggerEvent(firstEvent);
+        Thread.sleep(1000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setBranch("def");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(project, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.SUCCESS, project.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, project.getBuildByNumber(2).getResult());
+    }
+
+    /**
      * Helper method to test the behavior of the "Build Current Patches Only" functionality.
      * Parameterized so that the different combinations can be tested.
      * @param abortManual true if manual patchsets should be cancelled and be able to cancel builds, false if not.
@@ -510,7 +591,8 @@ public class SpecGerritTriggerHudsonTest {
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(abortManual);
         policy.setAbortNewPatchsets(abortNew);
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
+        Random rand = new Random();
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "project" + rand.nextInt());
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
