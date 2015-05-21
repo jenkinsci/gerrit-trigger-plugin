@@ -34,7 +34,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import hudson.ExtensionList;
 import hudson.model.Action;
 import hudson.model.AbstractProject;
@@ -52,8 +51,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
-
 import jenkins.model.TransientActionFactory;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,7 +100,8 @@ public class DependencyQueueTaskDispatcherTest {
         jenkinsMock = mock(Jenkins.class);
         when(jenkinsMock.getQueue()).thenReturn(queueMock);
         ExtensionList<TransientActionFactory> list = mock(ExtensionList.class);
-        Iterator<TransientActionFactory> iterator = Collections.emptyIterator();
+        List<TransientActionFactory> emptyList = Collections.emptyList();
+        Iterator<TransientActionFactory> iterator = emptyList.iterator();
         when(list.iterator()).thenReturn(iterator);
         when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
         PowerMockito.mockStatic(Jenkins.class);
