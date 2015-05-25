@@ -85,13 +85,13 @@
                                                          help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
                                                     <f:checkbox name="abortNewPatchsets"
                                                                 checked="${it.config.buildCurrentPatchesOnly.abortNewPatchsets}"
-                                                                default="true"/>
+                                                                default="false"/>
                                                 </f:entry>
                                                 <f:entry title="${%Abort manual patch sets}"
                                                          help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
                                                     <f:checkbox name="abortManualPatchsets"
                                                                 checked="${it.config.buildCurrentPatchesOnly.abortManualPatchsets}"
-                                                                default="true"/>
+                                                                default="false"/>
                                                 </f:entry>
                                             </f:optionalBlock>
                     <f:validateButton title="${%Test Connection}"
