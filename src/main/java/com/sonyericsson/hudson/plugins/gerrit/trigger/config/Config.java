@@ -1054,8 +1054,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (this.buildCurrentPatchesOnly == null) {
             this.buildCurrentPatchesOnly = new BuildCancellationPolicy();
             this.buildCurrentPatchesOnly.setEnabled(gerritBuildCurrentPatchesOnly);
-            this.buildCurrentPatchesOnly.setAbortManualPatchsets(true);
-            this.buildCurrentPatchesOnly.setAbortNewPatchsets(true);
+            this.buildCurrentPatchesOnly.setAbortManualPatchsets(false);
+            this.buildCurrentPatchesOnly.setAbortNewPatchsets(false);
         }
         return this;
     }
