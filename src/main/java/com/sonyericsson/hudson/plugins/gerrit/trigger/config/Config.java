@@ -189,6 +189,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private int dynamicConfigRefreshInterval;
     private boolean enableProjectAutoCompletion;
     private int projectListRefreshInterval;
+    @Deprecated
+    private transient boolean loadProjectListOnStartup;
     private int projectListFetchDelay;
     private List<VerdictCategory> categories;
     private ReplicationConfig replicationConfig;
