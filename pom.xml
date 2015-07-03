@@ -55,6 +55,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.net.id>rsandell</java.net.id>
         <powermock.version>1.5.4</powermock.version>
+        <findbugs.version>2.5.5</findbugs.version>
+        <checkstyle.version>2.13</checkstyle.version>
     </properties>
 
     <dependencies>
@@ -247,7 +249,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.11</version>
+                <version>${checkstyle.version}</version>
                 <configuration>
                     <configLocation>build-config/swe_checkstyle.xml</configLocation>
                     <suppressionsLocation>build-config/checkstyle-suppressions.xml</suppressionsLocation>
@@ -272,6 +274,25 @@
                         <configuration>
                             <violationSeverity>warning</violationSeverity>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>${findbugs.version}</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <excludeFilterFile>build-config/findbugs-exclude.xml</excludeFilterFile>
+                    <!-- Optional directory to put findbugs xdoc xml report -->
+                    <!--<xmlOutputDirectory>target/site</xmlOutputDirectory>-->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>findbugs</goal>
+                        </goals>
+                        <phase>test</phase>
                     </execution>
                 </executions>
             </plugin>

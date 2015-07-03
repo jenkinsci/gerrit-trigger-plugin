@@ -1,9 +1,12 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE suppressions PUBLIC
-     "-//Puppy Crawl//DTD Suppressions 1.0//EN"
-     "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
+        "-//Puppy Crawl//DTD Suppressions 1.0//EN"
+        "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
 
-<suppressions>  
-  
+<suppressions>
+    <suppress checks=".+"
+              files="Messages.java"/>
+    <suppress checks=".+"
+              files="InjectedTest.java"/>
 </suppressions>
