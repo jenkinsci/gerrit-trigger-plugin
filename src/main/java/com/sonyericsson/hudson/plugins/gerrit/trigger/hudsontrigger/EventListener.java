@@ -174,6 +174,8 @@ public final class EventListener implements GerritEventListener {
             // it's a manual trigger, no need for a quiet period
             projectbuildDelay = 0;
         } else if (project instanceof AbstractProject) {
+            // TODO: How about using ParameterizedJobMixIn.ParameterizedJob here?
+            // If yes, we need an alternative to getHasCustomQuietPeriod (or remove it)?
             AbstractProject abstractProject = (AbstractProject)project;
             if (abstractProject.getHasCustomQuietPeriod() && abstractProject.getQuietPeriod() > projectbuildDelay) {
                 projectbuildDelay = abstractProject.getQuietPeriod();
