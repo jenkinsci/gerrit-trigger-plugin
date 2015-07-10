@@ -25,13 +25,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
 
 /**
- * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link AbstractProject }.
+ * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link Job }.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class TriggeredItemEntity {
@@ -127,7 +126,7 @@ public class TriggeredItemEntity {
          */
         public Job getProject() {
             if (project == null) {
-                project = Hudson.getInstance().getItemByFullName(projectId, AbstractProject.class);
+                project = Hudson.getInstance().getItemByFullName(projectId, Job.class);
             }
             return project;
         }
@@ -161,7 +160,7 @@ public class TriggeredItemEntity {
         /**
          * The project's id.
          * @return the id.
-         * @see AbstractProject#getFullName()
+         * @see Job#getFullName()
          */
         public String getProjectId() {
             return projectId;
@@ -171,7 +170,7 @@ public class TriggeredItemEntity {
          * The project's id.
          * <strong>Do not use this method unless you are a serializer!</strong>
          * @param projectId the id.
-         * @see AbstractProject#getFullName()
+         * @see Job#getFullName()
          */
         public void setProjectId(String projectId) {
             this.projectId = projectId;
@@ -215,7 +214,7 @@ public class TriggeredItemEntity {
          * @param aProject the project to compare.
          * @return true if it is so.
          */
-        public boolean equals(AbstractProject aProject) {
+        public boolean equals(Job aProject) {
             return projectId.equals(aProject.getFullName());
         }
 

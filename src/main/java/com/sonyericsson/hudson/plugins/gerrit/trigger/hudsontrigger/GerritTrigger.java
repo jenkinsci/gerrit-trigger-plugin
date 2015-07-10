@@ -55,6 +55,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import static jenkins.model.ParameterizedJobMixIn.ParameterizedJob;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -85,7 +86,6 @@ import hudson.model.Run;
 import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
-import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
@@ -382,12 +382,12 @@ public class GerritTrigger extends Trigger<Job> {
             return null;
         }
 
-        // TODO: I'd imagine this needs to be optimized?
-        DescribableList<Trigger<?>, TriggerDescriptor> triggers =
-                new DescribableList<Trigger<?>, TriggerDescriptor>(project);
-        for (Trigger p : triggers) {
-            if (GerritTrigger.class.isInstance(p)) {
-                return GerritTrigger.class.cast(p);
+        if (project instanceof ParameterizedJob) {
+            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
+            for (Trigger p : parameterizedJob.getTriggers().values()) {
+                if (GerritTrigger.class.isInstance(p)) {
+                    return GerritTrigger.class.cast(p);
+                }
             }
         }
 

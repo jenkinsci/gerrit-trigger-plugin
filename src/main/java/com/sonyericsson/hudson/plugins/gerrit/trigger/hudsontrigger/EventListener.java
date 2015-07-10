@@ -300,11 +300,11 @@ public final class EventListener implements GerritEventListener {
         if (jenkins == null) {
             return null;
         }
-        AbstractProject p = jenkins.getItemByFullName(job, AbstractProject.class);
+        Job p = jenkins.getItemByFullName(job, Job.class);
         if (p == null) {
             return null;
         }
-        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
+        return GerritTrigger.getTrigger(p);
     }
 
     @Override

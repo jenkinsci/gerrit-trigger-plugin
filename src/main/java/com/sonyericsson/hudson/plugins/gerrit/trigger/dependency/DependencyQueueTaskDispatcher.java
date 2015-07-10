@@ -117,9 +117,9 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
     @Override
     public CauseOfBlockage canRun(Queue.Item item) {
-        //AbstractProject check
+        //Job check
         if (!(item.task instanceof Job)) {
-            logger.debug("Not an abstract project: {}", item.task);
+            logger.debug("Not an Job instance: {}", item.task);
             return null;
         }
 

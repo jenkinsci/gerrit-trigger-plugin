@@ -30,7 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Item;
 import hudson.model.listeners.ItemListener;
 
@@ -49,7 +49,7 @@ public class GerritItemListener extends ItemListener {
 
     /**
      * Called by Jenkins when an item is about to be deleted. If this item is a project
-     * (AbstractProject or any of its subclasses), then we check if it has a GerritTrigger
+     * (Job or any of its subclasses), then we check if it has a GerritTrigger
      * among its triggers. If so, call the trigger's stop() method.
      *
      * This class is unfortunately needed because Jenkins doesn't call Trigger.stop() when
@@ -57,13 +57,13 @@ public class GerritItemListener extends ItemListener {
      * to remove the listener and cancel the timer when a project is deleted.
      *
      * @param item the item that will be deleted, it is interesting if it is
-     * a subclass of an AbstractProject
+     * a subclass of an Job
      */
     @Override
     public void onDeleted(Item item) {
-        if (item instanceof AbstractProject<?, ?>) {
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>)item;
-            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
+        if (item instanceof Job<?, ?>) {
+            Job<?, ?> project = (Job<?, ?>)item;
+            GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger != null) {
                 gerritTrigger.stop();
             }
@@ -82,9 +82,9 @@ public class GerritItemListener extends ItemListener {
      */
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
-        if (item instanceof AbstractProject<?, ?>) {
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>)item;
-            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
+        if (item instanceof Job<?, ?>) {
+            Job<?, ?> project = (Job<?, ?>)item;
+            GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger != null) {
                 gerritTrigger.onJobRenamed(oldFullName, newFullName);
             }

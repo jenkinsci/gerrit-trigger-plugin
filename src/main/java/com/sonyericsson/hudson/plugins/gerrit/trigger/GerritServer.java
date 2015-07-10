@@ -33,6 +33,7 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.RelativePath;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Failure;
@@ -904,7 +905,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return the list of jobs configured with this server.
      */
-    public List<AbstractProject> getConfiguredJobs() {
+    public List<Job> getConfiguredJobs() {
         return PluginImpl.getConfiguredJobs_(name);
     }
 
@@ -914,14 +915,21 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param oldName the old name of the Gerrit server
      */
     private void changeSelectedServerInJobs(String oldName) {
-        for (AbstractProject job : PluginImpl.getConfiguredJobs_(oldName)) {
-            GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
+        for (Job job : PluginImpl.getConfiguredJobs_(oldName)) {
+
+            // TODO: find a way to handle add/remove of triggers
+            if (!(job instanceof AbstractProject)) {
+                return;
+            }
+            AbstractProject project = (AbstractProject)job;
+
+            GerritTrigger trigger = (GerritTrigger)project.getTrigger(GerritTrigger.class);
             if (trigger != null) {
                 try {
                     trigger.setServerName(name);
                     trigger.start(job, false);
-                    job.addTrigger(trigger);
-                    job.save();
+                    project.addTrigger(trigger);
+                    project.save();
                 } catch (IOException e) {
                     logger.error("Error saving Gerrit Trigger configurations for job [" + job.getName()
                             + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
@@ -934,11 +942,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Remove "Gerrit event" as a trigger in all jobs selecting this server.
      */
     private void removeGerritTriggerInJobs() {
-        for (AbstractProject job : getConfiguredJobs()) {
-            GerritTrigger trigger = (GerritTrigger)job.getTrigger(GerritTrigger.class);
+        for (Job job : getConfiguredJobs()) {
+
+            // TODO: find a way to handle add/remove of triggers
+            if (!(job instanceof AbstractProject)) {
+                return;
+            }
+            AbstractProject project = (AbstractProject)job;
+
+            GerritTrigger trigger = (GerritTrigger)project.getTrigger(GerritTrigger.class);
             trigger.stop();
             try {
-                job.removeTrigger(trigger.getDescriptor());
+                project.removeTrigger(trigger.getDescriptor());
             } catch (IOException e) {
                 logger.error("Error removing Gerrit trigger from job [" + job.getName()
                         + "]. Please check job config");
