@@ -28,7 +28,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.rebuild.RebuildValidator;
 import hudson.Extension;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 
 /**
  * Disables the rebuild button for Gerrit triggered builds.
@@ -41,7 +41,7 @@ public class GerritRebuildValidator extends RebuildValidator {
     private static final long serialVersionUID = 2704238052581467905L;
 
     @Override
-    public boolean isApplicable(AbstractBuild build) {
+    public boolean isApplicable(Run build) {
         return (build.getCause(GerritCause.class) != null);
     }
 
