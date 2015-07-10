@@ -31,8 +31,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class GerritNotifier {
      * @param event the event.
      * @param stats the stats.
      */
-    public void buildStarted(AbstractBuild build, TaskListener taskListener,
+    public void buildStarted(Run build, TaskListener taskListener,
             GerritTriggeredEvent event, BuildsStartedStats stats) {
         try {
             /* Without a change, it doesn't make sense to notify gerrit */

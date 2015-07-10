@@ -28,9 +28,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.events;
 import java.util.LinkedList;
 import java.util.List;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
@@ -38,6 +35,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 
+import hudson.model.Job;
+import hudson.model.Run;
 import net.sf.json.JSONObject;
 
 /**
@@ -147,7 +146,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
     }
 
     @Override
-    public synchronized void fireProjectTriggered(final AbstractProject project) {
+    public synchronized void fireProjectTriggered(final Job project) {
         fireEvent(new ListenerVisitor() {
             @Override
             public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
@@ -157,7 +156,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
     }
 
     @Override
-    public synchronized void fireBuildStarted(final AbstractBuild build) {
+    public synchronized void fireBuildStarted(final Run build) {
         fireEvent(new ListenerVisitor() {
             @Override
             public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
@@ -167,7 +166,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
     }
 
     @Override
-    public synchronized void fireBuildCompleted(final AbstractBuild build) {
+    public synchronized void fireBuildCompleted(final Run build) {
         fireEvent(new ListenerVisitor() {
             @Override
             public void visit(GerritEventLifecycleListener listener, GerritEvent event) {

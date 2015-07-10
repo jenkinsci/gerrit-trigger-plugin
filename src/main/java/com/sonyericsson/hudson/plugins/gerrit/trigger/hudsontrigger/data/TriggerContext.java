@@ -24,8 +24,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.model.Run;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,7 +54,7 @@ public class TriggerContext {
      * @param event     the event for this context.
      * @param others    the other building and untriggered builds.
      */
-    public TriggerContext(AbstractBuild thisBuild,
+    public TriggerContext(Run thisBuild,
                           GerritTriggeredEvent event,
                           List<TriggeredItemEntity> others) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
@@ -92,7 +92,7 @@ public class TriggerContext {
      * {@link TriggeredItemEntity#getBuild()} == null.
      * <strong>
      * Do not use this method unless you are a serializer,
-     * use {@link #addOtherBuild(hudson.model.AbstractBuild)} for adding builds.
+     * use {@link #addOtherBuild(hudson.model.Run)} for adding builds.
      * </strong>
      *
      * @param otherBuilds the builds.
@@ -124,7 +124,7 @@ public class TriggerContext {
      *
      * @param thisBuild the build.
      */
-    public synchronized void setThisBuild(AbstractBuild thisBuild) {
+    public synchronized void setThisBuild(Run thisBuild) {
         this.thisBuild = new TriggeredItemEntity(thisBuild);
     }
 
@@ -154,13 +154,13 @@ public class TriggerContext {
      * @param build the build to add.
      * @see #getOtherBuilds()
      */
-    public synchronized void addOtherBuild(AbstractBuild build) {
+    public synchronized void addOtherBuild(Run build) {
         if (others == null) {
             others = new LinkedList<TriggeredItemEntity>();
         }
         TriggeredItemEntity other = findOtherBuild(build);
         if (other == null) {
-            other = findOtherProject(build.getProject());
+            other = findOtherProject(build.getParent());
             if (other != null) {
                 other.setBuild(build);
             } else {
@@ -175,7 +175,7 @@ public class TriggerContext {
      * @param project the project to add.
      * @see #getOtherProjects()
      */
-    public synchronized void addOtherProject(AbstractProject project) {
+    public synchronized void addOtherProject(Job project) {
         if (others == null) {
             others = new LinkedList<TriggeredItemEntity>();
         }
@@ -201,7 +201,7 @@ public class TriggerContext {
      * @param build a build.
      * @return the other object if there is one, null if there is none.
      */
-    private synchronized TriggeredItemEntity findOtherBuild(AbstractBuild build) {
+    private synchronized TriggeredItemEntity findOtherBuild(Run build) {
         for (TriggeredItemEntity other : others) {
             if (other.equals(build)) {
                 return other;
@@ -216,7 +216,7 @@ public class TriggerContext {
      * @param project the project.
      * @return the other object, or null if none.
      */
-    private synchronized TriggeredItemEntity findOtherProject(AbstractProject project) {
+    private synchronized TriggeredItemEntity findOtherProject(Job project) {
         for (TriggeredItemEntity other : others) {
             if (other.equals(project)) {
                 return other;
@@ -231,8 +231,8 @@ public class TriggerContext {
      *
      * @return a list of builds from this context.
      */
-    public synchronized List<AbstractBuild> getOtherBuilds() {
-        List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+    public synchronized List<Run> getOtherBuilds() {
+        List<Run> list = new LinkedList<Run>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getBuild() != null) {
@@ -248,8 +248,8 @@ public class TriggerContext {
      *
      * @return a list of projects from this context.
      */
-    public synchronized List<AbstractProject> getOtherProjects() {
-        List<AbstractProject> list = new LinkedList<AbstractProject>();
+    public synchronized List<Job> getOtherProjects() {
+        List<Job> list = new LinkedList<Job>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getProject() != null) {

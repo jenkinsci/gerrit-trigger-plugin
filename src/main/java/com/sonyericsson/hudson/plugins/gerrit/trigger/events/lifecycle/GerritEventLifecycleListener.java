@@ -24,10 +24,9 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import hudson.model.Job;
+import hudson.model.Run;
 
 /**
  * Listener interface for listening in on a specific GerritEvent's lifecycle.
@@ -52,21 +51,21 @@ public interface GerritEventLifecycleListener {
      * @param event the event.
      * @param project the project that was triggered.
      */
-    void projectTriggered(GerritEvent event, AbstractProject project);
+    void projectTriggered(GerritEvent event, Job project);
 
     /**
      * Called when a build has started.
      * @param event the event.
      * @param build the build.
      */
-    void buildStarted(GerritEvent event, AbstractBuild build);
+    void buildStarted(GerritEvent event, Run build);
 
     /**
      * Called when a build is completed.
      * @param event the event.
      * @param build the build.
      */
-    void buildCompleted(GerritEvent event, AbstractBuild build);
+    void buildCompleted(GerritEvent event, Run build);
 
     /**
      * Called when all builds triggered by the event are completed.

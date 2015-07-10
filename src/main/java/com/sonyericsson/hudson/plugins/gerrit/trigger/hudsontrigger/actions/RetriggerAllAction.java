@@ -31,9 +31,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
-import hudson.model.AbstractProject;
 import hudson.model.Action;
 import java.io.IOException;
+
+import hudson.model.Job;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -129,7 +130,7 @@ public class RetriggerAllAction implements Action {
             return false;
         }
         if (context.getThisBuild().getProject().hasPermission(PluginImpl.RETRIGGER)) {
-            for (AbstractProject project : context.getOtherProjects()) {
+            for (Job project : context.getOtherProjects()) {
                 if (!project.hasPermission(PluginImpl.RETRIGGER)) {
                     return false;
                 }
@@ -168,7 +169,7 @@ public class RetriggerAllAction implements Action {
         }
 
         TriggeredItemEntity entity = context.getThisBuild();
-        GerritTrigger trigger = (GerritTrigger)entity.getProject().getTrigger(GerritTrigger.class);
+        GerritTrigger trigger = GerritTrigger.getTrigger(entity.getProject());
         if (trigger == null) {
             //TODO show config error to user?
             return;

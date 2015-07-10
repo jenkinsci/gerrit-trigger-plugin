@@ -35,10 +35,11 @@ import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 
@@ -59,7 +60,7 @@ import javax.annotation.Nullable;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @Extension(ordinal = ToGerritRunListener.ORDINAL)
-public final class ToGerritRunListener extends RunListener<AbstractBuild> {
+public final class ToGerritRunListener extends RunListener<Run> {
 
     /**
      * The ordering of this extension.
@@ -86,13 +87,13 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     @Override
-    public synchronized void onCompleted(@Nonnull AbstractBuild r, @Nonnull TaskListener listener) {
+    public synchronized void onCompleted(@Nonnull Run r, @Nonnull TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
             GerritTriggeredEvent event = cause.getEvent();
-            GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
+            GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
             if (trigger != null) {
                 // There won't be a trigger if this job was run through a unit test
                 trigger.notifyBuildEnded(event);
@@ -159,7 +160,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param p   the Gerrit project being checked.
      * @return true if so.
      */
-    public synchronized boolean isProjectTriggeredAndIncomplete(AbstractProject p, GerritTriggeredEvent event) {
+    public synchronized boolean isProjectTriggeredAndIncomplete(Job p, GerritTriggeredEvent event) {
         if (!memory.isTriggered(event, p)) {
             return false;
         }
@@ -173,7 +174,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
     }
 
     @Override
-    public synchronized void onStarted(AbstractBuild r, TaskListener listener) {
+    public synchronized void onStarted(Run r, TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Started. Build: {} Cause: {}", r, cause);
         if (cause != null) {
@@ -187,7 +188,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
             if (!cause.isSilentMode()) {
                 memory.started(cause.getEvent(), r);
                 updateTriggerContexts(r);
-                GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
+                GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
                 boolean silentStartMode = false;
                 if (trigger != null) {
                     silentStartMode = trigger.isSilentStartMode();
@@ -209,9 +210,9 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param r   the build.
      * @see BuildMemory#updateTriggerContext(
      *                  com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause,
-     *                  hudson.model.AbstractBuild)
+     *                  hudson.model.Run)
      */
-    protected void updateTriggerContexts(AbstractBuild r) {
+    protected void updateTriggerContexts(Run r) {
         List<Cause> causes = r.getCauses();
         for (Cause cause : causes) {
             if (cause instanceof GerritCause) {
@@ -227,7 +228,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      *
      * @param r the build to update.
      */
-    protected void setThisBuild(AbstractBuild r) {
+    protected void setThisBuild(Run r) {
         List<Cause> causes = r.getCauses();
         for (Cause cause : causes) {
             if (cause instanceof GerritCause) {
@@ -242,7 +243,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param firstFound the cause first returned by {@link AbstractBuild#getCause(Class)}.
      * @param build      the build to clean up.
      */
-    protected void cleanUpGerritCauses(GerritCause firstFound, AbstractBuild build) {
+    protected void cleanUpGerritCauses(GerritCause firstFound, Run build) {
         List<Cause> causes = build.getAction(CauseAction.class).getCauses();
         int pos = causes.indexOf(firstFound) + 1;
         while (pos < causes.size()) {
@@ -261,7 +262,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param project the project that will be built.
      * @param event   the event that caused the build to be scheduled.
      */
-    public synchronized void onTriggered(AbstractProject project, GerritTriggeredEvent event) {
+    public synchronized void onTriggered(Job project, GerritTriggeredEvent event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
         if (event instanceof GerritEventLifecycle) {
@@ -282,9 +283,9 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event       the event.
      * @param otherBuilds the list of other builds in the previous context.
      */
-    public synchronized void onRetriggered(AbstractProject project,
+    public synchronized void onRetriggered(Job project,
                                            GerritTriggeredEvent event,
-                                           List<AbstractBuild> otherBuilds) {
+                                           List<Run> otherBuilds) {
         memory.retriggered(event, project, otherBuilds);
         if (event instanceof GerritEventLifecycle) {
             ((GerritEventLifecycle)event).fireProjectTriggered(project);
@@ -304,9 +305,9 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event   the event.
      * @return true if so.
      *
-     * @see BuildMemory#isBuilding(GerritTriggeredEvent, hudson.model.AbstractProject)
+     * @see BuildMemory#isBuilding(GerritTriggeredEvent, hudson.model.Job)
      */
-    public boolean isBuilding(AbstractProject project, GerritTriggeredEvent event) {
+    public boolean isBuilding(Job project, GerritTriggeredEvent event) {
         if (project == null || event == null) {
             return false;
         } else {
@@ -337,7 +338,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param event the event.
      * @return true if so.
      */
-    public boolean isTriggered(AbstractProject project, GerritTriggeredEvent event) {
+    public boolean isTriggered(Job project, GerritTriggeredEvent event) {
         if (project == null || event == null) {
             return false;
         } else {
@@ -351,7 +352,7 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @param build the build to look in.
      * @return the GerritCause or null if there is none.
      */
-    private GerritCause getCause(AbstractBuild build) {
+    private GerritCause getCause(Run build) {
         return (GerritCause)build.getCause(GerritCause.class);
     }
 
@@ -402,10 +403,10 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
      * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
      */
     private String obtainFailureMessage(@Nullable GerritTriggeredEvent event,
-                                        @Nonnull AbstractBuild build,
+                                        @Nonnull Run build,
                                         @Nullable TaskListener listener)
             throws IOException, InterruptedException {
-        AbstractProject project = build.getProject();
+        Job project = build.getParent();
         String content = null;
 
         GerritTrigger trigger = GerritTrigger.getTrigger(project);
@@ -428,15 +429,18 @@ public final class ToGerritRunListener extends RunListener<AbstractBuild> {
                 // The filename may contain environment variables
                 filepath = envVars.expand(filepath);
 
-                // Check for ANT-style file path
-                FilePath[] matches = this.getMatchingWorkspaceFiles(build.getWorkspace(), filepath);
-                logger.debug("Found matching workspace files: {}", matches);
+                // TODO: what will we do here?
+                if (build instanceof AbstractBuild) {
+                    // Check for ANT-style file path
+                    FilePath[] matches = this.getMatchingWorkspaceFiles(((AbstractBuild)build).getWorkspace(), filepath);
+                    logger.debug("Found matching workspace files: {}", matches);
 
-                if (matches.length > 0) {
-                    // Use the first match
-                    FilePath path = matches[0];
-                    content = this.getExpandedContent(path, envVars);
-                    logger.info("Obtained failure message from file: {}", content);
+                    if (matches.length > 0) {
+                        // Use the first match
+                        FilePath path = matches[0];
+                        content = this.getExpandedContent(path, envVars);
+                        logger.info("Obtained failure message from file: {}", content);
+                    }
                 }
             }
         }

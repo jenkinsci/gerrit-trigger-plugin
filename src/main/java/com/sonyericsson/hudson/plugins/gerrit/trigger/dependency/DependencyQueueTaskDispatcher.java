@@ -25,11 +25,11 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
 import hudson.Extension;
 import hudson.ExtensionList;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Queue;
+import hudson.model.Run;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 import jenkins.model.Jenkins;
@@ -118,7 +118,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     @Override
     public CauseOfBlockage canRun(Queue.Item item) {
         //AbstractProject check
-        if (!(item.task instanceof AbstractProject)) {
+        if (!(item.task instanceof Job)) {
             logger.debug("Not an abstract project: {}", item.task);
             return null;
         }
@@ -143,7 +143,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             logger.debug("Item is already buildable");
             return null;
         }
-        AbstractProject p = (AbstractProject)item.task;
+        Job p = (Job)item.task;
         GerritTrigger trigger = GerritTrigger.getTrigger(p);
         //The project being checked has no Gerrit Trigger
         if (trigger == null) {
@@ -151,7 +151,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             return null;
         }
         //Dependency projects in the build queue
-        List<AbstractProject> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
+        List<Job> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
                 (Item)p);
         if ((dependencies == null) || (dependencies.size() == 0)) {
             logger.debug("No dependencies on project: {}", p);
@@ -182,7 +182,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         }
 
 
-        List<AbstractProject> blockingProjects = getBlockingDependencyProjects(dependencies, event);
+        List<Job> blockingProjects = getBlockingDependencyProjects(dependencies, event);
 
         if (blockingProjects.size() > 0) {
             return new BecauseDependentBuildIsBuilding(blockingProjects);
@@ -198,12 +198,12 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @param event The event should have also caused the blocking builds.
      * @return the sublist of dependencies which need to be completed before this event is resolved.
      */
-    protected List<AbstractProject> getBlockingDependencyProjects(List<AbstractProject> dependencies,
+    protected List<Job> getBlockingDependencyProjects(List<Job> dependencies,
             GerritTriggeredEvent event) {
-        List<AbstractProject> blockingProjects = new ArrayList<AbstractProject>();
+        List<Job> blockingProjects = new ArrayList<Job>();
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         if (toGerritRunListener != null) {
-            for (AbstractProject dependency : dependencies) {
+            for (Job dependency : dependencies) {
                 if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, event)) {
                     blockingProjects.add(dependency);
                 }
@@ -232,8 +232,8 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @param context The context in which to read the string
      * @return the list of projects
      */
-    public static List<AbstractProject> getProjectsFromString(String projects, Item context) {
-        List<AbstractProject> dependencyJobs = new ArrayList<AbstractProject>();
+    public static List<Job> getProjectsFromString(String projects, Item context) {
+        List<Job> dependencyJobs = new ArrayList<Job>();
         if ((projects == null) || projects.equals("")) {
             return null;
         } else {
@@ -244,9 +244,9 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.equals("")) {
                     Item item = jenkins.getItem(projectName, context, Item.class);
-                    if ((item != null) && (item instanceof AbstractProject)) {
-                        dependencyJobs.add((AbstractProject)item);
-                        logger.debug("project dependency job added : {}", (AbstractProject)item);
+                    if ((item != null) && (item instanceof Job)) {
+                        dependencyJobs.add((Job)item);
+                        logger.debug("project dependency job added : {}", (Job)item);
                     }
                 }
             }
@@ -331,15 +331,15 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     }
 
     @Override
-    public void projectTriggered(GerritEvent event, AbstractProject project) {
+    public void projectTriggered(GerritEvent event, Job project) {
     }
 
     @Override
-    public void buildStarted(GerritEvent event, AbstractBuild build) {
+    public void buildStarted(GerritEvent event, Run build) {
     }
 
     @Override
-    public void buildCompleted(GerritEvent event, AbstractBuild build) {
+    public void buildCompleted(GerritEvent event, Run build) {
     }
 
     @Override

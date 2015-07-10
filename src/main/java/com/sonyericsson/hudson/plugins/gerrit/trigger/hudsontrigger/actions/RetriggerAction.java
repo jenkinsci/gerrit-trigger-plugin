@@ -139,7 +139,7 @@ public class RetriggerAction implements Action {
         }
 
         TriggeredItemEntity entity = context.getThisBuild();
-        GerritTrigger trigger = (GerritTrigger)entity.getProject().getTrigger(GerritTrigger.class);
+        GerritTrigger trigger = GerritTrigger.getTrigger(entity.getProject());
         if (trigger == null) {
             //TODO show config error to user?
             return;

@@ -36,11 +36,13 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import jenkins.model.Jenkins;
+import jenkins.triggers.SCMTriggerItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +71,7 @@ public final class EventListener implements GerritEventListener {
      *
      * @param job the job to handle.
      */
-    EventListener(@Nonnull AbstractProject job) {
+    EventListener(@Nonnull Job job) {
         this(job.getFullName());
     }
 
@@ -164,25 +166,39 @@ public final class EventListener implements GerritEventListener {
      * @param event   the event.
      * @param project the project to build.
      */
-    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
+    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, Job project) {
         BadgeAction badgeAction = new BadgeAction(event);
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = t.getBuildScheduleDelay();
         if (cause instanceof GerritUserCause) {
             // it's a manual trigger, no need for a quiet period
             projectbuildDelay = 0;
-        } else if (project.getHasCustomQuietPeriod()
-                && project.getQuietPeriod() > projectbuildDelay) {
-            projectbuildDelay = project.getQuietPeriod();
+        } else if (project instanceof AbstractProject) {
+            AbstractProject abstractProject = (AbstractProject)project;
+            if (abstractProject.getHasCustomQuietPeriod() && abstractProject.getQuietPeriod() > projectbuildDelay) {
+                projectbuildDelay = abstractProject.getQuietPeriod();
+            }
         }
         ParametersAction parameters = createParameters(event, project);
-        Future build = project.scheduleBuild2(
+
+        Future build;
+        if (project instanceof AbstractProject) {
+            build = ((AbstractProject)project).scheduleBuild2(
                 projectbuildDelay,
                 cause,
                 badgeAction,
                 new RetriggerAction(cause.getContext()),
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
+        } else if (project instanceof SCMTriggerItem) {
+            // TODO: Using SCMTriggerItem smells bad here. What should we be using?
+            // BuildableItem seems like the more correct interface to use, but it's scheduleBuild methods don't give
+            // access to the Future.
+            build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay);
+        } else {
+            throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
+                    + project.getClass().getName());
+        }
 
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
 
@@ -216,7 +232,7 @@ public final class EventListener implements GerritEventListener {
      * @param project the project.
      * @return the ParameterAction.
      */
-    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
+    protected ParametersAction createParameters(GerritTriggeredEvent event, Job project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
         setOrCreateParameters(event, project, parameters);
         return new ParametersAction(parameters);
@@ -230,7 +246,7 @@ public final class EventListener implements GerritEventListener {
      * @param project the project.
      * @return the default parameter values.
      */
-    private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
+    private List<ParameterValue> getDefaultParametersValues(Job project) {
         ParametersDefinitionProperty paramDefProp =
                 (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
         List<ParameterValue> defValues = new ArrayList<ParameterValue>();

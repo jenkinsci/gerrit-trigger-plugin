@@ -25,8 +25,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
 import hudson.ExtensionPoint;
-import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
+import hudson.model.Run;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -49,7 +49,7 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
      * @param build Triggered build to provide custom message for
      * @return the custom message
      */
-    public String getBuildStartedMessage(AbstractBuild build) {
+    public String getBuildStartedMessage(Run build) {
         return null;
     }
 
@@ -61,7 +61,7 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
      * @param build Triggered build to provide custom message for
      * @return the custom message
      */
-    public String getBuildCompletedMessage(AbstractBuild build) {
+    public String getBuildCompletedMessage(Run build) {
         return null;
     }
 
@@ -71,7 +71,7 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
      * @param build the build to complain about
      * @return the file comments, default is an empty list.
      */
-    public Collection<CommentedFile> getFileComments(AbstractBuild build) {
+    public Collection<CommentedFile> getFileComments(Run build) {
         return Collections.emptyList();
     }
 

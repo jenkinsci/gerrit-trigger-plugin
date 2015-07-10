@@ -82,11 +82,11 @@ public final class TestUtils {
      * @param event the event to monitor.
      * @return the reference of future build to start.
      */
-    public static AtomicReference<AbstractBuild> getFutureBuildToStart(GerritEventLifecycle event) {
-        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+    public static AtomicReference<Run> getFutureBuildToStart(GerritEventLifecycle event) {
+        final AtomicReference<Run> reference = new AtomicReference<Run>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
-            public void buildStarted(GerritEvent event, AbstractBuild build) {
+            public void buildStarted(GerritEvent event, Run build) {
                 reference.getAndSet(build);
             }
         });
@@ -99,11 +99,11 @@ public final class TestUtils {
      * @param event the event to monitor.
      * @return the reference of future build to start.
      */
-    public static AtomicReference<AbstractBuild> getFutureBuildToStart2(GerritEventLifecycle event) {
-        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+    public static AtomicReference<Run> getFutureBuildToStart2(GerritEventLifecycle event) {
+        final AtomicReference<Run> reference = new AtomicReference<Run>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
-            public void buildStarted(GerritEvent event, AbstractBuild build) {
+            public void buildStarted(GerritEvent event, Run build) {
                 reference.getAndSet(build);
             }
         });

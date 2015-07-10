@@ -27,6 +27,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.Job;
+import hudson.model.Run;
 
 /**
  * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link AbstractProject }.
@@ -36,8 +38,8 @@ public class TriggeredItemEntity {
 
     private Integer buildNumber;
         private String projectId;
-        private transient AbstractProject project;
-        private transient AbstractBuild build;
+        private transient Job project;
+        private transient Run build;
 
         /**
          * Standard constructor.
@@ -54,7 +56,7 @@ public class TriggeredItemEntity {
          * @param project a project.
          * @param build a build.
          */
-        public TriggeredItemEntity(AbstractProject project, AbstractBuild build) {
+        public TriggeredItemEntity(Job project, AbstractBuild build) {
             setProject(project);
             setBuild(build);
         }
@@ -64,8 +66,8 @@ public class TriggeredItemEntity {
          * The project will be set from {@link AbstractBuild#getProject() }.
          * @param build a build.
          */
-        public TriggeredItemEntity(AbstractBuild build) {
-            setProject(build.getProject());
+        public TriggeredItemEntity(Run build) {
+            setProject(build.getParent());
             setBuild(build);
         }
 
@@ -73,7 +75,7 @@ public class TriggeredItemEntity {
          * Easy Constructor.
          * @param project a project.
          */
-        public TriggeredItemEntity(AbstractProject project) {
+        public TriggeredItemEntity(Job project) {
             setProject(project);
             this.buildNumber = null;
         }
@@ -97,7 +99,7 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the build will be looked up via {@link #getBuildNumber() }.
          * @return the build.
          */
-        public AbstractBuild getBuild() {
+        public Run getBuild() {
             if (build == null) {
                 if (buildNumber != null) {
                     getProject();
@@ -113,7 +115,7 @@ public class TriggeredItemEntity {
          * The build.
          * @param build the build.
          */
-        public void setBuild(AbstractBuild build) {
+        public void setBuild(Run build) {
             this.build = build;
             buildNumber = build.getNumber();
         }
@@ -123,7 +125,7 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the project will be looked up from {@link #getProjectId() }
          * @return the project.
          */
-        public AbstractProject getProject() {
+        public Job getProject() {
             if (project == null) {
                 project = Hudson.getInstance().getItemByFullName(projectId, AbstractProject.class);
             }
@@ -134,7 +136,7 @@ public class TriggeredItemEntity {
          * The project.
          * @param project the project.
          */
-        public void setProject(AbstractProject project) {
+        public void setProject(Job project) {
             this.project = project;
             this.projectId = project.getFullName();
         }
