@@ -1930,6 +1930,7 @@ public class GerritTrigger extends Trigger<Job> {
         private void cancelJob(GerritTriggeredEvent event) {
             if (!(job instanceof Queue.Task)) {
                 logger.error("Error canceling job. The job is not of type Task.");
+                return;
             }
 
             // Remove any jobs in the build queue.
