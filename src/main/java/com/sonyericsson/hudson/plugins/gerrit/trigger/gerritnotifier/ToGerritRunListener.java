@@ -240,7 +240,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
     /**
      * Workaround for builds that are triggered by the same Gerrit cause but multiple times in the same quiet period.
      *
-     * @param firstFound the cause first returned by {@link AbstractBuild#getCause(Class)}.
+     * @param firstFound the cause first returned by {@link Run#getCause(Class)}.
      * @param build      the build to clean up.
      */
     protected void cleanUpGerritCauses(GerritCause firstFound, Run build) {

@@ -24,13 +24,12 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
 
 /**
- * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link Job }.
+ * Wrapper class for smoother serialization of {@link Run } and {@link Job }.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class TriggeredItemEntity {
@@ -55,14 +54,14 @@ public class TriggeredItemEntity {
          * @param project a project.
          * @param build a build.
          */
-        public TriggeredItemEntity(Job project, AbstractBuild build) {
+        public TriggeredItemEntity(Job project, Run build) {
             setProject(project);
             setBuild(build);
         }
 
         /**
          * Easy Constructor.
-         * The project will be set from {@link AbstractBuild#getProject() }.
+         * The project will be set from {@link hudson.model.Run#getParent()}.
          * @param build a build.
          */
         public TriggeredItemEntity(Run build) {
@@ -103,7 +102,7 @@ public class TriggeredItemEntity {
                 if (buildNumber != null) {
                     getProject();
                     if (project != null) {
-                        build = (AbstractBuild)project.getBuildByNumber(buildNumber);
+                        build = project.getBuildByNumber(buildNumber);
                     }
                 }
             }
@@ -201,9 +200,9 @@ public class TriggeredItemEntity {
          * @param aBuild the build.
          * @return true if it is so.
          */
-        public boolean equals(AbstractBuild aBuild) {
+        public boolean equals(Run aBuild) {
             if (this.buildNumber != null) {
-                return projectId.equals(aBuild.getProject().getFullName())
+                return projectId.equals(aBuild.getParent().getFullName())
                         && this.buildNumber.equals(aBuild.getNumber());
             }
             return false;
