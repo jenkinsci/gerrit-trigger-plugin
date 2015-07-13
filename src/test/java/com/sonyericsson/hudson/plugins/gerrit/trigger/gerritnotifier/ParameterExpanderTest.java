@@ -37,6 +37,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 import hudson.EnvVars;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -608,12 +609,12 @@ public class ParameterExpanderTest {
         private static final long serialVersionUID = -7565217057927807166L;
 
         @Override
-        public String getBuildStartedMessage(AbstractBuild build) {
+        public String getBuildStartedMessage(Run build) {
             return "CUSTOM_MESSAGE_BUILD_STARTED";
         }
 
         @Override
-        public String getBuildCompletedMessage(AbstractBuild build) {
+        public String getBuildCompletedMessage(Run build) {
             return "CUSTOM_MESSAGE_BUILD_COMPLETED";
         }
     }
@@ -625,12 +626,12 @@ public class ParameterExpanderTest {
         private static final long serialVersionUID = -3479376646924947609L;
 
         @Override
-        public String getBuildStartedMessage(AbstractBuild build) {
+        public String getBuildStartedMessage(Run build) {
             return null;
         }
 
         @Override
-        public String getBuildCompletedMessage(AbstractBuild build) {
+        public String getBuildCompletedMessage(Run build) {
             return null;
         }
     }

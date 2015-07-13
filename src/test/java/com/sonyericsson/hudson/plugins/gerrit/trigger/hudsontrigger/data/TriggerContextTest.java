@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Run;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -288,7 +289,7 @@ public class TriggerContextTest {
     @Test
     public void testGetOtherBuilds() {
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<TriggeredItemEntity>());
-        List<AbstractBuild> others = context.getOtherBuilds();
+        List<Run> others = context.getOtherBuilds();
         assertNotNull(others);
         assertEquals(0, others.size());
     }
@@ -300,7 +301,7 @@ public class TriggerContextTest {
     @Test
     public void testGetOtherBuildsNull() {
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, null);
-        List<AbstractBuild> others = context.getOtherBuilds();
+        List<Run> others = context.getOtherBuilds();
         assertNotNull(others);
         assertEquals(0, others.size());
     }
@@ -314,10 +315,10 @@ public class TriggerContextTest {
         List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
         bah.add(new TriggeredItemEntity(mockBuild("p2", 3)));
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, bah);
-        List<AbstractBuild> others = context.getOtherBuilds();
+        List<Run> others = context.getOtherBuilds();
         assertNotNull(others);
         assertEquals(1, others.size());
-        assertEquals("p2", others.get(0).getProject().getFullName());
+        assertEquals("p2", others.get(0).getParent().getFullName());
         assertEquals(3, others.get(0).getNumber());
     }
 

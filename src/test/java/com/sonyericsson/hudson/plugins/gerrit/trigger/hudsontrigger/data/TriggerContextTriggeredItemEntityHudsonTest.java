@@ -62,12 +62,12 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(build.getNumber(), "myProject");
         assertNotNull(wrap.getBuild());
-        assertEquals("myProject", wrap.getBuild().getProject().getFullName());
+        assertEquals("myProject", wrap.getBuild().getParent().getFullName());
     }
 
     /**
      * Thests that the serializable data is correctly set in the Constructor.
-     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.AbstractProject, hudson.model.AbstractBuild)}.
+     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.Job, hudson.model.Run)}.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      * @throws IOException if so.
@@ -82,7 +82,7 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
 
     /**
      * Tests that the serializable data is correctly set in the Constructor.
-     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.AbstractBuild)}.
+     * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.Run)}.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      * @throws IOException if so.

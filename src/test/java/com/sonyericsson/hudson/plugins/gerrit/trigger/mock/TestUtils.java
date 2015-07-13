@@ -116,7 +116,7 @@ public final class TestUtils {
      * @param reference the reference of future build to start.
      * @return the build that started.
      */
-    public static AbstractBuild waitForBuildToStart(AtomicReference<AbstractBuild> reference) {
+    public static Run waitForBuildToStart(AtomicReference<Run> reference) {
         return waitForBuildToStart(reference, DEFAULT_WAIT_BUILD_MS);
     }
 
@@ -128,7 +128,7 @@ public final class TestUtils {
      * @param timeoutMs the maximum time in ms to wait for the build to start.
      * @return the build that started.
      */
-    public static AbstractBuild waitForBuildToStart(AtomicReference<AbstractBuild> reference, int timeoutMs) {
+    public static Run waitForBuildToStart(AtomicReference<Run> reference, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         while (reference.get() == null) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {

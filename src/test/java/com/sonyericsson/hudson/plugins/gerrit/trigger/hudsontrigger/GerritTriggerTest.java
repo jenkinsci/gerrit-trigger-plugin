@@ -53,10 +53,12 @@ import hudson.model.Cause;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
+import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
@@ -854,7 +856,7 @@ public class GerritTriggerTest {
 
         trigger.retriggerThisBuild(context);
 
-        verify(listener).onRetriggered(same(project), same(event), anyListOf(AbstractBuild.class));
+        verify(listener).onRetriggered(same(project), same(event), anyListOf(Run.class));
 
         verify(project).scheduleBuild2(
                 eq(0),
@@ -897,9 +899,9 @@ public class GerritTriggerTest {
 
         trigger.retriggerThisBuild(context);
 
-        verify(listener, never()).onRetriggered(isA(AbstractProject.class),
+        verify(listener, never()).onRetriggered(isA(Job.class),
                 isA(PatchsetCreated.class),
-                anyListOf(AbstractBuild.class));
+                anyListOf(Run.class));
 
         verify(project).scheduleBuild2(
                 anyInt(),
@@ -1281,7 +1283,7 @@ public class GerritTriggerTest {
     /**
      * Tests {@link GerritTrigger#createParameters(
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
-     * hudson.model.AbstractProject)} with a normal scenario.
+     * hudson.model.Job)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
      * when the escapeQuotes setting is on.
@@ -1355,7 +1357,7 @@ public class GerritTriggerTest {
     /**
      * Tests {@link GerritTrigger#createParameters(
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
-     * hudson.model.AbstractProject)} with a normal scenario.
+     * hudson.model.Job)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having escaped quotes or not
      * when the escapeQuotes setting is off.
@@ -1429,7 +1431,7 @@ public class GerritTriggerTest {
     /**
      * Tests {@link GerritTrigger#createParameters(
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
-     * hudson.model.AbstractProject)} with a normal scenario.
+     * hudson.model.Job)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having human readable message or not
      * when the readableMessage setting is on.
@@ -1491,7 +1493,7 @@ public class GerritTriggerTest {
     /**
      * Tests {@link GerritTrigger#createParameters(
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent,
-     * hudson.model.AbstractProject)} with a normal scenario.
+     * hudson.model.Job)} with a normal scenario.
      * this is a test case that checks that
      * the Trigger is creating parameters having human readable message or not
      * when the readableMessage setting is off.
