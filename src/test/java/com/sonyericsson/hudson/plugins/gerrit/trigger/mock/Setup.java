@@ -57,11 +57,15 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import hudson.triggers.Trigger;
+import hudson.triggers.TriggerDescriptor;
 import net.sf.json.JSONObject;
+import org.powermock.api.mockito.PowerMockito;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -615,6 +619,9 @@ public final class Setup {
     public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(GerritTrigger trigger, Result result) {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+        triggers.put(new GerritTrigger.DescriptorImpl(), trigger);
+        PowerMockito.when(project.getTriggers()).thenReturn(triggers);
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getResult()).thenReturn(result);
         return createImprintEntry(project, build);
