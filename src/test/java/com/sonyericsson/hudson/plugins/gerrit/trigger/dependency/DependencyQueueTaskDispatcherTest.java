@@ -46,10 +46,14 @@ import hudson.model.queue.CauseOfBlockage;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import hudson.triggers.Trigger;
+import hudson.triggers.TriggerDescriptor;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 
@@ -82,6 +86,7 @@ public class DependencyQueueTaskDispatcherTest {
     private DependencyQueueTaskDispatcher dispatcher;
     private Queue queueMock;
     private GerritHandler gerritHandlerMock;
+    private Map<TriggerDescriptor, Trigger<?>> triggers;
     private GerritTrigger gerritTriggerMock;
     private AbstractProject<?, ?> abstractProjectMock;
     private AbstractProject<?, ?> abstractProjectDependencyMock;
@@ -96,6 +101,8 @@ public class DependencyQueueTaskDispatcherTest {
         gerritHandlerMock = mock(GerritHandler.class);
         dispatcher = new DependencyQueueTaskDispatcher(gerritHandlerMock);
         gerritTriggerMock = mock(GerritTrigger.class);
+        triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+        triggers.put(new GerritTrigger.DescriptorImpl(), gerritTriggerMock);
         queueMock = mock(Queue.class);
         jenkinsMock = mock(Jenkins.class);
         when(jenkinsMock.getQueue()).thenReturn(queueMock);
@@ -295,6 +302,7 @@ public class DependencyQueueTaskDispatcherTest {
 
         abstractProjectMock = mock(AbstractProject.class);
         when(abstractProjectMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
+        when(abstractProjectMock.getTriggers()).thenReturn(triggers);
         abstractProjectDependencyMock = mock(AbstractProject.class);
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         when(gerritTriggerMock.getDependencyJobsNames()).thenReturn(dependency);
