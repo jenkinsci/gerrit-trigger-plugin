@@ -618,13 +618,17 @@ public final class Setup {
      */
     public static MemoryImprint.Entry createAndSetupMemoryImprintEntry(GerritTrigger trigger, Result result) {
         AbstractProject project = mock(AbstractProject.class);
+        setTrigger(trigger, project);
+        AbstractBuild build = mock(AbstractBuild.class);
+        when(build.getResult()).thenReturn(result);
+        return createImprintEntry(project, build);
+    }
+
+    public static void setTrigger(GerritTrigger trigger, AbstractProject project) {
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
         triggers.put(new GerritTrigger.DescriptorImpl(), trigger);
         PowerMockito.when(project.getTriggers()).thenReturn(triggers);
-        AbstractBuild build = mock(AbstractBuild.class);
-        when(build.getResult()).thenReturn(result);
-        return createImprintEntry(project, build);
     }
 
     /**

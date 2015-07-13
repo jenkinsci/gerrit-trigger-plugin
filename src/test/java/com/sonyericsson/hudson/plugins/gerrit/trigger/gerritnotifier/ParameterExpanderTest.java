@@ -88,7 +88,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         AbstractBuild r = Setup.createBuild(project, taskListener, Setup.createEnvVars());
 
@@ -452,7 +452,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
         when(trigger.getCustomUrl()).thenReturn(customUrl);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[expectedBuildResults.length];
         for (int i = 0; i < expectedBuildResults.length; i++) {
@@ -534,7 +534,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         EnvVars env = Setup.createEnvVars();
         AbstractBuild r = Setup.createBuild(project, taskListener, env);
