@@ -38,7 +38,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
