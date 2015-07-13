@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,8 +86,10 @@ public class MemoryImprintTest {
         build = mock(AbstractBuild.class);
         doReturn(buildId).when(build).getId();
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         doReturn(build).when(project).getBuild(eq(buildId));
         when(jenkins.getItemByFullName(eq(name), same(AbstractProject.class))).thenReturn(project);
+        when(jenkins.getItemByFullName(eq(name), same(Job.class))).thenReturn(project);
     }
 
     /**
