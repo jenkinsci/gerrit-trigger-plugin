@@ -38,6 +38,7 @@ import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Hudson;
+import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
@@ -107,6 +108,7 @@ public class SpecGerritVerifiedSetterTest {
         project = mock(AbstractProject.class);
         doReturn("MockProject").when(project).getFullName();
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         doReturn(build).when(project).getBuild(anyString());
 
         trigger = mock(GerritTrigger.class);
@@ -114,12 +116,13 @@ public class SpecGerritVerifiedSetterTest {
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkins);
         when(jenkins.getItemByFullName(eq("MockProject"), same(AbstractProject.class))).thenReturn(project);
+        when(jenkins.getItemByFullName(eq("MockProject"), same(Job.class))).thenReturn(project);
 
         mockStatic(GerritTriggeredBuildListener.class);
         when(GerritTriggeredBuildListener.all()).thenReturn(mock(ExtensionList.class));
@@ -212,12 +215,14 @@ public class SpecGerritVerifiedSetterTest {
         doReturn("MockProject2").when(project).getFullName();
         doReturn(build).when(project).getBuild(anyString());
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         when(jenkins.getItemByFullName(eq("MockProject2"), same(AbstractProject.class))).thenReturn(project);
+        when(jenkins.getItemByFullName(eq("MockProject2"), same(Job.class))).thenReturn(project);
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         memory.completed(event, build);
 
