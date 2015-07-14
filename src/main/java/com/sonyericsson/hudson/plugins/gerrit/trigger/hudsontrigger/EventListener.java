@@ -196,7 +196,11 @@ public final class EventListener implements GerritEventListener {
             // TODO: Using SCMTriggerItem smells bad here. What should we be using?
             // BuildableItem seems like the more correct interface to use, but it's scheduleBuild methods don't give
             // access to the Future.
-            build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay);
+            build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay,
+                                                             badgeAction,
+                                                             new RetriggerAction(cause.getContext()),
+                                                             new RetriggerAllAction(cause.getContext()),
+                                                             parameters);
         } else {
             throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
                     + project.getClass().getName());
