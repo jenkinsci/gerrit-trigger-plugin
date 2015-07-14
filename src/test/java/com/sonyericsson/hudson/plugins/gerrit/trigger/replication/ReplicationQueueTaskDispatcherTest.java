@@ -754,7 +754,7 @@ public class ReplicationQueueTaskDispatcherTest {
         actions.add(new CauseAction(gerritCause));
 
         abstractProjectMock = mock(AbstractProject.class);
-        when(abstractProjectMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
+        Setup.setTrigger(gerritTriggerMock, abstractProjectMock);
         if (slaves != null && slaves.length > 0) {
             List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
             for (String slave : slaves) {
