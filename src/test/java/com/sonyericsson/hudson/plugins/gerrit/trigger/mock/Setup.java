@@ -624,6 +624,11 @@ public final class Setup {
         return createImprintEntry(project, build);
     }
 
+    /**
+     * Set/mock the supplied trigger onto the supplied {@link AbstractProject} instance.
+     * @param trigger The trigger.
+     * @param project The project.
+     */
     public static void setTrigger(GerritTrigger trigger, AbstractProject project) {
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();

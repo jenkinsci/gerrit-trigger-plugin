@@ -256,7 +256,8 @@ public class ToGerritRunListenerTest {
      *
      * @throws Exception if so.
      */
-    @Ignore("TODO: Find where getTrigger is being mocked into the AbstractProject. getTriggers also need to be mocked. ToGerritRunListener.obtainFailureMessage needs it.")
+    @Ignore("TODO: Find where getTrigger is being mocked into the AbstractProject. getTriggers also need to be "
+            + "mocked. ToGerritRunListener.obtainFailureMessage needs it.")
     @Test
     public void testObtainFailureMessageNoMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
@@ -281,7 +282,8 @@ public class ToGerritRunListenerTest {
      *
      * @throws Exception if so.
      */
-    @Ignore("TODO: Find where getTrigger is being mocked into the AbstractProject. getTriggers also need to be mocked. ToGerritRunListener.obtainFailureMessage needs it.")
+    @Ignore("TODO: Find where getTrigger is being mocked into the AbstractProject. getTriggers also need to be "
+            + "mocked. ToGerritRunListener.obtainFailureMessage needs it.")
     @Test
     public void testObtainFailureMessageWithMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
