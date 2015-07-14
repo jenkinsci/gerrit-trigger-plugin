@@ -8,6 +8,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import jenkins.model.Jenkins;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -57,7 +58,8 @@ public class EventListenerTest {
         mockStatic(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkins);
         when(jenkins.getItemByFullName("MockProject", AbstractProject.class)).thenReturn(project);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        when(jenkins.getItemByFullName("MockProject", Job.class)).thenReturn(project);
+        Setup.setTrigger(trigger, project);
         when(trigger.isInteresting(any(GerritTriggeredEvent.class))).thenReturn(true);
         handler = new JenkinsAwareGerritHandler(1);
         handler.addListener(listener);
