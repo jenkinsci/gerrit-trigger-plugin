@@ -164,7 +164,6 @@
             <version>1.51</version>
             <scope>test</scope>
         </dependency>
-        <!-- TODO: Figure out dependencies wrt this. Was expecting this to come in as transitive of jenkins-core -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
