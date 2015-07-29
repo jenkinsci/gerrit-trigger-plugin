@@ -42,6 +42,7 @@ import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 import jenkins.triggers.SCMTriggerItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,11 +174,9 @@ public final class EventListener implements GerritEventListener {
         if (cause instanceof GerritUserCause) {
             // it's a manual trigger, no need for a quiet period
             projectbuildDelay = 0;
-        } else if (project instanceof AbstractProject) {
-            // TODO: How about using ParameterizedJobMixIn.ParameterizedJob here?
-            // If yes, we need an alternative to getHasCustomQuietPeriod (or remove it)?
-            AbstractProject abstractProject = (AbstractProject)project;
-            if (abstractProject.getHasCustomQuietPeriod() && abstractProject.getQuietPeriod() > projectbuildDelay) {
+        } else if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            ParameterizedJobMixIn.ParameterizedJob abstractProject = (ParameterizedJobMixIn.ParameterizedJob)project;
+            if (abstractProject.getQuietPeriod() > projectbuildDelay) {
                 projectbuildDelay = abstractProject.getQuietPeriod();
             }
         }
