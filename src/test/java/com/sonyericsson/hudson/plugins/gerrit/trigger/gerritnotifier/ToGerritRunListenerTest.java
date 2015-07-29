@@ -47,7 +47,6 @@ import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;

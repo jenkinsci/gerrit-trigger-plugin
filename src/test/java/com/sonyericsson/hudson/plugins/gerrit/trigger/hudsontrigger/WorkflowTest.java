@@ -47,11 +47,19 @@ import java.util.Collections;
  */
 public class WorkflowTest {
 
+    /**
+     * Jenkins rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
     @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+    public final JenkinsRule jenkinsRule = new JenkinsRule();
 
+    /**
+     * Trigger test.
+     * @throws Exception if there is one.
+     */
     @Test
-    public void test_trigger_workflow() throws Exception {
+    public void testTriggerWorkflow() throws Exception {
         jenkinsRule.jenkins.setCrumbIssuer(null);
         GerritServer gerritServer = createGerritServer();
 
@@ -61,11 +69,11 @@ public class WorkflowTest {
 
             WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
 
-            job.setDefinition(new CpsFlowDefinition("" +
-                    "node {\n" +
-                    "   stage 'Build'\n " +
-                    "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n " +
-                    "}\n"));
+            job.setDefinition(new CpsFlowDefinition(""
+                    + "node {\n"
+                    + "   stage 'Build'\n "
+                    + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n "
+                    + "}\n"));
 
             GerritTrigger trigger = Setup.createDefaultTrigger(job);
             trigger.setGerritProjects(Collections.singletonList(
@@ -81,13 +89,18 @@ public class WorkflowTest {
 
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            
-            jenkinsRule.assertLogContains("Gerrit trigger: patchset-created", run);            
+
+            jenkinsRule.assertLogContains("Gerrit trigger: patchset-created", run);
         } finally {
             gerritServer.stop();
         }
     }
 
+    /**
+     * Create a gerrit server.
+     * @return The gerit server.
+     * @throws IOException If anything goes wrong.
+     */
     private GerritServer createGerritServer() throws IOException {
         GerritServer server1 = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
 

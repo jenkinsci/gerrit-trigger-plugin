@@ -75,7 +75,6 @@ import java.util.List;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.mockito.Mockito.doReturn;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
