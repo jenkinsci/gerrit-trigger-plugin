@@ -40,7 +40,6 @@ import java.io.IOException;
 @Extension
 public class ReplicationFailedHandler extends RunListener<AbstractBuild<?, ?>> {
 
-    // TODO: scooby doo'd here wrt AbstractBuild. What are the implications?
     @Override
     public Environment setUpEnvironment(AbstractBuild build, Launcher launcher, BuildListener listener)
         throws IOException, InterruptedException {
