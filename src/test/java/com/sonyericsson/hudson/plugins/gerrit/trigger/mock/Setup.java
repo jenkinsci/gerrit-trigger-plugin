@@ -528,7 +528,7 @@ public final class Setup {
     public static GerritTrigger createGerritTrigger(AbstractBuild build) {
         GerritTrigger trigger = mock(GerritTrigger.class);
         AbstractProject project = build.getProject();
-        doReturn(trigger).when(project).getTrigger(GerritTrigger.class);
+        setTrigger(trigger, project);
         return trigger;
     }
 
