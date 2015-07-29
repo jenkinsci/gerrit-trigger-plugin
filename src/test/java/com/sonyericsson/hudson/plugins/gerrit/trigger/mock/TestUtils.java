@@ -37,6 +37,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import hudson.model.Cause;
+import hudson.model.Job;
 import hudson.model.Run;
 
 /**
@@ -186,7 +187,7 @@ public final class TestUtils {
      * @param project   the project to check
      * @param number    the build number to wait for.
      */
-    public static void waitForBuilds(AbstractProject project, int number) {
+    public static void waitForBuilds(Job project, int number) {
         waitForBuilds(project, number, DEFAULT_WAIT_BUILD_MS);
     }
 
@@ -197,7 +198,7 @@ public final class TestUtils {
      * @param number    the build number to wait for.
      * @param timeoutMs the timeout in ms.
      */
-    public static void waitForBuilds(AbstractProject project, int number, int timeoutMs) {
+    public static void waitForBuilds(Job project, int number, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         while (project.getLastCompletedBuild() == null || project.getLastCompletedBuild().getNumber() != number) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {

@@ -55,11 +55,14 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import net.sf.json.JSONObject;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.junit.Assert;
 import org.powermock.api.mockito.PowerMockito;
 
 import java.io.IOException;
@@ -532,10 +535,10 @@ public final class Setup {
     /**
      * Create a new default trigger object.
      *
-     * @param project if not null, start the trigger with the given project.
+     * @param job if not null, start the trigger with the given project.
      * @return a new GerritTrigger object.
      */
-    public static GerritTrigger createDefaultTrigger(AbstractProject project) {
+    public static GerritTrigger createDefaultTrigger(Job job) {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
@@ -546,10 +549,16 @@ public final class Setup {
                 silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
 
-        if (project != null) {
-            trigger.start(project, true);
+        if (job != null) {
+            trigger.start(job, true);
             try {
-                project.addTrigger(trigger);
+                if (job instanceof AbstractProject) {
+                    ((AbstractProject)job).addTrigger(trigger);
+                } else if (job instanceof WorkflowJob) {
+                    ((WorkflowJob)job).addTrigger(trigger);
+                } else {
+                    Assert.fail("Unsupported Job type: " + job.getClass().getName());
+                }
             } catch (IOException e) {
                 // for the sake of testing this should be ok
                 throw new RuntimeException(e);
