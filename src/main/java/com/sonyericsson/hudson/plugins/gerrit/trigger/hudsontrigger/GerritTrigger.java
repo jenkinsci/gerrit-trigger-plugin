@@ -383,6 +383,7 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         if (project instanceof ParameterizedJob) {
+            // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
             ParameterizedJob parameterizedJob = (ParameterizedJob)project;
             for (Trigger p : parameterizedJob.getTriggers().values()) {
                 if (GerritTrigger.class.isInstance(p)) {
