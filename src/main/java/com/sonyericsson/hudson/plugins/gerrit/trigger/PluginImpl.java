@@ -36,6 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Plugin;
+import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Api;
 import hudson.model.Hudson;
@@ -96,7 +97,7 @@ public class PluginImpl extends Plugin {
     public static final Permission RETRIGGER = new Permission(PERMISSION_GROUP,
             "Retrigger",
             Messages._RetriggerPermissionDescription(),
-            Job.BUILD);
+            Item.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private final List<GerritServer> servers = new CopyOnWriteArrayList<GerritServer>();
