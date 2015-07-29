@@ -193,9 +193,6 @@ public final class EventListener implements GerritEventListener {
                 new RetriggerAllAction(cause.getContext()),
                 parameters);
         } else if (project instanceof SCMTriggerItem) {
-            // TODO: Using SCMTriggerItem smells bad here. What should we be using?
-            // BuildableItem seems like the more correct interface to use, but it's scheduleBuild methods don't give
-            // access to the Future.
             build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay,
                                                              badgeAction,
                                                              new RetriggerAction(cause.getContext()),

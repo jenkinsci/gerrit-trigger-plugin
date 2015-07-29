@@ -34,6 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -61,10 +62,10 @@ public class WorkflowTest {
             WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
 
             job.setDefinition(new CpsFlowDefinition("" +
-                    "node {" +
-                    "   stage ('Build'); " +
-                    "   sh ('echo Building'); " +
-                    "}"));
+                    "node {\n" +
+                    "   stage 'Build'\n " +
+                    "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n " +
+                    "}\n"));
 
             GerritTrigger trigger = Setup.createDefaultTrigger(job);
             trigger.setGerritProjects(Collections.singletonList(
@@ -79,6 +80,9 @@ public class WorkflowTest {
             PluginImpl.getInstance().getHandler().post(event);
 
             TestUtils.waitForBuilds(job, 1);
+            WorkflowRun run = job.getBuilds().iterator().next();
+            
+            jenkinsRule.assertLogContains("Gerrit trigger: patchset-created", run);            
         } finally {
             gerritServer.stop();
         }
