@@ -429,7 +429,6 @@ public final class ToGerritRunListener extends RunListener<Run> {
                 // The filename may contain environment variables
                 filepath = envVars.expand(filepath);
 
-                // TODO: what will we do here?
                 if (build instanceof AbstractBuild) {
                     // Check for ANT-style file path
                     FilePath[] matches = this.getMatchingWorkspaceFiles(((AbstractBuild)build).getWorkspace(), filepath);
@@ -441,6 +440,8 @@ public final class ToGerritRunListener extends RunListener<Run> {
                         content = this.getExpandedContent(path, envVars);
                         logger.info("Obtained failure message from file: {}", content);
                     }
+                } else {
+                    logger.info("Unable to find matching workspace files for job type {}", build.getClass().getName());
                 }
             }
         }
