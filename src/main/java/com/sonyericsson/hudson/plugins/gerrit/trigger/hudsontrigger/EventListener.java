@@ -36,6 +36,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.AbstractProject;
+import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -193,6 +194,7 @@ public final class EventListener implements GerritEventListener {
                 parameters);
         } else if (project instanceof SCMTriggerItem) {
             build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay,
+                                                             new CauseAction(cause),
                                                              badgeAction,
                                                              new RetriggerAction(cause.getContext()),
                                                              new RetriggerAllAction(cause.getContext()),
