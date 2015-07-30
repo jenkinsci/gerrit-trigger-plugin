@@ -35,7 +35,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
-import hudson.model.AbstractProject;
 import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
@@ -44,7 +43,6 @@ import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
-import jenkins.triggers.SCMTriggerItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,7 +166,7 @@ public final class EventListener implements GerritEventListener {
      * @param event   the event.
      * @param project the project to build.
      */
-    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, Job project) {
+    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, final Job project) {
         BadgeAction badgeAction = new BadgeAction(event);
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = t.getBuildScheduleDelay();
@@ -184,21 +182,18 @@ public final class EventListener implements GerritEventListener {
         ParametersAction parameters = createParameters(event, project);
 
         Future build;
-        if (project instanceof AbstractProject) {
-            build = ((AbstractProject)project).scheduleBuild2(
-                projectbuildDelay,
-                cause,
-                badgeAction,
-                new RetriggerAction(cause.getContext()),
-                new RetriggerAllAction(cause.getContext()),
-                parameters);
-        } else if (project instanceof SCMTriggerItem) {
-            build = ((SCMTriggerItem)project).scheduleBuild2(projectbuildDelay,
-                                                             new CauseAction(cause),
-                                                             badgeAction,
-                                                             new RetriggerAction(cause.getContext()),
-                                                             new RetriggerAllAction(cause.getContext()),
-                                                             parameters);
+        if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            ParameterizedJobMixIn jobMixIn = new ParameterizedJobMixIn() {
+                @Override
+                protected Job asJob() {
+                    return project;
+                }
+            };
+            build = jobMixIn.scheduleBuild2(projectbuildDelay, new CauseAction(cause),
+                                                               badgeAction,
+                                                               new RetriggerAction(cause.getContext()),
+                                                               new RetriggerAllAction(cause.getContext()),
+                                                               parameters);
         } else {
             throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
                     + project.getClass().getName());
@@ -244,7 +239,7 @@ public final class EventListener implements GerritEventListener {
 
     /**
      * Retrieves all default parameter values for a project.
-     * Copied from {@link AbstractProject#getDefaultParametersValues()}
+     * Copied from {@link hudson.model.AbstractProject#getDefaultParametersValues()}
      * version 1.362. TODO: This is not a good way to solve the problem.
      *
      * @param project the project.
