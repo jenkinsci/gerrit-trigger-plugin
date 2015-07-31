@@ -571,6 +571,10 @@ public final class Setup {
                     return null;
                 }
             }
+            @Override
+            public TriggerDescriptor getDescriptor() {
+                return new GerritTrigger.DescriptorImpl();
+            }
         };
 
         if (job != null) {
@@ -598,7 +602,15 @@ public final class Setup {
      * to get working in this case because the scheduling no longer happens directly off the Job/AbstractProject
      * (now happens via a ParameterizedJobMixIn wrapper on the Job).
      */
-    public static class ScheduleProxy {
+    public static class ScheduleProxy {                
+        private boolean passThru = false;
+        /**
+         * Schedule the build (pass through the "proxy").
+         */
+        public ScheduleProxy passThru() {
+            this.passThru = true;
+            return this;
+        }
         /**
          * Schedule job proxy.
          * <p>
@@ -609,12 +621,12 @@ public final class Setup {
          * @param cause Build cause.
          * @param badgeAction build badge action.
          * @param parameters Build parameters.
-         * @return true if ParameterizedJobMixIn.scheduleBuild2 shold be called, otherwise false (the default).
+         * @return true if ParameterizedJobMixIn.scheduleBuild2 should be called, otherwise false (the default).
          */
         public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                 ParametersAction parameters) {
             // Override and add whatever test checks you want here.
-            return false;
+            return passThru;
         }
     }
 

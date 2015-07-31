@@ -75,7 +75,7 @@ public class WorkflowTest {
                     + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n "
                     + "}\n"));
 
-            GerritTrigger trigger = Setup.createDefaultTrigger(job);
+            GerritTrigger trigger = Setup.createDefaultTrigger(job, new Setup.ScheduleProxy().passThru());
             trigger.setGerritProjects(Collections.singletonList(
                     new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
                             Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),
