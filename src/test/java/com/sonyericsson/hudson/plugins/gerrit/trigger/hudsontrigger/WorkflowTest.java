@@ -32,14 +32,22 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import hudson.model.RootAction;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Collections;
 
 /**
@@ -61,14 +69,13 @@ public class WorkflowTest {
     @Test
     public void testTriggerWorkflow() throws Exception {
         jenkinsRule.jenkins.setCrumbIssuer(null);
-        GerritServer gerritServer = createGerritServer();
+        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
 
         gerritServer.start();
         try {
             PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
 
             WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
-
             job.setDefinition(new CpsFlowDefinition(""
                     + "node {\n"
                     + "   stage 'Build'\n "
@@ -87,32 +94,120 @@ public class WorkflowTest {
 
             PluginImpl.getInstance().getHandler().post(event);
 
+            // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-
             jenkinsRule.assertLogContains("Gerrit trigger: patchset-created", run);
+
+            // Workflow build was triggered successfully. Now lets check make sure the
+            // gerrit plugin sent a verified notification back to the Gerrit Server...
+            JSONObject verifiedMessage = gerritServer.waitForNextVerified();
+            // System.out.println(gerritServer.lastContent);
+            String message = verifiedMessage.getString("message");
+            Assert.assertTrue(message.startsWith("Build Successful"));
+            Assert.assertTrue(message.contains("job/WFJob/1/"));
+            JSONObject labels = verifiedMessage.getJSONObject("labels");
+            Assert.assertEquals(1, labels.getInt("Verified"));
         } finally {
             gerritServer.stop();
         }
     }
 
     /**
-     * Create a gerrit server.
-     * @return The gerit server.
-     * @throws IOException If anything goes wrong.
+     * Mock Gerrit server.
      */
-    private GerritServer createGerritServer() throws IOException {
-        GerritServer server1 = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+    @TestExtension
+    public static class MockGerritServer extends GerritServer implements RootAction {
 
-        PluginImpl.getInstance().addServer(server1);
-        Config config = (Config)server1.getConfig();
-        config.setGerritFrontEndURL(jenkinsRule.getURL().toString() + "gerrit/");
-        config.setUseRestApi(true);
-        config.setGerritHttpUserName("user");
-        config.setGerritHttpPassword("passwd");
-        config.setRestCodeReview(true);
-        config.setRestVerified(true);
+        private String lastContent;
 
-        return server1;
+        /**
+         * Create server instance.
+         */
+        public MockGerritServer() {
+            super(PluginImpl.DEFAULT_SERVER_NAME);
+        }
+
+        /**
+         * Get the server.
+         * @param jenkinsRule The Jenkins rule for the test instance.
+         * @return The Mock Gerrit server.
+         * @throws IOException if so (as the Gerrit boys seem to say).
+         */
+        private static MockGerritServer get(JenkinsRule jenkinsRule) throws IOException {
+            MockGerritServer mockGerritServer = jenkinsRule.jenkins.getExtensionList(MockGerritServer.class).get(0);
+            mockGerritServer.configure(jenkinsRule);
+            return mockGerritServer;
+        }
+
+        /**
+         * Config the server.
+         * @param jenkinsRule The Jenkins rule for the test instance.
+         * @throws IOException if so (as the Gerrit boys seem to say).
+         */
+        private void configure(JenkinsRule jenkinsRule) throws IOException {
+            PluginImpl.getInstance().addServer(this);
+            Config config = (Config)getConfig();
+            config.setGerritFrontEndURL(jenkinsRule.getURL().toString() + getUrlName() + "/");
+            config.setUseRestApi(true);
+            config.setGerritHttpUserName("user");
+            config.setGerritHttpPassword("passwd");
+            config.setRestCodeReview(true);
+            config.setRestVerified(true);
+        }
+
+        /**
+         * Wait for the Verified label/notification.
+         * @return The Verified label/notification.
+         */
+        private JSONObject waitForNextVerified() {
+            long start = System.currentTimeMillis();
+            while (lastContent == null) {
+                // CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: It's magic.
+                if (System.currentTimeMillis() > start + 20000) {
+                    Assert.fail("Timed out waiting on Verified message from Gerrit Trigger plugin.");
+                }
+                try {
+                    // CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: It's magic.
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Assert.fail("Unexpected interrupt: " + e.getMessage());
+                }
+            }
+            return JSONObject.fromObject(lastContent);
+        }
+
+        @Override
+        public String getIconFileName() {
+            return "gear2.png";
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Gerrit";
+        }
+
+        @Override
+        public String getUrlName() {
+            return "gerrit";
+        }
+
+        /**
+         * Retrieves the Gerrit command.
+         *
+         * @param request  the request
+         * @param response the response
+         * @throws IOException if so.
+         */
+        public void doDynamic(StaplerRequest request, StaplerResponse response) throws IOException {
+            try {
+                this.lastContent = IOUtils.toString(request.getReader());
+            } finally {
+                response.setContentType("application/json");
+                PrintWriter writer = response.getWriter();
+                writer.write(new JSONObject(true).toString());
+                writer.flush();
+            }
+        }
     }
 }
