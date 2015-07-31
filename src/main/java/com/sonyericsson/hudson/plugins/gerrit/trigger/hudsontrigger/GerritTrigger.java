@@ -41,6 +41,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
@@ -73,6 +75,7 @@ import hudson.Util;
 import hudson.model.Action;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Hudson;
@@ -108,10 +111,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
 
+import jenkins.model.ParameterizedJobMixIn;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -564,6 +569,33 @@ public class GerritTrigger extends Trigger<Job> {
     @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, Job project) {
         createListener().schedule(this, cause, event, project);
+    }
+
+    /**
+     * Schedules a build of a job.
+     * <p>
+     * Added here to facilitate unit testing.
+     *
+     * @param theJob The job.
+     * @param quitePeriod Quite period.
+     * @param cause Build cause.
+     * @param badgeAction build badge action.
+     * @param parameters Build parameters.
+     * @return Scheduled build future.
+     */
+    protected Future schedule(final Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
+                              ParametersAction parameters) {
+        ParameterizedJobMixIn jobMixIn = new ParameterizedJobMixIn() {
+            @Override
+            protected Job asJob() {
+                return theJob;
+            }
+        };
+        return jobMixIn.scheduleBuild2(quitePeriod, new CauseAction(cause),
+                badgeAction,
+                new RetriggerAction(cause.getContext()),
+                new RetriggerAllAction(cause.getContext()),
+                parameters);
     }
 
     /**

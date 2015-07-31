@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
@@ -56,6 +57,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Job;
+import hudson.model.ParametersAction;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.triggers.Trigger;
@@ -65,12 +67,14 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
 import org.powermock.api.mockito.PowerMockito;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -537,7 +541,18 @@ public final class Setup {
      * @param job if not null, start the trigger with the given project.
      * @return a new GerritTrigger object.
      */
-    public static GerritTrigger createDefaultTrigger(Job job) {
+    public static GerritTrigger createDefaultTrigger(@Nonnull Job job) {
+        return createDefaultTrigger(job, new ScheduleProxy());
+    }
+
+    /**
+     * Create a new default trigger object.
+     *
+     * @param job if not null, start the trigger with the given project.
+     * @param scheduleTestProxy Schedule test proxy. See {@link ScheduleProxy} for detail.
+     * @return a new GerritTrigger object.
+     */
+    public static GerritTrigger createDefaultTrigger(Job job, @Nonnull final ScheduleProxy scheduleTestProxy) {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
@@ -546,7 +561,17 @@ public final class Setup {
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
-                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
+                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null) {
+            @Override
+            protected Future schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
+                                      ParametersAction parameters) {
+                if (scheduleTestProxy.schedule(theJob, quitePeriod, cause, badgeAction, parameters)) {
+                    return super.schedule(theJob, quitePeriod, cause, badgeAction, parameters);
+                } else {
+                    return null;
+                }
+            }
+        };
 
         if (job != null) {
             trigger.start(job, true);
@@ -565,6 +590,32 @@ public final class Setup {
         }
 
         return trigger;
+    }
+
+    /**
+     * Added this hack as a way of replacing the verify(AbstractProject).scheduleBuild2(...) parameter
+     * verifications that were in GerritTriggerTest. Tried using PowerMock/Mockito but it's a pain in the xxx
+     * to get working in this case because the scheduling no longer happens directly off the Job/AbstractProject
+     * (now happens via a ParameterizedJobMixIn wrapper on the Job).
+     */
+    public static class ScheduleProxy {
+        /**
+         * Schedule job proxy.
+         * <p>
+         * Add checks/assertions here.
+         *
+         * @param theJob The job.
+         * @param quitePeriod Quite period.
+         * @param cause Build cause.
+         * @param badgeAction build badge action.
+         * @param parameters Build parameters.
+         * @return true if ParameterizedJobMixIn.scheduleBuild2 shold be called, otherwise false (the default).
+         */
+        public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
+                                ParametersAction parameters) {
+            // Override and add whatever test checks you want here.
+            return false;
+        }
     }
 
     /**

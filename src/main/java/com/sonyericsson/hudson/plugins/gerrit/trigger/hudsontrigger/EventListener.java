@@ -27,15 +27,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
-import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -183,17 +180,7 @@ public final class EventListener implements GerritEventListener {
 
         Future build;
         if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
-            ParameterizedJobMixIn jobMixIn = new ParameterizedJobMixIn() {
-                @Override
-                protected Job asJob() {
-                    return project;
-                }
-            };
-            build = jobMixIn.scheduleBuild2(projectbuildDelay, new CauseAction(cause),
-                                                               badgeAction,
-                                                               new RetriggerAction(cause.getContext()),
-                                                               new RetriggerAllAction(cause.getContext()),
-                                                               parameters);
+            build = t.schedule(project, projectbuildDelay, cause, badgeAction, parameters);
         } else {
             throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
                     + project.getClass().getName());
