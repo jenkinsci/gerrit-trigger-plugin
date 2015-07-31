@@ -602,10 +602,11 @@ public final class Setup {
      * to get working in this case because the scheduling no longer happens directly off the Job/AbstractProject
      * (now happens via a ParameterizedJobMixIn wrapper on the Job).
      */
-    public static class ScheduleProxy {                
+    public static class ScheduleProxy {
         private boolean passThru = false;
         /**
          * Schedule the build (pass through the "proxy").
+         * @return {@code this}.
          */
         public ScheduleProxy passThru() {
             this.passThru = true;
