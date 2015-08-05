@@ -24,6 +24,9 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
 import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
@@ -97,6 +100,7 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the build will be looked up via {@link #getBuildNumber() }.
          * @return the build.
          */
+        @WithBridgeMethods(AbstractBuild.class)
         public Run getBuild() {
             if (build == null) {
                 if (buildNumber != null) {
@@ -123,6 +127,7 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the project will be looked up from {@link #getProjectId() }
          * @return the project.
          */
+        @WithBridgeMethods(AbstractProject.class)
         public Job getProject() {
             if (project == null) {
                 project = Hudson.getInstance().getItemByFullName(projectId, Job.class);
