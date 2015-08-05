@@ -1841,7 +1841,7 @@ public class GerritTrigger extends Trigger<Job> {
 
         @Override
         public boolean isApplicable(Item item) {
-            return true;
+            return (item instanceof ParameterizedJob);
         }
 
         @Override
