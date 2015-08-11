@@ -441,7 +441,8 @@ public final class ToGerritRunListener extends RunListener<Run> {
                         logger.info("Obtained failure message from file: {}", content);
                     }
                 } else {
-                    logger.warn("Unable to find matching workspace files for job {}, type {}", build.getDisplayName(), build.getClass().getName());
+                    logger.warn("Unable to find matching workspace files for job {}, type {}",
+                            build.getDisplayName(), build.getClass().getName());
                 }
             }
         }
