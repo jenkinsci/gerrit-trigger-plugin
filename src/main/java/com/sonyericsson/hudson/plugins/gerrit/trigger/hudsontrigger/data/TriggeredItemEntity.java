@@ -27,9 +27,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Run;
+import jenkins.model.Jenkins;
 
 /**
  * Wrapper class for smoother serialization of {@link Run } and {@link Job }.
@@ -130,7 +130,7 @@ public class TriggeredItemEntity {
         @WithBridgeMethods(AbstractProject.class)
         public Job getProject() {
             if (project == null) {
-                project = Hudson.getInstance().getItemByFullName(projectId, Job.class);
+                project = Jenkins.getInstance().getItemByFullName(projectId, Job.class);
             }
             return project;
         }

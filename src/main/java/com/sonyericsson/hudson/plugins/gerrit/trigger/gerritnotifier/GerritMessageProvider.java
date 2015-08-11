@@ -135,7 +135,7 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
         if (thisOverrides("getFileComments", Run.class)) {
             return getFileComments((Run)build);
         }
-        return null;
+        return Collections.emptyList();
     }
 
      /**

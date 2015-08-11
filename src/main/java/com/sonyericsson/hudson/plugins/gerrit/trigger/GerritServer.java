@@ -918,7 +918,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         for (Job job : PluginImpl.getConfiguredJobs_(oldName)) {
 
             if (!(job instanceof AbstractProject)) {
-                logger.info("Unable to modify Gerrit Trigger configurations for job [" + job.getName()
+                logger.warn("Unable to modify Gerrit Trigger configurations for job [" + job.getName()
                         + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]."
                         + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
                 return;
@@ -947,7 +947,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         for (Job job : getConfiguredJobs()) {
 
             if (!(job instanceof AbstractProject)) {
-                logger.info("Unable to remove Gerrit Trigger ffrom job [" + job.getName() + "]. "
+                logger.warn("Unable to remove Gerrit Trigger ffrom job [" + job.getName() + "]. "
                         + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
                 return;
             }

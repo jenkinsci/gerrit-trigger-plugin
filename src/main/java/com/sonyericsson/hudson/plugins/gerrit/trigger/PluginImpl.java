@@ -439,7 +439,7 @@ public class PluginImpl extends Plugin {
      */
     public List<Job> getConfiguredJobs(String serverName) {
         LinkedList<Job> configuredJobs = new LinkedList<Job>();
-        for (Job<?, ?> project : Hudson.getInstance().getItems(Job.class)) { //get the jobs
+        for (Job<?, ?> project : Jenkins.getInstance().getItems(Job.class)) { //get the jobs
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 
             //if the job has a gerrit trigger, check whether the trigger has selected this server:
