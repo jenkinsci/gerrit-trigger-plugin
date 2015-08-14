@@ -565,10 +565,14 @@ public final class Setup {
             @Override
             protected Future schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                       ParametersAction parameters) {
-                if (scheduleTestProxy.schedule(theJob, quitePeriod, cause, badgeAction, parameters)) {
-                    return super.schedule(theJob, quitePeriod, cause, badgeAction, parameters);
-                } else {
-                    return null;
+                try {
+                    if (scheduleTestProxy.schedule(theJob, quitePeriod, cause, badgeAction, parameters)) {
+                        return super.schedule(theJob, quitePeriod, cause, badgeAction, parameters);
+                    } else {
+                        return null;
+                    }
+                } finally {
+                    scheduleTestProxy.setWasScheduled(true);
                 }
             }
             @Override
@@ -604,6 +608,7 @@ public final class Setup {
      */
     public static class ScheduleProxy {
         private boolean passThru = false;
+        private boolean wasScheduled = false;
         /**
          * Schedule the build (pass through the "proxy").
          * @return {@code this}.
@@ -628,6 +633,22 @@ public final class Setup {
                                 ParametersAction parameters) {
             // Override and add whatever test checks you want here.
             return passThru;
+        }
+
+        /**
+         * Was scheduled.
+         * @return True if the schedule method was called, otherwise false.
+         */
+        public boolean wasScheduled() {
+            return wasScheduled;
+        }
+
+        /**
+         * Set the wasScheduled flag.
+         * @param wasScheduled Set the wasScheduled flag.
+         */
+        public void setWasScheduled(boolean wasScheduled) {
+            this.wasScheduled = wasScheduled;
         }
     }
 

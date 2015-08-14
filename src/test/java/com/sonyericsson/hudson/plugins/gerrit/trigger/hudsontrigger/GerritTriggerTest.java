@@ -105,6 +105,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyListOf;
@@ -245,7 +246,7 @@ public class GerritTriggerTest {
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -253,10 +254,12 @@ public class GerritTriggerTest {
                 Assert.assertTrue(gerritCause == cause);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -385,7 +388,7 @@ public class GerritTriggerTest {
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -393,11 +396,13 @@ public class GerritTriggerTest {
                 Assert.assertTrue(gerritCause == cause);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -426,7 +431,7 @@ public class GerritTriggerTest {
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -434,11 +439,13 @@ public class GerritTriggerTest {
                 Assert.assertTrue(gerritCause == cause);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -470,7 +477,7 @@ public class GerritTriggerTest {
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -479,7 +486,8 @@ public class GerritTriggerTest {
                 Assert.assertEquals("http://mock.url", parameters.getParameter(GERRIT_CHANGE_URL.name()).getValue());
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -488,6 +496,7 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
         when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -515,7 +524,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -524,7 +533,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_CHANGE_ID, event.getChange().getId());
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
@@ -534,6 +544,7 @@ public class GerritTriggerTest {
         when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -563,7 +574,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -576,7 +587,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
@@ -587,6 +599,7 @@ public class GerritTriggerTest {
         when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -617,7 +630,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, null);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -630,7 +643,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
@@ -641,6 +655,7 @@ public class GerritTriggerTest {
         when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -671,7 +686,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -684,7 +699,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
@@ -695,6 +711,7 @@ public class GerritTriggerTest {
         when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -724,7 +741,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, null);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -737,7 +754,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, "");
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
@@ -748,6 +766,7 @@ public class GerritTriggerTest {
         when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -778,7 +797,7 @@ public class GerritTriggerTest {
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -791,7 +810,8 @@ public class GerritTriggerTest {
                 assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, "");
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
@@ -802,6 +822,7 @@ public class GerritTriggerTest {
         when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -825,7 +846,7 @@ public class GerritTriggerTest {
         when(build.getProject()).thenReturn(project);
         when(build.getParent()).thenReturn(project);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -835,7 +856,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         when(listener.isBuilding(project, event)).thenReturn(false);
@@ -849,6 +871,7 @@ public class GerritTriggerTest {
         trigger.retriggerThisBuild(context);
 
         verify(listener).onRetriggered(same(project), same(event), anyListOf(Run.class));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -876,7 +899,7 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -885,7 +908,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.EMPTY_LIST);
 
@@ -896,6 +920,7 @@ public class GerritTriggerTest {
         verify(listener, never()).onRetriggered(isA(Job.class),
                 isA(PatchsetCreated.class),
                 anyListOf(Run.class));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -929,7 +954,7 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(event)).thenReturn(false);
 
-        GerritTrigger thisTrigger = Setup.createDefaultTrigger(thisProject, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy1 = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -939,13 +964,14 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger thisTrigger = Setup.createDefaultTrigger(thisProject, scheduleTestProxy1);
         thisTrigger.setGerritProjects(Collections.EMPTY_LIST);
         thisTrigger.setEscapeQuotes(false);
         thisTrigger.setSilentMode(false);
         Setup.setTrigger(thisTrigger, thisProject);
 
-        GerritTrigger otherTrigger = Setup.createDefaultTrigger(otherProject, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy2 = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -955,7 +981,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger otherTrigger = Setup.createDefaultTrigger(otherProject, scheduleTestProxy2);
         otherTrigger.setGerritProjects(Collections.EMPTY_LIST);
         otherTrigger.setEscapeQuotes(false);
         otherTrigger.setSilentMode(false);
@@ -973,8 +1000,10 @@ public class GerritTriggerTest {
         thisTrigger.retriggerAllBuilds(context);
 
         verify(listener).onRetriggered(thisProject, event, null);
+        assertTrue(scheduleTestProxy1.wasScheduled());
 
         verify(listener).onRetriggered(otherProject, event, null);
+        assertTrue(scheduleTestProxy2.wasScheduled());
 
         verify(dispatcherMock, times(1)).onTriggeringAll(eq(event));
         verify(dispatcherMock, times(1)).onDoneTriggeringAll(eq(event));
@@ -998,7 +1027,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -1007,7 +1036,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
@@ -1019,6 +1049,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener).onTriggered(same(project), same(event));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -1132,7 +1163,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -1142,7 +1173,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
@@ -1154,6 +1186,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener).onTriggered(same(project), same(event));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -1176,7 +1209,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(null, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -1185,7 +1218,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(null, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "job", project);
@@ -1195,6 +1229,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener, never()).onTriggered(same(project), same(event));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
@@ -1215,7 +1250,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
+        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
             @Override
             public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
                                     ParametersAction parameters) {
@@ -1223,7 +1258,8 @@ public class GerritTriggerTest {
                 Assert.assertTrue(parameters instanceof ParametersAction);
                 return false;
             }
-        });
+        };
+        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         //Whitebox.setInternalState(trigger, "job", project);
@@ -1236,6 +1272,7 @@ public class GerritTriggerTest {
 
         verify(listener, never()).onTriggered(same(project), same(event));
         verify(eventListener).schedule(same(trigger), argThat(new IsAManualCause(true)), same(event));
+        assertTrue(scheduleTestProxy.wasScheduled());
     }
 
     /**
