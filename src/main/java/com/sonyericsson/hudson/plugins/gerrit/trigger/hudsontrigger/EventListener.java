@@ -27,12 +27,15 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -178,9 +181,9 @@ public final class EventListener implements GerritEventListener {
         }
         ParametersAction parameters = createParameters(event, project);
 
-        Future build;
+        Future futureBuild;
         if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
-            build = t.schedule(project, projectbuildDelay, cause, badgeAction, parameters);
+            futureBuild = schedule(project, projectbuildDelay, cause, badgeAction, parameters);
         } else {
             throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
                     + project.getClass().getName());
@@ -195,20 +198,47 @@ public final class EventListener implements GerritEventListener {
             }
             if (null != changeBasedEvent.getPatchSet()) {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
-                        new Object[]{project.getName(), (build != null),
+                        new Object[]{project.getName(), (futureBuild != null),
                                 changeBasedEvent.getChange().getNumber() + "/"
                                         + changeBasedEvent.getPatchSet().getNumber(), });
             } else {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
-                        new Object[]{project.getName(), (build != null),
+                        new Object[]{project.getName(), (futureBuild != null),
                                 changeBasedEvent.getChange().getNumber(), });
             }
         } else if (event instanceof RefUpdated) {
             RefUpdated refUpdated = (RefUpdated)event;
             logger.info("Project {} Build Scheduled: {} By event: {}",
-                    new Object[]{project.getName(), (build != null),
+                    new Object[]{project.getName(), (futureBuild != null),
                             refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev(), });
         }
+    }
+
+    /**
+     * Schedules a build of a job.
+     * <p>
+     * Added here to facilitate unit testing.
+     *
+     * @param theJob The job.
+     * @param quitePeriod Quite period.
+     * @param cause Build cause.
+     * @param badgeAction build badge action.
+     * @param parameters Build parameters.
+     * @return Scheduled build future.
+     */
+    protected Future schedule(final Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
+                              ParametersAction parameters) {
+        ParameterizedJobMixIn jobMixIn = new ParameterizedJobMixIn() {
+            @Override
+            protected Job asJob() {
+                return theJob;
+            }
+        };
+        return jobMixIn.scheduleBuild2(quitePeriod, new CauseAction(cause),
+                badgeAction,
+                new RetriggerAction(cause.getContext()),
+                new RetriggerAllAction(cause.getContext()),
+                parameters);
     }
 
     /**

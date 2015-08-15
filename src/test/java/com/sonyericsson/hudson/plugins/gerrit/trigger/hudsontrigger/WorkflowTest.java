@@ -50,6 +50,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
+import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
+import static org.hamcrest.core.AllOf.allOf;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.Is.isA;
+import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
@@ -75,24 +85,9 @@ public class WorkflowTest {
         try {
             PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
 
-            WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
-            job.setDefinition(new CpsFlowDefinition(""
-                    + "node {\n"
-                    + "   stage 'Build'\n "
-                    + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n "
-                    + "}\n"));
+            WorkflowJob job = createWorkflowJob(event);
 
-            GerritTrigger trigger = Setup.createDefaultTrigger(job, new Setup.ScheduleProxy().passThru());
-            trigger.setGerritProjects(Collections.singletonList(
-                    new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
-                            Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),
-                            null, null, null)
-            ));
-            trigger.setSilentMode(false);
-            trigger.setGerritBuildSuccessfulCodeReviewValue(1);
-            trigger.setGerritBuildSuccessfulVerifiedValue(1);
-
-            PluginImpl.getInstance().getHandler().post(event);
+            PluginImpl.getHandler_().post(event);
 
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
@@ -107,10 +102,62 @@ public class WorkflowTest {
             Assert.assertTrue(message.startsWith("Build Successful"));
             Assert.assertTrue(message.contains("job/WFJob/1/"));
             JSONObject labels = verifiedMessage.getJSONObject("labels");
-            Assert.assertEquals(1, labels.getInt("Verified"));
+            assertEquals(1, labels.getInt("Verified"));
         } finally {
             gerritServer.stop();
         }
+    }
+
+    /**
+     * Tests a {@link JenkinsRule#configRoundtrip(hudson.model.Job)} on the workflow job.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testConfigRoundTrip() throws Exception {
+        PatchsetCreated event = Setup.createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME);
+        WorkflowJob job = createWorkflowJob(event);
+        jenkinsRule.configRoundtrip(job);
+        job = (WorkflowJob)jenkinsRule.jenkins.getItem("WFJob");
+        GerritTrigger trigger = GerritTrigger.getTrigger(job);
+        assertFalse(trigger.isSilentMode());
+        assertEquals(1, trigger.getGerritBuildSuccessfulCodeReviewValue().intValue());
+        assertEquals(1, trigger.getGerritBuildSuccessfulVerifiedValue().intValue());
+        assertEquals(0, trigger.getGerritBuildFailedCodeReviewValue().intValue());
+        assertThat(trigger.getGerritProjects(), hasItem(
+                allOf(
+                    isA(GerritProject.class),
+                    hasProperty("compareType", is(CompareType.PLAIN)),
+                    hasProperty("pattern", equalTo(event.getChange().getProject()))
+                )
+        ));
+    }
+
+    /**
+     * Creates a {@link WorkflowJob} with a configured {@link GerritTrigger}.
+     *
+     * @param event the event to trigger on.
+     * @return the job
+     * @throws IOException if so
+     */
+    private WorkflowJob createWorkflowJob(PatchsetCreated event) throws IOException {
+        WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
+        job.setDefinition(new CpsFlowDefinition(""
+                + "node {\n"
+                + "   stage 'Build'\n "
+                + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n "
+                + "}\n"));
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(job);
+        trigger.setGerritProjects(Collections.singletonList(
+                new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
+                        Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),
+                        null, null, null)
+        ));
+        trigger.setSilentMode(false);
+        trigger.setGerritBuildSuccessfulCodeReviewValue(1);
+        trigger.setGerritBuildSuccessfulVerifiedValue(1);
+        return job;
     }
 
     /**

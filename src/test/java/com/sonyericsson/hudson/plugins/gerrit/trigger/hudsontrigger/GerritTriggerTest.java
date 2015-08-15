@@ -33,6 +33,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -47,7 +48,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
-import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
@@ -56,16 +57,20 @@ import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.StringParameterDefinition;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
+import hudson.model.queue.ScheduleResult;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.acegisecurity.Authentication;
 import org.hamcrest.BaseMatcher;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,8 +85,8 @@ import org.powermock.reflect.Whitebox;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -105,11 +110,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.anyListOf;
-import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
@@ -149,6 +154,7 @@ public class GerritTriggerTest {
     private GerritTrigger upstreamGerritTriggerMock;
     private GerritTrigger veryUpstreamGerritTriggerMock;
     private DependencyQueueTaskDispatcher dispatcherMock;
+    private PluginImpl plugin;
 
     /**
      * test.
@@ -227,40 +233,21 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithAverageBuildScheduleDelay() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        when(server.getConfig()).thenReturn(config);
-        when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(config.getBuildScheduleDelay()).thenReturn(20);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject();
+        mockPluginConfig(20);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(20, quitePeriod);
-                Assert.assertTrue(gerritCause == cause);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(20), hasCauseActionContainingCause(gerritCause));
     }
+
+
 
     /**
      * Tests a project rename.
@@ -270,9 +257,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testProjectRename() throws Exception {
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        mockPluginConfig(0);
         // we'll make AbstractProject return different names over time
         final String[] name = new String[1];
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
@@ -301,11 +286,8 @@ public class GerritTriggerTest {
      */
     @Test
     public void testInitializeTriggerOnEvents() {
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
+        mockPluginConfig(0);
+        AbstractProject project = mockProject();
         boolean silentStartMode = false;
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, silentStartMode, true, false, false, "", "", "", "", "", "", "", null, null, null,
@@ -329,37 +311,17 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithNegativeBuildScheduleDelay() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(config.getBuildScheduleDelay()).thenReturn(-20);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject();
+        mockPluginConfig(-20);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(0, quitePeriod);
-                Assert.assertTrue(gerritCause == cause);
-                return false;
-            }
-        });
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingCause(gerritCause));
     }
 
     /**
@@ -369,40 +331,19 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithNoBuildScheduleDelay() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(config.getBuildScheduleDelay()).thenReturn(0);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject();
+        mockPluginConfig(0);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(0, quitePeriod);
-                Assert.assertTrue(gerritCause == cause);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingCause(gerritCause));
     }
 
     /**
@@ -412,40 +353,19 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithMaximumBuildScheduleDelay() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        when(config.getBuildScheduleDelay()).thenReturn(10000);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject();
+        mockPluginConfig(10000);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(10000, quitePeriod);
-                Assert.assertTrue(gerritCause == cause);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(10000), hasCauseActionContainingCause(gerritCause));
     }
 
     /**
@@ -456,47 +376,27 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithDefaultParameters() {
-
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+        Queue queue = mockJenkinsQueue();
         List<ParameterDefinition> list = new LinkedList<ParameterDefinition>();
         list.add(new StringParameterDefinition("MOCK_PARAM", "mock_value"));
-        when(parameters.getParameterDefinitions()).thenReturn(list);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        AbstractProject project = mockProject(list);
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                Assert.assertEquals("mock_value", parameters.getParameter("MOCK_PARAM").getValue());
-                Assert.assertEquals("http://mock.url", parameters.getParameter(GERRIT_CHANGE_URL.name()).getValue());
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
-        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
+
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher("MOCK_PARAM", "mock_value"),
+                hasParamActionMatcher(GERRIT_CHANGE_URL, "http://mock.url")
+        ));
     }
 
     /**
@@ -506,45 +406,24 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithNoDefaultParameters() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_URL, "http://mock.url");
-                assertParamEquals(parameters, GERRIT_CHANGE_ID, event.getChange().getId());
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
-        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_ID, event.getChange().getId()),
+                hasParamActionMatcher(GERRIT_CHANGE_URL, "http://mock.url")
+        ));
     }
 
     /**
@@ -554,52 +433,32 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithOwnerAndUploader() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER, owner.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_NAME, owner.getName());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER, owner.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_NAME, owner.getName()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail())
+        ));
     }
 
     /**
@@ -610,52 +469,32 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithOwnerAndOneUploaderNull() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, null);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER, owner.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_NAME, owner.getName());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(plugin.getServer(any(String.class)).getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER, owner.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_NAME, owner.getName()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail())
+        ));
     }
 
     /**
@@ -666,52 +505,33 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithOwnerAndOtherUploaderNull() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER, owner.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_NAME, owner.getName());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail());
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER, owner.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_NAME, owner.getName()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER, uploader.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_EMAIL, uploader.getEmail())
+        ));
     }
 
     /**
@@ -722,51 +542,32 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithOwnerAndBothUploadersNull() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, null, null);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER, owner.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_NAME, owner.getName());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER, "");
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_NAME, "");
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, "");
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER, owner.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_NAME, owner.getName()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER, ""),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_NAME, ""),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_EMAIL, "")
+        ));
     }
 
     /**
@@ -777,52 +578,33 @@ public class GerritTriggerTest {
      */
     @Test
     public void testScheduleWithOwnerAndPartOfUploadersNull() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        Queue queue = mockJenkinsQueue();
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Bobby", null);
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
+        mockPluginConfig(0);
 
         final PatchsetCreated event = Setup.createPatchsetCreatedWithAccounts(owner, uploader, uploader);
         final GerritCause gerritCause = spy(new GerritCause(event, true));
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(gerritCause == cause);
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER, owner.getNameAndEmail());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_NAME, owner.getName());
-                assertParamEquals(parameters, GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER, "");
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName());
-                assertParamEquals(parameters, GERRIT_PATCHSET_UPLOADER_EMAIL, "");
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         Setup.setTrigger(trigger, project);
         trigger.setEscapeQuotes(false);
         doReturn("http://mock.url").when(gerritCause).getUrl();
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
 
         trigger.schedule(gerritCause, event);
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasAllActions(
+                hasCauseActionContainingCauseMatcher(gerritCause),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER, owner.getNameAndEmail()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_NAME, owner.getName()),
+                hasParamActionMatcher(GERRIT_CHANGE_OWNER_EMAIL, owner.getEmail()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER, ""),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_NAME, uploader.getName()),
+                hasParamActionMatcher(GERRIT_PATCHSET_UPLOADER_EMAIL, "")
+        ));
     }
 
     /**
@@ -830,12 +612,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testRetriggerThisBuild() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        when(project.isBuildable()).thenReturn(true);
+        AbstractProject project = mockProject();
 
-        mockConfig(project);
+        Queue queue = mockConfig(project);
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
@@ -846,32 +625,21 @@ public class GerritTriggerTest {
         when(build.getProject()).thenReturn(project);
         when(build.getParent()).thenReturn(project);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(0, quitePeriod);
-                Assert.assertTrue(cause instanceof GerritUserCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         when(listener.isBuilding(project, event)).thenReturn(false);
         Setup.setTrigger(trigger, project);
-        trigger.setGerritProjects(Collections.EMPTY_LIST);
+        trigger.setGerritProjects(Collections.<GerritProject>emptyList());
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
 
-        TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
+        TriggerContext context = new TriggerContext(build, event, Collections.<TriggeredItemEntity>emptyList());
 
         trigger.retriggerThisBuild(context);
 
         verify(listener).onRetriggered(same(project), same(event), anyListOf(Run.class));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingUserCause());
     }
 
     /**
@@ -879,12 +647,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testRetriggerThisBuildSilent() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullDisplayName()).thenReturn("MockedProject");
-        when(project.getFullName()).thenReturn("MockedProject");
-        when(project.isBuildable()).thenReturn(true);
+        AbstractProject project = mockProject();
 
-        mockConfig(project);
+        Queue queue = mockConfig(project);
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
@@ -899,28 +664,18 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(project, event)).thenReturn(false);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(cause instanceof GerritUserCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
-        trigger.setGerritProjects(Collections.EMPTY_LIST);
+        trigger.setGerritProjects(Collections.<GerritProject>emptyList());
 
-        TriggerContext context = new TriggerContext(build, event, Collections.EMPTY_LIST);
+        TriggerContext context = new TriggerContext(build, event, Collections.<TriggeredItemEntity>emptyList());
 
         trigger.retriggerThisBuild(context);
 
         verify(listener, never()).onRetriggered(isA(Job.class),
                 isA(PatchsetCreated.class),
                 anyListOf(Run.class));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingUserCause());
     }
 
     /**
@@ -928,17 +683,10 @@ public class GerritTriggerTest {
      */
     @Test
     public void testRetriggerAllBuilds() {
-        final AbstractProject thisProject = PowerMockito.mock(AbstractProject.class);
-        when(thisProject.getFullDisplayName()).thenReturn("MockedProject");
-        when(thisProject.getFullName()).thenReturn("MockedProject");
-        when(thisProject.isBuildable()).thenReturn(true);
+        final AbstractProject thisProject = mockProject();
+        final AbstractProject otherProject = mockProject("Other_MockedProject");
 
-        final AbstractProject otherProject = PowerMockito.mock(AbstractProject.class);
-        when(otherProject.getFullDisplayName()).thenReturn("Other_MockedProject");
-        when(otherProject.getFullName()).thenReturn("Other_MockedProject");
-        when(otherProject.isBuildable()).thenReturn(true);
-
-        mockConfig(thisProject, otherProject);
+        Queue queue = mockConfig(thisProject, otherProject);
         mockDependencyQueueTaskDispatcherConfig();
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
@@ -954,36 +702,16 @@ public class GerritTriggerTest {
 
         when(listener.isBuilding(event)).thenReturn(false);
 
-        Setup.ScheduleProxy scheduleTestProxy1 = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(theJob == thisProject);
-                Assert.assertTrue(cause instanceof GerritUserCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger thisTrigger = Setup.createDefaultTrigger(thisProject, scheduleTestProxy1);
-        thisTrigger.setGerritProjects(Collections.EMPTY_LIST);
+
+        GerritTrigger thisTrigger = Setup.createDefaultTrigger(thisProject);
+        thisTrigger.setGerritProjects(Collections.<GerritProject>emptyList());
         thisTrigger.setEscapeQuotes(false);
         thisTrigger.setSilentMode(false);
         Setup.setTrigger(thisTrigger, thisProject);
 
-        Setup.ScheduleProxy scheduleTestProxy2 = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(theJob == otherProject);
-                Assert.assertTrue(cause instanceof GerritUserCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger otherTrigger = Setup.createDefaultTrigger(otherProject, scheduleTestProxy2);
-        otherTrigger.setGerritProjects(Collections.EMPTY_LIST);
+
+        GerritTrigger otherTrigger = Setup.createDefaultTrigger(otherProject);
+        otherTrigger.setGerritProjects(Collections.<GerritProject>emptyList());
         otherTrigger.setEscapeQuotes(false);
         otherTrigger.setSilentMode(false);
         Setup.setTrigger(otherTrigger, otherProject);
@@ -1000,10 +728,10 @@ public class GerritTriggerTest {
         thisTrigger.retriggerAllBuilds(context);
 
         verify(listener).onRetriggered(thisProject, event, null);
-        assertTrue(scheduleTestProxy1.wasScheduled());
+        verify(queue).schedule2(same(thisProject), eq(0), hasCauseActionContainingUserCause());
 
         verify(listener).onRetriggered(otherProject, event, null);
-        assertTrue(scheduleTestProxy2.wasScheduled());
+        verify(queue).schedule2(same(otherProject), eq(0), hasCauseActionContainingUserCause());
 
         verify(dispatcherMock, times(1)).onTriggeringAll(eq(event));
         verify(dispatcherMock, times(1)).onDoneTriggeringAll(eq(event));
@@ -1015,10 +743,8 @@ public class GerritTriggerTest {
      */
     @Test
     public void testGerritEvent() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        when(project.isBuildable()).thenReturn(true);
-        mockConfig(project);
+        AbstractProject project = mockProject();
+        Queue queue = mockConfig(project);
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
@@ -1027,17 +753,8 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(cause instanceof GerritCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
@@ -1049,7 +766,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener).onTriggered(same(project), same(event));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
     }
 
     /**
@@ -1063,17 +780,16 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(false);
-        mockConfig(project);
+        Queue queue = mockConfig(project);
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
-        trigger.setGerritProjects(Collections.EMPTY_LIST);
+        trigger.setGerritProjects(Collections.<GerritProject>emptyList());
         trigger.setEscapeQuotes(false);
         trigger.setSilentMode(false);
-        //Whitebox.setInternalState(trigger, "job", project);
 
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -1085,7 +801,7 @@ public class GerritTriggerTest {
         verify(project).addTrigger(same(trigger));
         verify(project).getTriggers();
         verify(project).isBuildable();
-        verify(project, never()).scheduleBuild2(anyInt(), any(Cause.class), any(Collection.class));
+        verify(queue, never()).schedule2(same(project), anyInt(), any(List.class));
         verify(eventListener, never()).schedule(
                 any(GerritTrigger.class),
                 any(GerritCause.class),
@@ -1149,11 +865,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testGerritEventManualEvent() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        when(project.isBuildable()).thenReturn(true);
+        AbstractProject project = mockProject();
 
-        mockConfig(project);
+        Queue queue = mockConfig(project);
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
@@ -1163,18 +877,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertEquals(0, quitePeriod);
-                Assert.assertTrue(cause instanceof GerritUserCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         trigger.setEscapeQuotes(false);
@@ -1186,7 +889,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener).onTriggered(same(project), same(event));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingUserCause());
     }
 
     /**
@@ -1195,11 +898,9 @@ public class GerritTriggerTest {
      */
     @Test
     public void testGerritEventSilentMode() {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        when(project.isBuildable()).thenReturn(true);
+        AbstractProject project = mockProject();
 
-        mockConfig(project);
+        Queue queue = mockConfig(project);
 
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
@@ -1209,17 +910,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(cause instanceof GerritCause);
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(null, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(null);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         Whitebox.setInternalState(trigger, "job", project);
@@ -1229,7 +920,7 @@ public class GerritTriggerTest {
         trigger.createListener().gerritEvent(event);
 
         verify(listener, never()).onTriggered(same(project), same(event));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
     }
 
     /**
@@ -1241,7 +932,7 @@ public class GerritTriggerTest {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockProject");
         when(project.isBuildable()).thenReturn(true);
-        mockConfig(project);
+        Queue queue = mockConfig(project);
         PowerMockito.mockStatic(ToGerritRunListener.class);
         ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
@@ -1250,16 +941,7 @@ public class GerritTriggerTest {
         doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
         when(gP.getFilePaths()).thenReturn(null);
 
-        Setup.ScheduleProxy scheduleTestProxy = new Setup.ScheduleProxy() {
-            @Override
-            public boolean schedule(Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
-                                    ParametersAction parameters) {
-                Assert.assertTrue(badgeAction instanceof BadgeAction);
-                Assert.assertTrue(parameters instanceof ParametersAction);
-                return false;
-            }
-        };
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, scheduleTestProxy);
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         Setup.setTrigger(trigger, project);
         trigger.setGerritProjects(Collections.nCopies(1, gP));
         //Whitebox.setInternalState(trigger, "job", project);
@@ -1272,7 +954,7 @@ public class GerritTriggerTest {
 
         verify(listener, never()).onTriggered(same(project), same(event));
         verify(eventListener).schedule(same(trigger), argThat(new IsAManualCause(true)), same(event));
-        assertTrue(scheduleTestProxy.wasScheduled());
+        verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingCause(null));
     }
 
     /**
@@ -1330,11 +1012,7 @@ public class GerritTriggerTest {
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1356,17 +1034,7 @@ public class GerritTriggerTest {
         PatchsetCreated eventWithoutQuotes = preparePatchsetCreatedObjForMockTest(changeWithoutQuotes,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         //mock the returned url
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        mockPluginConfig(0);
 
         //prepare GerritTrigger object with the escapeQuotes setting is on.
         GerritTrigger triggerWithEscapeQuotesOn = Setup.createDefaultTrigger(project);
@@ -1403,11 +1071,7 @@ public class GerritTriggerTest {
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1430,17 +1094,7 @@ public class GerritTriggerTest {
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
 
         //mock the returned url
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        mockPluginConfig(0);
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
         GerritTrigger triggerWithEscapeQuotesOff = Setup.createDefaultTrigger(project);
@@ -1476,11 +1130,7 @@ public class GerritTriggerTest {
         String stringReadable = "This is human readable message";
 
         //prepare AbstractProject object
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1498,17 +1148,7 @@ public class GerritTriggerTest {
         PatchsetCreated event = preparePatchsetCreatedObjForMockTest(change,
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
         //mock the returned url
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        mockPluginConfig(0);
 
         //prepare GerritTrigger object with the readableMessage setting is on.
         GerritTrigger triggerWithReadableMessageOn = Setup.createDefaultTrigger(project);
@@ -1539,11 +1179,7 @@ public class GerritTriggerTest {
         String stringEncoded = "VGhpcyBpcyBodW1hbiByZWFkYWJsZSBtZXNzYWdl";
 
         //prepare AbstractProject object
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
-        when(project.getFullName()).thenReturn("MockedProject");
-        ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
-        when(parameters.getParameterDefinitions()).thenReturn(Collections.EMPTY_LIST);
-        when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1562,17 +1198,7 @@ public class GerritTriggerTest {
                 new PatchSet(patch), GerritEventType.PATCHSET_CREATED);
 
         //mock the returned url
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        GerritHandler handler = mock(GerritHandler.class);
-        when(plugin.getHandler()).thenReturn(handler);
-        IGerritHudsonTriggerConfig config = Setup.createConfig();
-        config = spy(config);
-        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
-        when(server.getConfig()).thenReturn(config);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        mockPluginConfig(0);
 
         //prepare GerritTrigger object with the escapeQuotes setting is off.
         GerritTrigger triggerWithReadableMessageOff = Setup.createDefaultTrigger(project);
@@ -1648,8 +1274,9 @@ public class GerritTriggerTest {
      * And specifically the retrieval of Config and the frontendUrl.
      *
      * @param jobs the jobs that should be retrievable from {@link Jenkins#getItemByFullName(String, Class)}.
+     * @return the mocked Queue object to use for schedule verification.
      */
-    private static void mockConfig(AbstractProject... jobs) {
+    private static Queue mockConfig(AbstractProject... jobs) {
         PowerMockito.mockStatic(PluginImpl.class);
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -1675,6 +1302,8 @@ public class GerritTriggerTest {
         doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
         when(server.getConfig()).thenReturn(config);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+
+        return mockQueue(jenkins);
     }
 
     /**
@@ -2062,5 +1691,287 @@ public class GerritTriggerTest {
      */
     private void assertParamEquals(ParametersAction parameters, Enum name, String expectedValue) {
         Assert.assertEquals(expectedValue, parameters.getParameter(name.name()).getValue());
+    }
+
+    /**
+     * A {@link CoreMatchers#allOf(Iterable)} version for mockito {@link Action} matchers.
+     * the list could contain more Actions than provided to check.
+     *
+     * @param all all the {@link Matcher}s that the list should contain.
+     * @return the matcher.
+     *
+     * @see #hasCauseActionContainingCauseMatcher(GerritCause)
+     * @see #hasParamActionMatcher(String, String)
+     */
+    protected List<Action> hasAllActions(Matcher<List<Action>>... all) {
+        return argThat(CoreMatchers.allOf(all));
+    }
+
+    /**
+     * {@link org.mockito.Matchers#argThat(Matcher)} version of
+     * {@link #hasCauseActionContainingCauseMatcher(GerritCause)}.
+     *
+     * @param cause the GerritCause to check for instance equality.
+     * @return the matcher.
+     * @see #hasCauseActionContainingCauseMatcher(GerritCause)
+     */
+    protected List<Action> hasCauseActionContainingCause(final GerritCause cause) {
+        return argThat(hasCauseActionContainingCauseMatcher(cause));
+    }
+
+    /**
+     * A {@link Matcher} that checks a list of {@link Action}s for a {@link CauseAction}
+     * containing the provided instance of a  {@link GerritCause}.
+     *
+     * @param expectedSame the GerritCause to check for instance equality.
+     *
+     * @return the matcher.
+     */
+    private BaseMatcher<List<Action>> hasCauseActionContainingCauseMatcher(final GerritCause expectedSame) {
+        return new BaseMatcher<List<Action>>() {
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof List) {
+                    for (Action a : ((List<Action>)item)) {
+                        if (a instanceof CauseAction) {
+                            GerritCause cause = ((CauseAction)a).findCause(GerritCause.class);
+                            if (expectedSame == null && cause != null) {
+                                //Don't care about the instance just that it exists
+                                return true;
+                            } else if (expectedSame == null && cause == null) {
+                                return false;
+                            }
+                            if (cause == expectedSame) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                if (expectedSame == null) {
+                    description.appendText("does not contain a CauseAction with a GerritCause.");
+                } else {
+                    description.appendText("does not contain a CauseAction with the valid GerritCause.");
+                }
+            }
+        };
+    }
+
+    /**
+     * A {@link org.mockito.Matchers#argThat(Matcher)} version of {@link #hasCauseActionContainingUserCauseMatcher()}.
+     *
+     * @return the matcher.
+     * @see #hasCauseActionContainingUserCauseMatcher()
+     */
+    private List<Action> hasCauseActionContainingUserCause() {
+        return argThat(hasCauseActionContainingUserCauseMatcher());
+    }
+
+    /**
+     * A {@link Matcher} that checks a list of {@link Action}s for a {@link CauseAction}
+     * containing any {@link GerritUserCause}.
+     *
+     * @return the matcher.
+     */
+    private BaseMatcher<List<Action>> hasCauseActionContainingUserCauseMatcher() {
+        return new BaseMatcher<List<Action>>() {
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof List) {
+                    for (Action a : ((List<Action>)item)) {
+                        if (a instanceof CauseAction) {
+                            GerritCause cause = ((CauseAction)a).findCause(GerritUserCause.class);
+                            if (cause != null) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("does not contain a CauseAction with a GerritUserCause.");
+            }
+        };
+    }
+
+
+    /**
+     * A {@link org.mockito.Matchers#argThat(Matcher)} version of {@link #hasParamActionMatcher(String, String)}.
+     *
+     * @param key the key to find
+     * @param value the value to compare
+     * @return the matcher
+     * @see #hasParamActionMatcher(String, String)
+     */
+    protected List<Action> hasParamAction(final String key, final String value) {
+        return argThat(hasParamActionMatcher(key, value));
+    }
+
+    /**
+     * A version of {@link #hasParamActionMatcher(String, String)} using {@link GerritTriggerParameters}
+     * for the key for simpler usage.
+     * @param key the key
+     * @param value the value to compare
+     * @return the matcher
+     * @see #hasParamActionMatcher(String, String)
+     */
+    private BaseMatcher<List<Action>> hasParamActionMatcher(final GerritTriggerParameters key, final String value) {
+        return hasParamActionMatcher(key.name(), value);
+    }
+
+    /**
+     * {@link Matcher} that checks a list of {@link Action}s for a {@link ParametersAction} that contains any parameter
+     * with the specified key whose {@code toString()} method equals the specified value.
+     * @param key the key to find
+     * @param value the value to compare
+     * @return the matcher
+     */
+    private BaseMatcher<List<Action>> hasParamActionMatcher(final String key, final String value) {
+        return new BaseMatcher<List<Action>>() {
+            @Override
+            public boolean matches(Object item) {
+                if (item instanceof List) {
+                    for (Action a : ((List<Action>)item)) {
+                        if (a instanceof ParametersAction) {
+                            ParametersAction parameters = (ParametersAction)a;
+                            ParameterValue parameter = parameters.getParameter(key);
+                            if (parameter != null) {
+                                return value.equals(parameter.getValue());
+                            }
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("does not contain a parameter ").
+                        appendText(key).appendText(" with value ").appendText(value);
+            }
+        };
+    }
+
+
+    /**
+     * Sets up a more functioning plugin config than {@link #setupSeverConfigMock()}
+     * but not as excessive as {@link #mockConfig(AbstractProject[])}.
+     *
+     * @param buildScheduleDelay the {@link IGerritHudsonTriggerConfig#getBuildScheduleDelay()} to return.
+     *
+     * @return the config.
+     */
+    private IGerritHudsonTriggerConfig mockPluginConfig(int buildScheduleDelay) {
+        PowerMockito.mockStatic(PluginImpl.class);
+        plugin = PowerMockito.mock(PluginImpl.class);
+        GerritServer server = mock(GerritServer.class);
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        config = spy(config);
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(String.class), any(String.class));
+        doReturn("http://mock.url").when(config).getGerritFrontEndUrlFor(any(GerritTriggeredEvent.class));
+        when(plugin.getServer(any(String.class))).thenReturn(server);
+        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
+        GerritHandler handler = mock(GerritHandler.class);
+        when(plugin.getHandler()).thenReturn(handler);
+        when(server.getConfig()).thenReturn(config);
+        when(PluginImpl.getInstance()).thenReturn(plugin);
+        when(config.getBuildScheduleDelay()).thenReturn(buildScheduleDelay);
+        return config;
+    }
+
+    /**
+     * Creates a mocked {@link AbstractProject} with a mocked {@link ParametersDefinitionProperty}
+     * containing the provided parameters and a default name.
+     * The default name is <strong>MockedProject</strong>
+     * @param parameterDefinitionList the parameters
+     * @return the mocked project
+     * @see #mockProject(String, List)
+     */
+    private AbstractProject mockProject(List<ParameterDefinition> parameterDefinitionList) {
+        return mockProject("MockedProject", parameterDefinitionList);
+    }
+
+    /**
+     * Creates a mocked {@link AbstractProject} with no {@link ParametersDefinitionProperty} and a default name.
+     *
+     * @return the mocked project.
+     * @see #mockProject(List)
+     */
+    private AbstractProject mockProject() {
+        return mockProject((List<ParameterDefinition>)null);
+    }
+
+    /**
+     * Creates a mocked {@link AbstractProject} with no {@link ParametersDefinitionProperty}.
+     * @param name the name it should have.
+     * @return the project.
+     * @see #mockProject(String, List)
+     */
+    private AbstractProject mockProject(String name) {
+        return mockProject(name, null);
+    }
+
+    /**
+     * Creates a mocked {@link AbstractProject} that returns the provided name and parameters
+     * @param name the name
+     * @param parameterDefinitionList the list of parameters or
+     *              {@code null} to not mock the {@link ParametersDefinitionProperty} at all.
+     * @return the mocked project
+     */
+    private AbstractProject mockProject(String name, List<ParameterDefinition> parameterDefinitionList) {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullDisplayName()).thenReturn(name);
+        when(project.getFullName()).thenReturn(name);
+        when(project.isBuildable()).thenReturn(true);
+
+        if (parameterDefinitionList != null) {
+            ParametersDefinitionProperty parameters = mock(ParametersDefinitionProperty.class);
+            when(parameters.getParameterDefinitions()).thenReturn(parameterDefinitionList);
+            when(project.getProperty(ParametersDefinitionProperty.class)).thenReturn(parameters);
+        }
+        return project;
+    }
+
+    /**
+     * Creates a mock of {@link Jenkins} and its containing {@link Queue}.
+     *
+     * @return the mocked Queue.
+     * @see #mockQueue(Jenkins)
+     */
+    private static Queue mockJenkinsQueue() {
+        Jenkins jenkins = PowerMockito.mock(Jenkins.class);
+        PowerMockito.mockStatic(Jenkins.class);
+        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        return mockQueue(jenkins);
+    }
+
+    /**
+     * Mocks {@link Jenkins#getQueue()} and sets it up to return {@link ScheduleResult#created(Queue.WaitingItem)} on
+     * any calls to {@link Queue#schedule2(Queue.Task, int, List)}.
+     *
+     * @param jenkins the jenkins mock.
+     * @return the mocked queue.
+     */
+    private static Queue mockQueue(Jenkins jenkins) {
+        Queue queue = PowerMockito.mock(Queue.class);
+        when(jenkins.getQueue()).thenReturn(queue);
+        when(queue.schedule2(any(Queue.Task.class), anyInt(), anyList())).thenAnswer(new Answer<ScheduleResult>() {
+            @Override
+            public ScheduleResult answer(InvocationOnMock invocation) throws Throwable {
+                Object[] arguments = invocation.getArguments();
+                Queue.WaitingItem i = new Queue.WaitingItem(
+                        new GregorianCalendar(), (Queue.Task)arguments[0], (List<Action>)arguments[2]);
+                return ScheduleResult.created(i);
+            }
+        });
+        return queue;
     }
 }

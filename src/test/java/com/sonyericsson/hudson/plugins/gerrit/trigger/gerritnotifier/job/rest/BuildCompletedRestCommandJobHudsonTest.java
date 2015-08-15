@@ -91,7 +91,7 @@ public class BuildCompletedRestCommandJobHudsonTest {
         PatchsetCreated event = Setup.createPatchsetCreated(server1.getName());
 
         FreeStyleProject project = j.createFreeStyleProject();
-        GerritTrigger trigger = Setup.createDefaultTrigger(project, new Setup.ScheduleProxy().passThru());
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setGerritProjects(Collections.singletonList(
                 new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
                         Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),

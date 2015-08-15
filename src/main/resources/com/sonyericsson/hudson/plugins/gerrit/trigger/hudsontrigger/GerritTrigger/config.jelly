@@ -168,7 +168,7 @@
                          help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
                    <f:textbox/>
                 </f:entry>
-                <j:if test="${it.job instanceof hudson.model.AbstractProject}">
+                <j:if test="${descriptor.isUnsuccessfulMessageFileSupported(it)}">
                     <f:entry title="${%Unsuccessful Message File}"
                              field="buildUnsuccessfulFilepath"
                              help="/plugin/gerrit-trigger/trigger/help-BuildUnsuccessfulFilepath.html">
