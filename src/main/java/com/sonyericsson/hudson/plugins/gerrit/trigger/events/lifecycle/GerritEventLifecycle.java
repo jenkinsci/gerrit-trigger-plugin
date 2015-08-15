@@ -24,10 +24,9 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import hudson.model.Job;
+import hudson.model.Run;
 
 /**
  * Interface representing a class handling event listeners for the lifecycle of a GerritEvent.
@@ -52,7 +51,7 @@ public interface GerritEventLifecycle {
      * Removes the listener from the list of listeners.
      * @param listener the listener to remove.
      * @return true if it was removed.
-     * @see List#remove(java.lang.Object)
+     * @see java.util.List#remove(java.lang.Object)
      */
     boolean removeListener(GerritEventLifecycleListener listener);
 
@@ -67,22 +66,22 @@ public interface GerritEventLifecycle {
     void fireTriggerScanDone();
 
     /**
-     * Fires the event {@link GerritEventLifecycleListener#projectTriggered(GerritEvent, AbstractProject)}.
+     * Fires the event {@link GerritEventLifecycleListener#projectTriggered(GerritEvent, Job)}.
      * @param project the project that is triggered.
      */
-    void fireProjectTriggered(final AbstractProject<?, ?> project);
+    void fireProjectTriggered(final Job<?, ?> project);
 
     /**
-     * Fires the event {@link GerritEventLifecycleListener#buildStarted(GerritEvent, AbstractBuild)}.
+     * Fires the event {@link GerritEventLifecycleListener#buildStarted(GerritEvent, Run)}.
      * @param build the build that has started.
      */
-    void fireBuildStarted(final AbstractBuild<?, ?> build);
+    void fireBuildStarted(final Run<?, ?> build);
 
     /**
-     * Fires the event {@link GerritEventLifecycleListener#buildCompleted(GerritEvent, AbstractBuild)}.
+     * Fires the event {@link GerritEventLifecycleListener#buildCompleted(GerritEvent, Run)}.
      * @param build the build that is completed.
      */
-    void fireBuildCompleted(final AbstractBuild<?, ?> build);
+    void fireBuildCompleted(final Run<?, ?> build);
 
     /**
      * Fires the event {@link GerritEventLifecycleListener#allBuildsCompleted(GerritEvent)}.

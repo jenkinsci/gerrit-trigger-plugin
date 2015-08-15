@@ -27,20 +27,19 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +68,7 @@ public final class EventListener implements GerritEventListener {
      *
      * @param job the job to handle.
      */
-    EventListener(@Nonnull AbstractProject job) {
+    EventListener(@Nonnull Job job) {
         this(job.getFullName());
     }
 
@@ -164,25 +163,28 @@ public final class EventListener implements GerritEventListener {
      * @param event   the event.
      * @param project the project to build.
      */
-    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
+    protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, final Job project) {
         BadgeAction badgeAction = new BadgeAction(event);
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = t.getBuildScheduleDelay();
         if (cause instanceof GerritUserCause) {
             // it's a manual trigger, no need for a quiet period
             projectbuildDelay = 0;
-        } else if (project.getHasCustomQuietPeriod()
-                && project.getQuietPeriod() > projectbuildDelay) {
-            projectbuildDelay = project.getQuietPeriod();
+        } else if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            ParameterizedJobMixIn.ParameterizedJob abstractProject = (ParameterizedJobMixIn.ParameterizedJob)project;
+            if (abstractProject.getQuietPeriod() > projectbuildDelay) {
+                projectbuildDelay = abstractProject.getQuietPeriod();
+            }
         }
         ParametersAction parameters = createParameters(event, project);
-        Future build = project.scheduleBuild2(
-                projectbuildDelay,
-                cause,
-                badgeAction,
-                new RetriggerAction(cause.getContext()),
-                new RetriggerAllAction(cause.getContext()),
-                parameters);
+
+        Future build;
+        if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
+            build = t.schedule(project, projectbuildDelay, cause, badgeAction, parameters);
+        } else {
+            throw new IllegalStateException("Unexpected error. Unsupported Job type for Gerrit Trigger: "
+                    + project.getClass().getName());
+        }
 
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
 
@@ -216,7 +218,7 @@ public final class EventListener implements GerritEventListener {
      * @param project the project.
      * @return the ParameterAction.
      */
-    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
+    protected ParametersAction createParameters(GerritTriggeredEvent event, Job project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
         setOrCreateParameters(event, project, parameters);
         return new ParametersAction(parameters);
@@ -224,13 +226,13 @@ public final class EventListener implements GerritEventListener {
 
     /**
      * Retrieves all default parameter values for a project.
-     * Copied from {@link AbstractProject#getDefaultParametersValues()}
+     * Copied from {@link hudson.model.AbstractProject#getDefaultParametersValues()}
      * version 1.362. TODO: This is not a good way to solve the problem.
      *
      * @param project the project.
      * @return the default parameter values.
      */
-    private List<ParameterValue> getDefaultParametersValues(AbstractProject project) {
+    private List<ParameterValue> getDefaultParametersValues(Job project) {
         ParametersDefinitionProperty paramDefProp =
                 (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
         List<ParameterValue> defValues = new ArrayList<ParameterValue>();
@@ -284,11 +286,11 @@ public final class EventListener implements GerritEventListener {
         if (jenkins == null) {
             return null;
         }
-        AbstractProject p = jenkins.getItemByFullName(job, AbstractProject.class);
+        Job p = jenkins.getItemByFullName(job, Job.class);
         if (p == null) {
             return null;
         }
-        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
+        return GerritTrigger.getTrigger(p);
     }
 
     @Override

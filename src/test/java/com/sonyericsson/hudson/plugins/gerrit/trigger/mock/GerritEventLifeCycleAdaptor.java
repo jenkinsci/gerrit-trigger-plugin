@@ -24,11 +24,10 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
+import hudson.model.Job;
+import hudson.model.Run;
 
 /**
  * Empty implementation of a {@link GerritEventLifecycleListener}. Useful when a test just wants to use one of the
@@ -48,17 +47,17 @@ public class GerritEventLifeCycleAdaptor implements GerritEventLifecycleListener
     }
 
     @Override
-    public void projectTriggered(GerritEvent event, AbstractProject project) {
+    public void projectTriggered(GerritEvent event, Job project) {
 
     }
 
     @Override
-    public void buildStarted(GerritEvent event, AbstractBuild build) {
+    public void buildStarted(GerritEvent event, Run build) {
 
     }
 
     @Override
-    public void buildCompleted(GerritEvent event, AbstractBuild build) {
+    public void buildCompleted(GerritEvent event, Run build) {
 
     }
 

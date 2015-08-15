@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -31,7 +32,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,14 +162,14 @@ public class BuildMemory {
      * @param event the event
      * @param build the build.
      */
-    public synchronized void completed(GerritTriggeredEvent event, AbstractBuild build) {
+    public synchronized void completed(GerritTriggeredEvent event, Run build) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //Shoudn't happen but just in case, keep the memory.
             pb = new MemoryImprint(event);
             memory.put(event, pb);
         }
-        pb.set(build.getProject(), build, true);
+        pb.set(build.getParent(), build, true);
     }
 
     /**
@@ -175,7 +178,7 @@ public class BuildMemory {
      * @param event the event.
      * @param build the build.
      */
-    public synchronized void started(GerritTriggeredEvent event, AbstractBuild build) {
+    public synchronized void started(GerritTriggeredEvent event, Run build) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //A build should not start for a job that hasn't been registered. Keep the memory anyway.
@@ -183,7 +186,7 @@ public class BuildMemory {
             logger.warn("Build started without being registered first.");
             memory.put(event, pb);
         }
-        pb.set(build.getProject(), build);
+        pb.set(build.getParent(), build);
     }
 
     /**
@@ -192,7 +195,7 @@ public class BuildMemory {
      * @param event   the event that triggered it.
      * @param project the project that was triggered.
      */
-    public synchronized void triggered(GerritTriggeredEvent event, AbstractProject project) {
+    public synchronized void triggered(GerritTriggeredEvent event, Job project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
@@ -212,16 +215,16 @@ public class BuildMemory {
      */
     public synchronized void retriggered(
             GerritTriggeredEvent event,
-            AbstractProject project,
-            List<AbstractBuild> otherBuilds) {
+            Job project,
+            List<Run> otherBuilds) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             pb = new MemoryImprint(event);
             memory.put(event, pb);
             if (otherBuilds != null) {
                 //It is a new memory so it wasn't building, let's populate with old build info
-                for (AbstractBuild build : otherBuilds) {
-                    pb.set(build.getProject(), build, !build.isBuilding());
+                for (Run build : otherBuilds) {
+                    pb.set(build.getParent(), build, !build.isBuilding());
                 }
             }
         }
@@ -240,23 +243,23 @@ public class BuildMemory {
     /**
      * Updates the {@link TriggerContext} for the event. The cause and build is the "focal point" for the update, but
      * all memory entities will be updated, but only the current context will be {@link
-     * TriggerContext#setThisBuild(hudson.model.AbstractBuild)}updated.
+     * TriggerContext#setThisBuild(hudson.model.Run)}updated.
      *
      * @param cause the cause.
      * @param r     the build the cause is in.
      */
-    public synchronized void updateTriggerContext(GerritCause cause, AbstractBuild r) {
+    public synchronized void updateTriggerContext(GerritCause cause, Run r) {
         MemoryImprint imprint = getMemoryImprint(cause.getEvent());
         TriggerContext context = cause.getContext();
         context.setThisBuild(r);
         for (MemoryImprint.Entry entry : imprint.getEntries()) {
-            AbstractBuild build = entry.getBuild();
+            Run build = entry.getBuild();
             if (build != null && !build.equals(r)) {
                 context.addOtherBuild(build);
                 updateTriggerContext(entry, imprint);
             } else {
-                AbstractProject project = entry.getProject();
-                if (build == null && project != null && !project.equals(r.getProject())) {
+                Job project = entry.getProject();
+                if (build == null && project != null && !project.equals(r.getParent())) {
                     context.addOtherProject(project);
                 }
             }
@@ -277,17 +280,17 @@ public class BuildMemory {
      * @param imprint       the information for the update.
      */
     private synchronized void updateTriggerContext(@Nonnull Entry entryToUpdate, @Nonnull MemoryImprint imprint) {
-        AbstractBuild build = entryToUpdate.getBuild();
+        Run build = entryToUpdate.getBuild();
         if (build != null) {
             GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
             if (cause != null) {
                 TriggerContext context = cause.getContext();
                 for (MemoryImprint.Entry ent : imprint.getEntries()) {
-                    AbstractBuild entBuild = ent.getBuild();
+                    Run entBuild = ent.getBuild();
                     if (entBuild != null && !entBuild.equals(build)) {
                         context.addOtherBuild(entBuild);
                     } else {
-                        AbstractProject entProject = ent.getProject();
+                        Job entProject = ent.getProject();
                         if (entBuild == null && entProject != null && !entProject.equals(entryToUpdate.getProject())) {
                             context.addOtherProject(entProject);
                         }
@@ -311,7 +314,7 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isTriggered(@Nonnull GerritTriggeredEvent event, @Nonnull AbstractProject project) {
+    public synchronized boolean isTriggered(@Nonnull GerritTriggeredEvent event, @Nonnull Job project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
@@ -332,7 +335,7 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isBuilding(GerritTriggeredEvent event, AbstractProject project) {
+    public synchronized boolean isBuilding(GerritTriggeredEvent event, Job project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
@@ -367,10 +370,10 @@ public class BuildMemory {
      * @param event the event.
      * @return the list of builds, or null if there is no memory.
      */
-    public synchronized List<AbstractBuild> getBuilds(GerritTriggeredEvent event) {
+    public synchronized List<Run> getBuilds(GerritTriggeredEvent event) {
         MemoryImprint pb = memory.get(event);
         if (pb != null) {
-            List<AbstractBuild> list = new LinkedList<AbstractBuild>();
+            List<Run> list = new LinkedList<Run>();
             for (Entry entry : pb.getEntries()) {
                 if (entry.getBuild() != null) {
                     list.add(entry.getBuild());
@@ -389,11 +392,11 @@ public class BuildMemory {
      * @param r              the build that caused the failure.
      * @param failureMessage the failure message
      */
-    public void setEntryFailureMessage(GerritTriggeredEvent event, AbstractBuild r, String failureMessage) {
+    public void setEntryFailureMessage(GerritTriggeredEvent event, Run r, String failureMessage) {
         MemoryImprint pb = getMemoryImprint(event);
 
         if (pb != null) {
-            Entry entry = pb.getEntry(r.getProject());
+            Entry entry = pb.getEntry(r.getParent());
 
             if (entry != null) {
                 logger.info("Recording unsuccessful message for {}: {}", event, failureMessage);
@@ -425,7 +428,7 @@ public class BuildMemory {
          * @param event   the event.
          * @param project the first project.
          */
-        public MemoryImprint(GerritTriggeredEvent event, AbstractProject project) {
+        public MemoryImprint(GerritTriggeredEvent event, Job project) {
             this.event = event;
             set(project);
         }
@@ -454,7 +457,7 @@ public class BuildMemory {
          * @param project the project.
          * @param build   the build.
          */
-        protected synchronized void set(AbstractProject project, AbstractBuild build) {
+        protected synchronized void set(Job project, Run build) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -469,7 +472,7 @@ public class BuildMemory {
          *
          * @param project the project.
          */
-        protected synchronized void set(AbstractProject project) {
+        protected synchronized void set(Job project) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project);
@@ -479,11 +482,11 @@ public class BuildMemory {
 
         /**
          * Resets the build info for the project. If the project doesn't exist it would be as if calling {@link
-         * #set(hudson.model.AbstractProject)}.
+         * #set(hudson.model.Job)}.
          *
          * @param project the project to reset.
          */
-        protected synchronized void reset(AbstractProject project) {
+        protected synchronized void reset(Job project) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project);
@@ -501,7 +504,7 @@ public class BuildMemory {
          * @param build          the build
          * @param buildCompleted if the build is finished.
          */
-        private synchronized void set(AbstractProject project, AbstractBuild build, boolean buildCompleted) {
+        private synchronized void set(Job project, Run build, boolean buildCompleted) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -554,11 +557,11 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                AbstractProject project = entry.getProject();
+                Job project = entry.getProject();
                 if (project != null) {
                     str.append("  Project/Build: [").append(project.getName()).append("]");
                     str.append(": [#");
-                    AbstractBuild build = entry.getBuild();
+                    Run build = entry.getBuild();
                     if (build != null) {
                         str.append(build.getNumber());
                         str.append(": ").append(build.getResult());
@@ -580,7 +583,7 @@ public class BuildMemory {
          * @param project the project.
          * @return the entry or null if nothing is found.
          */
-        private Entry getEntry(@Nonnull AbstractProject project) {
+        private Entry getEntry(@Nonnull Job project) {
             for (Entry entry : list) {
                 if (entry != null && project.equals(entry.getProject())) {
                     return entry;
@@ -615,7 +618,7 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                AbstractBuild build = entry.getBuild();
+                Run build = entry.getBuild();
                 if (build == null) {
                     return false;
                 } else if (!entry.isBuildCompleted()) {
@@ -642,7 +645,7 @@ public class BuildMemory {
                     if (entry == null) {
                         continue;
                     }
-                    AbstractBuild build = entry.getBuild();
+                    Run build = entry.getBuild();
                     if (build == null) {
                         return false;
                     } else if (!entry.isBuildCompleted()) {
@@ -658,7 +661,7 @@ public class BuildMemory {
                     if (entry == null) {
                         continue;
                     }
-                    AbstractBuild build = entry.getBuild();
+                    Run build = entry.getBuild();
                     if (build == null) {
                         return false;
                     } else if (!entry.isBuildCompleted()) {
@@ -686,7 +689,7 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                AbstractBuild build = entry.getBuild();
+                Run build = entry.getBuild();
                 if (build != null && entry.isBuildCompleted()
                         && build.getResult() == Result.FAILURE) {
                     return true;
@@ -705,7 +708,7 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                AbstractBuild build = entry.getBuild();
+                Run build = entry.getBuild();
                 if (build != null && entry.isBuildCompleted()
                         && build.getResult() == Result.UNSTABLE) {
                     return true;
@@ -725,7 +728,7 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                AbstractBuild build = entry.getBuild();
+                Run build = entry.getBuild();
                 if (build == null) {
                     return false;
                 } else if (!entry.isBuildCompleted()) {
@@ -757,7 +760,7 @@ public class BuildMemory {
              * @param project the project
              * @param build   the build.
              */
-            private Entry(AbstractProject project, AbstractBuild build) {
+            private Entry(Job project, Run build) {
                 this.project = project.getFullName();
                 this.build = build.getId();
                 buildCompleted = false;
@@ -768,7 +771,7 @@ public class BuildMemory {
              *
              * @param project the project.
              */
-            private Entry(AbstractProject project) {
+            private Entry(Job project) {
                 this.project = project.getFullName();
                 buildCompleted = false;
             }
@@ -779,10 +782,11 @@ public class BuildMemory {
              * @return the project.
              */
             @CheckForNull
-            public AbstractProject getProject() {
+            @WithBridgeMethods(AbstractProject.class)
+            public Job getProject() {
                 Jenkins jenkins = Jenkins.getInstance();
                 if (jenkins != null) {
-                    return jenkins.getItemByFullName(project, AbstractProject.class);
+                    return jenkins.getItemByFullName(project, Job.class);
                 } else {
                     return null;
                 }
@@ -794,8 +798,9 @@ public class BuildMemory {
              * @return the build.
              */
             @CheckForNull
-            public AbstractBuild getBuild() {
-                AbstractProject p = getProject();
+            @WithBridgeMethods(AbstractBuild.class)
+            public Run getBuild() {
+                Job p = getProject();
                 if (p != null && build != null) {
                     return p.getBuild(build);
                 } else {
@@ -808,7 +813,7 @@ public class BuildMemory {
              *
              * @param build the build.
              */
-            private void setBuild(AbstractBuild build) {
+            private void setBuild(Run build) {
                 if (build != null) {
                     this.build = build.getId();
                 } else {
@@ -855,11 +860,11 @@ public class BuildMemory {
             @Override
             public String toString() {
                 String s = "";
-                AbstractBuild theBuild = getBuild();
+                Run theBuild = getBuild();
                 if (theBuild != null) {
                     s = theBuild.toString();
                 } else {
-                    AbstractProject theProject = getProject();
+                    Job theProject = getProject();
                     if (theProject != null) {
                         s = theProject.getName();
                     }
@@ -878,7 +883,7 @@ public class BuildMemory {
              * @return true if so.
              * @see #getProject()
              */
-            public boolean isProject(AbstractProject other) {
+            public boolean isProject(Job other) {
                 if (this.project != null && other != null) {
                     return this.project.equals(other.getFullName());
                 } else {

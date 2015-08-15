@@ -24,20 +24,23 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Hudson;
+import hudson.model.Job;
+import hudson.model.Run;
+import jenkins.model.Jenkins;
 
 /**
- * Wrapper class for smoother serialization of {@link AbstractBuild } and {@link AbstractProject }.
+ * Wrapper class for smoother serialization of {@link Run } and {@link Job }.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class TriggeredItemEntity {
 
     private Integer buildNumber;
         private String projectId;
-        private transient AbstractProject project;
-        private transient AbstractBuild build;
+        private transient Job project;
+        private transient Run build;
 
         /**
          * Standard constructor.
@@ -54,18 +57,18 @@ public class TriggeredItemEntity {
          * @param project a project.
          * @param build a build.
          */
-        public TriggeredItemEntity(AbstractProject project, AbstractBuild build) {
+        public TriggeredItemEntity(Job project, Run build) {
             setProject(project);
             setBuild(build);
         }
 
         /**
          * Easy Constructor.
-         * The project will be set from {@link AbstractBuild#getProject() }.
+         * The project will be set from {@link hudson.model.Run#getParent()}.
          * @param build a build.
          */
-        public TriggeredItemEntity(AbstractBuild build) {
-            setProject(build.getProject());
+        public TriggeredItemEntity(Run build) {
+            setProject(build.getParent());
             setBuild(build);
         }
 
@@ -73,7 +76,7 @@ public class TriggeredItemEntity {
          * Easy Constructor.
          * @param project a project.
          */
-        public TriggeredItemEntity(AbstractProject project) {
+        public TriggeredItemEntity(Job project) {
             setProject(project);
             this.buildNumber = null;
         }
@@ -97,12 +100,13 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the build will be looked up via {@link #getBuildNumber() }.
          * @return the build.
          */
-        public AbstractBuild getBuild() {
+        @WithBridgeMethods(AbstractBuild.class)
+        public Run getBuild() {
             if (build == null) {
                 if (buildNumber != null) {
                     getProject();
                     if (project != null) {
-                        build = (AbstractBuild)project.getBuildByNumber(buildNumber);
+                        build = project.getBuildByNumber(buildNumber);
                     }
                 }
             }
@@ -113,7 +117,7 @@ public class TriggeredItemEntity {
          * The build.
          * @param build the build.
          */
-        public void setBuild(AbstractBuild build) {
+        public void setBuild(Run build) {
             this.build = build;
             buildNumber = build.getNumber();
         }
@@ -123,9 +127,10 @@ public class TriggeredItemEntity {
          * If this object is newly deserialized, the project will be looked up from {@link #getProjectId() }
          * @return the project.
          */
-        public AbstractProject getProject() {
+        @WithBridgeMethods(AbstractProject.class)
+        public Job getProject() {
             if (project == null) {
-                project = Hudson.getInstance().getItemByFullName(projectId, AbstractProject.class);
+                project = Jenkins.getInstance().getItemByFullName(projectId, Job.class);
             }
             return project;
         }
@@ -134,7 +139,7 @@ public class TriggeredItemEntity {
          * The project.
          * @param project the project.
          */
-        public void setProject(AbstractProject project) {
+        public void setProject(Job project) {
             this.project = project;
             this.projectId = project.getFullName();
         }
@@ -159,7 +164,7 @@ public class TriggeredItemEntity {
         /**
          * The project's id.
          * @return the id.
-         * @see AbstractProject#getFullName()
+         * @see Job#getFullName()
          */
         public String getProjectId() {
             return projectId;
@@ -169,7 +174,7 @@ public class TriggeredItemEntity {
          * The project's id.
          * <strong>Do not use this method unless you are a serializer!</strong>
          * @param projectId the id.
-         * @see AbstractProject#getFullName()
+         * @see Job#getFullName()
          */
         public void setProjectId(String projectId) {
             this.projectId = projectId;
@@ -200,9 +205,9 @@ public class TriggeredItemEntity {
          * @param aBuild the build.
          * @return true if it is so.
          */
-        public boolean equals(AbstractBuild aBuild) {
+        public boolean equals(Run aBuild) {
             if (this.buildNumber != null) {
-                return projectId.equals(aBuild.getProject().getFullName())
+                return projectId.equals(aBuild.getParent().getFullName())
                         && this.buildNumber.equals(aBuild.getNumber());
             }
             return false;
@@ -213,7 +218,7 @@ public class TriggeredItemEntity {
          * @param aProject the project to compare.
          * @return true if it is so.
          */
-        public boolean equals(AbstractProject aProject) {
+        public boolean equals(Job aProject) {
             return projectId.equals(aProject.getFullName());
         }
 

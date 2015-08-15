@@ -168,11 +168,13 @@
                          help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
                    <f:textbox/>
                 </f:entry>
-                <f:entry title="${%Unsuccessful Message File}"
-                         field="buildUnsuccessfulFilepath"
-                         help="/plugin/gerrit-trigger/trigger/help-BuildUnsuccessfulFilepath.html">
-                   <f:textbox/>
-                </f:entry>
+                <j:if test="${it.job instanceof hudson.model.AbstractProject}">
+                    <f:entry title="${%Unsuccessful Message File}"
+                             field="buildUnsuccessfulFilepath"
+                             help="/plugin/gerrit-trigger/trigger/help-BuildUnsuccessfulFilepath.html">
+                        <f:textbox/>
+                    </f:entry>
+                </j:if>
             </f:section>
         </f:advanced>
 

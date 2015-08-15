@@ -31,7 +31,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVot
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Result;
+import hudson.triggers.Trigger;
+import hudson.triggers.TriggerDescriptor;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +43,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -67,6 +71,8 @@ public class BuildMemoryTest {
     AbstractProject project;
     private AbstractBuild build;
     private Jenkins jenkins;
+    private HashMap<TriggerDescriptor, Trigger<?>> triggers;
+    private GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
 
     /**
      * Setup the mocks, specifically {@link #jenkins}.
@@ -95,8 +101,12 @@ public class BuildMemoryTest {
         build = mock(AbstractBuild.class);
         doReturn(buildId).when(build).getId();
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         doReturn(build).when(project).getBuild(eq(buildId));
         when(jenkins.getItemByFullName(eq(name), same(AbstractProject.class))).thenReturn(project);
+        when(jenkins.getItemByFullName(eq(name), same(Job.class))).thenReturn(project);
+        triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+        when(project.getTriggers()).thenReturn(triggers);
     }
 
     /**
@@ -587,6 +597,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
@@ -597,6 +608,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         instance.started(event, build2);
 
         setup();
@@ -606,6 +618,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         instance.started(event, build3);
 
         instance.completed(event, build1);
@@ -631,6 +644,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
@@ -640,6 +654,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build2);
@@ -649,6 +664,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.FAILURE);
         instance.started(event, build3);
@@ -676,6 +692,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
@@ -685,6 +702,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
@@ -694,6 +712,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.FAILURE);
         instance.started(event, build3);
@@ -723,6 +742,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
@@ -732,6 +752,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
@@ -741,6 +762,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build3);
@@ -772,6 +794,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
@@ -781,6 +804,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
@@ -790,6 +814,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build3 = build;
         when(build3.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build3);
@@ -818,6 +843,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
 
@@ -843,6 +869,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
 
@@ -869,6 +896,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build);
@@ -878,6 +906,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.UNSTABLE);
         instance.started(event, build2);
@@ -905,6 +934,7 @@ public class BuildMemoryTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build1 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build);
@@ -914,6 +944,7 @@ public class BuildMemoryTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
+        triggers.put(descriptor, trigger);
         AbstractBuild build2 = build;
         when(build2.getResult()).thenReturn(Result.SUCCESS);
         instance.started(event, build2);

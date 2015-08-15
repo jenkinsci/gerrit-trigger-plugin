@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import java.util.TimerTask;
 import javax.annotation.CheckForNull;
 import jenkins.model.Jenkins;
@@ -84,11 +84,11 @@ public class GerritTriggerTimerTask extends TimerTask {
         if (jenkins == null) {
             return null;
         }
-        AbstractProject p = jenkins.getItemByFullName(job, AbstractProject.class);
+        Job p = jenkins.getItemByFullName(job, Job.class);
         if (p == null) {
             return null;
         }
-        return (GerritTrigger)p.getTrigger(GerritTrigger.class);
+        return GerritTrigger.getTrigger(p);
     }
 
     @Deprecated

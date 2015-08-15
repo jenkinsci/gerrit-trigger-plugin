@@ -37,7 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
@@ -326,7 +326,7 @@ public enum GerritTriggerParameters {
      * @param parameters the default parameters
      * @see #setOrCreateStringParameterValue(java.util.List, String, boolean)
      */
-    public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent, AbstractProject project,
+    public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent, Job project,
             List<ParameterValue> parameters) {
 
         boolean noNameAndEmailParameters = false;
@@ -470,7 +470,7 @@ public enum GerritTriggerParameters {
      * @param project the project for which the parameters are being set
      * @return the front end url
      */
-    private static String getURL(ChangeBasedEvent event, AbstractProject project) {
+    private static String getURL(ChangeBasedEvent event, Job project) {
         String url = "";
         String serverName = null;
         //Figure out what serverName to use

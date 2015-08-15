@@ -41,6 +41,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
@@ -55,6 +57,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
+import static jenkins.model.ParameterizedJobMixIn.ParameterizedJob;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -69,16 +72,16 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Cause;
+import hudson.model.CauseAction;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
+import hudson.model.Items;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -108,10 +111,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.Future;
 import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
 
+import jenkins.model.ParameterizedJobMixIn;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -125,7 +130,7 @@ import javax.annotation.Nullable;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritTrigger extends Trigger<AbstractProject> {
+public class GerritTrigger extends Trigger<Job> {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
 
@@ -309,7 +314,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * Provides package access to the internal {@link #job} reference.
      * @return the job
      */
-    AbstractProject getJob() {
+    Job getJob() {
         return job;
     }
 
@@ -377,11 +382,22 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param project the project.
      * @return the trigger if there is one, null otherwise.
      */
-    public static GerritTrigger getTrigger(@Nullable AbstractProject project) {
+    public static GerritTrigger getTrigger(@Nullable Job project) {
         if (project == null) {
             return null;
         }
-        return (GerritTrigger)project.getTrigger(GerritTrigger.class);
+
+        if (project instanceof ParameterizedJob) {
+            // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
+            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
+            for (Trigger p : parameterizedJob.getTriggers().values()) {
+                if (GerritTrigger.class.isInstance(p)) {
+                    return GerritTrigger.class.cast(p);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -400,7 +416,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     *
     * @param project the project associated with the trigger.
     */
-    private void addThisTriggerAsListener(AbstractProject project) {
+    private void addThisTriggerAsListener(Job project) {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
@@ -421,21 +437,21 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param project the project
      * @return a new listener instance
      */
-    /*package*/ static EventListener createListener(AbstractProject project) {
+    /*package*/ static EventListener createListener(Job project) {
         return new EventListener(project);
     }
 
     /**
      * Creates an {@link EventListener} for this trigger's job.
      * @return a new listener instance.
-     * @see #createListener(hudson.model.AbstractProject)
+     * @see #createListener(hudson.model.Job)
      */
     /*package*/ EventListener createListener() {
         return createListener(job);
     }
 
     @Override
-    public void start(AbstractProject project, boolean newInstance) {
+    public void start(Job project, boolean newInstance) {
         logger.debug("Start project: {}", project);
         super.start(project, newInstance);
         initializeServerName();
@@ -548,11 +564,38 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param event   the event.
      * @param project the project to build.
      * @deprecated
-     *    moved to {@link EventListener#schedule(GerritTrigger, GerritCause, GerritTriggeredEvent, AbstractProject)}
+     *    moved to {@link EventListener#schedule(GerritTrigger, GerritCause, GerritTriggeredEvent, Job)}
      */
     @Deprecated
-    protected void schedule(GerritCause cause, GerritTriggeredEvent event, AbstractProject project) {
+    protected void schedule(GerritCause cause, GerritTriggeredEvent event, Job project) {
         createListener().schedule(this, cause, event, project);
+    }
+
+    /**
+     * Schedules a build of a job.
+     * <p>
+     * Added here to facilitate unit testing.
+     *
+     * @param theJob The job.
+     * @param quitePeriod Quite period.
+     * @param cause Build cause.
+     * @param badgeAction build badge action.
+     * @param parameters Build parameters.
+     * @return Scheduled build future.
+     */
+    protected Future schedule(final Job theJob, int quitePeriod, GerritCause cause, BadgeAction badgeAction,
+                              ParametersAction parameters) {
+        ParameterizedJobMixIn jobMixIn = new ParameterizedJobMixIn() {
+            @Override
+            protected Job asJob() {
+                return theJob;
+            }
+        };
+        return jobMixIn.scheduleBuild2(quitePeriod, new CauseAction(cause),
+                badgeAction,
+                new RetriggerAction(cause.getContext()),
+                new RetriggerAllAction(cause.getContext()),
+                parameters);
     }
 
     /**
@@ -562,10 +605,10 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param project the project.
      * @return the ParameterAction.
      * @deprecated
-     *     moved to {@link EventListener#createParameters(GerritTriggeredEvent, AbstractProject)}
+     *     moved to {@link EventListener#createParameters(GerritTriggeredEvent, Job)}
      */
     @Deprecated
-    protected ParametersAction createParameters(GerritTriggeredEvent event, AbstractProject project) {
+    protected ParametersAction createParameters(GerritTriggeredEvent event, Job project) {
         return createListener().createParameters(event, project);
     }
 
@@ -708,10 +751,10 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                 if (!listener.isBuilding(context.getEvent())) {
                     dependencyQueueTaskDispatcher.onTriggeringAll(context.getEvent());
                     retrigger(context.getThisBuild().getProject(), context.getEvent());
-                    for (AbstractBuild build : context.getOtherBuilds()) {
-                        GerritTrigger trigger = (GerritTrigger)build.getProject().getTrigger(GerritTrigger.class);
+                    for (Run build : context.getOtherBuilds()) {
+                        GerritTrigger trigger = getTrigger(build.getParent());
                         if (trigger != null) {
-                            trigger.retrigger(build.getProject(), context.getEvent());
+                            trigger.retrigger(build.getParent(), context.getEvent());
                         }
                     }
                     dependencyQueueTaskDispatcher.onDoneTriggeringAll(context.getEvent());
@@ -727,7 +770,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param event   the event.
      * @see #retriggerAllBuilds(com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext)
      */
-    private void retrigger(AbstractProject project, GerritTriggeredEvent event) {
+    private void retrigger(Job project, GerritTriggeredEvent event) {
         if (project.isBuildable()) {
             initializeProvider(event);
             if (!silentMode) {
@@ -1582,8 +1625,8 @@ public class GerritTrigger extends Trigger<AbstractProject> {
                     Jenkins jenkins = Jenkins.getInstance();
                     assert jenkins != null;
                     Item item = jenkins.getItem(projectName, project, Item.class);
-                    if ((item == null) || !(item instanceof AbstractProject)) {
-                        AbstractProject nearest = AbstractProject.findNearest(
+                    if ((item == null) || !(item instanceof Job)) {
+                        Job nearest = Items.findNearest(Job.class,
                                 projectName,
                                 project.getParent()
                         );
@@ -1600,33 +1643,33 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             }
             //Check there are no cycles in the dependencies, by exploring all dependencies recursively
             //Only way of creating a cycle is if this project is in the dependencies somewhere.
-            Set<AbstractProject> explored = new HashSet<AbstractProject>();
-            List<AbstractProject> directDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(value,
+            Set<Job> explored = new HashSet<Job>();
+            List<Job> directDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(value,
                     project);
             if (directDependencies == null) {
                 // no dependencies
                 return FormValidation.ok();
             }
-            for (AbstractProject directDependency : directDependencies) {
+            for (Job directDependency : directDependencies) {
                 if (directDependency.getFullName().equals(project.getFullName())) {
                     return FormValidation.error(Messages.CannotAddSelfAsDependency());
                 }
-                java.util.Queue<AbstractProject> toExplore = new LinkedList<AbstractProject>();
+                java.util.Queue<Job> toExplore = new LinkedList<Job>();
                 toExplore.add(directDependency);
                 while (toExplore.size() > 0) {
-                    AbstractProject currentlyExploring = toExplore.remove();
+                    Job currentlyExploring = toExplore.remove();
                     explored.add(currentlyExploring);
                     GerritTrigger currentTrigger = getTrigger(currentlyExploring);
                     if (currentTrigger == null) {
                         continue;
                     }
                     String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
-                    List<AbstractProject> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
+                    List<Job> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
                             currentDependenciesString, (Item)project);
                     if (currentDependencies == null) {
                         continue;
                     }
-                    for (AbstractProject dependency : currentDependencies) {
+                    for (Job dependency : currentDependencies) {
                         if (dependency.getFullName().equals(project.getFullName())) {
                             return FormValidation.error(Messages.AddingDependentProjectWouldCreateLoop(
                                     directDependency.getFullName(), currentlyExploring.getFullName()));
@@ -1798,7 +1841,7 @@ public class GerritTrigger extends Trigger<AbstractProject> {
 
         @Override
         public boolean isApplicable(Item item) {
-            return true;
+            return (item instanceof ParameterizedJob);
         }
 
         @Override
@@ -1918,8 +1961,13 @@ public class GerritTrigger extends Trigger<AbstractProject> {
          *            The event that originally triggered the build.
          */
         private void cancelJob(GerritTriggeredEvent event) {
+            if (!(job instanceof Queue.Task)) {
+                logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
+                return;
+            }
+
             // Remove any jobs in the build queue.
-            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems(getJob());
+            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
             for (hudson.model.Queue.Item item : itemsInQueue) {
                 if (checkCausedByGerrit(event, item.getCauses())) {
                     Queue.getInstance().cancel(item);

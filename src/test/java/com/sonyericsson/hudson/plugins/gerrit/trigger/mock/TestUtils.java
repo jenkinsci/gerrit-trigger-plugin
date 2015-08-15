@@ -37,6 +37,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import hudson.model.Cause;
+import hudson.model.Job;
 import hudson.model.Run;
 
 /**
@@ -82,11 +83,11 @@ public final class TestUtils {
      * @param event the event to monitor.
      * @return the reference of future build to start.
      */
-    public static AtomicReference<AbstractBuild> getFutureBuildToStart(GerritEventLifecycle event) {
-        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+    public static AtomicReference<Run> getFutureBuildToStart(GerritEventLifecycle event) {
+        final AtomicReference<Run> reference = new AtomicReference<Run>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
-            public void buildStarted(GerritEvent event, AbstractBuild build) {
+            public void buildStarted(GerritEvent event, Run build) {
                 reference.getAndSet(build);
             }
         });
@@ -99,11 +100,11 @@ public final class TestUtils {
      * @param event the event to monitor.
      * @return the reference of future build to start.
      */
-    public static AtomicReference<AbstractBuild> getFutureBuildToStart2(GerritEventLifecycle event) {
-        final AtomicReference<AbstractBuild> reference = new AtomicReference<AbstractBuild>();
+    public static AtomicReference<Run> getFutureBuildToStart2(GerritEventLifecycle event) {
+        final AtomicReference<Run> reference = new AtomicReference<Run>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
-            public void buildStarted(GerritEvent event, AbstractBuild build) {
+            public void buildStarted(GerritEvent event, Run build) {
                 reference.getAndSet(build);
             }
         });
@@ -116,7 +117,7 @@ public final class TestUtils {
      * @param reference the reference of future build to start.
      * @return the build that started.
      */
-    public static AbstractBuild waitForBuildToStart(AtomicReference<AbstractBuild> reference) {
+    public static Run waitForBuildToStart(AtomicReference<Run> reference) {
         return waitForBuildToStart(reference, DEFAULT_WAIT_BUILD_MS);
     }
 
@@ -128,7 +129,7 @@ public final class TestUtils {
      * @param timeoutMs the maximum time in ms to wait for the build to start.
      * @return the build that started.
      */
-    public static AbstractBuild waitForBuildToStart(AtomicReference<AbstractBuild> reference, int timeoutMs) {
+    public static Run waitForBuildToStart(AtomicReference<Run> reference, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         while (reference.get() == null) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {
@@ -186,7 +187,7 @@ public final class TestUtils {
      * @param project   the project to check
      * @param number    the build number to wait for.
      */
-    public static void waitForBuilds(AbstractProject project, int number) {
+    public static void waitForBuilds(Job project, int number) {
         waitForBuilds(project, number, DEFAULT_WAIT_BUILD_MS);
     }
 
@@ -197,7 +198,7 @@ public final class TestUtils {
      * @param number    the build number to wait for.
      * @param timeoutMs the timeout in ms.
      */
-    public static void waitForBuilds(AbstractProject project, int number, int timeoutMs) {
+    public static void waitForBuilds(Job project, int number, int timeoutMs) {
         long startTime = System.currentTimeMillis();
         while (project.getLastCompletedBuild() == null || project.getLastCompletedBuild().getNumber() != number) {
             if (System.currentTimeMillis() - startTime >= timeoutMs) {

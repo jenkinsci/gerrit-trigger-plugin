@@ -25,7 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import hudson.Extension;
-import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.model.Cause;
 import hudson.model.Queue;
 import hudson.model.Queue.Item;
@@ -203,9 +203,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             return null;
         }
         if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent
-                && item.task instanceof AbstractProject<?, ?>) {
+                && item.task instanceof Job<?, ?>) {
 
-            GerritTrigger gerritTrigger = GerritTrigger.getTrigger((AbstractProject<?, ?>)item.task);
+            GerritTrigger gerritTrigger = GerritTrigger.getTrigger((Job<?, ?>)item.task);
             if (gerritTrigger == null) {
                 logger.trace("Gerrit Trigger null for item: {} !", item.id);
                 return null;

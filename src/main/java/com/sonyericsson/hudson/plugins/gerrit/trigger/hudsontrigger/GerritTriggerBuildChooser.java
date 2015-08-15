@@ -31,7 +31,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 
 import hudson.Extension;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.Result;
 import hudson.plugins.git.GitException;
@@ -210,10 +210,10 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      * Retrieve the Gerrit event revision
      */
     private static class GetGerritEventRevision
-            implements BuildChooserContext.ContextCallable<AbstractBuild<?, ?>, String> {
+            implements BuildChooserContext.ContextCallable<Run<?, ?>, String> {
         static final long serialVersionUID = 0L;
         @Override
-        public String invoke(AbstractBuild<?, ?> build, VirtualChannel channel) {
+        public String invoke(Run<?, ?> build, VirtualChannel channel) {
             GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
             if (cause != null) {
                 GerritTriggeredEvent event = cause.getEvent();

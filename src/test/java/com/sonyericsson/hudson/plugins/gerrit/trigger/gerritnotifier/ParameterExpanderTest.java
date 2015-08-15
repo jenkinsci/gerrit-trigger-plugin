@@ -37,6 +37,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 import hudson.EnvVars;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -87,7 +88,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         AbstractBuild r = Setup.createBuild(project, taskListener, Setup.createEnvVars());
 
@@ -451,7 +452,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
         when(trigger.getCustomUrl()).thenReturn(customUrl);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[expectedBuildResults.length];
         for (int i = 0; i < expectedBuildResults.length; i++) {
@@ -533,7 +534,7 @@ public class ParameterExpanderTest {
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
+        Setup.setTrigger(trigger, project);
 
         EnvVars env = Setup.createEnvVars();
         AbstractBuild r = Setup.createBuild(project, taskListener, env);
@@ -608,12 +609,12 @@ public class ParameterExpanderTest {
         private static final long serialVersionUID = -7565217057927807166L;
 
         @Override
-        public String getBuildStartedMessage(AbstractBuild build) {
+        public String getBuildStartedMessage(Run build) {
             return "CUSTOM_MESSAGE_BUILD_STARTED";
         }
 
         @Override
-        public String getBuildCompletedMessage(AbstractBuild build) {
+        public String getBuildCompletedMessage(Run build) {
             return "CUSTOM_MESSAGE_BUILD_COMPLETED";
         }
     }
@@ -625,12 +626,12 @@ public class ParameterExpanderTest {
         private static final long serialVersionUID = -3479376646924947609L;
 
         @Override
-        public String getBuildStartedMessage(AbstractBuild build) {
+        public String getBuildStartedMessage(Run build) {
             return null;
         }
 
         @Override
-        public String getBuildCompletedMessage(AbstractBuild build) {
+        public String getBuildCompletedMessage(Run build) {
             return null;
         }
     }

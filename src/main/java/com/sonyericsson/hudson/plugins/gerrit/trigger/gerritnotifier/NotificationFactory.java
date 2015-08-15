@@ -39,7 +39,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.Bui
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildStartedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -189,7 +189,7 @@ public class NotificationFactory {
      * @see GerritSendCommandQueue#queue(com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
      * @see BuildStartedCommandJob
      */
-    public void queueBuildStarted(AbstractBuild build, TaskListener listener,
+    public void queueBuildStarted(Run build, TaskListener listener,
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
         String serverName = getServerName(event);
         if (serverName != null) {

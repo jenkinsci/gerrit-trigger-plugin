@@ -30,7 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 
 /**
@@ -39,7 +39,7 @@ import hudson.model.TaskListener;
  */
 public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
 
-    private final AbstractBuild build;
+    private final Run build;
     private final BuildsStartedStats stats;
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
@@ -53,7 +53,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      * @param event    event
      * @param stats    stats
      */
-    public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, AbstractBuild build, TaskListener listener,
+    public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, Run build, TaskListener listener,
                                       ChangeBasedEvent event, BuildsStartedStats stats) {
         //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
         super(config, (listener != null ? listener.getLogger() : null), event);

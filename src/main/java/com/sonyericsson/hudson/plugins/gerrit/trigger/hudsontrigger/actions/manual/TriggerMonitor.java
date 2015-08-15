@@ -29,10 +29,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEve
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycleListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.BallColor;
+import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Run;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -103,7 +103,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void projectTriggered(GerritEvent event, AbstractProject project) {
+    public synchronized void projectTriggered(GerritEvent event, Job project) {
         EventState state = findState(event);
         if (state != null) {
             state.addProject(project);
@@ -111,7 +111,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void buildStarted(GerritEvent event, AbstractBuild build) {
+    public synchronized void buildStarted(GerritEvent event, Run build) {
         EventState state = findState(event);
         if (state != null) {
             state.setBuild(build);
@@ -119,7 +119,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
     }
 
     @Override
-    public synchronized void buildCompleted(GerritEvent event, AbstractBuild build) {
+    public synchronized void buildCompleted(GerritEvent event, Run build) {
         EventState state = findState(event);
         if (state != null) {
             if (state.allBuildsCompleted && state.isReallyAllBuildsCompleted()) {
@@ -179,7 +179,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
          * Adds a project to the list of triggered projects.
          * @param project the project.
          */
-        void addProject(AbstractProject project) {
+        void addProject(Job project) {
             builds.add(new TriggeredItemEntity(project));
         }
 
@@ -187,9 +187,9 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
          * Sets the started build to an already triggered project.
          * @param build the build.
          */
-        void setBuild(AbstractBuild build) {
+        void setBuild(Run build) {
             for (TriggeredItemEntity entity : builds) {
-                if (entity.equals(build.getProject())) {
+                if (entity.equals(build.getParent())) {
                     entity.setBuild(build);
                 }
             }

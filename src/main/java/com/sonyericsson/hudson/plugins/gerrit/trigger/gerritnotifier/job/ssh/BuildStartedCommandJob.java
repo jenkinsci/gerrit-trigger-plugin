@@ -25,6 +25,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh;
 
+import hudson.model.Run;
 import org.acegisecurity.context.SecurityContext;
 import org.acegisecurity.context.SecurityContextHolder;
 
@@ -35,7 +36,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotif
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 
-import hudson.model.AbstractBuild;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 
@@ -46,7 +46,7 @@ import hudson.security.ACL;
  */
 public class BuildStartedCommandJob extends AbstractSendCommandJob {
 
-    private AbstractBuild build;
+    private Run build;
     private TaskListener taskListener;
     private GerritTriggeredEvent event;
     private BuildsStartedStats stats;
@@ -59,9 +59,9 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
      * @param taskListener a listener.
      * @param event        the event.
      * @param stats        the stats.
-     * @see GerritNotifier#buildStarted(AbstractBuild, TaskListener, GerritTriggeredEvent, BuildsStartedStats)
+     * @see GerritNotifier#buildStarted(Run, TaskListener, GerritTriggeredEvent, BuildsStartedStats)
      */
-    public BuildStartedCommandJob(IGerritHudsonTriggerConfig config, AbstractBuild build,
+    public BuildStartedCommandJob(IGerritHudsonTriggerConfig config, Run build,
                                   TaskListener taskListener, GerritTriggeredEvent event,
                                   BuildsStartedStats stats) {
         super(config);

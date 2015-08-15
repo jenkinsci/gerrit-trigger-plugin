@@ -36,7 +36,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Plugin;
-import hudson.model.AbstractProject;
+import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Api;
 import hudson.model.Hudson;
 import hudson.model.Items;
@@ -96,7 +97,7 @@ public class PluginImpl extends Plugin {
     public static final Permission RETRIGGER = new Permission(PERMISSION_GROUP,
             "Retrigger",
             Messages._RetriggerPermissionDescription(),
-            AbstractProject.BUILD);
+            Item.BUILD);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private final List<GerritServer> servers = new CopyOnWriteArrayList<GerritServer>();
@@ -436,10 +437,10 @@ public class PluginImpl extends Plugin {
      * @param serverName the name of the Gerrit server.
      * @return the list of jobs configured with this server.
      */
-    public List<AbstractProject> getConfiguredJobs(String serverName) {
-        LinkedList<AbstractProject> configuredJobs = new LinkedList<AbstractProject>();
-        for (AbstractProject<?, ?> project : Hudson.getInstance().getItems(AbstractProject.class)) { //get the jobs
-            GerritTrigger gerritTrigger = project.getTrigger(GerritTrigger.class);
+    public List<Job> getConfiguredJobs(String serverName) {
+        LinkedList<Job> configuredJobs = new LinkedList<Job>();
+        for (Job<?, ?> project : Jenkins.getInstance().getItems(Job.class)) { //get the jobs
+            GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 
             //if the job has a gerrit trigger, check whether the trigger has selected this server:
             if (gerritTrigger != null && gerritTrigger.getServerName().equals(serverName)) {
@@ -458,7 +459,7 @@ public class PluginImpl extends Plugin {
      */
     @Nonnull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
-    public static List<AbstractProject> getConfiguredJobs_(String serverName) {
+    public static List<Job> getConfiguredJobs_(String serverName) {
         PluginImpl plugin = getInstance();
         if (plugin == null) {
             logger.debug("Error, plugin instance could not be found!");

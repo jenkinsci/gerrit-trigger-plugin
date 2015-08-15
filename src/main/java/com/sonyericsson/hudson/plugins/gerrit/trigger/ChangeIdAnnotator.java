@@ -3,7 +3,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import hudson.Extension;
 import hudson.MarkupText;
 import hudson.MarkupText.SubText;
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogAnnotator;
 import hudson.scm.ChangeLogSet.Entry;
 
@@ -19,7 +19,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 @Extension
 public class ChangeIdAnnotator extends ChangeLogAnnotator {
     @Override
-    public void annotate(AbstractBuild<?, ?> build, Entry change, MarkupText text) {
+    public void annotate(Run<?, ?> build, Entry change, MarkupText text) {
         for (SubText token : text.findTokens(CHANGE_ID)) {
             GerritCause gerritCause = build.getCause(GerritCause.class);
             if (gerritCause != null

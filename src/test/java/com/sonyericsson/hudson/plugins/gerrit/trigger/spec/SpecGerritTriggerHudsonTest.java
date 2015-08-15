@@ -38,7 +38,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
@@ -47,6 +46,7 @@ import hudson.model.Item;
 import hudson.model.Queue.QueueDecisionHandler;
 import hudson.model.Queue.Task;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TopLevelItem;
 
 import org.apache.sshd.SshServer;
@@ -597,7 +597,7 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
         firstEvent.getPatchSet().setNumber("1");
-        AtomicReference<AbstractBuild> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
+        AtomicReference<Run> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
         gerritServer.triggerEvent(firstEvent);
         TestUtils.waitForBuildToStart(firstBuildRef);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
@@ -631,9 +631,9 @@ public class SpecGerritTriggerHudsonTest {
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         ManualPatchsetCreated firstEvent = Setup.createManualPatchsetCreated();
-        AtomicReference<AbstractBuild> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
+        AtomicReference<Run> firstBuildRef = TestUtils.getFutureBuildToStart(firstEvent);
         gerritServer.triggerEvent(firstEvent);
-        AbstractBuild firstBuild = TestUtils.waitForBuildToStart(firstBuildRef);
+        Run firstBuild = TestUtils.waitForBuildToStart(firstBuildRef);
         PatchsetCreated secondEvent = Setup.createPatchsetCreated();
         if (null != secondEvent.getPatchSet()) {
             secondEvent.getPatchSet().setNumber("2");

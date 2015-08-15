@@ -37,8 +37,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
 import hudson.model.Hudson;
 
 import java.util.Arrays;
@@ -99,10 +99,10 @@ public class ParameterExpander {
      * @param stats the statistics.
      * @return the "expanded" command string.
      */
-    public String getBuildStartedCommand(AbstractBuild r, TaskListener taskListener,
+    public String getBuildStartedCommand(Run r, TaskListener taskListener,
             ChangeBasedEvent event, BuildsStartedStats stats) {
 
-        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         String gerritCmd = config.getGerritCmdBuildStarted();
         Map<String, String> parameters = createStandardParameters(r, event,
                 getBuildStartedCodeReviewValue(r),
@@ -154,8 +154,8 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private int getBuildStartedVerifiedValue(AbstractBuild r) {
-        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
+    private int getBuildStartedVerifiedValue(Run r) {
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedVerifiedValue();
@@ -178,8 +178,8 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private int getBuildStartedCodeReviewValue(AbstractBuild r) {
-        GerritTrigger trigger = GerritTrigger.getTrigger(r.getProject());
+    private int getBuildStartedCodeReviewValue(Run r) {
+        GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedCodeReviewValue();
@@ -219,7 +219,7 @@ public class ParameterExpander {
      * @param notifyLevel the notify level.
      * @return the parameters and their values.
      */
-    private Map<String, String> createStandardParameters(AbstractBuild r, GerritTriggeredEvent gerritEvent,
+    private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent,
             int codeReview, int verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
@@ -257,7 +257,7 @@ public class ParameterExpander {
      * @param parameters the &lt;parameters&gt; from the trigger.
      * @return the expanded string.
      */
-    private String expandParameters(String gerritCommand, AbstractBuild r, TaskListener taskListener,
+    private String expandParameters(String gerritCommand, Run r, TaskListener taskListener,
             Map<String, String> parameters) {
 
         if (r != null && taskListener != null) {
@@ -370,7 +370,7 @@ public class ParameterExpander {
             if (entry == null) {
                 continue;
             }
-            AbstractBuild build = entry.getBuild();
+            Run build = entry.getBuild();
             if (build == null) {
                 continue;
             }
@@ -401,7 +401,7 @@ public class ParameterExpander {
     public int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
-            AbstractBuild build = entry.getBuild();
+            Run build = entry.getBuild();
             if (build == null) {
                 continue;
             }
@@ -435,7 +435,7 @@ public class ParameterExpander {
             if (entry == null) {
                 continue;
             }
-            AbstractBuild build = entry.getBuild();
+            Run build = entry.getBuild();
             if (build == null) {
                 continue;
             }
@@ -515,7 +515,7 @@ public class ParameterExpander {
                 codeReview, verified, notifyLevel.name());
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
 
-        AbstractBuild build = null;
+        Run build = null;
         Entry[] entries = memoryImprint.getEntries();
         if (entries.length > 0 && entries[0].getBuild() != null) {
             build = entries[0].getBuild();
@@ -555,9 +555,9 @@ public class ParameterExpander {
                 if (entry == null) {
                     continue;
                 }
-                AbstractBuild build = entry.getBuild();
+                Run build = entry.getBuild();
                 if (build != null) {
-                    GerritTrigger trigger = GerritTrigger.getTrigger(build.getProject());
+                    GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
                     Result res = build.getResult();
                     if (res == null) {
                         res = Result.NOT_BUILT;
@@ -650,7 +650,7 @@ public class ParameterExpander {
      * @param stats stats
      * @return the message for the build started command.
      */
-    public String getBuildStartedMessage(AbstractBuild build, TaskListener listener, ChangeBasedEvent event,
+    public String getBuildStartedMessage(Run build, TaskListener listener, ChangeBasedEvent event,
                                          BuildsStartedStats stats) {
         String startedCommand = getBuildStartedCommand(build, listener, event, stats);
         return findMessage(startedCommand);
@@ -701,8 +701,8 @@ public class ParameterExpander {
             if (e2 == null) {
                 throw new NullPointerException("e2");
             }
-            AbstractBuild b1 = e1.getBuild();
-            AbstractBuild b2 = e2.getBuild();
+            Run b1 = e1.getBuild();
+            Run b2 = e2.getBuild();
             if (b1 != null && b2 != null) {
                 Result r1 = b1.getResult();
                 Result r2 = b2.getResult();
