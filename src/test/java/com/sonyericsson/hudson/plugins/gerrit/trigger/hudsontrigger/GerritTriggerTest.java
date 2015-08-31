@@ -30,6 +30,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
@@ -45,6 +47,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -66,6 +70,7 @@ import hudson.model.queue.ScheduleResult;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
 import org.acegisecurity.Authentication;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
@@ -83,6 +88,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.GregorianCalendar;
@@ -889,6 +895,120 @@ public class GerritTriggerTest {
 
         verify(listener).onTriggered(same(project), same(event));
         verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingUserCause());
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with short ref name.
+     */
+    @Test
+    public void testGerritEventRefUpdatedShortName() {
+        AbstractProject project = mockProject();
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        List<Branch> branches = new ArrayList<Branch>();
+        Branch br = new Branch();
+        br.setCompareType(CompareType.PLAIN);
+        br.setPattern("master");
+        branches.add(br);
+
+        GerritProject gP = new GerritProject(
+                CompareType.PLAIN, "job", branches, null, null, null);
+
+        GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        RefUpdated event = Setup.createRefUpdated(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), eq(3), anyListOf(Action.class));
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with long ref name.
+     */
+    @Test
+    public void testGerritEventRefUpdatedLongName() {
+        AbstractProject project = mockProject();
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        List<Branch> branches = new ArrayList<Branch>();
+        Branch br = new Branch();
+        br.setCompareType(CompareType.PLAIN);
+        br.setPattern("master");
+        branches.add(br);
+
+        GerritProject gP = new GerritProject(
+                CompareType.PLAIN, "job", branches, null, null, null);
+
+        GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        RefUpdated event = Setup.createRefUpdated(PluginImpl.DEFAULT_SERVER_NAME, "job", "refs/heads/master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), eq(3), anyListOf(Action.class));
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with a tag as ref name.
+     */
+    @Test
+    public void testGerritEventRefUpdatedWithTag() {
+        AbstractProject project = mockProject();
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        List<Branch> branches = new ArrayList<Branch>();
+        Branch br = new Branch();
+        br.setCompareType(CompareType.PLAIN);
+        br.setPattern("refs/tags/1.0");
+        branches.add(br);
+
+        GerritProject gP = new GerritProject(
+                CompareType.PLAIN, "job", branches, null, null, null);
+
+        GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        RefUpdated event = Setup.createRefUpdated(PluginImpl.DEFAULT_SERVER_NAME, "job", "refs/tags/1.0");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), eq(3), anyListOf(Action.class));
     }
 
     /**
