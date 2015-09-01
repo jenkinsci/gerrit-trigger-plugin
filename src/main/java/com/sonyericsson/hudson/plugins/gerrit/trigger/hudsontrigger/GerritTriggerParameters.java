@@ -260,7 +260,7 @@ public enum GerritTriggerParameters {
             constructor = clazz.getConstructor(types);
             parameter = constructor.newInstance(args);
             parameters.add(parameter);
-        } catch (Exception ex) {
+        } catch (ReflectiveOperationException ex) {
             parameter = null;
         }
     }
