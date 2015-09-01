@@ -123,7 +123,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         if (item.isBuildable()) {
             return null;
         }
-        Integer itemId = new Integer(item.id);
+        Integer itemId = Integer.valueOf(item.id);
         if (blockedItems.containsKey(itemId)) {
             BlockedItem blockedItem = blockedItems.get(itemId);
             if (blockedItem.canRunWithTimeoutCheck()) {

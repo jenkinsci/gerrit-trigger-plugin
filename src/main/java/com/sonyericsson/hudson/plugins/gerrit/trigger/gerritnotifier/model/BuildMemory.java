@@ -75,7 +75,7 @@ public class BuildMemory {
             if (o1 == null && o2 != null) {
                 return -1;
             }
-            return new Integer(o1.hashCode()).compareTo(o2.hashCode());
+            return Integer.valueOf(o1.hashCode()).compareTo(o2.hashCode());
         }
     }
 
