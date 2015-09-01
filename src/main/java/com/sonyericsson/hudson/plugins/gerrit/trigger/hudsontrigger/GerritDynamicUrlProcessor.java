@@ -40,7 +40,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -247,7 +247,7 @@ public final class GerritDynamicUrlProcessor {
         BufferedReader reader = null;
         try {
           instream = connection.getInputStream();
-          reader = new BufferedReader(new InputStreamReader(instream, StandardCharsets.UTF_8));
+          reader = new BufferedReader(new InputStreamReader(instream, Charset.forName("UTF-8")));
           return readAndParseTriggerConfig(reader, serverName);
         } finally {
           if (reader != null) {
