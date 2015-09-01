@@ -855,7 +855,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
         JSONObject form = req.getSubmittedForm();
 
         String newName = form.getString("name");
-        boolean renamed = false;
         if (!name.equals(newName)) {
             if (PluginImpl.containsServer_(newName)) {
                 throw new Failure("A server already exists with the name '" + newName + "'");
@@ -863,7 +862,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 throw new Failure("Illegal name '" + newName + "'");
             }
             rename(newName);
-            renamed = true;
         }
         noConnectionOnStartup = form.getBoolean("noConnectionOnStartup");
         config.setValues(form);
