@@ -88,20 +88,20 @@ public final class GerritDynamicUrlProcessor {
               + "|" + SHORTNAME_FILE
               + "|" + SHORTNAME_FORBIDDEN_FILE
               + ")";
-      String operators = "(";
+      StringBuilder operators = new StringBuilder("(");
       boolean firstoperator = true;
       for (CompareType type : CompareType.values()) {
         if (!firstoperator) {
-          operators += "|";
+          operators.append("|");
         }
-        operators += type.getOperator();
+        operators.append(type.getOperator());
         firstoperator = false;
       }
-      operators += ")";
+      operators.append(")");
 
       return Pattern.compile(projectBranchFile
               + "\\s*"
-              + operators
+              + operators.toString()
               + "\\s*(.+)$");
     }
 
