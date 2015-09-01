@@ -55,7 +55,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.net.id>rsandell</java.net.id>
         <powermock.version>1.5.4</powermock.version>
-        <findbugs.version>2.5.5</findbugs.version>
+        <findbugs.version>3.0.2</findbugs.version>
         <checkstyle.version>2.13</checkstyle.version>
     </properties>
 
