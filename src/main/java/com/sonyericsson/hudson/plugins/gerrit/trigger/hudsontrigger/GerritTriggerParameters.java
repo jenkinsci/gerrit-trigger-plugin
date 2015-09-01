@@ -44,6 +44,7 @@ import hudson.model.TextParameterValue;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
@@ -391,7 +392,7 @@ public enum GerritTriggerParameters {
                     try {
                         byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
                         GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateBase64EncodedStringParameterValue(
-                            parameters, new String(encodedBytes), escapeQuotes);
+                            parameters, new String(encodedBytes, StandardCharsets.UTF_8), escapeQuotes);
                     } catch (UnsupportedEncodingException uee) {
                         logger.error("Failed to encode commit message as Base64: ", uee);
                     }
