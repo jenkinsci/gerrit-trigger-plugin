@@ -51,10 +51,10 @@ import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Random;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;

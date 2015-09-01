@@ -53,10 +53,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
-import static junit.framework.TestCase.assertNotNull;
-import static junit.framework.TestCase.assertSame;
-import static junit.framework.TestCase.fail;
-import static net.sf.ezmorph.test.ArrayAssertions.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
 
