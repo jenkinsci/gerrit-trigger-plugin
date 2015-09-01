@@ -627,13 +627,18 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public int getProjectListFetchDelay() { return projectListFetchDelay; }
+    public int getProjectListFetchDelay() {
+        return projectListFetchDelay; }
 
     @Override
-    public int getProjectListRefreshInterval() { return projectListRefreshInterval; }
+    public int getProjectListRefreshInterval() {
+        return projectListRefreshInterval;
+    }
 
     @Override
-    public boolean isEnableProjectAutoCompletion() { return enableProjectAutoCompletion; }
+    public boolean isEnableProjectAutoCompletion() {
+        return enableProjectAutoCompletion;
+    }
 
     /**
      * Setting dynamicConfigRefreshInterval.

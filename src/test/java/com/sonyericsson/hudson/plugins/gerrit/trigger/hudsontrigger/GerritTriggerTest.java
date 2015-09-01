@@ -71,7 +71,6 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
@@ -1681,16 +1680,6 @@ public class GerritTriggerTest {
         //next is only for error messages to not fail on NPE.
         PowerMockito.mockStatic(AbstractProject.class);
         when(AbstractProject.findNearest(any(String.class), any(ItemGroup.class))).thenReturn(downstreamProject);
-    }
-
-    /**
-     * Assert a {@link ParametersAction} name-value pair.
-     * @param parameters The parameters.
-     * @param name The name of the parameter to check.
-     * @param expectedValue The expected value.
-     */
-    private void assertParamEquals(ParametersAction parameters, Enum name, String expectedValue) {
-        Assert.assertEquals(expectedValue, parameters.getParameter(name.name()).getValue());
     }
 
     /**

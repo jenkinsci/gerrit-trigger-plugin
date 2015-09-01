@@ -295,7 +295,9 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public int getProjectListRefreshInterval() { return Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL; }
+    public int getProjectListRefreshInterval() {
+        return Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL;
+    }
 
     @Override
     public boolean isEnableProjectAutoCompletion() {

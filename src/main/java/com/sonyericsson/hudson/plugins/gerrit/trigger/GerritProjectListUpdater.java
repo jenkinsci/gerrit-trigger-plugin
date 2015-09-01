@@ -95,13 +95,17 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * This as ConnectionListener.
      * @return This as ConnectionListener.
      */
-    private ConnectionListener connectionListener() { return this; }
+    private ConnectionListener connectionListener() {
+        return this;
+    }
 
     /**
      * This as GerritEventListener.
      * @return This as GerritEventListener.
      */
-    private GerritEventListener gerritEventListener() { return this; }
+    private GerritEventListener gerritEventListener() {
+        return this;
+    }
 
     @Override
     public synchronized void connectionEstablished() {
@@ -123,7 +127,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * @param gerritEvent the event.
      */
     public void gerritEvent(ProjectCreated gerritEvent) {
-            addGerritProject(gerritEvent.getProjectName());
+        addGerritProject(gerritEvent.getProjectName());
     }
 
     /**
