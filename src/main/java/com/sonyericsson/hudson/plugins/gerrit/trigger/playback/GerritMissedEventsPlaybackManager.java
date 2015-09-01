@@ -357,32 +357,26 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
         if (statusCode == HttpURLConnection.HTTP_OK) {
             try {
                 HttpEntity entity = execute.getEntity();
-                ContentType contentType;
-                if (entity == null) {
-                    logger.warn("Not successful at requesting missed events from {} plugin. Null entity returned)",
-                            statusCode);
+                if (entity != null) {
+                    ContentType contentType = ContentType.get(entity);
+                    if (contentType == null) {
+                        contentType = ContentType.DEFAULT_TEXT;
+                    }
+                    Charset charset = contentType.getCharset();
+                    if (charset == null) {
+                        charset = Charset.defaultCharset();
+                    }
+                    InputStream bodyStream = entity.getContent();
+                    String body = IOUtils.toString(bodyStream, charset.name());
+                    logger.debug(body);
+                    return body;
                 }
-                contentType = ContentType.get(entity);
-                if (contentType == null) {
-                    contentType = ContentType.DEFAULT_TEXT;
-                }
-                Charset charset = contentType.getCharset();
-                if (charset == null) {
-                    charset = Charset.defaultCharset();
-                }
-                InputStream bodyStream = entity.getContent();
-                String body = IOUtils.toString(bodyStream, charset.name());
-                logger.debug(body);
-                return body;
             } catch (IOException ioe) {
                 logger.warn(ioe.getMessage(), ioe);
-                logger.warn("Not successful at requesting missed events from {} plugin. (errorcode: {})",
-                    EVENTS_LOG_PLUGIN_NAME, statusCode);
             }
-        } else {
-            logger.warn("Not successful at requesting missed events from {} plugin. (errorcode: {})",
-                EVENTS_LOG_PLUGIN_NAME, statusCode);
         }
+        logger.warn("Not successful at requesting missed events from {} plugin. (errorcode: {})",
+                EVENTS_LOG_PLUGIN_NAME, statusCode);
         return "";
     }
 

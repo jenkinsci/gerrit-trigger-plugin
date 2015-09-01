@@ -40,6 +40,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,20 +89,20 @@ public final class GerritDynamicUrlProcessor {
               + "|" + SHORTNAME_FILE
               + "|" + SHORTNAME_FORBIDDEN_FILE
               + ")";
-      String operators = "(";
+      StringBuilder operators = new StringBuilder("(");
       boolean firstoperator = true;
       for (CompareType type : CompareType.values()) {
         if (!firstoperator) {
-          operators += "|";
+          operators.append("|");
         }
-        operators += type.getOperator();
+        operators.append(type.getOperator());
         firstoperator = false;
       }
-      operators += ")";
+      operators.append(")");
 
       return Pattern.compile(projectBranchFile
               + "\\s*"
-              + operators
+              + operators.toString()
               + "\\s*(.+)$");
     }
 
@@ -246,7 +247,7 @@ public final class GerritDynamicUrlProcessor {
         BufferedReader reader = null;
         try {
           instream = connection.getInputStream();
-          reader = new BufferedReader(new InputStreamReader(instream));
+          reader = new BufferedReader(new InputStreamReader(instream, Charset.forName("UTF-8")));
           return readAndParseTriggerConfig(reader, serverName);
         } finally {
           if (reader != null) {
