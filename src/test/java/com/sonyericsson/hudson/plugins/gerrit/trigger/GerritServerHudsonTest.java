@@ -249,7 +249,8 @@ public class GerritServerHudsonTest {
         textContent = form.getTextContent();
 
         if (serverSize == 1) {
-            try { form.submit();
+            try {
+                form.submit();
             } catch (Exception e) {
                 buttonFound = false;
             }

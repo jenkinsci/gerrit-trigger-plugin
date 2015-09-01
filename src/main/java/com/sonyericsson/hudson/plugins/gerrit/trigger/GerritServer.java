@@ -762,7 +762,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
 
             int statusCode = execute.getStatusLine().getStatusCode();
-            switch(statusCode) {
+            switch (statusCode) {
                 case HttpURLConnection.HTTP_OK:
                     return FormValidation.ok(Messages.Success());
                 case HttpURLConnection.HTTP_UNAUTHORIZED:
