@@ -172,6 +172,8 @@ public class GerritTrigger extends Trigger<Job> {
     private String serverName;
     private String gerritSlaveId;
     private List<PluginGerritEvent> triggerOnEvents;
+    @Deprecated
+    private transient boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
@@ -300,6 +302,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
+        this.allowTriggeringUnreviewedPatches = false;
         this.notificationLevel = notificationLevel;
     }
 
