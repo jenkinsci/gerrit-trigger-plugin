@@ -9,4 +9,6 @@
               files="Messages.java"/>
     <suppress checks=".+"
               files="InjectedTest.java"/>
+    <suppress checks=".+"
+              files="[/\\]generated-sources[/\\]"/>
 </suppressions>
