@@ -62,6 +62,19 @@ public class ManualTriggerActionPermissionTest {
     public final JenkinsRule jenkinsRule = new JenkinsRule();
 
     /**
+     * Get the href for an action.
+     * @param action the action.
+     * @return the href.
+     */
+    private static String getHrefForAction(ManualTriggerAction action) {
+        // WebClient objects returned by JenkinsRule.createWebClient create
+        // hrefs prefixed with "/jenkins", which was not the case with
+        // the WebClients created by the previously used and now deprecated
+        // org.jvnet.hudson.test.HudsonTestCase.WebClient.
+        return "/jenkins" + action.getUrlName();
+    }
+
+    /**
      * Tests if the html-link to {@link ManualTriggerAction#getUrlName()} is visible from the main-page.
      * It should be hidden from an Anonymous user as configured in the test-configuration.
      *
@@ -76,7 +89,7 @@ public class ManualTriggerActionPermissionTest {
         WebClient wc = jenkinsRule.createWebClient();
         HtmlPage page = wc.goTo("/");
         try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
+            HtmlAnchor a = page.getAnchorByHref(getHrefForAction(action));
             assertNull(a);
         } catch (ElementNotFoundException e) {
             return;
@@ -99,7 +112,7 @@ public class ManualTriggerActionPermissionTest {
         WebClient wc = jenkinsRule.createWebClient().login("admin", "admin");
         HtmlPage page = wc.goTo("/");
         try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
+            HtmlAnchor a = page.getAnchorByHref(getHrefForAction(action));
             assertNotNull(a);
         } catch (ElementNotFoundException e) {
             fail("Admin should see the RootAction");
@@ -121,7 +134,7 @@ public class ManualTriggerActionPermissionTest {
         WebClient wc = jenkinsRule.createWebClient().login("bobby", "bobby");
         HtmlPage page = wc.goTo("/");
         try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
+            HtmlAnchor a = page.getAnchorByHref(getHrefForAction(action));
             assertNotNull(a);
         } catch (ElementNotFoundException e) {
             fail("Bobby should see the RootAction");
