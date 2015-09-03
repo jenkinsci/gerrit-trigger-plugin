@@ -104,52 +104,52 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public int getGerritBuildStartedVerifiedValue() {
+    public Integer getGerritBuildStartedVerifiedValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildStartedCodeReviewValue() {
+    public Integer getGerritBuildStartedCodeReviewValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildSuccessfulVerifiedValue() {
+    public Integer getGerritBuildSuccessfulVerifiedValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildSuccessfulCodeReviewValue() {
+    public Integer getGerritBuildSuccessfulCodeReviewValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildFailedVerifiedValue() {
+    public Integer getGerritBuildFailedVerifiedValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildFailedCodeReviewValue() {
+    public Integer getGerritBuildFailedCodeReviewValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildUnstableVerifiedValue() {
+    public Integer getGerritBuildUnstableVerifiedValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildUnstableCodeReviewValue() {
+    public Integer getGerritBuildUnstableCodeReviewValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildNotBuiltVerifiedValue() {
+    public Integer getGerritBuildNotBuiltVerifiedValue() {
         return 0;
     }
 
     @Override
-    public int getGerritBuildNotBuiltCodeReviewValue() {
+    public Integer getGerritBuildNotBuiltCodeReviewValue() {
         return 0;
     }
 

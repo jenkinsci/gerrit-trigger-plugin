@@ -36,6 +36,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -154,7 +155,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private int getBuildStartedVerifiedValue(Run r) {
+    private Integer getBuildStartedVerifiedValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
@@ -164,7 +165,7 @@ public class ParameterExpander {
             logger.trace("BuildStartedVerified overridden in project config. returning {}", value);
             return value;
         } else {
-            final int value = config.getGerritBuildStartedVerifiedValue();
+            final Integer value = config.getGerritBuildStartedVerifiedValue();
             logger.trace("BuildStartedVerified standard value used {}", value);
             return value;
         }
@@ -178,7 +179,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private int getBuildStartedCodeReviewValue(Run r) {
+    private Integer getBuildStartedCodeReviewValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
@@ -188,7 +189,7 @@ public class ParameterExpander {
             logger.trace("BuildStartedCodeReview overridden in project config. returning {}", value);
             return value;
         } else {
-            final int value = config.getGerritBuildStartedCodeReviewValue();
+            final Integer value = config.getGerritBuildStartedCodeReviewValue();
             logger.trace("BuildStartedCodeReview standard value used {}", value);
             return value;
         }
@@ -220,7 +221,7 @@ public class ParameterExpander {
      * @return the parameters and their values.
      */
     private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent,
-            int codeReview, int verified, String notifyLevel) {
+            Integer codeReview, Integer verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
         if (gerritEvent instanceof ChangeBasedEvent) {
@@ -272,6 +273,11 @@ public class ParameterExpander {
         for (Map.Entry<String, String> param : parameters.entrySet()) {
             gerritCommand = gerritCommand.replace("<" + param.getKey() + ">", param.getValue());
         }
+        //replace null and Integer.MAX_VALUE code review value
+        gerritCommand = gerritCommand.replace("--code-review null", "");
+        gerritCommand = gerritCommand.replace("--code-review " + Integer.MAX_VALUE, "");
+        gerritCommand = gerritCommand.replace("--verified null", "");
+        gerritCommand = gerritCommand.replace("--verified " + Integer.MAX_VALUE, "");
 
         return gerritCommand;
     }
@@ -282,7 +288,7 @@ public class ParameterExpander {
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
-    protected int getCodeReviewValue(Result res, GerritTrigger trigger) {
+    protected Integer getCodeReviewValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulCodeReviewValue() != null) {
                 return trigger.getGerritBuildSuccessfulCodeReviewValue();
@@ -323,7 +329,7 @@ public class ParameterExpander {
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
-    protected int getVerifiedValue(Result res, GerritTrigger trigger) {
+    protected Integer getVerifiedValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulVerifiedValue() != null) {
                 return trigger.getGerritBuildSuccessfulVerifiedValue();
@@ -360,12 +366,14 @@ public class ParameterExpander {
 
     /**
      * Returns the minimum verified value for the build results in the memory.
+     * If no builds have contributed to verified value, this method returns null
      * @param memoryImprint the memory.
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
-    public int getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
-        int verified = Integer.MAX_VALUE;
+    @CheckForNull
+    public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+        Integer verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             if (entry == null) {
                 continue;
@@ -383,23 +391,29 @@ public class ParameterExpander {
             if (shouldSkip(trigger.getSkipVote(), result)) {
                 continue;
             }
-            verified = Math.min(verified, getVerifiedValue(result, trigger));
+            Integer verifiedObj = getVerifiedValue(result, trigger);
+            if (verifiedObj != null) {
+                verified = Math.min(verified, verifiedObj);
+            }
+        }
 
+        if (verified == Integer.MAX_VALUE) {
+            return null;
         }
-        if (verified >= Integer.MAX_VALUE) {
-            verified = 0;
-        }
+
         return verified;
     }
 
     /**
      * Returns the minimum code review value for the build results in the memory.
+     * If no builds have contributed to code review value, this method returns null
      * @param memoryImprint the memory
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
-    public int getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
-        int codeReview = Integer.MAX_VALUE;
+    @CheckForNull
+    public Integer getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+        Integer codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Run build = entry.getBuild();
             if (build == null) {
@@ -414,11 +428,16 @@ public class ParameterExpander {
             if (shouldSkip(trigger.getSkipVote(), result)) {
                 continue;
             }
-            codeReview = Math.min(codeReview, getCodeReviewValue(result, trigger));
+            Integer codeReviewObj = getCodeReviewValue(result, trigger);
+            if (codeReviewObj != null) {
+                codeReview = Math.min(codeReview, codeReviewObj);
+            }
         }
-        if (codeReview >= Integer.MAX_VALUE) {
-            codeReview = 0;
+
+        if (codeReview == Integer.MAX_VALUE) {
+            return null;
         }
+
         return codeReview;
     }
 

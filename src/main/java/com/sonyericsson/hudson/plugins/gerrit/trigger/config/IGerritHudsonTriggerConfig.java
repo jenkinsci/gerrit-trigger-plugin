@@ -95,61 +95,61 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * The default verified value for build started.
      * @return the value.
      */
-    int getGerritBuildStartedVerifiedValue();
+    Integer getGerritBuildStartedVerifiedValue();
 
     /**
      * The default code review value for build started.
      * @return the value.
      */
-    int getGerritBuildStartedCodeReviewValue();
+    Integer getGerritBuildStartedCodeReviewValue();
 
     /**
      * The default verified value for build successful.
      * @return the falue.
      */
-    int getGerritBuildSuccessfulVerifiedValue();
+    Integer getGerritBuildSuccessfulVerifiedValue();
 
     /**
      * The default code review value for build successful.
      * @return the value.
      */
-    int getGerritBuildSuccessfulCodeReviewValue();
+    Integer getGerritBuildSuccessfulCodeReviewValue();
 
     /**
      * The default verified value for build failed.
      * @return the value.
      */
-    int getGerritBuildFailedVerifiedValue();
+    Integer getGerritBuildFailedVerifiedValue();
 
     /**
      * The default code review value for build failed.
      * @return the value.
      */
-    int getGerritBuildFailedCodeReviewValue();
+    Integer getGerritBuildFailedCodeReviewValue();
 
     /**
      * The default verified value for build unstable.
      * @return the value.
      */
-    int getGerritBuildUnstableVerifiedValue();
+    Integer getGerritBuildUnstableVerifiedValue();
 
     /**
      * The default code review value for build unstable.
      * @return the value.
      */
-    int getGerritBuildUnstableCodeReviewValue();
+    Integer getGerritBuildUnstableCodeReviewValue();
 
     /**
      * The default verified value for build not built.
      * @return the value.
      */
-    int getGerritBuildNotBuiltVerifiedValue();
+    Integer getGerritBuildNotBuiltVerifiedValue();
 
     /**
      * The default code review value for build not built.
      * @return the value.
      */
-    int getGerritBuildNotBuiltCodeReviewValue();
+    Integer getGerritBuildNotBuiltCodeReviewValue();
 
     /**
      * Sets all config values from the provided JSONObject.

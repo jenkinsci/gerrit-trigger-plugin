@@ -27,7 +27,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import hudson.model.Result;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -70,8 +73,12 @@ public class ParameterExpanderSkipVoteParameterTest {
     public void testCodeReview() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         ParameterExpander instance = new ParameterExpander(config);
-        int result = instance.getMinimumCodeReviewValue(parameter.memoryImprint, true);
-        assertEquals(parameter.expectedCodeReview, result);
+        Integer result = instance.getMinimumCodeReviewValue(parameter.memoryImprint, true);
+        if (parameter.expectedCodeReview == null) {
+            assertNull(result);
+        } else {
+            assertEquals(Integer.valueOf(parameter.expectedCodeReview), result);
+        }
     }
 
     /**
@@ -82,8 +89,12 @@ public class ParameterExpanderSkipVoteParameterTest {
     public void testVerified() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         ParameterExpander instance = new ParameterExpander(config);
-        int result = instance.getMinimumVerifiedValue(parameter.memoryImprint, true);
-        assertEquals(parameter.expectedVerified, result);
+        Integer result = instance.getMinimumVerifiedValue(parameter.memoryImprint, true);
+        if (parameter.expectedVerified == null) {
+            assertNull(result);
+        } else {
+            assertEquals(Integer.valueOf(parameter.expectedVerified), result);
+        }
     }
 
     /**
@@ -125,17 +136,17 @@ public class ParameterExpanderSkipVoteParameterTest {
         parameters.add(createParameter(-1, -2,
                 Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false)
                 ));
-        parameters.add(createParameter(0, 0,
+        parameters.add(createParameter(null, null,
                 Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true)
                 ));
-        parameters.add(createParameter(0, 0,
+        parameters.add(createParameter(null, null,
                 Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true)
                 ));
-        parameters.add(createParameter(0, 0,
+        parameters.add(createParameter(null, null,
                 Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
                 Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true)
                 ));
-        parameters.add(createParameter(0, 0,
+        parameters.add(createParameter(null, null,
                 Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
                 Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true)
                 ));
@@ -152,7 +163,7 @@ public class ParameterExpanderSkipVoteParameterTest {
      * @param entries the build memory entries
      * @return the created test parameter.
      */
-    private static TestParameter[] createParameter(int expectedCodeReview, int expectedVerified,
+    private static TestParameter[] createParameter(Integer expectedCodeReview, Integer expectedVerified,
                                                    BuildMemory.MemoryImprint.Entry... entries) {
         return new TestParameter[]{new TestParameter(expectedCodeReview, expectedVerified, entries)};
     }
@@ -164,8 +175,8 @@ public class ParameterExpanderSkipVoteParameterTest {
     public static class TestParameter {
 
         BuildMemory.MemoryImprint memoryImprint;
-        private int expectedCodeReview;
-        private int expectedVerified;
+        private Integer expectedCodeReview;
+        private Integer expectedVerified;
 
         /**
          * Convenience constructor.
@@ -174,7 +185,8 @@ public class ParameterExpanderSkipVoteParameterTest {
          * @param expectedVerified the expected verified vote.
          * @param entries the build memory entries.
          */
-        public TestParameter(int expectedCodeReview, int expectedVerified, BuildMemory.MemoryImprint.Entry... entries) {
+        public TestParameter(Integer expectedCodeReview, Integer expectedVerified,
+                BuildMemory.MemoryImprint.Entry... entries) {
             this.expectedCodeReview = expectedCodeReview;
             this.expectedVerified = expectedVerified;
             memoryImprint = mock(BuildMemory.MemoryImprint.class);
