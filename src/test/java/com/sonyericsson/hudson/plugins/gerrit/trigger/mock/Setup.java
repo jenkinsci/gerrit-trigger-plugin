@@ -48,6 +48,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
 import hudson.EnvVars;
@@ -61,6 +62,7 @@ import hudson.model.TaskListener;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import net.sf.json.JSONObject;
+
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
 import org.powermock.api.mockito.PowerMockito;
@@ -539,6 +541,42 @@ public final class Setup {
      */
     public static GerritTrigger createDefaultTrigger(Job job) {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+        boolean silentMode = true;
+        boolean silentStart = false;
+
+        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
+                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
+
+        if (job != null) {
+            trigger.start(job, true);
+            try {
+                if (job instanceof AbstractProject) {
+                    ((AbstractProject)job).addTrigger(trigger);
+                } else if (job instanceof WorkflowJob) {
+                    ((WorkflowJob)job).addTrigger(trigger);
+                } else {
+                    Assert.fail("Unsupported Job type: " + job.getClass().getName());
+                }
+            } catch (IOException e) {
+                // for the sake of testing this should be ok
+                throw new RuntimeException(e);
+            }
+        }
+
+        return trigger;
+    }
+
+    /**
+     * Create a new default trigger object.
+     *
+     * @param job if not null, start the trigger with the given project.
+     * @return a new GerritTrigger object.
+     */
+    public static GerritTrigger createRefUpdatedTrigger(Job job) {
+        PluginRefUpdatedEvent pluginEvent = new PluginRefUpdatedEvent();
         List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
         triggerOnEvents.add(pluginEvent);
         boolean silentMode = true;
