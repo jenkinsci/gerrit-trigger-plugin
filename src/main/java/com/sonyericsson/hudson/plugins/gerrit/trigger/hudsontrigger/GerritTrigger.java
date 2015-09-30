@@ -818,8 +818,12 @@ public class GerritTrigger extends Trigger<Job> {
                          && p.isInteresting(changeBasedEvent.getChange().getProject(),
                                             changeBasedEvent.getChange().getBranch(),
                                             changeBasedEvent.getChange().getTopic())) {
-                        if (isFileTriggerEnabled() && p.getFilePaths() != null
-                                && p.getFilePaths().size() > 0) {
+
+                        boolean containsFilePathsOrForbiddenFilePaths =
+                                ((p.getFilePaths() != null && p.getFilePaths().size() > 0)
+                                        || (p.getForbiddenFilePaths() != null && p.getForbiddenFilePaths().size() > 0));
+
+                        if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
                             if (isServerInteresting(event)
                                  && p.isInteresting(changeBasedEvent.getChange().getProject(),
                                                     changeBasedEvent.getChange().getBranch(),

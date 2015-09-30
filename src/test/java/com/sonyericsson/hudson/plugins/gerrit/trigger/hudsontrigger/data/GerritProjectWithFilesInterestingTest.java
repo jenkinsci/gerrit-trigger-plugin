@@ -142,6 +142,22 @@ public class GerritProjectWithFilesInterestingTest {
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "project", "master", null, files, false), });
 
+        //Testing with Forbidden File Paths now BUT no filepaths defined
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.PLAIN, "master");
+        branches.add(branch);
+        topics = new LinkedList<Topic>();
+        filePaths = null;
+        forbiddenFilePaths = new LinkedList<FilePath>();
+        forbiddenFilePath = new FilePath(CompareType.PLAIN, "test2.txt");
+        forbiddenFilePaths.add(forbiddenFilePath);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths, forbiddenFilePaths);
+        files = new LinkedList<String>();
+        files.add("test.txt");
+        files.add("test2.txt");
+        parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
+                config, "project", "master", null, files, false), });
+
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.REG_EXP, "feature/.*master");
         branches.add(branch);
