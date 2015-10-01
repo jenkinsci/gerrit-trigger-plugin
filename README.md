@@ -28,21 +28,19 @@ Each job can be configured with one Gerrit server.
 
 # Environments
 * `linux`
-    * `java-1.6`
-        * `maven-3.0.4`
+    * `java-1.7`
+        * `maven-3.3.3`
 
-* Java 1.7: official development environment.
-* Java 8: tests won't run, because the Powermock libraries do not
-  support Java 8.
+* Java 1.7: minimum development environment.
+* Java 8: Works.
+* Java 6 Runtime compatible
 
 You should have no problem running the plugin on a Windows server.
 
 The maintainers' development, tests and production environments are
 Ubuntu so we have no means of detecting or fixing any Windows issues.
 
-Patches to prepare for future Java 8 compatibility or other
-development environments while retaining Java 1.6 compatibility are
-welcome.
+Java 6 compatibility will be dropped as soon as newer core version is needed for features.
 
 # Build
 
