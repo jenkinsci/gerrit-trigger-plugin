@@ -54,6 +54,7 @@ public class GerritProject implements Describable<GerritProject> {
     private List<FilePath> filePaths;
     private List<Topic> topics;
     private List<FilePath> forbiddenFilePaths;
+    private boolean disableStrictForbiddenFileVerification;
 
     /**
      * Default empty constructor.
@@ -70,6 +71,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @param topics the topic-rules
      * @param filePaths the file-path rules.
      * @param forbiddenFilePaths the forbidden file-path rules.
+     * @param disableStrictForbiddenFileVerification whether to be strict or not.
      */
     @DataBoundConstructor
     public GerritProject(
@@ -78,7 +80,8 @@ public class GerritProject implements Describable<GerritProject> {
             List<Branch> branches,
             List<Topic> topics,
             List<FilePath> filePaths,
-            List<FilePath> forbiddenFilePaths) {
+            List<FilePath> forbiddenFilePaths,
+            boolean disableStrictForbiddenFileVerification) {
 
         this.compareType = compareType;
         this.pattern = pattern;
@@ -86,6 +89,23 @@ public class GerritProject implements Describable<GerritProject> {
         this.topics = topics;
         this.filePaths = filePaths;
         this.forbiddenFilePaths = forbiddenFilePaths;
+        this.disableStrictForbiddenFileVerification = disableStrictForbiddenFileVerification;
+    }
+
+    /**
+     * Whether to disable strict verification of forbidden files.
+     * @return true if disabled.
+     */
+    public boolean isDisableStrictForbiddenFileVerification() {
+        return disableStrictForbiddenFileVerification;
+    }
+
+    /**
+     * Set whether to disable strict verification of forbidden files.
+     * @param disableStrictForbiddenFileVerification true to disable.
+     */
+    public void setDisableStrictForbiddenFileVerification(boolean disableStrictForbiddenFileVerification) {
+        this.disableStrictForbiddenFileVerification = disableStrictForbiddenFileVerification;
     }
 
     /**
@@ -195,16 +215,32 @@ public class GerritProject implements Describable<GerritProject> {
     public boolean isInteresting(String project, String branch, String topic, List<String> files) {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
+                boolean foundInterestingForbidden = false;
+                boolean foundInterestingTopicOrFile = false;
                 if (b.isInteresting(branch)) {
                     if (forbiddenFilePaths != null) {
                         for (FilePath ffp : forbiddenFilePaths) {
                             if (ffp.isInteresting(files)) {
-                                return false;
+                                foundInterestingForbidden = true;
+                                break;
                             }
                         }
                     }
                     if (isInterestingTopic(topic) && isInterestingFile(files)) {
-                        return true;
+                        foundInterestingTopicOrFile = true;
+                    }
+                    if (disableStrictForbiddenFileVerification) {
+                        // Here we want to be able to trigger a build if the event contains
+                        // wanted topics or file paths even though there may be a forbidden file
+                        return foundInterestingTopicOrFile;
+                    } else {
+                        if (foundInterestingForbidden) {
+                            // we have a forbidden file and a wanted file path.
+                            return false;
+                        } else if (foundInterestingTopicOrFile) {
+                            // we DO not have a forbidden file and but we have a wanted file path.
+                            return true;
+                        }
                     }
                 }
             }

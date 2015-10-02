@@ -920,7 +920,7 @@ public class GerritTriggerTest {
         branches.add(br);
 
         GerritProject gP = new GerritProject(
-                CompareType.PLAIN, "job", branches, null, null, null);
+                CompareType.PLAIN, "job", branches, null, null, null, false);
 
         GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
         Setup.setTrigger(trigger, project);
@@ -958,7 +958,7 @@ public class GerritTriggerTest {
         branches.add(br);
 
         GerritProject gP = new GerritProject(
-                CompareType.PLAIN, "job", branches, null, null, null);
+                CompareType.PLAIN, "job", branches, null, null, null, false);
 
         GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
         Setup.setTrigger(trigger, project);
@@ -996,7 +996,7 @@ public class GerritTriggerTest {
         branches.add(br);
 
         GerritProject gP = new GerritProject(
-                CompareType.PLAIN, "job", branches, null, null, null);
+                CompareType.PLAIN, "job", branches, null, null, null, false);
 
         GerritTrigger trigger = Setup.createRefUpdatedTrigger(project);
         Setup.setTrigger(trigger, project);

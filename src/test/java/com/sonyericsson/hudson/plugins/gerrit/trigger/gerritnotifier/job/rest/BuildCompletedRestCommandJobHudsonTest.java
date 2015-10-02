@@ -95,7 +95,7 @@ public class BuildCompletedRestCommandJobHudsonTest {
         trigger.setGerritProjects(Collections.singletonList(
                 new GerritProject(CompareType.PLAIN, event.getChange().getProject(),
                         Collections.singletonList(new Branch(CompareType.PLAIN, event.getChange().getBranch())),
-                        null, null, null)
+                        null, null, null, false)
         ));
         trigger.setSilentMode(false);
         trigger.setGerritBuildSuccessfulCodeReviewValue(1);
