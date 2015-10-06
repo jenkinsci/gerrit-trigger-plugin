@@ -882,10 +882,31 @@ public class GerritTrigger extends Trigger<Job> {
             if (e instanceof PluginCommentAddedEvent) {
                 commentAdded = (PluginCommentAddedEvent)e;
                 for (Approval approval : event.getApprovals()) {
-                    if (approval.getType().equals(commentAdded.getVerdictCategory())
-                        && (approval.getValue().equals(commentAdded.getCommentAddedTriggerApprovalValue())
-                        || ("+" + approval.getValue()).equals(commentAdded.getCommentAddedTriggerApprovalValue()))) {
-                    return true;
+                    /** Ensure that this trigger is backwards compatible.
+                     * Gerrit stream events changed to append approval info to
+                     * every comment-added event.  The change also includes a
+                     * new `updated` attribute to indicate whether the score
+                     * was changed.
+                     **/
+                    if (approval.getUpdated() != null) {
+                        if (approval.getUpdated()
+                            && approval.getType().equals(
+                                commentAdded.getVerdictCategory())
+                            && (approval.getValue().equals(
+                                commentAdded.getCommentAddedTriggerApprovalValue())
+                            || ("+" + approval.getValue()).equals(
+                                commentAdded.getCommentAddedTriggerApprovalValue()))) {
+                            return true;
+                         }
+                    } else {
+                        if (approval.getType().equals(
+                                commentAdded.getVerdictCategory())
+                            && (approval.getValue().equals(
+                                commentAdded.getCommentAddedTriggerApprovalValue())
+                            || ("+" + approval.getValue()).equals(
+                                commentAdded.getCommentAddedTriggerApprovalValue()))) {
+                            return true;
+                        }
                     }
                 }
             }
