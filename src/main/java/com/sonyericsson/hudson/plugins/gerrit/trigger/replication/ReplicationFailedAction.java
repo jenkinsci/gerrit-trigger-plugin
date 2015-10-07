@@ -23,6 +23,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
+import java.util.Iterator;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher.BlockedItem;
+
 import hudson.model.InvisibleAction;
 
 /**
@@ -32,14 +37,14 @@ import hudson.model.InvisibleAction;
  */
 public class ReplicationFailedAction extends InvisibleAction {
 
-    private String reason;
+    private BlockedItem blockedItem;
 
     /**
      * Standard constructor.
-     * @param reason The reason of the Failed replication
+     * @param blockedItem The reason of the Failed replication
      */
-    public ReplicationFailedAction(String reason) {
-        this.reason = reason;
+    public ReplicationFailedAction(BlockedItem blockedItem) {
+        this.blockedItem = blockedItem;
     }
 
     /**
@@ -47,6 +52,19 @@ public class ReplicationFailedAction extends InvisibleAction {
      * @return the reason
      */
     public String getReason() {
-        return reason;
+        StringBuffer slavesReason = new StringBuffer("\n\nReplication Status:");
+        slavesReason.append("\n-------------------\n\n");
+
+        if (blockedItem.getSlavesWaitingFor() != null && blockedItem.getSlavesWaitingFor().size() > 0) {
+            Iterator<String> it = blockedItem.getSlavesWaitingFor().keySet().iterator();
+            while (it.hasNext()) {
+                GerritSlave slave = blockedItem.getSlavesWaitingFor().get(it.next());
+                if (slave.getReplicationStatus() != null) {
+                    slavesReason = slavesReason.append("** Replication to " + slave.getName() + " "
+                            + slave.getReplicationStatus().getStatusMessage() + "!\n");
+                }
+            }
+        }
+        return blockedItem.getReplicationFailedMessage() + slavesReason.toString();
     }
 }
