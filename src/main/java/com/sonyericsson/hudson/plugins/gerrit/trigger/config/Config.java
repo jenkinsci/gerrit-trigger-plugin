@@ -50,10 +50,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-
-
-
-
 //CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static import.
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
@@ -78,29 +74,13 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final int DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE = 0;
     /**
-     * Default code review vote to Gerrit when a build is started.
-     */
-    public static final int DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE = 0;
-    /**
      * Default verified vote to Gerrit when a build is unstable.
      */
     public static final int DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE = 0;
     /**
-     * Default code review vote to Gerrit when a build is unstable.
-     */
-    public static final int DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE = -1;
-    /**
      * Default verified vote to Gerrit when a build is failed.
      */
     public static final int DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE = -1;
-    /**
-     * Default code review vote to Gerrit when a build is failed.
-     */
-    public static final int DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE = 0;
-    /**
-     * Default code review vote to Gerrit when a build is successful.
-     */
-    public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE = 0;
     /**
      * Default verified vote to Gerrit when a build is successful.
      */
@@ -109,11 +89,26 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default verified vote to Gerrit when a build is not built.
      */
     public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE = 0;
+   /**
+-     * Default code review vote to Gerrit when a build is started.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE = 0;
+   /**
+     * Default code review vote to Gerrit when a build is unstable.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE = -1;
+   /**
+     * Default code review vote to Gerrit when a build is failed.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE = 0;
+    /**
+     * Default code review vote to Gerrit when a build is successful.
+     */
+    public static final int DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE = 0;
     /**
      * Default code review vote to Gerrit when a build is not built.
      */
     public static final int DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE = 0;
-
     /**
      * Default value indicating if the Gerrit server should be used to fetch project names.
      */
@@ -171,16 +166,16 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritVerifiedCmdBuildStarted;
     private String gerritVerifiedCmdBuildNotBuilt;
     private String gerritFrontEndUrl;
-    private int gerritBuildStartedVerifiedValue;
-    private int gerritBuildStartedCodeReviewValue;
-    private int gerritBuildSuccessfulVerifiedValue;
-    private int gerritBuildSuccessfulCodeReviewValue;
-    private int gerritBuildFailedVerifiedValue;
-    private int gerritBuildFailedCodeReviewValue;
-    private int gerritBuildUnstableVerifiedValue;
-    private int gerritBuildUnstableCodeReviewValue;
-    private int gerritBuildNotBuiltVerifiedValue;
-    private int gerritBuildNotBuiltCodeReviewValue;
+    private Integer gerritBuildStartedVerifiedValue = null;
+    private Integer gerritBuildSuccessfulVerifiedValue = null;
+    private Integer gerritBuildFailedVerifiedValue = null;
+    private Integer gerritBuildUnstableVerifiedValue = null;
+    private Integer gerritBuildNotBuiltVerifiedValue = null;
+    private Integer gerritBuildStartedCodeReviewValue = null;
+    private Integer gerritBuildSuccessfulCodeReviewValue = null;
+    private Integer gerritBuildFailedCodeReviewValue = null;
+    private Integer gerritBuildUnstableCodeReviewValue = null;
+    private Integer gerritBuildNotBuiltCodeReviewValue = null;
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
     @Deprecated
@@ -305,36 +300,31 @@ public class Config implements IGerritHudsonTriggerConfig {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
         }
 
-        gerritBuildStartedVerifiedValue = formData.optInt(
-                "gerritBuildStartedVerifiedValue",
-                DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE);
-        gerritBuildStartedCodeReviewValue = formData.optInt(
-                "gerritBuildStartedCodeReviewValue",
-                DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE);
-        gerritBuildSuccessfulVerifiedValue = formData.optInt(
-                "gerritBuildSuccessfulVerifiedValue",
-                DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE);
-        gerritBuildSuccessfulCodeReviewValue = formData.optInt(
-                "gerritBuildSuccessfulCodeReviewValue",
-                DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE);
-        gerritBuildFailedVerifiedValue = formData.optInt(
-                "gerritBuildFailedVerifiedValue",
-                DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE);
-        gerritBuildFailedCodeReviewValue = formData.optInt(
-                "gerritBuildFailedCodeReviewValue",
-                DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE);
-        gerritBuildUnstableVerifiedValue = formData.optInt(
-                "gerritBuildUnstableVerifiedValue",
-                DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE);
-        gerritBuildUnstableCodeReviewValue = formData.optInt(
-                "gerritBuildUnstableCodeReviewValue",
-                DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE);
-        gerritBuildNotBuiltVerifiedValue = formData.optInt(
-                "gerritBuildNotBuiltVerifiedValue",
-                DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE);
-        gerritBuildNotBuiltCodeReviewValue = formData.optInt(
-                "gerritBuildNotBuiltCodeReviewValue",
-                DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE);
+        if (formData.isEmpty()) {
+            gerritBuildStartedVerifiedValue = DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE;
+            gerritBuildSuccessfulVerifiedValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE;
+            gerritBuildFailedVerifiedValue = DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE;
+            gerritBuildUnstableVerifiedValue = DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE;
+            gerritBuildNotBuiltVerifiedValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE;
+            gerritBuildStartedCodeReviewValue = DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE;
+            gerritBuildSuccessfulCodeReviewValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE;
+            gerritBuildFailedCodeReviewValue = DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE;
+            gerritBuildUnstableCodeReviewValue = DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE;
+            gerritBuildNotBuiltCodeReviewValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE;
+        } else {
+            gerritBuildStartedVerifiedValue = getValueFromFormData(formData, "gerritBuildStartedVerifiedValue");
+            gerritBuildSuccessfulVerifiedValue = getValueFromFormData(formData, "gerritBuildSuccessfulVerifiedValue");
+            gerritBuildFailedVerifiedValue = getValueFromFormData(formData, "gerritBuildFailedVerifiedValue");
+            gerritBuildUnstableVerifiedValue = getValueFromFormData(formData, "gerritBuildUnstableVerifiedValue");
+            gerritBuildNotBuiltVerifiedValue = getValueFromFormData(formData, "gerritBuildNotBuiltVerifiedValue");
+            gerritBuildStartedCodeReviewValue = getValueFromFormData(formData, "gerritBuildStartedCodeReviewValue");
+            gerritBuildSuccessfulCodeReviewValue = getValueFromFormData(formData,
+                    "gerritBuildSuccessfulCodeReviewValue");
+            gerritBuildFailedCodeReviewValue = getValueFromFormData(formData, "gerritBuildFailedCodeReviewValue");
+            gerritBuildUnstableCodeReviewValue = getValueFromFormData(formData, "gerritBuildUnstableCodeReviewValue");
+            gerritBuildNotBuiltCodeReviewValue = getValueFromFormData(formData, "gerritBuildNotBuiltCodeReviewValue");
+        }
+
 
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
@@ -412,6 +402,28 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
+    }
+
+    /**
+     * Obtain value from a key in formdata.
+     * @param formData JSONObject.
+     * @param key key to extract value for.
+     * @return value.
+     */
+    private Integer getValueFromFormData(JSONObject formData, String key) {
+        if (formData.has(key)) {
+            String testData = formData.optString(key);
+            if (testData == null || testData.equals("")) {
+                return null;
+            } else {
+                try {
+                    return Integer.parseInt(testData);
+                } catch (NumberFormatException nfe) {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -815,52 +827,52 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public int getGerritBuildStartedVerifiedValue() {
+    public Integer getGerritBuildStartedVerifiedValue() {
         return gerritBuildStartedVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildStartedCodeReviewValue() {
+    public Integer getGerritBuildStartedCodeReviewValue() {
         return gerritBuildStartedCodeReviewValue;
     }
 
     @Override
-    public int getGerritBuildSuccessfulVerifiedValue() {
+    public Integer getGerritBuildSuccessfulVerifiedValue() {
         return gerritBuildSuccessfulVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildSuccessfulCodeReviewValue() {
+    public Integer getGerritBuildSuccessfulCodeReviewValue() {
         return gerritBuildSuccessfulCodeReviewValue;
     }
 
     @Override
-    public int getGerritBuildFailedVerifiedValue() {
+    public Integer getGerritBuildFailedVerifiedValue() {
         return gerritBuildFailedVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildFailedCodeReviewValue() {
+    public Integer getGerritBuildFailedCodeReviewValue() {
         return gerritBuildFailedCodeReviewValue;
     }
 
     @Override
-    public int getGerritBuildUnstableVerifiedValue() {
+    public Integer getGerritBuildUnstableVerifiedValue() {
         return gerritBuildUnstableVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildUnstableCodeReviewValue() {
+    public Integer getGerritBuildUnstableCodeReviewValue() {
         return gerritBuildUnstableCodeReviewValue;
     }
 
     @Override
-    public int getGerritBuildNotBuiltVerifiedValue() {
+    public Integer getGerritBuildNotBuiltVerifiedValue() {
         return gerritBuildNotBuiltVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildNotBuiltCodeReviewValue() {
+    public Integer getGerritBuildNotBuiltCodeReviewValue() {
         return gerritBuildNotBuiltCodeReviewValue;
     }
 

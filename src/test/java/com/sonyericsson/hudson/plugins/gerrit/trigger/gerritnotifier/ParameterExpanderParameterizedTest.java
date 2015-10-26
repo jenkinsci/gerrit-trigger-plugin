@@ -27,7 +27,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import hudson.model.Result;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -68,7 +70,8 @@ public class ParameterExpanderParameterizedTest {
     @Test
     public void testGetVerifiedValue() {
         ParameterExpander instance = new ParameterExpander(parameters.config);
-        assertEquals(parameters.expectedVerified, instance.getVerifiedValue(parameters.result, parameters.trigger));
+        assertEquals(Integer.valueOf(parameters.expectedVerified),
+                instance.getVerifiedValue(parameters.result, parameters.trigger));
     }
 
     /**
@@ -77,7 +80,8 @@ public class ParameterExpanderParameterizedTest {
     @Test
     public void testGetCodeReviewValue() {
         ParameterExpander instance = new ParameterExpander(parameters.config);
-        assertEquals(parameters.expectedCodeReview, instance.getCodeReviewValue(parameters.result, parameters.trigger));
+        assertEquals(Integer.valueOf(parameters.expectedCodeReview),
+                instance.getCodeReviewValue(parameters.result, parameters.trigger));
     }
 
     /**

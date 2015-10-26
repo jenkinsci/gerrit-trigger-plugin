@@ -195,14 +195,12 @@ public class ParameterExpanderTest {
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
-        int expResult = -1;
-        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
-        assertEquals(expResult, result);
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(Integer.valueOf(-1), result);
 
         // Otherwise, we should use NOT_BUILT.
-        expResult = -4;
         result = instance.getMinimumCodeReviewValue(memoryImprint, false);
-        assertEquals(expResult, result);
+        assertEquals(Integer.valueOf(-4), result);
     }
 
     /**
@@ -236,9 +234,8 @@ public class ParameterExpanderTest {
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
-        int expResult = 1;
-        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
-        assertEquals(expResult, result);
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(Integer.valueOf(1), result);
     }
 
     /**
@@ -263,9 +260,98 @@ public class ParameterExpanderTest {
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
-        int expResult = 0;
-        int result = instance.getMinimumCodeReviewValue(memoryImprint, true);
-        assertEquals(expResult, result);
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        assertEquals(null, result);
+    }
+
+    /**
+     * Tests {@link ParameterExpander#getMinimumCodeReviewValue(MemoryImprint, boolean)} with one
+     * job that has override core review value on build successful.
+     *
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    @Test
+    public void testGetMinimumCodeReviewValueForOneJobOverridenBuildSuccessful() {
+        IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
+
+        ParameterExpander instance = new ParameterExpander(config);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(null);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        // Since one job has overriden CR value, it is the only one inspected
+        // and therefore the only one that contributes.
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, false);
+        assertEquals(Integer.valueOf(2), result);
+    }
+
+    /**
+     * Tests {@link ParameterExpander#getMinimumCodeReviewValue(MemoryImprint, boolean)} with one
+     * job that has override core review value on build successful.
+     *
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    @Test
+    public void testGetMinimumCodeReviewValueForOneJobOverridenBuildFailed() {
+        IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
+
+        ParameterExpander instance = new ParameterExpander(config);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(Integer.valueOf(-2));
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        // Since one job has overriden CR value, it is the only one inspected
+        // and therefore the only one that contributes.
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, false);
+        assertEquals(Integer.valueOf(-2), result);
+    }
+
+    /**
+     * Tests {@link ParameterExpander#getMinimumCodeReviewValue(MemoryImprint, boolean)} with one
+     * job that has override core review value on build successful.
+     *
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
+     */
+    @Test
+    public void testGetMinimumCodeReviewValueForOneJobOverridenMixed() {
+        IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
+
+        ParameterExpander instance = new ParameterExpander(config);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
+
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        // Since one job has overriden CR value, it is the only one inspected
+        // and therefore the only one that contributes.
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, false);
+        assertEquals(Integer.valueOf(2), result);
     }
 
     /**

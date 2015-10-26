@@ -199,54 +199,142 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock object.
+    private Integer gerritBuildStartedCodeReviewValue = new Integer(2);
+    private Integer gerritBuildSuccessfulCodeReviewValue = new Integer(4);
+    private Integer gerritBuildFailedCodeReviewValue = new Integer(-2);
+    private Integer gerritBuildUnstableCodeReviewValue = new Integer(-4);
+    private Integer gerritBuildNotBuiltCodeReviewValue = new Integer(-6);
+
+    private Integer gerritBuildStartedVerifiedValue = new Integer(1);
+    private Integer gerritBuildSuccessfulVerifiedValue = new Integer(3);
+    private Integer gerritBuildFailedVerifiedValue = new Integer(-1);
+    private Integer gerritBuildUnstableVerifiedValue = new Integer(-3);
+    private Integer gerritBuildNotBuiltVerifiedValue = new Integer(-5);
+
     @Override
-    public int getGerritBuildStartedVerifiedValue() {
-        return 1;
+    public Integer getGerritBuildStartedVerifiedValue() {
+        return gerritBuildStartedVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildStartedCodeReviewValue() {
-        return 2;
+    public Integer getGerritBuildSuccessfulVerifiedValue() {
+        return gerritBuildSuccessfulVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildSuccessfulVerifiedValue() {
-        return 3;
+    public Integer getGerritBuildFailedVerifiedValue() {
+        return gerritBuildFailedVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildSuccessfulCodeReviewValue() {
-        return 4;
+    public Integer getGerritBuildUnstableVerifiedValue() {
+        return gerritBuildUnstableVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildFailedVerifiedValue() {
-        return -1;
+    public Integer getGerritBuildNotBuiltVerifiedValue() {
+        return gerritBuildNotBuiltVerifiedValue;
     }
 
     @Override
-    public int getGerritBuildFailedCodeReviewValue() {
-        return -2;
+    public Integer getGerritBuildStartedCodeReviewValue() {
+        return gerritBuildStartedCodeReviewValue;
+    }
+    @Override
+    public Integer getGerritBuildSuccessfulCodeReviewValue() {
+        return gerritBuildSuccessfulCodeReviewValue;
+    }
+    @Override
+    public Integer getGerritBuildFailedCodeReviewValue() {
+        return gerritBuildFailedCodeReviewValue;
+    }
+    @Override
+    public Integer getGerritBuildUnstableCodeReviewValue() {
+        return gerritBuildUnstableCodeReviewValue;
+    }
+    @Override
+    public Integer getGerritBuildNotBuiltCodeReviewValue() {
+        return gerritBuildNotBuiltCodeReviewValue;
     }
 
-    @Override
-    public int getGerritBuildUnstableVerifiedValue() {
-        return -3;
+    /**
+     * Set value.
+     * @param gerritBuildSuccessfulCodeReviewValue value to set.
+     */
+    public void setGerritBuildSuccessfulCodeReviewValue(Integer gerritBuildSuccessfulCodeReviewValue) {
+        this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
     }
 
-    @Override
-    public int getGerritBuildUnstableCodeReviewValue() {
-        return -4;
+    /**
+     * Set value.
+     * @param gerritBuildStartedCodeReviewValue value to set.
+     */
+    public void setGerritBuildStartedCodeReviewValue(Integer gerritBuildStartedCodeReviewValue) {
+        this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
     }
 
-    @Override
-    public int getGerritBuildNotBuiltVerifiedValue() {
-        return -5;
+    /**
+     * Set value.
+     * @param gerritBuildFailedCodeReviewValue value to set.
+     */
+    public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
+        this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
     }
 
-    @Override
-    public int getGerritBuildNotBuiltCodeReviewValue() {
-        return -6;
+    /**
+     * Set value.
+     * @param gerritBuildUnstableCodeReviewValue value to set.
+     */
+    public void setGerritBuildUnstableCodeReviewValue(Integer gerritBuildUnstableCodeReviewValue) {
+        this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildNotBuiltCodeReviewValue value to set.
+     */
+    public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
+        this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildStartedVerifiedValue value to set.
+     */
+    public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
+        this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildSuccessfulVerifiedValue value to set.
+     */
+    public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
+        this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildFailedVerifiedValue value to set.
+     */
+    public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
+        this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildUnstableVerifiedValue value to set.
+     */
+    public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
+        this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildNotBuiltVerifiedValue value to set.
+     */
+    public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
+        this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
     }
 
     @Override

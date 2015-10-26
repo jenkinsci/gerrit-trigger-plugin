@@ -115,6 +115,20 @@ public final class Setup {
     }
 
     /**
+     * Gives you a Config mock with nulled code review values.
+     * @return MockGerritHudsonTriggerConfig mock.
+     */
+    public static MockGerritHudsonTriggerConfig createConfigWithCodeReviewsNull() {
+        MockGerritHudsonTriggerConfig config = new MockGerritHudsonTriggerConfig();
+        config.setGerritBuildFailedCodeReviewValue(null);
+        config.setGerritBuildSuccessfulCodeReviewValue(null);
+        config.setGerritBuildNotBuiltCodeReviewValue(null);
+        config.setGerritBuildStartedCodeReviewValue(null);
+        config.setGerritBuildUnstableCodeReviewValue(null);
+        return config;
+    }
+
+    /**
      * Gives you a PatchsetCreated mock.
      * @return PatchsetCreated mock.
      */
