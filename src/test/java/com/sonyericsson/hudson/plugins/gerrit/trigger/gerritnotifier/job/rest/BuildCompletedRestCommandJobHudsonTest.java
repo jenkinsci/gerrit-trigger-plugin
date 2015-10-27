@@ -34,11 +34,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+
 import hudson.model.FreeStyleProject;
-import hudson.model.RootAction;
+import hudson.model.UnprotectedRootAction;
 import hudson.util.IOUtils;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -68,13 +71,19 @@ public class BuildCompletedRestCommandJobHudsonTest {
     public JenkinsRule j = new JenkinsRule();
 
     /**
-     * The test.
-     *
-     * @throws IOException          if so
-     * @throws InterruptedException if so.
+     * Unlock the instance if secured.
+     * @throws Exception if it occurs.
      */
-    @Test
-    public void testIt() throws IOException, InterruptedException {
+    @Before
+    public void unlockInstance() throws Exception {
+        Setup.unLock(j);
+    }
+
+    /**
+     * Guts of the test.
+     * @throws Exception if it occurs.
+     */
+    private void runTest() throws Exception {
         j.jenkins.setCrumbIssuer(null);
         GerritServer server1 = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         PluginImpl.getInstance().addServer(server1);
@@ -122,9 +131,27 @@ public class BuildCompletedRestCommandJobHudsonTest {
         JSONObject labels = json.getJSONObject("labels");
         assertEquals(1, labels.getInt("Code-Review"));
         assertEquals(1, labels.getInt("Verified"));
-
+    }
+    /**
+     * The test with a locked down instance.
+     *
+     * @throws Exception          if so
+     */
+    @Test
+    public void testItWithSecurity() throws Exception {
+        Setup.lockDown(j);
+        runTest();
     }
 
+    /**
+     * The test.
+     *
+     * @throws Exception          if so
+     */
+    @Test
+    public void testIt() throws Exception {
+        runTest();
+    }
     /**
      * Finds the registered {@link FakeHttpGerrit}.
      *
@@ -138,7 +165,7 @@ public class BuildCompletedRestCommandJobHudsonTest {
      * Acts as a fake REST endpoint to receive the REST commands from the command job.
      */
     @TestExtension
-    public static class FakeHttpGerrit implements RootAction {
+    public static class FakeHttpGerrit implements UnprotectedRootAction {
 
         String lastPath;
         String lastContent;
