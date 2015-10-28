@@ -56,15 +56,19 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
+import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import hudson.security.GlobalMatrixAuthorizationStrategy;
+import hudson.security.SecurityRealm;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.powermock.api.mockito.PowerMockito;
 
 import java.io.IOException;
@@ -787,4 +791,28 @@ public final class Setup {
         refReplicated.setStatus(status);
         return refReplicated;
     }
+
+    /**
+     * Lock down the instance.
+     * @param j JenkinsRule.
+     * @throws Exception throw if so.
+     */
+    public static void lockDown(JenkinsRule j) throws Exception {
+        SecurityRealm securityRealm = j.createDummySecurityRealm();
+        j.getInstance().setSecurityRealm(securityRealm);
+
+        GlobalMatrixAuthorizationStrategy authorizationStrategy = new GlobalMatrixAuthorizationStrategy();
+        authorizationStrategy.add(Hudson.READ, "authenticated");
+        j.getInstance().setAuthorizationStrategy(authorizationStrategy);
+    }
+
+    /**
+     * Unlock the instance.
+     * @param j JenkinsRule.
+     * @throws Exception throw if so.
+     */
+    public static void unLock(JenkinsRule j) throws Exception {
+        j.getInstance().setSecurityRealm(SecurityRealm.NO_AUTHENTICATION);
+    }
+
 }

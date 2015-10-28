@@ -31,10 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.Hudson;
 import hudson.model.Result;
-import hudson.security.GlobalMatrixAuthorizationStrategy;
-import hudson.security.SecurityRealm;
 
 import org.apache.sshd.SshServer;
 import org.junit.After;
@@ -105,19 +102,6 @@ public class LockedDownGerritEventTest {
     }
 
     /**
-     * Lock down the instance.
-     * @throws Exception throw if so.
-     */
-    private void lockDown() throws Exception {
-        SecurityRealm securityRealm = j.createDummySecurityRealm();
-        j.getInstance().setSecurityRealm(securityRealm);
-
-        GlobalMatrixAuthorizationStrategy authorizationStrategy = new GlobalMatrixAuthorizationStrategy();
-        authorizationStrategy.add(Hudson.READ, "authenticated");
-        j.getInstance().setAuthorizationStrategy(authorizationStrategy);
-    }
-
-    /**
      * Test that a build can still be triggered if only authenticated
      * users can login.
      *
@@ -134,7 +118,7 @@ public class LockedDownGerritEventTest {
     public void testTriggerWithLockedDownInstance() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName);
 
-        lockDown();
+        Setup.lockDown(j);
 
         GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
         trigger.setSilentStartMode(false);

@@ -36,10 +36,14 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
 
 import hudson.model.TaskListener;
+import hudson.security.ACL;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.acegisecurity.context.SecurityContext;
+import org.acegisecurity.context.SecurityContextHolder;
 
 /**
 * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
@@ -74,41 +78,48 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     @Override
     protected ReviewInput createReview() {
-        String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
-        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
-        if (memoryImprint.getEvent().isScorable()) {
-            if (config.isRestCodeReview()) {
-                Integer crValue = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
-                if (crValue != null && crValue != Integer.MAX_VALUE) {
-                    scoredLabels.add(new ReviewLabel(
-                            LABEL_CODEREVIEW,
-                            crValue));
+        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
+        try {
+            String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
+            Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
+            if (memoryImprint.getEvent().isScorable()) {
+                if (config.isRestCodeReview()) {
+                    Integer crValue = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
+                    if (crValue != null && crValue != Integer.MAX_VALUE) {
+                        scoredLabels.add(new ReviewLabel(
+                                LABEL_CODEREVIEW,
+                                crValue));
+                    }
                 }
-            }
-            if (config.isRestVerified()) {
-                Integer verValue = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
-                if (verValue != null && verValue != Integer.MAX_VALUE) {
-                    scoredLabels.add(new ReviewLabel(
-                            LABEL_VERIFIED,
-                            parameterExpander.getMinimumVerifiedValue(memoryImprint, true)));
-                }
-            }
-        }
-        Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
-        List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
-        Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
-        if (gerritMessageProviders != null) {
-            for (GerritMessageProvider gerritMessageProvider : gerritMessageProviders) {
-                for (BuildMemory.MemoryImprint.Entry e : memoryImprint.getEntries()) {
-                    try {
-                        commentedFiles.addAll(gerritMessageProvider.getFileComments(e.getBuild()));
-                    } catch (Exception ef) {
-                        listener.error(ef.getMessage());
-
+                if (config.isRestVerified()) {
+                    Integer verValue = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
+                    if (verValue != null && verValue != Integer.MAX_VALUE) {
+                        scoredLabels.add(new ReviewLabel(
+                                LABEL_VERIFIED,
+                                parameterExpander.getMinimumVerifiedValue(memoryImprint, true)));
                     }
                 }
             }
+            Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
+            List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
+            Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
+            if (gerritMessageProviders != null) {
+                for (GerritMessageProvider gerritMessageProvider : gerritMessageProviders) {
+                    for (BuildMemory.MemoryImprint.Entry e : memoryImprint.getEntries()) {
+                        try {
+                            commentedFiles.addAll(gerritMessageProvider.getFileComments(e.getBuild()));
+                        } catch (Exception ef) {
+                            listener.error(ef.getMessage());
+
+                        }
+                    }
+                }
+            }
+
+            return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
+
+        } finally {
+            SecurityContextHolder.setContext(old);
         }
-        return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
     }
 }
