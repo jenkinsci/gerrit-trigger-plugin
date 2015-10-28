@@ -521,8 +521,8 @@ public class ParameterExpander {
             command = config.getGerritCmdBuildFailed();
         }
 
-        int verified = 0;
-        int codeReview = 0;
+        Integer verified = 0;
+        Integer codeReview = 0;
         Notify notifyLevel = Notify.ALL;
         if (memoryImprint.getEvent().isScorable()) {
             verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);

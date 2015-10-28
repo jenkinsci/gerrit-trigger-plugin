@@ -96,7 +96,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                     if (verValue != null && verValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
                                 LABEL_VERIFIED,
-                                parameterExpander.getMinimumVerifiedValue(memoryImprint, true)));
+                                verValue));
                     }
                 }
             }
@@ -117,7 +117,6 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             }
 
             return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
-
         } finally {
             SecurityContextHolder.setContext(old);
         }

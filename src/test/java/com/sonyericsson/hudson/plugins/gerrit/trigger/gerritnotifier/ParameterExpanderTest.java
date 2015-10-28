@@ -662,6 +662,62 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Test to determine Build Stats when server Code Review Values are null.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void getBuildStatsFailureCommandWithNullsForCodeReviewValues() throws Exception {
+        IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
+
+        Hudson hudson = PowerMockito.mock(Hudson.class);
+        when(hudson.getRootUrl()).thenReturn("http://localhost/");
+
+        TaskListener taskListener = mock(TaskListener.class);
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
+
+        AbstractProject project = mock(AbstractProject.class);
+        Setup.setTrigger(trigger, project);
+
+        EnvVars env = Setup.createEnvVars();
+        AbstractBuild r = Setup.createBuild(project, taskListener, env);
+        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+
+        when(r.getResult()).thenReturn(Result.FAILURE);
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        when(memoryImprint.getEvent()).thenReturn(event);
+
+        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(true);
+        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(false);
+        when(memoryImprint.wereAnyBuildsUnstable()).thenReturn(false);
+
+        MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
+
+        when(entries[0].getUnsuccessfulMessage()).thenReturn("This Build has Failed");
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+        messageProviderExtensionList.add(new GerritMessageProviderExtension());
+        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+
+        ParameterExpander instance = new ParameterExpander(config, hudson);
+
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
+        System.out.println("Result: " + result);
+
+        assertTrue("Missing Build has Failed", result.indexOf("This Build has Failed") >= 0);
+    }
+
+    /**
      * Whether all of the given results equal to the given result.
      *
      * @param query the result to check
