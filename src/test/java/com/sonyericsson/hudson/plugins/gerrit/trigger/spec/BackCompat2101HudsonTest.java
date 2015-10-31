@@ -25,7 +25,14 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import hudson.model.FreeStyleProject;
-import org.jvnet.hudson.test.HudsonTestCase;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 /**
@@ -33,15 +40,23 @@ import org.jvnet.hudson.test.recipes.LocalData;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class BackCompat2101HudsonTest extends HudsonTestCase {
+public class BackCompat2101HudsonTest {
+    /**
+     * Jenkins rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule jenkinsRule = new JenkinsRule();
 
     /**
      * Tests that a dynamic trigger config in 2.10.1 carries over correctly.
      * @see https://issues.jenkins-ci.org/browse/JENKINS-22155
      */
     @LocalData
+    @Test
     public void testDynamicTriggerLoading() {
-        FreeStyleProject project = (FreeStyleProject)jenkins.getItem("DynamicTrigger");
+        FreeStyleProject project =
+                (FreeStyleProject)jenkinsRule.jenkins.getItem("DynamicTrigger");
         assertNotNull(project);
         GerritTrigger trigger = GerritTrigger.getTrigger(project);
         assertNotNull(trigger);

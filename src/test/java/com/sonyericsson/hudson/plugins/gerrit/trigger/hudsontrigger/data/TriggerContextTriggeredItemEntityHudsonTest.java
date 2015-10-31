@@ -27,25 +27,39 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause.UserCause;
-import org.jvnet.hudson.test.HudsonTestCase;
+import hudson.model.Cause.UserIdCause;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
 
 /**
  * Tests the TriggerContext.Wrap class in a Hudson context.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase {
+public class TriggerContextTriggeredItemEntityHudsonTest {
 
+    /**
+     * Jenkins rule.
+     */
+    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    @Rule
+    public final JenkinsRule jenkinsRule = new JenkinsRule();
 
     /**
      * Tests that {@link TriggeredItemEntity#getProject()} can find a project from its name.
      * @throws IOException if so.
      */
+    @Test
     public void testGetProject() throws IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
+        AbstractProject project = jenkinsRule.createFreeStyleProject("myProject");
         TriggeredItemEntity wrap = new TriggeredItemEntity(null, "myProject");
         assertNotNull(wrap.getProject());
         assertSame(project, wrap.getProject());
@@ -57,24 +71,26 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      */
+    @Test
     public void testGetBuild() throws IOException, InterruptedException, ExecutionException {
-        AbstractProject project = createFreeStyleProject("myProject");
-        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
+        AbstractProject project = jenkinsRule.createFreeStyleProject("myProject");
+        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserIdCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(build.getNumber(), "myProject");
         assertNotNull(wrap.getBuild());
         assertEquals("myProject", wrap.getBuild().getParent().getFullName());
     }
 
     /**
-     * Thests that the serializable data is correctly set in the Constructor.
+     * Tests that the serializable data is correctly set in the Constructor.
      * {@link TriggeredItemEntity#TriggeredItemEntity(hudson.model.Job, hudson.model.Run)}.
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      * @throws IOException if so.
      */
+    @Test
     public void testInitProjectBuild() throws InterruptedException, ExecutionException, IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
-        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
+        AbstractProject project = jenkinsRule.createFreeStyleProject("myProject");
+        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserIdCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(project, build);
         assertEquals(project.getFullName(), wrap.getProjectId());
         assertEquals(build.getNumber(), wrap.getBuildNumber().intValue());
@@ -87,9 +103,10 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
      * @throws ExecutionException if so.
      * @throws IOException if so.
      */
+    @Test
     public void testInitBuild() throws InterruptedException, ExecutionException, IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
-        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
+        AbstractProject project = jenkinsRule.createFreeStyleProject("myProject");
+        AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserIdCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(build);
         assertEquals(project.getFullName(), wrap.getProjectId());
         assertEquals(build.getNumber(), wrap.getBuildNumber().intValue());
