@@ -192,6 +192,11 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritProjects = gerritProjects;
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
+        skipVote = new SkipVote(false, false, false, false);
+        ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillNotificationLevelItems(this.serverName);
+        if (!options.isEmpty()) {
+            notificationLevel = options.get(0).value;
+        }
     }
 
     /**
@@ -349,6 +354,12 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setServerName(String name) {
         this.serverName = name;
+        if (this.notificationLevel == null) {
+            ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillNotificationLevelItems(this.serverName);
+            if (!options.isEmpty()) {
+                notificationLevel = options.get(0).value;
+            }
+        }
     }
 
     /**
