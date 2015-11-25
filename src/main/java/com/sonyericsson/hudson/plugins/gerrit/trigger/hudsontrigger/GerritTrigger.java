@@ -161,8 +161,12 @@ public class GerritTrigger extends Trigger<Job> {
     private boolean escapeQuotes;
     private boolean noNameAndEmailParameters;
     private String dependencyJobsNames;
-    //private List<AbstractProject> dependencyJobs;
-    private boolean readableMessage;
+    /**
+     * Replaced with {@link #commitMessageParameterMode}
+     */
+    @Deprecated
+    private transient boolean readableMessage;
+    private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -191,12 +195,13 @@ public class GerritTrigger extends Trigger<Job> {
     public GerritTrigger(List<GerritProject> gerritProjects) {
         this.gerritProjects = gerritProjects;
         this.gerritTriggerTimerTask = null;
-        triggerInformationAction = new GerritTriggerInformationAction();
-        skipVote = new SkipVote(false, false, false, false);
+        this.triggerInformationAction = new GerritTriggerInformationAction();
+        this.skipVote = new SkipVote(false, false, false, false);
         ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillNotificationLevelItems(this.serverName);
         if (!options.isEmpty()) {
-            notificationLevel = options.get(0).value;
+            this.notificationLevel = options.get(0).value;
         }
+        this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
     }
 
     /**
@@ -283,7 +288,11 @@ public class GerritTrigger extends Trigger<Job> {
         this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
         this.noNameAndEmailParameters = noNameAndEmailParameters;
-        this.readableMessage = readableMessage;
+        if (readableMessage) {
+            commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        } else {
+            commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        }
         this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -298,8 +307,28 @@ public class GerritTrigger extends Trigger<Job> {
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
-        triggerInformationAction = new GerritTriggerInformationAction();
+        this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+    }
+
+    /**
+     * What mode the commit message parameter {@link GerritTriggerParameters#GERRIT_CHANGE_COMMIT_MESSAGE} should be used
+     * when adding it.
+     *
+     * @return the mode
+     */
+    public GerritTriggerParameters.ParameterMode getCommitMessageParameterMode() {
+        return commitMessageParameterMode;
+    }
+
+    /**
+     * What mode the commit message parameter {@link GerritTriggerParameters#GERRIT_CHANGE_COMMIT_MESSAGE} should be used
+     * when adding it.
+     * @param commitMessageParameterMode the mode
+     */
+    @DataBoundSetter
+    public void setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
+        this.commitMessageParameterMode = commitMessageParameterMode;
     }
 
     /**
@@ -332,6 +361,13 @@ public class GerritTrigger extends Trigger<Job> {
     public Object readResolve() throws ObjectStreamException {
         initializeServerName();
         initializeTriggerOnEvents();
+        if (commitMessageParameterMode == null) {
+            if (readableMessage) {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+            } else {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+            }
+        }
         return super.readResolve();
     }
 
@@ -1382,9 +1418,11 @@ public class GerritTrigger extends Trigger<Job> {
      * it will be encoded.
      *
      * @return true if readableMessage is on.
+     * @deprecated replaced with {@link #getCommitMessageParameterMode()}
      */
+    @Deprecated
     public boolean isReadableMessage() {
-        return readableMessage;
+        return this.commitMessageParameterMode == GerritTriggerParameters.ParameterMode.PLAIN;
     }
 
     /**
@@ -1393,10 +1431,15 @@ public class GerritTrigger extends Trigger<Job> {
      * it will be encoded.
      *
      * @param readableMessage is true if human readable message is set.
+     * @deprecated replaced with {@link #setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode)}.
      */
-    @DataBoundSetter
+    @Deprecated
     public void setReadableMessage(boolean readableMessage) {
-        this.readableMessage = readableMessage;
+        if (readableMessage) {
+            this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        } else {
+            this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        }
     }
 
     /**

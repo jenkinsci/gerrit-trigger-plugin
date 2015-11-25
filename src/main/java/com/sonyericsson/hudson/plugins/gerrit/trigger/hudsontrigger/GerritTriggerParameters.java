@@ -24,6 +24,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -31,25 +37,19 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
-
 import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
+import org.apache.commons.codec.binary.Base64;
+import org.jvnet.localizer.Localizable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
 import java.util.List;
-
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The parameters to add to a build.
@@ -332,13 +332,13 @@ public enum GerritTriggerParameters {
 
         boolean noNameAndEmailParameters = false;
         boolean escapeQuotes = false;
-        boolean readableMessage = false;
+        ParameterMode commitMessageMode = ParameterMode.BASE64;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
                 noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
                 escapeQuotes = trigger.isEscapeQuotes();
-                readableMessage = trigger.isReadableMessage();
+                commitMessageMode = trigger.getCommitMessageParameterMode();
             }
         }
 
@@ -385,18 +385,8 @@ public enum GerritTriggerParameters {
 
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
-                if (readableMessage) {
-                    GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateTextParameterValue(
-                            parameters, commitMessage, escapeQuotes);
-                } else {
-                    try {
-                        byte[] encodedBytes = Base64.encodeBase64(commitMessage.getBytes("UTF-8"));
-                        GERRIT_CHANGE_COMMIT_MESSAGE.setOrCreateBase64EncodedStringParameterValue(
-                            parameters, new String(encodedBytes, Charset.forName("UTF-8")), escapeQuotes);
-                    } catch (UnsupportedEncodingException uee) {
-                        logger.error("Failed to encode commit message as Base64: ", uee);
-                    }
-                }
+                commitMessageMode.setOrCreateParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE,
+                        parameters, commitMessage, escapeQuotes);
             }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
@@ -563,6 +553,89 @@ public enum GerritTriggerParameters {
             return "";
         } else {
             return account.getEmail();
+        }
+    }
+
+    /**
+     * How a parameter should be added to the triggered build.
+     *
+     * Some parameters like {@link #GERRIT_CHANGE_COMMIT_MESSAGE} and {@link #GERRIT_CHANGE_SUBJECT} can be bulky
+     * and not often used in the build. This allows the user to specify how those specific parameters should be added.
+     * {@link #NONE} means that they are not added at all.
+     */
+    public enum ParameterMode {
+        /**
+         * The parameter will be added as a human readable {@link TextParameterValue}.
+         */
+        PLAIN(Messages._ParameterMode_PLAIN()) {
+            @Override
+            void setOrCreateParameterValue(GerritTriggerParameters parameter,
+                                           List<ParameterValue> parameters,
+                                           String value, boolean escapeQuotes) {
+                parameter.setOrCreateTextParameterValue(
+                        parameters, value, escapeQuotes);
+            }
+        },
+        /**
+         * The parameter will be added as a {@link Base64EncodedStringParameterValue}.
+         */
+        BASE64(Messages._ParameterMode_BASE64()) {
+            @Override
+            void setOrCreateParameterValue(GerritTriggerParameters parameter,
+                                           List<ParameterValue> parameters,
+                                           String value, boolean escapeQuotes) {
+                try {
+                    byte[] encodedBytes = Base64.encodeBase64(value.getBytes("UTF-8"));
+                    parameter.setOrCreateBase64EncodedStringParameterValue(
+                            parameters, new String(encodedBytes, Charset.forName("UTF-8")), escapeQuotes);
+                } catch (UnsupportedEncodingException uee) {
+                    logger.error("Failed to encode " + parameter.name() + " as Base64: ", uee);
+                }
+
+            }
+        },
+        /**
+         * The parameter will not be added.
+         */
+        NONE(Messages._ParameterMode_NONE()) {
+            @Override
+            void setOrCreateParameterValue(GerritTriggerParameters parameter,
+                                           List<ParameterValue> parameters,
+                                           String value, boolean escapeQuotes) {
+                //Do nothing
+            }
+        };
+
+        private final Localizable displayName;
+
+        /**
+         * Constructor.
+         *
+         * @param displayName the name to show on the config page
+         */
+        ParameterMode(Localizable displayName) {
+            this.displayName = displayName;
+        }
+
+        /**
+         * Adds the parameter in accordance with the mode and adds it to the provided list.
+         *
+         * If the parameter with the same name already exists in the list it will be replaced by the new parameter,
+         * but its description will be used, unless the parameter type is something else than a TextParameterValue.
+         *
+         * @param parameter    the parameter to add
+         * @param parameters   the list of already added parameters
+         * @param value        the value to set (in plain text)
+         * @param escapeQuotes if quote characters should be escaped.
+         * @see #setOrCreateBase64EncodedStringParameterValue(List, String, boolean)
+         * @see #setOrCreateTextParameterValue(List, String, boolean)
+         */
+        abstract void setOrCreateParameterValue(GerritTriggerParameters parameter, List<ParameterValue> parameters,
+                                                String value, boolean escapeQuotes);
+
+        @Override
+        public String toString() {
+            return this.displayName.toString();
         }
     }
 }
