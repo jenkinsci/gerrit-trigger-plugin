@@ -410,9 +410,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
                         name, isProjectCreatedEventsSupported());
         projectListUpdater.start();
 
-        if (missedEventsPlaybackManager.isSupported()) {
-            addListener((GerritEventListener)missedEventsPlaybackManager);
-        }
+        missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
+        addListener((GerritEventListener)missedEventsPlaybackManager);
 
         logger.info(name + " started");
         started = true;
@@ -447,6 +446,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         if (missedEventsPlaybackManager != null) {
             missedEventsPlaybackManager.shutdown();
+            missedEventsPlaybackManager = null;
         }
 
         if (gerritConnection != null) {
@@ -516,10 +516,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
-                if (missedEventsPlaybackManager == null) {
-                    missedEventsPlaybackManager = new GerritMissedEventsPlaybackManager(name);
-                }
+
+                missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
                 gerritConnection.addListener(missedEventsPlaybackManager);
+
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");
@@ -870,7 +870,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         if (!started) {
             this.start();
+        } else {
+            if (missedEventsPlaybackManager != null) {
+                missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
+            }
         }
+
         rsp.sendRedirect("../..");
     }
 

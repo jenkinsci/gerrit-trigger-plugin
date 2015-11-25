@@ -34,7 +34,6 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritJsonEventFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 import hudson.Util;
@@ -102,7 +101,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
     private boolean playBackComplete = false;
 
     /**
-     * @param name Gerrit Server Name
+     * @param name Gerrit Server Name.
      */
     public GerritMissedEventsPlaybackManager(String name) {
         this.serverName = name;
@@ -110,9 +109,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
     }
 
     /**
-     * method to verify if plugin is supported
+     * method to verify if plugin is supported.
      */
-    private void checkIfEventsLogPluginSupported() {
+    public void checkIfEventsLogPluginSupported() {
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null && server.getConfig() != null) {
             isSupported = GerritPluginChecker.isPluginEnabled(
@@ -323,11 +322,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
                 continue;
             }
             GerritEvent evt = GerritJsonEventFactory.getEvent(jsonObject);
-            if (evt instanceof ChangeBasedEvent) {
+            if (evt instanceof GerritTriggeredEvent) {
                 Provider provider = new Provider();
                 provider.setName(serverName);
                 ((GerritTriggeredEvent)evt).setProvider(provider);
-                events.add((ChangeBasedEvent)evt);
+                events.add((GerritTriggeredEvent)evt);
             }
         }
         scanner.close();

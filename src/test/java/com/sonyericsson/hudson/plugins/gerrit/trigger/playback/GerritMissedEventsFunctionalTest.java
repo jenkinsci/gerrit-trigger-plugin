@@ -83,8 +83,6 @@ public class GerritMissedEventsFunctionalTest {
     private static final int HTTPOK = 200;
     private static final int SLEEPTIME = 1000;
 
-    private final String gerritServerName = "testServer";
-    private final String projectName = "testProject";
     private final int port = 29418;
 
     private SshdServerMock server;
@@ -127,12 +125,15 @@ public class GerritMissedEventsFunctionalTest {
 
     /**
      * Test the scenario whereby connection is restarted and events are missed
-     * but replayed.
+     * but replayed. This simulates a restart of Jenkins.
      * @throws Exception Error creating job.
      */
     @Test
     public void testRestartWithMissedEvents() throws Exception {
-        GerritServer gerritServer = new GerritServer(gerritServerName);
+        GerritServer gerritServer = new GerritServer("ZZZZZ");
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.start();
+
         Config config = (Config)gerritServer.getConfig();
         config.setUseRestApi(true);
         config.setGerritHttpUserName("scott");
@@ -143,10 +144,59 @@ public class GerritMissedEventsFunctionalTest {
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
         gerritServer.setConfig(config);
 
+        gerritServer.startConnection();
+
+        while (!gerritServer.isConnected()) {
+            Thread.sleep(SLEEPTIME);
+        }
+
+        restartWithMissedEvents(gerritServer, "Test ZZZZZ");
+
+    }
+
+    /**
+     * Test the scenario whereby connection is restarted and events are missed
+     * but replayed. This simulates when REST API is enabled and connection is restarted.
+     * @throws Exception Error creating job.
+     */
+    @Test
+    public void testRestartWithRESTApiChangeMissedEvents() throws Exception {
+        GerritServer gerritServer = new GerritServer("ABCDEF");
         PluginImpl.getInstance().addServer(gerritServer);
         gerritServer.start();
+
+        Config config = (Config)gerritServer.getConfig();
+        config.setGerritFrontEndURL("http://localhost:8089");
+        config.setGerritHostName("localhost");
+        config.setGerritProxy("");
+        config.setGerritAuthKeyFile(sshKey.getPrivateKey());
+
         gerritServer.startConnection();
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gerritServerName);
+
+        while (!gerritServer.isConnected()) {
+            Thread.sleep(SLEEPTIME);
+        }
+
+        Config config2 = (Config)gerritServer.getConfig();
+        config2.setUseRestApi(true);
+        config2.setGerritHttpUserName("scott");
+        config2.setGerritHttpPassword("scott");
+
+        //simulate a save of config...it calls doConfigSubmit()
+        gerritServer.getMissedEventsPlaybackManager().checkIfEventsLogPluginSupported();
+
+        restartWithMissedEvents(gerritServer, "Test ABCDEF");
+    }
+
+    /**
+     * Helper method to test the scenarios whereby connection is restarted and events are missed
+     * but replayed.
+     * @param gServer configured Gerrit Server.
+     * @param projectName Project name.
+     * @throws Exception Error creating job.
+     */
+    private void restartWithMissedEvents(GerritServer gServer, String projectName) throws Exception {
+        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gServer.getName());
 
         GerritTriggerApi api = new GerritTriggerApi();
         Handler handler = null;
@@ -156,17 +206,17 @@ public class GerritMissedEventsFunctionalTest {
             fail(ex.getMessage());
         }
         assertNotNull(handler);
-        handler.post(Setup.createPatchsetCreated(gerritServerName));
+        handler.post(Setup.createPatchsetCreated(gServer.getName()));
         TestUtils.waitForBuilds(project, 1);
 
-        assertNotNull(gerritServer.getMissedEventsPlaybackManager().getServerTimestamp());
+        assertNotNull(gServer.getMissedEventsPlaybackManager().getServerTimestamp());
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
         assertEquals(1, project.getLastCompletedBuild().getNumber());
-        assertSame(gerritServerName, buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
+        assertSame(gServer.getName(), buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
 
-        gerritServer.stopConnection();
-        Thread.currentThread().sleep(SLEEPTIME);
+        gServer.stopConnection();
+        Thread.sleep(SLEEPTIME);
 
         String json = "{\"type\":\"patchset-created\",\"change\":{\"project\":\""
                 + projectName
@@ -198,11 +248,9 @@ public class GerritMissedEventsFunctionalTest {
                         .withHeader("Content-Type", "text/html")
                         .withBody(json)));
 
-        gerritServer.restartConnection();
+        gServer.restartConnection();
 
         TestUtils.waitForBuilds(project, 2);
 
     }
-
-
 }
