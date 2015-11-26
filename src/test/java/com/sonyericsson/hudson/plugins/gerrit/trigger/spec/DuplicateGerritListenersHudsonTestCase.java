@@ -180,6 +180,7 @@ public class DuplicateGerritListenersHudsonTestCase {
                 && server.isProjectCreatedEventsSupported()) {
             nbrOfListeners++; // GerritProjectListUpdater adds 1 listener
         }
+        nbrOfListeners++; // GerritMissedEventsPlaybackManager adds 1 listeners
         assertEquals(nbrOfListeners, gerritEventListeners.size());
     }
 }
