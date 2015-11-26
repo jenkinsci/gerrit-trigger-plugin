@@ -27,9 +27,10 @@
                     ${it.toString()}
                 </ff:enum>
             </f:entry>
-            <f:entry title="${%Do not Pass Compound 'Name And Email' Parameters}" field="noNameAndEmailParameters"
-                 help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
-                <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>
+            <f:entry title="${%Compound 'Name And Email' Parameters}" field="nameAndEmailParameterMode">
+                <ff:enum default="PLAIN">
+                    ${it.toString()}
+                </ff:enum>
             </f:entry>
             <f:entry field="dependencyJobsNames" title="${%Other jobs on which this job depends}"
                  help="/plugin/gerrit-trigger/trigger/help-DependencyJobs.html">

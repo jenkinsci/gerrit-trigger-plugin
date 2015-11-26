@@ -330,13 +330,13 @@ public enum GerritTriggerParameters {
     public static void setOrCreateParameters(GerritTriggeredEvent gerritEvent, Job project,
             List<ParameterValue> parameters) {
 
-        boolean noNameAndEmailParameters = false;
+        ParameterMode nameAndEmailParameterMode = ParameterMode.PLAIN;
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
-                noNameAndEmailParameters = trigger.isNoNameAndEmailParameters();
+                nameAndEmailParameterMode = trigger.getNameAndEmailParameterMode();
                 escapeQuotes = trigger.isEscapeQuotes();
                 commitMessageMode = trigger.getCommitMessageParameterMode();
             }
@@ -369,10 +369,8 @@ public enum GerritTriggerParameters {
             GERRIT_PROJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getProject(), escapeQuotes);
             if (event instanceof ChangeRestored) {
-                if (!noNameAndEmailParameters) {
-                    GERRIT_CHANGE_RESTORER.setOrCreateStringParameterValue(
-                            parameters, getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
-                }
+                nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_RESTORER, parameters,
+                        getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
                 GERRIT_CHANGE_RESTORER_NAME.setOrCreateStringParameterValue(
                         parameters, getName(((ChangeRestored)event).getRestorer()), escapeQuotes);
                 GERRIT_CHANGE_RESTORER_EMAIL.setOrCreateStringParameterValue(
@@ -391,28 +389,22 @@ public enum GerritTriggerParameters {
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
-                if (!noNameAndEmailParameters) {
-                    GERRIT_CHANGE_ABANDONER.setOrCreateStringParameterValue(
-                            parameters, getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
-                }
+                nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_ABANDONER, parameters,
+                        getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_NAME.setOrCreateStringParameterValue(
                         parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
-            if (!noNameAndEmailParameters) {
-                GERRIT_CHANGE_OWNER.setOrCreateStringParameterValue(
-                    parameters, getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
-            }
+            nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_OWNER, parameters,
+                    getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
             GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
                     parameters, getName(event.getChange().getOwner()), escapeQuotes);
             GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
             Account uploader = findUploader(event);
-            if (!noNameAndEmailParameters) {
-                GERRIT_PATCHSET_UPLOADER.setOrCreateStringParameterValue(
-                    parameters, getNameAndEmail(uploader), escapeQuotes);
-            }
+            nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_PATCHSET_UPLOADER, parameters,
+                    getNameAndEmail(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
                     parameters, getName(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
@@ -430,10 +422,8 @@ public enum GerritTriggerParameters {
         }
         Account account = gerritEvent.getAccount();
         if (account != null) {
-            if (!noNameAndEmailParameters) {
-                GERRIT_EVENT_ACCOUNT.setOrCreateStringParameterValue(
-                        parameters, getNameAndEmail(account), escapeQuotes);
-            }
+            nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_EVENT_ACCOUNT, parameters,
+                    getNameAndEmail(account), escapeQuotes);
             GERRIT_EVENT_ACCOUNT_NAME.setOrCreateStringParameterValue(
                     parameters, getName(account), escapeQuotes);
             GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(

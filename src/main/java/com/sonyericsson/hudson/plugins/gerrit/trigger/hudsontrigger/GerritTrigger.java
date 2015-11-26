@@ -120,6 +120,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -159,7 +160,12 @@ public class GerritTrigger extends Trigger<Job> {
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
-    private boolean noNameAndEmailParameters;
+    /**
+     * Replaced with {@link #nameAndEmailParameterMode}
+     */
+    @Deprecated
+    private transient boolean noNameAndEmailParameters;
+    private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
     /**
      * Replaced with {@link #commitMessageParameterMode}
@@ -202,6 +208,7 @@ public class GerritTrigger extends Trigger<Job> {
             this.notificationLevel = options.get(0).value;
         }
         this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
     }
 
     /**
@@ -287,7 +294,11 @@ public class GerritTrigger extends Trigger<Job> {
         this.silentMode = silentMode;
         this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
-        this.noNameAndEmailParameters = noNameAndEmailParameters;
+        if (noNameAndEmailParameters) {
+            nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+        } else {
+            nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        }
         if (readableMessage) {
             commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         } else {
@@ -309,6 +320,37 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+    }
+
+    /**
+     * The parameter mode for the compound "name and email" parameters.
+     *
+     * Replaces {@link #isNoNameAndEmailParameters()}.
+     * @return the mode
+     * @see GerritTriggerParameters#GERRIT_CHANGE_ABANDONER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_OWNER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_RESTORER
+     * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
+     * @see GerritTriggerParameters#GERRIT_SUBMITTER
+     */
+    public GerritTriggerParameters.ParameterMode getNameAndEmailParameterMode() {
+        return nameAndEmailParameterMode;
+    }
+
+    /**
+     * The parameter mode for the compound "name and email" parameters.
+     * Replaces {@link #isNoNameAndEmailParameters()}.
+     *
+     * @param nameAndEmailParameterMode the mode
+     * @see GerritTriggerParameters#GERRIT_CHANGE_ABANDONER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_OWNER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_RESTORER
+     * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
+     * @see GerritTriggerParameters#GERRIT_SUBMITTER
+     */
+    @DataBoundSetter
+    public void setNameAndEmailParameterMode(@Nonnull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
+        this.nameAndEmailParameterMode = nameAndEmailParameterMode;
     }
 
     /**
@@ -366,6 +408,13 @@ public class GerritTrigger extends Trigger<Job> {
                 commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
             } else {
                 commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+            }
+        }
+        if (nameAndEmailParameterMode == null) {
+            if (noNameAndEmailParameters) {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+            } else {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
             }
         }
         return super.readResolve();
@@ -1395,9 +1444,11 @@ public class GerritTrigger extends Trigger<Job> {
      * problems with some configurations.
      *
      * @return true if noNameAndEmailParameters is on.
+     * @deprecated replaced with {@link #getNameAndEmailParameterMode()}
      */
+    @Deprecated
     public boolean isNoNameAndEmailParameters() {
-        return noNameAndEmailParameters;
+        return nameAndEmailParameterMode == GerritTriggerParameters.ParameterMode.NONE;
     }
 
     /**
@@ -1406,10 +1457,15 @@ public class GerritTrigger extends Trigger<Job> {
      * problems with some configurations.
      *
      * @param noNameAndEmailParameters is true if problematic parameters should be omitted.
+     * @deprecated replaced with {@link #setNameAndEmailParameterMode(GerritTriggerParameters.ParameterMode)}
      */
-    @DataBoundSetter
+    @Deprecated
     public void setNoNameAndEmailParameters(boolean noNameAndEmailParameters) {
-        this.noNameAndEmailParameters = noNameAndEmailParameters;
+        if (noNameAndEmailParameters) {
+            this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+        } else {
+            this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        }
     }
 
     /**
