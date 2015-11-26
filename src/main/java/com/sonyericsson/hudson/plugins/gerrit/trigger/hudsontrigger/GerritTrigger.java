@@ -160,18 +160,8 @@ public class GerritTrigger extends Trigger<Job> {
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
-    /**
-     * Replaced with {@link #nameAndEmailParameterMode}
-     */
-    @Deprecated
-    private transient boolean noNameAndEmailParameters;
     private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
-    /**
-     * Replaced with {@link #commitMessageParameterMode}
-     */
-    @Deprecated
-    private transient boolean readableMessage;
     private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
@@ -183,14 +173,10 @@ public class GerritTrigger extends Trigger<Job> {
     private String serverName;
     private String gerritSlaveId;
     private List<PluginGerritEvent> triggerOnEvents;
-    @SuppressWarnings("unused")
-    @Deprecated
-    private transient boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
-
     private GerritTriggerInformationAction triggerInformationAction;
 
     /**
@@ -391,33 +377,6 @@ public class GerritTrigger extends Trigger<Job> {
      */
     Job getJob() {
         return job;
-    }
-
-    /**
-     * Converts old trigger configs when only patchset created was available as event
-     * and when jobs were not associated to Gerrit servers.
-     *
-     * @return the resolved instance.
-     * @throws ObjectStreamException if something beneath goes wrong.
-     */
-    public Object readResolve() throws ObjectStreamException {
-        initializeServerName();
-        initializeTriggerOnEvents();
-        if (commitMessageParameterMode == null) {
-            if (readableMessage) {
-                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
-            } else {
-                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
-            }
-        }
-        if (nameAndEmailParameterMode == null) {
-            if (noNameAndEmailParameters) {
-                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
-            } else {
-                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
-            }
-        }
-        return super.readResolve();
     }
 
     /**
@@ -1772,6 +1731,54 @@ public class GerritTrigger extends Trigger<Job> {
     public SkipVote getSkipVote() {
         return skipVote;
     }
+
+    /*
+     * DEPRECATION HANDLING
+     */
+
+    /**
+     * Replaced with {@link #nameAndEmailParameterMode}
+     */
+    @Deprecated
+    private transient boolean noNameAndEmailParameters;
+    /**
+     * Replaced with {@link #commitMessageParameterMode}
+     */
+    @Deprecated
+    private transient boolean readableMessage;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient boolean allowTriggeringUnreviewedPatches;
+
+    /**
+     * Converts old trigger configs when only patchset created was available as event
+     * and when jobs were not associated to Gerrit servers.
+     *
+     * @return the resolved instance.
+     * @throws ObjectStreamException if something beneath goes wrong.
+     */
+    public Object readResolve() throws ObjectStreamException {
+        initializeServerName();
+        initializeTriggerOnEvents();
+        if (commitMessageParameterMode == null) {
+            if (readableMessage) {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+            } else {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+            }
+        }
+        if (nameAndEmailParameterMode == null) {
+            if (noNameAndEmailParameters) {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+            } else {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+            }
+        }
+        return super.readResolve();
+    }
+    /*
+     * /DEPRECATION HANDLING
+     */
 
     /**
      * The Descriptor for the Trigger.
