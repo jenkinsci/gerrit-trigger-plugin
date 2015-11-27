@@ -120,7 +120,8 @@ public class NotificationFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                if (config.isUseRestApi()) {
+                if (config.isUseRestApi()
+                        && memoryImprint.getEvent() instanceof ChangeBasedEvent) {
                     GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
                 } else {
                     GerritSendCommandQueue.queue(new BuildCompletedCommandJob(config, memoryImprint, listener));
