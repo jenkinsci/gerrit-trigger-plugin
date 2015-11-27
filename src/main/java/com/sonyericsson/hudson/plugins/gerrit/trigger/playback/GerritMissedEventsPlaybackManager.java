@@ -405,12 +405,18 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
      * @param evt Gerrit Event to persist.
      * @return true if was able to persist event.
      */
-    private synchronized boolean persist(GerritTriggeredEvent evt) {
+    synchronized boolean persist(GerritTriggeredEvent evt) {
+
+        if (evt == null || evt.getEventCreatedOn() == null) {
+            logger.warn("Event CreatedOn is null...Gerrit Server might not support attribute eventCreatedOn. "
+                    + "Will NOT persist this event and Missed Events will be disabled!");
+            isSupported = false;
+            return false;
+        }
 
         long ts = evt.getEventCreatedOn().getTime();
-
         if (ts == 0) {
-            logger.warn("Event CreatedOn is 0...Gerrit Server does not support attribute eventCreateOn. "
+            logger.warn("Event CreatedOn is 0...Gerrit Server does not support attribute eventCreatedOn. "
                     + "Will NOT persist this event and Missed Events will be disabled!");
             isSupported = false;
             return false;
