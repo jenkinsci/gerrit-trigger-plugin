@@ -406,8 +406,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         initializeConnectionListener();
 
         projectListUpdater =
-                new GerritProjectListUpdater(
-                        name, isProjectCreatedEventsSupported());
+                new GerritProjectListUpdater(name);
         projectListUpdater.start();
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
@@ -631,10 +630,16 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks whether the current server support project-created events or not.
+     *
+     * Note: We need to exclude snapshot versions from this check. Otherwise, snapshot versions
+     * that are < Gerrit 2.12 will default to waiting for Project Created events which are only
+     * supported in Gerrit >= 2.12.
+     *
      * @return true if project-created events are supported, otherwise false
      */
     public boolean isProjectCreatedEventsSupported() {
-        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.projectCreatedEvents, name);
+        return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.projectCreatedEvents, name,
+                true);
     }
 
     /**

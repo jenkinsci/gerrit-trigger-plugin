@@ -134,6 +134,37 @@ public final class GerritVersionChecker {
     }
 
     /**
+     * Tells us if we are running the correct version for a particular feature.
+     *
+     * @param feature the feature we want to check.
+     * @param serverName the name of the Gerrit server.
+     * @param excludeSnapshotVersions exclude snapshot versions from feature checks.
+     * @return true if the Gerrit version is high enough for us to use this feature.
+     */
+    public static boolean isCorrectVersion(Feature feature, String serverName,
+            boolean excludeSnapshotVersions) {
+        if (PluginImpl.getInstance() != null) {
+            if (serverName == null || serverName.isEmpty()
+                    || GerritServer.ANY_SERVER.equals(serverName)) {
+                for (GerritServer server : PluginImpl.getServers_()) {
+                    GerritVersionNumber gerritVersion
+                            = createVersionNumber(server.getGerritVersion());
+                    if (isCorrectVersion(gerritVersion, feature, excludeSnapshotVersions)) {
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                GerritVersionNumber gerritVersion
+                    = createVersionNumber(getGerritVersion(serverName));
+                return isCorrectVersion(gerritVersion, feature, excludeSnapshotVersions);
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      *Returns the current Gerrit version.
      *@param serverName the name of the server.
      *@return the current Gerrit version as a String if connected, or null otherwise.
@@ -158,10 +189,27 @@ public final class GerritVersionChecker {
      *
      * @param gerritVersion the version of Gerrit we are running.
      * @param feature       the feature we want to check.
+     * @param excludeSnapshotVersions exclude snapshots from feature check.
+     * @return true if the Gerrit version is high enough for us to use this feature.
+     */
+    public static boolean isCorrectVersion(GerritVersionNumber gerritVersion,
+            Feature feature, boolean excludeSnapshotVersions) {
+        if (excludeSnapshotVersions) {
+            return !feature.versionNumber.isNewerThan(gerritVersion);
+        } else {
+            return (gerritVersion.isSnapshot() || !feature.versionNumber.isNewerThan(gerritVersion));
+        }
+    }
+
+    /**
+     * Tells us if we are running the correct version for a particular feature.
+     *
+     * @param gerritVersion the version of Gerrit we are running.
+     * @param feature       the feature we want to check.
      * @return true if the Gerrit version is high enough for us to use this feature.
      */
     public static boolean isCorrectVersion(GerritVersionNumber gerritVersion, Feature feature) {
-        return (gerritVersion.isSnapshot() || !feature.versionNumber.isNewerThan(gerritVersion));
+        return isCorrectVersion(gerritVersion, feature, false);
     }
 
     /**
