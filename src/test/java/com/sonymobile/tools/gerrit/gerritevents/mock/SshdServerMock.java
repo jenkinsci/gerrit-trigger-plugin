@@ -635,6 +635,103 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
+     * A Command that prints a version and then exits with 0.
+     */
+    public static class SendVersionCommand extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendVersionCommand(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            String line = "gerrit version 2.11.4";
+            System.out.println("Starting PL-command: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + line);
+                out.println(line);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+        }
+    }
+
+    /**
+     * A Command that prints a project and then exits with 0 and is destroyed.
+     */
+    public static class SendOneProjectCommand extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendOneProjectCommand(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            String line = "abcProject";
+            System.out.println("Starting PL-command: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + line);
+                out.println(line);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+            this.destroy();
+        }
+    }
+
+    /**
+     * A Command that prints 2 projects and then exits with 0.
+     */
+    public static class SendTwoProjectsCommand extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendTwoProjectsCommand(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            String line = "abcProject";
+            String line2 = "defProject";
+            System.out.println("Starting PL-command: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + line);
+                out.println(line);
+                System.out.println("Sending: " + line2);
+                out.println(line2);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+        }
+    }
+
+    /**
      * Utility class for looking up and creating commands.
      *
      * @see SshdServerMock#findAndCreateCommand(String)

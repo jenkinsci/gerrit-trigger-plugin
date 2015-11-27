@@ -37,6 +37,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +54,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * The command for fetching projects.
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
-    private boolean useIncrementalUpdate;
 
-    private boolean connected = false;
+    private AtomicBoolean connected = new AtomicBoolean(false);
     private boolean shutdown = false;
     private static final Logger logger = LoggerFactory.getLogger(GerritProjectListUpdater.class);
     private List<String> gerritProjects;
@@ -64,10 +64,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     /**
      * Default constructor.
      * @param serverName the name of the Gerrit server.
-     * @param hasProjectCreatedEvents true if Gerrit server has project-created events.
      */
-    public GerritProjectListUpdater(String serverName, boolean hasProjectCreatedEvents) {
-        this.useIncrementalUpdate = hasProjectCreatedEvents;
+    public GerritProjectListUpdater(String serverName) {
         this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
         this.serverName = serverName;
@@ -85,7 +83,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         GerritServer server = plugin.getServer(serverName);
         if (server != null) {
             server.addListener(this.connectionListener());
-            connected = server.isConnected();
+            connected.set(server.isConnected());
         } else {
             logger.error("Could not find the server {}", serverName);
         }
@@ -128,6 +126,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      */
     public void gerritEvent(ProjectCreated gerritEvent) {
         addGerritProject(gerritEvent.getProjectName());
+        logger.debug("Added project {} to project lists", gerritEvent.getProjectName());
     }
 
     /**
@@ -150,9 +149,10 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             waitFor(getConfig().getProjectListFetchDelay());
             tryLoadProjectList();
         }
-        if (useIncrementalUpdate) {
-            listenToProjectCreatedEvents();
 
+        if (listenToProjectCreatedEvents()) {
+            logger.info("ProjectCreated events supported by Gerrit Server {}. "
+                    + "Will now listen for new projects...", serverName);
         } else {
             while (!shutdown) {
                 waitFor(getConfig().getProjectListRefreshInterval());
@@ -162,28 +162,33 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     }
 
     /**
-     * Add this as GerritEventListener.
+     * Add this as GerritEventListener if project events supported.
+     * @return true is project created events are supported and listener is added.
      */
-    private void listenToProjectCreatedEvents() {
+    private boolean listenToProjectCreatedEvents() {
         // Listen to project-created events.
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             GerritServer server = plugin.getServer(serverName);
             if (server != null) {
-                // If run was called before.
-                server.removeListener(this.gerritEventListener());
-                server.addListener(this.gerritEventListener());
+                if (server.isProjectCreatedEventsSupported()) {
+                    // If run was called before.
+                    server.removeListener(this.gerritEventListener());
+                    server.addListener(this.gerritEventListener());
+                    return true;
+                }
             } else {
                 logger.error("Could not find the server {} to add GerritEventListener.", serverName);
             }
         }
+        return false;
     }
 
     /**
      * Wait for 'delay' seconds.
      * @param delay seconds to wait.
      */
-    private void waitFor(int delay) {
+    private void waitFor(long delay) {
         try {
             synchronized (this) {
                 long startTime = System.nanoTime();
@@ -281,14 +286,14 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * @return if connected to Gerrit.
      */
     public synchronized boolean isConnected() {
-        return connected;
+        return connected.get();
     }
 
     /**
      * @param connected the connected to set.
      */
     public synchronized void setConnected(boolean connected) {
-        this.connected = connected;
+        this.connected.set(connected);
     }
 
     /**
