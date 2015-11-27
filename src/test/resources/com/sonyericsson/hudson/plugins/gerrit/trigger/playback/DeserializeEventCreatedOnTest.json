@@ -1,0 +1,11 @@
+{"type":"change-restored","change":{"project":"playback-test","branch":"master"
+,"id":"Ibafad9613934fdec650d6186dc1021bc2cf5d2f5","number":"654","subject":"Mon Dec  8 20:53:56 EST 2014"
+,"owner":{"name":"Scott","email":"scott@company.com","username":"scott"
+  },"url":"http://localhost:9090/654"
+,"commitMessage":"Mon Dec  8 20:53:56 EST 2014\n\nChange-Id: Ibafad9613934fdec650d6186dc1021bc2cf5d2f5\n"
+,"status":"NEW"},"patchSet":{"number":"1","revision":"b2b5f7c8fb8f96312d629d4d4f379f34f5b9b651"
+,"parents":["6cf2d28cc07d22a49e0e614c7bde0a4e5fd0c8f5"],"ref":"refs/changes/54/654/1"
+,"uploader":{"name":"Scott","email":"scott@company.com","username":"scott"}
+,"createdOn":1418090036,"author":{"name":"Scott","email":"scott@company.com","username":"scott"}
+,"isDraft":false,"sizeInsertions":1,"sizeDeletions":0},"restorer":{"name":"Scott"
+,"email":"scott@company.com","username":"scott"}}

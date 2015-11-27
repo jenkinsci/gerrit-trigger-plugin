@@ -30,12 +30,17 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritJsonEventFactory;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 import hudson.XmlFile;
 import jenkins.model.Jenkins;
 import junit.framework.TestCase;
+import net.sf.json.JSONObject;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +52,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Random;
@@ -133,6 +139,25 @@ public class GerritMissedEventsLoadPersistTest {
                 , anyString())).thenReturn(true);
     }
 
+    /**
+     * Test if Gerrit returns a null eventCreated attribute.
+     * @throws IOException if occurs.
+     */
+    @Test
+    public void testNullEventCreatedOn() throws IOException {
+        InputStream stream = getClass().getResourceAsStream("DeserializeEventCreatedOnTest.json");
+        String json = IOUtils.toString(stream);
+        JSONObject jsonObject = JSONObject.fromObject(json);
+        GerritEvent evt = GerritJsonEventFactory.getEvent(jsonObject);
+        GerritTriggeredEvent gEvt = (GerritTriggeredEvent)evt;
+        assertNull(gEvt.getEventCreatedOn());
+
+        GerritMissedEventsPlaybackManager missingEventsPlaybackManager
+        = new GerritMissedEventsPlaybackManager("defaultServer");
+
+        assertTrue(!missingEventsPlaybackManager.persist(gEvt));
+
+    }
     /**
      * Given a non-existing timestamp file
      * When we attempt to load it
