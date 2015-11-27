@@ -41,6 +41,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import hudson.util.ListBoxModel.Option;
 
 import java.io.File;
@@ -689,7 +690,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             File file = new File(gerritAuthKeyFile);
             String password = null;
             if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() > 0) {
-                password = gerritAuthKeyFilePassword;
+                password = Secret.fromString(gerritAuthKeyFilePassword).getPlainText();
             }
             if (SshUtil.checkPassPhrase(file, password)) {
                 if (file.exists() && file.isFile()) {
@@ -747,6 +748,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
                 @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
                 @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
+
+            String password = Secret.fromString(gerritHttpPassword).getPlainText();
+
             String restUrl = gerritFrontEndUrl;
             if (gerritFrontEndUrl != null && !gerritFrontEndUrl.endsWith("/")) {
                 restUrl = gerritFrontEndUrl + "/";
@@ -754,7 +758,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             CredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(null, -1),
                 new UsernamePasswordCredentials(gerritHttpUserName,
-                        gerritHttpPassword));
+                        password));
             HttpClient httpclient = HttpClients.custom()
                 .setDefaultCredentialsProvider(credsProvider)
                 .build();
