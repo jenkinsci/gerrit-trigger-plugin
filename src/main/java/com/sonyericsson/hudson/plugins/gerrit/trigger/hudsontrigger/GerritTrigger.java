@@ -189,12 +189,33 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.skipVote = new SkipVote(false, false, false, false);
-        ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillNotificationLevelItems(this.serverName);
-        if (!options.isEmpty()) {
-            this.notificationLevel = options.get(0).value;
+        this.escapeQuotes = true;
+        this.serverName = ANY_SERVER;
+        try {
+            DescriptorImpl descriptor = (DescriptorImpl)getDescriptor();
+            if (descriptor != null) {
+                ListBoxModel options = descriptor.doFillNotificationLevelItems(this.serverName);
+                if (!options.isEmpty()) {
+                    this.notificationLevel = options.get(0).value;
+                }
+            }
+            //CS IGNORE EmptyBlock FOR NEXT 1 LINES. REASON: Handled one row below
+        } catch (NullPointerException ignored) { /*Could happen during testing*/ }
+        if (this.notificationLevel == null) {
+            this.notificationLevel = "";
         }
+
         this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+
+        this.dependencyJobsNames = "";
+        this.buildStartMessage = "";
+        this.buildSuccessfulMessage = "";
+        this.buildUnstableMessage = "";
+        this.buildFailureMessage = "";
+        this.buildNotBuiltMessage = "";
+        this.buildUnsuccessfulFilepath = "";
+        this.triggerConfigURL = "";
     }
 
     /**

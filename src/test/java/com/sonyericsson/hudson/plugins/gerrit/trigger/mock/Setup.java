@@ -274,6 +274,7 @@ public final class Setup {
         event.setPatchset(patch);
         Account abandoner = new Account("Name1", "email@domain1.com");
         event.setAbandoner(abandoner);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         event.setEventCreatedOn("1418133772");
         return event;
     }
@@ -416,6 +417,7 @@ public final class Setup {
         event.setPatchset(patch);
         Account restorer = new Account("Name1", "email@domain1.com");
         event.setRestorer(restorer);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         event.setEventCreatedOn("1418133772");
         return event;
     }
@@ -564,9 +566,24 @@ public final class Setup {
         boolean silentMode = true;
         boolean silentStart = false;
 
-        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        GerritTrigger trigger = new GerritTrigger(null);
+        /*new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
-                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
+                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);*/
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        trigger.setSilentMode(silentMode);
+        trigger.setSilentStartMode(silentStart);
+        trigger.setGerritBuildStartedVerifiedValue(0);
+        trigger.setGerritBuildStartedCodeReviewValue(0);
+        trigger.setGerritBuildSuccessfulVerifiedValue(0);
+        trigger.setGerritBuildSuccessfulCodeReviewValue(0);
+        trigger.setGerritBuildFailedVerifiedValue(0);
+        trigger.setGerritBuildFailedCodeReviewValue(0);
+        trigger.setGerritBuildUnstableVerifiedValue(0);
+        trigger.setGerritBuildUnstableCodeReviewValue(0);
+        trigger.setGerritBuildNotBuiltVerifiedValue(0);
+        trigger.setGerritBuildNotBuiltCodeReviewValue(0);
+        trigger.setServerName(PluginImpl.DEFAULT_SERVER_NAME);
 
         if (job != null) {
             trigger.start(job, true);

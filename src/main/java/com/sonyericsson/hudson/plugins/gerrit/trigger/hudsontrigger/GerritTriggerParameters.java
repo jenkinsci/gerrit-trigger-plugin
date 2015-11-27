@@ -575,9 +575,8 @@ public enum GerritTriggerParameters {
                                            List<ParameterValue> parameters,
                                            String value, boolean escapeQuotes) {
                 try {
-                    byte[] encodedBytes = Base64.encodeBase64(value.getBytes("UTF-8"));
                     parameter.setOrCreateBase64EncodedStringParameterValue(
-                            parameters, new String(encodedBytes, Charset.forName("UTF-8")), escapeQuotes);
+                            parameters, encodeBase64(value), escapeQuotes);
                 } catch (UnsupportedEncodingException uee) {
                     logger.error("Failed to encode " + parameter.name() + " as Base64: ", uee);
                 }
@@ -595,6 +594,18 @@ public enum GerritTriggerParameters {
                 //Do nothing
             }
         };
+
+        /**
+         * Encodes the string as Base64.
+         * @param original the string to encode
+         * @return a new encoded string for the original.
+         *
+         * @throws UnsupportedEncodingException if so
+         */
+        public static String encodeBase64(String original) throws UnsupportedEncodingException {
+            byte[] encodedBytes = Base64.encodeBase64(original.getBytes("UTF-8"));
+            return new String(encodedBytes, Charset.forName("UTF-8"));
+        }
 
         private final Localizable displayName;
 
