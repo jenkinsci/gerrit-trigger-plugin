@@ -1,4 +1,4 @@
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
@@ -22,13 +22,15 @@
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
-            <f:entry title="${%Commit message as human readable}"  field="readableMessage"
-                 help="/plugin/gerrit-trigger/trigger/help-ReadableMessage.html">
-                <f:checkbox name="readableMessage" default="false" checked="${it.readableMessage}"/>
+            <f:entry title="${%Commit message parameter}" field="commitMessageParameterMode">
+                <ff:enum default="BASE64"> <!-- TODO change to f when core dep >= 1.640 -->
+                    ${it.toString()}
+                </ff:enum>
             </f:entry>
-            <f:entry title="${%Do not Pass Compound 'Name And Email' Parameters}" field="noNameAndEmailParameters"
-                 help="/plugin/gerrit-trigger/trigger/help-NoNameAndEmailParameters.html">
-                <f:checkbox name="noNameAndEmailParameters" default="false" checked="${it.noNameAndEmailParameters}"/>
+            <f:entry title="${%Compound 'Name And Email' Parameters}" field="nameAndEmailParameterMode">
+                <ff:enum default="PLAIN"> <!-- TODO change to f when core dep >= 1.640 -->
+                    ${it.toString()}
+                </ff:enum>
             </f:entry>
             <f:entry field="dependencyJobsNames" title="${%Other jobs on which this job depends}"
                  help="/plugin/gerrit-trigger/trigger/help-DependencyJobs.html">

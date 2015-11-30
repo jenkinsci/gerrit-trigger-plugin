@@ -115,10 +115,12 @@ import jenkins.model.Jenkins;
 
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
@@ -158,10 +160,9 @@ public class GerritTrigger extends Trigger<Job> {
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
-    private boolean noNameAndEmailParameters;
+    private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
-    //private List<AbstractProject> dependencyJobs;
-    private boolean readableMessage;
+    private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -172,18 +173,53 @@ public class GerritTrigger extends Trigger<Job> {
     private String serverName;
     private String gerritSlaveId;
     private List<PluginGerritEvent> triggerOnEvents;
-    @SuppressWarnings("unused")
-    @Deprecated
-    private transient boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
-
     private GerritTriggerInformationAction triggerInformationAction;
 
     /**
      * Default DataBound Constructor.
+     * @param gerritProjects the set of triggering rules.
+     */
+    @DataBoundConstructor
+    public GerritTrigger(List<GerritProject> gerritProjects) {
+        this.gerritProjects = gerritProjects;
+        this.gerritTriggerTimerTask = null;
+        this.triggerInformationAction = new GerritTriggerInformationAction();
+        this.skipVote = new SkipVote(false, false, false, false);
+        this.escapeQuotes = true;
+        this.serverName = ANY_SERVER;
+        try {
+            DescriptorImpl descriptor = (DescriptorImpl)getDescriptor();
+            if (descriptor != null) {
+                ListBoxModel options = descriptor.doFillNotificationLevelItems(this.serverName);
+                if (!options.isEmpty()) {
+                    this.notificationLevel = options.get(0).value;
+                }
+            }
+            //CS IGNORE EmptyBlock FOR NEXT 1 LINES. REASON: Handled one row below
+        } catch (NullPointerException ignored) { /*Could happen during testing*/ }
+        if (this.notificationLevel == null) {
+            this.notificationLevel = "";
+        }
+
+        this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+
+        this.dependencyJobsNames = "";
+        this.buildStartMessage = "";
+        this.buildSuccessfulMessage = "";
+        this.buildUnstableMessage = "";
+        this.buildFailureMessage = "";
+        this.buildNotBuiltMessage = "";
+        this.buildUnsuccessfulFilepath = "";
+        this.triggerConfigURL = "";
+    }
+
+    /**
+     * Old DataBound Constructor. Replaced with {@link #GerritTrigger(List)} and {@link DataBoundSetter}s.
      *
      * @param gerritProjects                 the set of triggering rules.
      * @param skipVote                       what votes if any should be skipped in the final
@@ -238,39 +274,18 @@ public class GerritTrigger extends Trigger<Job> {
      * @param triggerConfigURL               Where to fetch the configuration file from
      * @param notificationLevel              Whom to notify.
      */
-    @DataBoundConstructor
-    public GerritTrigger(
-            List<GerritProject> gerritProjects,
-            SkipVote skipVote,
-            Integer gerritBuildStartedVerifiedValue,
-            Integer gerritBuildStartedCodeReviewValue,
-            Integer gerritBuildSuccessfulVerifiedValue,
-            Integer gerritBuildSuccessfulCodeReviewValue,
-            Integer gerritBuildFailedVerifiedValue,
-            Integer gerritBuildFailedCodeReviewValue,
-            Integer gerritBuildUnstableVerifiedValue,
-            Integer gerritBuildUnstableCodeReviewValue,
-            Integer gerritBuildNotBuiltVerifiedValue,
-            Integer gerritBuildNotBuiltCodeReviewValue,
-            boolean silentMode,
-            boolean silentStartMode,
-            boolean escapeQuotes,
-            boolean noNameAndEmailParameters,
-            boolean readableMessage,
-            String dependencyJobsNames,
-            String buildStartMessage,
-            String buildSuccessfulMessage,
-            String buildUnstableMessage,
-            String buildFailureMessage,
-            String buildNotBuiltMessage,
-            String buildUnsuccessfulFilepath,
-            String customUrl,
-            String serverName,
-            String gerritSlaveId,
-            List<PluginGerritEvent> triggerOnEvents,
-            boolean dynamicTriggerConfiguration,
-            String triggerConfigURL,
-            String notificationLevel) {
+    @Deprecated
+    public GerritTrigger(List<GerritProject> gerritProjects, SkipVote skipVote, Integer gerritBuildStartedVerifiedValue,
+            Integer gerritBuildStartedCodeReviewValue, Integer gerritBuildSuccessfulVerifiedValue,
+            Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
+            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
+            Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
+            Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
+            boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
+            String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
+            String buildFailureMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
+            String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
+            boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -286,8 +301,16 @@ public class GerritTrigger extends Trigger<Job> {
         this.silentMode = silentMode;
         this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
-        this.noNameAndEmailParameters = noNameAndEmailParameters;
-        this.readableMessage = readableMessage;
+        if (noNameAndEmailParameters) {
+            nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+        } else {
+            nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        }
+        if (readableMessage) {
+            commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        } else {
+            commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        }
         this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -302,8 +325,71 @@ public class GerritTrigger extends Trigger<Job> {
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
-        triggerInformationAction = new GerritTriggerInformationAction();
+        this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+    }
+
+    /**
+     * The parameter mode for the compound "name and email" parameters.
+     *
+     * Replaces {@link #isNoNameAndEmailParameters()}.
+     * @return the mode
+     * @see GerritTriggerParameters#GERRIT_CHANGE_ABANDONER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_OWNER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_RESTORER
+     * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
+     * @see GerritTriggerParameters#GERRIT_SUBMITTER
+     */
+    public GerritTriggerParameters.ParameterMode getNameAndEmailParameterMode() {
+        return nameAndEmailParameterMode;
+    }
+
+    /**
+     * The parameter mode for the compound "name and email" parameters.
+     * Replaces {@link #isNoNameAndEmailParameters()}.
+     *
+     * @param nameAndEmailParameterMode the mode
+     * @see GerritTriggerParameters#GERRIT_CHANGE_ABANDONER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_OWNER
+     * @see GerritTriggerParameters#GERRIT_CHANGE_RESTORER
+     * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
+     * @see GerritTriggerParameters#GERRIT_SUBMITTER
+     */
+    @DataBoundSetter
+    public void setNameAndEmailParameterMode(@Nonnull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
+        this.nameAndEmailParameterMode = nameAndEmailParameterMode;
+    }
+
+    /**
+     * What mode the commit message parameter {@link GerritTriggerParameters#GERRIT_CHANGE_COMMIT_MESSAGE} should be used
+     * when adding it.
+     *
+     * @return the mode
+     */
+    public GerritTriggerParameters.ParameterMode getCommitMessageParameterMode() {
+        return commitMessageParameterMode;
+    }
+
+    /**
+     * What mode the commit message parameter {@link GerritTriggerParameters#GERRIT_CHANGE_COMMIT_MESSAGE} should be used
+     * when adding it.
+     * @param commitMessageParameterMode the mode
+     */
+    @DataBoundSetter
+    public void setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
+        this.commitMessageParameterMode = commitMessageParameterMode;
+    }
+
+    /**
+     * The skip vote selection.
+     * &quot;Skipping&quot; the vote means that if more than one build of this job is triggered by a Gerrit event
+     * the outcome of this build won't be counted when the final vote is sent to Gerrit.
+     *
+     * @param skipVote what votes if any should be skipped in the final
+     */
+    @DataBoundSetter
+    public void setSkipVote(SkipVote skipVote) {
+        this.skipVote = skipVote;
     }
 
     /**
@@ -312,19 +398,6 @@ public class GerritTrigger extends Trigger<Job> {
      */
     Job getJob() {
         return job;
-    }
-
-    /**
-     * Converts old trigger configs when only patchset created was available as event
-     * and when jobs were not associated to Gerrit servers.
-     *
-     * @return the resolved instance.
-     * @throws ObjectStreamException if something beneath goes wrong.
-     */
-    public Object readResolve() throws ObjectStreamException {
-        initializeServerName();
-        initializeTriggerOnEvents();
-        return super.readResolve();
     }
 
     /**
@@ -343,16 +416,36 @@ public class GerritTrigger extends Trigger<Job> {
      * @param name the name of the newly selected server.
      *
      */
+    @DataBoundSetter
     public void setServerName(String name) {
         this.serverName = name;
+        if (this.notificationLevel == null) {
+            ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillNotificationLevelItems(this.serverName);
+            if (!options.isEmpty()) {
+                notificationLevel = options.get(0).value;
+            }
+        }
     }
 
     /**
-     * Returns id of the gerrit slave.
+     * The selected slave associated to this job, if enabled in server configs.
+     *
      * @return the id of the gerrit slave
+     * @see GerritSlave
      */
     public String getGerritSlaveId() {
         return gerritSlaveId;
+    }
+
+    /**
+     * The selected slave associated to this job, if enabled in server configs.
+     *
+     * @param gerritSlaveId the id of the gerrit slave
+     * @see GerritSlave
+     */
+    @DataBoundSetter
+    public void setGerritSlaveId(String gerritSlaveId) {
+        this.gerritSlaveId = gerritSlaveId;
     }
 
     /**
@@ -964,6 +1057,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildFailedCodeReviewValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
     }
@@ -983,6 +1077,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param gerritBuildFailedVerifiedValue the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
     }
@@ -1003,6 +1098,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildStartedCodeReviewValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildStartedCodeReviewValue(Integer gerritBuildStartedCodeReviewValue) {
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
     }
@@ -1023,6 +1119,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildStartedVerifiedValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
     }
@@ -1044,6 +1141,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildSuccessfulCodeReviewValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildSuccessfulCodeReviewValue(Integer gerritBuildSuccessfulCodeReviewValue) {
         this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
     }
@@ -1064,6 +1162,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildSuccessfulVerifiedValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
         this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
     }
@@ -1084,6 +1183,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildUnstableCodeReviewValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildUnstableCodeReviewValue(Integer gerritBuildUnstableCodeReviewValue) {
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
     }
@@ -1104,6 +1204,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildUnstableVerifiedValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
     }
@@ -1124,6 +1225,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildNotBuiltCodeReviewValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
     }
@@ -1144,17 +1246,20 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildNotBuiltVerifiedValue
      *         the vote value.
      */
+    @DataBoundSetter
     public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
     }
 
     /**
      * Sets the path to a file that contains the unsuccessful Gerrit comment message.
+     * Filename to retrieve Gerrit comment message from, in the case of an unsuccessful build.
      *
-     * @param path The unsuccessful message comment file path
+     * @param buildUnsuccessfulFilepath The unsuccessful message comment file path
      */
-    public void setBuildUnsuccessfulFilepath(String path) {
-        buildUnsuccessfulFilepath = path;
+    @DataBoundSetter
+    public void setBuildUnsuccessfulFilepath(String buildUnsuccessfulFilepath) {
+        this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
     }
 
     /**
@@ -1164,6 +1269,16 @@ public class GerritTrigger extends Trigger<Job> {
     public List<PluginGerritEvent> getTriggerOnEvents() {
         initializeTriggerOnEvents();
         return triggerOnEvents;
+    }
+
+    /**
+     * The list of event types to trigger on.
+     *
+     * @param triggerOnEvents the list
+     */
+    @DataBoundSetter
+    public void setTriggerOnEvents(List<PluginGerritEvent> triggerOnEvents) {
+        this.triggerOnEvents = triggerOnEvents;
     }
 
     /**
@@ -1206,6 +1321,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param dynamicTriggerConfiguration
      *         true if dynamic trigger configuration should be enabled.
      */
+    @DataBoundSetter
     public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
     }
@@ -1224,7 +1340,10 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param triggerConfigURL
      *         the URL where the trigger configuration should be fetched from.
+     * @see #dynamicTriggerConfiguration
+     * @see #dynamicGerritProjects
      */
+    @DataBoundSetter
     public void setTriggerConfigURL(String triggerConfigURL) {
         this.triggerConfigURL = triggerConfigURL;
     }
@@ -1239,11 +1358,12 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Set the list of dependency jobs.
+     * The list of jobs on which this job depends.
      *
      * @param dependencyJobsNames
      *         the string containing a comma-separated list of job names.
      */
+    @DataBoundSetter
     public void setDependencyJobsNames(String dependencyJobsNames) {
         this.dependencyJobsNames = dependencyJobsNames;
     }
@@ -1269,7 +1389,7 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Returns whom to notify.
+     * Whom to notify.
      *
      * @return the notification level value
      */
@@ -1293,6 +1413,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param escapeQuotes is true if escapeQuotes should be on.
      */
+    @DataBoundSetter
     public void setEscapeQuotes(boolean escapeQuotes) {
         this.escapeQuotes = escapeQuotes;
     }
@@ -1303,9 +1424,11 @@ public class GerritTrigger extends Trigger<Job> {
      * problems with some configurations.
      *
      * @return true if noNameAndEmailParameters is on.
+     * @deprecated replaced with {@link #getNameAndEmailParameterMode()}
      */
+    @Deprecated
     public boolean isNoNameAndEmailParameters() {
-        return noNameAndEmailParameters;
+        return nameAndEmailParameterMode == GerritTriggerParameters.ParameterMode.NONE;
     }
 
     /**
@@ -1314,9 +1437,15 @@ public class GerritTrigger extends Trigger<Job> {
      * problems with some configurations.
      *
      * @param noNameAndEmailParameters is true if problematic parameters should be omitted.
+     * @deprecated replaced with {@link #setNameAndEmailParameterMode(GerritTriggerParameters.ParameterMode)}
      */
+    @Deprecated
     public void setNoNameAndEmailParameters(boolean noNameAndEmailParameters) {
-        this.noNameAndEmailParameters = noNameAndEmailParameters;
+        if (noNameAndEmailParameters) {
+            this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+        } else {
+            this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        }
     }
 
     /**
@@ -1325,9 +1454,11 @@ public class GerritTrigger extends Trigger<Job> {
      * it will be encoded.
      *
      * @return true if readableMessage is on.
+     * @deprecated replaced with {@link #getCommitMessageParameterMode()}
      */
+    @Deprecated
     public boolean isReadableMessage() {
-        return readableMessage;
+        return this.commitMessageParameterMode == GerritTriggerParameters.ParameterMode.PLAIN;
     }
 
     /**
@@ -1336,9 +1467,15 @@ public class GerritTrigger extends Trigger<Job> {
      * it will be encoded.
      *
      * @param readableMessage is true if human readable message is set.
+     * @deprecated replaced with {@link #setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode)}.
      */
+    @Deprecated
     public void setReadableMessage(boolean readableMessage) {
-        this.readableMessage = readableMessage;
+        if (readableMessage) {
+            this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        } else {
+            this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+        }
     }
 
     /**
@@ -1351,12 +1488,32 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Message to write to Gerrit when a build begins.
+     *
+     * @param buildStartMessage The build start message
+     */
+    @DataBoundSetter
+    public void setBuildStartMessage(String buildStartMessage) {
+        this.buildStartMessage = buildStartMessage;
+    }
+
+    /**
      * The message to show users when a build succeeds, if custom messages are enabled.
      *
      * @return The build successful message
      */
     public String getBuildSuccessfulMessage() {
         return buildSuccessfulMessage;
+    }
+
+    /**
+     * Message to write to Gerrit when a build succeeds.
+     *
+     * @param buildSuccessfulMessage The build successful message
+     */
+    @DataBoundSetter
+    public void setBuildSuccessfulMessage(String buildSuccessfulMessage) {
+        this.buildSuccessfulMessage = buildSuccessfulMessage;
     }
 
     /**
@@ -1369,6 +1526,15 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Message to write to Gerrit when a build is unstable.
+     * @param buildUnstableMessage The build unstable message
+     */
+    @DataBoundSetter
+    public void setBuildUnstableMessage(String buildUnstableMessage) {
+        this.buildUnstableMessage = buildUnstableMessage;
+    }
+
+    /**
      * The message to show users when a build finishes, if custom messages are enabled.
      *
      * @return The build failure message
@@ -1378,12 +1544,32 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Message to write to Gerrit when a build fails.
+     *
+     * @param buildFailureMessage The build failure message
+     */
+    @DataBoundSetter
+    public void setBuildFailureMessage(String buildFailureMessage) {
+        this.buildFailureMessage = buildFailureMessage;
+    }
+
+    /**
      * The message to show users when all builds are not built, if custom messages are enabled.
      *
      * @return The build not built message
      */
     public String getBuildNotBuiltMessage() {
         return buildNotBuiltMessage;
+    }
+
+    /**
+     * Message to write to Gerrit when all builds are not built.
+     *
+     * @param buildNotBuiltMessage The build not built message
+     */
+    @DataBoundSetter
+    public void setBuildNotBuiltMessage(String buildNotBuiltMessage) {
+        this.buildNotBuiltMessage = buildNotBuiltMessage;
     }
 
     /**
@@ -1401,6 +1587,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param silentMode true if silent mode should be on.
      */
+    @DataBoundSetter
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
     }
@@ -1411,15 +1598,17 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param silentStartMode true if silent start mode should be on.
      */
+    @DataBoundSetter
     public void setSilentStartMode(boolean silentStartMode) {
         this.silentStartMode = silentStartMode;
     }
 
     /**
-     * Sets the value for whom to notify.
+     * Whom to notify.
      *
      * @param notificationLevel the notification level.
      */
+    @DataBoundSetter
     public void setNotificationLevel(String notificationLevel) {
         this.notificationLevel = notificationLevel;
     }
@@ -1434,10 +1623,11 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Set custom URL to post back to Gerrit.
+     * Custom URL to send to Gerrit instead of build URL.
      *
      * @param customUrl URL to set
      */
+    @DataBoundSetter
     public void setCustomUrl(String customUrl) {
         this.customUrl = customUrl;
     }
@@ -1562,6 +1752,54 @@ public class GerritTrigger extends Trigger<Job> {
     public SkipVote getSkipVote() {
         return skipVote;
     }
+
+    /*
+     * DEPRECATION HANDLING
+     */
+
+    /**
+     * Replaced with {@link #nameAndEmailParameterMode}
+     */
+    @Deprecated
+    private transient boolean noNameAndEmailParameters;
+    /**
+     * Replaced with {@link #commitMessageParameterMode}
+     */
+    @Deprecated
+    private transient boolean readableMessage;
+    @SuppressWarnings("unused")
+    @Deprecated
+    private transient boolean allowTriggeringUnreviewedPatches;
+
+    /**
+     * Converts old trigger configs when only patchset created was available as event
+     * and when jobs were not associated to Gerrit servers.
+     *
+     * @return the resolved instance.
+     * @throws ObjectStreamException if something beneath goes wrong.
+     */
+    public Object readResolve() throws ObjectStreamException {
+        initializeServerName();
+        initializeTriggerOnEvents();
+        if (commitMessageParameterMode == null) {
+            if (readableMessage) {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+            } else {
+                commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
+            }
+        }
+        if (nameAndEmailParameterMode == null) {
+            if (noNameAndEmailParameters) {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.NONE;
+            } else {
+                nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+            }
+        }
+        return super.readResolve();
+    }
+    /*
+     * /DEPRECATION HANDLING
+     */
 
     /**
      * The Descriptor for the Trigger.
