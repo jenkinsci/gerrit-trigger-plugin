@@ -284,6 +284,67 @@ public class ParameterModeJenkinsTest {
         j.assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name(), build);
     }
 
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#NONE} setting
+     * for {@link GerritTrigger#changeSubjectParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testChangeSubjectParameterModeNone() throws Exception {
+        trigger.setChangeSubjectParameterMode(GerritTriggerParameters.ParameterMode.NONE);
+        String expected = "A new commit has arrived!";
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setSubject(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name(), build);
+    }
+
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#PLAIN} (default) setting
+     * for {@link GerritTrigger#changeSubjectParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testChangeSubjectParameterModeDefault() throws Exception {
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getChangeSubjectParameterMode());
+        String expected = "A new commit has arrived!";
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setSubject(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
+                + "="
+                + expected, build);
+    }
+
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#BASE64} setting
+     * for {@link GerritTrigger#changeSubjectParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testChangeSubjectParameterModeBase64() throws Exception {
+        trigger.setChangeSubjectParameterMode(GerritTriggerParameters.ParameterMode.BASE64);
+        String expected = "A new commit has arrived!";
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setSubject(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
+                + "="
+                + GerritTriggerParameters.ParameterMode.encodeBase64(expected), build);
+    }
+
 
     /**
      * Test builder that prints out all env vars to the build log.

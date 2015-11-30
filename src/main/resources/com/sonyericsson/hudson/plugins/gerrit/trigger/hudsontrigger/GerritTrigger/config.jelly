@@ -27,6 +27,11 @@
                     ${it.toString()}
                 </ff:enum>
             </f:entry>
+            <f:entry title="${%Change subject parameter}" field="changeSubjectParameterMode">
+                <ff:enum default="PLAIN"> <!-- TODO change to f when core dep >= 1.640 -->
+                    ${it.toString()}
+                </ff:enum>
+            </f:entry>
             <f:entry title="${%Compound 'Name And Email' Parameters}" field="nameAndEmailParameterMode">
                 <ff:enum default="PLAIN"> <!-- TODO change to f when core dep >= 1.640 -->
                     ${it.toString()}

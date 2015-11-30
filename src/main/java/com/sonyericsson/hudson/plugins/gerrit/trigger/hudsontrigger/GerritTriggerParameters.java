@@ -333,12 +333,14 @@ public enum GerritTriggerParameters {
         ParameterMode nameAndEmailParameterMode = ParameterMode.PLAIN;
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
+        ParameterMode changeSubjectMode = ParameterMode.PLAIN;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
                 nameAndEmailParameterMode = trigger.getNameAndEmailParameterMode();
                 escapeQuotes = trigger.isEscapeQuotes();
                 commitMessageMode = trigger.getCommitMessageParameterMode();
+                changeSubjectMode = trigger.getChangeSubjectParameterMode();
             }
         }
 
@@ -376,8 +378,8 @@ public enum GerritTriggerParameters {
                 GERRIT_CHANGE_RESTORER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
             }
-            GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
-                    parameters, event.getChange().getSubject(), escapeQuotes);
+            changeSubjectMode.setOrCreateParameterValue(GERRIT_CHANGE_SUBJECT, parameters,
+                    event.getChange().getSubject(), escapeQuotes);
 
             String url = getURL(event, project);
 
