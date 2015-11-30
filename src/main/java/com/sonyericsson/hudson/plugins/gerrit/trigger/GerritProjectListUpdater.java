@@ -54,6 +54,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * The command for fetching projects.
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
+    private static final int MAX_WAIT_TIME = 64;
 
     private AtomicBoolean connected = new AtomicBoolean(false);
     private boolean shutdown = false;
@@ -214,7 +215,9 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         while (!isConnected() && !shutdown) {
             logger.info("Not connected to {}, waiting for {} second(s)", serverName, interval);
             waitFor(interval);
-            interval = interval * 2;
+            if (interval < MAX_WAIT_TIME) {
+                interval = interval * 2;
+            }
         }
         try {
             logger.info("Trying to load project list.");
