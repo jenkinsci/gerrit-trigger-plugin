@@ -43,5 +43,5 @@ THE SOFTWARE.
             </f:option>
         </j:forEach>
     </select>
-    <!-- TODO consider customizedFields -->
+    <!-- TODO Remove when core dep >= 1.640 (6641190b8cce326bf9040de4d8182669ff7582d3) -->
 </j:jelly>
