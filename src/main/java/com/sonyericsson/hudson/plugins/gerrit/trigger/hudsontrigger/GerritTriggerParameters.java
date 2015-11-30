@@ -614,6 +614,11 @@ public enum GerritTriggerParameters {
 
             final Class<? extends StringParameterValue> clazz;
 
+            /**
+             * Constructor.
+             *
+             * @param clazz what parameter value class to use for plain text.
+             */
             PlainMode(Class<? extends StringParameterValue> clazz) {
                 this.clazz = clazz;
             }
@@ -651,6 +656,7 @@ public enum GerritTriggerParameters {
          * @param parameter    the parameter to add
          * @param parameters   the list of already added parameters
          * @param value        the value to set (in plain text)
+         * @param mode         what plain text parameters should be added as
          * @param escapeQuotes if quote characters should be escaped.
          * @see #setOrCreateBase64EncodedStringParameterValue(List, String, boolean)
          * @see #setOrCreateTextParameterValue(List, String, boolean)
