@@ -163,6 +163,7 @@ public class GerritTrigger extends Trigger<Job> {
     private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
     private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
+    private GerritTriggerParameters.ParameterMode changeSubjectParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -207,6 +208,7 @@ public class GerritTrigger extends Trigger<Job> {
 
         this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        this.changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
 
         this.dependencyJobsNames = "";
         this.buildStartMessage = "";
@@ -311,6 +313,7 @@ public class GerritTrigger extends Trigger<Job> {
         } else {
             commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         }
+        this.changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -340,6 +343,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
      * @see GerritTriggerParameters#GERRIT_SUBMITTER
      */
+    @Nonnull
     public GerritTriggerParameters.ParameterMode getNameAndEmailParameterMode() {
         return nameAndEmailParameterMode;
     }
@@ -366,6 +370,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
+    @Nonnull
     public GerritTriggerParameters.ParameterMode getCommitMessageParameterMode() {
         return commitMessageParameterMode;
     }
@@ -376,8 +381,32 @@ public class GerritTrigger extends Trigger<Job> {
      * @param commitMessageParameterMode the mode
      */
     @DataBoundSetter
-    public void setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
+    public void setCommitMessageParameterMode(
+            @Nonnull GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
         this.commitMessageParameterMode = commitMessageParameterMode;
+    }
+
+    /**
+     * What mode the change subject parameter {@link GerritTriggerParameters#GERRIT_CHANGE_SUBJECT} should be used
+     * when adding it.
+     *
+     * @return the mode
+     */
+    @Nonnull
+    public GerritTriggerParameters.ParameterMode getChangeSubjectParameterMode() {
+        return changeSubjectParameterMode;
+    }
+
+    /**
+     * What mode the change subject parameter {@link GerritTriggerParameters#GERRIT_CHANGE_SUBJECT} should be used
+     * when adding it.
+     *
+     * @param changeSubjectParameterMode the mode
+     */
+    @DataBoundSetter
+    public void setChangeSubjectParameterMode(
+            @Nonnull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
+        this.changeSubjectParameterMode = changeSubjectParameterMode;
     }
 
     /**
@@ -1794,6 +1823,9 @@ public class GerritTrigger extends Trigger<Job> {
             } else {
                 nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
             }
+        }
+        if (changeSubjectParameterMode == null) {
+            changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         }
         return super.readResolve();
     }

@@ -92,7 +92,7 @@ public class BackCompat2173JenkinsTest {
         assertFalse("Skip not built", trigger.getSkipVote().isOnNotBuilt());
         assertNotNull(trigger.getGerritBuildFailedCodeReviewValue());
         assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                                                       trigger.getGerritBuildFailedCodeReviewValue());
+                trigger.getGerritBuildFailedCodeReviewValue());
         assertFalse("Silent Mode", trigger.isSilentMode());
         assertEquals("Notification level", "ALL", trigger.getNotificationLevel());
         assertFalse("Silent start", trigger.isSilentStartMode());
@@ -103,6 +103,9 @@ public class BackCompat2173JenkinsTest {
         assertFalse("Readable message", trigger.isReadableMessage());
         assertSame("Commit message mode == BASE64", GerritTriggerParameters.ParameterMode.BASE64,
                 trigger.getCommitMessageParameterMode());
+        //Setting introduced after the version under test, so it should have the default value
+        assertSame("Change subject mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
+                trigger.getChangeSubjectParameterMode());
         assertEquals(GerritServer.ANY_SERVER, trigger.getServerName());
 
         assertThat(trigger.getGerritProjects(), hasItem(
@@ -161,7 +164,7 @@ public class BackCompat2173JenkinsTest {
         assertTrue("Skip not built", trigger.getSkipVote().isOnNotBuilt());
         assertNotNull(trigger.getGerritBuildNotBuiltCodeReviewValue());
         assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                                                       trigger.getGerritBuildNotBuiltCodeReviewValue());
+                trigger.getGerritBuildNotBuiltCodeReviewValue());
         assertFalse("Silent Mode", trigger.isSilentMode());
         assertEquals("Notification level", "OWNER", trigger.getNotificationLevel());
         assertTrue("Silent start", trigger.isSilentStartMode());
@@ -172,6 +175,9 @@ public class BackCompat2173JenkinsTest {
         assertTrue("Readable message", trigger.isReadableMessage());
         assertSame("Commit message mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
                 trigger.getCommitMessageParameterMode());
+        //Setting introduced after the version under test, so it should have the default value
+        assertSame("Change subject mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
+                trigger.getChangeSubjectParameterMode());
         assertEquals(GerritServer.ANY_SERVER, trigger.getServerName());
 
         assertThat(trigger.getGerritProjects(), hasItem(

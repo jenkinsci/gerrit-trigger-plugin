@@ -333,12 +333,14 @@ public enum GerritTriggerParameters {
         ParameterMode nameAndEmailParameterMode = ParameterMode.PLAIN;
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
+        ParameterMode changeSubjectMode = ParameterMode.PLAIN;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
                 nameAndEmailParameterMode = trigger.getNameAndEmailParameterMode();
                 escapeQuotes = trigger.isEscapeQuotes();
                 commitMessageMode = trigger.getCommitMessageParameterMode();
+                changeSubjectMode = trigger.getChangeSubjectParameterMode();
             }
         }
 
@@ -370,41 +372,43 @@ public enum GerritTriggerParameters {
                     parameters, event.getChange().getProject(), escapeQuotes);
             if (event instanceof ChangeRestored) {
                 nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_RESTORER, parameters,
-                        getNameAndEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
+                        getNameAndEmail(((ChangeRestored)event).getRestorer()),
+                        ParameterMode.PlainMode.STRING, escapeQuotes);
                 GERRIT_CHANGE_RESTORER_NAME.setOrCreateStringParameterValue(
                         parameters, getName(((ChangeRestored)event).getRestorer()), escapeQuotes);
                 GERRIT_CHANGE_RESTORER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
             }
-            GERRIT_CHANGE_SUBJECT.setOrCreateStringParameterValue(
-                    parameters, event.getChange().getSubject(), escapeQuotes);
+            changeSubjectMode.setOrCreateParameterValue(GERRIT_CHANGE_SUBJECT, parameters,
+                    event.getChange().getSubject(), ParameterMode.PlainMode.STRING, escapeQuotes);
 
             String url = getURL(event, project);
 
             String commitMessage = event.getChange().getCommitMessage();
             if (commitMessage != null) {
                 commitMessageMode.setOrCreateParameterValue(GERRIT_CHANGE_COMMIT_MESSAGE,
-                        parameters, commitMessage, escapeQuotes);
+                        parameters, commitMessage, ParameterMode.PlainMode.TEXT, escapeQuotes);
             }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
                 nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_ABANDONER, parameters,
-                        getNameAndEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+                        getNameAndEmail(((ChangeAbandoned)event).getAbandoner()),
+                        ParameterMode.PlainMode.STRING, escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_NAME.setOrCreateStringParameterValue(
                         parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_OWNER, parameters,
-                    getNameAndEmail(event.getChange().getOwner()), escapeQuotes);
+                    getNameAndEmail(event.getChange().getOwner()), ParameterMode.PlainMode.STRING, escapeQuotes);
             GERRIT_CHANGE_OWNER_NAME.setOrCreateStringParameterValue(
                     parameters, getName(event.getChange().getOwner()), escapeQuotes);
             GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
             Account uploader = findUploader(event);
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_PATCHSET_UPLOADER, parameters,
-                    getNameAndEmail(uploader), escapeQuotes);
+                    getNameAndEmail(uploader), ParameterMode.PlainMode.STRING, escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_NAME.setOrCreateStringParameterValue(
                     parameters, getName(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
@@ -423,7 +427,7 @@ public enum GerritTriggerParameters {
         Account account = gerritEvent.getAccount();
         if (account != null) {
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_EVENT_ACCOUNT, parameters,
-                    getNameAndEmail(account), escapeQuotes);
+                    getNameAndEmail(account), ParameterMode.PlainMode.STRING, escapeQuotes);
             GERRIT_EVENT_ACCOUNT_NAME.setOrCreateStringParameterValue(
                     parameters, getName(account), escapeQuotes);
             GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
@@ -561,9 +565,9 @@ public enum GerritTriggerParameters {
             @Override
             void setOrCreateParameterValue(GerritTriggerParameters parameter,
                                            List<ParameterValue> parameters,
-                                           String value, boolean escapeQuotes) {
-                parameter.setOrCreateTextParameterValue(
-                        parameters, value, escapeQuotes);
+                                           String value, PlainMode mode, boolean escapeQuotes) {
+                parameter.setOrCreateParameterValue(
+                        parameters, value, escapeQuotes, mode.clazz);
             }
         },
         /**
@@ -573,7 +577,7 @@ public enum GerritTriggerParameters {
             @Override
             void setOrCreateParameterValue(GerritTriggerParameters parameter,
                                            List<ParameterValue> parameters,
-                                           String value, boolean escapeQuotes) {
+                                           String value, PlainMode mode, boolean escapeQuotes) {
                 try {
                     parameter.setOrCreateBase64EncodedStringParameterValue(
                             parameters, encodeBase64(value), escapeQuotes);
@@ -590,10 +594,35 @@ public enum GerritTriggerParameters {
             @Override
             void setOrCreateParameterValue(GerritTriggerParameters parameter,
                                            List<ParameterValue> parameters,
-                                           String value, boolean escapeQuotes) {
+                                           String value, PlainMode mode, boolean escapeQuotes) {
                 //Do nothing
             }
         };
+
+        /**
+         * If plain text parameters should be added as {@link StringParameterValue} or {@link TextParameterValue}.
+         */
+        enum PlainMode {
+            /**
+             * {@link StringParameterValue}.
+             */
+            STRING(StringParameterValue.class),
+            /**
+             * {@link TextParameterValue}.
+             */
+            TEXT(TextParameterValue.class);
+
+            final Class<? extends StringParameterValue> clazz;
+
+            /**
+             * Constructor.
+             *
+             * @param clazz what parameter value class to use for plain text.
+             */
+            PlainMode(Class<? extends StringParameterValue> clazz) {
+                this.clazz = clazz;
+            }
+        }
 
         /**
          * Encodes the string as Base64.
@@ -627,12 +656,13 @@ public enum GerritTriggerParameters {
          * @param parameter    the parameter to add
          * @param parameters   the list of already added parameters
          * @param value        the value to set (in plain text)
+         * @param mode         what plain text parameters should be added as
          * @param escapeQuotes if quote characters should be escaped.
          * @see #setOrCreateBase64EncodedStringParameterValue(List, String, boolean)
          * @see #setOrCreateTextParameterValue(List, String, boolean)
          */
         abstract void setOrCreateParameterValue(GerritTriggerParameters parameter, List<ParameterValue> parameters,
-                                                String value, boolean escapeQuotes);
+                                                String value, PlainMode mode, boolean escapeQuotes);
 
         @Override
         public String toString() {
