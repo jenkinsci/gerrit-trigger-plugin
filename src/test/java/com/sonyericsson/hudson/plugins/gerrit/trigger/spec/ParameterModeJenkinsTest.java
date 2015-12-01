@@ -24,6 +24,7 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.ParametersAction;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import org.junit.Before;
@@ -354,7 +355,15 @@ public class ParameterModeJenkinsTest {
         @Override
         public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
                 throws InterruptedException, IOException {
-            EnvVars vars = build.getEnvironment(listener);
+            EnvVars vars = new EnvVars();
+            ParametersAction parametersAction = build.getAction(ParametersAction.class);
+            if (parametersAction != null) {
+                parametersAction.buildEnvVars(build, vars);
+            } else {
+                listener.error("Build was scheduled without parameters!");
+                return false;
+            }
+
             for (Map.Entry<String, String> entry : vars.entrySet()) {
                 listener.getLogger().println(entry.getKey() + "=" + entry.getValue());
             }
