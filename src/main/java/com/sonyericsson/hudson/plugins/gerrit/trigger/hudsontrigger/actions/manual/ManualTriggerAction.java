@@ -649,13 +649,13 @@ public class ManualTriggerAction implements RootAction {
      */
     public static enum Approval {
         /**
-         * A Code Review Approval type <i>CRVW</i>.
+         * A Code Review Approval type <i>Code-Review</i>.
          */
-        CODE_REVIEW("CRVW"),
+        CODE_REVIEW("Code-Review"),
         /**
-         * A Verified Approval type <i>VRIF</i>.
+         * A Verified Approval type <i>Verified</i>.
          */
-        VERIFIED("VRIF");
+        VERIFIED("Verified");
         private String type;
 
         /**

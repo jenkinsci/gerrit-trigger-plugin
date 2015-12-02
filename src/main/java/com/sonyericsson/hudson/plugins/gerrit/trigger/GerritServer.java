@@ -394,8 +394,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
             categories = new LinkedList<VerdictCategory>();
         }
         if (categories.isEmpty()) {
-            categories.add(new VerdictCategory("CRVW", "Code Review"));
-            categories.add(new VerdictCategory("VRIF", "Verified"));
+            categories.add(new VerdictCategory("Code-Review", "Code Review"));
+            categories.add(new VerdictCategory("Verified", "Verified"));
         }
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getHandler_();

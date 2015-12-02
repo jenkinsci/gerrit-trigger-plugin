@@ -152,7 +152,7 @@ public abstract class DuplicatesUtil {
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null, false));
-        PluginCommentAddedEvent event = new PluginCommentAddedEvent("CRVW", "1");
+        PluginCommentAddedEvent event = new PluginCommentAddedEvent("Code-Review", "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
