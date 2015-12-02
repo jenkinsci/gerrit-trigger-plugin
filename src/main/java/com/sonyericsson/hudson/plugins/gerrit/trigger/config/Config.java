@@ -373,7 +373,7 @@ public class Config implements IGerritHudsonTriggerConfig {
                 "projectListRefreshInterval",
                 DEFAULT_PROJECT_LIST_REFRESH_INTERVAL);
         enableProjectAutoCompletion = formData.optBoolean(
-                "isEnableProjectAutoCompletion",
+                "enableProjectAutoCompletion",
                 DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION);
 
         categories = new LinkedList<VerdictCategory>();
