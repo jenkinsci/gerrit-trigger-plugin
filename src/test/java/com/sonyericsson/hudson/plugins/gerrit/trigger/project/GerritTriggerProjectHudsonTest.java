@@ -87,10 +87,10 @@ public class GerritTriggerProjectHudsonTest {
         HtmlElement option = iterator.next();
         String value = option.getAttribute("value");
         //This will test that the default values are correct.
-        assertEquals("First value should be CRVW", "CRVW", value);
+        assertEquals("First value should be Code-Review", "Code-Review", value);
         option = iterator.next();
         value = option.getAttribute("value");
-        assertEquals("Second value should be VRIF", "VRIF", value);
+        assertEquals("Second value should be Verified", "Verified", value);
     }
 
     /**
@@ -133,10 +133,10 @@ public class GerritTriggerProjectHudsonTest {
         HtmlElement option = iterator.next();
         String value = option.getAttribute("value");
         //This will test that the default values are correct.
-        assertEquals("First value should be VRIF", "VRIF", value);
+        assertEquals("First value should be Verified", "Verified", value);
         option = iterator.next();
         value = option.getAttribute("value");
-        assertEquals("Second value should be CRVW", "CRVW", value);
+        assertEquals("Second value should be Code-Review", "Code-Review", value);
         option = iterator.next();
         value = option.getAttribute("value");
         assertEquals("Third value should be Code-Review", "Code-Review", value);

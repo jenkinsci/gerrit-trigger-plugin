@@ -58,7 +58,7 @@ public class ManualTriggerActionTest {
 
     /**
      * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject)}.
-     * With CRVW patchset info.
+     * With Code-Review patchset info.
      * @throws Exception if so.
      */
     @Test
@@ -68,19 +68,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", "Code-Review");
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", "Code-Review");
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", "Verified");
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", "Code-Review");
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
@@ -114,7 +114,7 @@ public class ManualTriggerActionTest {
 
     /**
      * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject)}.
-     * With VRIF patchset info.
+     * With Verified patchset info.
      * @throws Exception if so.
      */
     @Test
@@ -124,19 +124,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", "Verified");
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", "Verified");
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "CRVW");
+        crw.put("type", "Code-Review");
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "VRIF");
+        crw.put("type", "Verified");
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
