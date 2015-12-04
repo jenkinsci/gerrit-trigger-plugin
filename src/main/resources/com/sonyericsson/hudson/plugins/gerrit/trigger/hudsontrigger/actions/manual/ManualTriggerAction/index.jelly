@@ -169,7 +169,7 @@
                                                         </td>
                                                         <td align="center" valign="middle"
                                                             onClick="activateRow('${theId}')">
-                                                            <j:set var="v" value="${it.getVerified(res)}"/>
+                                                            <j:set var="v" value="${it.getVerified(res, patch.getInt('number'))}"/>
                                                             <j:choose>
                                                                 <j:when test="${v.low &lt; 0}">
                                                                     <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"
@@ -186,7 +186,7 @@
                                                         </td>
                                                         <td align="center" valign="middle"
                                                             onClick="activateRow('${theId}')">
-                                                            <j:set var="v" value="${it.getCodeReview(res)}"/>
+                                                            <j:set var="v" value="${it.getCodeReview(res, patch.getInt('number'))}"/>
                                                             <j:choose>
                                                                 <j:when test="${v.low &lt; -1}">
                                                                     <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"

@@ -220,7 +220,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             }
         }
         try {
-            logger.info("Trying to load project list.");
+            logger.trace("Trying to load project list.");
             if (isConnected()) {
                 IGerritHudsonTriggerConfig activeConfig = getConfig();
                 SshConnection sshConnection = SshConnectionFactory.getConnection(
@@ -232,7 +232,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 List<String> projects = readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
                 if (projects.size() > 0) {
                     setGerritProjects(projects);
-                    logger.info("Project list from {} contains {} entries", serverName, projects.size());
+                    logger.trace("Project list from {} contains {} entries", serverName, projects.size());
                 } else {
                     logger.warn("Project list from {} contains 0 projects", serverName);
                 }
