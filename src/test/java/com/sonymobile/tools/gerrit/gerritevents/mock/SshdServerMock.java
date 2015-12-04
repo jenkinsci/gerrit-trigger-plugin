@@ -47,12 +47,37 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
 import com.jcraft.jsch.KeyPair;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.APPROVALS;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.AUTHOR;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.COMMIT_MESSAGE;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.CREATED_ON;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.ID;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.LAST_UPDATED;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NAME;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.OWNER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.PARENTS;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.PROJECT;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REF;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.STATUS;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.TYPE;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.UPLOADER;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.URL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.VALUE;
 
 /**
  * The beginning of a mock of a sshd server. When it is done the idea is to use this to send in stream-events over the
@@ -657,6 +682,228 @@ public class SshdServerMock implements CommandFactory {
                         new OutputStreamWriter(getOutputStream(), "UTF-8")));
                 System.out.println("Sending: " + line);
                 out.println(line);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+        }
+    }
+
+    /**
+     * A Command that returns last patcheset with approvals.
+     */
+    public static class SendQueryLastPatchSet extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendQueryLastPatchSet(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+
+            final int createdOn1 = 1449170072;
+            final int createdOn2 = 1449168976;
+            final int lastUpdated = 1449170950;
+
+            JSONObject jsonAccount = new JSONObject();
+            jsonAccount.put(EMAIL, "EngyCZ@gmail.com");
+            jsonAccount.put(NAME, "Engy");
+
+            JSONArray parents = new JSONArray();
+            parents.add("31581608d63510c13d7cb12d3e9a245ca4f72a62");
+
+            JSONObject currentPatchSet = new JSONObject();
+            currentPatchSet.put(NUMBER, "2");
+            currentPatchSet.put(REVISION, "87861b77a7614f8e6da19b017c588b741911983c");
+            currentPatchSet.put(PARENTS, parents);
+            currentPatchSet.put(REF, "refs/changes/00/100/2");
+            currentPatchSet.put(UPLOADER, jsonAccount);
+            currentPatchSet.put(CREATED_ON, createdOn1);
+            currentPatchSet.put(AUTHOR, jsonAccount);
+
+            JSONArray approvals = new JSONArray();
+
+            JSONObject crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            currentPatchSet.put(APPROVALS, approvals);
+
+            JSONObject change = new JSONObject();
+            change.put(PROJECT, "project");
+            change.put(BRANCH, "branch");
+            change.put(ID, "I2343434344");
+            change.put(NUMBER, "100");
+            change.put(SUBJECT, "subject");
+            change.put(OWNER, jsonAccount);
+            change.put(URL, "http://localhost:8080");
+            change.put(COMMIT_MESSAGE, "Change");
+            change.put(CREATED_ON, createdOn2);
+            change.put(LAST_UPDATED, lastUpdated);
+            change.put("open", true);
+            change.put(STATUS, "NEW");
+            change.put("currentPatchSet", currentPatchSet);
+
+            System.out.println("Starting QueryLastPatchSet: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + change);
+                out.println(change);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+        }
+    }
+
+    /**
+     * A Command that returns last patcheset with approvals.
+     */
+    public static class SendQueryAllPatchSets extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendQueryAllPatchSets(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            final int createdOn1 = 1449170072;
+            final int createdOn2 = 1449168976;
+            final int lastUpdated = 1449170950;
+
+            JSONObject jsonAccount = new JSONObject();
+            jsonAccount.put(EMAIL, "EngyCZ@gmail.com");
+            jsonAccount.put(NAME, "Engy");
+
+            JSONArray parents = new JSONArray();
+            parents.add("31581608d63510c13d7cb12d3e9a245ca4f72a62");
+
+            JSONObject currentPatchSet = new JSONObject();
+            currentPatchSet.put(NUMBER, "2");
+            currentPatchSet.put(REVISION, "87861b77a7614f8e6da19b017c588b741911983c");
+            currentPatchSet.put(PARENTS, parents);
+            currentPatchSet.put(REF, "refs/changes/00/100/2");
+            currentPatchSet.put(UPLOADER, jsonAccount);
+            currentPatchSet.put(CREATED_ON, createdOn1);
+            currentPatchSet.put(AUTHOR, jsonAccount);
+
+            JSONArray approvals = new JSONArray();
+
+            JSONObject crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            currentPatchSet.put(APPROVALS, approvals);
+
+            JSONObject patchSet1 = new JSONObject();
+            patchSet1.put(NUMBER, "1");
+            patchSet1.put(REVISION, "009365b77a69cd5ecd05a699b19213682f7f8d79");
+            patchSet1.put(PARENTS, parents);
+            patchSet1.put(REF, "refs/changes/00/100/1");
+            patchSet1.put(UPLOADER, jsonAccount);
+            patchSet1.put(CREATED_ON, createdOn2);
+            patchSet1.put(AUTHOR, jsonAccount);
+
+            JSONObject patchSet2 = new JSONObject();
+            patchSet2.put(NUMBER, "2");
+            patchSet2.put(REVISION, "87861b77a7614f8e6da19b017c588b741911983c");
+            patchSet2.put(PARENTS, parents);
+            patchSet2.put(REF, "refs/changes/00/100/1");
+            patchSet2.put(UPLOADER, jsonAccount);
+            patchSet2.put(CREATED_ON, createdOn1);
+            patchSet2.put(AUTHOR, jsonAccount);
+
+            JSONArray patchSets = new JSONArray();
+            patchSets.add(patchSet1);
+            patchSets.add(patchSet2);
+
+            JSONObject change = new JSONObject();
+            change.put(PROJECT, "project");
+            change.put(BRANCH, "branch");
+            change.put(ID, "I2343434344");
+            change.put(NUMBER, "100");
+            change.put(SUBJECT, "subject");
+            change.put(OWNER, jsonAccount);
+            change.put(URL, "http://localhost:8080");
+            change.put(COMMIT_MESSAGE, "Change");
+            change.put(CREATED_ON, createdOn2);
+            change.put(LAST_UPDATED, lastUpdated);
+            change.put("open", true);
+            change.put(STATUS, "NEW");
+            change.put("currentPatchSet", currentPatchSet);
+            change.put("patchSets", patchSets);
+
+            System.out.println("Starting QueryAllPatchSets: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + change);
+                out.println(change);
                 out.flush();
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
