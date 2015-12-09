@@ -43,6 +43,7 @@ import hudson.model.Hudson;
 import hudson.model.ParameterValue;
 import hudson.model.RootAction;
 import hudson.security.Permission;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -324,7 +325,9 @@ public class ManualTriggerAction implements RootAction {
             response.sendRedirect2(".");
             return;
         }
-        Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
+        Jenkins jenkins = Jenkins.getInstance();
+        assert jenkins != null;
+        jenkins.checkPermission(PluginImpl.MANUAL_TRIGGER);
         IGerritHudsonTriggerConfig config = getServerConfig(selectedServer);
 
         if (config != null) {

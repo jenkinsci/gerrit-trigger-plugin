@@ -90,7 +90,7 @@
                                     <j:set var="result" value="${request.session.getAttribute('result')}"/>
                                     <table width="100%" border="1" cellpadding="2" cellspacing="0"
                                            class="pane bigtable"
-                                           style="margin-top: 0">
+                                           style="margin-top: 0" name="searchResultTable">
                                         <tr>
                                             <td class="pane-header" colspan="2">
                                                 <st:nbsp/>

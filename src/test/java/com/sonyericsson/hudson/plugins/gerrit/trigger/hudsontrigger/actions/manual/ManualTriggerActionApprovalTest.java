@@ -24,16 +24,16 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import static org.mockito.Mockito.any;
-
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
+import com.gargoylesoftware.htmlunit.html.DomNode;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlImage;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTable;
+import com.gargoylesoftware.htmlunit.html.HtmlTableCell;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
-
-import net.sf.json.JSONObject;
-
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -41,33 +41,19 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.util.List;
-
-import javax.servlet.http.HttpSession;
-
-import hudson.model.FreeStyleProject;
-
-//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static import
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-//CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static java import.
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Jiri Engelthaler &lt;EngyCZ@gmail.com&gt;
  */
-
 public class ManualTriggerActionApprovalTest {
 
+    private static final int VERIFIED_COLUMN = 10;
+    private static final int CODE_REVIEW_COLUMN = 11;
+    private static final int FIRST_RESULT_ROW = 1;
+    private static final int SECOND_RESULT_ROW = 3;
     /**
      * An instance of Jenkins Rule.
      */
@@ -97,9 +83,19 @@ public class ManualTriggerActionApprovalTest {
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit query --format=JSON --current-patch-set \"status:open\"",
-            SshdServerMock.SendQueryLastPatchSet.class);
+                SshdServerMock.SendQueryLastPatchSet.class);
         server.returnCommandFor("gerrit query --format=JSON --patch-sets --current-patch-set \"status:open\"",
-            SshdServerMock.SendQueryAllPatchSets.class);
+                SshdServerMock.SendQueryAllPatchSets.class);
+
+        GerritServer gerritServer = new GerritServer(gerritServerName);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.start();
+
+        Config config = (Config)gerritServer.getConfig();
+        config.setGerritAuthKeyFile(sshKey.getPrivateKey());
+        config.setGerritHostName("localhost");
+        config.setGerritSshPort(port);
+        gerritServer.startConnection();
     }
 
     /**
@@ -114,112 +110,52 @@ public class ManualTriggerActionApprovalTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getApprovals(net.sf.json.JSONObject, int)}.
+     * Tests {@link ManualTriggerAction.Approval#getApprovals(net.sf.json.JSONObject, int)}.
      * With an last patchset
+     *
      * @throws Exception if so.
      */
     @Test
     public void testDoGerritSearchLastPatchSet() throws Exception {
-        GerritServer gerritServer = new GerritServer(gerritServerName);
-        PluginImpl.getInstance().addServer(gerritServer);
-        gerritServer.start();
+        JenkinsRule.WebClient client = j.createWebClient();
+        HtmlPage page = client.goTo("gerrit_manual_trigger");
+        HtmlForm theSearch = page.getFormByName("theSearch");
+        page = j.submit(theSearch);
+        HtmlTable table = page.getElementByName("searchResultTable");
+        HtmlTableCell verifiedCell = table.getCellAt(FIRST_RESULT_ROW, VERIFIED_COLUMN);
+        DomNode child = verifiedCell.getFirstChild();
+        assertThat(child, instanceOf(HtmlImage.class));
+        assertEquals("-1", ((HtmlImage)child).getAltAttribute());
 
-        Config config = (Config)gerritServer.getConfig();
-        config.setGerritAuthKeyFile(sshKey.getPrivateKey());
-        config.setGerritHostName("localhost");
-        config.setGerritSshPort(port);
-        gerritServer.startConnection();
-
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gerritServerName);
-
-        final ManualTriggerAction action = new ManualTriggerAction();
-        HttpSession session = mock(HttpSession.class);
-
-        StaplerRequest request = mock(StaplerRequest.class);
-        StaplerResponse response = mock(StaplerResponse.class);
-
-        when(request.getSession(true)).thenReturn(session);
-
-        doAnswer(new Answer() {
-            /**
-             * @see org.mockito.stubbing.Answer#answer(org.mockito.invocation.InvocationOnMock)
-             */
-            @Override
-            public Object answer(InvocationOnMock aInvocation) throws Throwable {
-                List<JSONObject> json = (List<JSONObject>)aInvocation.getArguments()[1];
-
-                ManualTriggerAction.HighLow highLow = action.getCodeReview(json.get(0), 2);
-                assertEquals(2, highLow.getHigh());
-                assertEquals(-1, highLow.getLow());
-
-                highLow = action.getVerified(json.get(0), 2);
-                assertEquals(2, highLow.getHigh());
-                assertEquals(-1, highLow.getLow());
-
-                return null;
-            }
-
-        }).when(session).setAttribute(eq("result"), any());
-
-        action.doGerritSearch("status:open", gerritServerName, false, request, response);
+        HtmlTableCell codeReviewCell = table.getCellAt(FIRST_RESULT_ROW, CODE_REVIEW_COLUMN);
+        child = codeReviewCell.getFirstChild();
+        assertThat(child, instanceOf(HtmlImage.class));
+        assertEquals("2", ((HtmlImage)child).getAltAttribute());
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getApprovals(net.sf.json.JSONObject, int)}.
+     * Tests {@link ManualTriggerAction.Approval#getApprovals(net.sf.json.JSONObject, int)}.
      * With an all patchsets
+     *
      * @throws Exception if so.
      */
     @Test
     public void testDoGerritSearchAllPatchSets() throws Exception {
-        GerritServer gerritServer = new GerritServer(gerritServerName);
-        PluginImpl.getInstance().addServer(gerritServer);
-        gerritServer.start();
+        JenkinsRule.WebClient client = j.createWebClient();
+        HtmlPage page = client.goTo("gerrit_manual_trigger");
+        HtmlForm theSearch = page.getFormByName("theSearch");
+        page = theSearch.getInputByName("allPatchSets").click();
+        theSearch = page.getFormByName("theSearch");
+        page = j.submit(theSearch);
+        HtmlTable table = page.getElementByName("searchResultTable");
+        HtmlTableCell verifiedCell = table.getCellAt(SECOND_RESULT_ROW, VERIFIED_COLUMN);
+        DomNode child = verifiedCell.getFirstChild();
+        assertThat(child, instanceOf(HtmlImage.class));
+        assertEquals("-1", ((HtmlImage)child).getAltAttribute());
 
-        Config config = (Config)gerritServer.getConfig();
-        config.setGerritAuthKeyFile(sshKey.getPrivateKey());
-        config.setGerritHostName("localhost");
-        config.setGerritSshPort(port);
-        gerritServer.startConnection();
-
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gerritServerName);
-
-        final ManualTriggerAction action = new ManualTriggerAction();
-        HttpSession session = mock(HttpSession.class);
-
-        StaplerRequest request = mock(StaplerRequest.class);
-        StaplerResponse response = mock(StaplerResponse.class);
-
-        when(request.getSession(true)).thenReturn(session);
-
-        doAnswer(new Answer() {
-            /**
-             * @see org.mockito.stubbing.Answer#answer(org.mockito.invocation.InvocationOnMock)
-             */
-            @Override
-            public Object answer(InvocationOnMock aInvocation) throws Throwable {
-                List<JSONObject> json = (List<JSONObject>)aInvocation.getArguments()[1];
-
-                ManualTriggerAction.HighLow highLow = action.getCodeReview(json.get(0), 1);
-                assertEquals(0, highLow.getHigh());
-                assertEquals(0, highLow.getLow());
-
-                highLow = action.getCodeReview(json.get(0), 2);
-                assertEquals(2, highLow.getHigh());
-                assertEquals(-1, highLow.getLow());
-
-                highLow = action.getVerified(json.get(0), 1);
-                assertEquals(0, highLow.getHigh());
-                assertEquals(0, highLow.getLow());
-
-                highLow = action.getVerified(json.get(0), 2);
-                assertEquals(2, highLow.getHigh());
-                assertEquals(-1, highLow.getLow());
-
-                return null;
-            }
-
-        }).when(session).setAttribute(eq("result"), any());
-
-        action.doGerritSearch("status:open", gerritServerName, true, request, response);
+        HtmlTableCell codeReviewCell = table.getCellAt(SECOND_RESULT_ROW, CODE_REVIEW_COLUMN);
+        child = codeReviewCell.getFirstChild();
+        assertThat(child, instanceOf(HtmlImage.class));
+        assertEquals("2", ((HtmlImage)child).getAltAttribute());
     }
 }
