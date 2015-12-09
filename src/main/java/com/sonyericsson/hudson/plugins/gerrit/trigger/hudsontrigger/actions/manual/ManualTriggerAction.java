@@ -238,8 +238,20 @@ public class ManualTriggerAction implements RootAction {
      * @param res the patch set.
      * @return the highest and lowest code review vote for the patch set.
      */
+    @Deprecated
     public HighLow getCodeReview(JSONObject res) {
-        return Approval.CODE_REVIEW.getApprovals(res);
+        return getCodeReview(res, 0);
+    }
+
+    /**
+     * Finds the highest and lowest code review vote for the provided patch set.
+     *
+     * @param res the patch set.
+     * @param patchSetNumber the patch set number.
+     * @return the highest and lowest code review vote for the patch set.
+     */
+    public HighLow getCodeReview(JSONObject res, int patchSetNumber) {
+        return Approval.CODE_REVIEW.getApprovals(res, patchSetNumber);
     }
 
     /**
@@ -248,8 +260,20 @@ public class ManualTriggerAction implements RootAction {
      * @param res the patch-set.
      * @return the highest and lowest verified vote.
      */
+    @Deprecated
     public HighLow getVerified(JSONObject res) {
-        return Approval.VERIFIED.getApprovals(res);
+        return getVerified(res, 0);
+    }
+
+    /**
+     * Finds the lowest and highest verified vote for the provided patch set.
+     *
+     * @param res the patch-set.
+     * @param patchSetNumber the patch set number.
+     * @return the highest and lowest verified vote.
+     */
+    public HighLow getVerified(JSONObject res, int patchSetNumber) {
+        return Approval.VERIFIED.getApprovals(res, patchSetNumber);
     }
 
     /**
@@ -316,7 +340,6 @@ public class ManualTriggerAction implements RootAction {
                             JSONArray jsonArray = new JSONArray();
                             jsonArray.add(j.getJSONObject("currentPatchSet"));
                             j.put("patchSets", jsonArray);
-                            j.remove("currentPatchSet");
                         }
                     }
                 }
@@ -324,7 +347,7 @@ public class ManualTriggerAction implements RootAction {
                 //TODO Implement some smart default selection.
                 //That can notice that a specific revision is searched or that there is only one result etc.
             } catch (GerritQueryException gqe) {
-                logger.debug("Bad query. ", gqe);
+                logger.debug("Bad query {}", gqe);
                 session.setAttribute(SESSION_SEARCH_ERROR, gqe);
             } catch (Exception ex) {
                 logger.warn("Could not query Gerrit for [" + queryString + "]", ex);
@@ -673,26 +696,40 @@ public class ManualTriggerAction implements RootAction {
          * @param res the change.
          * @return the highest and lowest value. Or 0,0 if there are no values.
          */
+        @Deprecated
         public HighLow getApprovals(JSONObject res) {
+            return getApprovals(res, 0);
+        }
+
+        /**
+         * Finds the highest and lowest approval value of the approval's type for the specified change.
+         *
+         * @param res the change.
+         * @param patchSetNumber the patch set number.
+         * @return the highest and lowest value. Or 0,0 if there are no values.
+         */
+        public HighLow getApprovals(JSONObject res, int patchSetNumber) {
             logger.trace("Get Approval: {} {}", type, res);
             int highValue = Integer.MIN_VALUE;
             int lowValue = Integer.MAX_VALUE;
             if (res.has("currentPatchSet")) {
                 logger.trace("Has currentPatchSet");
                 JSONObject patchSet = res.getJSONObject("currentPatchSet");
-                if (patchSet.has("approvals")) {
-                    JSONArray approvals = patchSet.getJSONArray("approvals");
-                    logger.trace("Approvals: ", approvals);
-                    for (Object o : approvals) {
-                        JSONObject ap = (JSONObject)o;
-                        if (type.equalsIgnoreCase(ap.optString("type"))) {
-                            logger.trace("A {}", type);
-                            try {
-                                int approval = Integer.parseInt(ap.getString("value"));
-                                highValue = Math.max(highValue, approval);
-                                lowValue = Math.min(lowValue, approval);
-                            } catch (NumberFormatException nfe) {
-                                logger.warn("Gerrit is bad at giving me Approval-numbers!", nfe);
+                if (patchSet.has("number") && patchSet.has("approvals")) {
+                    if (patchSet.getInt("number") == patchSetNumber) {
+                        JSONArray approvals = patchSet.getJSONArray("approvals");
+                        logger.trace("Approvals: {}", approvals);
+                        for (Object o : approvals) {
+                            JSONObject ap = (JSONObject)o;
+                            if (type.equalsIgnoreCase(ap.optString("type"))) {
+                                logger.trace("A {}", type);
+                                try {
+                                    int approval = Integer.parseInt(ap.getString("value"));
+                                    highValue = Math.max(highValue, approval);
+                                    lowValue = Math.min(lowValue, approval);
+                                } catch (NumberFormatException nfe) {
+                                    logger.warn("Gerrit is bad at giving me Approval-numbers! {}", nfe);
+                                }
                             }
                         }
                     }

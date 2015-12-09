@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
 public class ManualTriggerActionTest {
 
     /**
-     * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject)}.
+     * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject, int)}.
      * With Code-Review patchset info.
      * @throws Exception if so.
      */
@@ -84,15 +84,21 @@ public class ManualTriggerActionTest {
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
+        currentPatchSet.put("number", 2);
 
         json.put("currentPatchSet", currentPatchSet);
 
         ManualTriggerAction action = new ManualTriggerAction();
 
-        ManualTriggerAction.HighLow highLow = action.getCodeReview(json);
+        ManualTriggerAction.HighLow highLow = action.getCodeReview(json, 2);
 
         assertEquals(2, highLow.getHigh());
         assertEquals(-1, highLow.getLow());
+
+        highLow = action.getCodeReview(json, 1);
+
+        assertEquals(0, highLow.getHigh());
+        assertEquals(0, highLow.getLow());
     }
 
     /**
@@ -106,14 +112,14 @@ public class ManualTriggerActionTest {
 
         ManualTriggerAction action = new ManualTriggerAction();
 
-        ManualTriggerAction.HighLow highLow = action.getCodeReview(json);
+        ManualTriggerAction.HighLow highLow = action.getCodeReview(json, 2);
 
         assertEquals(0, highLow.getHigh());
         assertEquals(0, highLow.getLow());
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject)}.
+     * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject, int)}.
      * With Verified patchset info.
      * @throws Exception if so.
      */
@@ -140,15 +146,21 @@ public class ManualTriggerActionTest {
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
+        currentPatchSet.put("number", 2);
 
         json.put("currentPatchSet", currentPatchSet);
 
         ManualTriggerAction action = new ManualTriggerAction();
 
-        ManualTriggerAction.HighLow highLow = action.getVerified(json);
+        ManualTriggerAction.HighLow highLow = action.getVerified(json, 2);
 
         assertEquals(2, highLow.getHigh());
         assertEquals(-1, highLow.getLow());
+
+        highLow = action.getVerified(json, 1);
+
+        assertEquals(0, highLow.getHigh());
+        assertEquals(0, highLow.getLow());
     }
 
     /**
@@ -162,7 +174,7 @@ public class ManualTriggerActionTest {
 
         ManualTriggerAction action = new ManualTriggerAction();
 
-        ManualTriggerAction.HighLow highLow = action.getVerified(json);
+        ManualTriggerAction.HighLow highLow = action.getVerified(json, 2);
 
         assertEquals(0, highLow.getHigh());
         assertEquals(0, highLow.getLow());
