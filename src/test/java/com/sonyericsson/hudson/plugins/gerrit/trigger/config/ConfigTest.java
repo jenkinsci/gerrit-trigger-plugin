@@ -140,6 +140,19 @@ public class ConfigTest {
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
     /**
+     * Test ProjectListRefreshInterval zero value after upgrade from gerrit-trigger version 2.13.0 to 2.14.0.
+     */
+    @Test
+    public void testProjectListRefreshIntervalZeroValue() {
+        String formString = "{\"projectListRefreshInterval\":\"0\"}";
+        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
+        Config config = new Config(form);
+        assertEquals(config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL, config.getProjectListRefreshInterval());
+    }
+
+    //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
+
+    /**
      * Test creation of a config object from an existing one.
      */
     @Test

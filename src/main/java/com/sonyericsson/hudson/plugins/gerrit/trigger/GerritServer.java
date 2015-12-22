@@ -1261,19 +1261,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     * Checks that the provided parameter is an integer, not negative.
-     *
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doProjectListFetchDelayCheck(
-            @QueryParameter("value")
-            final String value) {
-
-        return FormValidation.validateNonNegativeInteger(value);
-    }
-
-    /**
      * Checks that the provided parameter is an integer.
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
