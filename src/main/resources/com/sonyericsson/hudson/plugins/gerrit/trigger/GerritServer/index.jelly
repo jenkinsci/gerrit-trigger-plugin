@@ -251,7 +251,7 @@
                                      <f:textbox name="projectListFetchDelay"
                                         value="${it.config.projectListFetchDelay}"
                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_FETCH_DELAY}"
-                                        checkUrl="'${rootURL}/${serverURL}/projectListFetchDelayCheck?value='+escape(this.value)"
+                                        checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"
                                         style="max-width: 100px;"/>
                                 </div>
                             </div>
@@ -263,7 +263,7 @@
                                      <f:textbox name="projectListRefreshInterval"
                                         value="${it.config.projectListRefreshInterval}"
                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL}"
-                                        checkUrl="'${rootURL}/${serverURL}/projectListFetchDelayCheck?value='+escape(this.value)"
+                                        checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"
                                         style="max-width: 100px;"/>
                                 </div>
                             </div>

@@ -644,6 +644,9 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public int getProjectListRefreshInterval() {
+        if (projectListRefreshInterval == 0) {
+            projectListRefreshInterval = DEFAULT_PROJECT_LIST_REFRESH_INTERVAL;
+        }
         return projectListRefreshInterval;
     }
 
