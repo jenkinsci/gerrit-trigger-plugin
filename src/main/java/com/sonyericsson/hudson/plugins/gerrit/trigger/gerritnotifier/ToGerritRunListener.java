@@ -86,6 +86,20 @@ public final class ToGerritRunListener extends RunListener<Run> {
         return listeners.get(0);
     }
 
+    /**
+     * Records the failure message for the given build.
+     *
+     * @param r              the build that caused the failure.
+     * @param failureMessage the failure message
+     */
+    public void setBuildFailureMessage(@Nonnull Run r, @Nonnull String failureMessage) {
+        GerritCause cause = getCause(r);
+        if (cause != null) {
+            cleanUpGerritCauses(cause, r);
+            memory.setEntryFailureMessage(cause.getEvent(), r, failureMessage);
+        }
+    }
+
     @Override
     public synchronized void onCompleted(@Nonnull Run r, @Nonnull TaskListener listener) {
         GerritCause cause = getCause(r);
@@ -110,7 +124,9 @@ public final class ToGerritRunListener extends RunListener<Run> {
                         // Attempt to record the failure message, if applicable
                         String failureMessage = this.obtainFailureMessage(event, r, listener);
                         logger.info("Obtained failure message: {}", failureMessage);
-                        memory.setEntryFailureMessage(event, r, failureMessage);
+                        if (failureMessage != null) {
+                            memory.setEntryFailureMessage(event, r, failureMessage);
+                        }
                     } catch (IOException e) {
                         listener.error("[gerrit-trigger] Unable to read failure message from the workspace.");
                         logger.warn("IOException while obtaining failure message for build: "

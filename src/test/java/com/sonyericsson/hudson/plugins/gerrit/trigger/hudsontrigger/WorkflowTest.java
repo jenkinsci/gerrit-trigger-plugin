@@ -109,6 +109,48 @@ public class WorkflowTest {
     }
 
     /**
+     * Tests setting a failure message using gerritReview from a workflow job.
+     * @throws Exception if there is one.
+     */
+    @Test
+    public void testWorkflowStepSetsUnsuccessfulMessage() throws Exception {
+        jenkinsRule.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+
+        gerritServer.start();
+        try {
+            PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
+
+            WorkflowJob job = createWorkflowJob(event, ""
+                + "node {\n"
+                + "   stage 'Build'\n"
+                + "   gerritReview unsuccessfulMessage: 'myMessage'\n"
+                + "   currentBuild.setResult('FAILURE')\n"
+                + "}\n");
+
+            PluginImpl.getHandler_().post(event);
+
+            // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
+            TestUtils.waitForBuilds(job, 1);
+            WorkflowRun run = job.getBuilds().iterator().next();
+            jenkinsRule.assertLogContains("Set Gerrit review", run);
+
+            // Workflow build was triggered successfully. Now lets check make sure the
+            // gerrit plugin sent a verified notification back to the Gerrit Server,
+            // and the message contains the custom message...
+            JSONObject verifiedMessage = gerritServer.waitForNextVerified();
+            // System.out.println(gerritServer.lastContent);
+            String message = verifiedMessage.getString("message");
+            Assert.assertTrue(message.startsWith("Build Failed"));
+            Assert.assertTrue(message.contains("myMessage"));
+            JSONObject labels = verifiedMessage.getJSONObject("labels");
+            assertEquals(0, labels.getInt("Verified"));
+        } finally {
+            gerritServer.stop();
+        }
+    }
+
+    /**
      * Tests a {@link JenkinsRule#configRoundtrip(hudson.model.Job)} on the workflow job.
      *
      * @throws Exception if so.
@@ -141,12 +183,24 @@ public class WorkflowTest {
      * @throws IOException if so
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event) throws IOException {
-        WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
-        job.setDefinition(new CpsFlowDefinition(""
+        return createWorkflowJob(event, ""
                 + "node {\n"
-                + "   stage 'Build'\n "
-                + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n "
-                + "}\n"));
+                + "   stage 'Build'\n"
+                + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n"
+                + "}\n");
+    }
+
+    /**
+     * Creates a {@link WorkflowJob} with a configured {@link GerritTrigger} and given workflow DSL script.
+     *
+     * @param event  the event to trigger on.
+     * @param script the workflow DSL script.
+     * @return the job
+     * @throws IOException if so
+     */
+    private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws IOException {
+        WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
+        job.setDefinition(new CpsFlowDefinition(script));
 
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
         trigger.setGerritProjects(Collections.singletonList(
