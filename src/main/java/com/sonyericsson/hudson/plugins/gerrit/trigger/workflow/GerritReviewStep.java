@@ -42,6 +42,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  */
 public class GerritReviewStep extends AbstractStepImpl {
 
+    private String customUrl;
     private String unsuccessfulMessage;
 
     /**
@@ -51,6 +52,24 @@ public class GerritReviewStep extends AbstractStepImpl {
      */
     @DataBoundConstructor
     public GerritReviewStep() {
+    }
+
+    /**
+     * Gets the custom URL for a step.
+     * @return the URL.
+     */
+    @CheckForNull
+    public String getCustomUrl() {
+        return customUrl;
+    }
+
+    /**
+     * Sets a custom URL to post for a build.
+     * @param customUrl the URL to post.
+     */
+    @DataBoundSetter
+    public void setCustomUrl(String customUrl) {
+        this.customUrl = Util.fixEmptyAndTrim(customUrl);
     }
 
     /**
@@ -85,6 +104,10 @@ public class GerritReviewStep extends AbstractStepImpl {
         @Override
         protected Void run() throws Exception {
             ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            String customUrl = step.getCustomUrl();
+            if (customUrl != null) {
+                listener.setBuildCustomUrl(build, customUrl);
+            }
             String unsuccessfulMessage = step.getUnsuccessfulMessage();
             if (unsuccessfulMessage != null) {
                 listener.setBuildFailureMessage(build, unsuccessfulMessage);

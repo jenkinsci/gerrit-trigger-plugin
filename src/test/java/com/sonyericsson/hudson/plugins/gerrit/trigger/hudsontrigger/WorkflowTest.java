@@ -109,6 +109,46 @@ public class WorkflowTest {
     }
 
     /**
+     * Tests setting a custom URL using gerritReview from a workflow job.
+     * @throws Exception if there is one.
+     */
+    @Test
+    public void testWorkflowStepSetsCustomUrl() throws Exception {
+        jenkinsRule.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+
+        gerritServer.start();
+        try {
+            PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
+
+            WorkflowJob job = createWorkflowJob(event, ""
+                + "node {\n"
+                + "   stage 'Build'\n"
+                + "   gerritReview customUrl: 'myCustomUrl'\n"
+                + "}\n");
+
+            PluginImpl.getHandler_().post(event);
+
+            // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
+            TestUtils.waitForBuilds(job, 1);
+            WorkflowRun run = job.getBuilds().iterator().next();
+            jenkinsRule.assertLogContains("Set Gerrit review", run);
+
+            // Workflow build was triggered successfully. Now lets check make sure the
+            // gerrit plugin sent a verified notification back to the Gerrit Server...
+            JSONObject verifiedMessage = gerritServer.waitForNextVerified();
+            // System.out.println(gerritServer.lastContent);
+            String message = verifiedMessage.getString("message");
+            Assert.assertTrue(message.startsWith("Build Successful"));
+            Assert.assertTrue(message.contains("myCustomUrl"));
+            JSONObject labels = verifiedMessage.getJSONObject("labels");
+            assertEquals(1, labels.getInt("Verified"));
+        } finally {
+            gerritServer.stop();
+        }
+    }
+
+    /**
      * Tests setting a failure message using gerritReview from a workflow job.
      * @throws Exception if there is one.
      */

@@ -386,6 +386,26 @@ public class BuildMemory {
     }
 
     /**
+     * Records a custom URL for the given build.
+     *
+     * @param event     the event.
+     * @param r         the build that caused the failure.
+     * @param customUrl the URL.
+     */
+    public void setEntryCustomUrl(GerritTriggeredEvent event, Run r, String customUrl) {
+        MemoryImprint pb = getMemoryImprint(event);
+
+        if (pb != null) {
+            Entry entry = pb.getEntry(r.getParent());
+
+            if (entry != null) {
+                logger.info("Recording custom URL for {}: {}", event, customUrl);
+                entry.setCustomUrl(customUrl);
+            }
+        }
+    }
+
+    /**
      * Records the failure message for the given build.
      *
      * @param event          the event.
@@ -752,6 +772,7 @@ public class BuildMemory {
             private String project;
             private String build;
             private boolean buildCompleted;
+            private String customUrl;
             private String unsuccessfulMessage;
 
             /**
@@ -819,6 +840,24 @@ public class BuildMemory {
                 } else {
                     this.build = null;
                 }
+            }
+
+            /**
+             * Sets the URL to post for an entry.
+             *
+             * @param customUrl the URL.
+             */
+            private void setCustomUrl(String customUrl) {
+                this.customUrl = customUrl;
+            }
+
+            /**
+             * Gets the URL to post for an entry.
+             *
+             * @return the URL.
+             */
+            public String getCustomUrl() {
+                return this.customUrl;
             }
 
             /**

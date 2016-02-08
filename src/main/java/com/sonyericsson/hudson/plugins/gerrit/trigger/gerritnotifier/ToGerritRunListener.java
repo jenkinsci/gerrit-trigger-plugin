@@ -87,6 +87,20 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     /**
+     * Records a custom URL for the given build.
+     *
+     * @param r         the build.
+     * @param customUrl the URL.
+     */
+    public void setBuildCustomUrl(@Nonnull Run r, @Nonnull String customUrl) {
+        GerritCause cause = getCause(r);
+        if (cause != null) {
+            cleanUpGerritCauses(cause, r);
+            memory.setEntryCustomUrl(cause.getEvent(), r, customUrl);
+        }
+    }
+
+    /**
      * Records the failure message for the given build.
      *
      * @param r              the build that caused the failure.

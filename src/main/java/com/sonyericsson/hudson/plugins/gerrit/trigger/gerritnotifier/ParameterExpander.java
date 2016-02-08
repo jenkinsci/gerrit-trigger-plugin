@@ -590,10 +590,12 @@ public class ParameterExpander {
                      */
                     str.append("\n\n");
 
-                    if (trigger.getCustomUrl() == null || trigger.getCustomUrl().isEmpty()) {
-                        str.append(rootUrl).append(build.getUrl());
-                    } else {
+                    if (entry.getCustomUrl() != null && !entry.getCustomUrl().isEmpty()) {
+                        str.append(expandParameters(entry.getCustomUrl(), build, listener, parameters));
+                    } else if (trigger.getCustomUrl() != null && !trigger.getCustomUrl().isEmpty()) {
                         str.append(expandParameters(trigger.getCustomUrl(), build, listener, parameters));
+                    } else {
+                        str.append(rootUrl).append(build.getUrl());
                     }
                     str.append(MESSAGE_DELIMITER);
 
