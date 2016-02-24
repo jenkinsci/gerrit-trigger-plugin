@@ -787,6 +787,9 @@ public class BuildMemory {
             private boolean buildCompleted;
             private String customUrl;
             private String unsuccessfulMessage;
+            private final long triggeredTimestamp;
+            private Long completedTimestamp = null;
+            private Long startedTimestamp = null;
 
             /**
              * Constructor.
@@ -797,6 +800,8 @@ public class BuildMemory {
             private Entry(Job project, Run build) {
                 this.project = project.getFullName();
                 this.build = build.getId();
+                this.startedTimestamp = System.currentTimeMillis();
+                this.triggeredTimestamp = System.currentTimeMillis();
                 buildCompleted = false;
             }
 
@@ -808,6 +813,7 @@ public class BuildMemory {
             private Entry(Job project) {
                 this.project = project.getFullName();
                 buildCompleted = false;
+                this.triggeredTimestamp = System.currentTimeMillis();
             }
 
             /**
@@ -850,6 +856,7 @@ public class BuildMemory {
             private void setBuild(Run build) {
                 if (build != null) {
                     this.build = build.getId();
+                    this.startedTimestamp = System.currentTimeMillis();
                 } else {
                     this.build = null;
                 }
@@ -907,6 +914,40 @@ public class BuildMemory {
              */
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
+                if (buildCompleted) {
+                    this.completedTimestamp = System.currentTimeMillis();
+                }
+            }
+
+            /**
+             * The timestamp when {@link #setBuildCompleted(boolean)} was set to true.
+             * <code>null</code> indicates not completed yet.
+             *
+             * @return the timestamp the build completed.
+             */
+            @CheckForNull
+            public Long getCompletedTimestamp() {
+                return completedTimestamp;
+            }
+
+            /**
+             * The timestamp when {@link #setBuild(Run)} was called with a non null value.
+             * <code>null</code> indicates not started yet.
+             *
+             * @return the timestamp when the build was started.
+             */
+            @CheckForNull
+            public Long getStartedTimestamp() {
+                return startedTimestamp;
+            }
+
+            /**
+             * The timestamp when this entry was created. i.e. when it was triggered.
+             *
+             * @return the timestamp when the job was triggered.
+             */
+            public long getTriggeredTimestamp() {
+                return triggeredTimestamp;
             }
 
             @Override
