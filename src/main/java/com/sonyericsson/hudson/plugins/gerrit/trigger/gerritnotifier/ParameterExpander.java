@@ -626,7 +626,7 @@ public class ParameterExpander {
                         unsuccessfulMessage = entry.getUnsuccessfulMessage();
 
                         if (null != unsuccessfulMessage && !unsuccessfulMessage.isEmpty()) {
-                            logger.trace("Using unsuccessful message from file.");
+                            logger.trace("Using unsuccessful message.");
                             str.append(" <<<\n");
                             str.append(unsuccessfulMessage.trim());
                             str.append("\n>>>");

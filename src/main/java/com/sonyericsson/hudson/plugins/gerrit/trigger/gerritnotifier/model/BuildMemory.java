@@ -399,7 +399,7 @@ public class BuildMemory {
             Entry entry = pb.getEntry(r.getParent());
 
             if (entry != null) {
-                logger.info("Recording custom URL for {}: {}", event, customUrl);
+                logger.trace("Recording custom URL for {}: {}", event, customUrl);
                 entry.setCustomUrl(customUrl);
             }
         }
@@ -419,7 +419,7 @@ public class BuildMemory {
             Entry entry = pb.getEntry(r.getParent());
 
             if (entry != null) {
-                logger.info("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
+                logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
                 entry.setUnsuccessfulMessage(unsuccessfulMessage);
             }
         }
