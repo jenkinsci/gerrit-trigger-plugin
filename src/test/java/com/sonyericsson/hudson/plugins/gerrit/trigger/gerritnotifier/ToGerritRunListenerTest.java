@@ -229,13 +229,13 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainFailureMessage}.
+     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}.
      * File path is not configured.
      *
      * @throws Exception if so.
      */
     @Test
-    public void testObtainFailureMessageNoFilepathConfigured() throws Exception {
+    public void testObtainUnsuccessfulMessageNoFilepathConfigured() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = spy(Setup.createPatchsetCreated());
 
@@ -250,13 +250,13 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainFailureMessage}.
+     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}.
      * File path is configured, but not files match the glob.
      *
      * @throws Exception if so.
      */
     @Test
-    public void testObtainFailureMessageNoMatchingFiles() throws Exception {
+    public void testObtainUnsuccessfulMessageNoMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         FilePath[] fileList = {};
         String filepath = "error-file*.txt";
@@ -275,12 +275,12 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainFailureMessage}. Results in a failure message being retrieved.
+     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}. Results in a message being retrieved.
      *
      * @throws Exception if so.
      */
     @Test
-    public void testObtainFailureMessageWithMatchingFiles() throws Exception {
+    public void testObtainUnsuccessfulMessageWithMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         String filepath = "error-file*.txt";
         String message = "This is the failure";

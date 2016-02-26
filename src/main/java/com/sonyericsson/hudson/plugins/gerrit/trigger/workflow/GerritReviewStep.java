@@ -110,7 +110,7 @@ public class GerritReviewStep extends AbstractStepImpl {
             }
             String unsuccessfulMessage = step.getUnsuccessfulMessage();
             if (unsuccessfulMessage != null) {
-                listener.setBuildFailureMessage(build, unsuccessfulMessage);
+                listener.setBuildUnsuccessfulMessage(build, unsuccessfulMessage);
             }
             return null;
         }

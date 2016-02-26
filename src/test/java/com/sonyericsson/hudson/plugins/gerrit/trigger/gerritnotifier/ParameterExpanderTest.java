@@ -594,21 +594,21 @@ public class ParameterExpanderTest {
      * @throws Exception if so
      */
     @Test
-    public void testBuildStatsWithFailureMessage() throws Exception {
-        tryBuildStatsFailureCommand("This was a failure message. ",
-                "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was a failure message.\n>>>");
+    public void testBuildStatsWithUnsuccessfulMessage() throws Exception {
+        tryBuildStatsFailureCommand("This was an unsuccessful message. ",
+                "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
         tryBuildStatsFailureCommand(null, "\n\nhttp://localhost/test/ : FAILURE");
         tryBuildStatsFailureCommand("", "\n\nhttp://localhost/test/ : FAILURE");
     }
 
     /**
-     * Sub test for {@link #testBuildStatsWithFailureMessage()}.
+     * Sub test for {@link #testBuildStatsWithUnsuccessfulMessage()}.
      *
-     * @param failureMessage Build failure message
+     * @param unsuccessfulMessage Build unsuccessful message
      * @param expectedBuildStats Expected build stats string
      * @throws Exception if so
      */
-    public void tryBuildStatsFailureCommand(String failureMessage, String expectedBuildStats) throws Exception {
+    public void tryBuildStatsFailureCommand(String unsuccessfulMessage, String expectedBuildStats) throws Exception {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         Hudson hudson = PowerMockito.mock(Hudson.class);
@@ -639,8 +639,8 @@ public class ParameterExpanderTest {
 
         MemoryImprint.Entry[] entries = { Setup.createImprintEntry(project, r) };
 
-        if (failureMessage != null && !failureMessage.isEmpty()) {
-            when(entries[0].getUnsuccessfulMessage()).thenReturn(failureMessage.trim());
+        if (unsuccessfulMessage != null && !unsuccessfulMessage.isEmpty()) {
+            when(entries[0].getUnsuccessfulMessage()).thenReturn(unsuccessfulMessage.trim());
         } else {
             when(entries[0].getUnsuccessfulMessage()).thenReturn(null);
         }

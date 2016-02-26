@@ -149,7 +149,7 @@ public class WorkflowTest {
     }
 
     /**
-     * Tests setting a failure message using gerritReview from a workflow job.
+     * Tests setting an unsuccessful message from a workflow job.
      * @throws Exception if there is one.
      */
     @Test

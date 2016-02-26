@@ -406,23 +406,36 @@ public class BuildMemory {
     }
 
     /**
-     * Records the failure message for the given build.
+     * Records the unsuccessful message for the given build.
      *
-     * @param event          the event.
-     * @param r              the build that caused the failure.
-     * @param failureMessage the failure message
+     * @param event               the event.
+     * @param r                   the build that caused the failure.
+     * @param unsuccessfulMessage the unsuccessful message
      */
-    public void setEntryFailureMessage(GerritTriggeredEvent event, Run r, String failureMessage) {
+    public void setEntryUnsuccessfulMessage(GerritTriggeredEvent event, Run r, String unsuccessfulMessage) {
         MemoryImprint pb = getMemoryImprint(event);
 
         if (pb != null) {
             Entry entry = pb.getEntry(r.getParent());
 
             if (entry != null) {
-                logger.info("Recording unsuccessful message for {}: {}", event, failureMessage);
-                entry.setUnsuccessfulMessage(failureMessage);
+                logger.info("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
+                entry.setUnsuccessfulMessage(unsuccessfulMessage);
             }
         }
+    }
+
+    /**
+     * Records the failure message for the given build.
+     *
+     * @param event          the event.
+     * @param r              the build that caused the failure.
+     * @param failureMessage the failure message
+     * @deprecated Use {@link #setEntryUnsuccessfulMessage}
+     */
+    @Deprecated
+    public void setEntryFailureMessage(GerritTriggeredEvent event, Run r, String failureMessage) {
+        setEntryUnsuccessfulMessage(event, r, failureMessage);
     }
 
     /**
