@@ -191,6 +191,47 @@ public class WorkflowTest {
     }
 
     /**
+     * Tests setting am unsuccessful message from a successful workflow job.
+     * @throws Exception if there is one.
+     */
+    @Test
+    public void testWorkflowStepSetsUnsuccessfulMessageWithSuccessfulBuild() throws Exception {
+        jenkinsRule.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+
+        gerritServer.start();
+        try {
+            PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
+
+            WorkflowJob job = createWorkflowJob(event, ""
+                + "node {\n"
+                + "   stage 'Build'\n"
+                + "   gerritReview unsuccessfulMessage: 'myMessage'\n"
+                + "}\n");
+
+            PluginImpl.getHandler_().post(event);
+
+            // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
+            TestUtils.waitForBuilds(job, 1);
+            WorkflowRun run = job.getBuilds().iterator().next();
+            jenkinsRule.assertLogContains("Set Gerrit review", run);
+
+            // Workflow build was triggered successfully. Now lets check make sure the
+            // gerrit plugin sent a verified notification back to the Gerrit Server,
+            // and the message does not contain the custom message...
+            JSONObject verifiedMessage = gerritServer.waitForNextVerified();
+            // System.out.println(gerritServer.lastContent);
+            String message = verifiedMessage.getString("message");
+            Assert.assertTrue(message.startsWith("Build Successful"));
+            Assert.assertFalse(message.contains("myMessage"));
+            JSONObject labels = verifiedMessage.getJSONObject("labels");
+            assertEquals(1, labels.getInt("Verified"));
+        } finally {
+            gerritServer.stop();
+        }
+    }
+
+    /**
      * Tests a {@link JenkinsRule#configRoundtrip(hudson.model.Job)} on the workflow job.
      *
      * @throws Exception if so.
