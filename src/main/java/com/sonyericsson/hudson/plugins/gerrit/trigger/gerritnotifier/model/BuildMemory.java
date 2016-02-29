@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
@@ -439,6 +440,23 @@ public class BuildMemory {
     }
 
     /**
+     * Creates a snapshot clone of the current coordination memory status.
+     *
+     * @return the report
+     */
+    public synchronized BuildMemoryReport report() {
+        BuildMemoryReport report = new BuildMemoryReport();
+        for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {
+            List<Entry> triggered = new LinkedList<Entry>();
+            for (Entry tr : entry.getValue().list) {
+                triggered.add(tr.clone());
+            }
+            report.put(entry.getKey(), triggered);
+        }
+        return report;
+    }
+
+    /**
      * A holder for all builds triggered by one event.
      */
     public static class MemoryImprint {
@@ -780,7 +798,7 @@ public class BuildMemory {
         /**
          * A project-build entry in the list of a MemoryImprint.
          */
-        public static class Entry {
+        public static class Entry implements Cloneable {
 
             private String project;
             private String build;
@@ -814,6 +832,22 @@ public class BuildMemory {
                 this.project = project.getFullName();
                 buildCompleted = false;
                 this.triggeredTimestamp = System.currentTimeMillis();
+            }
+
+            public Entry(Entry copy) {
+                this.project = copy.project;
+                this.build = copy.build;
+                this.buildCompleted = copy.buildCompleted;
+                this.unsuccessfulMessage = copy.unsuccessfulMessage;
+                this.triggeredTimestamp = copy.triggeredTimestamp;
+                this.completedTimestamp = copy.completedTimestamp;
+                this.startedTimestamp = copy.startedTimestamp;
+                this.customUrl = copy.customUrl;
+            }
+
+            @Override
+            public Entry clone() {
+                return new Entry(this);
             }
 
             /**
