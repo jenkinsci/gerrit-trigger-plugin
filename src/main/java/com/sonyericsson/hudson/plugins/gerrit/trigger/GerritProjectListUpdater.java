@@ -73,6 +73,10 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         addThisAsListener();
     }
 
+    public String getServerName() {
+        return serverName;
+    }
+
     /**
      * Add the current list updater as a listener to the GerritServer object.
      */

@@ -43,6 +43,8 @@ import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +90,10 @@ public final class EventListener implements GerritEventListener {
      */
     EventListener(@Nonnull String fullName) {
         this.job = fullName;
+    }
+
+    public String getJob() {
+        return job;
     }
 
     @Override
@@ -357,16 +363,28 @@ public final class EventListener implements GerritEventListener {
      * @return the trigger or null if job is gone or doesn't have a trigger.
      */
     @CheckForNull
-    private GerritTrigger getTrigger() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            return null;
-        }
-        Job p = jenkins.getItemByFullName(job, Job.class);
+    @Restricted(NoExternalUse.class)
+    public GerritTrigger getTrigger() {
+        Job p = findJob();
         if (p == null) {
             return null;
         }
         return GerritTrigger.getTrigger(p);
+    }
+
+    /**
+     * Utility method for finding the Job instance referred to by {@link #job}.
+     *
+     * @return the job unless environment doesn't allow it.
+     */
+    @CheckForNull
+    @Restricted(NoExternalUse.class)
+    public Job findJob() {
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            return null;
+        }
+        return jenkins.getItemByFullName(job, Job.class);
     }
 
     @Override

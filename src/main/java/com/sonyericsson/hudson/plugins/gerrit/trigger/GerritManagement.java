@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListenersReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import hudson.DescriptorExtensionList;
@@ -448,6 +449,17 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                              .withUrl(url.toString())
                              .withStockIcon("clipboard.png")
                              .withDisplayName(Messages.BuildMemoryReport_DisplayName()));
+            url = new StringBuilder("eventListeners");
+            if (!StringUtils.isBlank(context)) {
+                if (!context.endsWith("/")) {
+                    url.insert(0, '/');
+                }
+                url.insert(0, context);
+            }
+            menu.add(new MenuItem()
+                             .withUrl(url.toString())
+                             .withStockIcon("clipboard.png")
+                             .withDisplayName(Messages.EventListenersReport_DisplayName()));
             return menu;
         }
 
@@ -463,6 +475,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
                 return instance.report();
             }
             return null;
+        }
+
+        @CheckForNull
+        public EventListenersReport getEventListeners() {
+            return EventListenersReport.report();
         }
 
         @Override
