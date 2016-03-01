@@ -21,12 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics
+package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
 
-GerritManagement.Diagnostics diag = my
+Diagnostics diag = my
 
 def l = namespace(lib.LayoutTagLib)
 

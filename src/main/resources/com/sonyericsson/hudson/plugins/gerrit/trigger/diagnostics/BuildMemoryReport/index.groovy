@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemoryReport
+package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemoryReport
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated
 import hudson.model.Job

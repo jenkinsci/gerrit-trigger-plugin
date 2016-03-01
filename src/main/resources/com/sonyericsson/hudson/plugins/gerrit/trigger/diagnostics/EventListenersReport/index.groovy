@@ -21,12 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListenersReport
+package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.EventListenersReport
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListenersReport
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.EventListenersReport
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger
 import hudson.model.Job
 

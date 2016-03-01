@@ -22,12 +22,13 @@
  * SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
@@ -42,7 +43,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * A {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics} page showing
+ * A {@link Diagnostics} page showing
  * the list of registered {@link com.sonymobile.tools.gerrit.gerritevents.GerritEventListener}s.
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.

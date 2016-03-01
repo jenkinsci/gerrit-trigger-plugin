@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;

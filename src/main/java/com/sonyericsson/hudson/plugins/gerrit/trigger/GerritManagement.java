@@ -27,9 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemoryReport;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListenersReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import hudson.DescriptorExtensionList;
@@ -45,12 +43,10 @@ import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ModelObjectWithContextMenu;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.CharEncoding;
-import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
@@ -426,89 +422,4 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         rsp.sendRedirect(".");
     }
 
-    /**
-     * Sub page containing some diagnostic views.
-     */
-    public static class Diagnostics implements ModelObjectWithChildren, ModelObjectWithContextMenu {
-
-        @Override
-        public ContextMenu doChildrenContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
-            return getContextMenu(null);
-        }
-
-        /**
-         * Helper method to produce the breadcrumb context menu.
-         *
-         * @param context the url prefix to put on all urls.
-         * @return the selectable reports.
-         * @see #doChildrenContextMenu(StaplerRequest, StaplerResponse)
-         * @see GerritManagement#doContextMenu(StaplerRequest, StaplerResponse)
-         */
-        ContextMenu getContextMenu(String context) {
-            ContextMenu menu = new ContextMenu();
-            StringBuilder url = new StringBuilder("buildMemory");
-            if (!StringUtils.isBlank(context)) {
-                if (!context.endsWith("/")) {
-                    url.insert(0, '/');
-                }
-                url.insert(0, context);
-            }
-            menu.add(new MenuItem()
-                             .withUrl(url.toString())
-                             .withStockIcon("clipboard.png")
-                             .withDisplayName(Messages.BuildMemoryReport_DisplayName()));
-            url = new StringBuilder("eventListeners");
-            if (!StringUtils.isBlank(context)) {
-                if (!context.endsWith("/")) {
-                    url.insert(0, '/');
-                }
-                url.insert(0, context);
-            }
-            menu.add(new MenuItem()
-                             .withUrl(url.toString())
-                             .withStockIcon("clipboard.png")
-                             .withDisplayName(Messages.EventListenersReport_DisplayName()));
-            return menu;
-        }
-
-        @Override
-        public String getDisplayName() {
-            return Messages.GerritManagement_Diagnostics_DisplayName();
-        }
-
-        /**
-         * A report of the currently coordinated builds.
-         *
-         * @return the build memory coordination report.
-         * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#report()
-         */
-        @CheckForNull
-        @SuppressWarnings("unused")
-        public BuildMemoryReport getBuildMemory() {
-            ToGerritRunListener instance = ToGerritRunListener.getInstance();
-            if (instance != null) {
-                return instance.report();
-            }
-            return null;
-        }
-
-        /**
-         * A report of all registered {@link com.sonymobile.tools.gerrit.gerritevents.GerritEventListener}s
-         * in the system.
-         *
-         * Intended to be accessed via Stapler URL mapping.
-         *
-         * @return the listeners report.
-         */
-        @CheckForNull
-        @SuppressWarnings("unused")
-        public EventListenersReport getEventListeners() {
-            return EventListenersReport.report();
-        }
-
-        @Override
-        public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
-            return getContextMenu(null);
-        }
-    }
 }

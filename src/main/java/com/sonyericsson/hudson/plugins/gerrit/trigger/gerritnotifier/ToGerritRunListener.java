@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
@@ -163,7 +163,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * Creates a snapshot report of the current contents of the {@link BuildMemory}.
      *
      * @return the report.
-     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
      */
     public synchronized BuildMemoryReport report() {
         return memory.report();

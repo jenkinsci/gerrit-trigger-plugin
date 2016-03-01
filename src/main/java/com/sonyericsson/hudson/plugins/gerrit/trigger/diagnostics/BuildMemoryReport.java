@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.ModelObject;
 
@@ -40,7 +41,7 @@ import java.util.TreeMap;
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  * @see BuildMemory#report()
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics
+ * @see Diagnostics
  */
 public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>, ModelObject {
 
