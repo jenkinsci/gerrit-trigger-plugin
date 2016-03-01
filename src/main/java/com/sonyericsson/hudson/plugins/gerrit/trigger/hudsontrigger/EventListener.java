@@ -92,6 +92,11 @@ public final class EventListener implements GerritEventListener {
         this.job = fullName;
     }
 
+    /**
+     * The {@link Job#getFullName()} this listener is for.
+     *
+     * @return the fullName of the Job
+     */
     public String getJob() {
         return job;
     }

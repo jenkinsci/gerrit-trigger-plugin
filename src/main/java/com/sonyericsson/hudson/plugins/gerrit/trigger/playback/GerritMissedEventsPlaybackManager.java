@@ -108,6 +108,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
         checkIfEventsLogPluginSupported();
     }
 
+    /**
+     * The name of the {@link GerritServer} this is managing.
+     *
+     * @return the {@link GerritServer#getName()}.
+     */
     public String getServerName() {
         return serverName;
     }

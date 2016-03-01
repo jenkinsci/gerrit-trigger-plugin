@@ -834,6 +834,12 @@ public class BuildMemory {
                 this.triggeredTimestamp = System.currentTimeMillis();
             }
 
+            /**
+             * Constructor to create a copy of with the contents of an existing Entry.
+             *
+             * @param copy the entry to copy.
+             * @see #clone()
+             */
             public Entry(Entry copy) {
                 this.project = copy.project;
                 this.build = copy.build;

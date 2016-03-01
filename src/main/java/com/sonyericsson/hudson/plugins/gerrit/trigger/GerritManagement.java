@@ -86,7 +86,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     private static final Logger logger = LoggerFactory.getLogger(GerritManagement.class);
 
-    private static final Diagnostics diagnostics = new Diagnostics();
+    private static final Diagnostics DIAGNOSTICS = new Diagnostics();
 
 
     @Override
@@ -126,9 +126,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
         MenuItem item = new MenuItem()
                 .withUrl("diagnostics")
-                .withDisplayName(diagnostics)
+                .withDisplayName(DIAGNOSTICS)
                 .withStockIcon("folder.png");
-        item.subMenu = diagnostics.getContextMenu("diagnostics");
+        item.subMenu = DIAGNOSTICS.getContextMenu("diagnostics");
         menu.add(item);
         return menu;
     }
@@ -139,7 +139,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return the diagnostics page.
      */
     public Diagnostics getDiagnostics() {
-        return diagnostics;
+        return DIAGNOSTICS;
     }
 
     /**
@@ -436,6 +436,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return getContextMenu(null);
         }
 
+        /**
+         * Helper method to produce the breadcrumb context menu.
+         *
+         * @param context the url prefix to put on all urls.
+         * @return the selectable reports.
+         * @see #doChildrenContextMenu(StaplerRequest, StaplerResponse)
+         * @see GerritManagement#doContextMenu(StaplerRequest, StaplerResponse)
+         */
         ContextMenu getContextMenu(String context) {
             ContextMenu menu = new ContextMenu();
             StringBuilder url = new StringBuilder("buildMemory");
@@ -468,7 +476,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return Messages.GerritManagement_Diagnostics_DisplayName();
         }
 
+        /**
+         * A report of the currently coordinated builds.
+         *
+         * @return the build memory coordination report.
+         * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#report()
+         */
         @CheckForNull
+        @SuppressWarnings("unused")
         public BuildMemoryReport getBuildMemory() {
             ToGerritRunListener instance = ToGerritRunListener.getInstance();
             if (instance != null) {
@@ -477,7 +492,16 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
             return null;
         }
 
+        /**
+         * A report of all registered {@link com.sonymobile.tools.gerrit.gerritevents.GerritEventListener}s
+         * in the system.
+         *
+         * Intended to be accessed via Stapler URL mapping.
+         *
+         * @return the listeners report.
+         */
         @CheckForNull
+        @SuppressWarnings("unused")
         public EventListenersReport getEventListeners() {
             return EventListenersReport.report();
         }

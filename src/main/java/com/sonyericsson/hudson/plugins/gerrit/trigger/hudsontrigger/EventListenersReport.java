@@ -52,21 +52,51 @@ public class EventListenersReport implements ModelObject {
     private Set<EventListener> jobs;
     private Set<GerritEventListener> others;
 
-    public EventListenersReport(Set<EventListener> jobs, Set<GerritEventListener> others) {
+    /**
+     * The constructor.
+     *
+     * @param jobs the job specific listeners
+     * @param others the other non job listeners
+     */
+    /*package*/ EventListenersReport(Set<EventListener> jobs, Set<GerritEventListener> others) {
         this.jobs = jobs;
         this.others = others;
     }
 
+    /**
+     * The list of job specific listeners.
+     *
+     * An ordered set of {@link EventListener}s.
+     *
+     * @return the listeners for jobs
+     */
     public Set<EventListener> getJobs() {
         return jobs;
     }
 
+    /**
+     * Any other listeners that are not {@link EventListener}s for jobs.
+     *
+     * @return the other listeners.
+     */
     public Set<GerritEventListener> getOthers() {
         return others;
     }
 
+    /**
+     * A shorter/more descriptive name to display for any other listener than {@link EventListener}s.
+     * The default is to use {@link Class#getSimpleName()} but for some can contain a bit more information
+     * like which {@link GerritServer} the listener is targeting,
+     * for example {@link GerritProjectListUpdater} and {@link GerritMissedEventsPlaybackManager}.
+     *
+     * @param listener the listener to display a name for.
+     * @return the display name of the listener.
+     */
     @Restricted(NoExternalUse.class)
     public String getName(GerritEventListener listener) {
+        /*TODO this should really be up to the listener itself as to how it wants to represent itself
+        Perhaps via an optional name.jelly view?
+        */
         if (listener instanceof GerritProjectListUpdater) {
             String serverName = ((GerritProjectListUpdater)listener).getServerName();
             GerritServer server = PluginImpl.getServer_(serverName);
@@ -88,6 +118,12 @@ public class EventListenersReport implements ModelObject {
         }
     }
 
+    /**
+     * Produces a report from the active {@link GerritHandler}.
+     *
+     * @return the report.
+     * @see PluginImpl#getHandler_()
+     */
     @CheckForNull
     public static EventListenersReport report() {
         GerritHandler handler = PluginImpl.getHandler_();

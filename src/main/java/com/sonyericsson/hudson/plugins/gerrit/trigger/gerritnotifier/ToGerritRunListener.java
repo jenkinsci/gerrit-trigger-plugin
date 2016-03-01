@@ -159,6 +159,12 @@ public final class ToGerritRunListener extends RunListener<Run> {
         }
     }
 
+    /**
+     * Creates a snapshot report of the current contents of the {@link BuildMemory}.
+     *
+     * @return the report.
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics
+     */
     public synchronized BuildMemoryReport report() {
         return memory.report();
     }

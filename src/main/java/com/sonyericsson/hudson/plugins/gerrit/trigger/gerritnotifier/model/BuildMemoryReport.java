@@ -27,10 +27,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.ModelObject;
-import jenkins.model.ModelObjectWithChildren;
-import jenkins.model.ModelObjectWithContextMenu;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -42,8 +38,9 @@ import java.util.TreeMap;
 /**
  * Contains a snapshot clone of a {@link BuildMemory}.
  *
- * @see BuildMemory#report()
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
+ * @see BuildMemory#report()
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement.Diagnostics
  */
 public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>, ModelObject {
 
@@ -82,7 +79,8 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
     }
 
     @Override
-    public List<BuildMemory.MemoryImprint.Entry> put(GerritTriggeredEvent key, List<BuildMemory.MemoryImprint.Entry> value) {
+    public List<BuildMemory.MemoryImprint.Entry> put(GerritTriggeredEvent key,
+                                                     List<BuildMemory.MemoryImprint.Entry> value) {
         return internal.put(key, value);
     }
 
