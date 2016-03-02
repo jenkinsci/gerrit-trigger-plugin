@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryRe
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated
 import hudson.model.Job
@@ -37,7 +38,7 @@ def l = namespace(lib.LayoutTagLib)
 BuildMemoryReport report = my
 DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM)
 
-l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh: false, permission: GerritManagement.get().requiredPermission) {
+l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
             l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
@@ -57,17 +58,10 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                 th(id: 'hStartedTs', _('Started@'))
                 th(id: 'hCompletedTs', _('Completed@'))
             }
-            report.entrySet().sort(false, {a,b -> return a.key.eventCreatedOn.compareTo(b.key.eventCreatedOn) * -1})
-                    .each {event ->
+            report.getSortedEntrySet().each {event ->
                 def eventHeaderId = "event${event.key.hashCode()}"
                 tr {
-                    def display = event.key.eventType.typeValue
-                    if (event.key instanceof ChangeBasedEvent) {
-                        display += " ${event.key.change.number}/${event.key.patchSet.number}"
-                    } else if (event.key instanceof RefUpdated) {
-                        display += " ${event.key.refUpdate.project}"
-                    }
-                    display += " @ ${dateFormat.format(event.key.eventCreatedOn)}"
+                    def display = report.getDisplayNameFor(event.key)
                     th(id: eventHeaderId, colspan: "7", scope: "colgroup", display)
                 }
                 event.value.each {entry ->

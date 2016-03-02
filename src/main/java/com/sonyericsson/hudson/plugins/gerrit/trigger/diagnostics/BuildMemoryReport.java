@@ -26,11 +26,17 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.ModelObject;
 
 import javax.annotation.Nonnull;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,10 +54,65 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
     private final Map<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> internal;
 
     /**
+     * The format used to display timestamps.
+     * <p/>
+     * A variant of ISO 8601 with the 'T' replaced by a space for simpler ocular parsing.
+     */
+    public static final SimpleDateFormat TS_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+
+
+    /**
      * Default Constructor.
      */
     public BuildMemoryReport() {
         internal = new TreeMap<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>();
+    }
+
+    /**
+     * Gets a sorted list of the contents from {@link #entrySet()}.
+     * The sorting is based on the inverse comparison of {@link GerritTriggeredEvent#getEventCreatedOn()}.
+     *
+     * @return a sorted list of this report's entries.
+     */
+    public List<Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> getSortedEntrySet() {
+        List<Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> entries =
+                new LinkedList<Entry<GerritTriggeredEvent,
+                        List<BuildMemory.MemoryImprint.Entry>>>(entrySet());
+        Collections.sort(entries, new Comparator<Entry<GerritTriggeredEvent,
+                List<BuildMemory.MemoryImprint.Entry>>>() {
+            @Override
+            public int compare(Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> a,
+                               Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> b) {
+                return a.getKey().getEventCreatedOn().compareTo(b.getKey().getEventCreatedOn()) * -1;
+            }
+        });
+        return entries;
+    }
+
+    /**
+     * Generates a one liner display name for the event.
+     * <p/>
+     * For {@link ChangeBasedEvent}s: "type change#/patchSet# @ timestamp".
+     * For {@link RefUpdated} events: "type project @ timestamp".
+     * Default: "type @ timestamp"
+     *
+     * @param event the event
+     * @return a name to display
+     */
+    public String getDisplayNameFor(GerritTriggeredEvent event) {
+        StringBuilder display = new StringBuilder(event.getEventType().getTypeValue());
+        if (event instanceof ChangeBasedEvent) {
+            display.append(' ');
+            display.append(((ChangeBasedEvent)event).getChange().getNumber());
+            display.append('/');
+            display.append(((ChangeBasedEvent)event).getPatchSet().getNumber());
+        } else if (event instanceof RefUpdated) {
+            display.append(' ');
+            display.append(((RefUpdated)event).getRefUpdate().getProject());
+        }
+        display.append(" @ ");
+        display.append(TS_FORMAT.format(event.getEventCreatedOn()));
+        return display.toString();
     }
 
     @Override

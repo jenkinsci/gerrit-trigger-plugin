@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.EventListener
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.EventListenersReport
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger
@@ -34,7 +35,7 @@ EventListenersReport report = my;
 
 def l = namespace(lib.LayoutTagLib)
 
-l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), norefresh: false, permission: GerritManagement.get().requiredPermission) {
+l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.header {
         style {
             raw("""

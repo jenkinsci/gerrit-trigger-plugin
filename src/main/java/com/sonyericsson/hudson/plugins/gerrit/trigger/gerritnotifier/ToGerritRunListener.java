@@ -52,6 +52,7 @@ import java.util.List;
 
 import jenkins.model.Jenkins;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -75,9 +76,13 @@ public final class ToGerritRunListener extends RunListener<Run> {
      *
      * @return the instance.
      */
+    @CheckForNull
     public static ToGerritRunListener getInstance() {
         Jenkins jenkins = Jenkins.getInstance();
-        assert jenkins != null;
+        if (jenkins == null) {
+            logger.error("Jenkins instance is not available, are we not fully live yet?");
+            return null;
+        }
         ExtensionList<ToGerritRunListener> listeners =
                 jenkins.getExtensionList(ToGerritRunListener.class);
         if (listeners == null || listeners.isEmpty()) {
@@ -165,6 +170,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @return the report.
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
      */
+    @Nonnull
     public synchronized BuildMemoryReport report() {
         return memory.report();
     }

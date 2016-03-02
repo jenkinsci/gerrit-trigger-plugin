@@ -445,6 +445,7 @@ public class BuildMemory {
      *
      * @return the report
      */
+    @Nonnull
     public synchronized BuildMemoryReport report() {
         BuildMemoryReport report = new BuildMemoryReport();
         for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {

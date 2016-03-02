@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import hudson.security.Permission;
+import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ModelObjectWithContextMenu;
 import org.apache.commons.lang3.StringUtils;
@@ -35,6 +37,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 
 /**
  * Sub page on {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement} containing some diagnostic views.
@@ -46,13 +49,14 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
         return getContextMenu(null);
     }
 
+    //CS IGNORE LineLength FOR NEXT 8 LINES. REASON: Javadoc
     /**
      * Helper method to produce the breadcrumb context menu.
      *
      * @param context the url prefix to put on all urls.
      * @return the selectable reports.
      * @see #doChildrenContextMenu(StaplerRequest, StaplerResponse)
-     * @see GerritManagement#doContextMenu(StaplerRequest, StaplerResponse)
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement#doContextMenu(StaplerRequest, StaplerResponse)
      */
     @Restricted(NoExternalUse.class)
     public ContextMenu getContextMenu(String context) {
@@ -80,6 +84,16 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
                          .withStockIcon("clipboard.png")
                          .withDisplayName(Messages.EventListenersReport_DisplayName()));
         return menu;
+    }
+
+    /**
+     * The Jenkins permission required to view the diagnostic reports.
+     *
+     * @return the permission
+     */
+    @Nonnull
+    public static Permission getRequiredPermission() {
+        return Jenkins.ADMINISTER;
     }
 
     @Override

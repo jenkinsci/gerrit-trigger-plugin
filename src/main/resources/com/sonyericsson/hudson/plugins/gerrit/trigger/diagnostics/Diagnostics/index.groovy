@@ -31,7 +31,7 @@ Diagnostics diag = my
 
 def l = namespace(lib.LayoutTagLib)
 
-l.layout(title: _("Gerrit Trigger Diagnostics"), norefresh: false, permission: GerritManagement.get().requiredPermission) {
+l.layout(title: _("Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
             l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
