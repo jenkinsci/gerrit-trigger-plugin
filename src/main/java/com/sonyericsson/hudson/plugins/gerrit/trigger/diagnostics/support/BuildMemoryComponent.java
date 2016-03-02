@@ -49,8 +49,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Support Core Component writing the
- * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport}.
+ * Support Core Component writing the {@link BuildMemoryReport}.
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  */

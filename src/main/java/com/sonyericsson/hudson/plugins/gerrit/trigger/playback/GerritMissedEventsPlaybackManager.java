@@ -25,10 +25,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.playback;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.HttpUtils;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritJsonEventFactory;
@@ -78,7 +80,7 @@ import jenkins.model.Jenkins;
  *
  * @author scott.hebert@ericsson.com
  */
-public class GerritMissedEventsPlaybackManager implements ConnectionListener, GerritEventListener {
+public class GerritMissedEventsPlaybackManager implements ConnectionListener, NamedGerritEventListener {
 
     private static final String GERRIT_SERVER_EVENT_DATA_FOLDER = "/gerrit-server-event-data/";
     private static final Logger logger = LoggerFactory.getLogger(GerritMissedEventsPlaybackManager.class);
@@ -511,4 +513,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
         return new XmlFile(Jenkins.XSTREAM, xmlFile);
     }
 
+    @Override
+    public String getDisplayName() {
+        return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
+    }
 }

@@ -24,12 +24,10 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import hudson.model.ModelObject;
@@ -87,33 +85,16 @@ public class EventListenersReport implements ModelObject {
     /**
      * A shorter/more descriptive name to display for any other listener than {@link EventListener}s.
      * The default is to use {@link Class#getSimpleName()} but for some can contain a bit more information
-     * like which {@link GerritServer} the listener is targeting,
-     * for example {@link GerritProjectListUpdater} and {@link GerritMissedEventsPlaybackManager}.
+     * like which {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer}
+     * the listener is targeting, in that case they should implement {@link NamedGerritEventListener}.
      *
      * @param listener the listener to display a name for.
      * @return the display name of the listener.
      */
     @Restricted(NoExternalUse.class)
     public String getName(GerritEventListener listener) {
-        /*TODO this should really be up to the listener itself as to how it wants to represent itself
-        Perhaps via an optional name.jelly view?
-        */
-        if (listener instanceof GerritProjectListUpdater) {
-            String serverName = ((GerritProjectListUpdater)listener).getServerName();
-            GerritServer server = PluginImpl.getServer_(serverName);
-            if (server != null) {
-                return Messages.GerritProjectListUpdater_For(server.getDisplayName());
-            } else {
-                return Messages.GerritProjectListUpdater_For(serverName);
-            }
-        } else if (listener instanceof GerritMissedEventsPlaybackManager) {
-            String serverName = ((GerritMissedEventsPlaybackManager)listener).getServerName();
-            GerritServer server = PluginImpl.getServer_(serverName);
-            if (server != null) {
-                return Messages.GerritMissedEventsPlaybackManager_For(server.getDisplayName());
-            } else {
-                return Messages.GerritMissedEventsPlaybackManager_For(serverName);
-            }
+        if (listener instanceof NamedGerritEventListener) {
+            return ((NamedGerritEventListener)listener).getDisplayName();
         } else {
             return listener.getClass().getSimpleName();
         }
