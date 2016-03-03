@@ -101,7 +101,7 @@ public class BuildMemoryComponent extends Component {
                             number = run.getDisplayName();
                         }
                         String result = "";
-                        if (run != null) {
+                        if (run != null && run.getResult() != null) {
                             result = run.getResult().toString();
                         }
                         String startedAt = "";

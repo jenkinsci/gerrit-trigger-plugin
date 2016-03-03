@@ -24,12 +24,22 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.ManualTriggerAction;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import hudson.Main;
 import hudson.security.Permission;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ModelObjectWithContextMenu;
+import org.acegisecurity.Authentication;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
@@ -38,6 +48,12 @@ import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Sub page on {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement} containing some diagnostic views.
@@ -61,29 +77,37 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
     @Restricted(NoExternalUse.class)
     public ContextMenu getContextMenu(String context) {
         ContextMenu menu = new ContextMenu();
-        StringBuilder url = new StringBuilder("buildMemory");
-        if (!StringUtils.isBlank(context)) {
-            if (!context.endsWith("/")) {
-                url.insert(0, '/');
-            }
-            url.insert(0, context);
-        }
+        String url = makeRelativeUrl(context, "buildMemory");
         menu.add(new MenuItem()
-                         .withUrl(url.toString())
+                         .withUrl(url)
                          .withStockIcon("clipboard.png")
                          .withDisplayName(Messages.BuildMemoryReport_DisplayName()));
-        url = new StringBuilder("eventListeners");
+        url = makeRelativeUrl(context, "eventListeners");
+        menu.add(new MenuItem()
+                         .withUrl(url)
+                         .withStockIcon("clipboard.png")
+                         .withDisplayName(Messages.EventListenersReport_DisplayName()));
+        if (isDebugMode()) {
+            menu.add("triggerDebugEvent", "warning.png", "Trigger Debug", false, true);
+        }
+        return menu;
+    }
+
+    /**
+     * Construct an url with a potential context for {@link #getContextMenu(String)}.
+     * @param context potential string to prefix with
+     * @param name the url
+     * @return an url, relative or not.
+     */
+    private String makeRelativeUrl(String context, String name) {
+        StringBuilder url = new StringBuilder(name);
         if (!StringUtils.isBlank(context)) {
             if (!context.endsWith("/")) {
                 url.insert(0, '/');
             }
             url.insert(0, context);
         }
-        menu.add(new MenuItem()
-                         .withUrl(url.toString())
-                         .withStockIcon("clipboard.png")
-                         .withDisplayName(Messages.EventListenersReport_DisplayName()));
-        return menu;
+        return url.toString();
     }
 
     /**
@@ -134,5 +158,82 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
         return getContextMenu(null);
+    }
+
+    //CS IGNORE MagicNumber FOR NEXT 56 LINES. REASON: Test data.
+    /**
+     * Triggers a {@link ManualPatchsetCreated} event with some random data for debug purposes in a dev environment.
+     *
+     * @param request stapler
+     * @param response stapler
+     * @throws IOException if so
+     * @see #isDebugMode()
+     */
+    public void doTriggerDebugEvent(StaplerRequest request, StaplerResponse response) throws IOException {
+        if (!isDebugMode()) {
+            throw new IllegalStateException("Can only be done in a dev environment!");
+        }
+        List<GerritServer> servers = PluginImpl.getServers_();
+        if (servers.isEmpty()) {
+            throw new IllegalStateException("Need at least one server configured!");
+        }
+        GerritServer srv;
+        if (servers.size() == 1) {
+            srv = servers.get(0);
+        } else {
+            srv = servers.get(RND.nextInt(servers.size()));
+        }
+        //Todo maybe some configuration from the request?
+        ManualPatchsetCreated event = new ManualPatchsetCreated();
+        Authentication authentication = Jenkins.getAuthentication();
+        event.setUserName(authentication.getName());
+        event.setAccount(new Account(authentication.getName(), authentication.getName() + "@example.com"));
+        Change change = new Change();
+        change.setOwner(event.getAccount());
+        change.setCommitMessage("Debug Commit Message");
+        change.setSubject("Debug Subject");
+        change.setBranch("master");
+        change.setCreatedOn(new Date());
+        change.setId("I" + UUID.randomUUID().toString().replace("-", ""));
+        change.setLastUpdated(new Date());
+        change.setProject("debug/project");
+        change.setTopic("debug");
+        change.setNumber(String.valueOf(RND.nextInt(10001)));
+        change.setUrl("http://gerrit/" + change.getNumber());
+        event.setChange(change);
+        PatchSet patchSet = new PatchSet();
+        patchSet.setUploader(event.getAccount());
+        patchSet.setNumber(String.valueOf(RND.nextInt(32)));
+        patchSet.setCreatedOn(new Date());
+        patchSet.setDraft(false);
+        patchSet.setKind(GerritChangeKind.REWORK);
+        patchSet.setRevision(UUID.randomUUID().toString().replace("-", ""));
+        patchSet.setRef("refs/changes/" + change.getNumber() + "/" + patchSet.getNumber()); //Hopefully close enough
+        event.setPatchset(patchSet);
+        event.setEventCreatedOn(String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+        event.setReceivedOn(System.currentTimeMillis());
+        event.setProvider(ManualTriggerAction.createProvider(srv));
+        srv.triggerEvent(event);
+
+        response.sendRedirect2(request.getReferer());
+    }
+
+    /**
+     * Helping {@link #doTriggerDebugEvent(StaplerRequest, StaplerResponse)}.
+     */
+    private static final Random RND = new Random();
+
+    /**
+     * Checks if the plugin is running in a development environment.
+     *
+     * @return true if debug
+     */
+    @Restricted(NoExternalUse.class)
+    public boolean isDebugMode() {
+        if (Main.isDevelopmentMode || Main.isUnitTest) {
+            return true;
+        } else {
+            return System.getProperty("hudson.hpi.run") != null;
+        }
     }
 }

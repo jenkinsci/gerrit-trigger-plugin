@@ -50,19 +50,19 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
         p(style: "font-size: smaller; font-style: italic;", _("blurb"))
         table(class: "sortable pane bigtable") {
             tr {
-                th(id: 'hJob', _('Job'))
-                th(id: 'hRun', _('Run #'))
-                th(id: 'hCompleted', _('Completed'))
-                th(id: 'hResult', _('Result'))
-                th(id: 'hTriggeredTs', _('Triggered@'))
-                th(id: 'hStartedTs', _('Started@'))
-                th(id: 'hCompletedTs', _('Completed@'))
+                th(id: 'hJob', align: "left", _('Job'))
+                th(id: 'hRun', align: "left", _('Run #'))
+                th(id: 'hCompleted', align: "left", _('Completed'))
+                th(id: 'hResult', align: "left", _('Result'))
+                th(id: 'hTriggeredTs', align: "left", _('Triggered@'))
+                th(id: 'hStartedTs', align: "left", _('Started@'))
+                th(id: 'hCompletedTs', align: "left", _('Completed@'))
             }
             report.getSortedEntrySet().each {event ->
                 def eventHeaderId = "event${event.key.hashCode()}"
                 tr {
                     def display = report.getDisplayNameFor(event.key)
-                    th(id: eventHeaderId, colspan: "7", scope: "colgroup", display)
+                    th(id: eventHeaderId, colspan: "7", scope: "colgroup", align: "left", display)
                 }
                 event.value.each {entry ->
                     tr {
@@ -70,14 +70,14 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                         Run run = entry.build
                         td(headers: "hJob ${eventHeaderId}") {
                             if (job != null) {
-                                a(href: job.shortUrl, job.fullDisplayName)
+                                a(href: "${rootURL}/${job.shortUrl}", job.fullDisplayName)
                             } else {
                                 raw("&nbsp;")
                             }
                         }
                         td(headers: "hRun ${eventHeaderId}") {
                             if (run != null) {
-                                a(href: run.url, run.displayName)
+                                a(href: "${rootURL}/${run.url}", run.displayName)
                             } else {
                                 raw("&nbsp;")
                             }
@@ -90,8 +90,8 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                             }
                         }
                         td(headers: "hResult ${eventHeaderId}") {
-                            if (run != null) {
-                                img(src: run.result.color.getImageOf('16x16'), run.result.toString())
+                            if (run != null && run.result != null) {
+                                strong(run.result.toString())
                             } else {
                                 raw('&nbsp;')
                             }

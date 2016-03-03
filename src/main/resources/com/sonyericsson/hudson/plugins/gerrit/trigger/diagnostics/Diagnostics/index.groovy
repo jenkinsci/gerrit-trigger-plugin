@@ -37,6 +37,9 @@ l.layout(title: _("Gerrit Trigger Diagnostics"), norefresh: false, permission: D
             l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
             l.task(icon: "icon-clipboard icon-md", href: "buildMemory", title: Messages.BuildMemoryReport_DisplayName())
             l.task(icon: "icon-clipboard icon-md", href: "eventListeners", title: Messages.EventListenersReport_DisplayName())
+            if (diag.isDebugMode()) {
+                l.task(icon: "icon-warning icon-md", href: "triggerDebugEvent", title: "Trigger Event", post: false, requiresConfirmation: true)
+            }
         }
     }
     l.'main-panel' {

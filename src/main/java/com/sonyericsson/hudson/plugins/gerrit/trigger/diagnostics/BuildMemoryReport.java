@@ -65,7 +65,17 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
      * Default Constructor.
      */
     public BuildMemoryReport() {
-        internal = new TreeMap<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>();
+        internal = new TreeMap<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>(
+                new Comparator<GerritTriggeredEvent>() {
+            @Override
+            public int compare(GerritTriggeredEvent a, GerritTriggeredEvent b) {
+                int to = a.getEventCreatedOn().compareTo(b.getEventCreatedOn()) * -1;
+                if (to == 0) {
+                    return Integer.compare(a.hashCode(), b.hashCode()) * -1;
+                }
+                return to;
+            }
+        });
     }
 
     /**
