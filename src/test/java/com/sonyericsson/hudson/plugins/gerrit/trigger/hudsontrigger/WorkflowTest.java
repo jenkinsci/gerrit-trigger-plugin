@@ -109,7 +109,7 @@ public class WorkflowTest {
     }
 
     /**
-     * Tests setting a custom URL using gerritReview from a workflow job.
+     * Tests setting a custom URL from a workflow job.
      * @throws Exception if there is one.
      */
     @Test
@@ -124,7 +124,7 @@ public class WorkflowTest {
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
                 + "   stage 'Build'\n"
-                + "   gerritReview customUrl: 'myCustomUrl'\n"
+                + "   setGerritReview customUrl: 'myCustomUrl'\n"
                 + "}\n");
 
             PluginImpl.getHandler_().post(event);
@@ -164,7 +164,7 @@ public class WorkflowTest {
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
                 + "   stage 'Build'\n"
-                + "   gerritReview unsuccessfulMessage: 'myMessage'\n"
+                + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
                 + "   currentBuild.setResult('FAILURE')\n"
                 + "}\n");
 
@@ -206,7 +206,7 @@ public class WorkflowTest {
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
                 + "   stage 'Build'\n"
-                + "   gerritReview unsuccessfulMessage: 'myMessage'\n"
+                + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
                 + "}\n");
 
             PluginImpl.getHandler_().post(event);

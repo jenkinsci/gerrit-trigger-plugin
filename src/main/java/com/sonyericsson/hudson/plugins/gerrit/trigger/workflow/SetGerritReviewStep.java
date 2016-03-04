@@ -40,7 +40,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  * Allows altering the Gerrit review posted at the end of build during the build.
  * @author Teemu Murtola &lt;teemu.murtola@gmail.com&gt
  */
-public class GerritReviewStep extends AbstractStepImpl {
+public class SetGerritReviewStep extends AbstractStepImpl {
 
     private String customUrl;
     private String unsuccessfulMessage;
@@ -51,7 +51,7 @@ public class GerritReviewStep extends AbstractStepImpl {
      * There are no mandatory parameters to the step.
      */
     @DataBoundConstructor
-    public GerritReviewStep() {
+    public SetGerritReviewStep() {
     }
 
     /**
@@ -91,7 +91,7 @@ public class GerritReviewStep extends AbstractStepImpl {
     }
 
     /**
-     * Executes the GerritReviewStep.
+     * Executes the SetGerritReviewStep.
      */
     public static class Execution extends AbstractSynchronousStepExecution<Void> {
 
@@ -99,7 +99,7 @@ public class GerritReviewStep extends AbstractStepImpl {
         private transient Run build;
 
         @Inject
-        private transient GerritReviewStep step;
+        private transient SetGerritReviewStep step;
 
         @Override
         protected Void run() throws Exception {
@@ -133,7 +133,7 @@ public class GerritReviewStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "gerritReview";
+            return "setGerritReview";
         }
 
         @Override
