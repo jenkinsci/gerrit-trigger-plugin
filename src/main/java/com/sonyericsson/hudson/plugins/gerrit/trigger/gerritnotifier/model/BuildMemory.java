@@ -386,23 +386,56 @@ public class BuildMemory {
     }
 
     /**
-     * Records the failure message for the given build.
+     * Records a custom URL for the given build.
      *
-     * @param event          the event.
-     * @param r              the build that caused the failure.
-     * @param failureMessage the failure message
+     * @param event     the event.
+     * @param r         the build that caused the failure.
+     * @param customUrl the URL.
      */
-    public void setEntryFailureMessage(GerritTriggeredEvent event, Run r, String failureMessage) {
+    public void setEntryCustomUrl(GerritTriggeredEvent event, Run r, String customUrl) {
         MemoryImprint pb = getMemoryImprint(event);
 
         if (pb != null) {
             Entry entry = pb.getEntry(r.getParent());
 
             if (entry != null) {
-                logger.info("Recording unsuccessful message for {}: {}", event, failureMessage);
-                entry.setUnsuccessfulMessage(failureMessage);
+                logger.trace("Recording custom URL for {}: {}", event, customUrl);
+                entry.setCustomUrl(customUrl);
             }
         }
+    }
+
+    /**
+     * Records the unsuccessful message for the given build.
+     *
+     * @param event               the event.
+     * @param r                   the build that caused the failure.
+     * @param unsuccessfulMessage the unsuccessful message
+     */
+    public void setEntryUnsuccessfulMessage(GerritTriggeredEvent event, Run r, String unsuccessfulMessage) {
+        MemoryImprint pb = getMemoryImprint(event);
+
+        if (pb != null) {
+            Entry entry = pb.getEntry(r.getParent());
+
+            if (entry != null) {
+                logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
+                entry.setUnsuccessfulMessage(unsuccessfulMessage);
+            }
+        }
+    }
+
+    /**
+     * Records the failure message for the given build.
+     *
+     * @param event          the event.
+     * @param r              the build that caused the failure.
+     * @param failureMessage the failure message
+     * @deprecated Use {@link #setEntryUnsuccessfulMessage}
+     */
+    @Deprecated
+    public void setEntryFailureMessage(GerritTriggeredEvent event, Run r, String failureMessage) {
+        setEntryUnsuccessfulMessage(event, r, failureMessage);
     }
 
     /**
@@ -752,6 +785,7 @@ public class BuildMemory {
             private String project;
             private String build;
             private boolean buildCompleted;
+            private String customUrl;
             private String unsuccessfulMessage;
 
             /**
@@ -819,6 +853,24 @@ public class BuildMemory {
                 } else {
                     this.build = null;
                 }
+            }
+
+            /**
+             * Sets the URL to post for an entry.
+             *
+             * @param customUrl the URL.
+             */
+            private void setCustomUrl(String customUrl) {
+                this.customUrl = customUrl;
+            }
+
+            /**
+             * Gets the URL to post for an entry.
+             *
+             * @return the URL.
+             */
+            public String getCustomUrl() {
+                return this.customUrl;
             }
 
             /**
