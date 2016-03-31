@@ -275,14 +275,22 @@ public final class ToGerritRunListener extends RunListener<Run> {
      */
     protected void cleanUpGerritCauses(GerritCause firstFound, Run build) {
         List<Cause> causes = build.getAction(CauseAction.class).getCauses();
-        int pos = causes.indexOf(firstFound) + 1;
-        while (pos < causes.size()) {
-            Cause c = causes.get(pos);
-            if (c.equals(firstFound)) {
-                causes.remove(pos);
-            } else {
-                pos++;
+        try {
+            int pos = causes.indexOf(firstFound) + 1;
+            while (pos < causes.size()) {
+                Cause c = causes.get(pos);
+                if (c.equals(firstFound)) {
+                    causes.remove(pos);
+                } else {
+                    pos++;
+                }
             }
+        } catch (UnsupportedOperationException ignored) {
+            logger.debug("Got smashed by JENKINS-33467, but it shouldn't do any harm", ignored);
+            /*
+            TODO Something better should be done here, this is to prevent totally breaking when JENKINS-33467 hits.
+                 But since JENKINS-33467 is aimed at preventing this case maybe it's no longer needed at all.
+            */
         }
     }
 
