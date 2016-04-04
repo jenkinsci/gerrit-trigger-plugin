@@ -1006,12 +1006,9 @@ public class GerritTrigger extends Trigger<Job> {
                 for (Approval approval : event.getApprovals()) {
                     /** Ensure that this trigger is backwards compatible.
                      * Gerrit stream events changed to append approval info to
-                     * every comment-added event.  The change also includes a
-                     * new `updated` attribute to indicate whether the score
-                     * was changed.
+                     * every comment-added event.
                      **/
-                    if (approval.getUpdated() != null) {
-                        if (approval.getUpdated()
+                    if (approval.isUpdated()
                             && approval.getType().equals(
                                 commentAdded.getVerdictCategory())
                             && (approval.getValue().equals(
@@ -1019,7 +1016,6 @@ public class GerritTrigger extends Trigger<Job> {
                             || ("+" + approval.getValue()).equals(
                                 commentAdded.getCommentAddedTriggerApprovalValue()))) {
                             return true;
-                         }
                     } else {
                         if (approval.getType().equals(
                                 commentAdded.getVerdictCategory())
