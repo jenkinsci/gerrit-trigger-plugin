@@ -28,6 +28,7 @@ import hudson.Extension;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,7 @@ public class PluginCommentAddedContainsEvent extends PluginGerritEvent
      * The descriptor for PluginCommentAddedContainsEvent.
      */
     @Extension
+    @Symbol("commentAddedContains")
     public static class PluginCommentAddedContainsEventDescriptor extends
             PluginGerritEventDescriptor {
 

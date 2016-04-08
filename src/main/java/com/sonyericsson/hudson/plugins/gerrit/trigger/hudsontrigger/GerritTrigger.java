@@ -113,6 +113,7 @@ import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
 
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -1837,6 +1838,7 @@ public class GerritTrigger extends Trigger<Job> {
      * The Descriptor for the Trigger.
      */
     @Extension
+    @Symbol("gerrit")
     public static final class DescriptorImpl extends TriggerDescriptor {
 
         /**

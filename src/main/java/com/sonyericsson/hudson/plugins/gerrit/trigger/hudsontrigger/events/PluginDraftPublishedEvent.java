@@ -33,6 +33,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -69,6 +70,7 @@ public class PluginDraftPublishedEvent extends PluginGerritEvent implements Seri
      * The Descriptor for the PluginDraftPublishedEvent.
      */
     @Extension
+    @Symbol("draftPublished")
     public static class PluginDraftPublishedEventDescriptor extends PluginGerritEventDescriptor {
 
         /**

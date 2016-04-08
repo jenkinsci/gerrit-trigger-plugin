@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import java.io.Serializable;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -63,6 +64,7 @@ public class PluginChangeAbandonedEvent extends PluginGerritEvent implements Ser
      * The descriptor for the PluginChangeAbandonedEvent.
      */
     @Extension
+    @Symbol("changeAbandoned")
     public static class PluginChangeAbandonedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override
