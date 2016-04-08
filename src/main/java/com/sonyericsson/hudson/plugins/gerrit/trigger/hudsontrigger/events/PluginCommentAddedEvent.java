@@ -38,6 +38,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ListBoxModel;
 
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -105,6 +106,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
      * The Descriptor for the PluginCommentAddedEvent.
      */
     @Extension
+    @Symbol("commentAdded")
     public static class PluginCommentAddedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override

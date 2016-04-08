@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -133,6 +134,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * The Descriptor for the PluginPatchsetCreatedEvent.
      */
     @Extension
+    @Symbol("patchsetCreated")
     public static class PluginPatchsetCreatedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override

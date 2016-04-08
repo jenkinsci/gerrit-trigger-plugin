@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import java.io.Serializable;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -64,6 +65,7 @@ public class PluginChangeRestoredEvent extends PluginGerritEvent implements Seri
      * The descriptor for the PluginChangeRestoredEvent.
      */
     @Extension
+    @Symbol("changeRestored")
     public static class PluginChangeRestoredEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override

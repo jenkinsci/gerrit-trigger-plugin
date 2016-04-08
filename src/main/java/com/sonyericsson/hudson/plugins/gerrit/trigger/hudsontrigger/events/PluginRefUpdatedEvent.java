@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.Serializable;
@@ -63,6 +64,7 @@ public class PluginRefUpdatedEvent extends PluginGerritEvent implements Serializ
      * The descriptor for the PluginRefUpdatedEvent.
      */
     @Extension
+    @Symbol("refUpdated")
     public static class PluginRefUpdatedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override
