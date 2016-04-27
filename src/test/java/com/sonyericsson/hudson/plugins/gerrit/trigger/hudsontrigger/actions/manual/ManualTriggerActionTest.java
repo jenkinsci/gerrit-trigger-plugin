@@ -254,7 +254,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} with a URL in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject, String)} with a URL in the event info.
      */
     @Test
     public void testGetGerritUrlJson() {
@@ -267,7 +267,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject)} without a URL in the event info.
+     * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject, String)} without a URL in the event info.
      */
     @Test
     public void testGetGerritUrlJsonNoUrl() {

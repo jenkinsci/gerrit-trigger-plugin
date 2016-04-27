@@ -82,7 +82,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
 
     /**
      * Determines which Revisions to build.
-     * <p/>
+     *
      * Doesn't care about branches.
      *
      * @param isPollCall   whether this is being called from Git polling

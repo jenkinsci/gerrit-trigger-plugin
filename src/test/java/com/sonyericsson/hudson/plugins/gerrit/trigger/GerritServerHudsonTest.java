@@ -40,7 +40,6 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
@@ -220,10 +219,10 @@ public class GerritServerHudsonTest {
 
     /**
      * Test removing one server without configured job from UI.
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
     @Test
-    public void testRemoveOneServerWithoutConfiguredJob() throws IOException {
+    public void testRemoveOneServerWithoutConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
 
@@ -237,9 +236,9 @@ public class GerritServerHudsonTest {
     /**
      * Remove Server from UI.
      * @param serverName the name of the Gerrit server you want to access.
-     * @throws IOException if error removing server.
+     * @throws Exception if error removing server.
      */
-    private void removeServer(String serverName) throws IOException {
+    private void removeServer(String serverName) throws Exception {
         URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
         HtmlPage removalPage = j.createWebClient().getPage(url);
 
@@ -250,23 +249,22 @@ public class GerritServerHudsonTest {
 
         if (serverSize == 1) {
             try {
-                form.submit();
+                j.submit(form);
             } catch (Exception e) {
                 buttonFound = false;
             }
         } else {
-            form.submit(null);
+            j.submit(form);
         }
     }
 
     /**
      * Test adding server from UI.
-     * @throws IOException if error adding server.
+     *
+     * @throws Exception if error adding server.
      */
-
-
     @Test
-    public void testAddServer() throws IOException {
+    public void testAddServer() throws Exception {
         addNewServerWithDefaultConfigs(gerritServerOneName);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
 
@@ -287,9 +285,9 @@ public class GerritServerHudsonTest {
      * Add a GerritServer with default configs from the UI.
      *
      * @param serverName the name
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
-    private void addNewServerWithDefaultConfigs(String serverName) throws IOException {
+    private void addNewServerWithDefaultConfigs(String serverName) throws Exception {
         URL url = new URL(j.getURL(), newServerURL);
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
@@ -306,7 +304,7 @@ public class GerritServerHudsonTest {
         }
         assertTrue("Failed to choose 'GerritServer with Default Configurations'", radioButtonDefaultConfig.isChecked());
 
-        form.submit(null);
+        j.submit(form);
     }
 
     /**
@@ -314,9 +312,9 @@ public class GerritServerHudsonTest {
      *
      * @param newServerName the name of the new server
      * @param fromServerName the name of the server from which the config is copied.
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
-    private void addNewServerByCopyingConfig(String newServerName, String fromServerName) throws IOException {
+    private void addNewServerByCopyingConfig(String newServerName, String fromServerName) throws Exception {
         URL url = new URL(j.getURL(), newServerURL);
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
@@ -335,7 +333,7 @@ public class GerritServerHudsonTest {
 
         form.getInputByName(fromInputFormName).setValueAttribute(fromServerName);
 
-        form.submit(null);
+        j.submit(form);
     }
 
     /**

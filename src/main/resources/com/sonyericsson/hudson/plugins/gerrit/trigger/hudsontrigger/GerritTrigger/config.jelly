@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
  <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>

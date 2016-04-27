@@ -169,17 +169,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
      /**
      * Convenience method for jelly to get url of the server list's page relative to root.
-     * @link {@link GerritManagement#getUrlName()}.
      *
+     * @see GerritManagement#getUrlName()
      * @return the relative url
      */
     public String getParentUrl() {
         return GerritManagement.get().getUrlName();
     }
+
     /**
      * Convenience method for jelly to get url of this server's config page relative to root.
-     * @link {@link GerritManagement#getUrlName()}.
      *
+     * @see GerritManagement#getUrlName()
      * @return the relative url
      */
     public String getUrl() {
@@ -633,8 +634,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Checks whether the current server support project-created events or not.
      *
      * Note: We need to exclude snapshot versions from this check. Otherwise, snapshot versions
-     * that are < Gerrit 2.12 will default to waiting for Project Created events which are only
-     * supported in Gerrit >= 2.12.
+     * that are &lt; Gerrit 2.12 will default to waiting for Project Created events which are only
+     * supported in Gerrit &gt;= 2.12.
      *
      * @return true if project-created events are supported, otherwise false
      */

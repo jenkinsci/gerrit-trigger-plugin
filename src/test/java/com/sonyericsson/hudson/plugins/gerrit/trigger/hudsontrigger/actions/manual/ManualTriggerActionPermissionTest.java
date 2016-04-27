@@ -31,7 +31,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.jvnet.hudson.test.HudsonTestCase;
 import org.jvnet.hudson.test.recipes.LocalData;
 
@@ -56,7 +56,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = new WebClient();
+        WebClient wc = createWebClient();
         HtmlPage page = wc.goTo("/");
         try {
             HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
@@ -138,7 +138,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
 
     /**
      * Tests that a privileged user can perform a search via
-     * {@link ManualTriggerAction#doGerritSearch(String, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
+     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
      *
      * @throws Exception if so.
      */
@@ -152,7 +152,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
             HtmlPage page = wc.goTo(action.getUrlName());
             HtmlForm form = page.getFormByName("theSearch");
             form.getInputByName("queryString").setValueAttribute("2000");
-            Page result = form.submit(null);
+            Page result = submit(form);
             assertGoodStatus(result);
         } catch (FailingHttpStatusCodeException e) {
             if (e.getStatusCode() == 403) {
@@ -167,7 +167,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
 
     /**
      * Tests that an anonymous user can not perform a search via
-     * {@link ManualTriggerAction#doGerritSearch(String, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
+     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
      *
      * @throws Exception if so.
      */
@@ -176,12 +176,12 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = new WebClient();
+        WebClient wc = createWebClient();
         try {
             HtmlPage page = wc.goTo(action.getUrlName());
             HtmlForm form = page.getFormByName("theSearch");
             form.getInputByName("queryString").setValueAttribute("2000");
-            form.submit(null);
+            submit(form);
         } catch (FailingHttpStatusCodeException e) {
             assertEquals(403, e.getStatusCode());
             return;
@@ -196,6 +196,6 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      * @return the Action
      */
     private ManualTriggerAction getManualTriggerAction() {
-        return Hudson.getInstance().getExtensionList(ManualTriggerAction.class).get(0);
+        return Jenkins.getInstance().getExtensionList(ManualTriggerAction.class).get(0);
     }
 }

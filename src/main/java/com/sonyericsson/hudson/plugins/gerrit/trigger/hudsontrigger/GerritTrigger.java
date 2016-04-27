@@ -1838,7 +1838,7 @@ public class GerritTrigger extends Trigger<Job> {
     public static final class DescriptorImpl extends TriggerDescriptor {
 
         /**
-         * Checks if the provided job type can support {@link #GerritTrigger#getBuildUnsuccessfulFilepath()}.
+         * Checks if the provided job type can support {@link GerritTrigger#getBuildUnsuccessfulFilepath()}.
          * I.e. if the job is an {@link AbstractProject}.
          *
          * @param job the job to check.

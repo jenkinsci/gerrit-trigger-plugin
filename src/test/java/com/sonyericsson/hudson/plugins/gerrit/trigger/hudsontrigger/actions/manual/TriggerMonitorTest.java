@@ -50,8 +50,9 @@ import static org.mockito.Mockito.when;
 @PrepareForTest(AbstractProject.class)
 public class TriggerMonitorTest {
 
+    //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
     /**
-     * Tests {@link TriggerMonitor#add(com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated)}.
+     * Tests {@link TriggerMonitor#add(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}.
      * @throws Exception if so.
      */
     @Test
@@ -63,8 +64,11 @@ public class TriggerMonitorTest {
         assertSame(patch, monitor.getEvents().get(0).getEvent());
     }
 
+    //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
+
     /**
-     * Tests {@link TriggerMonitor#contains(PatchsetCreated)} when it does.
+     * Tests {@link TriggerMonitor#contains(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}
+     * when it does.
      * @throws Exception if so.
      */
     @Test
@@ -75,8 +79,11 @@ public class TriggerMonitorTest {
         assertTrue(monitor.contains(patch));
     }
 
+    //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
+
     /**
-     * Tests {@link TriggerMonitor#contains(PatchsetCreated)} when nothing is.
+     * Tests {@link TriggerMonitor#contains(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}
+     * when nothing is.
      * @throws Exception if so.
      */
     @SuppressWarnings({"deprecation" })
@@ -91,7 +98,8 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#triggerScanStarting(PatchsetCreated)} when it is.
+     * Tests {@link TriggerMonitor#triggerScanStarting(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * when it is.
      * @throws Exception if so.
      */
     @Test
@@ -107,7 +115,8 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#triggerScanStarting(PatchsetCreated)} when it is not.
+     * Tests {@link TriggerMonitor#triggerScanStarting(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * when it is not.
      * @throws Exception if so.
      */
     @Test
@@ -123,7 +132,8 @@ public class TriggerMonitorTest {
 
 
     /**
-     * Tests {@link TriggerMonitor#triggerScanDone(PatchsetCreated)} when it is.
+     * Tests {@link TriggerMonitor#triggerScanDone(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * when it is.
      * @throws Exception if so.
      */
     @Test
@@ -140,7 +150,8 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#triggerScanDone(PatchsetCreated)} when it is not.
+     * Tests {@link TriggerMonitor#triggerScanDone(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * when it is not.
      * @throws Exception if so.
      */
     @Test
@@ -155,8 +166,10 @@ public class TriggerMonitorTest {
         assertFalse(state.isTriggerScanDone());
     }
 
+    //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
+
     /**
-     * Tests {@link TriggerMonitor#projectTriggered(PatchsetCreated, hudson.model.AbstractProject)}.
+     * Tests {@link TriggerMonitor#projectTriggered(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Job)}.
      * @throws Exception if so.
      */
     @Test
@@ -176,7 +189,8 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#buildStarted(PatchsetCreated, hudson.model.AbstractBuild)}.
+     * Tests
+     * {@link TriggerMonitor#buildStarted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Run)}.
      * @throws Exception if so.
      */
     @Test
@@ -200,7 +214,8 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#buildCompleted(PatchsetCreated, hudson.model.AbstractBuild)}.
+     * Tests
+     * {@link TriggerMonitor#buildCompleted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Run)}.
      * @throws Exception if so.
      */
     @Test
@@ -224,7 +239,7 @@ public class TriggerMonitorTest {
     }
 
     /**
-     * Tests {@link TriggerMonitor#allBuildsCompleted(PatchsetCreated)}.
+     * Tests {@link TriggerMonitor#allBuildsCompleted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
      * @throws Exception if so.
      */
     @Test

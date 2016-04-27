@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.gargoylesoftware.htmlunit.HttpMethod;
 import com.gargoylesoftware.htmlunit.Page;
-import com.gargoylesoftware.htmlunit.WebRequestSettings;
+import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -152,7 +152,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
         Document document = xmlPage.getXmlDocument();
         String xml = changeConfigXml(gerritProjectPattern, document);
         URL url = UrlUtils.toUrlUnsafe(j.getURL().toExternalForm() + testProj.getUrl() + "config.xml");
-        WebRequestSettings request = new WebRequestSettings(url, HttpMethod.POST);
+        WebRequest request = new WebRequest(url, HttpMethod.POST);
         request.setRequestBody(xml);
         j.jenkins.setCrumbIssuer(null);
         Page page = j.createWebClient().getPage(request);

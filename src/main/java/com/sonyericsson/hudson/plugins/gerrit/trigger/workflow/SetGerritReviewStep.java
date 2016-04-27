@@ -38,7 +38,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 
 /**
  * Allows altering the Gerrit review posted at the end of build during the build.
- * @author Teemu Murtola &lt;teemu.murtola@gmail.com&gt
+ * @author Teemu Murtola &lt;teemu.murtola@gmail.com&gt;
  */
 public class SetGerritReviewStep extends AbstractStepImpl {
 

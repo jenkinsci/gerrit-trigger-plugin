@@ -38,6 +38,7 @@ import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -101,11 +102,12 @@ public class GerritTriggeredBuildListenerTest {
     }
 
     /**
-     * Tests that {@link GrritTriggeredBuildListener} can listen triggered build.
+     * Tests that {@link GerritTriggeredBuildListener} can listen triggered build.
      *
      * @throws Exception if so.
      */
     @LocalData
+    @Test
     public void testListenTriggeredBuild() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
                 Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
@@ -121,11 +123,12 @@ public class GerritTriggeredBuildListenerTest {
     }
 
     /**
-     * Tests that {@link GrritTriggeredBuildListener} can listen triggered build with no build schedule.
+     * Tests that {@link GerritTriggeredBuildListener} can listen triggered build with no build schedule.
      *
      * @throws Exception if so.
      */
     @LocalData
+    @Test
     public void testListenTriggeredBuildWithNoBuildScheduleDelay() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
                 Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
@@ -147,7 +150,7 @@ public class GerritTriggeredBuildListenerTest {
     }
 
     /**
-     * A {@link GrritTriggeredBuildListener} implementation class.
+     * A {@link GerritTriggeredBuildListener} implementation class.
      * This would be automatically registered to system by @TestExtension annotation.
      */
     @TestExtension("testListenTriggeredBuild")
@@ -169,7 +172,7 @@ public class GerritTriggeredBuildListenerTest {
     }
 
     /**
-     * A {@link GrritTriggeredBuildListener} implementation class.
+     * A {@link GerritTriggeredBuildListener} implementation class.
      * This would be automatically registered to system by @TestExtension annotation.
      */
     @TestExtension("testListenTriggeredBuildWithNoBuildScheduleDelay")
