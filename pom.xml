@@ -57,7 +57,7 @@
         <java.level>6</java.level>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <concurrency>1</concurrency>
+        <concurrency>1</concurrency> <!-- At least my machine doesn't have enough memory to run tests in parallel-->
         <powermock.version>1.6.2</powermock.version>
         <checkstyle.version>2.13</checkstyle.version>
         <mockito.version>1.10.19</mockito.version>
@@ -74,6 +74,12 @@
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
+                    <!--
+                    We could release a version of gerrit-events that uses the newer required version.
+                    I ran the full test suite with v 4.5 and it worked.
+                    But a new module version just for that feels like too much of a hassle.
+                    TODO remove when gerrit-events comes with the newer dependency.
+                    -->
                 </exclusion>
             </exclusions>
         </dependency>

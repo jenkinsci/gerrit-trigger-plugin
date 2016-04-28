@@ -18,6 +18,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -85,7 +86,6 @@ public class GerritServerHudsonTest {
     private final String removeLastServerWarning = "Cannot remove the last server!";
     private final String wrongMessageWarning = "Wrong message when trying to remove GerritServer! ";
 
-    private boolean buttonFound = true;
     private String textContent = "";
     private SshdServerMock serverOne;
     private SshdServerMock serverTwo;
@@ -210,7 +210,7 @@ public class GerritServerHudsonTest {
 
         DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
 
-        removeServer(gerritServerOneName);
+        boolean buttonFound = removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -226,7 +226,7 @@ public class GerritServerHudsonTest {
         GerritServer server = new GerritServer(gerritServerOneName);
         PluginImpl.getInstance().addServer(server);
 
-        removeServer(gerritServerOneName);
+        boolean buttonFound = removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -236,25 +236,21 @@ public class GerritServerHudsonTest {
     /**
      * Remove Server from UI.
      * @param serverName the name of the Gerrit server you want to access.
+     * @return true if the form had a button and was posted
      * @throws Exception if error removing server.
      */
-    private void removeServer(String serverName) throws Exception {
+    private boolean removeServer(String serverName) throws Exception {
         URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
         HtmlPage removalPage = j.createWebClient().getPage(url);
 
-        int serverSize = PluginImpl.getInstance().getServers().size();
-
         HtmlForm form = removalPage.getFormByName(removalFormName);
+        List<HtmlElement> buttons = form.getHtmlElementsByTagName("button");
         textContent = form.getTextContent();
-
-        if (serverSize == 1) {
-            try {
-                j.submit(form);
-            } catch (Exception e) {
-                buttonFound = false;
-            }
-        } else {
+        if (buttons.size() >= 1) {
             j.submit(form);
+            return true;
+        } else {
+            return false;
         }
     }
 
