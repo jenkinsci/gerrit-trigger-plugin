@@ -62,6 +62,7 @@
         <checkstyle.version>2.13</checkstyle.version>
         <mockito.version>1.10.19</mockito.version>
         <workflow.version>1.14</workflow.version>
+        <workflow.version.test>1.14.1-beta-1</workflow.version.test>
     </properties>
 
     <dependencies>
@@ -131,7 +132,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>${workflow.version}</version>
+            <version>${workflow.version.test}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

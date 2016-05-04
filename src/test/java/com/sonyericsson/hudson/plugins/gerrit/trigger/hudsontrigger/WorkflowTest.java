@@ -238,8 +238,6 @@ public class WorkflowTest {
      * @throws Exception if so.
      */
     @Test
-    //TODO remove when a workaround can be found
-    @Ignore("The new HtmlUnit borks the structured form submission on workflow jobs")
     public void testConfigRoundTrip() throws Exception {
         PatchsetCreated event = Setup.createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME);
         WorkflowJob job = createWorkflowJob(event);
