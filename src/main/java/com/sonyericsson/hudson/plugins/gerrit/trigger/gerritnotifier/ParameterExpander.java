@@ -482,7 +482,7 @@ public class ParameterExpander {
      * @param trigger the trigger.
      * @return the level value.
      */
-    private Notify getNotificationLevel(GerritTrigger trigger) {
+    public Notify getNotificationLevel(GerritTrigger trigger) {
         String level = trigger.getNotificationLevel();
         if (level != null && level.length() > 0) {
             return Notify.valueOf(level);
