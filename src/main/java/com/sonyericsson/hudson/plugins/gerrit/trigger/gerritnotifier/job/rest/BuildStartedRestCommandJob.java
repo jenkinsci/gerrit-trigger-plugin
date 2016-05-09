@@ -29,6 +29,8 @@ import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommand
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -70,7 +72,12 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      */
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
-        return new ReviewInput(message);
+        Notify notificationLevel = Notify.ALL;
+        GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
+        if (trigger != null) {
+            notificationLevel = parameterExpander.getNotificationLevel(trigger);
+        }
+        return new ReviewInput(message).setNotify(notificationLevel);
     }
 
 }
