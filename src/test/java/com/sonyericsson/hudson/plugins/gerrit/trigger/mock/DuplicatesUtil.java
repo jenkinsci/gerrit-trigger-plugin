@@ -92,8 +92,6 @@ public abstract class DuplicatesUtil {
                 false, false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, null, false, null, null));
         return rule.configRoundtrip(p);
-        //rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
-        //return p;
     }
 
     /**

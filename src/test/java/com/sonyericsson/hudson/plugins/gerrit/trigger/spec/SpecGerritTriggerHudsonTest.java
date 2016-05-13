@@ -692,8 +692,6 @@ public class SpecGerritTriggerHudsonTest {
     @Test
     @LocalData
     public void testProjectRename() throws Exception {
-        //QueueDecisionHandlerImpl h = QueueDecisionHandlerImpl.all().get(QueueDecisionHandlerImpl.class);
-
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -704,27 +702,8 @@ public class SpecGerritTriggerHudsonTest {
         project.renameTo("anotherName");
         project = j.configRoundtrip(project);
 
-        //assertEquals(1, h.countTrigger);
-
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
         TestUtils.waitForBuilds(project, 2, 60000);
-
-        //assertEquals(2, h.countTrigger);
     }
-
-    /**
-     * {@link QueueDecisionHandler} for aid in {@link #testProjectRename}.
-     */
-    /*@TestExtension("testProjectRename")
-    public static class QueueDecisionHandlerImpl extends QueueDecisionHandler {
-        private int countTrigger = 0;
-
-        @Override
-        public boolean shouldSchedule(Task p, List<Action> actions) {
-            countTrigger++;
-            return false;
-        }
-    }*/
-
 }
