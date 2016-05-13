@@ -62,7 +62,9 @@ public abstract class DuplicatesUtil {
      * @return the project.
      *
      * @throws Exception if so.
+     * @deprecated use {@link TestUtils.JobBuilder} instead.
      */
+    @Deprecated
     public static FreeStyleProject createGerritTriggeredJob(JenkinsRule rule, String projectName) throws Exception {
         return createGerritTriggeredJob(rule, projectName, PluginImpl.DEFAULT_SERVER_NAME);
     }
@@ -76,7 +78,9 @@ public abstract class DuplicatesUtil {
      * @return the project.
      *
      * @throws Exception if so.
+     * @deprecated use {@link TestUtils.JobBuilder} instead.
      */
+    @Deprecated
     public static FreeStyleProject createGerritTriggeredJob(JenkinsRule rule,
             String projectName, String serverName) throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject(projectName);
@@ -87,8 +91,9 @@ public abstract class DuplicatesUtil {
                 null, null, null, null, null, null, null, null, null, null,
                 false, false, true, false, false, null, null, null, null, null, null, null,
                 null, serverName, null, null, false, null, null));
-        rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
-        return p;
+        return rule.configRoundtrip(p);
+        //rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
+        //return p;
     }
 
     /**

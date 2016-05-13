@@ -63,7 +63,6 @@ public class ManualTriggerActionApprovalTest {
 
     private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
-    private final int port = 29418;
 
     private SshdServerMock server;
     private SshServer sshd;
@@ -79,7 +78,7 @@ public class ManualTriggerActionApprovalTest {
         sshKey = SshdServerMock.generateKeyPair();
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(port, server);
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit query --format=JSON --current-patch-set \"status:open\"",
@@ -88,13 +87,11 @@ public class ManualTriggerActionApprovalTest {
                 SshdServerMock.SendQueryAllPatchSets.class);
 
         GerritServer gerritServer = new GerritServer(gerritServerName);
+        SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);
-        gerritServer.start();
-
         Config config = (Config)gerritServer.getConfig();
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
-        config.setGerritHostName("localhost");
-        config.setGerritSshPort(port);
+        gerritServer.start();
         gerritServer.startConnection();
     }
 

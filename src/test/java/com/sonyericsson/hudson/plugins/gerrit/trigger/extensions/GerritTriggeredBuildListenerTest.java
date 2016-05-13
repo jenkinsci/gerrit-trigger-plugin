@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
@@ -88,6 +89,10 @@ public class GerritTriggeredBuildListenerTest {
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+        GerritServer gserver = PluginImpl.getFirstServer_();
+        assertNotNull(gserver);
+        SshdServerMock.configureFor(sshd, gserver);
+        gserver.restartConnection();
     }
 
     /**

@@ -57,7 +57,7 @@
         <java.level>6</java.level>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <concurrency>1</concurrency> <!-- At least my machine doesn't have enough memory to run tests in parallel-->
+        <concurrency>1C</concurrency>
         <powermock.version>1.6.2</powermock.version>
         <checkstyle.version>2.13</checkstyle.version>
         <mockito.version>1.10.19</mockito.version>
@@ -88,6 +88,7 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5</version>
+            <!-- TODO remove when gerrit-events comes with the newer dependency. -->
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -230,31 +231,26 @@
     <build>
         <plugins>
             <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>hudson.udp</name>
+                            <value>33849</value>
+                        </property>
+                    </systemProperties>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=380m</argLine>
+                    <reuseForks>false</reuseForks>
+                    <forkCount>${concurrency}</forkCount>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>
                     <execution>
                         <goals>
                             <goal>test-jar</goal>
                         </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <id>add-eclipse-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${basedir}/target/generated-sources/localizer</source>
-                            </sources>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>

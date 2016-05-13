@@ -38,13 +38,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
-import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.Item;
-import hudson.model.Queue.QueueDecisionHandler;
-import hudson.model.Queue.Task;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TopLevelItem;
@@ -56,7 +52,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
-import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.Arrays;
@@ -66,9 +61,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-import java.lang.ref.WeakReference;
-
-import org.powermock.reflect.Whitebox;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -97,6 +89,7 @@ public class SpecGerritTriggerHudsonTest {
     private SshServer sshd;
     private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock serverMock;
+    private GerritServer gerritServer;
 
     /**
      * Runs before test method.
@@ -115,6 +108,8 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+        gerritServer = PluginImpl.getFirstServer_();
+        SshdServerMock.configureFor(sshd, gerritServer, true);
     }
 
     /**
@@ -132,19 +127,14 @@ public class SpecGerritTriggerHudsonTest {
      * Tests that a triggered build in silent start mode does not emit any build started messages.
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testTriggeredSilentStartModeBuild() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
-        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
-
-        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
-        trigger.setSilentStartMode(true);
+        FreeStyleProject project = new TestUtils.JobBuilder(j).silentStartMode(true).build();
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        TestUtils.waitForBuilds(project, 1, 5000);
+        TestUtils.waitForBuilds(project, 1, 20000);
 
         List<SshdServerMock.CommandMock> commands = serverMock.getCommandHistory();
         for (int i = 0; i < commands.size(); i++) {
@@ -157,19 +147,14 @@ public class SpecGerritTriggerHudsonTest {
      * Tests that a triggered build without silent start mode does emit build started messages.
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testTriggeredNoSilentStartModeBuild() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
-        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
-
-        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
-        trigger.setSilentStartMode(false);
+        FreeStyleProject project = new TestUtils.JobBuilder(j).name("projectX").silentStartMode(false).build();
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        waitForDynamicTimer(project, 5000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        TestUtils.waitForBuilds(project, 1, 5000);
+        TestUtils.waitForBuilds(project, 1, 20000);
 
         try {
             serverMock.waitForNrCommands("Build Started", 1, 5000);
@@ -185,64 +170,60 @@ public class SpecGerritTriggerHudsonTest {
      * while the ones without silent start mode does.
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testTriggeredSilentStartModeMixedBuild() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         gerritServer.getConfig().setNumberOfSendingWorkerThreads(3);
+
         final int nrOfJobs = 3;
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(1000));
         project.save();
+        int nrOfSilentStartJobs = 0;
         for (int i = 0; i < nrOfJobs; i++) {
             String name = String.format("project%d", i);
             FreeStyleProject copyProject = (FreeStyleProject)j.jenkins.copy((TopLevelItem)project, name);
             boolean mode = (i & 1) == 0; // true for even numbers
             copyProject.getTrigger(GerritTrigger.class).setSilentStartMode(mode);
+            if (mode) {
+                nrOfSilentStartJobs++;
+            }
+            copyProject.save();
         }
+        assertEquals("Wrong number of jobs", nrOfJobs + 1, j.jenkins.getAllItems().size());
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        try {
-            serverMock.waitForNrCommands("Build Started", 2, nrOfJobs * 5000);
-        } catch (Exception e) {
-            System.out.println(e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
-            fail("Should not throw exception.");
+        int expectedBuildStarted = nrOfJobs + 1 - nrOfSilentStartJobs;
+        System.out.println("Expected nr of start commands: " + expectedBuildStarted);
+        serverMock.waitForNrCommands("Build Started", expectedBuildStarted, nrOfJobs * 5000);
+        j.waitUntilNoActivity();
+        for (FreeStyleProject fp : j.jenkins.getAllItems(FreeStyleProject.class)) {
+            assertEquals(1, fp.getLastBuild().getNumber());
         }
+        StringBuilder cmdSearch = new StringBuilder("Build Successful[\\s\\S]+projectX/1/[\\s\\S]+SUCCESS[\\s\\S]+");
+        for (int i = 0; i < nrOfJobs; i++) {
+            cmdSearch.append("project" + i + "/1/[\\s\\S]+SUCCESS[\\s\\S]+");
+        }
+        System.out.println("Waiting for: " + cmdSearch);
+        serverMock.waitForNrCommands(cmdSearch.toString(), 1, 5000);
     }
 
     /**
      * Tests to trigger a build with a dynamic configuration.
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testDynamicTriggeredBuild() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
+
         FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        waitForDynamicTimer(project, 5000);
+        waitForDynamicTimer(project, 8000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         TestUtils.waitForBuilds(project, 1);
         FreeStyleBuild build = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, build.getResult());
-        // JENKINS-23152
-        WeakReference<FreeStyleProject> old = new WeakReference<FreeStyleProject>(project);
-        project = null;
-        //builds = null;
-        build = null;
-        gerritServer = null;
-        // clear out any BoundObjectTable references from config screen
-        Whitebox.getInternalState(j, org.mortbay.jetty.Server.class).stop();
-        j.jenkins.reload();
-        /* TODO https://netbeans.org/bugzilla/show_bug.cgi?id=244668 blocking further progress this way:
-           TODO use version from MemoryAssert in 1.519+
-        assertGC(old);
-        */
-        project = j.jenkins.getItemByFullName("projectX", FreeStyleProject.class);
-        assertEquals(1, project.getBuilds().size());
-        gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        gerritServer.triggerEvent(Setup.createPatchsetCreated());
-        //builds = DuplicatesUtil.waitForBuilds(project, 2, 5000);
     }
 
     /**
@@ -250,9 +231,10 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testDoubleTriggeredBuild() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
+
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(5000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -295,9 +277,9 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testDoubleTriggeredBuildWithProjects() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         FreeStyleProject project1 = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         FreeStyleProject project2 = DuplicatesUtil.createGerritTriggeredJob(j, "projectY");
         project1.getBuildersList().add(new SleepBuilder(5000));
@@ -341,9 +323,9 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testDoubleTriggeredBuildsOfDifferentChange() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(5000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -388,9 +370,9 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testTripleTriggeredBuildWithProjects() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         FreeStyleProject project1 = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         FreeStyleProject project2 = DuplicatesUtil.createGerritTriggeredJob(j, "projectY");
         project1.getBuildersList().add(new SleepBuilder(5000));
@@ -506,8 +488,7 @@ public class SpecGerritTriggerHudsonTest {
     @Test
     @LocalData
     public void testBuildLatestPatchsetOnlyNonRelatedChangeCannotAbort() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
         policy.setAbortNewPatchsets(false);
@@ -541,8 +522,7 @@ public class SpecGerritTriggerHudsonTest {
     @Test
     @LocalData
     public void testBuildLatestPatchsetOnlyNonRelatedChangeDifferentBranchCannotAbort() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
         policy.setAbortNewPatchsets(false);
@@ -583,11 +563,9 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
-    @LocalData
     public void buildLatestPatchsetOnlyAndReport(boolean abortManual, boolean abortNew, Result firstExpected,
                                                  Result secondExpected, Result thirdExpected) throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        BuildCancellationPolicy policy = ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly();
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(abortManual);
         policy.setAbortNewPatchsets(abortNew);
@@ -623,10 +601,11 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testNotBuildLatestPatchsetOnly() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
-        ((Config)gerritServer.getConfig()).getBuildCurrentPatchesOnly().setEnabled(false);
+        gerritServer.getConfig().getBuildCurrentPatchesOnly().setEnabled(false);
+
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -651,9 +630,9 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testTriggerOnCommentAdded() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
@@ -670,10 +649,11 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testDoubleTriggeredOnCommentAdded() throws Exception {
-        GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
+
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(2000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -709,29 +689,34 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception if so.
      */
+    @Test
     @LocalData
     public void testProjectRename() throws Exception {
-        QueueDecisionHandlerImpl h = QueueDecisionHandlerImpl.all().get(QueueDecisionHandlerImpl.class);
+        //QueueDecisionHandlerImpl h = QueueDecisionHandlerImpl.all().get(QueueDecisionHandlerImpl.class);
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
+
+        TestUtils.waitForBuilds(project, 1, 60000);
 
         project.renameTo("anotherName");
-        j.configRoundtrip((Item)project);
+        project = j.configRoundtrip(project);
 
-        assertEquals(0, h.countTrigger);
+        //assertEquals(1, h.countTrigger);
 
-        PluginImpl p = PluginImpl.getInstance();
-        p.getServer(PluginImpl.DEFAULT_SERVER_NAME).triggerEvent(Setup.createPatchsetCreated());
+        gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        Thread.sleep(3000); // TODO: is there a better way to wait for the completion of asynchronous event processing?
+        TestUtils.waitForBuilds(project, 2, 60000);
 
-        assertEquals(1, h.countTrigger);
+        //assertEquals(2, h.countTrigger);
     }
 
     /**
      * {@link QueueDecisionHandler} for aid in {@link #testProjectRename}.
      */
-    @TestExtension("testProjectRename")
+    /*@TestExtension("testProjectRename")
     public static class QueueDecisionHandlerImpl extends QueueDecisionHandler {
         private int countTrigger = 0;
 
@@ -740,6 +725,6 @@ public class SpecGerritTriggerHudsonTest {
             countTrigger++;
             return false;
         }
-    }
+    }*/
 
 }

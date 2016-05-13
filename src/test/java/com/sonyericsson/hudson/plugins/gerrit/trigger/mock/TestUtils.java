@@ -24,11 +24,19 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import hudson.matrix.MatrixProject;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,8 +45,15 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import hudson.model.Cause;
+import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Run;
+import hudson.model.TopLevelItem;
+import org.apache.commons.lang.NotImplementedException;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * A utility class for test.
@@ -209,6 +224,164 @@ public final class TestUtils {
             } catch (InterruptedException e) {
                 System.err.println("Interrupted while waiting!");
             }
+        }
+    }
+
+    /**
+     * A builder to create Jobs with a {@link GerritTrigger} configured.
+     */
+    public static class JobBuilder {
+        private static final String DEFAULT_JOB_NAME = "gerritProjectX";
+        private JenkinsRule j;
+        private String jobName;
+
+        private List<GerritProject> projects = new ArrayList<GerritProject>();
+        private String serverName = PluginImpl.DEFAULT_SERVER_NAME;
+        private boolean silentMode = false;
+        private boolean silentStartMode = false;
+        private boolean escapeQuotes = true;
+        private boolean dynamicTriggerConfiguration = false;
+
+        /**
+         * Creates a builder with the default project name.
+         * @param j the rule that rules it all
+         */
+        public JobBuilder(JenkinsRule j) {
+            this.j = j;
+            this.jobName = DEFAULT_JOB_NAME;
+        }
+
+        /**
+         * Sets the job name.
+         * @param name the name of the job to create
+         * @return this
+         */
+        public JobBuilder name(String name) {
+            this.jobName = name;
+            return this;
+        }
+
+        /**
+         * Adds a {@link GerritProject} configuration to trigger on.
+         * @param compareType the compareType
+         * @param pattern the pattern
+         * @param branches the branch patterns to trigger on.
+         *                 If none is provided one with {@link CompareType#ANT} and pattern: '**' is added as default.
+         * @return this
+         */
+        public JobBuilder project(CompareType compareType, String pattern, Branch... branches) {
+            List<Branch> bs = new ArrayList<Branch>();
+            if (branches == null || branches.length <= 0) {
+                bs.add(new Branch(CompareType.ANT, "**"));
+            } else {
+                Collections.addAll(bs, branches);
+            }
+            projects.add(new GerritProject(compareType, pattern, bs, null, null, null, false));
+            return this;
+        }
+
+        /**
+         * Sets the name of the {@link com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer} to trigger on.
+         * @param name the server name
+         * @return this
+         */
+        public JobBuilder serverName(String name) {
+            this.serverName = name;
+            return this;
+        }
+
+        /**
+         * Sets {@link GerritTrigger#setSilentMode(boolean)}.
+         * @param mode the silent mode
+         * @return this
+         */
+        public JobBuilder silentMode(boolean mode) {
+            this.silentMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets {@link GerritTrigger#setSilentStartMode(boolean)}.
+         * @param mode the silent start mode
+         * @return this
+         */
+        public JobBuilder silentStartMode(boolean mode) {
+            this.silentStartMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets {@link GerritTrigger#setEscapeQuotes(boolean)}.
+         * @param escape escape quotes
+         * @return this
+         */
+        public JobBuilder escapeQuotes(boolean escape) {
+            this.escapeQuotes = escape;
+            return this;
+        }
+
+        /**
+         * Sets {@link GerritTrigger#setDynamicTriggerConfiguration(boolean)}.
+         * @param dynamicTrigger dynamicTriggerConfiguration
+         * @return this
+         */
+        public JobBuilder dynamicTriggerConfiguration(boolean dynamicTrigger) {
+            this.dynamicTriggerConfiguration = dynamicTrigger;
+            return this;
+        }
+
+        /**
+         * Builds a {@link FreeStyleProject}.
+         * @return the job
+         * @throws Exception if so
+         */
+        public FreeStyleProject build() throws Exception {
+            return build(FreeStyleProject.class);
+        }
+
+        /**
+         * Builds a Job of the provided type.
+         * Due to how {@link FreeStyleProject#addTrigger(hudson.triggers.Trigger)} is defined in all job types
+         * it currently only supports {@link FreeStyleProject}, {@link MatrixProject} and {@link WorkflowJob}.
+         * Any other job types should be added on an as needed basis.
+         *
+         * @param jobType the type of job to create
+         * @param <T> the type of job to create
+         * @return the created job
+         * @throws Exception if so
+         * @see JenkinsRule#createProject(Class)
+         * @see JenkinsRule#configRoundtrip(Job)
+         */
+        public <T extends Job & TopLevelItem> T build(Class<? extends T> jobType) throws Exception {
+            if (isBlank(jobName)) {
+                jobName = DEFAULT_JOB_NAME;
+            }
+            T job = j.createProject(jobType, jobName);
+            GerritTrigger trigger = new GerritTrigger(projects);
+            if (projects.isEmpty()) {
+                project(CompareType.ANT, "**");
+            }
+            if (isBlank(serverName)) {
+                trigger.setServerName(PluginImpl.DEFAULT_SERVER_NAME);
+            } else {
+                trigger.setServerName(serverName);
+            }
+            trigger.setSilentMode(silentMode);
+            trigger.setSilentStartMode(silentStartMode);
+            trigger.setEscapeQuotes(escapeQuotes);
+            trigger.setDynamicTriggerConfiguration(dynamicTriggerConfiguration);
+            if (job instanceof FreeStyleProject) {
+                ((FreeStyleProject)job).addTrigger(trigger);
+            } else if (job instanceof MatrixProject) {
+                ((MatrixProject)job).addTrigger(trigger);
+            } else if (job instanceof WorkflowJob) {
+                ((WorkflowJob)job).addTrigger(trigger);
+            } else {
+                throw new NotImplementedException(job.getClass().getName() + "Is not a supported test class, "
+                                                          + "implement here.");
+            }
+
+            return j.configRoundtrip(job);
         }
     }
 }

@@ -34,17 +34,20 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 
 import hudson.model.FreeStyleProject;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * Tests for the project setup for a Gerrit triggered project.
@@ -86,14 +89,8 @@ public class GerritTriggerProjectHudsonTest {
         assertNotNull(tr);
         HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
         HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
-        Iterator<DomElement> iterator = select.getChildElements().iterator();
-        DomElement option = iterator.next();
-        String value = option.getAttribute("value");
-        //This will test that the default values are correct.
-        assertEquals("First value should be Code-Review", "Code-Review", value);
-        option = iterator.next();
-        value = option.getAttribute("value");
-        assertEquals("Second value should be Verified", "Verified", value);
+        List<String> expected = Arrays.asList("Verified", "Code-Review");
+        verifyOptions(select, expected);
     }
 
     /**
@@ -132,22 +129,25 @@ public class GerritTriggerProjectHudsonTest {
         HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
         HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
 
+        List<String> expected = Arrays.asList("Verified", "Code-Review", "Code-Review2", "Verified2");
+        verifyOptions(select, expected);
+    }
+
+    /**
+     * Verifies that the provided HtmlSelect contains options with values as in the expected list.
+     * The option values and the expected list will be sorted inline for comparison.
+     * @param select the html element to check
+     * @param expected the list of expected values
+     */
+    private void verifyOptions(HtmlSelect select, List<String> expected) {
         Iterator<DomElement> iterator = select.getChildElements().iterator();
-
-        DomElement option = iterator.next();
-        String value = option.getAttribute("value");
-        //This will test that the default values are correct.
-        assertEquals("First value should be Verified", "Verified", value);
-        option = iterator.next();
-        value = option.getAttribute("value");
-        assertEquals("Second value should be Code-Review", "Code-Review", value);
-        option = iterator.next();
-        value = option.getAttribute("value");
-        assertEquals("Third value should be Code-Review2", "Code-Review2", value);
-        option = iterator.next();
-        value = option.getAttribute("value");
-        assertEquals("Fourth value should be Verified2", "Verified2", value);
-
-        assertFalse(iterator.hasNext());
+        Collections.sort(expected);
+        List<String> actual = new ArrayList<String>(expected.size());
+        while (iterator.hasNext()) {
+            DomElement option = iterator.next();
+            actual.add(option.getAttribute("value"));
+        }
+        Collections.sort(actual);
+        assertThat(actual, CoreMatchers.equalTo(expected));
     }
 }

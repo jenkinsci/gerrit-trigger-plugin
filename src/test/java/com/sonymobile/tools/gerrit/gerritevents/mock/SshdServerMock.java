@@ -26,6 +26,10 @@ package com.sonymobile.tools.gerrit.gerritevents.mock;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import org.apache.commons.lang.StringUtils;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.server.Command;
@@ -55,6 +59,7 @@ import com.jcraft.jsch.KeyPair;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.APPROVALS;
@@ -207,9 +212,10 @@ public class SshdServerMock implements CommandFactory {
     public synchronized int getNrCommandsHistory(String commandSearch) {
         int matches = 0;
         if (commandHistory != null) {
-            Pattern p = Pattern.compile(commandSearch);
+            Pattern p = Pattern.compile(commandSearch, Pattern.MULTILINE);
             for (CommandMock command : commandHistory) {
-                if (p.matcher(command.getCommand()).find()) {
+                Matcher matcher = p.matcher(command.getCommand());
+                if (matcher.find()) {
                     matches++;
                 }
             }
@@ -330,15 +336,14 @@ public class SshdServerMock implements CommandFactory {
     /**
      * Starts a ssh server on the provided port.
      *
-     * @param port the port to listen to.
      * @param server the server mock to start
      *
      * @return the server.
      * @throws IOException if so.
      */
-    public static SshServer startServer(int port, SshdServerMock server) throws IOException {
+    public static SshServer startServer(SshdServerMock server) throws IOException {
         SshServer sshd = SshServer.setUpDefaultServer();
-        sshd.setPort(port);
+        sshd.setPort(0);
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
         List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
         userAuthFactories.add(new UserAuthNone.Factory());
@@ -348,18 +353,56 @@ public class SshdServerMock implements CommandFactory {
         return sshd;
     }
 
+    /**
+     * Configures the GerritServer config to connect to the provided ssh server.
+     *
+     * @param sshd the server to connect to
+     * @param gerritServer the config to configure
+     * @param reconnect if the GerritServer connection should be restarted after the configuration change
+     *
+     * @see #getConfigFor(SshServer, IGerritHudsonTriggerConfig)
+     * @see GerritServer#stopConnection()
+     * @see GerritServer#startConnection()
+     */
+    public static void configureFor(SshServer sshd, GerritServer gerritServer, boolean reconnect) {
+        if (reconnect) {
+            gerritServer.stopConnection();
+        }
+        configureFor(sshd, gerritServer);
+        if (reconnect) {
+            gerritServer.startConnection();
+        }
+    }
 
     /**
-     * Starts a ssh server on the standard Gerrit port.
+     * Configures the GerritServer config to connect to the provided ssh server.
      *
-     * @param server the server mock to start
-     *
-     * @return the server.
-     * @throws IOException if so.
-     * @see #GERRIT_SSH_PORT
+     * @param sshd the server to connect to
+     * @param gerritServer the config to configure
+     * @see #getConfigFor(SshServer, IGerritHudsonTriggerConfig)
      */
-    public static SshServer startServer(SshdServerMock server) throws IOException {
-        return startServer(GERRIT_SSH_PORT, server);
+    public static void configureFor(final SshServer sshd, GerritServer gerritServer) {
+        gerritServer.setConfig(getConfigFor(sshd, gerritServer.getConfig()));
+    }
+
+    /**
+     * creates a new Config with the ssh hostname and port set to connect to the provided server.
+     *
+     * @param sshd the server to configure for
+     * @param existing the existing configuration
+     * @return a new Config
+     * @see Config#Config(IGerritHudsonTriggerConfig)
+     */
+    public static Config getConfigFor(final SshServer sshd, IGerritHudsonTriggerConfig existing) {
+        Config c = new Config(existing);
+        String host = sshd.getHost();
+        if (StringUtils.isBlank(host)) {
+            c.setGerritHostName("localhost");
+        } else {
+            c.setGerritHostName(host);
+        }
+        c.setGerritSshPort(sshd.getPort());
+        return c;
     }
 
     /**

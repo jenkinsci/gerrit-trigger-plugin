@@ -640,7 +640,18 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public int getProjectListFetchDelay() {
-        return projectListFetchDelay; }
+        return projectListFetchDelay;
+    }
+
+    /**
+     * Sets the delay from Jenkins startup before the project list should be fetched.
+     * @param projectListFetchDelay the delay
+     * @see #getProjectListFetchDelay()
+     * @see #isEnableProjectAutoCompletion()
+     */
+    public void setProjectListFetchDelay(int projectListFetchDelay) {
+        this.projectListFetchDelay = projectListFetchDelay;
+    }
 
     @Override
     public int getProjectListRefreshInterval() {
@@ -650,9 +661,31 @@ public class Config implements IGerritHudsonTriggerConfig {
         return projectListRefreshInterval;
     }
 
+    /**
+     * The interval between recurrent fetches of the project list.
+     * @param projectListRefreshInterval the interval
+     * @see #getProjectListRefreshInterval()
+     * @see #isEnableProjectAutoCompletion()
+     */
+    public void setProjectListRefreshInterval(int projectListRefreshInterval) {
+        this.projectListRefreshInterval = projectListRefreshInterval;
+    }
+
     @Override
     public boolean isEnableProjectAutoCompletion() {
         return enableProjectAutoCompletion;
+    }
+
+    /**
+     * If the project list should be fetched from the gerrit server or not.
+     *
+     * @param enableProjectAutoCompletion true if so
+     * @see #isEnableProjectAutoCompletion()
+     * @see #getProjectListRefreshInterval()
+     * @see #getProjectListFetchDelay()
+     */
+    public void setEnableProjectAutoCompletion(boolean enableProjectAutoCompletion) {
+        this.enableProjectAutoCompletion = enableProjectAutoCompletion;
     }
 
     /**
@@ -746,11 +779,15 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public boolean isGerritBuildCurrentPatchesOnly() {
-        return this.buildCurrentPatchesOnly.isEnabled();
+        return getBuildCurrentPatchesOnly().isEnabled();
     }
 
     @Override
     public BuildCancellationPolicy getBuildCurrentPatchesOnly() {
+        if (this.buildCurrentPatchesOnly == null) {
+            this.buildCurrentPatchesOnly = new BuildCancellationPolicy();
+            this.buildCurrentPatchesOnly.setEnabled(false);
+        }
         return this.buildCurrentPatchesOnly;
     }
 

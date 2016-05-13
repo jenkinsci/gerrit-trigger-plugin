@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages the timer that is used for each GerritTrigger TimerTask that
@@ -52,16 +52,12 @@ public final class GerritTriggerTimer {
      */
     private static GerritTriggerTimer instance = null;
 
-    /**
-     * The timer that is doing the actual scheduling.
-     */
-    private Timer timer = null;
 
     /**
      * The private constructor (this is a singleton class).
      */
     private GerritTriggerTimer() {
-        timer = new Timer(true);
+
     }
 
     /**
@@ -139,7 +135,9 @@ public final class GerritTriggerTimer {
     public void schedule(GerritTriggerTimerTask timerTask) {
         long timerPeriod = TimeUnit2.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(timerTask));
         try {
-            timer.schedule(timerTask, DELAY_MILLISECONDS, timerPeriod);
+            jenkins.util.Timer.get().scheduleWithFixedDelay(timerTask, DELAY_MILLISECONDS, timerPeriod,
+                                                            TimeUnit.MILLISECONDS);
+
         } catch (IllegalArgumentException iae) {
             logger.error("Attempted use of negative delay", iae);
         } catch (IllegalStateException ise) {

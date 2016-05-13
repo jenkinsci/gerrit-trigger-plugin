@@ -56,6 +56,8 @@ import static org.junit.Assert.assertTrue;
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  */
 public class GerritServerHudsonTest {
+
+    // CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
     /**
      * An instance of Jenkins Rule.
      */
@@ -80,8 +82,6 @@ public class GerritServerHudsonTest {
     private final String radioButtonCopyValue = "copy";
 
     private final int badRequestErrorCode = 400;
-    private final int portOne = 29418;
-    private final int portTwo = 29419;
 
     private final String removeLastServerWarning = "Cannot remove the last server!";
     private final String wrongMessageWarning = "Wrong message when trying to remove GerritServer! ";
@@ -103,8 +103,8 @@ public class GerritServerHudsonTest {
         SshdServerMock.generateKeyPair();
         serverOne = new SshdServerMock();
         serverTwo = new SshdServerMock();
-        sshdOne = SshdServerMock.startServer(portOne, serverOne);
-        sshdTwo = SshdServerMock.startServer(portTwo, serverTwo);
+        sshdOne = SshdServerMock.startServer(serverOne);
+        sshdTwo = SshdServerMock.startServer(serverTwo);
         serverOne.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         serverOne.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverOne.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
@@ -136,16 +136,22 @@ public class GerritServerHudsonTest {
     public void testTriggeringFromMultipleGerritServers() throws Exception {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
         GerritServer gerritServerTwo = new GerritServer(gerritServerTwoName);
+        SshdServerMock.configureFor(sshdOne, gerritServerOne);
+        SshdServerMock.configureFor(sshdTwo, gerritServerTwo);
         PluginImpl.getInstance().addServer(gerritServerOne);
         PluginImpl.getInstance().addServer(gerritServerTwo);
         gerritServerOne.start();
+        gerritServerOne.startConnection();
         gerritServerTwo.start();
+        gerritServerTwo.startConnection();
         FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
         FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(j, projectTwoName, gerritServerTwoName);
+        serverOne.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverTwo.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
-        TestUtils.waitForBuilds(projectOne, 1);
-        TestUtils.waitForBuilds(projectTwo, 1);
+        TestUtils.waitForBuilds(projectOne, 1, 20000);
+        TestUtils.waitForBuilds(projectTwo, 1, 20000);
 
         FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
@@ -205,6 +211,7 @@ public class GerritServerHudsonTest {
     @Test
     public void testRemoveLastServerWithConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
+        SshdServerMock.configureFor(sshdOne, server);
         PluginImpl.getInstance().addServer(server);
         server.start();
 
@@ -224,6 +231,7 @@ public class GerritServerHudsonTest {
     @Test
     public void testRemoveOneServerWithoutConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
+        SshdServerMock.configureFor(sshdOne, server);
         PluginImpl.getInstance().addServer(server);
 
         boolean buttonFound = removeServer(gerritServerOneName);
