@@ -146,8 +146,8 @@ public class GerritServerHudsonTest {
         gerritServerTwo.startConnection();
         FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
         FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(j, projectTwoName, gerritServerTwoName);
-        serverOne.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
-        serverTwo.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverOne.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
+        serverTwo.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
         TestUtils.waitForBuilds(projectOne, 1, 20000);

@@ -109,7 +109,7 @@ public class GerritTriggerApiTest {
         gerritServer.startConnection();
 
         FreeStyleProject project = new TestUtils.JobBuilder(j).serverName(gerritServerName).build();
-        server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         GerritTriggerApi api = new GerritTriggerApi();
         Handler handler = null;
         try {
