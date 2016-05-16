@@ -75,13 +75,14 @@ public class GerritTriggerApiTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.generateKeyPair();
+        SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
     }
 
     /**

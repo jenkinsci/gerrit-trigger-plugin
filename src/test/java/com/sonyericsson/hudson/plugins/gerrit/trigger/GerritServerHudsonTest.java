@@ -100,7 +100,7 @@ public class GerritServerHudsonTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.generateKeyPair();
+        SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
         serverOne = new SshdServerMock();
         serverTwo = new SshdServerMock();
         sshdOne = SshdServerMock.startServer(serverOne);
@@ -113,6 +113,7 @@ public class GerritServerHudsonTest {
         serverTwo.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverTwo.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         serverTwo.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
     }
 
     /**
