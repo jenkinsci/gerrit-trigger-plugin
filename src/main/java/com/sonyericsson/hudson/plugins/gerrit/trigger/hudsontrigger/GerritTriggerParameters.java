@@ -34,6 +34,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
@@ -93,6 +94,10 @@ public enum GerritTriggerParameters {
      * Parameter name for the patch set revision.
      */
     GERRIT_PATCHSET_REVISION,
+    /**
+     * Parameter name for a merged change revision.
+     */
+    GERRIT_MERGED_REVISION,
     /**
      * Parameter name for the Gerrit project name.
      */
@@ -367,6 +372,9 @@ public enum GerritTriggerParameters {
                         parameters, event.getPatchSet().getRevision(), escapeQuotes);
                 GERRIT_REFSPEC.setOrCreateStringParameterValue(
                         parameters, StringUtil.makeRefSpec(event), escapeQuotes);
+            }
+            if (event instanceof ChangeMerged) {
+                GERRIT_MERGED_REVISION.setOrCreateStringParameterValue(parameters, ((ChangeMerged)event).getMergedRevision(), escapeQuotes);
             }
             GERRIT_PROJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getProject(), escapeQuotes);
