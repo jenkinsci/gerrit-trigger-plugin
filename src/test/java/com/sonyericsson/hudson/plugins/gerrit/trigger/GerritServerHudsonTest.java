@@ -91,6 +91,7 @@ public class GerritServerHudsonTest {
     private SshdServerMock serverTwo;
     private SshServer sshdOne;
     private SshServer sshdTwo;
+    private SshdServerMock.KeyPairFiles sshKey;
 
 
     /**
@@ -100,7 +101,7 @@ public class GerritServerHudsonTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
+        sshKey = SshdServerMock.generateKeyPair();
         serverOne = new SshdServerMock();
         serverTwo = new SshdServerMock();
         sshdOne = SshdServerMock.startServer(serverOne);
@@ -137,8 +138,8 @@ public class GerritServerHudsonTest {
     public void testTriggeringFromMultipleGerritServers() throws Exception {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
         GerritServer gerritServerTwo = new GerritServer(gerritServerTwoName);
-        SshdServerMock.configureFor(sshdOne, gerritServerOne);
-        SshdServerMock.configureFor(sshdTwo, gerritServerTwo);
+        SshdServerMock.configureFor(sshdOne, sshKey, gerritServerOne);
+        SshdServerMock.configureFor(sshdTwo, sshKey, gerritServerTwo);
         PluginImpl.getInstance().addServer(gerritServerOne);
         PluginImpl.getInstance().addServer(gerritServerTwo);
         gerritServerOne.start();
@@ -212,7 +213,7 @@ public class GerritServerHudsonTest {
     @Test
     public void testRemoveLastServerWithConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
-        SshdServerMock.configureFor(sshdOne, server);
+        SshdServerMock.configureFor(sshdOne, sshKey, server);
         PluginImpl.getInstance().addServer(server);
         server.start();
 
@@ -232,7 +233,7 @@ public class GerritServerHudsonTest {
     @Test
     public void testRemoveOneServerWithoutConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
-        SshdServerMock.configureFor(sshdOne, server);
+        SshdServerMock.configureFor(sshdOne, sshKey, server);
         PluginImpl.getInstance().addServer(server);
 
         boolean buttonFound = removeServer(gerritServerOneName);

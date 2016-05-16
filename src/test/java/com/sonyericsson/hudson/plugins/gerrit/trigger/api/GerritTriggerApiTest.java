@@ -67,6 +67,7 @@ public class GerritTriggerApiTest {
 
     private SshdServerMock server;
     private SshServer sshd;
+    private SshdServerMock.KeyPairFiles sshKey;
 
     /**
      * Runs before test method.
@@ -75,7 +76,7 @@ public class GerritTriggerApiTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
+        sshKey = SshdServerMock.generateKeyPair();
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
@@ -104,7 +105,7 @@ public class GerritTriggerApiTest {
     public void testApiTriggerBuild() throws Exception {
         String gerritServerName = "testServer";
         GerritServer gerritServer = new GerritServer(gerritServerName);
-        gerritServer.setConfig(SshdServerMock.getConfigFor(sshd, gerritServer.getConfig()));
+        gerritServer.setConfig(SshdServerMock.getConfigFor(sshd, sshKey, gerritServer.getConfig()));
         PluginImpl.getInstance().addServer(gerritServer);
         gerritServer.start();
         gerritServer.startConnection();

@@ -1103,7 +1103,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isConnectionError() {
-        if (!gerritConnectionListener.isConnected()) {
+        //if it is null then we haven't started at all.
+        if (gerritConnectionListener != null && !gerritConnectionListener.isConnected()) {
             if (timeoutWakeup) {
                 return true;
             }
@@ -1118,7 +1119,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isGerritSnapshotVersion() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             if (gerritConnectionListener.isSnapShotGerrit()) {
                 return true;
             }
@@ -1133,7 +1134,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isGerritMissedEventsSupported() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             return missedEventsPlaybackManager.isSupported();
         }
         return false;
@@ -1146,7 +1147,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean hasDisabledFeatures() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             List<GerritVersionChecker.Feature> disabledFeatures = gerritConnectionListener.getDisabledFeatures();
             if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
                 return true;
@@ -1161,7 +1162,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @return the list of disabled features or empty list if listener not found
      */
     public List<GerritVersionChecker.Feature> getDisabledFeatures() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             List<GerritVersionChecker.Feature> features = gerritConnectionListener.getDisabledFeatures();
             if (features != null) {
                 return features;

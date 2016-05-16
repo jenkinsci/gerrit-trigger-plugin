@@ -378,11 +378,23 @@ public class SshdServerMock implements CommandFactory {
      * Configures the GerritServer config to connect to the provided ssh server.
      *
      * @param sshd the server to connect to
+     * @param sshKey the public key location to configure
+     * @param gerritServer the config to configure
+     * @see #getConfigFor(SshServer, IGerritHudsonTriggerConfig)
+     */
+    public static void configureFor(final SshServer sshd, KeyPairFiles sshKey, GerritServer gerritServer) {
+        gerritServer.setConfig(getConfigFor(sshd, sshKey, gerritServer.getConfig()));
+    }
+
+    /**
+     * Configures the GerritServer config to connect to the provided ssh server.
+     *
+     * @param sshd the server to connect to
      * @param gerritServer the config to configure
      * @see #getConfigFor(SshServer, IGerritHudsonTriggerConfig)
      */
     public static void configureFor(final SshServer sshd, GerritServer gerritServer) {
-        gerritServer.setConfig(getConfigFor(sshd, gerritServer.getConfig()));
+        configureFor(sshd, null, gerritServer);
     }
 
     /**
@@ -394,6 +406,19 @@ public class SshdServerMock implements CommandFactory {
      * @see Config#Config(IGerritHudsonTriggerConfig)
      */
     public static Config getConfigFor(final SshServer sshd, IGerritHudsonTriggerConfig existing) {
+        return getConfigFor(sshd, null, existing);
+    }
+
+    /**
+     * creates a new Config with the ssh hostname and port set to connect to the provided server.
+     *
+     * @param sshd the server to configure for
+     * @param sshKey the public key location to configure
+     * @param existing the existing configuration
+     * @return a new Config
+     * @see Config#Config(IGerritHudsonTriggerConfig)
+     */
+    public static Config getConfigFor(final SshServer sshd, KeyPairFiles sshKey, IGerritHudsonTriggerConfig existing) {
         Config c = new Config(existing);
         String host = sshd.getHost();
         if (StringUtils.isBlank(host)) {
@@ -402,6 +427,9 @@ public class SshdServerMock implements CommandFactory {
             c.setGerritHostName(host);
         }
         c.setGerritSshPort(sshd.getPort());
+        if (sshKey != null) {
+            c.setGerritAuthKeyFile(sshKey.getPrivateKey());
+        }
         return c;
     }
 
