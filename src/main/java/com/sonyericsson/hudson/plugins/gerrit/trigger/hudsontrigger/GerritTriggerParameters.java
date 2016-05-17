@@ -37,6 +37,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -213,7 +214,11 @@ public enum GerritTriggerParameters {
     /**
      * The type of the event.
      */
-    GERRIT_EVENT_TYPE;
+    GERRIT_EVENT_TYPE,
+    /**
+     * The revision after the merge in a change-merged event.
+    */
+    GERRIT_MERGED_REVISION;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -399,6 +404,10 @@ public enum GerritTriggerParameters {
                         parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+            }
+            if (event instanceof ChangeMerged) {
+                GERRIT_MERGED_REVISION.setOrCreateStringParameterValue(
+                        parameters, ((ChangeMerged)event).getNewRev(), escapeQuotes);
             }
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_OWNER, parameters,
                     getNameAndEmail(event.getChange().getOwner()), ParameterMode.PlainMode.STRING, escapeQuotes);
