@@ -30,9 +30,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
+import jenkins.model.Jenkins;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 
@@ -46,6 +51,8 @@ import java.util.Arrays;
 /**
  * Tests for {@link GerritProjectListTest}.
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Jenkins.class)
 public class GerritProjectListTest {
 
     /**
@@ -88,6 +95,11 @@ public class GerritProjectListTest {
      */
     @Before
     public void createProjectsAndTriggers() throws Exception {
+
+        PowerMockito.mockStatic(Jenkins.class);
+        Jenkins jenkins = PowerMockito.mock(Jenkins.class);
+        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+
         GerritProject gP1 = createGerritProject("test/project1", CompareType.PLAIN);
         GerritProject gP2 = createGerritProject("test/project2", CompareType.PLAIN);
         GerritProject gP3 = createGerritProject("test/project3", CompareType.PLAIN);

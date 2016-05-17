@@ -233,7 +233,10 @@ public class GerritCause extends SCMTriggerCause {
 
     @Override
     public int hashCode() {
-        int result = tEvent.hashCode();
+        int result = 1;
+        if (tEvent != null) {
+            result = tEvent.hashCode();
+        }
         result = 31 * result + (silentMode ? 1 : 0);
         return result;
     }

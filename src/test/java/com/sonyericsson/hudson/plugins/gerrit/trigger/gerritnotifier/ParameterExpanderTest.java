@@ -41,16 +41,17 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Hudson;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import jenkins.model.Jenkins;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -73,8 +74,18 @@ import static org.mockito.Mockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Hudson.class, GerritMessageProvider.class })
+@PrepareForTest({ Jenkins.class, GerritMessageProvider.class })
 public class ParameterExpanderTest {
+
+    private Jenkins jenkins;
+
+    @Before
+    public void setup() {
+        PowerMockito.mockStatic(Jenkins.class);
+        jenkins = PowerMockito.mock(Jenkins.class);
+        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(jenkins.getRootUrl()).thenReturn("http://localhost/");
+    }
 
     /**
      * test.
@@ -96,8 +107,6 @@ public class ParameterExpanderTest {
         BuildsStartedStats stats = Setup.createBuildStartedStats(event);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
 
         PowerMockito.mockStatic(GerritMessageProvider.class);
         List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
@@ -105,7 +114,7 @@ public class ParameterExpanderTest {
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, hudson);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
 
         final String expectedRefSpec = StringUtil.makeRefSpec(event);
 
@@ -132,7 +141,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumVerifiedValue() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
@@ -172,7 +181,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValue() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[4];
 
@@ -213,7 +222,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValueOneUnstableSkipped() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[3];
 
@@ -248,7 +257,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValueOneSuccessfulSkipped() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[1];
 
@@ -274,7 +283,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValueForOneJobOverridenBuildSuccessful() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
 
@@ -304,7 +313,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValueForOneJobOverridenBuildFailed() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
 
@@ -334,7 +343,7 @@ public class ParameterExpanderTest {
     public void testGetMinimumCodeReviewValueForOneJobOverridenMixed() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
-        ParameterExpander instance = new ParameterExpander(config);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
 
@@ -528,9 +537,6 @@ public class ParameterExpanderTest {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
@@ -544,7 +550,7 @@ public class ParameterExpanderTest {
         for (int i = 0; i < expectedBuildResults.length; i++) {
             EnvVars env = Setup.createEnvVars();
             AbstractBuild r = Setup.createBuild(project, taskListener, env);
-            env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+            env.put("BUILD_URL", jenkins.getRootUrl() + r.getUrl());
             when(r.getResult()).thenReturn(expectedBuildResults[i]);
             entries[i] = Setup.createImprintEntry(project, r);
         }
@@ -568,7 +574,7 @@ public class ParameterExpanderTest {
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, hudson);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
 
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
@@ -611,9 +617,6 @@ public class ParameterExpanderTest {
     public void tryBuildStatsFailureCommand(String unsuccessfulMessage, String expectedBuildStats) throws Exception {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
@@ -624,7 +627,7 @@ public class ParameterExpanderTest {
 
         EnvVars env = Setup.createEnvVars();
         AbstractBuild r = Setup.createBuild(project, taskListener, env);
-        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+        env.put("BUILD_URL", jenkins.getRootUrl() + r.getUrl());
 
         when(r.getResult()).thenReturn(Result.FAILURE);
 
@@ -653,7 +656,7 @@ public class ParameterExpanderTest {
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, hudson);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
 
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
@@ -670,9 +673,6 @@ public class ParameterExpanderTest {
     public void getBuildStatsFailureCommandWithNullsForCodeReviewValues() throws Exception {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
-        Hudson hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
@@ -684,7 +684,7 @@ public class ParameterExpanderTest {
 
         EnvVars env = Setup.createEnvVars();
         AbstractBuild r = Setup.createBuild(project, taskListener, env);
-        env.put("BUILD_URL", hudson.getRootUrl() + r.getUrl());
+        env.put("BUILD_URL", jenkins.getRootUrl() + r.getUrl());
 
         when(r.getResult()).thenReturn(Result.FAILURE);
 
@@ -709,7 +709,7 @@ public class ParameterExpanderTest {
         messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, hudson);
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
 
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);

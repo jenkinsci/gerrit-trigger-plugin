@@ -48,6 +48,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,14 +73,14 @@ public class ParameterExpander {
 
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
-    private Hudson hudson;
+    private Jenkins hudson;
 
     /**
      * Constructor.
      * @param config the global config.
      * @param hudson the Hudson instance.
      */
-    public ParameterExpander(IGerritHudsonTriggerConfig config, Hudson hudson) {
+    public ParameterExpander(IGerritHudsonTriggerConfig config, Jenkins hudson) {
         this.config = config;
         this.hudson = hudson;
     }
@@ -89,7 +90,7 @@ public class ParameterExpander {
      * @param config the global config.
      */
     public ParameterExpander(IGerritHudsonTriggerConfig config) {
-        this(config, Hudson.getInstance());
+        this(config, Jenkins.getInstance());
     }
 
     /**

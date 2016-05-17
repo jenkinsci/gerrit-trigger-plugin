@@ -30,9 +30,15 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 import hudson.model.Result;
 
+import jenkins.model.Jenkins;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -51,7 +57,9 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonymobile.com&gt;
  */
-@RunWith(Parameterized.class)
+@RunWith(PowerMockRunner.class)
+@PowerMockRunnerDelegate(Parameterized.class)
+@PrepareForTest(Jenkins.class)
 public class ParameterExpanderSkipVoteParameterTest {
 
     private TestParameter parameter;
@@ -63,6 +71,13 @@ public class ParameterExpanderSkipVoteParameterTest {
      */
     public ParameterExpanderSkipVoteParameterTest(TestParameter parameter) {
         this.parameter = parameter;
+    }
+
+    @Before
+    public void setup() {
+        PowerMockito.mockStatic(Jenkins.class);
+        Jenkins jenkins = PowerMockito.mock(Jenkins.class);
+        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
     }
 
     /**
