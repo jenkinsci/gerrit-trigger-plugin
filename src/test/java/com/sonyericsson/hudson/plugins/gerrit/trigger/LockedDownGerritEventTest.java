@@ -83,7 +83,7 @@ public class LockedDownGerritEventTest {
         sshKey = SshdServerMock.generateKeyPair();
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(port, server);
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
@@ -124,6 +124,7 @@ public class LockedDownGerritEventTest {
         trigger.setSilentStartMode(false);
 
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);
         gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
         ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());

@@ -78,7 +78,7 @@ public class GerritMissedEventsFunctionalTest {
      */
     // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: WireMockRule.
     @Rule
-    public final WireMockRule wireMockRule = new WireMockRule(8089); // No-args constructor defaults to port 8089
+    public final WireMockRule wireMockRule = new WireMockRule(0); // No-args constructor defaults to port 8089
 
     private static final int HTTPOK = 200;
     private static final int SLEEPTIME = 1000;
@@ -99,7 +99,7 @@ public class GerritMissedEventsFunctionalTest {
         sshKey = SshdServerMock.generateKeyPair();
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(port, server);
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
@@ -138,11 +138,13 @@ public class GerritMissedEventsFunctionalTest {
         config.setUseRestApi(true);
         config.setGerritHttpUserName("scott");
         config.setGerritHttpPassword("scott");
-        config.setGerritFrontEndURL("http://localhost:8089");
-        config.setGerritHostName("localhost");
+        config.setGerritFrontEndURL("http://localhost:" + wireMockRule.port());
+
         config.setGerritProxy("");
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
+        config = (Config)SshdServerMock.getConfigFor(sshd, config);
         gerritServer.setConfig(config);
+
 
         gerritServer.startConnection();
 
@@ -166,11 +168,10 @@ public class GerritMissedEventsFunctionalTest {
         gerritServer.start();
 
         Config config = (Config)gerritServer.getConfig();
-        config.setGerritFrontEndURL("http://localhost:8089");
-        config.setGerritHostName("localhost");
+        config.setGerritFrontEndURL("http://localhost:" + wireMockRule.port());
         config.setGerritProxy("");
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
-
+        SshdServerMock.configureFor(sshd, gerritServer);
         gerritServer.startConnection();
 
         while (!gerritServer.isConnected()) {

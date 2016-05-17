@@ -132,7 +132,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("Set Gerrit review", run);
+            jenkinsRule.assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server...
@@ -173,7 +173,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("Set Gerrit review", run);
+            jenkinsRule.assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server,
@@ -214,7 +214,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("Set Gerrit review", run);
+            jenkinsRule.assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server,

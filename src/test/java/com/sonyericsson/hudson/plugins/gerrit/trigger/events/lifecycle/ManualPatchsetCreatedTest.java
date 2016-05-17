@@ -122,7 +122,7 @@ public class ManualPatchsetCreatedTest {
     }
 
     /**
-     * Tests {@link ManualPatchsetCreated#fireProjectTriggered(hudson.model.AbstractProject)}.
+     * Tests {@link ManualPatchsetCreated#fireProjectTriggered(hudson.model.Job)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
@@ -139,7 +139,7 @@ public class ManualPatchsetCreatedTest {
     }
 
     /**
-     * Tests {@link ManualPatchsetCreated#fireBuildStarted(hudson.model.AbstractBuild)}.
+     * Tests {@link ManualPatchsetCreated#fireBuildStarted(hudson.model.Run)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test
@@ -156,7 +156,7 @@ public class ManualPatchsetCreatedTest {
     }
 
     /**
-     * Tests {@link ManualPatchsetCreated#fireBuildCompleted(hudson.model.AbstractBuild)}.
+     * Tests {@link ManualPatchsetCreated#fireBuildCompleted(hudson.model.Run)}.
      * @throws Exception if the unfortunate happens.
      */
     @Test

@@ -169,17 +169,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
      /**
      * Convenience method for jelly to get url of the server list's page relative to root.
-     * @link {@link GerritManagement#getUrlName()}.
      *
+     * @see GerritManagement#getUrlName()
      * @return the relative url
      */
     public String getParentUrl() {
         return GerritManagement.get().getUrlName();
     }
+
     /**
      * Convenience method for jelly to get url of this server's config page relative to root.
-     * @link {@link GerritManagement#getUrlName()}.
      *
+     * @see GerritManagement#getUrlName()
      * @return the relative url
      */
     public String getUrl() {
@@ -633,8 +634,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Checks whether the current server support project-created events or not.
      *
      * Note: We need to exclude snapshot versions from this check. Otherwise, snapshot versions
-     * that are < Gerrit 2.12 will default to waiting for Project Created events which are only
-     * supported in Gerrit >= 2.12.
+     * that are &lt; Gerrit 2.12 will default to waiting for Project Created events which are only
+     * supported in Gerrit &gt;= 2.12.
      *
      * @return true if project-created events are supported, otherwise false
      */
@@ -1102,7 +1103,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isConnectionError() {
-        if (!gerritConnectionListener.isConnected()) {
+        //if it is null then we haven't started at all.
+        if (gerritConnectionListener != null && !gerritConnectionListener.isConnected()) {
             if (timeoutWakeup) {
                 return true;
             }
@@ -1117,7 +1119,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isGerritSnapshotVersion() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             if (gerritConnectionListener.isSnapShotGerrit()) {
                 return true;
             }
@@ -1132,7 +1134,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean isGerritMissedEventsSupported() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             return missedEventsPlaybackManager.isSupported();
         }
         return false;
@@ -1145,7 +1147,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @JavaScriptMethod
     public boolean hasDisabledFeatures() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             List<GerritVersionChecker.Feature> disabledFeatures = gerritConnectionListener.getDisabledFeatures();
             if (disabledFeatures != null && !disabledFeatures.isEmpty()) {
                 return true;
@@ -1160,7 +1162,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @return the list of disabled features or empty list if listener not found
      */
     public List<GerritVersionChecker.Feature> getDisabledFeatures() {
-        if (gerritConnectionListener.isConnected()) {
+        if (gerritConnectionListener != null && gerritConnectionListener.isConnected()) {
             List<GerritVersionChecker.Feature> features = gerritConnectionListener.getDisabledFeatures();
             if (features != null) {
                 return features;

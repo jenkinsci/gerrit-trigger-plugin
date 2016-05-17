@@ -240,7 +240,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
 
         /**
          * If no active triggers where interested in this event.
-         * Determined by: {@link #isTriggerScanDone()} && {@link #getBuilds()}.size() <= 0
+         * Determined by: {@link #isTriggerScanDone()} and {@link #getBuilds()}.size() &lt;= 0
          * unless not {@link #isTriggerScanStarted()}.
          * @return true if so.
          */

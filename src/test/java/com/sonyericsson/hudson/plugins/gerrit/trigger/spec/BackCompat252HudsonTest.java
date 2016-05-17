@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
@@ -97,11 +98,17 @@ public class BackCompat252HudsonTest {
         sshKey = SshdServerMock.generateKeyPair();
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
+        GerritServer gerritServer = PluginImpl.getFirstServer_();
+        assertNotNull(gerritServer);
+        gerritServer.stopConnection();
+        SshdServerMock.configureFor(sshd, gerritServer);
+        gerritServer.startConnection();
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+        SshdServerMock.configureFor(sshd, PluginImpl.getFirstServer_());
     }
 
     /**
@@ -182,7 +189,7 @@ public class BackCompat252HudsonTest {
         RunList<FreeStyleBuild> builds = proj.getBuilds();
         assertNotNull(builds);
         assertFalse("The build list should not be empty", builds.isEmpty());
-        FreeStyleBuild freeStyleBuild = builds.get(0);
+        FreeStyleBuild freeStyleBuild = proj.getFirstBuild();
         assertNotNull(freeStyleBuild.getAction(RetriggerAction.class));
         GerritManualCause cause = freeStyleBuild.getCause(GerritManualCause.class);
         assertNotNull(cause);
@@ -205,8 +212,8 @@ public class BackCompat252HudsonTest {
         MatrixProject proj = (MatrixProject)item;
         RunList<MatrixBuild> builds = proj.getBuilds();
         assertNotNull(builds);
-        assertTrue("The build list should not be empty", builds.size() > 0);
-        MatrixBuild matrixBuild = builds.get(0);
+        assertTrue("The build list should not be empty", !builds.isEmpty());
+        MatrixBuild matrixBuild = proj.getFirstBuild();
         assertNotNull(matrixBuild.getAction(RetriggerAction.class));
         GerritManualCause cause = matrixBuild.getCause(GerritManualCause.class);
         assertNotNull(cause);
@@ -228,7 +235,7 @@ public class BackCompat252HudsonTest {
         FreeStyleProject project = (FreeStyleProject)item;
         int number = project.getLastBuild().getNumber() + 1;
         PluginImpl.getServer_(PluginImpl.DEFAULT_SERVER_NAME).triggerEvent(Setup.createPatchsetCreated());
-        TestUtils.waitForBuilds(project, number);
+        TestUtils.waitForBuilds(project, number, 20000);
         //3 old builds + the new one.
         assertEquals(number, project.getLastCompletedBuild().getNumber());
         assertSame(Result.SUCCESS, project.getLastCompletedBuild().getResult());

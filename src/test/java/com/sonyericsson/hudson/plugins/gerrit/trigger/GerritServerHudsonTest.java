@@ -18,6 +18,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -40,7 +41,6 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
@@ -56,6 +56,8 @@ import static org.junit.Assert.assertTrue;
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  */
 public class GerritServerHudsonTest {
+
+    // CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
     /**
      * An instance of Jenkins Rule.
      */
@@ -80,18 +82,16 @@ public class GerritServerHudsonTest {
     private final String radioButtonCopyValue = "copy";
 
     private final int badRequestErrorCode = 400;
-    private final int portOne = 29418;
-    private final int portTwo = 29419;
 
     private final String removeLastServerWarning = "Cannot remove the last server!";
     private final String wrongMessageWarning = "Wrong message when trying to remove GerritServer! ";
 
-    private boolean buttonFound = true;
     private String textContent = "";
     private SshdServerMock serverOne;
     private SshdServerMock serverTwo;
     private SshServer sshdOne;
     private SshServer sshdTwo;
+    private SshdServerMock.KeyPairFiles sshKey;
 
 
     /**
@@ -101,11 +101,11 @@ public class GerritServerHudsonTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.generateKeyPair();
+        sshKey = SshdServerMock.generateKeyPair();
         serverOne = new SshdServerMock();
         serverTwo = new SshdServerMock();
-        sshdOne = SshdServerMock.startServer(portOne, serverOne);
-        sshdTwo = SshdServerMock.startServer(portTwo, serverTwo);
+        sshdOne = SshdServerMock.startServer(serverOne);
+        sshdTwo = SshdServerMock.startServer(serverTwo);
         serverOne.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         serverOne.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverOne.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
@@ -114,6 +114,7 @@ public class GerritServerHudsonTest {
         serverTwo.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverTwo.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         serverTwo.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
     }
 
     /**
@@ -137,16 +138,22 @@ public class GerritServerHudsonTest {
     public void testTriggeringFromMultipleGerritServers() throws Exception {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName);
         GerritServer gerritServerTwo = new GerritServer(gerritServerTwoName);
+        SshdServerMock.configureFor(sshdOne, sshKey, gerritServerOne);
+        SshdServerMock.configureFor(sshdTwo, sshKey, gerritServerTwo);
         PluginImpl.getInstance().addServer(gerritServerOne);
         PluginImpl.getInstance().addServer(gerritServerTwo);
         gerritServerOne.start();
+        gerritServerOne.startConnection();
         gerritServerTwo.start();
+        gerritServerTwo.startConnection();
         FreeStyleProject projectOne = DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
         FreeStyleProject projectTwo = DuplicatesUtil.createGerritTriggeredJob(j, projectTwoName, gerritServerTwoName);
+        serverOne.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
+        serverTwo.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         gerritServerOne.triggerEvent(Setup.createPatchsetCreated(gerritServerOneName));
         gerritServerTwo.triggerEvent(Setup.createPatchsetCreated(gerritServerTwoName));
-        TestUtils.waitForBuilds(projectOne, 1);
-        TestUtils.waitForBuilds(projectTwo, 1);
+        TestUtils.waitForBuilds(projectOne, 1, 20000);
+        TestUtils.waitForBuilds(projectTwo, 1, 20000);
 
         FreeStyleBuild buildOne = projectOne.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
@@ -206,12 +213,13 @@ public class GerritServerHudsonTest {
     @Test
     public void testRemoveLastServerWithConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
+        SshdServerMock.configureFor(sshdOne, sshKey, server);
         PluginImpl.getInstance().addServer(server);
         server.start();
 
         DuplicatesUtil.createGerritTriggeredJob(j, projectOneName, gerritServerOneName);
 
-        removeServer(gerritServerOneName);
+        boolean buttonFound = removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -220,14 +228,15 @@ public class GerritServerHudsonTest {
 
     /**
      * Test removing one server without configured job from UI.
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
     @Test
-    public void testRemoveOneServerWithoutConfiguredJob() throws IOException {
+    public void testRemoveOneServerWithoutConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName);
+        SshdServerMock.configureFor(sshdOne, sshKey, server);
         PluginImpl.getInstance().addServer(server);
 
-        removeServer(gerritServerOneName);
+        boolean buttonFound = removeServer(gerritServerOneName);
 
         assertEquals(false, buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
@@ -237,36 +246,31 @@ public class GerritServerHudsonTest {
     /**
      * Remove Server from UI.
      * @param serverName the name of the Gerrit server you want to access.
-     * @throws IOException if error removing server.
+     * @return true if the form had a button and was posted
+     * @throws Exception if error removing server.
      */
-    private void removeServer(String serverName) throws IOException {
+    private boolean removeServer(String serverName) throws Exception {
         URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
         HtmlPage removalPage = j.createWebClient().getPage(url);
 
-        int serverSize = PluginImpl.getInstance().getServers().size();
-
         HtmlForm form = removalPage.getFormByName(removalFormName);
+        List<HtmlElement> buttons = form.getHtmlElementsByTagName("button");
         textContent = form.getTextContent();
-
-        if (serverSize == 1) {
-            try {
-                form.submit();
-            } catch (Exception e) {
-                buttonFound = false;
-            }
+        if (buttons.size() >= 1) {
+            j.submit(form);
+            return true;
         } else {
-            form.submit(null);
+            return false;
         }
     }
 
     /**
      * Test adding server from UI.
-     * @throws IOException if error adding server.
+     *
+     * @throws Exception if error adding server.
      */
-
-
     @Test
-    public void testAddServer() throws IOException {
+    public void testAddServer() throws Exception {
         addNewServerWithDefaultConfigs(gerritServerOneName);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
 
@@ -287,9 +291,9 @@ public class GerritServerHudsonTest {
      * Add a GerritServer with default configs from the UI.
      *
      * @param serverName the name
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
-    private void addNewServerWithDefaultConfigs(String serverName) throws IOException {
+    private void addNewServerWithDefaultConfigs(String serverName) throws Exception {
         URL url = new URL(j.getURL(), newServerURL);
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
@@ -306,7 +310,7 @@ public class GerritServerHudsonTest {
         }
         assertTrue("Failed to choose 'GerritServer with Default Configurations'", radioButtonDefaultConfig.isChecked());
 
-        form.submit(null);
+        j.submit(form);
     }
 
     /**
@@ -314,9 +318,9 @@ public class GerritServerHudsonTest {
      *
      * @param newServerName the name of the new server
      * @param fromServerName the name of the server from which the config is copied.
-     * @throws IOException if error getting URL or getting page from URL.
+     * @throws Exception if error getting URL or getting page from URL.
      */
-    private void addNewServerByCopyingConfig(String newServerName, String fromServerName) throws IOException {
+    private void addNewServerByCopyingConfig(String newServerName, String fromServerName) throws Exception {
         URL url = new URL(j.getURL(), newServerURL);
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
@@ -335,7 +339,7 @@ public class GerritServerHudsonTest {
 
         form.getInputByName(fromInputFormName).setValueAttribute(fromServerName);
 
-        form.submit(null);
+        j.submit(form);
     }
 
     /**

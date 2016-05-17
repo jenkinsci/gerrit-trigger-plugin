@@ -72,8 +72,9 @@ public class GerritTriggerParametersTest {
         plugin.setServers(Arrays.asList(server));
     }
 
+    // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.
     /**
-     * Tests {@link GerritTriggerParameters#setOrCreateParameters(GerritTriggeredEvent, AbstractProject, List)}.
+     * Tests {@link GerritTriggerParameters#setOrCreateParameters(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, hudson.model.Job, List)}.
      * The {@link GerritTriggerParameters#GERRIT_CHANGE_URL} should contain the base url from the event provider.
      *
      * @throws Exception if so
@@ -89,8 +90,9 @@ public class GerritTriggerParametersTest {
         assertTrue(param.value.startsWith(created.getProvider().getUrl()));
     }
 
+    // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.
     /**
-     * Tests {@link GerritTriggerParameters#setOrCreateParameters(GerritTriggeredEvent, AbstractProject, List)}.
+     * Tests {@link GerritTriggerParameters#setOrCreateParameters(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, hudson.model.Job, List)}.
      * The {@link GerritTriggerParameters#GERRIT_CHANGE_URL} should contain the base url from the project trigger.
      *
      * @throws Exception if so
@@ -108,8 +110,9 @@ public class GerritTriggerParametersTest {
         assertTrue(param.value.startsWith(config.getGerritFrontEndUrl()));
     }
 
+    // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.
     /**
-     * Tests {@link GerritTriggerParameters#setOrCreateParameters(GerritTriggeredEvent, AbstractProject, List)}.
+     * Tests {@link GerritTriggerParameters#setOrCreateParameters(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, hudson.model.Job, List)}.
      * The {@link GerritTriggerParameters#GERRIT_CHANGE_URL} should contain the base url from the first server.
      *
      * @throws Exception if so

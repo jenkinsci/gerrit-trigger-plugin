@@ -23,7 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockConfigForProjectListTest;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import static org.junit.Assert.assertEquals;
@@ -75,7 +75,7 @@ public class GerritProjectListUpdaterFunctionalTest {
         sshKey = SshdServerMock.generateKeyPair();
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(port, server);
+        sshd = SshdServerMock.startServer(server);
         // We need to do this so that subsequent calls will be served with another command define later
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.SendOneProjectCommand.class,
                 true, new Object[0], new Class<?>[0]);
@@ -103,10 +103,14 @@ public class GerritProjectListUpdaterFunctionalTest {
     @Test
     public void testProjectListUpdateActiveOnStartup() throws Exception {
         GerritServer gerritServer = new GerritServer("ABCDEF");
-        PluginImpl.getInstance().addServer(gerritServer);
-        MockConfigForProjectListTest config = new MockConfigForProjectListTest();
+        Config config = (Config)gerritServer.getConfig();
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
+        config.setProjectListFetchDelay(1);
+        config.setProjectListRefreshInterval(1);
+        config = SshdServerMock.getConfigFor(sshd, config);
         gerritServer.setConfig(config);
+        PluginImpl.getInstance().addServer(gerritServer);
+
         gerritServer.start();
         gerritServer.startConnection();
 

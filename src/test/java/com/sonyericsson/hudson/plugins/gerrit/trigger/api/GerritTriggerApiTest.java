@@ -40,7 +40,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.GerritTriggerException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
@@ -57,6 +56,7 @@ import static org.junit.Assert.fail;
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
 public class GerritTriggerApiTest {
+    // CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test data.
 
     /**
      * An instance of Jenkins Rule.
@@ -65,12 +65,9 @@ public class GerritTriggerApiTest {
     @Rule
     public final JenkinsRule j = new JenkinsRule();
 
-    private final String gerritServerName = "testServer";
-    private final String projectName = "testProject";
-    private final int port = 29418;
-
     private SshdServerMock server;
     private SshServer sshd;
+    private SshdServerMock.KeyPairFiles sshKey;
 
     /**
      * Runs before test method.
@@ -79,13 +76,14 @@ public class GerritTriggerApiTest {
      */
     @Before
     public void setUp() throws Exception {
-        SshdServerMock.generateKeyPair();
+        sshKey = SshdServerMock.generateKeyPair();
         server = new SshdServerMock();
-        sshd = SshdServerMock.startServer(port, server);
+        sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
     }
 
     /**
@@ -105,11 +103,15 @@ public class GerritTriggerApiTest {
      */
     @Test
     public void testApiTriggerBuild() throws Exception {
+        String gerritServerName = "testServer";
         GerritServer gerritServer = new GerritServer(gerritServerName);
+        gerritServer.setConfig(SshdServerMock.getConfigFor(sshd, sshKey, gerritServer.getConfig()));
         PluginImpl.getInstance().addServer(gerritServer);
         gerritServer.start();
-        FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gerritServerName);
+        gerritServer.startConnection();
 
+        FreeStyleProject project = new TestUtils.JobBuilder(j).serverName(gerritServerName).build();
+        server.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         GerritTriggerApi api = new GerritTriggerApi();
         Handler handler = null;
         try {
@@ -119,7 +121,7 @@ public class GerritTriggerApiTest {
         }
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gerritServerName));
-        TestUtils.waitForBuilds(project, 1);
+        TestUtils.waitForBuilds(project, 1, 20000);
 
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());

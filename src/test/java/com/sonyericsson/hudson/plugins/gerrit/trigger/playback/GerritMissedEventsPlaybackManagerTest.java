@@ -87,7 +87,7 @@ public class GerritMissedEventsPlaybackManagerTest {
      */
     // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: WireMockRule.
     @Rule
-    public final WireMockRule wireMockRule = new WireMockRule(8089); // No-args constructor defaults to port 8089
+    public final WireMockRule wireMockRule = new WireMockRule(0); // No-args constructor defaults to port 8089
     private XmlFile xmlFile;
     private static final int SLEEPTIME = 500;
     private static final int HTTPOK = 200;
@@ -112,7 +112,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         GerritServer server = mock(GerritServer.class);
 
         MockPluginCheckerConfig config = new MockPluginCheckerConfig();
-        config.setGerritFrontEndURL("http://localhost:8089");
+        config.setGerritFrontEndURL("http://localhost:" + wireMockRule.port());
         config.setUseRestApi(true);
         config.setGerritHttpUserName("user");
         config.setGerritHttpPassword("passwd");

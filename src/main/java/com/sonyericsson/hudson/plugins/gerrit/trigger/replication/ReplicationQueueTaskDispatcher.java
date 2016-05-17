@@ -69,7 +69,7 @@ import javax.annotation.Nonnull;
 public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implements GerritEventListener {
 
     private static final Logger logger = LoggerFactory.getLogger(ReplicationQueueTaskDispatcher.class);
-    private final Map<Integer, BlockedItem> blockedItems;
+    private final Map<Long, BlockedItem> blockedItems;
     private final ReplicationCache replicationCache;
 
     /**
@@ -106,7 +106,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      */
     ReplicationQueueTaskDispatcher(@CheckForNull GerritHandler gerritHandler,
                                    @Nonnull ReplicationCache replicationCache) {
-        blockedItems = new ConcurrentHashMap<Integer, BlockedItem>();
+        blockedItems = new ConcurrentHashMap<Long, BlockedItem>();
         this.replicationCache = replicationCache;
         if (gerritHandler != null) {
             logger.warn("No GerritHandler was specified, won't register as event listener, so no function.");
@@ -123,7 +123,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         if (item.isBuildable()) {
             return null;
         }
-        Integer itemId = Integer.valueOf(item.id);
+        Long itemId = Long.valueOf(item.getId());
         if (blockedItems.containsKey(itemId)) {
             BlockedItem blockedItem = blockedItems.get(itemId);
             if (blockedItem.canRunWithTimeoutCheck()) {
@@ -152,7 +152,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 blockedItems.put(itemId, blockedItem);
                 return canRun(item);
             } else {
-                logger.debug("blockedItem null for {}!", item.id);
+                logger.debug("blockedItem null for {}!", item.getId());
             }
         }
         return null;
@@ -199,7 +199,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
     private BlockedItem getBlockedItem(Item item) {
         GerritCause gerritCause = getGerritCause(item);
         if (gerritCause == null) {
-            logger.trace("Gerrit Cause null for item: {} !", item.id);
+            logger.trace("Gerrit Cause null for item: {} !", item.getId());
             return null;
         }
         if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent
@@ -207,7 +207,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
 
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger((Job<?, ?>)item.task);
             if (gerritTrigger == null) {
-                logger.trace("Gerrit Trigger null for item: {} !", item.id);
+                logger.trace("Gerrit Trigger null for item: {} !", item.getId());
                 return null;
             }
 
@@ -216,7 +216,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 gerritServer = gerritCause.getEvent().getProvider().getName();
             }
             if (gerritServer == null) {
-                logger.trace("Gerrit Server null for item: {} !", item.id);
+                logger.trace("Gerrit Server null for item: {} !", item.getId());
                 return null;
             }
 
