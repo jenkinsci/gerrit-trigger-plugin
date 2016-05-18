@@ -70,26 +70,8 @@
         <dependency>
             <groupId>com.sonymobile.tools.gerrit</groupId>
             <artifactId>gerrit-events</artifactId>
-            <version>2.9.5</version>
+            <version>2.10.0</version>
             <!-- New source is here: https://github.com/sonyxperiadev/gerrit-events -->
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpclient</artifactId>
-                    <!--
-                    We could release a version of gerrit-events that uses the newer required version.
-                    I ran the full test suite with v 4.5 and it worked.
-                    But a new module version just for that feels like too much of a hassle.
-                    TODO remove when gerrit-events comes with the newer dependency.
-                    -->
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5</version>
-            <!-- TODO remove when gerrit-events comes with the newer dependency. -->
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
