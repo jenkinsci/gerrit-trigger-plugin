@@ -41,6 +41,7 @@ import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
+import hudson.util.VersionNumber;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import org.slf4j.Logger;
@@ -258,7 +259,16 @@ public final class EventListener implements GerritEventListener {
                                                                                               Collection.class);
             return constructor.newInstance(parameters, GerritTriggerParameters.getNamesSet());
         } catch (NoSuchMethodException e) {
-            logger.debug("Running on an old core before safe parameters, we are safe.", e);
+            VersionNumber version = Jenkins.getVersion();
+            if (version.isNewerThan(new VersionNumber("2.2"))
+                    || (version.isNewerThan(new VersionNumber("1.651.1"))
+                        && version.isOlderThan(new VersionNumber("1.651.300")))) {
+                logger.warn("Running on a core with SECURITY-170 fixed but no way to specify safe parameters.\n" +
+                                    "You should consider upgrading to > 2.5 or set the appropriate startup parameters",
+                            e);
+            } else {
+                logger.debug("Running on an old core before safe parameters, we should be safe.", e);
+            }
         } catch (IllegalAccessException e) {
             logger.warn("Running on a core with safe parameters fix available, but not allowed to specify them", e);
         } catch (Exception e) {
