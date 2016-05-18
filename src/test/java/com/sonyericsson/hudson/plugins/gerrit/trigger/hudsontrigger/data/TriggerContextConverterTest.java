@@ -36,9 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.thoughtworks.xstream.XStream;
 import hudson.ExtensionList;
 import hudson.diagnosis.OldDataMonitor;
-import hudson.matrix.MatrixProject;
 import hudson.matrix.MatrixRun;
-import hudson.model.AbstractItem;
 import hudson.model.Cause;
 import hudson.model.Saveable;
 import hudson.util.XStream2;
@@ -67,8 +65,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
 import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
@@ -83,12 +79,15 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, OldDataMonitor.class, ExtensionList.class})
+@PrepareForTest({Jenkins.class, OldDataMonitor.class, ExtensionList.class })
 public class TriggerContextConverterTest {
     private Jenkins jenkins;
 
-    //CS IGNORE MagicNumber FOR NEXT 500 LINES. REASON: test data.
+    //CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: test data.
 
+    /**
+     * Mock Jenkins.
+     */
     @Before
     public void setup() {
         PowerMockito.mockStatic(Jenkins.class);

@@ -73,6 +73,9 @@ public class ParameterExpanderSkipVoteParameterTest {
         this.parameter = parameter;
     }
 
+    /**
+     * Mock Jenkins.
+     */
     @Before
     public void setup() {
         PowerMockito.mockStatic(Jenkins.class);

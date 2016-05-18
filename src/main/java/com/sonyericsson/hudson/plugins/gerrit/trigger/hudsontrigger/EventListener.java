@@ -48,7 +48,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -251,6 +253,17 @@ public final class EventListener implements GerritEventListener {
     protected ParametersAction createParameters(GerritTriggeredEvent event, Job project) {
         List<ParameterValue> parameters = getDefaultParametersValues(project);
         setOrCreateParameters(event, project, parameters);
+        try {
+            Constructor<ParametersAction> constructor = ParametersAction.class.getConstructor(List.class,
+                                                                                              Collection.class);
+            return constructor.newInstance(parameters, GerritTriggerParameters.getNamesSet());
+        } catch (NoSuchMethodException e) {
+            logger.debug("Running on an old core before safe parameters, we are safe.", e);
+        } catch (IllegalAccessException e) {
+            logger.warn("Running on a core with safe parameters fix available, but not allowed to specify them", e);
+        } catch (Exception e) {
+            logger.warn("Running on a core with safe parameters fix available, but failed to provide them", e);
+        }
         return new ParametersAction(parameters);
     }
 

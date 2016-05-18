@@ -40,7 +40,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.Hudson;
 
 import java.util.Arrays;
 import java.util.Collections;

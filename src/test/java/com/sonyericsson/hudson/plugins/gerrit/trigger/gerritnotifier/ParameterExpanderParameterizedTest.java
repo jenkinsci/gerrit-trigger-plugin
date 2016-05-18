@@ -72,6 +72,9 @@ public class ParameterExpanderParameterizedTest {
         this.parameters = parameters;
     }
 
+    /**
+     * Mock Jenkins.
+     */
     @Before
     public void setup() {
         PowerMockito.mockStatic(Jenkins.class);
