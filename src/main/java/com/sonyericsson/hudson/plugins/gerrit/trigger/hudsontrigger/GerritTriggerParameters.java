@@ -171,7 +171,7 @@ public enum GerritTriggerParameters {
      */
     GERRIT_OLDREV,
     /**
-     * The new revision in a ref-updated event.
+     * The new revision in a ref-updated or change-merged event.
      */
     GERRIT_NEWREV,
     /**
@@ -214,11 +214,7 @@ public enum GerritTriggerParameters {
     /**
      * The type of the event.
      */
-    GERRIT_EVENT_TYPE,
-    /**
-     * The revision after the merge in a change-merged event.
-    */
-    GERRIT_MERGED_REVISION;
+    GERRIT_EVENT_TYPE;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -406,7 +402,7 @@ public enum GerritTriggerParameters {
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
             if (event instanceof ChangeMerged) {
-                GERRIT_MERGED_REVISION.setOrCreateStringParameterValue(
+                GERRIT_NEWREV.setOrCreateStringParameterValue(
                         parameters, ((ChangeMerged)event).getNewRev(), escapeQuotes);
             }
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_OWNER, parameters,
