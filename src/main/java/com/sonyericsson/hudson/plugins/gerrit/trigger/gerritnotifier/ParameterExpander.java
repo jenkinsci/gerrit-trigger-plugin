@@ -72,16 +72,16 @@ public class ParameterExpander {
 
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
-    private Jenkins hudson;
+    private Jenkins jenkins;
 
     /**
      * Constructor.
      * @param config the global config.
-     * @param hudson the Hudson instance.
+     * @param jenkins the Hudson instance.
      */
-    public ParameterExpander(IGerritHudsonTriggerConfig config, Jenkins hudson) {
+    public ParameterExpander(IGerritHudsonTriggerConfig config, Jenkins jenkins) {
         this.config = config;
-        this.hudson = hudson;
+        this.jenkins = jenkins;
     }
 
     /**
@@ -240,7 +240,7 @@ public class ParameterExpander {
             }
         }
         if (r != null) {
-            map.put("BUILDURL", hudson.getRootUrl() + r.getUrl());
+            map.put("BUILDURL", jenkins.getRootUrl() + r.getUrl());
         }
         map.put("VERIFIED", String.valueOf(verified));
         map.put("CODE_REVIEW", String.valueOf(codeReview));
@@ -554,7 +554,7 @@ public class ParameterExpander {
     private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
             Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
-        final String rootUrl = hudson.getRootUrl();
+        final String rootUrl = jenkins.getRootUrl();
 
         String unsuccessfulMessage = null;
 
