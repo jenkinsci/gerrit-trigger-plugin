@@ -1555,9 +1555,6 @@ public class GerritTriggerTest {
     public void shouldReturnEmptySlaveListWhenGerritServerNotFound() {
         // setup
         mockConfig();
-        /*PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl pluginMock = mock(PluginImpl.class);
-        when(PluginImpl.getInstance()).thenReturn(pluginMock);*/
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
 
         // actual test
