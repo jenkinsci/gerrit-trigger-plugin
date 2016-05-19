@@ -374,7 +374,7 @@ public enum GerritTriggerParameters {
                         parameters, StringUtil.makeRefSpec(event), escapeQuotes);
             }
             if (event instanceof ChangeMerged) {
-                GERRIT_MERGED_REVISION.setOrCreateStringParameterValue(parameters, ((ChangeMerged)event).getMergedRevision(), escapeQuotes);
+                GERRIT_MERGED_REVISION.setOrCreateStringParameterValue(parameters, ((ChangeMerged)event).getNewRev(), escapeQuotes);
             }
             GERRIT_PROJECT.setOrCreateStringParameterValue(
                     parameters, event.getChange().getProject(), escapeQuotes);
