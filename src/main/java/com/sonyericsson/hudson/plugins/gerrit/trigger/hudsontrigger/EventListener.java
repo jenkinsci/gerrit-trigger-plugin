@@ -269,8 +269,8 @@ public final class EventListener implements GerritEventListener {
                            )
                        )
                 ) {
-                logger.warn("Running on a core with SECURITY-170 fixed but no way to specify safe parameters.\n" +
-                                    "You should consider upgrading to > 2.5 or set the appropriate startup parameters",
+                logger.warn("Running on a core with SECURITY-170 fixed but no way to specify safe parameters.\n"
+                            + "You should consider upgrading to > 2.5 or set the appropriate startup parameters",
                             e);
             } else {
                 logger.debug("Running on an old core before safe parameters, we should be safe.", e);
