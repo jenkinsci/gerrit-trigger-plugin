@@ -260,9 +260,15 @@ public final class EventListener implements GerritEventListener {
             return constructor.newInstance(parameters, GerritTriggerParameters.getNamesSet());
         } catch (NoSuchMethodException e) {
             VersionNumber version = Jenkins.getVersion();
-            if (version.isNewerThan(new VersionNumber("2.2"))
-                    || (version.isNewerThan(new VersionNumber("1.651.1"))
-                        && version.isOlderThan(new VersionNumber("1.651.300")))) {
+            if (version != null
+                    && (
+                        version.isNewerThan(new VersionNumber("2.2"))
+                        || (
+                                version.isNewerThan(new VersionNumber("1.651.1"))
+                             && version.isOlderThan(new VersionNumber("1.651.300"))
+                           )
+                       )
+                ) {
                 logger.warn("Running on a core with SECURITY-170 fixed but no way to specify safe parameters.\n" +
                                     "You should consider upgrading to > 2.5 or set the appropriate startup parameters",
                             e);
