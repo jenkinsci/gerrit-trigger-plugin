@@ -263,15 +263,20 @@ public final class EventListener implements GerritEventListener {
             return constructor.newInstance(parameters, GerritTriggerParameters.getNamesSet());
         } catch (NoSuchMethodException e) {
             ParametersActionInspection inspection = getParametersInspection();
-            if (inspection.isHasSafeParameterConfig()) {
+            if (inspection.isInspectionFailure()) {
+                logger.warn("Failed to inspect ParametersAction to determine "
+                                    + "if we can behave normally around SECURITY-170.\nSee "
+                                    + "https://wiki.jenkins-ci.org/display/SECURITY/Jenkins+Security+Advisory+2016-05-11"
+                                    + " for information.");
+            } else if (inspection.isHasSafeParameterConfig()) {
                 StringBuilder txt = new StringBuilder(
                         "Running on a core with SECURITY-170 fixed but no direct way for Gerrit Trigger"
                                 + " to self-specify safe parameters.");
-                txt.append(" You should consider upgrading to a new Jenkins core version.");
+                txt.append(" You should consider upgrading to a new Jenkins core version.\n");
                 if (inspection.isKeepUndefinedParameters()) {
-                    txt.append("\n.keepSafeParameters is set so the trigger should behave normally.");
+                    txt.append(".keepSafeParameters is set so the trigger should behave normally.");
                 } else if (inspection.isSafeParametersSet()) {
-                    txt.append("\nAll Gerrit related parameters are set in .safeParameters");
+                    txt.append("All Gerrit related parameters are set in .safeParameters");
                     txt.append(" so the trigger should behave normally.");
                 } else {
                     txt.append("No overriding system properties appears to be set,");
@@ -280,11 +285,6 @@ public final class EventListener implements GerritEventListener {
                     txt.append(" for information.");
                 }
                 logger.warn(txt.toString());
-            } else if (inspection.isInspectionFailure()) {
-                logger.warn("Failed to inspect ParametersAction to determine "
-                             + "if we can behave normally around SECURITY-170.\nSee "
-                             + "https://wiki.jenkins-ci.org/display/SECURITY/Jenkins+Security+Advisory+2016-05-11"
-                             + " for information.");
             } else {
                 logger.debug("Running on an old core before safe parameters, we should be safe.", e);
             }
