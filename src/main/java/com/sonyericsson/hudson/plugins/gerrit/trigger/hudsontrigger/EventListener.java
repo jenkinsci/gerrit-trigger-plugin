@@ -41,18 +41,21 @@ import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
 import hudson.model.ParametersAction;
 import hudson.model.ParametersDefinitionProperty;
-import hudson.util.VersionNumber;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Future;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
@@ -259,19 +262,29 @@ public final class EventListener implements GerritEventListener {
                                                                                               Collection.class);
             return constructor.newInstance(parameters, GerritTriggerParameters.getNamesSet());
         } catch (NoSuchMethodException e) {
-            VersionNumber version = Jenkins.getVersion();
-            if (version != null
-                    && (
-                        version.isNewerThan(new VersionNumber("2.2"))
-                        || (
-                                version.isNewerThan(new VersionNumber("1.651.1"))
-                             && version.isOlderThan(new VersionNumber("1.651.300"))
-                           )
-                       )
-                ) {
-                logger.warn("Running on a core with SECURITY-170 fixed but no way to specify safe parameters.\n"
-                            + "You should consider upgrading to > 2.5 or set the appropriate startup parameters",
-                            e);
+            ParametersActionInspection inspection = getParametersInspection();
+            if (inspection.isHasSafeParameterConfig()) {
+                StringBuilder txt = new StringBuilder(
+                        "Running on a core with SECURITY-170 fixed but no direct way for Gerrit Trigger"
+                                + " to self-specify safe parameters.");
+                txt.append(" You should consider upgrading to a new Jenkins core version.");
+                if (inspection.isKeepUndefinedParameters()) {
+                    txt.append("\n.keepSafeParameters is set so the trigger should behave normally.");
+                } else if (inspection.isSafeParametersSet()) {
+                    txt.append("\nAll Gerrit related parameters are set in .safeParameters");
+                    txt.append(" so the trigger should behave normally.");
+                } else {
+                    txt.append("No overriding system properties appears to be set,");
+                    txt.append(" your builds might not work as expected.\n");
+                    txt.append("See https://wiki.jenkins-ci.org/display/SECURITY/Jenkins+Security+Advisory+2016-05-11");
+                    txt.append(" for information.");
+                }
+                logger.warn(txt.toString());
+            } else if (inspection.isInspectionFailure()) {
+                logger.warn("Failed to inspect ParametersAction to determine "
+                             + "if we can behave normally around SECURITY-170.\nSee "
+                             + "https://wiki.jenkins-ci.org/display/SECURITY/Jenkins+Security+Advisory+2016-05-11"
+                             + " for information.");
             } else {
                 logger.debug("Running on an old core before safe parameters, we should be safe.", e);
             }
@@ -360,5 +373,114 @@ public final class EventListener implements GerritEventListener {
     @Override
     public boolean equals(Object obj) {
         return obj instanceof EventListener && ((EventListener)obj).job.equals(job);
+    }
+
+    /**
+     * Inspects {@link ParametersAction} to see what kind of capabilities it has in regards to SECURITY-170.
+     * Assuming the safeParameters constructor could not be found.
+     *
+     * @return the inspection result
+     * @see #createParameters(GerritTriggeredEvent, Job)
+     */
+    private static synchronized ParametersActionInspection getParametersInspection() {
+        if (parametersInspectionCache == null) {
+            parametersInspectionCache = new ParametersActionInspection();
+        }
+        return parametersInspectionCache;
+    }
+
+    /**
+     * Stored cache of the inspection.
+     * @see #getParametersInspection()
+     */
+    private static volatile ParametersActionInspection parametersInspectionCache = null;
+
+    /**
+     * Data structure with information regarding what kind of capabilities {@link ParametersAction} has.
+     * @see #getParametersInspection()
+     * @see #createParameters(GerritTriggeredEvent, Job)
+     */
+    private static class ParametersActionInspection {
+        private static final Class<ParametersAction> KLASS = ParametersAction.class;
+        private boolean inspectionFailure;
+        private boolean safeParametersSet = false;
+        private boolean keepUndefinedParameters = false;
+        private boolean hasSafeParameterConfig = false;
+
+        /**
+         * Constructor that performs the inspection.
+         */
+        ParametersActionInspection() {
+            try {
+                for (Field field : KLASS.getDeclaredFields()) {
+                    if (Modifier.isStatic(field.getModifiers())
+                            &&  (
+                                 field.getName().equals("KEEP_UNDEFINED_PARAMETERS_SYSTEM_PROPERTY_NAME")
+                                 || field.getName().equals("SAFE_PARAMETERS_SYSTEM_PROPERTY_NAME")
+                                )
+                       ) {
+                        this.hasSafeParameterConfig = true;
+                        break;
+                    }
+                }
+                if (hasSafeParameterConfig) {
+                    if (Boolean.getBoolean(KLASS.getName() + ".keepUndefinedParameters")) {
+                        this.keepUndefinedParameters = true;
+                    }
+                    String safeParameters = System.getProperty(KLASS.getName() + ".safeParameters");
+                    if (!StringUtils.isBlank(safeParameters)) {
+                        safeParameters = safeParameters.toUpperCase(Locale.ENGLISH);
+                        boolean declared = true;
+                        for (GerritTriggerParameters parameter : GerritTriggerParameters.values()) {
+                            if (!safeParameters.contains(parameter.name())) {
+                                declared = false;
+                                break;
+                            }
+                        }
+                        this.safeParametersSet = declared;
+                    } else {
+                        this.safeParametersSet = false;
+                    }
+                }
+                this.inspectionFailure = false;
+            } catch (Exception e) {
+                this.inspectionFailure = true;
+            }
+        }
+
+        /**
+         * If the system property .safeParameters is set and contains all Gerrit related parameters.
+         * @return true if so.
+         */
+        boolean isSafeParametersSet() {
+            return safeParametersSet;
+        }
+
+        /**
+         * If the system property ..keepSafeParameters is set and set to true.
+         *
+         * @return true if so.
+         */
+        boolean isKeepUndefinedParameters() {
+            return keepUndefinedParameters;
+        }
+
+        /**
+         * If any of the constant fields regarding safeParameters are declared in {@link ParametersAction}.
+         *
+         * @return true if so.
+         */
+        boolean isHasSafeParameterConfig() {
+            return hasSafeParameterConfig;
+        }
+
+        /**
+         * If there was an exception when inspecting the class.
+         *
+         * @return true if so.
+         */
+        public boolean isInspectionFailure() {
+            return inspectionFailure;
+        }
     }
 }
