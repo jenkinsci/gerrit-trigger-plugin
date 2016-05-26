@@ -249,6 +249,10 @@ public final class EventListener implements GerritEventListener {
 
     /**
      * Creates a ParameterAction and fills it with the project's default parameters + the Standard Gerrit parameters.
+     * If running on a core version that let's us specify safeParameters for the ParameterAction
+     * the Gerrit specific parameters will be specified in the safeParameters list in addition to anything the admin
+     * might have set.
+     * A warning will be printed to the log if that is not possible but SECURITY-170 appears to be in effect.
      *
      * @param event   the event.
      * @param project the project.
@@ -274,7 +278,7 @@ public final class EventListener implements GerritEventListener {
                                 + " to self-specify safe parameters.");
                 txt.append(" You should consider upgrading to a new Jenkins core version.\n");
                 if (inspection.isKeepUndefinedParameters()) {
-                    txt.append(".keepSafeParameters is set so the trigger should behave normally.");
+                    txt.append(".keepUndefinedParameters is set so the trigger should behave normally.");
                 } else if (inspection.isSafeParametersSet()) {
                     txt.append("All Gerrit related parameters are set in .safeParameters");
                     txt.append(" so the trigger should behave normally.");
@@ -457,7 +461,7 @@ public final class EventListener implements GerritEventListener {
         }
 
         /**
-         * If the system property ..keepSafeParameters is set and set to true.
+         * If the system property .keepUndefinedParameters is set and set to true.
          *
          * @return true if so.
          */
