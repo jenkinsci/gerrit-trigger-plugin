@@ -34,13 +34,24 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.thoughtworks.xstream.XStream;
+import hudson.ExtensionList;
+import hudson.diagnosis.OldDataMonitor;
 import hudson.matrix.MatrixRun;
 import hudson.model.Cause;
+import hudson.model.Saveable;
 import hudson.util.XStream2;
 
+import jenkins.model.Jenkins;
+import jenkins.model.TransientActionFactory;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -52,7 +63,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.same;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 
 /**
@@ -60,9 +78,24 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Jenkins.class, OldDataMonitor.class, ExtensionList.class })
 public class TriggerContextConverterTest {
+    private Jenkins jenkins;
 
-    //CS IGNORE MagicNumber FOR NEXT 500 LINES. REASON: test data.
+    //CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: test data.
+
+    /**
+     * Mock Jenkins.
+     */
+    @Before
+    public void setup() {
+        PowerMockito.mockStatic(Jenkins.class);
+        jenkins = mock(Jenkins.class);
+        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(jenkins.getFullName()).thenReturn("");
+    }
+
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
 
     /**
@@ -536,13 +569,18 @@ public class TriggerContextConverterTest {
      */
     @Test
     public void testUnmarshalOldMatrixBuild() throws Exception {
+        PowerMockito.mockStatic(OldDataMonitor.class);
+        doNothing().when(OldDataMonitor.class, "report", any(Saveable.class), anyCollection());
         XStream xStream = new XStream2();
         xStream.registerConverter(new TriggerContextConverter());
         xStream.alias("matrix-run", MatrixRun.class);
         Object obj = xStream.fromXML(getClass().getResourceAsStream("matrix_build.xml"));
         assertTrue(obj instanceof MatrixRun);
         MatrixRun run = (MatrixRun)obj;
-
+        mockStatic(ExtensionList.class);
+        ExtensionList listMock = mock(ExtensionList.class);
+        doReturn(Collections.emptyList().iterator()).when(listMock).iterator();
+        doReturn(listMock).when(ExtensionList.class, "lookup", same(TransientActionFactory.class));
         Cause.UpstreamCause upCause = run.getCause(Cause.UpstreamCause.class);
         List upstreamCauses = Whitebox.getInternalState(upCause, "upstreamCauses");
         GerritCause cause = (GerritCause)upstreamCauses.get(0);

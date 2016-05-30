@@ -40,7 +40,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.Hudson;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +47,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
+import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,16 +72,16 @@ public class ParameterExpander {
 
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
-    private Hudson hudson;
+    private Jenkins jenkins;
 
     /**
      * Constructor.
      * @param config the global config.
-     * @param hudson the Hudson instance.
+     * @param jenkins the Hudson instance.
      */
-    public ParameterExpander(IGerritHudsonTriggerConfig config, Hudson hudson) {
+    public ParameterExpander(IGerritHudsonTriggerConfig config, Jenkins jenkins) {
         this.config = config;
-        this.hudson = hudson;
+        this.jenkins = jenkins;
     }
 
     /**
@@ -89,7 +89,7 @@ public class ParameterExpander {
      * @param config the global config.
      */
     public ParameterExpander(IGerritHudsonTriggerConfig config) {
-        this(config, Hudson.getInstance());
+        this(config, Jenkins.getInstance());
     }
 
     /**
@@ -240,7 +240,7 @@ public class ParameterExpander {
             }
         }
         if (r != null) {
-            map.put("BUILDURL", hudson.getRootUrl() + r.getUrl());
+            map.put("BUILDURL", jenkins.getRootUrl() + r.getUrl());
         }
         map.put("VERIFIED", String.valueOf(verified));
         map.put("CODE_REVIEW", String.valueOf(codeReview));
@@ -554,7 +554,7 @@ public class ParameterExpander {
     private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
             Map<String, String> parameters) {
         StringBuilder str = new StringBuilder("");
-        final String rootUrl = hudson.getRootUrl();
+        final String rootUrl = jenkins.getRootUrl();
 
         String unsuccessfulMessage = null;
 

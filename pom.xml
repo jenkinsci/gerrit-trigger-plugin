@@ -54,6 +54,7 @@
 
     <properties>
         <jenkins.version>1.609.3</jenkins.version>
+        <!--<jenkins.version>2.5-SNAPSHOT</jenkins.version>-->
         <java.level>6</java.level>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>

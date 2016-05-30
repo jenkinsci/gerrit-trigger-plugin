@@ -51,6 +51,8 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The parameters to add to a build.
@@ -217,6 +219,20 @@ public enum GerritTriggerParameters {
     GERRIT_EVENT_TYPE;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
+
+    /**
+     * A set of all the declared parameter names.
+     * @return the names of the parameters
+     * @see #values()
+     * @see #name()
+     */
+    public static Set<String> getNamesSet() {
+        Set<String> names = new TreeSet<String>();
+        for (GerritTriggerParameters p : GerritTriggerParameters.values()) {
+            names.add(p.name());
+        }
+        return names;
+    }
 
     /**
      * Creates a {@link hudson.model.ParameterValue} and adds it to the provided list.

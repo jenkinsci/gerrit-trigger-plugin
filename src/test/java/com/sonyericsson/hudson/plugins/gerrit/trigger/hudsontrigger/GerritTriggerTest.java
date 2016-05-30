@@ -264,6 +264,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testProjectRename() throws Exception {
+        mockConfig();
         mockPluginConfig(0);
         // we'll make AbstractProject return different names over time
         final String[] name = new String[1];
@@ -1127,7 +1128,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testCreateParametersWhenTriggerWithEscapeQuotesOn() {
-
+        mockConfig();
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
         String stringWithQuotesEscaped = "Fixed \\\" the thing to make \\\" some thing fun";
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
@@ -1187,7 +1188,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testCreateParametersWhenTriggerWithEscapeQuotesOff() {
-
+        mockConfig();
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
@@ -1247,7 +1248,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testCreateParametersWhenTriggerWithReadableMessageOn() {
-
+        mockConfig();
         String stringReadable = "This is human readable message";
 
         //prepare AbstractProject object
@@ -1295,7 +1296,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void testCreateParametersWhenTriggerWithReadableMessageOff() {
-
+        mockConfig();
         String stringReadable = "This is human readable message";
         String stringEncoded = "VGhpcyBpcyBodW1hbiByZWFkYWJsZSBtZXNzYWdl";
 
@@ -1553,9 +1554,7 @@ public class GerritTriggerTest {
     @Test
     public void shouldReturnEmptySlaveListWhenGerritServerNotFound() {
         // setup
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl pluginMock = mock(PluginImpl.class);
-        when(PluginImpl.getInstance()).thenReturn(pluginMock);
+        mockConfig();
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
 
         // actual test
@@ -1570,6 +1569,7 @@ public class GerritTriggerTest {
      */
     @Test
     public void shouldReturnEmptySlaveListWhenNotConfigured() {
+        mockConfig();
         IGerritHudsonTriggerConfig configMock = setupSeverConfigMock();
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
 
@@ -1738,6 +1738,7 @@ public class GerritTriggerTest {
      * @return the ReplicationConfig mock
      */
     private ReplicationConfig setupReplicationConfigMock() {
+        mockConfig();
         IGerritHudsonTriggerConfig configMock = setupSeverConfigMock();
         ReplicationConfig replicationConfigMock = mock(ReplicationConfig.class);
         when(configMock.getReplicationConfig()).thenReturn(replicationConfigMock);
