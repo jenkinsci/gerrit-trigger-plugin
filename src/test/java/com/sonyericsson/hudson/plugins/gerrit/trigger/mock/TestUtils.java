@@ -53,7 +53,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
  * A utility class for test.
