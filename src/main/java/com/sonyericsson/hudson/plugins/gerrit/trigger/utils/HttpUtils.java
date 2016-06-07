@@ -29,11 +29,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.params.ConnRoutePNames;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,22 +62,25 @@ public final class HttpUtils {
      * @return httpresponse.
      * @throws IOException if found.
      */
-    public static HttpResponse performHTTPGet(IGerritHudsonTriggerConfig config, String url) throws IOException {
-        DefaultHttpClient httpclient = new DefaultHttpClient();
+    public static CloseableHttpResponse performHTTPGet(IGerritHudsonTriggerConfig config,
+                                                       String url) throws IOException {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(url);
         if (config.getGerritProxy() != null && !config.getGerritProxy().isEmpty()) {
             try {
                 URL proxyUrl = new URL(config.getGerritProxy());
                 HttpHost proxy = new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol());
-                httpclient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+                DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(proxy);
+                httpClient = HttpClients.custom().setRoutePlanner(routePlanner).build();
             } catch (MalformedURLException e) {
                 logger.error("Could not parse proxy URL, attempting without proxy.", e);
             }
         }
 
-        httpclient.getCredentialsProvider().setCredentials(new AuthScope(null, -1),
-                config.getHttpCredentials());
-        HttpResponse execute;
-        return httpclient.execute(httpGet);
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(new AuthScope(null, -1), config.getHttpCredentials());
+        HttpClientContext context = HttpClientContext.create();
+        context.setCredentialsProvider(credsProvider);
+        return httpClient.execute(httpGet, context);
     }
 }

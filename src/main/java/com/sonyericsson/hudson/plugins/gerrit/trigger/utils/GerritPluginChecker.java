@@ -28,7 +28,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 
-import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,17 +116,24 @@ public final class GerritPluginChecker {
         }
         logger.trace("{}plugins/{}/", restUrl, pluginName);
 
-        HttpResponse execute = null;
+        CloseableHttpResponse execute = null;
         try {
             execute = HttpUtils.performHTTPGet(config, restUrl + "plugins/" + pluginName + "/");
+            int statusCode = execute.getStatusLine().getStatusCode();
+            logger.debug("status code: {}", statusCode);
+            return decodeStatus(statusCode, pluginName);
         } catch (IOException e) {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
             return false;
+        } finally {
+            if (execute != null) {
+                try {
+                    execute.close();
+                } catch (Exception exp) {
+                    logger.trace("Error happened when close http client.", exp);
+                }
+            }
         }
-
-        int statusCode = execute.getStatusLine().getStatusCode();
-        logger.debug("status code: {}", statusCode);
-        return decodeStatus(statusCode, pluginName);
     }
 }
