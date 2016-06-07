@@ -30,7 +30,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.time.StopWatch;
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
