@@ -1,9 +1,4 @@
 #!/usr/bin/env groovy
-import groovy.json.JsonSlurper
-import groovy.transform.Field
-
-import java.util.concurrent.TimeUnit
-
 /*
  * The MIT License (MIT)
  *
@@ -35,6 +30,12 @@ import java.util.concurrent.TimeUnit
 
  Since the last commit from maven-release-plugin
  */
+
+ import groovy.json.JsonSlurper
+ import groovy.transform.Field
+
+ import java.util.concurrent.TimeUnit
+
 
 @Field
 def mvnInfo = fetchMavenInfo()
