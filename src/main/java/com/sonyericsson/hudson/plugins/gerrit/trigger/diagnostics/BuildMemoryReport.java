@@ -55,7 +55,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
 
     /**
      * The format used to display timestamps.
-     * <p/>
+     *
      * A variant of ISO 8601 with the 'T' replaced by a space for simpler ocular parsing.
      */
     public static final SimpleDateFormat TS_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
@@ -101,7 +101,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
 
     /**
      * Generates a one liner display name for the event.
-     * <p/>
+     *
      * For {@link ChangeBasedEvent}s: "type change#/patchSet# @ timestamp".
      * For {@link RefUpdated} events: "type project @ timestamp".
      * Default: "type @ timestamp"
