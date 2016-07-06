@@ -52,9 +52,9 @@
     </developers>
 
     <properties>
-        <jenkins.version>1.609.3</jenkins.version>
+        <jenkins.version>1.625</jenkins.version>
         <!--<jenkins.version>2.5-SNAPSHOT</jenkins.version>-->
-        <java.level>6</java.level>
+        <java.level>7</java.level>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
         <concurrency>1C</concurrency>
@@ -80,13 +80,13 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>2.3</version>
+            <version>3.0.0-beta1</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git-client</artifactId>
-            <version>1.11.1</version>
+            <version>2.0.0-beta1</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -302,8 +302,8 @@
                 <configuration>
                     <signature>
                         <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                        <version>1.1</version>
+                        <artifactId>java17</artifactId>
+                        <version>1.0</version>
                     </signature>
                 </configuration>
                 <executions>

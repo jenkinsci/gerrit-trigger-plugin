@@ -167,10 +167,8 @@ public class GerritTriggerBuildChooser extends BuildChooser {
             @Override
             public ObjectId invoke(Repository repository, VirtualChannel virtualChannel)
                     throws IOException, InterruptedException {
-                RevWalk walk = null;
                 ObjectId result = null;
-                try {
-                    walk = new RevWalk(repository);
+                try (RevWalk walk = new RevWalk(repository)) {
                     RevCommit commit = walk.parseCommit(id);
                     if (commit.getParentCount() > 0) {
                         result = commit.getParent(0);
@@ -180,10 +178,6 @@ public class GerritTriggerBuildChooser extends BuildChooser {
                     }
                 } catch (Exception e) {
                     throw new GitException("Failed to find parent id. ", e);
-                } finally {
-                    if (walk != null) {
-                        walk.release();
-                    }
                 }
                 return result;
             }
