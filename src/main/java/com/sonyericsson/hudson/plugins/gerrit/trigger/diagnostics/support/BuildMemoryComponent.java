@@ -68,6 +68,11 @@ public class BuildMemoryComponent extends Component {
     }
 
     @Override
+    public boolean isSelectedByDefault() {
+        return false;
+    }
+
+    @Override
     public void addContents(@NonNull Container container) {
         container.add(new PrintedContent("gerrit/buildmemory.md") {
             @Override
