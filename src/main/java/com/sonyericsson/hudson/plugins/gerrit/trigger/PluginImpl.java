@@ -39,7 +39,6 @@ import hudson.Plugin;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Api;
-import hudson.model.Hudson;
 import hudson.model.Items;
 import hudson.model.Run;
 import hudson.model.queue.QueueTaskDispatcher;
@@ -89,7 +88,7 @@ public class PluginImpl extends Plugin {
     public static final Permission MANUAL_TRIGGER = new Permission(PERMISSION_GROUP,
             "ManualTrigger",
             Messages._ManualTriggerPermissionDescription(),
-            Hudson.ADMINISTER);
+            Jenkins.ADMINISTER);
     /**
      * The permission that allows users to perform the
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction}.
@@ -526,7 +525,7 @@ public class PluginImpl extends Plugin {
 
         //Register it in all known XStreams just to be sure.
         Items.XSTREAM.registerConverter(new TriggerContextConverter());
-        Hudson.XSTREAM.registerConverter(new TriggerContextConverter());
+        Jenkins.XSTREAM.registerConverter(new TriggerContextConverter());
         //This is where the problems where, reading builds.
         Run.XSTREAM.registerConverter(new TriggerContextConverter());
         Run.XSTREAM2.addCompatibilityAlias(
@@ -535,7 +534,7 @@ public class PluginImpl extends Plugin {
 
         Items.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
                 "com.sonymobile.tools.gerrit.gerritevents");
-        Hudson.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
+        Jenkins.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
                 "com.sonymobile.tools.gerrit.gerritevents");
         Run.XSTREAM.aliasPackage("com.sonyericsson.hudson.plugins.gerrit.gerritevents",
                 "com.sonymobile.tools.gerrit.gerritevents");

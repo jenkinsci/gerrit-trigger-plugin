@@ -281,7 +281,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Hudson.getInstance().checkPermission(Hudson.ADMINISTER);
+        Hudson.getInstance().checkPermission(Jenkins.ADMINISTER);
         return this;
     }
 
