@@ -46,7 +46,7 @@ public final class StringUtil {
     /**
      * the field will be used as quote "\""
      */
-    private static final Pattern QUOTES_PATTERN = Pattern.compile("\"");;
+    private static final Pattern QUOTES_PATTERN = Pattern.compile("\"");
 
     /**
      * The base URL of the plugin images.
