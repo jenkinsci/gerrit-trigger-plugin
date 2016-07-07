@@ -1804,6 +1804,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the resolved instance.
      * @throws ObjectStreamException if something beneath goes wrong.
      */
+    @Override
     public Object readResolve() throws ObjectStreamException {
         initializeServerName();
         initializeTriggerOnEvents();

@@ -70,6 +70,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      *
      * @return ReviewInput
      */
+    @Override
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
         Notify notificationLevel = Notify.ALL;

@@ -59,6 +59,7 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * Base URL for the Gerrit UI.
      * @return the gerrit front end URL. Always ends with '/'
      */
+    @Override
     String getGerritFrontEndUrl();
 
     /**

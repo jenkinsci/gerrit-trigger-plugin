@@ -57,6 +57,7 @@ public class PluginDraftPublishedEvent extends PluginGerritEvent implements Seri
      * Getter for the Descriptor.
      * @return the Descriptor for the PluginDraftPublishedEvent.
      */
+    @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(PluginDraftPublishedEventDescriptor.class);
     }

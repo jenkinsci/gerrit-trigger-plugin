@@ -93,6 +93,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
      * Getter for the Descriptor.
      * @return the Descriptor for the PluginCommentAddedEvent.
      */
+    @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(PluginCommentAddedEventDescriptor.class);
     }
