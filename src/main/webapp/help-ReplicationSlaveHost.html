@@ -1,0 +1,4 @@
+Host representing the slave, typically hostname or hostname:port. This must be the same as value of targetNode in the Gerrit ref-replicated event.<br/>
+<br/>
+<b>Limitation:</b> Gerrit is setting the targetNode to the value of the host part of the url in the replication configuration so this
+feature do not support replication using file protocol since there is not host.

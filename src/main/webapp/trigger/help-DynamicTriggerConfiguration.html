@@ -1,0 +1,32 @@
+<p>
+    <strong>Dynamic Trigger Configuration</strong> - check this if you want to specify the URL to a text file
+    containing the Gerrit trigger configuration. This text file will be automatically fetched at
+    regular intervals, and the trigger configuration will be updated accordingly.
+</p>
+<p>
+    The URL must be in a format that can be parsed by <b>java.net.URL</b>.
+</p>
+<p>
+    A Dynamic Trigger Configuration can co-exist peacefully with the
+    regular way of manually specifying the trigger configuration below.
+</p>
+<p>
+    On a set interval, the plugin fetches and parses this file. The file contents should follow this syntax:
+<pre style="border: 1px dashed black; padding: 2px"><code>p=some/project
+b^**/master/*
+t~.*
+f~\.txt$
+p=some/other/project
+b^**</code></pre>
+
+    <strong><i>Legend:</i></strong><br/>
+    p for project<br/>
+    b for branch<br/>
+    t for topic<br />
+    f for file<br/>
+    o for forbidden file<br/>
+    = for plain syntax<br/>
+    ^ for ANT style syntax<br/>
+    ~ for regexp syntax<br/>
+    Branch, topic, file and forbidden file lines are assumed to be part of the closest preceding project line.
+</p>

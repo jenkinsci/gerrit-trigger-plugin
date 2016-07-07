@@ -16,3 +16,4 @@ generated-sources
 .idea
 hostkey.ser
 *.xml~
+/eclipse-classes

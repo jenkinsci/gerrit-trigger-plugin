@@ -1,0 +1,81 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
+        <l:header>
+            <style>.yui-skin-sam .yui-dt td.align-middle {vertical-align:middle;}</style>
+            <l:yui module="dom"/>
+            <l:yui module="event"/>
+            <l:yui module="element"/>
+            <l:yui module="logger"/>
+            <l:yui module="connection" />
+            <l:yui module="datasource"/>
+            <l:yui module="container" />
+            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
+            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/server-table.js"/>
+            <script type="text/javascript">
+                var textMessages = {
+                    confirm: "${%Remove?}",
+                    yes: "${%Yes}",
+                    no: "${%No}",
+                };
+                var columnDefs = [
+                    {key:"name", label: "${%Server Name}", formatter: "formatFrontEndLink", className: "align-middle"},
+                    {key:"version", label: "${%Version}", formatter: "text", className: "align-middle"},
+                    {key:"status", label: "${%Status}", formatter: "controlServer", className: "align-middle"},
+                    {key:"", label: "${%Edit}", formatter: "editServer", className: "align-middle"},
+                    {key:"", label: "${%Remove}", formatter: "removeServer", className: "align-middle"}
+                ];
+                var imagesURL = "${imagesURL}";
+                var pluginURL = "${rootURL}/plugin/${it.urlName}";
+                YAHOO.util.Event.addListener(window, "load", function() {
+                    serverTable();
+                });
+            </script>
+        </l:header>
+        <l:side-panel>
+            <l:tasks>
+                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/new-package.png" href="newServer" title="${%Add New Server}" />
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <j:set var="instance" value="${it}"/>
+            <j:set var="descriptor" value="${it.descriptor}"/>
+            <j:set var="aMonitor" value="${it.getAdministrativeMonitor()}"/>
+            <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
+                <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
+            </j:if>
+            <f:form method="post" action="configSubmit" name="config">
+                <f:section title="${%Global Configuration}">
+                    <f:entry title="${%No. of Receiving Worker Threads}"
+                             help="/plugin/gerrit-trigger/help-ReceivingEventWorkerThreads.html">
+                        <f:textbox name="numberOfReceivingWorkerThreads"
+                                   value="${it.pluginConfig.numberOfReceivingWorkerThreads}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS}"/>
+                    </f:entry>
+                    <f:entry title="${%No. of Sending Worker Threads}"
+                             help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
+                        <f:textbox name="numberOfSendingWorkerThreads"
+                                   value="${it.pluginConfig.numberOfSendingWorkerThreads}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
+                    </f:entry>
+                    <f:entry title="${%Replication Cache Expiration}"
+                             help="/plugin/gerrit-trigger/help-ReplicationCacheExpiration.html">
+                        <f:textbox name="replicationCacheExpirationInMinutes"
+                                   value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
+                    </f:entry>
+                </f:section>
+                <f:block>
+                    <f:submit value="${%Save}" />
+                </f:block>
+            </f:form>
+            <div class="gerrit-trigger-section">
+                <div class="section-header">${%Gerrit Servers}</div>
+                <p />
+                <div id="server-list"/>
+            </div>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

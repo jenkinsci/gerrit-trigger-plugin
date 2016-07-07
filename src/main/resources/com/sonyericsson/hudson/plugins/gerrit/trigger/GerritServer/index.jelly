@@ -1,0 +1,457 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
+        <l:side-panel>
+            <l:tasks>
+                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
+                <l:task icon="images/24x24/edit-delete.png" href="remove" title="Remove Server" />
+            </l:tasks>
+        </l:side-panel>
+        <l:main-panel>
+            <j:set var="instance" value="${it}"/>
+            <j:set var="descriptor" value="${it.descriptor}"/>
+            <st:include page="message.jelly" optional="true"/>
+            <j:set var="serverURL" value="${it.url}"/>
+            <f:form method="post" action="configSubmit" name="config">
+                <f:section title="${%Gerrit Connection Setting}">
+                    <f:entry title="${%Name}"
+                             help="/plugin/gerrit-trigger/help-GerritServerName.html">
+                        <f:textbox name="name"
+                                   value="${it.name}"
+                                   checkUrl="'${rootURL}/${serverURL}/nameFreeCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%No Connection On Startup}"
+                             help="/plugin/gerrit-trigger/help-GerritNoConnectionOnStartup.html">
+                        <f:checkbox name="noConnectionOnStartup"
+                                    checked="${it.noConnectionOnStartup}"
+                                    default="false"/>
+                    </f:entry>
+                    <f:entry title="${%Hostname}"
+                             help="/plugin/gerrit-trigger/help-GerritHostname.html">
+                        <f:textbox name="gerritHostName"
+                                   value="${it.config.gerritHostName}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_HOSTNAME}"/>
+                    </f:entry>
+                    <f:entry title="${%Frontend URL}"
+                             help="/plugin/gerrit-trigger/help-GerritFrontendUrl.html">
+                        <f:textbox name="gerritFrontEndUrl"
+                                   value="${it.config.gerritFrontEndUrl}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_FRONT_END_URL}"
+                                   checkUrl="'${rootURL}/${serverURL}/urlCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%SSH Port}"
+                             help="/plugin/gerrit-trigger/help-GerritSshPort.html">
+                        <f:textbox name="gerritSshPort"
+                                   value="${it.config.gerritSshPort}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT}"
+                                   checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Proxy}"
+                             help="/plugin/gerrit-trigger/help-GerritProxy.html">
+                        <f:textbox name="gerritProxy"
+                                   value="${it.config.gerritProxy}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_PROXY}"/>
+                    </f:entry>
+                    <f:entry title="${%Username}"
+                             help="/plugin/gerrit-trigger/help-GerritUserName.html">
+                        <f:textbox name="gerritUserName"
+                                   value="${it.config.gerritUserName}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}"/>
+                    </f:entry>
+                    <f:entry title="${%E-mail}"
+                             help="/plugin/gerrit-trigger/help-GerritEMail.html">
+                        <f:textbox name="gerritEMail"
+                                   value="${it.config.gerritEMail}"/>
+                    </f:entry>
+                    <f:entry title="${%SSH Keyfile}"
+                             help="/plugin/gerrit-trigger/help-GerritKeyFile.html">
+                        <f:textbox name="gerritAuthKeyFile"
+                                   value="${it.config.gerritAuthKeyFile}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE}"
+                                   checkUrl="'${rootURL}/${serverURL}/validKeyFileCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%SSH Keyfile Password}"
+                             help="/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
+                        <f:password name="gerritAuthKeyFilePassword"
+                                    value="${it.config.gerritAuthKeyFileSecretPassword}"
+                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
+                    </f:entry>
+                    <f:optionalBlock name="buildCurrentPatchesOnly"
+                                                             title="${%Build Current Patches Only}"
+                                                             help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html"
+                                                             checked="${it.config.buildCurrentPatchesOnly.enabled}">
+                                                <f:entry title="${%Abort new patch sets}"
+                                                         help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
+                                                    <f:checkbox name="abortNewPatchsets"
+                                                                checked="${it.config.buildCurrentPatchesOnly.abortNewPatchsets}"
+                                                                default="false"/>
+                                                </f:entry>
+                                                <f:entry title="${%Abort manual patch sets}"
+                                                         help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
+                                                    <f:checkbox name="abortManualPatchsets"
+                                                                checked="${it.config.buildCurrentPatchesOnly.abortManualPatchsets}"
+                                                                default="false"/>
+                                                </f:entry>
+                                            </f:optionalBlock>
+                    <f:validateButton title="${%Test Connection}"
+                                      progress="${%Testing...}"
+                                      method="testConnection"
+                                      with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
+                </f:section>
+                <f:section title="${%Gerrit Reporting Values}">
+                    <tr>
+                        <td></td>
+                        <td>
+                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
+                                ${%Verify}
+                            </div>
+                        </td>
+                    </tr>
+                    <f:entry title="${%Started}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
+                        <f:textbox name="gerritBuildStartedVerifiedValue"
+                                   value="${it.config.gerritBuildStartedVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Successful}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulVerified.html">
+                        <f:textbox name="gerritBuildSuccessfulVerifiedValue"
+                                   value="${it.config.gerritBuildSuccessfulVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Failed}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildFailedVerified.html">
+                        <f:textbox name="gerritBuildFailedVerifiedValue"
+                                   value="${it.config.gerritBuildFailedVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Unstable}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildUnstableVerified.html">
+                        <f:textbox name="gerritBuildUnstableVerifiedValue"
+                                   value="${it.config.gerritBuildUnstableVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Not Built}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltVerified.html">
+                        <f:textbox name="gerritBuildNotBuiltVerifiedValue"
+                                   value="${it.config.gerritBuildNotBuiltVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <tr>
+                        <td></td>
+                        <td>
+                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
+                                ${%Code Review}
+                            </div>
+                        </td>
+                    </tr>
+                    <f:entry title="${%Started}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
+                        <f:textbox name="gerritBuildStartedCodeReviewValue"
+                                   value="${it.config.gerritBuildStartedCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Successful}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulCodeReview.html">
+                        <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
+                                   value="${it.config.gerritBuildSuccessfulCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Failed}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildFailedCodeReview.html">
+                        <f:textbox name="gerritBuildFailedCodeReviewValue"
+                                   value="${it.config.gerritBuildFailedCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Unstable}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildUnstableCodeReview.html">
+                        <f:textbox name="gerritBuildUnstableCodeReviewValue"
+                                   value="${it.config.gerritBuildUnstableCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                    <f:entry title="${%Not Built}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltCodeReview.html">
+                        <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
+                                   value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
+                </f:section>
+                <f:advanced>
+                    <f:section title="${%Gerrit Verified Commands}">
+                        <f:entry title="${%Started}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
+                            <f:textbox name="gerritVerifiedCmdBuildStarted"
+                                       value="${it.config.gerritCmdBuildStarted}"
+                                       default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Successful}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
+                            <f:textbox name="gerritVerifiedCmdBuildSuccessful"
+                                       value="${it.config.gerritCmdBuildSuccessful}"
+                                       default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Failed}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
+                            <f:textbox name="gerritVerifiedCmdBuildFailed"
+                                       value="${it.config.gerritCmdBuildFailed}"
+                                       default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Unstable}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
+                            <f:textbox name="gerritVerifiedCmdBuildUnstable"
+                                       value="${it.config.gerritCmdBuildUnstable}"
+                                       default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Not Built}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildNotBuilt.html">
+                            <f:textbox name="gerritVerifiedCmdBuildNotBuilt"
+                                       value="${it.config.gerritCmdBuildNotBuilt}"
+                                       default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'No Builds Executed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                    </f:section>
+                    <f:section title="${%Miscellaneous}">
+                        <f:entry title="${%Build Schedule Delay}"
+                                 help="/plugin/gerrit-trigger/help-BuildScheduleDelay.html">
+                            <f:textbox name="buildScheduleDelay"
+                                       value="${it.config.buildScheduleDelay}"
+                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
+                                       checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Dynamic Config Refresh Interval}"
+                                 help="/plugin/gerrit-trigger/help-DynamicTriggerConfigRefreshInterval.html">
+                            <f:textbox name="dynamicConfigRefreshInterval"
+                                       value="${it.config.dynamicConfigRefreshInterval}"
+                                       default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL}"
+                                       checkUrl="'${rootURL}/${serverURL}/dynamicConfigRefreshCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Enable Manual Trigger}"
+                                 help="/plugin/gerrit-trigger/help-EnableManualTrigger.html">
+                            <f:checkbox name="enableManualTrigger"
+                                        checked="${it.config.enableManualTrigger}"
+                                        default="${true}"/>
+                        </f:entry>
+                        <f:entry title="${%Fetch Project List Settings}"
+                                 help="/plugin/gerrit-trigger/help-GerritFetchProjectList.html">
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Enable project Auto Completion}
+                                </div>
+                                <div style="display: inline">
+                                    <f:checkbox name="enableProjectAutoCompletion"
+                                         checked="${it.config.enableProjectAutoCompletion}"
+                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION}"/>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Project list fetch delay} (seconds)
+                                </div>
+                                <div style="display: inline;">
+                                     <f:textbox name="projectListFetchDelay"
+                                        value="${it.config.projectListFetchDelay}"
+                                        default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_FETCH_DELAY}"
+                                        checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"
+                                        style="max-width: 100px;"/>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="width: 200px; display: inline-block;">
+                                    ${%Project list fetch interval} (seconds)
+                                </div>
+                                <div style="display: inline;">
+                                     <f:textbox name="projectListRefreshInterval"
+                                        value="${it.config.projectListRefreshInterval}"
+                                        default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL}"
+                                        checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"
+                                        style="max-width: 100px;"/>
+                                </div>
+                            </div>
+                        </f:entry>
+                        <f:entry title="${%Notification Level}"
+                                 field="notificationLevel"
+                                 help="/plugin/gerrit-trigger/help-GerritNotificationLevel.html">
+                            <f:select value="${it.config.notificationLevel}"
+                                      default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_NOTIFICATION_LEVEL}" />
+                        </f:entry>
+                        <f:entry title="${%Verdict Categories}">
+                            <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"
+                                          add="${%Add Verdict Category}" minimum="0" header="">
+                                <table>
+                                    <tr>
+                                        <td>
+                                            ${%Verdict Value}
+                                        </td>
+                                        <td>
+                                            <f:textbox name="verdictValue" value="${v.verdictValue}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            ${%Verdict Description}
+                                        </td>
+                                        <td>
+                                            <f:textbox name="verdictDescription" value="${v.verdictDescription}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <f:repeatableDeleteButton/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </f:repeatable>
+                        </f:entry>
+                    </f:section>
+                    <f:section title="${%REST API}">
+                        <f:optionalBlock name="useRestApi" title="${%Use REST API}" checked="${it.config.useRestApi}">
+                            <f:entry title="${%Gerrit HTTP Username}">
+                                <f:textbox name="gerritHttpUserName"
+                                           value="${it.config.gerritHttpUserName}"/>
+                            </f:entry>
+                            <f:entry title="${%Gerrit HTTP Password}">
+                                <f:password name="gerritHttpPassword"
+                                            value="${it.config.gerritHttpSecretPassword}"/>
+                            </f:entry>
+                            <f:validateButton title="${%Test REST Connection}"
+                                              progress="${%Testing...}"
+                                              method="testRestConnection"
+                                              with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
+                            <f:entry title="${%Enable Code-Review}">
+                                <f:checkbox name="restCodeReview"
+                                            checked="${is.config.restCodeReview}"
+                                            default="true" />
+                            </f:entry>
+                            <f:entry title="${%Enable Verified}">
+                                <f:checkbox name="restVerified"
+                                            checked="${it.config.restVerified}"
+                                            default="true" />
+                            </f:entry>
+                        </f:optionalBlock>
+                    </f:section>
+                    <j:if test="${instance.isReplicationEventsSupported()}">
+                        <f:section title="${%Replication Events}">
+                            <f:optionalBlock name="enableReplication"
+                                             title="${%Block Build Until Replication is Complete}"
+                                             checked="${it.config.replicationConfig.enableReplication}"
+                                             help="/plugin/gerrit-trigger/help-Replication.html">
+                                <f:entry title="${%Gerrit Slaves}">
+                                    <f:repeatable var="slave" items="${it.config.replicationConfig.gerritSlaves}"
+                                                  name="slaves" add="${%Add Gerrit Slave}" minimum="1"
+                                                  header="${%Gerrit Slave}">
+                                        <table>
+                                            <f:invisibleEntry>
+                                                <f:textbox name="id" value="${slave.id}"/>
+                                            </f:invisibleEntry>
+                                            <f:entry title="${%Name}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveName.html">
+                                                <f:textbox name="name" value="${slave.name}"/>
+                                            </f:entry>
+                                            <f:entry title="${%Host}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveHost.html">
+                                                <f:textbox name="host" value="${slave.host}"/>
+                                            </f:entry>
+                                            <f:entry title="${%Time-out}"
+                                                     help="/plugin/gerrit-trigger/help-ReplicationSlaveTimeout.html">
+                                                <f:textbox name="timeout"
+                                                           value="${slave.timeoutInSeconds}"
+                                                           checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                                            </f:entry>
+                                            <f:entry title="">
+                                                <div align="right">
+                                                    <f:repeatableDeleteButton />
+                                                </div>
+                                            </f:entry>
+                                        </table>
+                                    </f:repeatable>
+                                </f:entry>
+                                <f:optionalBlock name="enableSlaveSelectionInJobs"
+                                                 title="${%Allow Slave Selection in Job Configurations}"
+                                                 checked="${it.config.replicationConfig.enableSlaveSelectionInJobs}"
+                                                 help="/plugin/gerrit-trigger/help-enableSlaveSelectionInJobs.html">
+                                    <f:entry title="${%Choose a Default Slave}"
+                                             field="defaultSlaveId"
+                                             help="/plugin/gerrit-trigger/help-defaultSlave.html">
+                                        <f:select/>
+                                    </f:entry>
+                                </f:optionalBlock>
+                            </f:optionalBlock>
+                        </f:section>
+                    </j:if>
+                    <f:section title="${%Watchdog}">
+                        <f:entry title="${%Connection Watchdog Timeout}"
+                                 help="/plugin/gerrit-trigger/help-ConnectionWatchdogTimeout.html">
+                            <f:textbox name="watchdogTimeoutMinutes"
+                                       value="${it.config.watchdogTimeoutMinutes}"
+                                       checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:optionalBlock name="watchdogExceptions" title="${%Connection Watchdog Exceptions}" checked="${it.config.exceptionData.enabled}">
+                            <f:entry title="${%Exception Days}"
+                                     help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionDays.html">
+                                <table>
+                                    <j:forEach var="helper" items="${it.generateHelper()}">
+                                        <tr>
+                                            <td>
+                                                ${helper.displayName}
+                                            </td>
+                                            <td>
+                                                <f:checkbox name="${helper.id}"
+                                                            checked="${helper.checked}"
+                                                            default="${false}"/>
+                                            </td>
+                                        </tr>
+                                    </j:forEach>
+                                </table>
+                            </f:entry>
+                            <f:entry title="${%Exception Times}"
+                                     help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionTimes.html">
+                                <f:repeatable var="t" items="${it.config.exceptionData.timesOfDay}"
+                                              name="watchdogExceptionTimes" add="${%Add Time}" minimum="0"
+                                              header="">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                ${%From}
+                                            </td>
+                                            <td>
+                                                <f:textbox name="from"
+                                                           value="${h.appendIfNotNull(t.from.hourAsString,'','00')}:${h.appendIfNotNull(t.from.minuteAsString,'','00')}"
+                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                ${%To}
+                                            </td>
+                                            <td>
+                                                <f:textbox name="to"
+                                                           value="${h.appendIfNotNull(t.to.hourAsString,'','00')}:${h.appendIfNotNull(t.to.minuteAsString,'','01')}"
+                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                            </td>
+                                        </tr>
+                                        <!--used to display the form validation error -->
+                                        <tr class="validation-error-area"><td/><td colspan="1" /></tr>
+                                        <tr>
+                                            <td>
+                                                <f:repeatableDeleteButton/>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </f:repeatable>
+                            </f:entry>
+                        </f:optionalBlock>
+                    </f:section>
+                </f:advanced>
+                <f:entry title="${%EnablePluginMessages}">
+                    <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
+                </f:entry>
+                <f:block>
+                    <f:submit value="${%Save}"/>
+                </f:block>
+            </f:form>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

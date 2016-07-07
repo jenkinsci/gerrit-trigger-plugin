@@ -1,0 +1,20 @@
+Defines when and how the project list is fetched from Gerrit.
+<p/>
+This list is used for project auto completion in the project configuration.
+<p/>
+<b>Enable project auto completion</b>
+<p/>
+If checked, this Gerrit server will be used to update the project list for project name auto-completion.
+<p/>
+If unchecked, disables fetching of project names,
+which also means no project name auto-completion will be available for users configuring Jenkins
+projects.
+<p/>
+<b>Refresh project list delay</b>
+<p/>
+Delay, in seconds, before the initial fetch of the project list from this Gerrit server.
+<p/>
+<b>Project list fetch interval</b>
+<p/>
+For Gerrit servers with version &lt; v2.12.
+The interval between fetches of the project list.

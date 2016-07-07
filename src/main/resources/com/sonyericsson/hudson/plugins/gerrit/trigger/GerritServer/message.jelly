@@ -1,0 +1,29 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <j:if test="${it.isTimeoutWakeup()}">
+        <div class="error">
+            ${%ConnectionError}
+        </div>
+    </j:if>
+    <j:if test="${it.isGerritSnapshotVersion()}">
+        <div class="warning">
+            ${%SnapshotVersionWarning}
+        </div>
+    </j:if>
+    <j:if test="${!it.isGerritMissedEventsSupported()}">
+        <div class="warning">
+            ${%MissedEventsPlaybackNotSupportedWarning}
+        </div>
+    </j:if>
+    <j:if test="${it.hasDisabledFeatures()}">
+        <div class="warning">
+            ${%DisabledFeaturesWarning}
+            <ul>
+                <j:forEach items="${it.getDisabledFeatures()}" var="feature">
+                    <li>${%SpecificVersionRequiredWarning(feature.getDisplayName(), feature.getVersion())}</li>
+                </j:forEach>
+            </ul>
+        </div>
+    </j:if>
+</j:jelly>

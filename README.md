@@ -14,47 +14,58 @@ Each job can be configured with one Gerrit server.
 ## Maintainers
 
 * Robert Sandell
-  - robert.sandell@sonymobile.com
+  - robert.sandell@cloudbees.com
   - sandell.robert@gmail.com
 
 * Tomas Westling
   - tomas.westling@sonymobile.com
 
+## Community Resources
+ * [Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger)
+ * [Open Issues](http://issues.jenkins-ci.org/secure/IssueNavigator.jspa?mode=hide&reset=true&jqlQuery=project+%3D+JENKINS+AND+status+in+%28Open%2C+%22In+Progress%22%2C+Reopened%29+AND+component+%3D+%27gerrit-trigger-plugin%27)
+ * [Mailing Lists](http://jenkins-ci.org/content/mailing-lists)
+
 
 # Environments
 * `linux`
-    * `java-1.6`
-        * `maven-3.0.4`
+    * `java-1.7`
+        * `maven-3.3.3`
+
+* Java 1.7: minimum development environment.
+* Java 8: Works.
+* Java 6 Runtime compatible
 
 You should have no problem running the plugin on a Windows server.
+
 The maintainers' development, tests and production environments are
-Ubuntu 12.04 so we have no means of detecting or fixing any Windows issues,
-but there are some kind contributors who provides win fixes every now and then.
+Ubuntu so we have no means of detecting or fixing any Windows issues.
 
-To build it however some of the tests needs ssh-keygen to be available,
-so some kind of GNU-like system is needed.
-
+Java 6 compatibility will be dropped as soon as newer core version is needed for features.
 
 # Build
 
-This is a multi module maven project, with all the maven derpiness that follows
-with it. One of the modules _(build-config)_ contains CheckStyle configurations
-for the other modules to use and needs to be installed into your local repo so 
-the maven checkstyle plugin can find it. 
-But simplest is to run install on the entire project.
+The plugin depends on a [gerrit-events](https://github.com/sonyxperiadev/gerrit-events) component
+that used to be part of this project but later broken out. Although we will try to avoid it,
+sometimes you might need to _mvn install_ it locally if dependant changes there haven't been released yet.
 
-    mvn clean install
+The _(build-config)_ directory contains "special" CheckStyle configurations and the build will
+fail during the verification phase if you don't follow them.
+
+    mvn clean package
     
-Run findbugs for future reference
-or to make sure you haven't introduced any new warnings
+Run findbugs for future reference or to make sure you haven't introduced any
+new warnings
 
     mvn findbugs:findbugs
-    
+
+Run checkstyle
+
+    mvn checkstyle:checkstyle
+
 # Test local instance
 
 To test in a local Jenkins instance
 
-    cd gerrithudsontrigger
     mvn hpi:run
 
 

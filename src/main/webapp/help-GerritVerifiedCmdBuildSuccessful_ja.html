@@ -1,0 +1,34 @@
+<p>
+    ビルドが成功した時に実行されるコマンドです。<br />
+    ビルドの際に使われたパラメータ PARAMETER を、フォーム上では&lt;PARAMETER&gt;として参照できます。
+    &lt;VERIFIED&gt;と&lt;CODE_REVIEW&gt;は下記に定義された値を持ちます。
+    &lt;BUILDURL&gt;はビルド結果へのURLです。
+</p>
+<p>
+    <strong>利用可能な標準パラメータ</strong>
+</p>
+<ul>
+    <li><strong>GERRIT_NAME</strong>: Gerritプロジェクト名</li>
+    <li><strong>CHANGE_ID</strong>: Gerrit Change-Id (SHA-1)</li>
+    <li><strong>BRANCH</strong>: プロジェクトのブランチ</li>
+    <li><strong>CHANGE</strong>: チェンジ番号</li>
+    <li><strong>PATCHSET</strong>: パッチセット番号</li>
+    <li><strong>PATCHSET_REVISION</strong>: パッチセットリビジョン</li>
+    <li><strong>REFSPEC</strong>: パッチセット参照仕様 (refs/changes/xx/xxxx/z)</li>
+    <li><strong>BUILDURL</strong>: ビルド結果へのURL</li>
+    <li><strong>VERIFIED</strong>: Verifiedスコア</li>
+    <li><strong>CODE_REVIEW</strong>: Code-Reviewスコア</li>
+    <li><strong>NOTIFICATION_LEVEL</strong>: 通知レベル</li>
+</ul>
+<p>
+    <strong>利用可能なスペシャルパラメータ</strong>
+</p>
+<ul>
+    <li>
+        <strong>BUILDS_STATS</strong>:
+        ビルドのステータスと結果へのリンクを対とした、関連する全ての終了したビルドのリスト（タブ区切り）
+    </li>
+</ul>
+<p>
+    最初のビルドが始まってから定義された環境変数は<strong>$ENV_VAR</strong>の形で参照できます。
+</p>

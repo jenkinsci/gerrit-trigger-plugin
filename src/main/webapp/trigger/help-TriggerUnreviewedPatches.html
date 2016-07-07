@@ -1,0 +1,11 @@
+Allows checking and running unreviewed patches when connection is established.
+If unreviewed patchsets have been created during Jenkins server down time,
+Jenkins will trigger "patchset created" events for those patches when the
+connection is re-established.<br/><br/>
+
+
+<b>Caution!</b><br/>
+<ul>
+  <li>Property <b>supports only plain text</b> formatted project patterns. Other type of project patterns will be ignored.</li>
+  <li>Property <b>supports only "patchset created" event</b>. Other types of event will be ignored.</li>
+</ul>

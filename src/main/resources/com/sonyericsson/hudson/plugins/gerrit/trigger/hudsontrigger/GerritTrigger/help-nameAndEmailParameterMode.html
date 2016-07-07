@@ -1,0 +1,19 @@
+<p>
+    How the &quot;Compound name and email parameters&quot; should be added to the build. I.e.
+</p>
+<ul>
+    <li>GERRIT_CHANGE_RESTORER</li>
+    <li>GERRIT_CHANGE_ABANDONER</li>
+    <li>GERRIT_CHANGE_OWNER</li>
+    <li>GERRIT_PATCHSET_UPLOADER</li>
+    <li>GERRIT_EVENT_ACCOUNT</li>
+</ul>
+<p></p>
+<ul>
+    <li><strong>Human readable <em>(default)</em>:</strong>
+        Plain text, as it arrives to Jenkins. With quotes escaped if configured above.</li>
+    <li><strong>Encoded (Base64):</strong>
+        Base64 encoded string.</li>
+    <li><strong>Do not add:</strong>
+        The parameters aren't added to the build at all.</li>
+</ul>

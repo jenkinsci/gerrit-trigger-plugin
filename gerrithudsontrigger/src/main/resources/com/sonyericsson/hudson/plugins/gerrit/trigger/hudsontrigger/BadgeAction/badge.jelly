@@ -1,5 +1,0 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <a href="${it.url}" target="_new">
-        <img src="${rootURL}/plugin/gerrit-trigger/images/icon16.png" border="0"/> ${it.text}
-    </a>
-</j:jelly>

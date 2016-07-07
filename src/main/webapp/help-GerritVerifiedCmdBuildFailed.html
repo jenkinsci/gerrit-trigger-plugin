@@ -1,0 +1,36 @@
+<p>
+    Command that will be run when the build is failed.<br/>
+    Use parameters in the form &lt;PARAMETER&gt; where PARAMETER is a parameter to the build.
+    The variables &lt;VERIFIED&gt; and &lt;CODE_REVIEW&gt; will have the values defined above.
+    The variable &lt;BUILDURL&gt; will have the URL to the build result.
+</p>
+<p>
+    <strong>The following standard &lt;PARAMETER&gt; values are available:</strong>
+</p>
+<ul>
+    <li><strong>GERRIT_NAME</strong>: The Gerrit project name.</li>
+    <li><strong>CHANGE_ID</strong>: The Gerrit Change-Id (SHA-1).</li>
+    <li><strong>BRANCH</strong>: The branch of the project.</li>
+    <li><strong>CHANGE</strong>: The change number.</li>
+    <li><strong>PATCHSET</strong>: The patchset number.</li>
+    <li><strong>PATCHSET_REVISION</strong>: The patchset revision.</li>
+    <li><strong>REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z).</li>
+    <li><strong>BUILDURL</strong>: The URL to the build.</li>
+    <li><strong>VERIFIED</strong>: The verified vote.</li>
+    <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
+    <li><strong>NOTIFICATION_LEVEL</strong>: The notification level.</li>
+</ul>
+<p>
+    <strong>The following special &lt;PARAMETER&gt; values are available:</strong>
+</p>
+<ul>
+    <li>
+        <strong>BUILDS_STATS</strong>:
+        Tab separated list of all the builds done
+        with their status and the link to the build.
+    </li>
+</ul>
+<p>
+    You can also use any environment variable from the first build that was started
+    with the <strong>$ENV_VAR</strong> syntax.
+</p>

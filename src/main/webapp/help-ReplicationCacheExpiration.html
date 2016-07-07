@@ -1,0 +1,9 @@
+Replication cache expiration time in minutes<br>
+<br>
+If one of the server supports replication events, these events are cached in memory because they can be received before
+the build is triggered and this plugin gets called to evaluate if the build can run. Cache allows the plugin to look if
+the replication events were already received when it gets called to evaluate if the build can run. If the time elapsed
+between this plugin gets called and the time the build entered the queue is greated than the cache expiration time, the
+plugin will assume that replication events were received and will let the build run.<br>
+<br>
+<b>Changing this value will only take effect when Jenkins is restarted</b>

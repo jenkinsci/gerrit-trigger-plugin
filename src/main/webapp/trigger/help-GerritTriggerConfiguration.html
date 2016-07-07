@@ -1,0 +1,50 @@
+<strong>Specify what Gerrit project(s) to trigger a build on.</strong>
+<p>
+    At least one project and branch pattern needs to be specified for a build to be triggered,
+    and you can specify as many Gerrit projects to trigger on as you want.
+</p>
+<p>
+    Start by specifying the name of the Gerrit project in the left hand text field.
+    You can specify the name pattern in three different ways, as provided by the &quot;Type&quot; drop-down menu.
+</p>
+<ul>
+    <li><strong>Plain:</strong> The exact name in Gerrit, case sensitive equality.</li>
+    <li><strong>Path:</strong> ANT style pattern. <i>Ex: &quot;**/base/*&quot;</i></li>
+    <li><strong>RegExp:</strong> Regular expression.</li>
+</ul>
+<p>
+    Then provide the name of the branch(es) to trigger on. The same "pattern types" are available as above.
+    So for example to trigger on all branches in the project you can specify:
+</p>
+<ul>
+    <li><strong>Type:</strong> Path</li>
+    <li><strong>Pattern:</strong> **</li>
+</ul>
+<p>
+    You can add more branch patterns by clicking on &quot;Add Branch&quot;
+</p>
+<p>
+    Then you can optionally provide the name of the specific file path(s) and topic names to trigger on.
+    <ul>
+        <li>To only trigger builds if the patch set contains files in a certain folder.</li>
+        <li>To only trigger builds if the change belongs to a topic.</li>
+    </ul>
+    The same "pattern types" are available as above. If no file paths are added,
+    all files will trigger a build. (same as topic.)
+
+<p>
+    So for example to trigger on all files in any folder structure under a sub-folder called java:
+</p>
+</p>
+<ul>
+    <li><strong>Type:</strong> Path</li>
+    <li><strong>Pattern:</strong> **/java/**</li>
+</ul>
+<p>
+    You can add more file path patterns by clicking on &quot;Add File path&quot;
+</p>
+<p><strong>Disabling strict forbidden file verification</strong></p>
+<ul>
+  <li>Enabling this option will allow an event to trigger a build if the event contains <strong>BOTH</strong> one or more wanted file paths <strong>AND</strong> one or more forbidden file paths. </li>
+  <li>In other words, with this option, the build will not get triggered if the change contains only forbidden files, otherwise it will get triggered.</li>
+</ul>

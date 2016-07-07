@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<matrix-run>
+  <actions>
+    <hudson.model.ParametersAction>
+      <parameters class="java.util.Arrays$ArrayList">
+        <a class="hudson.model.ParameterValue-array">
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_BRANCH</name>
+            <value>master</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_CHANGE_NUMBER</name>
+            <value>38506</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_CHANGE_ID</name>
+            <value>Icbd12345</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_PATCHSET_NUMBER</name>
+            <value>1</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_PATCHSET_REVISION</name>
+            <value>cbd12345</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_REFSPEC</name>
+            <value>refs/changes/06/38506/1</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_PROJECT</name>
+            <value>platform/project</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_CHANGE_SUBJECT</name>
+            <value>Removing the obsolete graphics</value>
+          </hudson.model.StringParameterValue>
+          <hudson.model.StringParameterValue>
+            <name>GERRIT_CHANGE_URL</name>
+            <value>http://gerrit/38506</value>
+          </hudson.model.StringParameterValue>
+        </a>
+      </parameters>
+    </hudson.model.ParametersAction>
+    <hudson.model.CauseAction>
+      <causes>
+        <hudson.model.Cause_-UpstreamCause>
+          <upstreamProject>Gerrit_master-theme_matrix</upstreamProject>
+          <upstreamUrl>job/Gerrit_master-theme_matrix/</upstreamUrl>
+          <upstreamBuild>102</upstreamBuild>
+          <upstreamCauses>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause>
+              <event>
+                <change>
+                  <project>platform/project</project>
+                  <branch>master</branch>
+                  <id>Icbd12345</id>
+                  <number>38506</number>
+                  <subject>Removing the obsolete graphics</subject>
+                  <owner>
+                    <name>Robert Sandell</name>
+                    <email>robert.sandell@sonyericsson.com</email>
+                  </owner>
+                  <url>https://gerrit/38506</url>
+                </change>
+                <patchSet>
+                  <number>1</number>
+                  <revision>cbd12345</revision>
+                </patchSet>
+              </event>
+              <silentMode>false</silentMode>
+              <context>
+                <thisBuild>
+                  <buildNumber>102</buildNumber>
+                  <projectId>Gerrit_master-theme_matrix</projectId>
+                </thisBuild>
+                <others class="linked-list">
+                  <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+                    <projectId>master-theme</projectId>
+                  </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext_-TriggeredItemEntity>
+                </others>
+              </context>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause>
+          </upstreamCauses>
+        </hudson.model.Cause_-UpstreamCause>
+      </causes>
+    </hudson.model.CauseAction>
+  </actions>
+  <number>102</number>
+  <result>FAILURE</result>
+  <duration>305782</duration>
+  <charset>US-ASCII</charset>
+  <keepLog>false</keepLog>
+  <builtOn>slave001</builtOn>
+  <workspace>/home/hudsonslave/root/workspace/Gerrit_master-theme_matrix/HUDSON_PRODUCT/product/label/BUILDNODE</workspace>
+  <hudsonVersion>1.367</hudsonVersion>
+  <scm class="hudson.scm.NullChangeLogParser"/>
+  <culprits/>
+</matrix-run>
