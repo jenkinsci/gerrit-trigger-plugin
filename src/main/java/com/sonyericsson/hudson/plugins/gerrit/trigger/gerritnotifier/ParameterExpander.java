@@ -260,10 +260,10 @@ public class ParameterExpander {
      */
     private String expandParameters(String gerritCommand, Run r, TaskListener taskListener,
             Map<String, String> parameters) {
-
+        String command = gerritCommand;
         if (r != null && taskListener != null) {
             try {
-                gerritCommand = r.getEnvironment(taskListener).expand(gerritCommand);
+                command = r.getEnvironment(taskListener).expand(command);
             } catch (Exception ex) {
                 logger.error("Failed to expand env vars into gerrit cmd. Gerrit won't be notified!!", ex);
                 return null;
@@ -271,15 +271,15 @@ public class ParameterExpander {
         }
 
         for (Map.Entry<String, String> param : parameters.entrySet()) {
-            gerritCommand = gerritCommand.replace("<" + param.getKey() + ">", param.getValue());
+            command = command.replace("<" + param.getKey() + ">", param.getValue());
         }
         //replace null and Integer.MAX_VALUE code review value
-        gerritCommand = gerritCommand.replace("--code-review null", "");
-        gerritCommand = gerritCommand.replace("--code-review " + Integer.MAX_VALUE, "");
-        gerritCommand = gerritCommand.replace("--verified null", "");
-        gerritCommand = gerritCommand.replace("--verified " + Integer.MAX_VALUE, "");
+        command = command.replace("--code-review null", "");
+        command = command.replace("--code-review " + Integer.MAX_VALUE, "");
+        command = command.replace("--verified null", "");
+        command = command.replace("--verified " + Integer.MAX_VALUE, "");
 
-        return gerritCommand;
+        return command;
     }
 
     /**

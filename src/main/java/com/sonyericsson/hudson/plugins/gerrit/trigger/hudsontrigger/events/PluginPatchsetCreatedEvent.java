@@ -74,6 +74,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * Getter for the Descriptor.
      * @return the Descriptor for the PluginPatchsetCreatedEvent.
      */
+    @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(PluginPatchsetCreatedEventDescriptor.class);
     }

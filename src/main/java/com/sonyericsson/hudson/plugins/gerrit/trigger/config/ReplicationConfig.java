@@ -104,7 +104,7 @@ public class ReplicationConfig {
      */
     public boolean isEnableReplication() {
         return enableReplication;
-    };
+    }
 
     /**
      * Get the list of GerritSlave objects.

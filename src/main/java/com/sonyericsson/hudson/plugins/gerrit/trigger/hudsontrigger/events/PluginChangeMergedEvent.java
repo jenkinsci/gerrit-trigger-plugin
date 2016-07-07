@@ -51,6 +51,7 @@ public class PluginChangeMergedEvent extends PluginGerritEvent implements Serial
      * Getter for the Descriptor.
      * @return the Descriptor for the PluginChangeMergedEvent.
      */
+    @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(PluginChangeMergedEventDescriptor.class);
     }

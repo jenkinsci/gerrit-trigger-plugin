@@ -142,7 +142,7 @@ public class GerritMissedEventsFunctionalTest {
 
         config.setGerritProxy("");
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
-        config = (Config)SshdServerMock.getConfigFor(sshd, config);
+        config = SshdServerMock.getConfigFor(sshd, config);
         gerritServer.setConfig(config);
 
 

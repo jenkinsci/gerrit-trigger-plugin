@@ -228,7 +228,8 @@ public class ManualPatchsetCreatedTest {
          *
          * @return the list of listeners.
          */
-        public List<GerritEventLifecycleListener> getListeners() {
+        @Override
+        public synchronized List<GerritEventLifecycleListener> getListeners() {
             return super.getListeners();
         }
     }

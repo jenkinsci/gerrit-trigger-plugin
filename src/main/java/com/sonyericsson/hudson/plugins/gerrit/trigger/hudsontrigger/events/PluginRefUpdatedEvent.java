@@ -51,6 +51,7 @@ public class PluginRefUpdatedEvent extends PluginGerritEvent implements Serializ
      * Getter for the Descriptor.
      * @return the Descriptor for the PluginRefUpdatedEvent.
      */
+    @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
         return Hudson.getInstance().getDescriptorByType(PluginRefUpdatedEventDescriptor.class);
     }

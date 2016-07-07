@@ -214,7 +214,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
         static final long serialVersionUID = 0L;
         @Override
         public String invoke(Run<?, ?> build, VirtualChannel channel) {
-            GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
+            GerritCause cause = build.getCause(GerritCause.class);
             if (cause != null) {
                 GerritTriggeredEvent event = cause.getEvent();
                 if (event instanceof ChangeBasedEvent) {

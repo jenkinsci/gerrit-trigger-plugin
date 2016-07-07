@@ -119,6 +119,7 @@ public class PluginConfig implements GerritWorkersConfig {
      *
      * @return the number of worker threads.
      */
+    @Override
     public int getNumberOfReceivingWorkerThreads() {
         if (numberOfReceivingWorkerThreads <= 0) {
             numberOfReceivingWorkerThreads = DEFAULT_NR_OF_RECEIVING_WORKER_THREADS;
@@ -141,6 +142,7 @@ public class PluginConfig implements GerritWorkersConfig {
      *
      * @return the number of worker threads.
      */
+    @Override
     public int getNumberOfSendingWorkerThreads() {
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;

@@ -170,7 +170,7 @@ public class TriggerContextConverter implements Converter {
         }
         Class<? extends GerritTriggeredEvent> theClass = null;
         try {
-            theClass = (Class<? extends GerritTriggeredEvent>)Run.XSTREAM2.getMapper().realClass(clazz);
+            theClass = Run.XSTREAM2.getMapper().realClass(clazz);
             return theClass;
         } catch (CannotResolveClassException e) {
             logger.error("Failed to unmarshall event type for trigger context!", e);

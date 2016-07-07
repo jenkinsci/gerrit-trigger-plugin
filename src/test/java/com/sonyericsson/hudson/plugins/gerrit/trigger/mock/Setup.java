@@ -56,13 +56,13 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
-import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import hudson.security.SecurityRealm;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -818,7 +818,7 @@ public final class Setup {
         SecurityRealm securityRealm = j.createDummySecurityRealm();
         j.getInstance().setSecurityRealm(securityRealm);
         j.getInstance().setAuthorizationStrategy(
-                new MockAuthorizationStrategy().grant(Hudson.READ).everywhere().toAuthenticated());
+                new MockAuthorizationStrategy().grant(Jenkins.READ).everywhere().toAuthenticated());
     }
 
     /**

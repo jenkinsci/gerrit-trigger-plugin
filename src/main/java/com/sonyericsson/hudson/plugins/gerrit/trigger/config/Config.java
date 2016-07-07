@@ -1014,6 +1014,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      *
      * @return the watchdogTimeoutMinutes.
      */
+    @Override
     public int getWatchdogTimeoutMinutes() {
         return watchdogTimeoutMinutes;
     }

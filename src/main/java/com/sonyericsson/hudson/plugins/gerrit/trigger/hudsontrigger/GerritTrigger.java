@@ -1804,6 +1804,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the resolved instance.
      * @throws ObjectStreamException if something beneath goes wrong.
      */
+    @Override
     public Object readResolve() throws ObjectStreamException {
         initializeServerName();
         initializeTriggerOnEvents();
@@ -1938,7 +1939,7 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                     String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
                     List<Job> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
-                            currentDependenciesString, (Item)project);
+                            currentDependenciesString, project);
                     if (currentDependencies == null) {
                         continue;
                     }

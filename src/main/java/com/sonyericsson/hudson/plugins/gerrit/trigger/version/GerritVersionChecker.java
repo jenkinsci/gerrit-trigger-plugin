@@ -97,8 +97,6 @@ public final class GerritVersionChecker {
         }
     }
 
-    ;
-
     /**
      * Private constructor to prevent instantiation of the util class.
      */
