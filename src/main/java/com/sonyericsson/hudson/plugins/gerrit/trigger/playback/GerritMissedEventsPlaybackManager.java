@@ -203,7 +203,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Ge
                 } else {
 
                     //do we have this event in the time slice?
-                    long currentEventCreatedTime = ((GerritTriggeredEvent)evt).getEventCreatedOn().getTime();
+                    long currentEventCreatedTime = evt.getEventCreatedOn().getTime();
                     if (serverTimestamp.getTimeSlice() == currentEventCreatedTime) {
                         if (serverTimestamp.getEvents().contains(evt)) {
                             logger.debug("({}) Event already triggered from time slice...skipping trigger.", serverName);

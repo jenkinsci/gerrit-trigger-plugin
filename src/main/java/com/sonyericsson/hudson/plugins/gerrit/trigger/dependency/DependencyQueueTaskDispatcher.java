@@ -152,7 +152,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         }
         //Dependency projects in the build queue
         List<Job> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
-                (Item)p);
+                p);
         if ((dependencies == null) || (dependencies.size() == 0)) {
             logger.debug("No dependencies on project: {}", p);
             return null;
@@ -246,7 +246,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                     Item item = jenkins.getItem(projectName, context, Item.class);
                     if ((item != null) && (item instanceof Job)) {
                         dependencyJobs.add((Job)item);
-                        logger.debug("project dependency job added : {}", (Job)item);
+                        logger.debug("project dependency job added : {}", item);
                     }
                 }
             }

@@ -1939,7 +1939,7 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                     String currentDependenciesString = getTrigger(currentlyExploring).getDependencyJobsNames();
                     List<Job> currentDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(
-                            currentDependenciesString, (Item)project);
+                            currentDependenciesString, project);
                     if (currentDependencies == null) {
                         continue;
                     }
