@@ -95,7 +95,7 @@ public final class GerritDynamicUrlProcessor {
         if (!firstoperator) {
           operators.append("|");
         }
-        operators.append(type.getOperator());
+        operators.append(regexEscapted(type.getOperator()));
         firstoperator = false;
       }
       operators.append(")");
@@ -104,6 +104,22 @@ public final class GerritDynamicUrlProcessor {
               + "\\s*"
               + operators.toString()
               + "\\s*(.+)$");
+    }
+
+    /**
+     * Escapted char for use in regex pattern.
+     *
+     * @param symbol to escapted char
+     *
+     * @return escapted symbol
+     */
+    private static String regexEscapted(char symbol) {
+      switch (symbol) {
+      case '^':
+        return "\\^";
+      default:
+        return String.valueOf(symbol);
+      }
     }
 
     /**
