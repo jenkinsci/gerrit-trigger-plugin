@@ -440,9 +440,11 @@ public enum GerritTriggerParameters {
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(uploader), escapeQuotes);
             if (event instanceof CommentAdded) {
-                commitMessageMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
-                        parameters, ((CommentAdded)event).getComment(),
-                        ParameterMode.PlainMode.TEXT, escapeQuotes);
+                String comment = ((CommentAdded)event).getComment();
+                if (comment != null) {
+                    commitMessageMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
+                            parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
+                }
             }
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
