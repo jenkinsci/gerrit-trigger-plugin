@@ -356,6 +356,7 @@ public enum GerritTriggerParameters {
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
         ParameterMode changeSubjectMode = ParameterMode.PLAIN;
+        ParameterMode commentTextMode = ParameterMode.BASE64;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
@@ -363,6 +364,7 @@ public enum GerritTriggerParameters {
                 escapeQuotes = trigger.isEscapeQuotes();
                 commitMessageMode = trigger.getCommitMessageParameterMode();
                 changeSubjectMode = trigger.getChangeSubjectParameterMode();
+                commentTextMode = trigger.getCommentTextParameterMode();
             }
         }
 
@@ -442,7 +444,7 @@ public enum GerritTriggerParameters {
             if (event instanceof CommentAdded) {
                 String comment = ((CommentAdded)event).getComment();
                 if (comment != null) {
-                    commitMessageMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
+                    commentTextMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
                             parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
                 }
             }

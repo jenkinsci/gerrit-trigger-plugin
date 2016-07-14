@@ -38,6 +38,11 @@
                     ${it.toString()}
                 </ff:enum>
             </f:entry>
+            <f:entry title="${%Comment text parameter}" field="commentTextParameterMode">
+                <ff:enum default="BASE64"> <!-- TODO change to f when core dep >= 1.640 -->
+                    ${it.toString()}
+                </ff:enum>
+            </f:entry>
             <f:entry field="dependencyJobsNames" title="${%Other jobs on which this job depends}"
                  help="/plugin/gerrit-trigger/trigger/help-DependencyJobs.html">
                 <f:textbox autoCompleteDelimChar=","/>
