@@ -10,11 +10,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeRestoredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.EnvVars;
@@ -283,6 +285,70 @@ public class ParameterModeJenkinsTest {
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
         j.assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name(), build);
+    }
+
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#BASE64} (default) setting
+     * for {@link GerritTrigger#commentTextParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testCommentTextParameterModeDefault() throws Exception {
+        assertSame(GerritTriggerParameters.ParameterMode.BASE64, trigger.getCommentTextParameterMode());
+        trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
+        String expected = "Triggering comment";
+        CommentAdded event = Setup.createCommentAdded();
+        event.setComment(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
+                + "="
+                + GerritTriggerParameters.ParameterMode.encodeBase64(expected), build);
+    }
+
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#PLAIN} setting
+     * for {@link GerritTrigger#commentTextParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testCommentTextParameterModePlain() throws Exception {
+        trigger.setCommentTextParameterMode(GerritTriggerParameters.ParameterMode.PLAIN);
+        trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
+        String expected = "Triggering comment";
+        CommentAdded event = Setup.createCommentAdded();
+        event.setComment(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
+                + "="
+                + expected, build);
+    }
+
+    /**
+     * Tests the {@link GerritTriggerParameters.ParameterMode#NONE} setting
+     * for {@link GerritTrigger#commentTextParameterMode} when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testCommentTextParameterModeNone() throws Exception {
+        trigger.setCommentTextParameterMode(GerritTriggerParameters.ParameterMode.NONE);
+        trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
+        String expected = "Triggering comment";
+        CommentAdded event = Setup.createCommentAdded();
+        event.setComment(expected);
+        PluginImpl.getHandler_().triggerEvent(event);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        j.assertLogNotContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name(), build);
     }
 
     /**
