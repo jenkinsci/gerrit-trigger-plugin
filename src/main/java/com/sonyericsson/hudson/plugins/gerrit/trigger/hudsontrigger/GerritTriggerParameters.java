@@ -38,6 +38,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -216,7 +217,11 @@ public enum GerritTriggerParameters {
     /**
      * The type of the event.
      */
-    GERRIT_EVENT_TYPE;
+    GERRIT_EVENT_TYPE,
+    /**
+     * Comment posted to Gerrit in a comment-added event.
+     */
+    GERRIT_EVENT_COMMENT_TEXT;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -351,6 +356,7 @@ public enum GerritTriggerParameters {
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
         ParameterMode changeSubjectMode = ParameterMode.PLAIN;
+        ParameterMode commentTextMode = ParameterMode.BASE64;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
             if (trigger != null) {
@@ -358,6 +364,7 @@ public enum GerritTriggerParameters {
                 escapeQuotes = trigger.isEscapeQuotes();
                 commitMessageMode = trigger.getCommitMessageParameterMode();
                 changeSubjectMode = trigger.getChangeSubjectParameterMode();
+                commentTextMode = trigger.getCommentTextParameterMode();
             }
         }
 
@@ -434,6 +441,13 @@ public enum GerritTriggerParameters {
                     parameters, getName(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(uploader), escapeQuotes);
+            if (event instanceof CommentAdded) {
+                String comment = ((CommentAdded)event).getComment();
+                if (comment != null) {
+                    commentTextMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
+                            parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
+                }
+            }
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
             GERRIT_REFNAME.setOrCreateStringParameterValue(

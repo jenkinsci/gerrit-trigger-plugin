@@ -165,6 +165,7 @@ public class GerritTrigger extends Trigger<Job> {
     private String dependencyJobsNames;
     private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
     private GerritTriggerParameters.ParameterMode changeSubjectParameterMode;
+    private GerritTriggerParameters.ParameterMode commentTextParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
     private String buildSuccessfulMessage;
@@ -210,6 +211,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         this.nameAndEmailParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         this.changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        this.commentTextParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
 
         this.dependencyJobsNames = "";
         this.buildStartMessage = "";
@@ -315,6 +317,7 @@ public class GerritTrigger extends Trigger<Job> {
             commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         }
         this.changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        this.commentTextParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
         this.dependencyJobsNames = dependencyJobsNames;
         this.buildStartMessage = buildStartMessage;
         this.buildSuccessfulMessage = buildSuccessfulMessage;
@@ -408,6 +411,29 @@ public class GerritTrigger extends Trigger<Job> {
     public void setChangeSubjectParameterMode(
             @Nonnull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
         this.changeSubjectParameterMode = changeSubjectParameterMode;
+    }
+
+    /**
+     * What mode the comment text parameter {@link GerritTriggerParameters#GERRIT_EVENT_COMMENT_TEXT} should be used
+     * when adding it.
+     *
+     * @return the mode
+     */
+    @Nonnull
+    public GerritTriggerParameters.ParameterMode getCommentTextParameterMode() {
+        return commentTextParameterMode;
+    }
+
+    /**
+     * What mode the comment text parameter {@link GerritTriggerParameters#GERRIT_EVENT_COMMENT_TEXT} should be used
+     * when adding it.
+     *
+     * @param commentTextParameterMode the mode
+     */
+    @DataBoundSetter
+    public void setCommentTextParameterMode(
+            @Nonnull GerritTriggerParameters.ParameterMode commentTextParameterMode) {
+        this.commentTextParameterMode = commentTextParameterMode;
     }
 
     /**
