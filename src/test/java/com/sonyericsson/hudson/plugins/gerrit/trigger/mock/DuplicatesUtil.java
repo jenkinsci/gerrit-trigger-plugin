@@ -99,18 +99,20 @@ public abstract class DuplicatesUtil {
      *
      * @param rule the instance of JenkinsRule.
      * @param name the name of the new job.
+     * @param branchSetting the dynamic branch setting with operator e.g. "^**" or "=branch"
      * @return the project.
      *
      * @throws Exception if so.
      */
-    public static FreeStyleProject createGerritDynamicTriggeredJob(JenkinsRule rule, String name) throws Exception {
+    public static FreeStyleProject createGerritDynamicTriggeredJob(JenkinsRule rule, String name,
+            String branchSetting) throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject(name);
         List<GerritProject> projects = new LinkedList<GerritProject>();
 
         File file = File.createTempFile("dynamic", "txt");
         FileWriter fw = new FileWriter(file);
         fw.write("p=project\n");
-        fw.write("b=branch");
+        fw.write("b" + branchSetting);
         fw.close();
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         URI uri = file.toURI();
