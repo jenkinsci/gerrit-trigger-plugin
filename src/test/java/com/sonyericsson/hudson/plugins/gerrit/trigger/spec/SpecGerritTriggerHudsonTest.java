@@ -209,15 +209,35 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
-     * Tests to trigger a build with a dynamic configuration.
+     * Tests to trigger a build with a dynamic plain branch configuration.
      * @throws Exception if so.
      */
     @Test
     @LocalData
-    public void testDynamicTriggeredBuild() throws Exception {
+    public void testDynamicTriggeredBuildWithPlainBranch() throws Exception {
+        testDynamicTriggeredBuild("=branch");
+    }
+
+    /**
+     * Tests to trigger a build with a dynamic ant branch configuration.
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testDynamicTriggeredBuildWithAntBranch() throws Exception {
+        testDynamicTriggeredBuild("^**");
+    }
+
+    /**
+     * Tests to trigger a build with a dynamic configuration.
+     * @param branchSetting  the dynamic branch setting with operator e.g. "^**" or "=branch"
+     *
+     * @throws Exception if so.
+     */
+    private void testDynamicTriggeredBuild(String branchSetting) throws Exception {
         ((Config)gerritServer.getConfig()).setDynamicConfigRefreshInterval(1);
 
-        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX");
+        FreeStyleProject project = DuplicatesUtil.createGerritDynamicTriggeredJob(j, "projectX", branchSetting);
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         waitForDynamicTimer(project, 8000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
