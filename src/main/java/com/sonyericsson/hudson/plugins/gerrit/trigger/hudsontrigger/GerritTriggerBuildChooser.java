@@ -52,9 +52,14 @@ import org.jenkinsci.plugins.gitclient.RepositoryCallback;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.eclipse.jgit.lib.ObjectId;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 
@@ -149,6 +154,51 @@ public class GerritTriggerBuildChooser extends BuildChooser {
         }
     }
 
+    /**
+     * Close walk through method name found by reflection.
+     * @param walk the RevWalk object to be closed
+     */
+    private static void closeByReflection(@NonNull RevWalk walk) {
+        java.lang.reflect.Method closeMethod;
+        try {
+            closeMethod = walk.getClass().getDeclaredMethod("close");
+        } catch (NoSuchMethodException ex) {
+            LOGGER.log(Level.SEVERE, "Exception finding walker close method: {0}", ex);
+            return;
+        } catch (SecurityException ex) {
+            LOGGER.log(Level.SEVERE, "Exception finding walker close method: {0}", ex);
+            return;
+        }
+        try {
+            closeMethod.invoke(walk);
+        } catch (IllegalAccessException ex) {
+            LOGGER.log(Level.SEVERE, "Exception calling walker close method: {0}", ex);
+        } catch (IllegalArgumentException ex) {
+            LOGGER.log(Level.SEVERE, "Exception calling walker close method: {0}", ex);
+        } catch (InvocationTargetException ex) {
+            LOGGER.log(Level.SEVERE, "Exception calling walker close method: {0}", ex);
+        }
+    }
+
+    /**
+     * Call release method on walk.  JGit 3 uses release(), JGit 4 uses close() to
+     * release resources.
+     *
+     * This method should be removed once the code depends on git client 2.0.0.
+     * @param walk object whose close or release method will be called
+     * @throws IOException on IO error
+     */
+    private static void releaseOrClose(RevWalk walk) throws IOException {
+        if (walk == null) {
+            return;
+        }
+        try {
+            walk.release(); // JGit 3
+        } catch (NoSuchMethodError noMethod) {
+            closeByReflection(walk);
+        }
+    }
+
     //CS IGNORE RedundantThrows FOR NEXT 30 LINES. REASON: Informative, and could happen.
     /**
      * Gets the top parent of the given revision.
@@ -181,9 +231,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
                 } catch (Exception e) {
                     throw new GitException("Failed to find parent id. ", e);
                 } finally {
-                    if (walk != null) {
-                        walk.release();
-                    }
+                    releaseOrClose(walk);
                 }
                 return result;
             }
@@ -227,4 +275,6 @@ public class GerritTriggerBuildChooser extends BuildChooser {
             return null;
         }
     }
+
+    private static final Logger LOGGER = Logger.getLogger(GerritTriggerBuildChooser.class.getName());
 }
