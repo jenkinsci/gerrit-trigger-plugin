@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
@@ -238,6 +239,7 @@ public final class TestUtils {
         private List<GerritProject> projects = new ArrayList<GerritProject>();
         private String serverName = PluginImpl.DEFAULT_SERVER_NAME;
         private boolean silentMode = false;
+        private SilentLevel silentLevel = SilentLevel.ALL;
         private boolean silentStartMode = false;
         private boolean escapeQuotes = true;
         private boolean dynamicTriggerConfiguration = false;
@@ -297,6 +299,16 @@ public final class TestUtils {
          */
         public JobBuilder silentMode(boolean mode) {
             this.silentMode = mode;
+            return this;
+        }
+
+        /**
+         * Sets {@link GerritTrigger#setSilentLevel(SilentLevel)}.
+         * @param the silent level
+         * @return this
+         */
+        public JobBuilder silentLevel(SilentLevel level) {
+            this.silentLevel = level;
             return this;
         }
 
@@ -367,6 +379,7 @@ public final class TestUtils {
                 trigger.setServerName(serverName);
             }
             trigger.setSilentMode(silentMode);
+            trigger.setSilentLevel(silentLevel);
             trigger.setSilentStartMode(silentStartMode);
             trigger.setEscapeQuotes(escapeQuotes);
             trigger.setDynamicTriggerConfiguration(dynamicTriggerConfiguration);

@@ -44,6 +44,7 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
 import org.junit.Before;
@@ -197,7 +198,7 @@ public class ToGerritRunListenerTest {
 
         verify(event).fireBuildCompleted(same(build));
         verify(event).fireAllBuildsCompleted();
-        verify(mockNotificationFactory).queueBuildCompleted(
+        verify(mockNotificationFactory).queueBuildCompleted(any(Run.class),
                 any(BuildMemory.MemoryImprint.class), any(TaskListener.class));
     }
 

@@ -29,6 +29,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -552,6 +553,7 @@ public class SpecGerritTriggerHudsonTest {
 
         GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
         trigger.setSilentMode(true);
+        trigger.setSilentLevel(SilentLevel.ALL);
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 

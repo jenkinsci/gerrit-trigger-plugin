@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -129,7 +130,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
             if (event instanceof GerritEventLifecycle) {
                 ((GerritEventLifecycle)event).fireBuildCompleted(r);
             }
-            if (!cause.isSilentMode()) {
+            if (!cause.isSilentMode() || (cause.isSilentMode() && trigger.getSilentLevel() != SilentLevel.ALL)) {
                 memory.completed(event, r);
 
                 Result result = r.getResult();
@@ -153,7 +154,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
                 }
 
                 updateTriggerContexts(r);
-                allBuildsCompleted(event, cause, listener);
+                allBuildsCompleted(r, event, cause, listener);
             }
         }
     }
@@ -162,18 +163,20 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * Manages the end of a Gerrit Event. Should be called after each build related to an event completes if that build
      * should report back to Gerrit.
      *
+     * @param build   the current build.
      * @param event   the Gerrit Event which may need to be completed.
      * @param cause   the Gerrit Cause which triggered the build initially.
      * @param listener   the Jenkins listener.
      */
-    public synchronized void allBuildsCompleted(GerritTriggeredEvent event, GerritCause cause, TaskListener listener) {
+    public synchronized void allBuildsCompleted(Run build, GerritTriggeredEvent event,
+                                                GerritCause cause, TaskListener listener) {
         if (memory.isAllBuildsCompleted(event)) {
             try {
                 logger.info("All Builds are completed for cause: {}", cause);
                 if (event instanceof GerritEventLifecycle) {
                     ((GerritEventLifecycle)event).fireAllBuildsCompleted();
                 }
-                NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
+                NotificationFactory.getInstance().queueBuildCompleted(build, memory.getMemoryImprint(event), listener);
             } finally {
                 memory.forget(event);
             }
@@ -215,10 +218,10 @@ public final class ToGerritRunListener extends RunListener<Run> {
                     ((GerritEventLifecycle)cause.getEvent()).fireBuildStarted(r);
                 }
             }
-            if (!cause.isSilentMode()) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
+            if (!cause.isSilentMode() || (cause.isSilentMode() && !trigger.isSilentComments())) {
                 memory.started(cause.getEvent(), r);
                 updateTriggerContexts(r);
-                GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
                 boolean silentStartMode = false;
                 if (trigger != null) {
                     silentStartMode = trigger.isSilentStartMode();

@@ -34,6 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -159,6 +160,7 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildNotBuiltCodeReviewValue;
     private boolean silentMode;
     private String notificationLevel;
+    private SilentLevel silentLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
     private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
@@ -206,6 +208,20 @@ public class GerritTrigger extends Trigger<Job> {
         } catch (NullPointerException ignored) { /*Could happen during testing*/ }
         if (this.notificationLevel == null) {
             this.notificationLevel = "";
+        }
+
+        try {
+          DescriptorImpl descriptor = (DescriptorImpl)getDescriptor();
+          if (descriptor != null) {
+              ListBoxModel options = descriptor.doFillSilentLevelItems();
+              if (!options.isEmpty()) {
+                  this.silentLevel = SilentLevel.valueOf(options.get(0).value);
+              }
+          }
+          //CS IGNORE EmptyBlock FOR NEXT 1 LINES. REASON: Handled one row below
+        } catch (NullPointerException ignored) { /*Could happen during testing*/ }
+        if (this.silentLevel == null) {
+            this.silentLevel = SilentLevel.ALL;
         }
 
         this.commitMessageParameterMode = GerritTriggerParameters.ParameterMode.BASE64;
@@ -278,6 +294,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
      * @param triggerConfigURL               Where to fetch the configuration file from
      * @param notificationLevel              Whom to notify.
+     * @param silentLevel                    Silent Model Level.
      */
     @Deprecated
     public GerritTrigger(List<GerritProject> gerritProjects, SkipVote skipVote, Integer gerritBuildStartedVerifiedValue,
@@ -290,7 +307,8 @@ public class GerritTrigger extends Trigger<Job> {
             String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
             String buildFailureMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
             String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
-            boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
+            boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel,
+            SilentLevel silentLevel) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -334,6 +352,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+        this.silentLevel = silentLevel;
     }
 
     /**
@@ -481,6 +500,12 @@ public class GerritTrigger extends Trigger<Job> {
                 notificationLevel = options.get(0).value;
             }
         }
+        if (this.silentLevel == null) {
+          ListBoxModel options = ((DescriptorImpl)getDescriptor()).doFillSilentLevelItems();
+          if (!options.isEmpty()) {
+              silentLevel = SilentLevel.valueOf(options.get(0).value);
+          }
+      }
     }
 
     /**
@@ -1450,6 +1475,33 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Silent Mode level to use.
+     *
+     * @return the silent level value
+     */
+    public SilentLevel getSilentLevel() {
+        return silentLevel;
+    }
+
+    /**
+     * Should comments be kept silent
+     *
+     * @return whether comments are kept silent
+     */
+    public boolean isSilentComments() {
+        return (silentMode && (silentLevel == SilentLevel.ALL || silentLevel == SilentLevel.COMMENTS));
+    }
+
+    /**
+     * Should votes be kept silent
+     *
+     * @return whether votes are kept silent
+     */
+    public boolean isSilentVotes() {
+        return (silentMode && (silentLevel == SilentLevel.ALL || silentLevel == SilentLevel.VOTES));
+    }
+
+    /**
      * if escapeQuotes is on or off. When escapeQuotes is on this plugin will escape quotes in Gerrit event parameter
      * string Default is true
      *
@@ -1663,6 +1715,16 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setNotificationLevel(String notificationLevel) {
         this.notificationLevel = notificationLevel;
+    }
+
+    /**
+     * Silent Mode level to use.
+     *
+     * @param silentLevel the silent level.
+     */
+    @DataBoundSetter
+    public void setSilentLevel(SilentLevel silentLevel) {
+        this.silentLevel = silentLevel;
     }
 
     /**
@@ -2095,6 +2157,19 @@ public class GerritTrigger extends Trigger<Job> {
             items.add(getOptionForNotificationLevelDefault(serverName, levelTextsById));
             for (Entry<Notify, String> level : levelTextsById.entrySet()) {
                 items.add(new Option(level.getValue(), level.getKey().toString()));
+            }
+            return items;
+        }
+
+        /**
+         * Fill the dropdown for silent levels.
+         * @return the values.
+         */
+        public ListBoxModel doFillSilentLevelItems() {
+            List<String> levels = SilentLevel.getLevels();
+            ListBoxModel items = new ListBoxModel(levels.size());
+            for (String level: levels) {
+              items.add(new Option(level.toLowerCase(), level));
             }
             return items;
         }

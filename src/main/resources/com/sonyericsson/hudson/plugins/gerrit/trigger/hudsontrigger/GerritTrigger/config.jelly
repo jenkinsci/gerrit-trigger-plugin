@@ -194,8 +194,17 @@
         <f:entry title="${%Silent Mode}"
                  field="silentMode"
                  help="/plugin/gerrit-trigger/trigger/help-SilentMode.html">
-           <f:checkbox name="silentMode"
-                       checked="${it.silentMode}"/>
+            <table width="100%">
+                <f:optionalBlock title="" inline="true" name="silentMode"
+                                 checked="${it.silentMode}">
+                    <f:entry title="${%Silent Level}"
+                             field="silentLevel"
+                             help="/plugin/gerrit-trigger/help-GerritSilentLevel.html"
+                             default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_SILENT_LEVEL}">
+                        <f:select />
+                    </f:entry>
+                </f:optionalBlock>
+            </table>
         </f:entry>
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">

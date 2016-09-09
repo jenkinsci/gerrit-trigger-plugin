@@ -110,19 +110,21 @@ public class NotificationFactory {
     /**
      * Queues a build completed command on the send-command queue.
      *
+     * @param build         the current build.
      * @param memoryImprint the memory of the builds.
      * @param listener      a listener.
      * @see GerritSendCommandQueue#queue(com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
      * @see BuildCompletedCommandJob
      */
-    public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
+    public void queueBuildCompleted(Run build, BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
         String serverName = getServerName(memoryImprint);
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
                 if (config.isUseRestApi()
                         && memoryImprint.getEvent() instanceof ChangeBasedEvent) {
-                    GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
+                    GerritSendCommandQueue.queue(
+                        new BuildCompletedRestCommandJob(config, build, memoryImprint, listener));
                 } else {
                     GerritSendCommandQueue.queue(new BuildCompletedCommandJob(config, memoryImprint, listener));
                 }

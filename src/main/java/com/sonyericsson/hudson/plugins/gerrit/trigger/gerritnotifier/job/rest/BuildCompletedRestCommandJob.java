@@ -27,14 +27,17 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
 
+import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 
@@ -58,15 +61,18 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
     private final IGerritHudsonTriggerConfig config;
+    private final Run build;
 
     /**
      * Constructor.
      *
      * @param config        config
+     * @param build         build
      * @param memoryImprint memory
      * @param listener      listener
      */
-    public BuildCompletedRestCommandJob(IGerritHudsonTriggerConfig config, BuildMemory.MemoryImprint memoryImprint,
+    public BuildCompletedRestCommandJob(IGerritHudsonTriggerConfig config, Run build,
+                                        BuildMemory.MemoryImprint memoryImprint,
                                         TaskListener listener) {
         //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
         super(config, (listener != null ? listener.getLogger() : null), (ChangeBasedEvent)memoryImprint.getEvent());
@@ -74,15 +80,17 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
         this.listener = listener;
         this.parameterExpander = new ParameterExpander(config);
         this.config = config;
+        this.build = build;
     }
 
     @Override
     protected ReviewInput createReview() {
         SecurityContext old = ACL.impersonate(ACL.SYSTEM);
         try {
-            String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
             Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
-            if (memoryImprint.getEvent().isScorable()) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
+            SilentLevel silentLevel = trigger.getSilentLevel();
+            if (memoryImprint.getEvent().isScorable() && !trigger.isSilentVotes()) {
                 if (config.isRestCodeReview()) {
                     Integer crValue = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
                     if (crValue != null && crValue != Integer.MAX_VALUE) {
@@ -103,7 +111,9 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
             List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
             Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
-            if (gerritMessageProviders != null) {
+            String message = null;
+            if (gerritMessageProviders != null && !trigger.isSilentComments()) {
+                message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
                 for (GerritMessageProvider gerritMessageProvider : gerritMessageProviders) {
                     for (BuildMemory.MemoryImprint.Entry e : memoryImprint.getEntries()) {
                         try {

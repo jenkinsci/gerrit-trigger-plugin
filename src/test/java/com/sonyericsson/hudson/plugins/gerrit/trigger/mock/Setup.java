@@ -619,7 +619,7 @@ public final class Setup {
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
-                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
+                PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null, null);
 
         if (job != null) {
             trigger.start(job, true);

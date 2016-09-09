@@ -41,6 +41,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SilentLevel;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -119,7 +120,7 @@ public class GerritItemListenerTest {
         GerritTrigger trigger = spy(new GerritTrigger(
                 null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 true, true, true, false, false, "", "", "", "", "", "", "", null, null, null,
-                null, false, "", null));
+                null, false, "", null, null));
 
         doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
         job.addTrigger(trigger);
