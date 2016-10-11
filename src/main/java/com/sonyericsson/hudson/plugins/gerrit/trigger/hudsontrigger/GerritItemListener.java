@@ -23,9 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
@@ -45,8 +42,6 @@ import hudson.model.listeners.ItemListener;
  */
 @Extension
 public class GerritItemListener extends ItemListener {
-    private static final Logger logger = LoggerFactory.getLogger(GerritItemListener.class);
-
     /**
      * Called by Jenkins when an item is about to be deleted. If this item is a project
      * (Job or any of its subclasses), then we check if it has a GerritTrigger
