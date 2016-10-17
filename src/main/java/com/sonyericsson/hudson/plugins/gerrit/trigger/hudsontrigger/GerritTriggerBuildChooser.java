@@ -114,10 +114,15 @@ public class GerritTriggerBuildChooser extends BuildChooser {
                 rev = "FETCH_HEAD";
             }
 
+            String refspec = context.actOnBuild(new GetGerritEventRefspec());
+            if (refspec == null) {
+                refspec = singleBranch;
+            }
+
             ObjectId sha1 = git.revParse(rev);
 
             Revision revision = new Revision(sha1);
-            revision.getBranches().add(new Branch(singleBranch, sha1));
+            revision.getBranches().add(new Branch(refspec, sha1));
 
             return Collections.singletonList(revision);
         } catch (GitException e) {
@@ -270,6 +275,28 @@ public class GerritTriggerBuildChooser extends BuildChooser {
                 }
                 if (event instanceof RefUpdated) {
                     return ((RefUpdated)event).getRefUpdate().getNewRev();
+                }
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve the Gerrit refspec
+     */
+    private static class GetGerritEventRefspec
+            implements BuildChooserContext.ContextCallable<Run<?, ?>, String> {
+        static final long serialVersionUID = 0L;
+        @Override
+        public String invoke(Run<?, ?> build, VirtualChannel channel) {
+            GerritCause cause = build.getCause(GerritCause.class);
+            if (cause != null) {
+                GerritTriggeredEvent event = cause.getEvent();
+                if (event instanceof ChangeBasedEvent) {
+                    return ((ChangeBasedEvent)event).getPatchSet().getRef();
+                }
+                if (event instanceof RefUpdated) {
+                    return ((RefUpdated)event).getRefUpdate().getRefName();
                 }
             }
             return null;
