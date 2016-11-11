@@ -24,6 +24,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import java.util.regex.Pattern;
 
@@ -125,5 +128,32 @@ public final class StringUtil {
         } else {
             return QUOTES_PATTERN.matcher(value).replaceAll("\\\\\"");
         }
+    }
+
+    /**
+     * Helper method for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener}s.
+     * To display a consistent "Server: Simple Name" pattern.
+     * Usable by {@link com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics}.
+     *
+     * @param listener the listener to get the class name from
+     * @param serverName the name of the server to get the server's display name from,
+     *                   null or empty string produces "Any Server"
+     * @return the name to display.
+     */
+    public static String getDefaultDisplayNameForSpecificServer(GerritEventListener listener, String serverName) {
+        StringBuilder name = new StringBuilder("");
+        if (GerritServer.isAnyServer(serverName)) {
+            name.append("Any Server: ");
+        } else {
+            GerritServer server = PluginImpl.getServer_(serverName);
+            if (server != null) {
+                name.append(server.getDisplayName());
+            } else {
+                name.append(serverName);
+            }
+            name.append(": ");
+        }
+        name.append(listener.getClass().getSimpleName());
+        return name.toString();
     }
 }

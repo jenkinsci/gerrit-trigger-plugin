@@ -23,13 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
-import com.sonymobile.tools.gerrit.gerritevents.GerritQueryException;
-import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -37,7 +30,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
-
+import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryException;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.Extension;
 import hudson.model.Hudson;
 import hudson.model.ParameterValue;
@@ -46,20 +45,20 @@ import hudson.security.Permission;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.servlet.http.HttpSession;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
@@ -493,8 +492,23 @@ public class ManualTriggerAction implements RootAction {
      * @param serverName the name of the GerritServer
      * @return the Provider with info from the GerritServer, or an empty provider if server not found
      */
-    private Provider createProviderFromGerritServer(String serverName) {
+    @Restricted(NoExternalUse.class)
+    public static Provider createProviderFromGerritServer(String serverName) {
         GerritServer server = PluginImpl.getServer_(serverName);
+        if (server == null) {
+            logger.warn("Could not find GerritServer: {}", serverName);
+        }
+        return createProvider(server);
+    }
+
+    /**
+     * Create event Provider from GerritServer.
+     *
+     * @param server the GerritServer to create the provider for
+     * @return the Provider with info from the GerritServer, or an empty provider if server is null
+     */
+    @Restricted(NoExternalUse.class)
+    public static Provider createProvider(GerritServer server) {
         if (server != null) {
             return new Provider(
                     server.getName(),
@@ -503,9 +517,8 @@ public class ManualTriggerAction implements RootAction {
                     GerritDefaultValues.DEFAULT_GERRIT_SCHEME,
                     server.getConfig().getGerritFrontEndUrl(),
                     server.getGerritVersion()
-                   );
+            );
         } else {
-            logger.warn("Could not find GerritServer: {}", serverName);
             return new Provider();
         }
     }

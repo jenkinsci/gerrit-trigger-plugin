@@ -24,40 +24,28 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdministrativeMonitor;
-
+import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.model.AdministrativeMonitor;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
-import hudson.model.Failure;
 import hudson.model.Descriptor;
+import hudson.model.Failure;
 import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.util.FormValidation;
-
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.Collections;
-import java.util.List;
-
-import javax.annotation.CheckForNull;
-import javax.servlet.ServletException;
-
 import jenkins.model.Jenkins;
-
 import jenkins.model.ModelObjectWithContextMenu;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
 import org.apache.commons.lang.CharEncoding;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
@@ -66,6 +54,14 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.CheckForNull;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.Collections;
+import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
 
@@ -85,6 +81,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     public static final String URL_NAME = "gerrit-trigger";
 
     private static final Logger logger = LoggerFactory.getLogger(GerritManagement.class);
+
+    private static final Diagnostics DIAGNOSTICS = new Diagnostics();
 
 
     @Override
@@ -118,11 +116,26 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         assert jenkins != null;
         ContextMenu menu = new ContextMenu();
         menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
-                "images", "24x24", "new-package.png"), Messages.AddNewServer());
+                                                 "images", "24x24", "new-package.png"), Messages.AddNewServer());
         for (GerritServer server : getServers()) {
             menu.add(server);
         }
+        MenuItem item = new MenuItem()
+                .withUrl("diagnostics")
+                .withDisplayName(DIAGNOSTICS)
+                .withStockIcon("folder.png");
+        item.subMenu = DIAGNOSTICS.getContextMenu("diagnostics");
+        menu.add(item);
         return menu;
+    }
+
+    /**
+     * A sub page displaying some diagnostic views.
+     *
+     * @return the diagnostics page.
+     */
+    public Diagnostics getDiagnostics() {
+        return DIAGNOSTICS;
     }
 
     /**
@@ -170,10 +183,10 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     /**
-    * Gets the list of GerritServer.
-    *
-    * @return the list of GerritServer.
-    */
+     * Gets the list of GerritServer.
+     *
+     * @return the list of GerritServer.
+     */
     @SuppressWarnings("unused") //Called from Jelly
     public List<GerritServer> getServers() {
         PluginImpl plugin = PluginImpl.getInstance();
@@ -184,10 +197,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     /**
-    * Used when redirected to a server.
-    * @param encodedServerName the server name encoded by URLEncoder.encode(name,"UTF-8").
-    * @return the GerritServer object.
-    */
+     * Used when redirected to a server.
+     *
+     * @param encodedServerName the server name encoded by URLEncoder.encode(name,"UTF-8").
+     * @return the GerritServer object.
+     */
     @SuppressWarnings("unused") //Called from Jelly
     public GerritServer getServer(String encodedServerName) {
         String serverName;
@@ -242,8 +256,8 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @param req the StaplerRequest
      * @param rsp the StaplerResponse
-     * @throws IOException when error sending redirect back to the list of servers
      * @return the new GerritServer
+     * @throws IOException when error sending redirect back to the list of servers
      */
     public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
         String serverName = req.getParameter("name");
@@ -281,7 +295,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Hudson.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins == null) {
+            throw new IllegalStateException("Jenkins is not alive.");
+        }
+        jenkins.checkPermission(Jenkins.ADMINISTER);
         return this;
     }
 
@@ -292,6 +310,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     /**
      * Returns this singleton.
+     *
      * @return the single loaded instance if this class.
      */
     public static GerritManagement get() {
@@ -381,13 +400,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @param req StaplerRequest
      * @param rsp StaplerResponse
-     * @throws ServletException if something unfortunate happens.
-     * @throws IOException if something unfortunate happens.
+     * @throws ServletException     if something unfortunate happens.
+     * @throws IOException          if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
     public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-    IOException,
-    InterruptedException {
+            IOException,
+            InterruptedException {
         if (logger.isDebugEnabled()) {
             logger.debug("submit {}", req.toString());
         }
@@ -402,4 +421,5 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         rsp.sendRedirect(".");
     }
+
 }

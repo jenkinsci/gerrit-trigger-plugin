@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
@@ -439,6 +441,24 @@ public class BuildMemory {
     }
 
     /**
+     * Creates a snapshot clone of the current coordination memory status.
+     *
+     * @return the report
+     */
+    @Nonnull
+    public synchronized BuildMemoryReport report() {
+        BuildMemoryReport report = new BuildMemoryReport();
+        for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {
+            List<Entry> triggered = new LinkedList<Entry>();
+            for (Entry tr : entry.getValue().list) {
+                triggered.add(tr.clone());
+            }
+            report.put(entry.getKey(), triggered);
+        }
+        return report;
+    }
+
+    /**
      * A holder for all builds triggered by one event.
      */
     public static class MemoryImprint {
@@ -780,13 +800,16 @@ public class BuildMemory {
         /**
          * A project-build entry in the list of a MemoryImprint.
          */
-        public static class Entry {
+        public static class Entry implements Cloneable {
 
             private String project;
             private String build;
             private boolean buildCompleted;
             private String customUrl;
             private String unsuccessfulMessage;
+            private final long triggeredTimestamp;
+            private Long completedTimestamp = null;
+            private Long startedTimestamp = null;
 
             /**
              * Constructor.
@@ -797,6 +820,8 @@ public class BuildMemory {
             private Entry(Job project, Run build) {
                 this.project = project.getFullName();
                 this.build = build.getId();
+                this.startedTimestamp = System.currentTimeMillis();
+                this.triggeredTimestamp = System.currentTimeMillis();
                 buildCompleted = false;
             }
 
@@ -808,6 +833,29 @@ public class BuildMemory {
             private Entry(Job project) {
                 this.project = project.getFullName();
                 buildCompleted = false;
+                this.triggeredTimestamp = System.currentTimeMillis();
+            }
+
+            /**
+             * Constructor to create a copy of with the contents of an existing Entry.
+             *
+             * @param copy the entry to copy.
+             * @see #clone()
+             */
+            public Entry(Entry copy) {
+                this.project = copy.project;
+                this.build = copy.build;
+                this.buildCompleted = copy.buildCompleted;
+                this.unsuccessfulMessage = copy.unsuccessfulMessage;
+                this.triggeredTimestamp = copy.triggeredTimestamp;
+                this.completedTimestamp = copy.completedTimestamp;
+                this.startedTimestamp = copy.startedTimestamp;
+                this.customUrl = copy.customUrl;
+            }
+
+            @Override
+            public Entry clone() {
+                return new Entry(this);
             }
 
             /**
@@ -850,6 +898,7 @@ public class BuildMemory {
             private void setBuild(Run build) {
                 if (build != null) {
                     this.build = build.getId();
+                    this.startedTimestamp = System.currentTimeMillis();
                 } else {
                     this.build = null;
                 }
@@ -907,6 +956,40 @@ public class BuildMemory {
              */
             private void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
+                if (buildCompleted) {
+                    this.completedTimestamp = System.currentTimeMillis();
+                }
+            }
+
+            /**
+             * The timestamp when {@link #setBuildCompleted(boolean)} was set to true.
+             * <code>null</code> indicates not completed yet.
+             *
+             * @return the timestamp the build completed.
+             */
+            @CheckForNull
+            public Long getCompletedTimestamp() {
+                return completedTimestamp;
+            }
+
+            /**
+             * The timestamp when {@link #setBuild(Run)} was called with a non null value.
+             * <code>null</code> indicates not started yet.
+             *
+             * @return the timestamp when the build was started.
+             */
+            @CheckForNull
+            public Long getStartedTimestamp() {
+                return startedTimestamp;
+            }
+
+            /**
+             * The timestamp when this entry was created. i.e. when it was triggered.
+             *
+             * @return the timestamp when the job was triggered.
+             */
+            public long getTriggeredTimestamp() {
+                return triggeredTimestamp;
             }
 
             @Override

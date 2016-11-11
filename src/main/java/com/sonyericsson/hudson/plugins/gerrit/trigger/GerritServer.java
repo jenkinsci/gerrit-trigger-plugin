@@ -209,6 +209,18 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * If the parameter represents {@link #ANY_SERVER}.
+     * I.e. if serverName is null or empty or equal to {@link #ANY_SERVER}.
+     *
+     * @param serverName the String to test
+     * @return true if so.
+     * @see GerritTrigger#isAnyServer()
+     */
+    public static boolean isAnyServer(String serverName) {
+        return serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName);
+    }
+
+    /**
      * Gets the global config of this server.
      *
      * @return the config.

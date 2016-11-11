@@ -667,9 +667,10 @@ public class GerritTrigger extends Trigger<Job> {
      * Or if serverName is null or empty.
      *
      * @return true if so.
+     * @see GerritServer#isAnyServer(String)
      */
     boolean isAnyServer() {
-        return serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName);
+        return GerritServer.isAnyServer(serverName);
     }
 
     /**

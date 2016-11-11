@@ -37,6 +37,7 @@
             <l:tasks>
                 <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
                 <l:task icon="images/24x24/new-package.png" href="newServer" title="${%Add New Server}" />
+                <l:task icon="icon-folder icon-md" href="diagnostics" title="${%Diagnostics}" />
             </l:tasks>
         </l:side-panel>
         <l:main-panel>

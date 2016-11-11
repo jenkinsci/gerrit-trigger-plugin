@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
@@ -49,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gustaf Lundh &lt;Gustaf.Lundh@sonyericsson.com&gt;
  */
-public class GerritProjectListUpdater extends Thread implements ConnectionListener, GerritEventListener {
+public class GerritProjectListUpdater extends Thread implements ConnectionListener, NamedGerritEventListener {
     /**
      * The command for fetching projects.
      */
@@ -71,6 +72,15 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         this.setDaemon(true);
         this.serverName = serverName;
         addThisAsListener();
+    }
+
+    /**
+     * The name of the {@link GerritServer} this listener is working for.
+     *
+     * @return the {@link GerritServer#getName()}.
+     */
+    public String getServerName() {
+        return serverName;
     }
 
     /**
@@ -324,6 +334,11 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             gerritProjects = new ArrayList<String>();
         }
         return gerritProjects;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
     }
 }
 
