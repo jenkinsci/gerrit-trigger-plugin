@@ -106,6 +106,8 @@ public class BackCompat2173JenkinsTest {
         //Setting introduced after the version under test, so it should have the default value
         assertSame("Change subject mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
                 trigger.getChangeSubjectParameterMode());
+        assertSame("Comment text mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
+                trigger.getCommentTextParameterMode());
         assertEquals(GerritServer.ANY_SERVER, trigger.getServerName());
 
         assertThat(trigger.getGerritProjects(), hasItem(
