@@ -1851,6 +1851,9 @@ public class GerritTrigger extends Trigger<Job> {
         if (changeSubjectParameterMode == null) {
             changeSubjectParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         }
+        if (commentTextParameterMode == null) {
+            commentTextParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
+        }
         return super.readResolve();
     }
     /*
