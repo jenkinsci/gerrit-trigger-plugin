@@ -60,7 +60,13 @@ public final class GerritVersionChecker {
         /**
          * Project created events, added in Gerrit 2.12.
          */
-        projectCreatedEvents("Project created events", "2.12");
+        projectCreatedEvents("Project created events", "2.12"),
+
+
+        /**
+         * Gerrit CommentAdded always contains approval information, added in Gerrit 2.13.
+         */
+        commentAlwaysApproval("CommentAdded always contains approval", "2.13");
 
         private final String displayName;
         private final String version;

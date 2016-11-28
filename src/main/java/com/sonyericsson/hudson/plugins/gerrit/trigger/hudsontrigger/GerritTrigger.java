@@ -1036,14 +1036,18 @@ public class GerritTrigger extends Trigger<Job> {
                      * Gerrit stream events changed to append approval info to
                      * every comment-added event.
                      **/
-                    if (approval.isUpdated()
-                            && approval.getType().equals(
-                                commentAdded.getVerdictCategory())
-                            && (approval.getValue().equals(
-                                commentAdded.getCommentAddedTriggerApprovalValue())
-                            || ("+" + approval.getValue()).equals(
-                                commentAdded.getCommentAddedTriggerApprovalValue()))) {
-                            return true;
+                    if (GerritVersionChecker.isCorrectVersion(
+                                GerritVersionChecker.Feature.commentAlwaysApproval,
+                                serverName)) {
+                        if (approval.isUpdated()
+                                && approval.getType().equals(
+                                    commentAdded.getVerdictCategory())
+                                && (approval.getValue().equals(
+                                    commentAdded.getCommentAddedTriggerApprovalValue())
+                                || ("+" + approval.getValue()).equals(
+                                    commentAdded.getCommentAddedTriggerApprovalValue()))) {
+                                return true;
+                        }
                     } else {
                         if (approval.getType().equals(
                                 commentAdded.getVerdictCategory())
