@@ -550,6 +550,27 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
+     * Returns {@link ParameterValue} for parameter with name {@link GerritTriggerParameters#GERRIT_CHANGE_URL}
+     * or <code>null</code> if such parameter is not present.
+     *
+     * @param jsonChange   the JSON data for the change.
+     * @param jsonPatchSet the JSON data for the patch-set.
+     * @param serverName the name of the GerritServer from the current session.
+     * @return ParameterValue or <code>null</code>
+     */
+    @SuppressWarnings("unused") //called from jelly.
+    public ParameterValue getChangeUrlParamForPatchSet(
+            JSONObject jsonChange,
+            JSONObject jsonPatchSet,
+            String serverName) {
+        List<ParameterValue> parameters = getParametersForPatchSet(jsonChange, jsonPatchSet, serverName);
+        for (ParameterValue parameterValue : parameters) {
+            if (hasUrl(parameterValue)) return parameterValue;
+        }
+        return null;
+    }
+
+    /**
      * Tells if the given parameter should have a URL or not.
      * i.e. if the parameter represents {@link GerritTriggerParameters#GERRIT_CHANGE_URL}.
      *
