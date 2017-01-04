@@ -277,11 +277,10 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
-     * Cuts the string to a max length of {@link #MAX_SUBJECT_STR_LENGTH} and escapes unsafe HTML characters.
+     * Cuts the string to a max length of {@link #MAX_SUBJECT_STR_LENGTH}.
      *
      * @param subject the string to fix if needed.
      * @return the fixed string.
-     * @see hudson.Util#escape(String)
      */
     @SuppressWarnings("unused")
     //Called from jelly
@@ -290,7 +289,7 @@ public class ManualTriggerAction implements RootAction {
             subject = subject.substring(0, MAX_SUBJECT_STR_LENGTH);
         }
         if (subject != null) {
-            return hudson.Util.escape(subject);
+            return subject;
         } else {
             return "";
         }
