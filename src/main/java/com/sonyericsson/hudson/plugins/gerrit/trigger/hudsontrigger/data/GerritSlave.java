@@ -51,6 +51,9 @@ public class GerritSlave extends AbstractDescribableImpl<GerritSlave> {
     private String host;
     private int timeoutInSeconds;
 
+    //Hold the replication status
+    private transient ReplicationStatus replicationStatus;
+
     /**
      * Standard Constructor.
      * @param id the ID or {@code null} to generate a new one
@@ -109,6 +112,55 @@ public class GerritSlave extends AbstractDescribableImpl<GerritSlave> {
      */
     public int getTimeoutInSeconds() {
         return timeoutInSeconds;
+    }
+
+    /**
+     * Getter for replication status.
+     * @return the replication status
+     */
+    public ReplicationStatus getReplicationStatus() {
+        return replicationStatus;
+    }
+
+    /**
+     * Setter for replication status.
+     * @param replicationStatus the replication status.
+     */
+    public void setReplicationStatus(ReplicationStatus replicationStatus) {
+        this.replicationStatus = replicationStatus;
+    }
+
+    /**
+     * Possible replication status.
+     */
+    public enum ReplicationStatus {
+
+        /**
+         * Replication is in progress.
+         **/
+        INPROGRESS("in progress"),
+        /**
+         * Replication is failing.
+         */
+        ISFAILING("is failing");
+
+        private String statusMessage;
+
+        /**
+         * Set Replication status.
+         * @param s status.
+         */
+        private ReplicationStatus(String s) {
+            statusMessage = s;
+        }
+
+        /**
+         * Get status message.
+         * @return statusMessage.
+         */
+        public String getStatusMessage() {
+            return statusMessage;
+        }
     }
 
     /**

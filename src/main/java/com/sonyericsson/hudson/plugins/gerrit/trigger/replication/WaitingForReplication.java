@@ -65,7 +65,11 @@ public class WaitingForReplication extends CauseOfBlockage {
         @Override
         public String apply(@Nullable GerritSlave gerritSlave) {
             if (gerritSlave != null) {
-                return gerritSlave.getName();
+                if (gerritSlave.getReplicationStatus() != null) {
+                    return gerritSlave.getName() + " (" + gerritSlave.getReplicationStatus().getStatusMessage() + ")";
+                } else {
+                    return gerritSlave.getName();
+                }
             } else {
                 return null;
             }

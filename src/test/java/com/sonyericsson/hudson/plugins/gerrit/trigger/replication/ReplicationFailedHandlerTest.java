@@ -23,8 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,9 +34,14 @@ import hudson.model.Environment;
 import hudson.model.AbstractBuild;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher.BlockedItem;
 
 /**
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationFailedHandler}.
@@ -76,13 +82,26 @@ public class ReplicationFailedHandlerTest {
      */
     @Test
     public void shouldThrowAbortExceptionWheReplicationFailedActionIsFound() throws IOException, InterruptedException {
+        GerritSlave slave = new GerritSlave("mirror", "mirrorHost", 1);
+        slave.setReplicationStatus(GerritSlave.ReplicationStatus.INPROGRESS);
+        GerritSlave slave2 = new GerritSlave("mirror2", "mirror2Host", 1);
+        slave2.setReplicationStatus(GerritSlave.ReplicationStatus.ISFAILING);
+        List<GerritSlave> slaves = new ArrayList<GerritSlave>();
+        slaves.add(slave);
+        slaves.add(slave2);
+
+        BlockedItem blockedItem = new BlockedItem("myproject", "refs/head/master", "defaultServer",
+                slaves, 0, "some event desc", false);
+        blockedItem.setReplicationFailedMessage("someReason");
+
         when(abstractBuildMock.getAction(ReplicationFailedAction.class)).thenReturn(
-            new ReplicationFailedAction("someReason"));
+            new ReplicationFailedAction(blockedItem));
         try {
             handler.setUpEnvironment(abstractBuildMock, null, null);
             fail("should have raise an AbortException");
         } catch (AbortException e) {
-            assertEquals("someReason", e.getMessage());
+            assertThat("Missing reason in message", e.getMessage(), containsString("someReason"));
+            assertThat("Missing mirror in message", e.getMessage(), containsString("mirror"));
         }
     }
 }

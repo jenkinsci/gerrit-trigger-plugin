@@ -128,7 +128,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             BlockedItem blockedItem = blockedItems.get(itemId);
             if (blockedItem.canRunWithTimeoutCheck()) {
                 if (blockedItem.replicationFailedMessage != null) {
-                    item.addAction(new ReplicationFailedAction(blockedItem.replicationFailedMessage));
+                    item.addAction(new ReplicationFailedAction(blockedItem));
                     logger.trace("{} -> {}", blockedItem.getEventDescription(), blockedItem.replicationFailedMessage);
                 } else {
                     logger.trace("{} can now run with no timeout check.", blockedItem.getEventDescription());
@@ -316,7 +316,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * Item blocked because of replication.
      * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
      */
-    private static class BlockedItem {
+    static class BlockedItem {
         private String gerritProject;
         private String ref;
         private String gerritServer;
@@ -346,6 +346,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             this.gerritServer = gerritServer;
             this.slavesWaitingFor = new ConcurrentHashMap<String, GerritSlave>(gerritSlaves.size());
             for (GerritSlave gerritSlave : gerritSlaves) {
+                gerritSlave.setReplicationStatus(GerritSlave.ReplicationStatus.INPROGRESS);
                 slavesWaitingFor.put(gerritSlave.getHost(), gerritSlave);
             }
             this.eventTimeStamp = eventTimeStamp;
@@ -411,6 +412,11 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                     logger.debug("Received successful refReplicated event for {} for slave {}"
                             , getEventDescription(), refReplicated.getTargetNode());
                     slavesWaitingFor.remove(refReplicated.getTargetNode());
+                } else {
+                    logger.debug("Received FAILED refReplicated event for {} for slave {}"
+                            , getEventDescription(), refReplicated.getTargetNode());
+                    slavesWaitingFor.get(refReplicated.getTargetNode())
+                        .setReplicationStatus(GerritSlave.ReplicationStatus.ISFAILING);
                 }
 
                 if (slavesWaitingFor.size() == 0) {
@@ -418,6 +424,30 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                     canRun = true;
                 }
             }
+        }
+
+        /**
+         * Get slaves to wait for.
+         * @return slavesWaitingFor.
+         */
+        public ConcurrentMap<String, GerritSlave> getSlavesWaitingFor() {
+            return slavesWaitingFor;
+        }
+
+        /**
+         * Get Replication Failed Message.
+         * @return replicationFailedMessage.
+         */
+        public String getReplicationFailedMessage() {
+            return replicationFailedMessage;
+        }
+
+        /**
+         * Sets the Replication Failed Message.
+         * @param replicationFailedMessage message.
+         */
+        public void setReplicationFailedMessage(String replicationFailedMessage) {
+            this.replicationFailedMessage = replicationFailedMessage;
         }
     }
 }
