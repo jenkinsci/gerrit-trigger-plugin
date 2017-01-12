@@ -134,10 +134,10 @@
                                                         </td>
                                                         <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
                                                         <j:set var="changeUrlParam" value="${it.getChangeUrlParamForPatchSet(res, patch, selectedServer)}"/>
-                                                        <td>
+                                                        <td onClick="activateRow('${theId}')">
                                                             <j:choose>
                                                                 <j:when test="${changeUrlParam != null}">
-                                                                    <a href="${changeUrlParam.value}" target="_blank">
+                                                                    <a href="${changeUrlParam.value}" target="_blank" onclick="event.stopPropagation();">
                                                                         ${res.getString('number')}
                                                                     </a>
                                                                 </j:when>
