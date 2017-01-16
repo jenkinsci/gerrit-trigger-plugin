@@ -132,8 +132,19 @@
                                                                    id="check${theId}"
                                                                    onClick="rowSelected('${theId}')"/>
                                                         </td>
+                                                        <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                        <j:set var="changeUrlParam" value="${it.getChangeUrlParamForPatchSet(res, patch, selectedServer)}"/>
                                                         <td onClick="activateRow('${theId}')">
-                                                            ${res.getString('number')}
+                                                            <j:choose>
+                                                                <j:when test="${changeUrlParam != null}">
+                                                                    <a href="${changeUrlParam.value}" target="_blank" onclick="event.stopPropagation();">
+                                                                        ${res.getString('number')}
+                                                                    </a>
+                                                                </j:when>
+                                                                <j:otherwise>
+                                                                    ${res.getString('number')}
+                                                                </j:otherwise>
+                                                            </j:choose>
                                                         </td>
                                                         <td onClick="activateRow('${theId}')">
                                                             ${patch.getString('number')}
