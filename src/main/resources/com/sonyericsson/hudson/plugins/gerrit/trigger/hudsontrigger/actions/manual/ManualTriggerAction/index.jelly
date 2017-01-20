@@ -150,7 +150,9 @@
                                                             ${patch.getString('number')}
                                                         </td>
                                                         <td onClick="activateRow('${theId}')">
-                                                            ${it.toReadableHtml(res.getString('subject'))}
+                                                            <span title="${res.has('commitMessage') ? res.get('commitMessage') : null}">
+                                                                ${it.toReadableHtml(res.getString('subject'))}
+                                                            </span>
                                                             <j:if test="${res.has('status')}">
                                                                 <j:if test="${res.getString('status').equals('ABANDONED')}">
                                                                     (${res.getString('status')})
