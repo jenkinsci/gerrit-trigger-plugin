@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -58,6 +59,13 @@ public class GerritProjectWithFilesInterestingTest {
     public void testInteresting() {
         assertEquals(scenarioWithFiles.expected, scenarioWithFiles.config.isInteresting(
                 scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic, scenarioWithFiles.files));
+    }
+
+    @BeforeClass
+    public static void setupEnv() {
+        // this is a somewhat hacky way to deal with the fact that the compare util was already set up before
+        // we get the chance to update the system environment
+        ((CompareUtil.PlainVarCompareUtil) CompareType.PLAIN_VAR.util).inject("PROJECTNAME", "myproject");
     }
 
     /**
@@ -212,6 +220,14 @@ public class GerritProjectWithFilesInterestingTest {
         files.add("files/skip.txt");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "vendor/semc/master/project", "origin/master", null, files, false), });
+
+        branches = new LinkedList<Branch>();
+        branch = new Branch(CompareType.PLAIN, "master");
+        branches.add(branch);
+        config = new GerritProject(CompareType.PLAIN_VAR, "${PROJECTNAME}", branches, null, null, null,
+                false);
+        parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
+                config, "myproject", "master", null, null, true),});
 
         return parameters;
     }

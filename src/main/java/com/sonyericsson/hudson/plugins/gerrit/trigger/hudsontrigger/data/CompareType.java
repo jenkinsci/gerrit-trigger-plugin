@@ -46,7 +46,13 @@ public enum CompareType {
     /**
      * Regular expression comparison.
      */
-    REG_EXP(new RegExpCompareUtil());
+    REG_EXP(new RegExpCompareUtil()),
+
+    /**
+     * Plain comparison however, the pattern will be expanded with the system environment.
+     * This allows comparisons such as "${PROJECTNAME}".
+     */
+    PLAIN_VAR(new CompareUtil.PlainVarCompareUtil());
 
     /**
      * Gets a list of all CompareType's displayNames.
@@ -88,7 +94,7 @@ public enum CompareType {
         return PLAIN;
     }
 
-    private CompareUtil util;
+    CompareUtil util;
 
     /**
      * Private Constructor.

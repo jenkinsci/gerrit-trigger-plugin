@@ -23,11 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import java.io.File;
+import hudson.EnvVars;
 import org.apache.tools.ant.types.selectors.SelectorUtils;
+
+import java.io.File;
 
 /**
  * Base interface for the compare-algorithms.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public interface CompareUtil {
@@ -56,7 +59,7 @@ public interface CompareUtil {
      * Compares based on Ant-style paths.
      * like <code>my/&#042;&#042;/something&#042;.git</code>
      */
-    static class AntCompareUtil implements CompareUtil {
+    class AntCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
@@ -80,9 +83,9 @@ public interface CompareUtil {
     }
 
     /**
-     * Compares with pattern.equals(str).
+     * Compares with pattern.equalsIgnoreCase(str).
      */
-    static class PlainCompareUtil implements CompareUtil {
+    class PlainCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
@@ -105,7 +108,7 @@ public interface CompareUtil {
      * string.matches(pattern)
      * @see java.util.regex.Pattern
      */
-    static class RegExpCompareUtil implements CompareUtil {
+    class RegExpCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
@@ -120,6 +123,43 @@ public interface CompareUtil {
         @Override
         public char getOperator() {
             return '~';
+        }
+    }
+
+    /**
+     * Compares just like plain comparison, however, patterns are expanded using the
+     * given system environment settings.
+     */
+    class PlainVarCompareUtil implements CompareUtil {
+        private final EnvVars systemEnvVars;
+
+        public PlainVarCompareUtil() {
+            systemEnvVars = new EnvVars(EnvVars.masterEnvVars);
+        }
+
+        /**
+         * Test only method to allow injecting test properties into our environment.
+         * @param key the key to inject into the env vars.
+         * @param value the value associated with the key.
+         */
+        void inject(String key, String value) {
+            systemEnvVars.put(key, value);
+        }
+
+        @Override
+        public boolean matches(String pattern, String str) {
+            String expandedPattern = systemEnvVars.expand(pattern);
+            return expandedPattern.equalsIgnoreCase(str);
+        }
+
+        @Override
+        public String getName() {
+            return "PlainVar";
+        }
+
+        @Override
+        public char getOperator() {
+            return ':';
         }
     }
 }
