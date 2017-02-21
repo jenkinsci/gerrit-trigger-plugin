@@ -67,6 +67,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.Util;
@@ -85,8 +86,12 @@ import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
 import hudson.model.Result;
+import hudson.slaves.EnvironmentVariablesNodeProperty;
+import hudson.slaves.NodeProperty;
+import hudson.slaves.NodePropertyDescriptor;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.ListBoxModel.Option;
@@ -178,6 +183,9 @@ public class GerritTrigger extends Trigger<Job> {
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
+    private final EnvVars envVars;
+    private int globalHashVarsHash;
+    private int systemEnvVarsHash;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
@@ -194,8 +202,10 @@ public class GerritTrigger extends Trigger<Job> {
         this.skipVote = new SkipVote(false, false, false, false);
         this.escapeQuotes = true;
         this.serverName = ANY_SERVER;
+        this.envVars = initEnvVars();
+
         try {
-            DescriptorImpl descriptor = (DescriptorImpl)getDescriptor();
+            DescriptorImpl descriptor = (DescriptorImpl) getDescriptor();
             if (descriptor != null) {
                 ListBoxModel options = descriptor.doFillNotificationLevelItems(this.serverName);
                 if (!options.isEmpty()) {
@@ -334,6 +344,23 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+        this.envVars = initEnvVars();
+    }
+
+    /**
+     * Initializes the environment variables used for expansion.
+     */
+    private EnvVars initEnvVars() {
+        EnvVars result = new EnvVars(EnvVars.masterEnvVars);
+        DescribableList<NodeProperty<?>, NodePropertyDescriptor> globalProps =
+                Jenkins.getActiveInstance().getGlobalNodeProperties();
+        EnvironmentVariablesNodeProperty envVarsProp = globalProps.get(EnvironmentVariablesNodeProperty.class);
+        EnvVars globalEnvVars = envVarsProp.getEnvVars();
+        result.putAll(globalEnvVars);
+
+        systemEnvVarsHash = EnvVars.masterEnvVars.hashCode();
+        globalHashVarsHash = globalEnvVars.hashCode();
+        return result;
     }
 
     /**
@@ -960,14 +987,15 @@ public class GerritTrigger extends Trigger<Job> {
         }
         logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
 
+        updateEnvVarsIfNecessary();
         for (GerritProject p : allGerritProjects) {
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
                     if (isServerInteresting(event)
-                         && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                            changeBasedEvent.getChange().getBranch(),
-                                            changeBasedEvent.getChange().getTopic())) {
+                            && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                               changeBasedEvent.getChange().getBranch(),
+                                               changeBasedEvent.getChange().getTopic(), envVars)) {
 
                         boolean containsFilePathsOrForbiddenFilePaths =
                                 ((p.getFilePaths() != null && p.getFilePaths().size() > 0)
@@ -975,11 +1003,11 @@ public class GerritTrigger extends Trigger<Job> {
 
                         if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
                             if (isServerInteresting(event)
-                                 && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                                    changeBasedEvent.getChange().getBranch(),
-                                                    changeBasedEvent.getChange().getTopic(),
-                                                    changeBasedEvent.getFiles(
-                                                        new GerritQueryHandler(getServerConfig(event))))) {
+                                    && p.isInteresting(changeBasedEvent.getChange().getProject(),
+                                    changeBasedEvent.getChange().getBranch(),
+                                    changeBasedEvent.getChange().getTopic(),
+                                    changeBasedEvent.getFiles(
+                                            new GerritQueryHandler(getServerConfig(event))), envVars)) {
                                 logger.trace("According to {} the event is interesting.", p);
                                 return true;
                             }
@@ -991,18 +1019,36 @@ public class GerritTrigger extends Trigger<Job> {
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
                     if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                                                                      refUpdated.getRefUpdate().getRefName(), null)) {
+                            refUpdated.getRefUpdate().getRefName(), null, envVars)) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }
                 }
             } catch (PatternSyntaxException pse) {
                 logger.error(MessageFormat.format("Exception caught for project {0} and pattern {1}, message: {2}",
-                       new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
+                        new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
             }
         }
         logger.trace("Nothing interesting here, move along folks!");
         return false;
+    }
+
+    /**
+     * Checks if the current system env vars are still the same and updates our local copy if necessary
+     */
+    private void updateEnvVarsIfNecessary() {
+        EnvironmentVariablesNodeProperty envVarsProp =
+                Jenkins.getActiveInstance().getGlobalNodeProperties().get(EnvironmentVariablesNodeProperty.class);
+        EnvVars globalEnvVars = envVarsProp.getEnvVars();
+        int newSystemEnvVarsHash = EnvVars.masterEnvVars.hashCode();
+        int newGlobalEnvVarsHash = globalEnvVars.hashCode();
+        if (newSystemEnvVarsHash != systemEnvVarsHash || newGlobalEnvVarsHash != globalHashVarsHash) {
+            this.envVars.clear();
+            this.envVars.putAll(EnvVars.masterEnvVars);
+            this.envVars.putAll(globalEnvVars);
+            systemEnvVarsHash = newSystemEnvVarsHash;
+            globalHashVarsHash = newGlobalEnvVarsHash;
+        }
     }
 
     /**

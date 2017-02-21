@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.EnvVars;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 public class GerritProjectInterestingTest {
 
     private final InterestingScenario scenario;
+    private EnvVars envVars;
 
     /**
      * Constructor.
@@ -49,17 +51,18 @@ public class GerritProjectInterestingTest {
      */
     public GerritProjectInterestingTest(InterestingScenario scenario) {
         this.scenario = scenario;
+        envVars = new EnvVars();
     }
 
     /**
-     * Tests {@link GerritProject#isInteresting(String, String, String)}.
+     * Tests {@link GerritProject#isInteresting(String, String, String, hudson.EnvVars)}.
      */
     @Test
     public void testInteresting() {
         assertEquals(scenario.expected, scenario.config.isInteresting(
                 scenario.project,
                 scenario.branch,
-                scenario.topic));
+                scenario.topic, envVars));
     }
 
     /**

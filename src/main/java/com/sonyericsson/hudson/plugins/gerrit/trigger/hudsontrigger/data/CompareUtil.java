@@ -39,9 +39,10 @@ public interface CompareUtil {
      * Tells if the given pattern matches the string according to the implemented comparer/algorithm.
      * @param pattern the pattern to use.
      * @param str the string to match on.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the string matches the pattern.
      */
-    boolean matches(String pattern, String str);
+    boolean matches(String pattern, String str, EnvVars envVars);
 
     /**
      * Returns the human-readable name of the util.
@@ -62,13 +63,14 @@ public interface CompareUtil {
     class AntCompareUtil implements CompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
+        public boolean matches(String pattern, String str, EnvVars envVars) {
             // Replace the Git directory separator character (always '/')
             // with the platform specific directory separator before
             // invoking Ant's platform specific path matching.
             String safePattern = pattern.replace('/', File.separatorChar);
+            String expandedPattern = envVars.expand(safePattern);
             String safeStr = str.replace('/', File.separatorChar);
-            return SelectorUtils.matchPath(safePattern, safeStr);
+            return SelectorUtils.matchPath(expandedPattern, safeStr);
         }
 
         @Override
@@ -88,8 +90,10 @@ public interface CompareUtil {
     class PlainCompareUtil implements CompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
-            return pattern.equalsIgnoreCase(str);
+        public boolean matches(String pattern, String str, EnvVars envVars) {
+            String expandedPattern = envVars.expand(pattern);
+
+            return expandedPattern.equalsIgnoreCase(str);
         }
 
         @Override
@@ -111,8 +115,9 @@ public interface CompareUtil {
     class RegExpCompareUtil implements CompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
-            return str.matches(pattern);
+        public boolean matches(String pattern, String str, EnvVars envVars) {
+            String expandedPattern = envVars.expand(pattern);
+            return str.matches(expandedPattern);
         }
 
         @Override
@@ -123,43 +128,6 @@ public interface CompareUtil {
         @Override
         public char getOperator() {
             return '~';
-        }
-    }
-
-    /**
-     * Compares just like plain comparison, however, patterns are expanded using the
-     * given system environment settings.
-     */
-    class PlainVarCompareUtil implements CompareUtil {
-        private final EnvVars systemEnvVars;
-
-        public PlainVarCompareUtil() {
-            systemEnvVars = new EnvVars(EnvVars.masterEnvVars);
-        }
-
-        /**
-         * Test only method to allow injecting test properties into our environment.
-         * @param key the key to inject into the env vars.
-         * @param value the value associated with the key.
-         */
-        void inject(String key, String value) {
-            systemEnvVars.put(key, value);
-        }
-
-        @Override
-        public boolean matches(String pattern, String str) {
-            String expandedPattern = systemEnvVars.expand(pattern);
-            return expandedPattern.equalsIgnoreCase(str);
-        }
-
-        @Override
-        public String getName() {
-            return "PlainVar";
-        }
-
-        @Override
-        public char getOperator() {
-            return ':';
         }
     }
 }

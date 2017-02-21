@@ -25,6 +25,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
+
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Describable;
@@ -210,23 +212,24 @@ public class GerritProject implements Describable<GerritProject> {
      * @param branch the branch.
      * @param topic the topic.
      * @param files the files.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch, String topic, List<String> files) {
-        if (compareType.matches(pattern, project)) {
+    public boolean isInteresting(String project, String branch, String topic, List<String> files, EnvVars envVars) {
+        if (compareType.matches(pattern, project, envVars)) {
             for (Branch b : branches) {
                 boolean foundInterestingForbidden = false;
                 boolean foundInterestingTopicOrFile = false;
-                if (b.isInteresting(branch)) {
+                if (b.isInteresting(branch, envVars)) {
                     if (forbiddenFilePaths != null) {
                         for (FilePath ffp : forbiddenFilePaths) {
-                            if (ffp.isInteresting(files)) {
+                            if (ffp.isInteresting(files, envVars)) {
                                 foundInterestingForbidden = true;
                                 break;
                             }
                         }
                     }
-                    if (isInterestingTopic(topic) && isInterestingFile(files)) {
+                    if (isInterestingTopic(topic, envVars) && isInterestingFile(files, envVars)) {
                         foundInterestingTopicOrFile = true;
                     }
                     if (disableStrictForbiddenFileVerification) {
@@ -253,13 +256,14 @@ public class GerritProject implements Describable<GerritProject> {
      * @param project the Gerrit project
      * @param branch the branch.
      * @param topic the topic.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch, String topic) {
-        if (compareType.matches(pattern, project)) {
+    public boolean isInteresting(String project, String branch, String topic, EnvVars envVars) {
+        if (compareType.matches(pattern, project, envVars)) {
             for (Branch b : branches) {
-                if (b.isInteresting(branch)) {
-                    return isInterestingTopic(topic);
+                if (b.isInteresting(branch, envVars)) {
+                    return isInterestingTopic(topic, envVars);
                 }
             }
         }
@@ -270,12 +274,13 @@ public class GerritProject implements Describable<GerritProject> {
      * Compare topics to see if the rules specified is a match.
      *
      * @param topic the topic.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the rules match or no rules.
      */
-    private boolean isInterestingTopic(String topic) {
+    private boolean isInterestingTopic(String topic, EnvVars envVars) {
         if (topics != null && topics.size() > 0) {
             for (Topic t : topics) {
-                if (t.isInteresting(topic)) {
+                if (t.isInteresting(topic, envVars)) {
                     return true;
                 }
             }
@@ -288,12 +293,13 @@ public class GerritProject implements Describable<GerritProject> {
      * Compare files to see if the rules specified is a match.
      *
      * @param files the files.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the rules match or no rules.
      */
-    private boolean isInterestingFile(List<String> files) {
+    private boolean isInterestingFile(List<String> files, EnvVars envVars) {
         if (filePaths != null && filePaths.size() > 0) {
             for (FilePath f : filePaths) {
-                if (f.isInteresting(files)) {
+                if (f.isInteresting(files, envVars)) {
                     return true;
                 }
             }

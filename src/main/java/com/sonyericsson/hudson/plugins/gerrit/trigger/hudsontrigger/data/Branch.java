@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -90,10 +91,11 @@ public class Branch extends AbstractDescribableImpl<Branch> {
     /**
      * Tells if the given branch is matched by this rule.
      * @param branch the branch
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the branch matches.
      */
-    public boolean isInteresting(String branch) {
-        return compareType.matches(pattern, branch);
+    public boolean isInteresting(String branch, EnvVars envVars) {
+        return compareType.matches(pattern, branch, envVars);
     }
 
     /**

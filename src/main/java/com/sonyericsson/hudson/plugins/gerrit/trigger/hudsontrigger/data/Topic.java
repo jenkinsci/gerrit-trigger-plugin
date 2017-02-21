@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -89,13 +90,14 @@ public class Topic extends AbstractDescribableImpl<Topic> {
     /**
      * Tells if the given topic are matched by this rule.
      * @param topic the topic in change.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the topic match.
      */
-    public boolean isInteresting(String topic) {
+    public boolean isInteresting(String topic, EnvVars envVars) {
         if (topic == null) {
             topic = "";
         }
-        if (compareType.matches(pattern, topic)) {
+        if (compareType.matches(pattern, topic, envVars)) {
             return true;
         }
         return false;

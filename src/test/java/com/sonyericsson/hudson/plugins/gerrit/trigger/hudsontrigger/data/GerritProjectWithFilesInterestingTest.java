@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.EnvVars;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +44,7 @@ import static org.junit.Assert.assertEquals;
 public class GerritProjectWithFilesInterestingTest {
 
     private final InterestingScenarioWithFiles scenarioWithFiles;
-
+    private static EnvVars envVars = new EnvVars();
     /**
      * Constructor.
      * @param scenarioWithFiles scenarioWithFiles
@@ -53,19 +54,23 @@ public class GerritProjectWithFilesInterestingTest {
     }
 
     /**
-     * Tests {@link GerritProject#isInteresting(String, String, String, java.util.List)}.
+     * Tests {@link GerritProject#isInteresting(String, String, String, List, hudson.EnvVars)}.
      */
     @Test
     public void testInteresting() {
         assertEquals(scenarioWithFiles.expected, scenarioWithFiles.config.isInteresting(
-                scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic, scenarioWithFiles.files));
+                scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic, scenarioWithFiles.files, envVars));
     }
 
+
+    /**
+     * Sets up the test environment.
+     */
     @BeforeClass
     public static void setupEnv() {
         // this is a somewhat hacky way to deal with the fact that the compare util was already set up before
         // we get the chance to update the system environment
-        ((CompareUtil.PlainVarCompareUtil) CompareType.PLAIN_VAR.util).inject("PROJECTNAME", "myproject");
+        envVars.put("PROJECTNAME", "myproject");
     }
 
     /**
@@ -224,7 +229,7 @@ public class GerritProjectWithFilesInterestingTest {
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.PLAIN, "master");
         branches.add(branch);
-        config = new GerritProject(CompareType.PLAIN_VAR, "${PROJECTNAME}", branches, null, null, null,
+        config = new GerritProject(CompareType.PLAIN, "${PROJECTNAME}", branches, null, null, null,
                 false);
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "myproject", "master", null, null, true),});
