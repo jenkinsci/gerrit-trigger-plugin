@@ -256,7 +256,18 @@ public class GerritProject implements Describable<GerritProject> {
      * @param project the Gerrit project
      * @param branch the branch.
      * @param topic the topic.
-     * @param envVars the environment variables exisiting on the jenkins host.
+     * @return true is the rules match.
+     */
+    public boolean isInteresting(String project, String branch, String topic) {
+        return isInteresting(project, branch, topic, null);
+    }
+
+    /**
+     * Compares the project and branch to see if the rules specified is a match.
+     * @param project the Gerrit project
+     * @param branch the branch.
+     * @param topic the topic.
+     * @param envVars the environment variables exisiting on the jenkins host. Can be {@code null}.
      * @return true is the rules match.
      */
     public boolean isInteresting(String project, String branch, String topic, EnvVars envVars) {

@@ -1036,12 +1036,13 @@ public class GerritTrigger extends Trigger<Job> {
     /**
      * Checks if the current system env vars are still the same and updates our local copy if necessary
      */
-    private void updateEnvVarsIfNecessary() {
+    private synchronized void updateEnvVarsIfNecessary() {
         EnvironmentVariablesNodeProperty envVarsProp =
                 Jenkins.getActiveInstance().getGlobalNodeProperties().get(EnvironmentVariablesNodeProperty.class);
         EnvVars globalEnvVars = envVarsProp.getEnvVars();
         int newSystemEnvVarsHash = EnvVars.masterEnvVars.hashCode();
         int newGlobalEnvVarsHash = globalEnvVars.hashCode();
+        
         if (newSystemEnvVarsHash != systemEnvVarsHash || newGlobalEnvVarsHash != globalHashVarsHash) {
             this.envVars.clear();
             this.envVars.putAll(EnvVars.masterEnvVars);
