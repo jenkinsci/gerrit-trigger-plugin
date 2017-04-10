@@ -1,5 +1,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
@@ -12,6 +13,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeRestoredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -41,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 /**
@@ -66,6 +69,13 @@ public class ParameterModeJenkinsTest {
     @Before
     public void setup() throws IOException {
 
+        MockGerritHudsonTriggerConfig config = Setup.createConfig();
+        GerritServer server = new MockGerritServer("gerrit version 2.11.4");
+        server.setConfig(config);
+        PluginImpl plugin = PluginImpl.getInstance();
+        assertNotNull(plugin);
+        plugin.setServers(Arrays.asList(server));
+
         job = j.createFreeStyleProject();
         job.getBuildersList().add(new ParametersBuilder());
         trigger = Setup.createDefaultTrigger(job);
@@ -76,6 +86,34 @@ public class ParameterModeJenkinsTest {
         trigger.setEscapeQuotes(false);
     }
 
+    /**
+     * Mock Gerrit server with a version.
+     */
+    public static class MockGerritServer extends GerritServer {
+
+        private String version;
+
+        /**
+         * Create Gerrit Server with Version.
+         * @param gerritVersion mock version for Gerrit.
+         */
+        public MockGerritServer(String gerritVersion) {
+            super(PluginImpl.DEFAULT_SERVER_NAME);
+            version = gerritVersion;
+        }
+
+        @Override
+        public String getGerritVersion() {
+            return version;
+        }
+
+        /**
+         * Create server instance.
+         */
+        public MockGerritServer() {
+            super(PluginImpl.DEFAULT_SERVER_NAME);
+        }
+    }
     /**
      * Tests the default {@link GerritTriggerParameters.ParameterMode#PLAIN}
      * when the build is triggered by a

@@ -105,7 +105,7 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         serverMock.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
-        serverMock.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
+        serverMock.returnCommandFor("gerrit version", SshdServerMock.SendVersionCommand.class);
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         gerritServer = PluginImpl.getFirstServer_();
