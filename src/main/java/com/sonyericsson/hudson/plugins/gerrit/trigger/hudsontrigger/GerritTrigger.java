@@ -1032,13 +1032,16 @@ public class GerritTrigger extends Trigger<Job> {
             if (e instanceof PluginCommentAddedEvent) {
                 commentAdded = (PluginCommentAddedEvent)e;
                 for (Approval approval : event.getApprovals()) {
-                    /** Ensure that this trigger is backwards compatible.
+                    /* Ensure that this trigger is backwards compatible.
                      * Gerrit stream events changed to append approval info to
-                     * every comment-added event.
-                     **/
+                     * every comment-added event. We need to exclude snapshot
+                     * versions from this check. Otherwise, Gerrit snapshot
+                     * versions that are < 2.13 will handle comment added event
+                     * the way they are supposed to be for Gerrit >= 2.13.
+                     */
                     if (GerritVersionChecker.isCorrectVersion(
                                 GerritVersionChecker.Feature.commentAlwaysApproval,
-                                serverName)) {
+                                serverName, true)) {
                         if (approval.isUpdated()
                                 && approval.getType().equals(
                                     commentAdded.getVerdictCategory())
