@@ -111,8 +111,9 @@ public class PluginCommentAddedContainsEvent extends PluginGerritEvent
             return false;
         }
         Pattern p = Pattern
-                .compile(commentAddedCommentContains, Pattern.DOTALL);
+                .compile(commentAddedCommentContains, Pattern.DOTALL | Pattern.MULTILINE);
         CommentAdded ca = (CommentAdded)event;
+        logger.debug("input comment: '{}'", ca.getComment());
         return p.matcher(ca.getComment()).find();
     }
 }
