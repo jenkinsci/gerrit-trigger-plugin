@@ -24,6 +24,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
@@ -44,11 +46,17 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 
+import jenkins.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
@@ -70,6 +78,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
     public static final int ORDINAL = 10003;
     private static final Logger logger = LoggerFactory.getLogger(ToGerritRunListener.class);
     private final transient BuildMemory memory = new BuildMemory();
+    private final transient HashMap<GerritTriggeredEvent, ScheduledFuture> aggregationFutures = new HashMap<GerritTriggeredEvent, ScheduledFuture>();
 
     /**
      * Returns the registered instance of this class from the list of all listeners.
@@ -193,6 +202,11 @@ public final class ToGerritRunListener extends RunListener<Run> {
                 NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
             } finally {
                 memory.forget(event);
+
+                if (aggregationFutures.containsKey(event)) {
+                    logger.info("Cancel notification task for [{}].", cause);
+                    aggregationFutures.remove(event).cancel(false);
+                }
             }
         } else {
             logger.info("Waiting for more builds to complete for cause [{}]. Status: \n{}",
@@ -221,19 +235,20 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     @Override
-    public synchronized void onStarted(Run r, TaskListener listener) {
+    public synchronized void onStarted(final Run r, final TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Started. Build: {} Cause: {}", r, cause);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
             setThisBuild(r);
-            if (cause.getEvent() != null) {
-                if (cause.getEvent() instanceof GerritEventLifecycle) {
-                    ((GerritEventLifecycle)cause.getEvent()).fireBuildStarted(r);
+            final GerritTriggeredEvent gerritEvent = cause.getEvent();
+            if (gerritEvent != null) {
+                if (gerritEvent instanceof GerritEventLifecycle) {
+                    ((GerritEventLifecycle)gerritEvent).fireBuildStarted(r);
                 }
             }
             if (!cause.isSilentMode()) {
-                memory.started(cause.getEvent(), r);
+                memory.started(gerritEvent, r);
                 updateTriggerContexts(r);
                 GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
                 boolean silentStartMode = false;
@@ -241,13 +256,95 @@ public final class ToGerritRunListener extends RunListener<Run> {
                     silentStartMode = trigger.isSilentStartMode();
                 }
                 if (!silentStartMode) {
-                    BuildsStartedStats stats = memory.getBuildsStartedStats(cause.getEvent());
-                    NotificationFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
+                    final BuildsStartedStats stats = memory.getBuildsStartedStats(gerritEvent);
+                    long delay = timeToSendNotification(trigger);
+
+                    if (delay == 0) {
+                        final List<Run> builds = Collections.singletonList(r);
+                        NotificationFactory.getInstance().queueBuildsStarted(builds, listener, gerritEvent, stats);
+                        logger.info("MemoryStatus:\n{}", memory.getStatusReport(gerritEvent));
+                    } else {
+                        handleAggregation(listener, cause, delay);
+                    }
                 }
             }
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);
-            logger.info("MemoryStatus:\n{}", memory.getStatusReport(cause.getEvent()));
         }
+    }
+
+    private void handleAggregation(final TaskListener listener, GerritCause cause, long delay) {
+        final GerritTriggeredEvent gerritEvent = cause.getEvent();
+
+        if (!aggregationFutures.containsKey(gerritEvent)) {
+            logger.info("Start notification task for [{}].", cause);
+            Runnable notifyCommand = new Runnable() {
+                @Override
+                public void run() {
+                    sendNotification(gerritEvent, listener);
+                }
+            };
+
+            aggregationFutures.put(gerritEvent,
+                    Timer.get().scheduleAtFixedRate(notifyCommand, 1, delay, TimeUnit.SECONDS));
+        }
+    }
+
+
+    /**
+     * Sends notification that build started
+     * @param event The event that triggered this build
+     * @param listener The build listener
+     */
+    private synchronized void sendNotification(GerritTriggeredEvent event, TaskListener listener) {
+        final List<Run> buildsToNotify = new ArrayList<Run>();
+
+        BuildMemory.MemoryImprint memoryImprint = memory.getMemoryImprint(event);
+
+        if (memoryImprint == null) {
+            logger.info("Gerrit event [{}] was forgotten already. Can't send notification", event);
+            return;
+        }
+
+        for (BuildMemory.MemoryImprint.Entry entry : memoryImprint.getEntries()) {
+            if (!entry.isNotified()) {
+                Run run = entry.getBuild();
+                if (run != null) {
+                    buildsToNotify.add(run);
+                    entry.setNotified(true);
+                }
+            }
+        }
+
+        if (!buildsToNotify.isEmpty()) {
+            final BuildsStartedStats stats = memory.getBuildsStartedStats(event);
+            NotificationFactory.getInstance().queueBuildsStarted(buildsToNotify, listener, event, stats);
+            logger.info("queue notification [{}] for [{}]", event, buildsToNotify);
+            logger.info("MemoryStatus:\n{}", memory.getStatusReport(event));
+        }
+    }
+
+
+    /**
+     * Returns time then build must be notified
+     * @param trigger the Gerrit Trigger which is being checked
+     * @return time then build must be notified
+     */
+    private long timeToSendNotification(final GerritTrigger trigger) {
+        if (trigger == null) {
+            return 0;
+        }
+
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin == null) {
+            return 0;
+        }
+
+        PluginConfig config = plugin.getPluginConfig();
+        if (config == null) {
+            return 0;
+        }
+
+        return config.getAggregateJobStartedInterval();
     }
 
     /**

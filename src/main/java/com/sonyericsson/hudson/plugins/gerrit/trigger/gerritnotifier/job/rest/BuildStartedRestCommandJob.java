@@ -29,11 +29,12 @@ import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommand
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+
+import java.util.List;
 
 /**
  * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
@@ -41,7 +42,7 @@ import hudson.model.TaskListener;
  */
 public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
 
-    private final Run build;
+    private final List<Run> builds;
     private final BuildsStartedStats stats;
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
@@ -50,16 +51,16 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      * Constructor.
      *
      * @param config   config
-     * @param build    build
+     * @param builds    builds
      * @param listener listener
      * @param event    event
      * @param stats    stats
      */
-    public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, Run build, TaskListener listener,
+    public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, List<Run> builds, TaskListener listener,
                                       ChangeBasedEvent event, BuildsStartedStats stats) {
         //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
         super(config, (listener != null ? listener.getLogger() : null), event);
-        this.build = build;
+        this.builds = builds;
         this.stats = stats;
         this.listener = listener;
         parameterExpander = new ParameterExpander(config);
@@ -72,13 +73,9 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      */
     @Override
     protected ReviewInput createReview() {
-        String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
-        Notify notificationLevel = Notify.ALL;
-        GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
-        if (trigger != null) {
-            notificationLevel = parameterExpander.getNotificationLevel(trigger);
-        }
-        return new ReviewInput(message).setNotify(notificationLevel).setTag(Constants.TAG_VALUE);
+        String message = parameterExpander.getBuildsStartedMessage(builds, listener, event, stats);
+        Notify notificationLevel = parameterExpander.getHighestNotificationLevel(builds, false);
+        return new ReviewInput(message).setNotify(notificationLevel);
     }
 
 }

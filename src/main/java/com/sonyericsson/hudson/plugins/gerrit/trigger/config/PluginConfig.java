@@ -45,10 +45,15 @@ public class PluginConfig implements GerritWorkersConfig {
      * Default number of sending worker threads.
      */
     public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
+    /**
+     * Default time for sending feedback aggregation.
+     */
+    public static final int DEFAULT_AGGREGATION_TIME = 0;
 
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
     private int replicationCacheExpirationInMinutes;
+    private int aggregateJobStartedInterval;
 
     /**
      * Constructs a config with default data.
@@ -75,6 +80,7 @@ public class PluginConfig implements GerritWorkersConfig {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
         replicationCacheExpirationInMinutes = pluginConfig.getReplicationCacheExpirationInMinutes();
+        aggregateJobStartedInterval = pluginConfig.getAggregateJobStartedInterval();
     }
 
     /**
@@ -111,6 +117,11 @@ public class PluginConfig implements GerritWorkersConfig {
             ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES);
         if (replicationCacheExpirationInMinutes <= 0) {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
+        }
+
+        aggregateJobStartedInterval = formData.optInt("aggregateJobStartedInterval", DEFAULT_AGGREGATION_TIME);
+        if (aggregateJobStartedInterval <= 0) {
+            aggregateJobStartedInterval = DEFAULT_AGGREGATION_TIME;
         }
     }
 
@@ -177,5 +188,27 @@ public class PluginConfig implements GerritWorkersConfig {
      */
     public void setReplicationCacheExpirationInMinutes(int replicationCacheExpirationInMinutes) {
         this.replicationCacheExpirationInMinutes = replicationCacheExpirationInMinutes;
+    }
+
+    /**
+     * Aggregate job started messages for some interval.
+     * I.e. setting this value to 2 means
+     * "wait first 2 minutes and send all notification only if 2 minutes passed or lst build had started already"
+     *
+     * @param aggregateJobStartedInterval time to wait builds before sending start messages
+     */
+    public void setAggregateJobStartedInterval(Integer aggregateJobStartedInterval) {
+        this.aggregateJobStartedInterval = aggregateJobStartedInterval;
+    }
+
+    /**
+     * Aggregate job started messages for some interval.
+     * I.e. "10" means
+     * "first wait 10 seconds and send all notification only if 10 seconds passed or lst build had started already"
+     *
+     * @return aggregation interval
+     */
+    public int getAggregateJobStartedInterval() {
+        return aggregateJobStartedInterval;
     }
 }

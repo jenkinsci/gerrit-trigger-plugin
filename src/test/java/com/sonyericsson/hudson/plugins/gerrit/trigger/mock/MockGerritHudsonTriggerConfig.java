@@ -49,24 +49,33 @@ import org.apache.http.auth.Credentials;
  */
 public class MockGerritHudsonTriggerConfig implements
         IGerritHudsonTriggerConfig {
+    private String cmdBuildStartedCommand = "CHANGE=<CHANGE>"
+            + " CHANGE_ID=<CHANGE_ID>"
+            + " PATCHSET=<PATCHSET>"
+            + " VERIFIED=<VERIFIED>"
+            + " CODEREVIEW=<CODE_REVIEW>"
+            + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+            + " REFSPEC=<REFSPEC> MSG=I started a build."
+            + " BUILDURL=<BUILDURL>"
+            + " STARTED_STATS=<STARTED_STATS>"
+            + " ENV_BRANCH=$BRANCH"
+            + " ENV_CHANGE=$CHANGE"
+            + " ENV_PATCHSET=$PATCHSET"
+            + " ENV_REFSPEC=$REFSPEC"
+            + " ENV_CHANGEURL=$CHANGE_URL"
+            + " Message\nwith newline";
 
     @Override
     public String getGerritCmdBuildStarted() {
-        return "CHANGE=<CHANGE>"
-                + " CHANGE_ID=<CHANGE_ID>"
-                + " PATCHSET=<PATCHSET>"
-                + " VERIFIED=<VERIFIED>"
-                + " CODEREVIEW=<CODE_REVIEW>"
-                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
-                + " REFSPEC=<REFSPEC> MSG=I started a build."
-                + " BUILDURL=<BUILDURL>"
-                + " STARTED_STATS=<STARTED_STATS>"
-                + " ENV_BRANCH=$BRANCH"
-                + " ENV_CHANGE=$CHANGE"
-                + " ENV_PATCHSET=$PATCHSET"
-                + " ENV_REFSPEC=$REFSPEC"
-                + " ENV_CHANGEURL=$CHANGE_URL"
-                + " Message\nwith newline";
+        return cmdBuildStartedCommand;
+    }
+
+    /**
+     * Set value.
+     * @param command value to set.
+     */
+    public void setGerritCmdBuildStarted(String command) {
+        cmdBuildStartedCommand = command;
     }
 
     @Override

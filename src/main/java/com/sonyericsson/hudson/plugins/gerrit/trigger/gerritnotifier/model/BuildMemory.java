@@ -171,7 +171,7 @@ public class BuildMemory {
             pb = new MemoryImprint(event);
             memory.put(event, pb);
         }
-        pb.set(build.getParent(), build, true);
+        pb.set(build.getParent(), build, true, false);
     }
 
     /**
@@ -226,7 +226,7 @@ public class BuildMemory {
             if (otherBuilds != null) {
                 //It is a new memory so it wasn't building, let's populate with old build info
                 for (Run build : otherBuilds) {
-                    pb.set(build.getParent(), build, !build.isBuilding());
+                    pb.set(build.getParent(), build, !build.isBuilding(), true);
                 }
             }
         }
@@ -569,6 +569,7 @@ public class BuildMemory {
             } else {
                 entry.setBuild(null);
                 entry.setBuildCompleted(false);
+                entry.setNotified(false);
             }
         }
 
@@ -578,18 +579,21 @@ public class BuildMemory {
          * @param project        the project
          * @param build          the build
          * @param buildCompleted if the build is finished.
+         * @param buildWasNotified if the notification for build was sent.
          */
-        private synchronized void set(Job project, Run build, boolean buildCompleted) {
+        private synchronized void set(Job project, Run build, boolean buildCompleted, boolean buildWasNotified) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
-                entry.setBuildCompleted(buildCompleted);
                 list.add(entry);
             } else {
                 if (entry.getBuild() == null) {
                     entry.setBuild(build);
                 }
-                entry.setBuildCompleted(buildCompleted);
+            }
+            entry.setBuildCompleted(buildCompleted);
+            if (buildWasNotified) {
+                entry.setNotified(true);
             }
         }
 
@@ -644,6 +648,7 @@ public class BuildMemory {
                         str.append("XX: NULL");
                     }
                     str.append("] Completed: ").append(entry.isBuildCompleted());
+                    str.append(" Notified: ").append(entry.isNotified());
                 } else {
                     str.append("  Project/Build: MISSING PROJECT!");
                 }
@@ -827,7 +832,7 @@ public class BuildMemory {
          */
         public static class Entry implements Cloneable {
 
-            private String project;
+            private final String project;
             private String build;
             private boolean buildCompleted;
             private boolean cancelled;
@@ -836,6 +841,7 @@ public class BuildMemory {
             private final long triggeredTimestamp;
             private Long completedTimestamp = null;
             private Long startedTimestamp = null;
+            private boolean notified;
 
             /**
              * Constructor.
@@ -848,7 +854,8 @@ public class BuildMemory {
                 this.build = build.getId();
                 this.startedTimestamp = System.currentTimeMillis();
                 this.triggeredTimestamp = System.currentTimeMillis();
-                buildCompleted = false;
+                this.buildCompleted = false;
+                this.notified = false;
             }
 
             /**
@@ -858,9 +865,10 @@ public class BuildMemory {
              */
             private Entry(Job project) {
                 this.project = project.getFullName();
-                buildCompleted = false;
                 cancelled = false;
                 this.triggeredTimestamp = System.currentTimeMillis();
+                this.buildCompleted = false;
+                this.notified = false;
             }
 
             /**
@@ -879,11 +887,30 @@ public class BuildMemory {
                 this.startedTimestamp = copy.startedTimestamp;
                 this.customUrl = copy.customUrl;
                 this.cancelled = copy.cancelled;
+                this.notified = false;
             }
 
             @Override
             public Entry clone() {
                 return new Entry(this);
+            }
+
+            /**
+             * If the notification was sent.
+             *
+             * @return true if the notification was sent.
+             */
+            public synchronized boolean isNotified() {
+                return notified;
+            }
+
+            /**
+             * If the notification was sent.
+             *
+             * @param notified true if the notification was sent.
+             */
+            public synchronized void setNotified(boolean notified) {
+                this.notified = notified;
             }
 
             /**

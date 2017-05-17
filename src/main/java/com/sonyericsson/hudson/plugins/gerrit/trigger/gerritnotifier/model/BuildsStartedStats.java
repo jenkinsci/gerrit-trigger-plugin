@@ -32,9 +32,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildsStartedStats {
-    private GerritTriggeredEvent event;
-    private int totalBuildsToStart;
-    private int startedBuilds;
+    private final GerritTriggeredEvent event;
+    private final int totalBuildsToStart;
+    private final int startedBuilds;
 
     /**
      * The Constructor.
@@ -57,27 +57,11 @@ public class BuildsStartedStats {
     }
 
     /**
-     * The event that started the build(s).
-     * @param event the event that started the build(s).
-     */
-    public void setEvent(GerritTriggeredEvent event) {
-        this.event = event;
-    }
-
-    /**
      * The amount of builds that have been started so far.
      * @return the amount of builds that have been started so far.
      */
     public int getStartedBuilds() {
         return startedBuilds;
-    }
-
-    /**
-     * The amount of builds that have been started so far.
-     * @param startedBuilds the amount of builds that have been started so far.
-     */
-    void setStartedBuilds(int startedBuilds) {
-        this.startedBuilds = startedBuilds;
     }
 
     /**
@@ -88,20 +72,28 @@ public class BuildsStartedStats {
         return totalBuildsToStart;
     }
 
-    /**
-     * The total amount of builds that have been triggered.
-     * @param totalBuildsToStart the total amount of builds that have been triggered.
-     */
-    void setTotalBuildsToStart(int totalBuildsToStart) {
-        this.totalBuildsToStart = totalBuildsToStart;
-    }
-
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("(");
-        str.append(getStartedBuilds()).append("/").append(getTotalBuildsToStart()).append(")");
-        return str.toString();
+        return getStats(0);
     }
 
+    /**
+     * Returns build started stats with the offset.
+     *
+     * @param offset the number of builds should off set
+     * @return the string with build started stats with the offset
+     */
+    public String stringWithOffset(int offset) {
+        return getStats(offset);
+    }
 
+    /**
+     * Returns build started stats with the offset.
+     *
+     * @param offset the number of builds should off set
+     * @return the string with build started stats with the offset
+     */
+    private String getStats(int offset) {
+        return "(" + (startedBuilds  - offset) + "/" + getTotalBuildsToStart() + ")";
+    }
 }
