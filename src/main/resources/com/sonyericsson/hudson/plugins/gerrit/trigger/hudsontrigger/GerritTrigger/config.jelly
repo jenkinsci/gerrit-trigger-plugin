@@ -159,27 +159,27 @@
                 <f:entry title="${%Build Start Message}"
                          field="buildStartMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildStartMessage.html">
-                   <f:textbox/>
+                   <f:textarea/>
                 </f:entry>
                 <f:entry title="${%Build Successful Message}"
                          field="buildSuccessfulMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildSuccessfulMessage.html">
-                   <f:textbox/>
+                   <f:textarea/>
                 </f:entry>
                 <f:entry title="${%Build Unstable Message}"
                          field="buildUnstableMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildUnstableMessage.html">
-                   <f:textbox/>
+                   <f:textarea/>
                 </f:entry>
                 <f:entry title="${%Build Failure Message}"
                          field="buildFailureMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildFailureMessage.html">
-                   <f:textbox/>
+                   <f:textarea/>
                 </f:entry>
                 <f:entry title="${%Build Not Built Message}"
                          field="buildNotBuiltMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
-                   <f:textbox/>
+                   <f:textarea/>
                 </f:entry>
                 <j:if test="${descriptor.isUnsuccessfulMessageFileSupported(it)}">
                     <f:entry title="${%Unsuccessful Message File}"

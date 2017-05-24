@@ -182,31 +182,31 @@
                     <f:section title="${%Gerrit Verified Commands}">
                         <f:entry title="${%Started}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildStarted.html">
-                            <f:textbox name="gerritVerifiedCmdBuildStarted"
+                            <f:textarea name="gerritVerifiedCmdBuildStarted"
                                        value="${it.config.gerritCmdBuildStarted}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started &lt;BUILDURL&gt; &lt;STARTED_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Successful}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildSuccessful.html">
-                            <f:textbox name="gerritVerifiedCmdBuildSuccessful"
+                            <f:textarea name="gerritVerifiedCmdBuildSuccessful"
                                        value="${it.config.gerritCmdBuildSuccessful}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Failed}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildFailed.html">
-                            <f:textbox name="gerritVerifiedCmdBuildFailed"
+                            <f:textarea name="gerritVerifiedCmdBuildFailed"
                                        value="${it.config.gerritCmdBuildFailed}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Unstable}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildUnstable.html">
-                            <f:textbox name="gerritVerifiedCmdBuildUnstable"
+                            <f:textarea name="gerritVerifiedCmdBuildUnstable"
                                        value="${it.config.gerritCmdBuildUnstable}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                         <f:entry title="${%Not Built}"
                                  help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildNotBuilt.html">
-                            <f:textbox name="gerritVerifiedCmdBuildNotBuilt"
+                            <f:textarea name="gerritVerifiedCmdBuildNotBuilt"
                                        value="${it.config.gerritCmdBuildNotBuilt}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'No Builds Executed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>

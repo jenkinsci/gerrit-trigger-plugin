@@ -135,6 +135,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
         assertTrue("Missing CUSTOM_MESSAGE", result.indexOf("CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
+        assertTrue("Newlines are stripped", result.indexOf("Message\nwith newline") >= 0);
     }
 
     /**
