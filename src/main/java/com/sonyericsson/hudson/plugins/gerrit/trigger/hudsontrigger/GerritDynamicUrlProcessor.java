@@ -180,7 +180,7 @@ public final class GerritDynamicUrlProcessor {
         char operChar = oper.charAt(0);
         CompareType type = CompareType.findByOperator(operChar);
 
-        logger.trace("==> item:({0}) oper:({1}) text:({2})", new Object[]{item, oper, text});
+        logger.trace("==> item:({}) oper:({}) text:({})", new Object[]{item, oper, text});
 
         if (SHORTNAME_PROJECT.equals(item)) { // Project
           // stash previous project to the list
