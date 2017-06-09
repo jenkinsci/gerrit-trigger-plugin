@@ -550,7 +550,11 @@ public class GerritTrigger extends Trigger<Job> {
      */
     public void cancelTimer() {
         if (gerritTriggerTimerTask != null) {
-            logger.trace("GerritTrigger.cancelTimer(): {0}", job.getName());
+            String name = "N/A";
+            if (job != null) {
+                name = job.getName();
+            }
+            logger.trace("GerritTrigger.cancelTimer(): {}", name);
             gerritTriggerTimerTask.cancel();
             gerritTriggerTimerTask = null;
         }
