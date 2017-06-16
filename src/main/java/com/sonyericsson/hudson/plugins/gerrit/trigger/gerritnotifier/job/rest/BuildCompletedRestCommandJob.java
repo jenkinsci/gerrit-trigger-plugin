@@ -116,7 +116,8 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                 }
             }
 
-            return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel);
+            return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel)
+                .setTag(Constants.TAG_VALUE);
         } finally {
             SecurityContextHolder.setContext(old);
         }

@@ -78,7 +78,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
         if (trigger != null) {
             notificationLevel = parameterExpander.getNotificationLevel(trigger);
         }
-        return new ReviewInput(message).setNotify(notificationLevel);
+        return new ReviewInput(message).setNotify(notificationLevel).setTag(Constants.TAG_VALUE);
     }
 
 }
