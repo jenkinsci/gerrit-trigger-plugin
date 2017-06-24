@@ -104,6 +104,15 @@ public class FilePath extends AbstractDescribableImpl<FilePath> {
     }
 
     /**
+     * Tells if the given file is matched by this rule.
+     * @param file the file path to match against.
+     * @return true if the file matches.
+     */
+    public boolean isInterestingFile(String file) {
+        return compareType.matches(pattern, file);
+    }
+
+    /**
      * The Descriptor for the FilePath.
      */
     @Extension
