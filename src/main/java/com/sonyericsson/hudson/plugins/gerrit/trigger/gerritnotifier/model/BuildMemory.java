@@ -24,24 +24,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+import hudson.model.Result;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
-import hudson.model.Result;
 import hudson.model.Run;
-import jenkins.model.Jenkins;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -50,7 +39,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
+import jenkins.model.Jenkins;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
@@ -234,6 +237,23 @@ public class BuildMemory {
     }
 
     /**
+     * Sets the status if a project to completed when queue is cancelled.
+     *
+     * @param event       the event to be retriggered.
+     * @param project     the project that has been retriggered.
+     */
+    public synchronized void cancelled(GerritTriggeredEvent event, Job project) {
+        MemoryImprint pb = memory.get(event);
+        if (pb == null) {
+            //Shoudn't happen but just in case, keep the memory.
+            pb = new MemoryImprint(event);
+            memory.put(event, pb);
+        }
+        pb.set(project, true);
+    }
+
+
+    /**
      * Removes the memory for the event.
      *
      * @param event the event.
@@ -344,11 +364,7 @@ public class BuildMemory {
         } else {
             for (Entry entry : pb.getEntries()) {
                 if (entry.isProject(project)) {
-                    if (entry.getBuild() != null) {
-                        return !entry.isBuildCompleted();
-                    } else {
-                        return true;
-                    }
+                    return !entry.isBuildCompleted();
                 }
             }
             return false;
@@ -567,6 +583,23 @@ public class BuildMemory {
                 if (entry.getBuild() == null) {
                     entry.setBuild(build);
                 }
+                entry.setBuildCompleted(buildCompleted);
+            }
+        }
+
+        /**
+         * Sets all the values of an entry and adds it if the project has not been added before.
+         *
+         * @param project        the project
+         * @param buildCompleted if the build is finished.
+         */
+        private synchronized void set(Job project, boolean buildCompleted) {
+            Entry entry = getEntry(project);
+            if (entry == null) {
+                entry = new Entry(project);
+                entry.setBuildCompleted(buildCompleted);
+                list.add(entry);
+            } else {
                 entry.setBuildCompleted(buildCompleted);
             }
         }

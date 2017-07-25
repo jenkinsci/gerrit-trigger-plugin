@@ -24,27 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Job;
-import hudson.model.Result;
-import hudson.triggers.Trigger;
-import hudson.triggers.TriggerDescriptor;
-import jenkins.model.Jenkins;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.util.Collections;
-import java.util.HashMap;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -56,6 +35,29 @@ import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import hudson.model.Result;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.triggers.Trigger;
+import hudson.triggers.TriggerDescriptor;
+
+import java.util.Collections;
+import java.util.HashMap;
+
+import jenkins.model.Jenkins;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 //CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: test-data.
 
@@ -309,6 +311,20 @@ public class BuildMemoryTest {
 
         BuildMemory instance = new BuildMemory();
         instance.completed(event, build);
+        assertTrue(instance.isAllBuildsCompleted(event));
+    }
+
+
+    /**
+     * test.
+     */
+    @Test
+    public void testCancelled() {
+        System.out.println("cancelled");
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        BuildMemory instance = new BuildMemory();
+        instance.cancelled(event, project);
         assertTrue(instance.isAllBuildsCompleted(event));
     }
 
