@@ -364,7 +364,11 @@ public class BuildMemory {
         } else {
             for (Entry entry : pb.getEntries()) {
                 if (entry.isProject(project)) {
-                    return !entry.isBuildCompleted();
+                    if (entry.getBuild() != null) {
+                        return !entry.isBuildCompleted();
+                    } else {
+                        return !entry.isCancelled();
+                    }
                 }
             }
             return false;
