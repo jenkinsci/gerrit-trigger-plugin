@@ -1,1 +1,16 @@
-Insert all jobs on which this job depends. If a commit should trigger both a dependency and this job, the dependency will be built first. Use commas to separate job names. Beware of cyclic dependencies.
+<div>
+Insert all jobs on which this job depends.
+If a commit should trigger both a dependency and this job, the dependency will be built first.
+Use commas to separate job names. Beware of cyclic dependencies.
+
+With this option enabled the parent builds are available as Env variables for the build<br/>
+<ul>
+    <li><b>DEP_KEYS</b>="Space separated list of all key names of triggered parent projects"</li>
+    <li><b>DEP_&lt;project name&gt;_BUILD_NAME</b>="The build name of triggered project"</li>
+    <li><b>DEP_&lt;project name&gt;_BUILD_NUMBER</b>="The build number of triggered project"</li>
+    <li><b>DEP_&lt;project name&gt;_BUILD_RESULT</b>="The build result of triggered project"</li>
+</ul>
+The project key name is produced from full project name using simple regular expression:
+    <b>replaceAll("[^a-zA-Z0-9]+", "_")</b>.
+So, all non-alphanumerical characters will be replaced by "_".
+</div>

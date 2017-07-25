@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.same;
@@ -35,12 +36,16 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import hudson.ExtensionList;
-import hudson.model.Action;
 import hudson.model.AbstractProject;
+import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Item;
+import hudson.model.ItemGroup;
+import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Queue.WaitingItem;
+import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
@@ -60,6 +65,7 @@ import jenkins.model.TransientActionFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -230,6 +236,35 @@ public class DependencyQueueTaskDispatcherTest {
     }
 
     /**
+     * Test that child job contains the list of builds it depends on as a StringParameters.
+     */
+    @Test
+    public void unblockedItemContainsParamsFromDependencies() {
+        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
+                "refs/changes/1/1/1");
+
+        Queue.Item item = createItem(patchsetCreated, "upstream");
+        dispatcher.onDoneTriggeringAll(patchsetCreated);
+
+        List<Run> runs = new ArrayList<Run>();
+        Run run = Mockito.mock(Run.class);
+        runs.add(run);
+        when(run.getResult()).thenReturn(Result.SUCCESS);
+        when(run.getNumber()).thenReturn(1);
+        when(run.getParent()).thenReturn(abstractProjectDependencyMock);
+
+        doReturn(runs).when(toGerritRunListenerMock).getRuns(patchsetCreated);
+        dispatcher.canRun(item);
+
+        ParametersAction parameters = item.getAction(ParametersAction.class);
+        assertNotNull(parameters);
+        assertEquals(parameters.getParameter("DEP_upstream_BUILD_NAME").getValue(), "upstream");
+        assertEquals(parameters.getParameter("DEP_upstream_BUILD_NUMBER").getValue(), "1");
+        assertEquals(parameters.getParameter("DEP_upstream_BUILD_RESULT").getValue(), "SUCCESS");
+        assertEquals(parameters.getParameter("DEP_KEYS").getValue(), "upstream");
+    }
+
+    /**
      * Test that it should not block a project whose dependencies are all built.
      */
     @Test
@@ -307,6 +342,12 @@ public class DependencyQueueTaskDispatcherTest {
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         when(gerritTriggerMock.getDependencyJobsNames()).thenReturn(dependency);
         when(jenkinsMock.getItem(eq("upstream"), any(Item.class), Item.class)).thenReturn(abstractProjectDependencyMock);
+
+        ItemGroup abstractProjectDependencyMockParent = mock(ItemGroup.class);
+        when(abstractProjectDependencyMockParent.getFullName()).thenReturn("");
+        when(abstractProjectDependencyMock.getParent()).thenReturn(abstractProjectDependencyMockParent);
+        when(abstractProjectDependencyMock.getName()).thenReturn("upstream");
+
         WaitingItem waitingItem = PowerMockito.spy(new WaitingItem(Calendar.getInstance(),
                 abstractProjectMock, actions));
         when(waitingItem.getInQueueSince()).thenReturn(System.currentTimeMillis()
