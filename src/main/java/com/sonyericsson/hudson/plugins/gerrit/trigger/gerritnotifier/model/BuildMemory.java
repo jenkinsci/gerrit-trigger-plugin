@@ -24,13 +24,24 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
-import hudson.model.Result;
+import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
+import hudson.model.Result;
 import hudson.model.Run;
+import jenkins.model.Jenkins;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -39,21 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
-import jenkins.model.Jenkins;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.

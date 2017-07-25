@@ -23,31 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.ExtensionList;
-import hudson.FilePath;
-import hudson.model.Result;
-import hudson.model.TaskListener;
-import hudson.model.AbstractBuild;
-import hudson.model.Cause;
-import hudson.model.CauseAction;
-import hudson.model.Job;
-import hudson.model.Run;
-import hudson.model.listeners.RunListener;
-
-import java.io.IOException;
-import java.util.List;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import jenkins.model.Jenkins;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
@@ -55,6 +30,33 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
+import hudson.model.Job;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import hudson.model.listeners.RunListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+
+import jenkins.model.Jenkins;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
