@@ -63,7 +63,9 @@ public class GerritQueueListenerTest {
     public JenkinsRule jenkinsRule = new JenkinsRule();
 
     /**
-     * Tests that all builds are completed when Queue item is cancelled.
+     * Tests that event is properly removed if only one project is triggered
+     * which is cancelled while in the queue.
+     *
      * @throws Exception if something goes wrong
      */
     @Test
@@ -85,7 +87,9 @@ public class GerritQueueListenerTest {
     }
 
     /**
-     * Tests that all builds are completed when Queue item is cancelled.
+     * Tests that event is properly removed if only two different projects are triggered
+     * and one of them is cancelled while in the queue.
+     *
      * @throws Exception if something goes wrong
      */
     @Test

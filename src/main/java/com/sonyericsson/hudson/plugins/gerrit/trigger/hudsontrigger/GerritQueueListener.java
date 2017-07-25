@@ -31,7 +31,7 @@ public class GerritQueueListener extends QueueListener {
                     GerritTriggeredEvent event = gerritCause.getEvent();
                     ToGerritRunListener runListener = ToGerritRunListener.getInstance();
                     runListener.setQueueCancelled((Job)item.task, event);
-                    TaskListener taskListener = new LogTaskListener(logger, Level.INFO);
+                    TaskListener taskListener = new LogTaskListener(logger, Level.WARNING);
                     runListener.allBuildsCompleted(event, gerritCause, taskListener);
                 }
             }

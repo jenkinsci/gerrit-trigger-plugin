@@ -52,7 +52,6 @@ import java.util.TreeMap;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
-
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
  *
@@ -845,7 +844,6 @@ public class BuildMemory {
                 this.triggeredTimestamp = System.currentTimeMillis();
                 buildCompleted = false;
             }
-
 
             /**
              * Constructor.
