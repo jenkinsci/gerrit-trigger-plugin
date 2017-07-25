@@ -249,7 +249,10 @@ public class BuildMemory {
             pb = new MemoryImprint(event);
             memory.put(event, pb);
         }
-        pb.set(project, true);
+        pb.set(project);
+        Entry entry = pb.getEntry(project);
+        entry.setCancelled(true);
+        entry.setBuildCompleted(true);
     }
 
 
@@ -588,23 +591,6 @@ public class BuildMemory {
         }
 
         /**
-         * Sets all the values of an entry and adds it if the project has not been added before.
-         *
-         * @param project        the project
-         * @param buildCompleted if the build is finished.
-         */
-        private synchronized void set(Job project, boolean buildCompleted) {
-            Entry entry = getEntry(project);
-            if (entry == null) {
-                entry = new Entry(project);
-                entry.setBuildCompleted(buildCompleted);
-                list.add(entry);
-            } else {
-                entry.setBuildCompleted(buildCompleted);
-            }
-        }
-
-        /**
          * Tells if all builds have a value (not null).
          *
          * @return true if it is so.
@@ -814,6 +800,9 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
+                if (entry.isCancelled()) {
+                    continue;
+                }
                 Run build = entry.getBuild();
                 if (build == null) {
                     return false;
@@ -838,6 +827,7 @@ public class BuildMemory {
             private String project;
             private String build;
             private boolean buildCompleted;
+            private boolean cancelled;
             private String customUrl;
             private String unsuccessfulMessage;
             private final long triggeredTimestamp;
@@ -858,6 +848,7 @@ public class BuildMemory {
                 buildCompleted = false;
             }
 
+
             /**
              * Constructor.
              *
@@ -866,6 +857,7 @@ public class BuildMemory {
             private Entry(Job project) {
                 this.project = project.getFullName();
                 buildCompleted = false;
+                cancelled = false;
                 this.triggeredTimestamp = System.currentTimeMillis();
             }
 
@@ -884,6 +876,7 @@ public class BuildMemory {
                 this.completedTimestamp = copy.completedTimestamp;
                 this.startedTimestamp = copy.startedTimestamp;
                 this.customUrl = copy.customUrl;
+                this.cancelled = copy.cancelled;
             }
 
             @Override
@@ -992,6 +985,23 @@ public class BuildMemory {
                 if (buildCompleted) {
                     this.completedTimestamp = System.currentTimeMillis();
                 }
+            }
+
+            /**
+             * If the build was cancelled.
+             * @return true if the build was cancelled while in the Queue
+             */
+            public boolean isCancelled() {
+                return cancelled;
+            }
+
+            /**
+             * If the build was cancelled before if left the queue.
+             *
+             * @param cancelled true if the build was cancelled while in the queue.
+             */
+            private void setCancelled(boolean cancelled) {
+                this.cancelled = cancelled;
             }
 
             /**

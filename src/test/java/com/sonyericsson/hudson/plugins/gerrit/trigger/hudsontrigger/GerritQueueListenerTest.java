@@ -67,7 +67,29 @@ public class GerritQueueListenerTest {
      * @throws Exception if something goes wrong
      */
     @Test
-    public void testCancelledQueueItem() throws Exception {
+    public void testCancelledQueueItemIsOnlyTriggeredProject() throws Exception {
+        FreeStyleProject project = jenkinsRule.createFreeStyleProject();
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        final GerritCause gerritCause = new GerritCause(event, false);
+
+        ToGerritRunListener runListener = ToGerritRunListener.getInstance();
+        runListener.onTriggered(project, event);
+        project.scheduleBuild2(QUIET_PERIOD, gerritCause);
+
+        Item item = waitForBlockedItem(project, TIMEOUT_SECONDS);
+        Queue queue = jenkinsRule.getInstance().getQueue();
+        queue.doCancelItem(item.getId());
+        assertThat(queue.isEmpty(), equalTo(true));
+        assertThat(project.getBuilds().size(), equalTo(0));
+        assertThat(runListener.isBuilding(event), equalTo(false));
+    }
+
+    /**
+     * Tests that all builds are completed when Queue item is cancelled.
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testCancelledOneQueueItemOfTwo() throws Exception {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject();
         FreeStyleProject project2 = jenkinsRule.createFreeStyleProject();
         PatchsetCreated event = Setup.createPatchsetCreated();
