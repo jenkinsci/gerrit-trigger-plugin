@@ -10,7 +10,8 @@
 <ul>
     <li><strong>Plain:</strong> The exact name in Gerrit, case sensitive equality.</li>
     <li><strong>Path:</strong> ANT style pattern. <i>Ex: &quot;**/base/*&quot;</i></li>
-    <li><strong>RegExp:</strong> Regular expression.</li>
+    <li><strong>RegExp:</strong> Regular expression. The expression should match the whole line, so to use the example
+                with base above, .*\/base\/?.*</li>
 </ul>
 <p>
     Then provide the name of the branch(es) to trigger on. The same "pattern types" are available as above.
