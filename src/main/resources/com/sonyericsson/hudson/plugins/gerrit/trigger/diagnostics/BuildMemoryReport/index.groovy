@@ -90,7 +90,7 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                                 raw('&nbsp;')
                             }
                         }
-                        td(headers: "hCompleted ${eventHeaderId}") {
+                        td(headers: "hCancelled ${eventHeaderId}") {
                             if (entry.cancelled) {
                                 strong(_('Y'))
                             } else {
