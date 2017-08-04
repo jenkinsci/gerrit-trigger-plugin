@@ -312,6 +312,20 @@ public class BuildMemoryTest {
         assertTrue(instance.isAllBuildsCompleted(event));
     }
 
+
+    /**
+     * test.
+     */
+    @Test
+    public void testCancelled() {
+        System.out.println("cancelled");
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        BuildMemory instance = new BuildMemory();
+        instance.cancelled(event, project);
+        assertTrue(instance.isAllBuildsCompleted(event));
+    }
+
     /**
      * test.
      */

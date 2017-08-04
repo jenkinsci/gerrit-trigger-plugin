@@ -53,6 +53,7 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                 th(id: 'hJob', align: "left", _('Job'))
                 th(id: 'hRun', align: "left", _('Run #'))
                 th(id: 'hCompleted', align: "left", _('Completed'))
+                th(id: 'hCancelled', align: "left", _('Cancelled'))
                 th(id: 'hResult', align: "left", _('Result'))
                 th(id: 'hTriggeredTs', align: "left", _('Triggered@'))
                 th(id: 'hStartedTs', align: "left", _('Started@'))
@@ -84,6 +85,13 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                         }
                         td(headers: "hCompleted ${eventHeaderId}") {
                             if (entry.buildCompleted) {
+                                strong(_('Y'))
+                            } else {
+                                raw('&nbsp;')
+                            }
+                        }
+                        td(headers: "hCancelled ${eventHeaderId}") {
+                            if (entry.cancelled) {
                                 strong(_('Y'))
                             } else {
                                 raw('&nbsp;')

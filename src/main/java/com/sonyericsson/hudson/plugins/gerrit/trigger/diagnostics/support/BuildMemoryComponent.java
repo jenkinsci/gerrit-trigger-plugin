@@ -121,6 +121,7 @@ public class BuildMemoryComponent extends Component {
                         out.println(" * Job: " + name);
                         out.println("    - Run: " + number);
                         out.println("    - Completed: " + en.isBuildCompleted());
+                        out.println("    - Cancelled: " + en.isCancelled());
                         out.println("    - Result: " + result);
                         out.println("    - Triggered@ " + tsFormat.format(en.getTriggeredTimestamp()));
                         out.println("    - Started@ " + startedAt);

@@ -402,6 +402,20 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     /**
+     * Sets the memory of the project to buildCompleted. Used when the entry is canceled in the Queue.
+     *
+     * @param project the project
+     * @param event the event
+     */
+    public void setQueueCancelled(Job project, GerritTriggeredEvent event) {
+        if (project == null || event == null) {
+            return;
+        } else {
+            memory.cancelled(event, project);
+        }
+    }
+
+    /**
      * Finds the GerritCause for a build if there is one.
      *
      * @param build the build to look in.
