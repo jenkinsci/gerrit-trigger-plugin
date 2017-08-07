@@ -23,9 +23,9 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -35,13 +35,15 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import hudson.EnvVars;
 import hudson.ExtensionList;
+import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.Result;
@@ -247,21 +249,26 @@ public class DependencyQueueTaskDispatcherTest {
         dispatcher.onDoneTriggeringAll(patchsetCreated);
 
         List<Run> runs = new ArrayList<Run>();
-        Run run = Mockito.mock(Run.class);
-        runs.add(run);
-        when(run.getResult()).thenReturn(Result.SUCCESS);
-        when(run.getNumber()).thenReturn(1);
-        when(run.getParent()).thenReturn(abstractProjectDependencyMock);
+        AbstractBuild build = Mockito.mock(AbstractBuild.class);
+        runs.add(build);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        when(build.getNumber()).thenReturn(1);
+        when(build.getParent()).thenReturn(abstractProjectDependencyMock);
+        EnvVars envVars = Mockito.mock(EnvVars.class);
+        when(envVars.put(anyString(), anyString())).thenReturn("");
 
         doReturn(runs).when(toGerritRunListenerMock).getRuns(patchsetCreated);
         dispatcher.canRun(item);
 
-        ParametersAction parameters = item.getAction(ParametersAction.class);
-        assertNotNull(parameters);
-        assertEquals(parameters.getParameter("DEP_upstream_BUILD_NAME").getValue(), "upstream");
-        assertEquals(parameters.getParameter("DEP_upstream_BUILD_NUMBER").getValue(), "1");
-        assertEquals(parameters.getParameter("DEP_upstream_BUILD_RESULT").getValue(), "SUCCESS");
-        assertEquals(parameters.getParameter("DEP_KEYS").getValue(), "upstream");
+        GerritDependencyAction dependencyAction = item.getAction(GerritDependencyAction.class);
+        assertNotNull(dependencyAction);
+
+        dependencyAction.buildEnvVars(build, envVars);
+
+        verify(envVars).put("DEP_upstream_BUILD_NAME", "upstream");
+        verify(envVars).put("DEP_upstream_BUILD_NUMBER", "1");
+        verify(envVars).put("DEP_upstream_BUILD_RESULT", "SUCCESS");
+        verify(envVars).put("DEP_KEYS", "upstream");
     }
 
     /**

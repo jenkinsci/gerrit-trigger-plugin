@@ -28,11 +28,8 @@ import hudson.ExtensionList;
 import hudson.model.Cause;
 import hudson.model.Item;
 import hudson.model.Job;
-import hudson.model.ParameterValue;
-import hudson.model.ParametersAction;
 import hudson.model.Queue;
 import hudson.model.Run;
-import hudson.model.StringParameterValue;
 import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 import jenkins.model.Jenkins;
@@ -194,32 +191,14 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
             ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
             if (toGerritRunListener != null) {
-                List<ParameterValue> parameters = new ArrayList<ParameterValue>();
-                StringBuilder actualDependencies = new StringBuilder();
+                List<Run> actualDependencies = new ArrayList<Run>(dependencies.size());
                 for (Run run : toGerritRunListener.getRuns(event)) {
                     if (dependencies.contains(run.getParent())) {
-                        String originalName = run.getParent().getFullName();
-                        String keyName = originalName.replaceAll("[^a-zA-Z0-9]+", "_");
-                        String prefix = "DEP_" + keyName;
-                        String number = String.valueOf(run.getNumber());
-                        String result = run.getResult().toString();
-                        parameters.add(new StringParameterValue(prefix + "_BUILD_NAME", originalName));
-                        parameters.add(new StringParameterValue(prefix + "_BUILD_NUMBER", number));
-                        parameters.add(new StringParameterValue(prefix + "_BUILD_RESULT", result));
-
-                        actualDependencies.append(keyName);
-                        actualDependencies.append(" ");
+                        actualDependencies.add(run);
                     }
                 }
 
-                parameters.add(new StringParameterValue("DEP_KEYS", actualDependencies.toString().trim()));
-                ParametersAction parametersAction = item.getAction(ParametersAction.class);
-                if (parametersAction != null) {
-                    parameters.addAll(parametersAction.getParameters());
-                    item.replaceAction(new ParametersAction(parameters));
-                } else {
-                    item.addAction(new ParametersAction(parameters));
-                }
+                item.addAction(new GerritDependencyAction(actualDependencies));
             }
 
             return null;
