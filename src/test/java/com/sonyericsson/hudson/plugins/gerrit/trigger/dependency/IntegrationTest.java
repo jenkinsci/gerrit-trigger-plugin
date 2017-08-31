@@ -13,7 +13,10 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.FreeStyleProject;
+import hudson.model.Job;
 import hudson.tasks.Shell;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -76,13 +79,46 @@ public class IntegrationTest {
         jenkinsRule.assertBuildStatusSuccess(child.getLastCompletedBuild());
     }
 
+    /***
+     * asdfasdf.
+     * @throws Exception if so.
+     */
+    @Test
+    public void testChildWorkflowBuildSeeParametersOfParentJob() throws Exception {
+        String gerritServerName = "";
+        GerritServer gerritServer = createMockGerritServer(gerritServerName);
+        PluginImpl.getInstance().addServer(gerritServer);
+
+        ChangeBasedEvent gerritEvent = createMockChangeBasedEvent(gerritServerName);
+        List<GerritProject> projectList = createMockGerritProjectList();
+        List<PluginGerritEvent> triggerOnEvents = createMockPluginGerritEventList();
+
+        GerritTrigger parentTrigger = new GerritTrigger(projectList);
+        WorkflowJob parent = createWJobWithGerritTrigger("parent", parentTrigger, triggerOnEvents);
+        parent.setDefinition(new CpsFlowDefinition("node { echo '1' } "));
+
+        GerritTrigger childTrigger = new GerritTrigger(projectList);
+        childTrigger.setDependencyJobsNames(parent.getName());
+        WorkflowJob child = createWJobWithGerritTrigger("child", childTrigger, triggerOnEvents);
+        child.setDefinition(new CpsFlowDefinition("node { "
+                + "sh \"test \'${env.DEP_parent_BUILD_NAME}\' == \'parent\'\" }"));
+
+        PluginImpl.getInstance().getHandler().notifyListeners(gerritEvent);
+
+        waitCompletedBuild(parent, TIMEOUT);
+        waitCompletedBuild(child, TIMEOUT);
+
+        jenkinsRule.assertBuildStatusSuccess(parent.getLastCompletedBuild());
+        jenkinsRule.assertBuildStatusSuccess(child.getLastCompletedBuild());
+    }
+
     /**
      * Wait for the first completed build of specified project.
      * @param project the instance of project
      * @param timeout timeout in seconds
      * @throws InterruptedException throw if so
      */
-    private void waitCompletedBuild(FreeStyleProject project, int timeout) throws InterruptedException {
+    private void waitCompletedBuild(Job<?, ?> project, int timeout) throws InterruptedException {
         long timeStarted = System.currentTimeMillis();
         long timeoutMs = TimeUnit.SECONDS.toMillis(timeout);
 
@@ -105,6 +141,26 @@ public class IntegrationTest {
                                                         GerritTrigger trigger,
                                                         List<PluginGerritEvent> triggerOnEvents) throws IOException {
         FreeStyleProject project = jenkinsRule.createFreeStyleProject(name);
+        project.addTrigger(trigger);
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        trigger.start(project, true);
+        return project;
+    }
+
+    /**
+     * Creates Workflow with specified Gerrit Trigger
+     * and configure it to be triggered on provided list of events.
+     *
+     * @param name the project name
+     * @param trigger the trigger to attach
+     * @param triggerOnEvents the list of event to be triggered on
+     * @return configured project
+     * @throws IOException in case of failure during project creation
+     */
+    private WorkflowJob createWJobWithGerritTrigger(String name,
+                                                        GerritTrigger trigger,
+                                                        List<PluginGerritEvent> triggerOnEvents) throws IOException {
+        WorkflowJob project = jenkinsRule.jenkins.createProject(WorkflowJob.class, name);
         project.addTrigger(trigger);
         trigger.setTriggerOnEvents(triggerOnEvents);
         trigger.start(project, true);

@@ -6,6 +6,7 @@ import hudson.model.EnvironmentContributingAction;
 import hudson.model.InvisibleAction;
 import hudson.model.Run;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,19 +14,41 @@ import java.util.List;
  * Adds Action that stores the data about dependency jobs.
  */
 public class GerritDependencyAction extends InvisibleAction implements EnvironmentContributingAction {
-    private List<Run> runs = Collections.emptyList();
+    private List<String> runs = Collections.emptyList();
 
     /**
      * @param runs list of runs it depend on
      */
     public GerritDependencyAction(List<Run> runs) {
-        this.runs = runs;
+        this.runs = new ArrayList<String>(runs.size());
+        for (Run run : runs) {
+            this.runs.add(run.getExternalizableId());
+        }
+    }
+
+    @Override
+    public void buildEnvironment(Run run, EnvVars env) {
+        fillEnv(env);
     }
 
     @Override
     public void buildEnvVars(AbstractBuild<?, ?> build, EnvVars env) {
+        fillEnv(env);
+    }
+
+    /**
+     * asdfasdfasdf.
+     * @param env asdfasdf
+     */
+    private void fillEnv(EnvVars env) {
         final StringBuilder depKeys = new StringBuilder();
-        for (Run run : runs) {
+        for (String externalizableId : runs) {
+            Run run = Run.fromExternalizableId(externalizableId);
+
+            if (run == null) {
+                continue;
+            }
+
             String originalName = run.getParent().getFullName();
             String keyName = originalName.replaceAll("[^a-zA-Z0-9]+", "_");
             String prefix = "DEP_" + keyName;

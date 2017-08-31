@@ -113,6 +113,7 @@ import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
 
+import jenkins.model.ParameterizedJobMixIn;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -534,12 +535,13 @@ public class GerritTrigger extends Trigger<Job> {
 
         if (project instanceof ParameterizedJob) {
             // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
-            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
-            for (Trigger p : parameterizedJob.getTriggers().values()) {
-                if (GerritTrigger.class.isInstance(p)) {
-                    return GerritTrigger.class.cast(p);
-                }
-            }
+            return ParameterizedJobMixIn.getTrigger(project, GerritTrigger.class);
+//            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
+//            for (Trigger p : parameterizedJob.getTriggers().values()) {
+//                if (GerritTrigger.class.isInstance(p)) {
+//                    return GerritTrigger.class.cast(p);
+//                }
+//            }
         }
 
         return null;

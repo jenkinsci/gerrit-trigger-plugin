@@ -19,7 +19,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
