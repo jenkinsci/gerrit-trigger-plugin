@@ -34,11 +34,12 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
@@ -77,6 +78,22 @@ public enum GerritTriggerParameters {
      * Parameter name for the topic.
      */
     GERRIT_TOPIC,
+    /**
+     * Parameter name for the old topic (in case of topic was changed).
+     */
+    GERRIT_OLD_TOPIC,
+    /**
+     * The name and email of the changer of the topic.
+     */
+    GERRIT_TOPIC_CHANGER,
+    /**
+     * The name of the changer of the topic.
+     */
+    GERRIT_TOPIC_CHANGER_NAME,
+    /**
+     * The email of the changer of the topic.
+     */
+    GERRIT_TOPIC_CHANGER_EMAIL,
     /**
      * Parameter name for the change-id.
      */
@@ -423,6 +440,18 @@ public enum GerritTriggerParameters {
                         parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+            }
+            if (event instanceof TopicChanged) {
+                GERRIT_OLD_TOPIC.setOrCreateStringParameterValue(parameters,
+                        ((TopicChanged)event).getOldTopic(),
+                        escapeQuotes);
+                nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_TOPIC_CHANGER, parameters,
+                        getNameAndEmail(((TopicChanged)event).getChanger()),
+                        ParameterMode.PlainMode.STRING, escapeQuotes);
+                GERRIT_TOPIC_CHANGER_NAME.setOrCreateStringParameterValue(
+                        parameters, getName(((TopicChanged)event).getChanger()), escapeQuotes);
+                GERRIT_TOPIC_CHANGER_EMAIL.setOrCreateStringParameterValue(
+                        parameters, getEmail(((TopicChanged)event).getChanger()), escapeQuotes);
             }
             if (event instanceof ChangeMerged) {
                 GERRIT_NEWREV.setOrCreateStringParameterValue(
