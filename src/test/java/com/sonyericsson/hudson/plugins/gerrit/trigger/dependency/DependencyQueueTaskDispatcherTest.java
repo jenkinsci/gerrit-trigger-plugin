@@ -219,12 +219,14 @@ public class DependencyQueueTaskDispatcherTest {
         dispatcher.onDoneTriggeringAll(patchsetCreated);
         //Setting the dependency as "triggered but not built"
         doReturn(true).when(toGerritRunListenerMock).
-            isProjectTriggeredAndIncomplete(abstractProjectDependencyMock, patchsetCreated);
+                isBuilding(abstractProjectDependencyMock, patchsetCreated);
+        doReturn(true).when(toGerritRunListenerMock).
+                isTriggered(abstractProjectDependencyMock, patchsetCreated);
         cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
         //Setting the dependency as "triggered and built"
         doReturn(false).when(toGerritRunListenerMock).
-            isProjectTriggeredAndIncomplete(abstractProjectDependencyMock, patchsetCreated);
+                isBuilding(abstractProjectDependencyMock, patchsetCreated);
         cause = dispatcher.canRun(item);
         assertNull("Build should not be blocked", cause);
     }
@@ -263,12 +265,14 @@ public class DependencyQueueTaskDispatcherTest {
         verify(manualPatchsetCreated, times(1)).removeListener(dispatcher);
         //Setting the dependency as "triggered but not built"
         doReturn(true).when(toGerritRunListenerMock).
-            isProjectTriggeredAndIncomplete(abstractProjectDependencyMock, manualPatchsetCreated);
+                isTriggered(abstractProjectDependencyMock, manualPatchsetCreated);
+        doReturn(true).when(toGerritRunListenerMock).
+                isBuilding(abstractProjectDependencyMock, manualPatchsetCreated);
         cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
         //Setting the dependency as "triggered and built"
         doReturn(false).when(toGerritRunListenerMock).
-            isProjectTriggeredAndIncomplete(abstractProjectDependencyMock, manualPatchsetCreated);
+                isBuilding(abstractProjectDependencyMock, manualPatchsetCreated);
         cause = dispatcher.canRun(item);
         assertNull("Build should not be blocked", cause);
     }
