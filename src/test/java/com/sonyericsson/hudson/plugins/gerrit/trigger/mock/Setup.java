@@ -29,14 +29,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.RefUpdate;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -51,6 +43,15 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -274,6 +275,35 @@ public final class Setup {
         event.setPatchset(patch);
         Account abandoner = new Account("Name1", "email@domain1.com");
         event.setAbandoner(abandoner);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
+        return event;
+    }
+
+    /**
+     * Gives you a TopicChanged mock.
+     * @return TopicChanged mock.
+     */
+    public static TopicChanged createTopicChanged() {
+        TopicChanged event = new TopicChanged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account("Name", "email@domain.com");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        change.setTopic("new-topic");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        Account changer = new Account("Name1", "email@domain1.com");
+        event.setOldTopic("old-topic");
+        event.setChanger(changer);
         event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         event.setEventCreatedOn("1418133772");
         return event;

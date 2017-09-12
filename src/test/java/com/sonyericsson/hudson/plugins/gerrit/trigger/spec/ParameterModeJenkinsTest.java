@@ -13,6 +13,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeRestoredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
@@ -21,6 +22,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import hudson.EnvVars;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -163,6 +165,35 @@ public class ParameterModeJenkinsTest {
         for (GerritTriggerParameters param : params) {
             j.assertLogContains(param.name() + "=" + expected, build);
         }
+    }
+
+    /**
+     * Tests the default {@link GerritTriggerParameters.ParameterMode#PLAIN}
+     * when the build is triggered by a {@link TopicChanged} event.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testNameAndEmailParameterModeDefaultTopicChanged() throws Exception {
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
+        trigger.getTriggerOnEvents().add(new PluginTopicChangedEvent());
+        Account ac = new Account("Bobby", "rsandell@cloudbees.com");
+        TopicChanged topicChanged = Setup.createTopicChanged();
+        topicChanged.setAccount(ac);
+        topicChanged.getChange().setOwner(ac);
+        topicChanged.setChanger(ac);
+        PluginImpl.getHandler_().triggerEvent(topicChanged);
+        j.waitUntilNoActivity();
+        FreeStyleBuild build = job.getLastBuild();
+        List<GerritTriggerParameters> params = Arrays.asList(
+                GerritTriggerParameters.GERRIT_CHANGE_OWNER,
+                GerritTriggerParameters.GERRIT_EVENT_ACCOUNT,
+                GerritTriggerParameters.GERRIT_TOPIC_CHANGER);
+        String expected = ac.getNameAndEmail();
+        for (GerritTriggerParameters param : params) {
+            j.assertLogContains(param.name() + "=" + expected, build);
+        }
+        j.assertLogContains("GERRIT_OLD_TOPIC" + "=" + topicChanged.getOldTopic(), build);
     }
 
     /**
