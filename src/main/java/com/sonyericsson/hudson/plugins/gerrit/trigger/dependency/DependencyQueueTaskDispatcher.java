@@ -204,7 +204,8 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         if (toGerritRunListener != null) {
             for (Job dependency : dependencies) {
-                if (toGerritRunListener.isProjectTriggeredAndIncomplete(dependency, event)) {
+                if (toGerritRunListener.isTriggered(dependency, event)
+                        && toGerritRunListener.isBuilding(dependency, event)) {
                     blockingProjects.add(dependency);
                 }
             }
