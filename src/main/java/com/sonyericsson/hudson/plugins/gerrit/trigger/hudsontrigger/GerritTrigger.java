@@ -101,7 +101,7 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -2195,68 +2195,86 @@ public class GerritTrigger extends Trigger<Job> {
      * Association between patches and the jobs that we're running for them.
      */
     public class RunningJobs {
-        private final HashMap<GerritTriggeredEvent, ParametersAction> runningJobs =
-                new HashMap<GerritTriggeredEvent, ParametersAction>();
+        private final Set<GerritTriggeredEvent> runningJobs =
+                Collections.synchronizedSet(new HashSet<GerritTriggeredEvent>());
 
         /**
          * Does the needful after a build has been scheduled.
          * I.e. cancelling the old build if configured to do so and removing and storing any references.
          *
          * @param event the event triggering a new build.
-         * @param parameters the parameters for the new build, used to find it later.
-         * @param projectName the name of the current project for better logging.
          */
-        public synchronized void scheduled(ChangeBasedEvent event, ParametersAction parameters, String projectName) {
+        public void scheduled(ChangeBasedEvent event) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
             if (serverConfig == null) {
-                runningJobs.put(event, parameters);
+                runningJobs.add(event);
                 return;
             }
             BuildCancellationPolicy buildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
             if (!buildCurrentPatchesOnly.isEnabled()
                     || (event instanceof ManualPatchsetCreated && !buildCurrentPatchesOnly.isAbortManualPatchsets())) {
-                runningJobs.put(event, parameters);
+                runningJobs.add(event);
                 return;
             }
-            Iterator<Entry<GerritTriggeredEvent, ParametersAction>> it = runningJobs.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<GerritTriggeredEvent, ParametersAction> pairs = it.next();
-                // Find all entries in runningJobs with the same Change #.
-                // Optionally, ignore all manual patchsets and don't cancel builds due to
-                // a retrigger of an older build.
-                if (pairs.getKey() instanceof ChangeBasedEvent) {
-                    ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
 
-                    boolean abortBecauseOfTopic = abortBecauseOfTopic(event,
-                                                                      buildCurrentPatchesOnly,
-                                                                      runningChangeBasedEvent);
+            List<ChangeBasedEvent> outdatedEvents = new ArrayList<ChangeBasedEvent>();
+            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
+            synchronized (runningJobs) {
+                while (it.hasNext()) {
+                    GerritTriggeredEvent runningEvent = it.next();
+                    // Find all entries in runningJobs with the same Change #.
+                    // Optionally, ignore all manual patchsets and don't cancel builds due to
+                    // a retrigger of an older build.
+                    if (runningEvent instanceof ChangeBasedEvent) {
+                        ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
 
-                    if (!abortBecauseOfTopic && !runningChangeBasedEvent.getChange().equals(event.getChange())) {
-                        continue;
-                    }
+                        boolean abortBecauseOfTopic = abortBecauseOfTopic(event,
+                                buildCurrentPatchesOnly,
+                                runningChangeBasedEvent);
 
-                    boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
+                        if (!abortBecauseOfTopic && !runningChangeBasedEvent.getChange().equals(event.getChange())) {
+                            continue;
+                        }
+
+                        boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
                                 && buildCurrentPatchesOnly.isAbortManualPatchsets()
                                 || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
 
-                    if (!shouldCancelManual) {
-                        continue;
-                    }
+                        if (!shouldCancelManual) {
+                            continue;
+                        }
 
-                    boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
+                        boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
                                 || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                                 < Integer.parseInt(event.getPatchSet().getNumber());
 
-                    if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber) {
-                        continue;
-                    }
+                        if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber) {
+                            continue;
+                        }
 
-                    cancelJob(pairs.getKey());
-                    it.remove();
+
+                        if (!shouldCancelPatchsetNumber) {
+                            continue;
+                        }
+
+                        outdatedEvents.add(runningChangeBasedEvent);
+                        it.remove();
+                    }
+                }
+                // add our new job
+                runningJobs.add(event);
+            }
+
+            // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
+            for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
+                logger.debug("Cancelling build for " + outdatedEvent);
+                try {
+                    cancelJob(outdatedEvent);
+                } catch (Exception e) {
+                    // Ignore any problems with canceling the job.
+                    logger.error("Error canceling job", e);
                 }
             }
-            // add our new job
-            runningJobs.put(event, parameters);
         }
 
         /**
@@ -2348,11 +2366,11 @@ public class GerritTrigger extends Trigger<Job> {
          * Removes any reference to the current build for this change.
          *
          * @param event the event which started the build we want to remove.
-         * @return the build that was removed.
+         * @return true if event was still running.
          */
-        public synchronized ParametersAction remove(ChangeBasedEvent event) {
+        public boolean remove(ChangeBasedEvent event) {
             logger.debug("Removing future job " + event.getPatchSet().getNumber());
-            return runningJobs.remove(event);
+            return runningJobs.add(event);
         }
     }
 
