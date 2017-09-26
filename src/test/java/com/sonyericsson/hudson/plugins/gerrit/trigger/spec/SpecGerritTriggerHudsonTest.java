@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -36,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
 import hudson.model.Cause;
@@ -68,7 +70,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-//CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 800 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -569,6 +571,93 @@ public class SpecGerritTriggerHudsonTest {
 
         //both should succeed since branches not the same
         assertEquals(Result.SUCCESS, project.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, project.getBuildByNumber(2).getResult());
+    }
+
+
+    /**
+     * Test the behaviour of "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is false.
+     *  - 2 changes with same gerrit project and same topic trigger builds.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testOngoingBuildWithSameTopicWillBeAborted() throws Exception {
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+        policy.setAbortManualPatchsets(false);
+        policy.setAbortNewPatchsets(false);
+        policy.setAbortSameTopic(true);
+        Random rand = new Random();
+        FreeStyleProject project = new TestUtils.JobBuilder(j).name("project" + rand.nextInt()).build();
+        project.getBuildersList().add(new SleepBuilder(3000));
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentMode(true);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(project, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(project, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.ABORTED, project.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, project.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Test the behaviour of "Build Current Patches Only" functionality when:
+     *  - Abort manual patch sets is false.
+     *  - Abort new patch sets is false.
+     *  - First change is triggered by new patch set and just after that topic was modified
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testOngoingBuildWithSameTopicWillBeAbortedByTopicChangedEvent() throws Exception {
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+        policy.setAbortManualPatchsets(false);
+        policy.setAbortNewPatchsets(false);
+        policy.setAbortSameTopic(true);
+        Random rand = new Random();
+
+        FreeStyleProject project = new TestUtils.JobBuilder(j).name("project" + rand.nextInt()).build();
+        project.getBuildersList().add(new SleepBuilder(3000));
+
+        GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+        trigger.setSilentMode(true);
+        trigger.getTriggerOnEvents().add(new PluginTopicChangedEvent());
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(project, firstEvent, 10000);
+
+        TopicChanged secondEvent = Setup.createTopicChanged();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.setOldTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(project, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.ABORTED, project.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, project.getBuildByNumber(2).getResult());
     }
 
