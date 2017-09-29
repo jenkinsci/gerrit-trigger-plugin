@@ -34,6 +34,7 @@ public class BuildCancellationPolicy {
     private boolean enabled = false;
     private boolean abortNewPatchsets = false;
     private boolean abortManualPatchsets = false;
+    private boolean abortSameTopic = false;
 
     /**
      * Getter for if build cancellation is turned off or on.
@@ -90,6 +91,24 @@ public class BuildCancellationPolicy {
     }
 
     /**
+     * Standard getter for the abortSameTopic value.
+     *
+     * @return the abortSameTopic value.
+     */
+    public boolean isAbortSameTopic() {
+        return abortSameTopic;
+    }
+
+    /**
+     * Standard setter for the abortSameTopic value.
+     *
+     * @param abortSameTopic true if patchsets with same topic should be cancelled.
+     */
+    public void setAbortSameTopic(boolean abortSameTopic) {
+        this.abortSameTopic = abortSameTopic;
+    }
+
+    /**
      * Creates a new BuildCancellationPolicy object from JSON.
      *
      * @param obj the JSONObject.
@@ -98,10 +117,12 @@ public class BuildCancellationPolicy {
     public static BuildCancellationPolicy createPolicyFromJSON(JSONObject obj) {
         boolean newPatchsets = obj.getBoolean("abortNewPatchsets");
         boolean manualPatchsets = obj.getBoolean("abortManualPatchsets");
+        boolean abortSameTopic = obj.optBoolean("abortSameTopic");
         BuildCancellationPolicy policy = new BuildCancellationPolicy();
         policy.setEnabled(true);
         policy.setAbortNewPatchsets(newPatchsets);
         policy.setAbortManualPatchsets(manualPatchsets);
+        policy.setAbortSameTopic(abortSameTopic);
         return policy;
     }
 }

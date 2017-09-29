@@ -65,6 +65,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
 import hudson.Extension;
@@ -2225,7 +2226,12 @@ public class GerritTrigger extends Trigger<Job> {
                 // a retrigger of an older build.
                 if (pairs.getKey() instanceof ChangeBasedEvent) {
                     ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)pairs.getKey());
-                    if (!runningChangeBasedEvent.getChange().equals(event.getChange())) {
+
+                    boolean abortBecauseOfTopic = abortBecauseOfTopic(event,
+                                                                      buildCurrentPatchesOnly,
+                                                                      runningChangeBasedEvent);
+
+                    if (!abortBecauseOfTopic && !runningChangeBasedEvent.getChange().equals(event.getChange())) {
                         continue;
                     }
 
@@ -2241,17 +2247,11 @@ public class GerritTrigger extends Trigger<Job> {
                                 || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                                 < Integer.parseInt(event.getPatchSet().getNumber());
 
-                    if (!shouldCancelPatchsetNumber) {
+                    if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber) {
                         continue;
                     }
 
-                    logger.debug("Cancelling build for " + pairs.getKey());
-                    try {
-                        cancelJob(pairs.getKey());
-                    } catch (Exception e) {
-                        // Ignore any problems with canceling the job.
-                        logger.error("Error canceling job", e);
-                    }
+                    cancelJob(pairs.getKey());
                     it.remove();
                 }
             }
@@ -2276,43 +2276,49 @@ public class GerritTrigger extends Trigger<Job> {
          *            The event that originally triggered the build.
          */
         private void cancelJob(GerritTriggeredEvent event) {
-            if (!(job instanceof Queue.Task)) {
-                logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
-                return;
-            }
-
-            // Remove any jobs in the build queue.
-            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
-            for (hudson.model.Queue.Item item : itemsInQueue) {
-                if (checkCausedByGerrit(event, item.getCauses())) {
-                    Queue.getInstance().cancel(item);
+            logger.debug("Cancelling build for " + event);
+            try {
+                if (!(job instanceof Queue.Task)) {
+                    logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
+                    return;
                 }
-            }
 
-            String workaround = System.getProperty(JOB_ABORT);
-            if ((workaround != null) && workaround.equals("false")) {
-                return;
-            }
+                // Remove any jobs in the build queue.
+                List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
+                for (hudson.model.Queue.Item item : itemsInQueue) {
+                    if (checkCausedByGerrit(event, item.getCauses())) {
+                        Queue.getInstance().cancel(item);
+                    }
+                }
 
-            // Interrupt any currently running jobs.
-            Jenkins jenkins = Jenkins.getInstance();
-            assert jenkins != null;
-            for (Computer c : jenkins.getComputers()) {
-                List<Executor> executors = new ArrayList<Executor>();
-                executors.addAll(c.getOneOffExecutors());
-                executors.addAll(c.getExecutors());
-                for (Executor e : executors) {
-                    Queue.Executable currentExecutable = e.getCurrentExecutable();
-                    if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
-                        Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                        if (checkCausedByGerrit(event, run.getCauses())) {
-                            e.interrupt(
-                                    Result.ABORTED,
-                                    new NewPatchSetInterruption()
-                            );
+                String workaround = System.getProperty(JOB_ABORT);
+                if ((workaround != null) && workaround.equals("false")) {
+                    return;
+                }
+
+                // Interrupt any currently running jobs.
+                Jenkins jenkins = Jenkins.getInstance();
+                assert jenkins != null;
+                for (Computer c : jenkins.getComputers()) {
+                    List<Executor> executors = new ArrayList<Executor>();
+                    executors.addAll(c.getOneOffExecutors());
+                    executors.addAll(c.getExecutors());
+                    for (Executor e : executors) {
+                        Queue.Executable currentExecutable = e.getCurrentExecutable();
+                        if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
+                            Run<?, ?> run = (Run<?, ?>)currentExecutable;
+                            if (checkCausedByGerrit(event, run.getCauses())) {
+                                e.interrupt(
+                                        Result.ABORTED,
+                                        new NewPatchSetInterruption()
+                                );
+                            }
                         }
                     }
                 }
+            } catch (Exception e) {
+                // Ignore any problems with canceling the job.
+                logger.error("Error canceling job", e);
             }
         }
 
@@ -2348,5 +2354,27 @@ public class GerritTrigger extends Trigger<Job> {
             logger.debug("Removing future job " + event.getPatchSet().getNumber());
             return runningJobs.remove(event);
         }
+    }
+
+
+    /**
+     * Checks that execution must be aborted because of topic.
+     * @param event the event.
+     * @param policy the cancellation policy.
+     * @param runningChange the ongoing change.
+     * @return true if so.
+     */
+    private boolean abortBecauseOfTopic(ChangeBasedEvent event,
+                                        BuildCancellationPolicy policy,
+                                        ChangeBasedEvent runningChange) {
+        String topicName = event.getChange().getTopic();
+
+        if (event instanceof TopicChanged) {
+            topicName = ((TopicChanged)event).getOldTopic();
+        }
+
+        return policy.isAbortSameTopic()
+                && !event.getChange().getTopic().isEmpty()
+                && runningChange.getChange().getTopic().equals(topicName);
     }
 }

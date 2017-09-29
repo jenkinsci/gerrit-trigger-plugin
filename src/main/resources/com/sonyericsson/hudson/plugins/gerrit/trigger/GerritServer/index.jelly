@@ -94,6 +94,12 @@
                                                                 checked="${it.config.buildCurrentPatchesOnly.abortManualPatchsets}"
                                                                 default="false"/>
                                                 </f:entry>
+                                                <f:entry title="${%Abort patch sets with same topic}"
+                                                         help="/plugin/gerrit-trigger/help-GerritAbortPatchSetsWithSameTopic.html">
+                                                    <f:checkbox name="abortSameTopic"
+                                                                checked="${it.config.buildCurrentPatchesOnly.abortSameTopic}"
+                                                                default="false"/>
+                                                </f:entry>
                                             </f:optionalBlock>
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
