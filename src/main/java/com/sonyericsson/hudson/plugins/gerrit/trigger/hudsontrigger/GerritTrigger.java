@@ -2374,7 +2374,8 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         return policy.isAbortSameTopic()
-                && !event.getChange().getTopic().isEmpty()
-                && runningChange.getChange().getTopic().equals(topicName);
+                && topicName != null
+                && !topicName.isEmpty()
+                && topicName.equals(runningChange.getChange().getTopic());
     }
 }
