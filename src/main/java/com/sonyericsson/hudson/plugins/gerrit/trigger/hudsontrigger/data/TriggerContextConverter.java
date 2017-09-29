@@ -67,9 +67,10 @@ public class TriggerContextConverter implements Converter {
             marshalItemEntity(tc.getThisBuild(), writer);
             writer.endNode();
         }
-        if (tc.getOthers() != null && tc.getOthers().size() > 0) {
+        List<TriggeredItemEntity> tcOthers = tc.getOthers();
+        if (tcOthers != null && !tcOthers.isEmpty()) {
             writer.startNode("others");
-            for (TriggeredItemEntity entity : tc.getOthers()) {
+            for (TriggeredItemEntity entity : tcOthers) {
                 if (entity != null) {
                     writer.startNode("triggeredItemEntity");
                     marshalItemEntity(entity, writer);

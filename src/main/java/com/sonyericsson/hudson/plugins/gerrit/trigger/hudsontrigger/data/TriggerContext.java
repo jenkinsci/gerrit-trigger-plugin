@@ -27,6 +27,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Job;
 import hudson.model.Run;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -83,7 +84,10 @@ public class TriggerContext {
      * @return the builds.
      */
     public synchronized List<TriggeredItemEntity> getOthers() {
-        return others;
+        if (others == null) {
+            return null;
+        }
+        return new ArrayList<TriggeredItemEntity>(others);
     }
 
     /**
