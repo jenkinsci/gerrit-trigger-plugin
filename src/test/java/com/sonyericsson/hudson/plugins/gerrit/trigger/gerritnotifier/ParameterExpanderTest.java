@@ -60,6 +60,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -469,7 +470,7 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeAbandoned(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeAbandoned(), 0, 0);
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeAbandoned(), null, null);
     }
 
     /**
@@ -483,7 +484,7 @@ public class ParameterExpanderTest {
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-                Setup.createChangeMerged(), 0, 0);
+                Setup.createChangeMerged(), null, null);
     }
 
     /**
@@ -496,7 +497,7 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeRestored(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeRestored(), 0, 0);
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -512,12 +513,11 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulEvent(String customUrl, String expectedBuildsStats,
-            GerritTriggeredEvent event, int expectedVerifiedVote,
-            int expectedCodeReviewVote)
+            GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
                     throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
                 new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
-                Setup.createChangeRestored(), 0, 0);
+                Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -536,7 +536,7 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
             Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
-            int expectedVerifiedVote, int expectedCodeReviewVote)
+            Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
                     throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
@@ -587,8 +587,6 @@ public class ParameterExpanderTest {
         assertThat("Missing BS", result, containsStrings(expectedBuildsStats));
         assertThat("Missing CHANGE_ID", result, containsString("CHANGE_ID=Iddaaddaa123456789"));
         assertThat("Missing PATCHSET", result, containsString("PATCHSET=1"));
-        assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
-        assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
         assertThat("Missing NOTIFICATION_LEVEL", result, containsString("NOTIFICATION_LEVEL=ALL"));
         assertThat("Missing REFSPEC", result, containsString("REFSPEC=" + expectedRefSpec));
         assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
@@ -596,6 +594,8 @@ public class ParameterExpanderTest {
         assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
         assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
         assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
+        assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
+        assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
     }
 
 
