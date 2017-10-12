@@ -60,7 +60,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -470,7 +469,8 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeAbandoned(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeAbandoned(), null, null);
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
+                                                   Setup.createChangeAbandoned(), null, null);
     }
 
     /**
@@ -484,7 +484,7 @@ public class ParameterExpanderTest {
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-                Setup.createChangeMerged(), null, null);
+                                                   Setup.createChangeMerged(), null, null);
     }
 
     /**
@@ -497,7 +497,8 @@ public class ParameterExpanderTest {
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeRestored(String customUrl, String expectedBuildsStats)
             throws IOException, InterruptedException {
-        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createChangeRestored(), null, null);
+        tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
+                                                   Setup.createChangeRestored(), null, null);
     }
 
     /**
