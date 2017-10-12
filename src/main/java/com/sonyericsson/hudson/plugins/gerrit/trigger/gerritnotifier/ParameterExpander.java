@@ -532,7 +532,11 @@ public class ParameterExpander {
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(),
                 codeReview, verified, notifyLevel.name());
-        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint, listener, parameters));
+        // escapes ' as '"'"' in order to avoid breaking command line param
+        // Details: http://stackoverflow.com/a/26165123/99834
+        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint,
+                                                         listener,
+                                                         parameters).replaceAll("'", "'\"'\"'"));
 
         Run build = null;
         Entry[] entries = memoryImprint.getEntries();
