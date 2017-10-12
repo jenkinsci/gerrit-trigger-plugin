@@ -71,7 +71,7 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                         Run run = entry.build
                         td(headers: "hJob ${eventHeaderId}") {
                             if (job != null) {
-                                a(href: "${rootURL}/${job.shortUrl}", job.fullDisplayName)
+                                a(href: "${rootURL}/${job.url}", job.fullDisplayName)
                             } else {
                                 raw("&nbsp;")
                             }
