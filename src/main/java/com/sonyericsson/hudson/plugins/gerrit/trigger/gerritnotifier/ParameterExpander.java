@@ -115,7 +115,7 @@ public class ParameterExpander {
         }
         String buildStartMessage = trigger.getBuildStartMessage();
         if (buildStartMessage != null && !buildStartMessage.isEmpty()) {
-            startedStats.append("\n\n").append(buildStartMessage);
+            gerritCmd += "\n\n" + buildStartMessage;
         }
 
         if (config.isEnablePluginMessages()) {
