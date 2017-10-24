@@ -101,7 +101,9 @@ public class ParameterExpanderTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
         when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
+        when(trigger.getBuildStartMessage()).thenReturn("${START_MESSAGE_VAR}");
         AbstractProject project = mock(AbstractProject.class);
+
         Setup.setTrigger(trigger, project);
 
         AbstractBuild r = Setup.createBuild(project, taskListener, Setup.createEnvVars());
@@ -123,7 +125,8 @@ public class ParameterExpanderTest {
 
         String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
         System.out.println("result: " + result);
-
+        assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
+                result.indexOf("START_MESSAGE_VAL") >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);

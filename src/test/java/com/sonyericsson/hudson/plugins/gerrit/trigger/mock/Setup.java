@@ -568,6 +568,7 @@ public final class Setup {
         env.put("PATCHSET", "1");
         env.put("REFSPEC", StringUtil.REFSPEC_PREFIX + "00/1000/1");
         env.put("CHANGE_URL", "http://gerrit/1000");
+        env.put("START_MESSAGE_VAR", "START_MESSAGE_VAL");
         return env;
     }
 

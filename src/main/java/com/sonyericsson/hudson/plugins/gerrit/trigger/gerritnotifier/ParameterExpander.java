@@ -115,7 +115,7 @@ public class ParameterExpander {
         }
         String buildStartMessage = trigger.getBuildStartMessage();
         if (buildStartMessage != null && !buildStartMessage.isEmpty()) {
-            startedStats.append("\n\n").append(buildStartMessage);
+            startedStats.append("\n\n").append(expandParameters(buildStartMessage, r, taskListener, parameters));
         }
 
         if (config.isEnablePluginMessages()) {
@@ -585,8 +585,6 @@ public class ParameterExpander {
                     if (res == null) {
                         res = Result.NOT_BUILT;
                     }
-                    String customMessage = null;
-
                     /* Gerrit comments cannot contain single-newlines, as they will be joined
                      * together. Double newlines are interpreted as paragraph breaks. Lines that
                      * begin with a space (even if the space occurs somewhere in the middle of
@@ -603,6 +601,7 @@ public class ParameterExpander {
                     }
                     str.append(MESSAGE_DELIMITER);
 
+                    String customMessage = null;
                     if (res == Result.SUCCESS) {
                         customMessage = trigger.getBuildSuccessfulMessage();
                     } else if (res == Result.FAILURE || res == Result.ABORTED) {
@@ -623,7 +622,7 @@ public class ParameterExpander {
                             str.append(" (skipped)");
                         }
                     } else {
-                        str.append(customMessage);
+                        str.append(expandParameters(customMessage, build, listener, parameters));
                     }
 
                     if (res.isWorseThan(Result.SUCCESS)) {
