@@ -342,7 +342,7 @@ public class BuildMemory {
             return false;
         } else {
             for (Entry entry : pb.getEntries()) {
-                if (project.equals(entry.getProject())) {
+                if (entry.isProject(project)) {
                     return true;
                 }
             }
