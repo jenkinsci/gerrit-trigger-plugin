@@ -41,7 +41,6 @@ import org.powermock.reflect.Whitebox;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.Is.isA;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -112,12 +111,12 @@ public class BackCompat2173JenkinsTest {
 
         assertThat(trigger.getGerritProjects(), hasItem(
                 allOf(
-                        isA(GerritProject.class),
+                        is(GerritProject.class),
                         hasProperty("compareType", is(CompareType.ANT)),
                         hasProperty("pattern", equalTo("**")),
                         hasProperty("branches", hasItem(
                                 allOf(
-                                        isA(Branch.class),
+                                        is(Branch.class),
                                         hasProperty("compareType", is(CompareType.ANT)),
                                         hasProperty("pattern", equalTo("**"))
                                 )
@@ -127,7 +126,7 @@ public class BackCompat2173JenkinsTest {
 
         assertThat(trigger.getTriggerOnEvents(), hasItem(
                 allOf(
-                        isA(PluginPatchsetCreatedEvent.class),
+                        is(PluginPatchsetCreatedEvent.class),
                         hasProperty("excludeDrafts", is(false)),
                         hasProperty("excludeTrivialRebase", is(false)),
                         hasProperty("excludeNoCodeChange", is(false))
@@ -184,12 +183,12 @@ public class BackCompat2173JenkinsTest {
 
         assertThat(trigger.getGerritProjects(), hasItem(
                 allOf(
-                        isA(GerritProject.class),
+                        is(GerritProject.class),
                         hasProperty("compareType", is(CompareType.ANT)),
                         hasProperty("pattern", equalTo("something/projects/*")),
                         hasProperty("branches", hasItem(
                                 allOf(
-                                        isA(Branch.class),
+                                        is(Branch.class),
                                         hasProperty("compareType", is(CompareType.ANT)),
                                         hasProperty("pattern", equalTo("**"))
                                 )
@@ -199,13 +198,13 @@ public class BackCompat2173JenkinsTest {
 
         assertThat(trigger.getTriggerOnEvents(), hasItem(
                 allOf(
-                        isA(PluginPatchsetCreatedEvent.class),
+                        is(PluginPatchsetCreatedEvent.class),
                         hasProperty("excludeDrafts", is(false)),
                         hasProperty("excludeTrivialRebase", is(true)),
                         hasProperty("excludeNoCodeChange", is(false))
                 )
         ));
-        assertThat(trigger.getTriggerOnEvents(), hasItem(isA(PluginChangeRestoredEvent.class)));
+        assertThat(trigger.getTriggerOnEvents(), hasItem(is(PluginChangeRestoredEvent.class)));
 
         assertNotNull(Whitebox.getInternalState(trigger, "triggerInformationAction"));
     }
