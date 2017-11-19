@@ -188,8 +188,9 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
          * @param build the build.
          */
         void setBuild(Run build) {
+            String fullName = build.getParent().getFullName();
             for (TriggeredItemEntity entity : builds) {
-                if (entity.equals(build.getParent())) {
+                if (entity.equals(fullName)) {
                     entity.setBuild(build);
                 }
             }
