@@ -11,8 +11,8 @@
             <l:yui module="connection" />
             <l:yui module="datasource"/>
             <l:yui module="container" />
-            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
-            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/server-table.js"/>
+            <script type="text/javascript" src="/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
+            <script type="text/javascript" src="/plugin/${it.urlName}/js/server-table.js"/>
             <script type="text/javascript">
                 var textMessages = {
                     confirm: "${%Remove?}",
@@ -27,7 +27,7 @@
                     {key:"", label: "${%Remove}", formatter: "removeServer", className: "align-middle"}
                 ];
                 var imagesURL = "${imagesURL}";
-                var pluginURL = "${rootURL}/plugin/${it.urlName}";
+                var pluginURL = "/plugin/${it.urlName}";
                 YAHOO.util.Event.addListener(window, "load", function() {
                     serverTable();
                 });
@@ -35,7 +35,7 @@
         </l:header>
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/up.gif" href="/" title="${%Back to Dashboard}"/>
                 <l:task icon="images/24x24/new-package.png" href="newServer" title="${%Add New Server}" />
                 <l:task icon="icon-folder icon-md" href="diagnostics" title="${%Diagnostics}" />
             </l:tasks>

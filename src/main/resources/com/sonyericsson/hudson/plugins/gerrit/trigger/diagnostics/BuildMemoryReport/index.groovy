@@ -41,8 +41,8 @@ DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFor
 l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
-            l.task(icon: "icon-folder icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
+            l.task(icon: "images/24x24/up.gif", href: "/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
+            l.task(icon: "icon-folder icon-md", href: "/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
         }
     }
     l.'main-panel' {
@@ -71,14 +71,14 @@ l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh:
                         Run run = entry.build
                         td(headers: "hJob ${eventHeaderId}") {
                             if (job != null) {
-                                a(href: "${rootURL}/${job.url}", job.fullDisplayName)
+                                a(href: "/${job.url}", job.fullDisplayName)
                             } else {
                                 raw("&nbsp;")
                             }
                         }
                         td(headers: "hRun ${eventHeaderId}") {
                             if (run != null) {
-                                a(href: "${rootURL}/${run.url}", run.displayName)
+                                a(href: "/${run.url}", run.displayName)
                             } else {
                                 raw("&nbsp;")
                             }

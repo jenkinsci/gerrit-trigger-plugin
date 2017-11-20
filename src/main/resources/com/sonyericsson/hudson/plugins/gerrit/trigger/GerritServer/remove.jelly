@@ -4,9 +4,9 @@
     <l:layout title="${%Remove Server}" norefresh="true">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.url}/" title="${%Back to Server Configuration}"/>
+                <l:task icon="images/24x24/up.gif" href="/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/up.gif" href="/${it.parentUrl}/" title="${%Back to Server List}"/>
+                <l:task icon="images/24x24/up.gif" href="/${it.url}/" title="${%Back to Server Configuration}"/>
             </l:tasks>
         </l:side-panel>
         <l:main-panel>
@@ -24,7 +24,7 @@
                         <f:submit value="${%Yes}" />
                         <ul>
                             <j:forEach var="job" items="${it.configuredJobs}" varStatus="loop">
-                                <li> <a href="${rootURL}/${job.url}/configure"> ${job.name} </a> </li>
+                                <li> <a href="/${job.url}/configure"> ${job.name} </a> </li>
                             </j:forEach>
                         </ul>
                     </j:otherwise>

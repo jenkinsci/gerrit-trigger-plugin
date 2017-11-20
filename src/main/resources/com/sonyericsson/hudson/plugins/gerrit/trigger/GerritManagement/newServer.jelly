@@ -30,8 +30,8 @@ THE SOFTWARE.
   <l:layout norefresh="true" permission="${app.ADMINISTER}" title="${%Add New Server}">
     <l:side-panel>
       <l:tasks>
-        <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
-        <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.urlName}/" title="${%Back to Server List}"/>
+        <l:task icon="images/24x24/up.gif" href="/" title="${%Back to Dashboard}"/>
+        <l:task icon="images/24x24/up.gif" href="/${it.urlName}/" title="${%Back to Server List}"/>
       </l:tasks>
     </l:side-panel>
     <l:main-panel>
@@ -40,7 +40,7 @@ THE SOFTWARE.
       <j:set var="serverDescriptors" value="${descriptor.serverDescriptorList()}" />
       <j:set var="servers" value="${it.serverNames}" />
       <n:form action="addNewServer" nameTitle="${%Add New Server}" copyTitle="${%Copy Existing Server Configurations}" showCopyOption="${!empty(servers)}"
-              descriptors="${serverDescriptors}" checkUrl="${rootURL}/${it.urlName}/nameFreeCheck" xmlns:n="/lib/hudson/newFromList" />
+              descriptors="${serverDescriptors}" checkUrl="/${it.urlName}/nameFreeCheck" xmlns:n="/lib/hudson/newFromList" />
     </l:main-panel>
   </l:layout>
 </j:jelly>

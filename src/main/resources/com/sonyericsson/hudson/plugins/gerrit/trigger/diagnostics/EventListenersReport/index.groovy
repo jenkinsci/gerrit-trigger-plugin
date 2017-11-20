@@ -76,8 +76,8 @@ l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), no
 
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
-            l.task(icon: "icon-folder icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
+            l.task(icon: "images/24x24/up.gif", href: "/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
+            l.task(icon: "icon-folder icon-md", href: "/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
         }
     }
     l.'main-panel' {
@@ -98,7 +98,7 @@ l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), no
                 tr {
                     td {
                         if (job != null) {
-                            a(href: "${rootURL}/${job.shortUrl}", job.getFullDisplayName())
+                            a(href: "/${job.shortUrl}", job.getFullDisplayName())
                         } else {
                             span(_("_unknown"))
                         }

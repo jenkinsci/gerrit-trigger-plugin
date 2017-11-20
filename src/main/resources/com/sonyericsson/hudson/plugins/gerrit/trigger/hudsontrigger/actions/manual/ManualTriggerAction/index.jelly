@@ -3,7 +3,7 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <l:layout title="${%Gerrit Manual trigger}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
-            <script src="${rootURL}${it.getJsUrl('gerrit-search.js')}" type="text/javascript"></script>
+            <script src="/${it.getJsUrl('gerrit-search.js')}" type="text/javascript"></script>
             <style type="text/css">
                 tr.disablehover:hover {
                 background-color: white;
@@ -12,7 +12,7 @@
         </l:header>
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/up.gif" href="/" title="${%Back to Dashboard}"/>
             </l:tasks>
             <j:if test="${!empty(request.session.getAttribute('trigger_monitor'))}">
                 <st:include page="ajaxTriggerMonitor.jelly"/>
@@ -108,9 +108,9 @@
                                             <td class="pane-header">${%R}</td>
                                         </tr>
                                         <j:set var="collapsedImg"
-                                               value="${rootURL}/plugin/gerrit-trigger/images/collapsed.gif"/>
+                                               value="/plugin/gerrit-trigger/images/collapsed.gif"/>
                                         <j:set var="expandedImg"
-                                               value="${rootURL}/plugin/gerrit-trigger/images/expanded.gif"/>
+                                               value="/plugin/gerrit-trigger/images/expanded.gif"/>
                                         <j:forEach var="res" items="${result}">
                                             <j:if test="${!res.has('type')}">
                                                 <j:forEach var="patch" items="${res.getJSONArray('patchSets')}">
@@ -186,11 +186,11 @@
                                                             <j:set var="v" value="${it.getVerified(res, patch.getInt('number'))}"/>
                                                             <j:choose>
                                                                 <j:when test="${v.low &lt; 0}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"
+                                                                    <img src="/plugin/gerrit-trigger/images/x.gif"
                                                                          alt="${v.low}"/>
                                                                 </j:when>
                                                                 <j:when test="${v.low &gt; 0}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/v.gif"
+                                                                    <img src="/plugin/gerrit-trigger/images/v.gif"
                                                                          alt="${v.low}"/>
                                                                 </j:when>
                                                                 <j:otherwise>
@@ -203,11 +203,11 @@
                                                             <j:set var="v" value="${it.getCodeReview(res, patch.getInt('number'))}"/>
                                                             <j:choose>
                                                                 <j:when test="${v.low &lt; -1}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"
+                                                                    <img src="/plugin/gerrit-trigger/images/x.gif"
                                                                          alt="${v.low}"/>
                                                                 </j:when>
                                                                 <j:when test="${v.high &gt; 1}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/v.gif"
+                                                                    <img src="/plugin/gerrit-trigger/images/v.gif"
                                                                          alt="${v.high}"/>
                                                                 </j:when>
                                                                 <j:when test="${v.low &lt; 0}">
