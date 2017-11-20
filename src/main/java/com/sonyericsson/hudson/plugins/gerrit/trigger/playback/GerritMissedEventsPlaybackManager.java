@@ -80,13 +80,14 @@ import jenkins.model.Jenkins;
  *
  * @author scott.hebert@ericsson.com
  */
-public class GerritMissedEventsPlaybackManager implements ConnectionListener, NamedGerritEventListener {
+public class GerritMissedEventsPlaybackManager extends Thread implements ConnectionListener, NamedGerritEventListener {
 
     private static final String GERRIT_SERVER_EVENT_DATA_FOLDER = "/gerrit-server-event-data/";
     private static final Logger logger = LoggerFactory.getLogger(GerritMissedEventsPlaybackManager.class);
     static final String EVENTS_LOG_PLUGIN_NAME = "events-log";
     private static final String EVENTS_LOG_PLUGIN_URL = "a/plugins/" + EVENTS_LOG_PLUGIN_NAME + "/events/";
     private static final String GERRIT_TRIGGER_SERVER_TIMESTAMPS_XML = "gerrit-trigger-server-timestamps.xml";
+    private static final long SLEEPTIME = 2000;
 
     private String serverName;
     /**
@@ -126,7 +127,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null && server.getConfig() != null) {
             isSupported = GerritPluginChecker.isPluginEnabled(
-                    server.getConfig(), EVENTS_LOG_PLUGIN_NAME);
+                    server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
         }
     }
 
@@ -138,6 +139,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         XmlFile xml = getConfigXml(serverName);
         if (xml.exists()) {
             serverTimestamp  = (EventTimeSlice)xml.unmarshal(serverTimestamp);
+        } else {
+            serverTimestamp = null;
         }
     }
 
@@ -153,6 +156,38 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             return myDate;
         }
         return new Date();
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            if (playBackComplete) {
+                boolean previousIsSupported = isSupported;
+                checkIfEventsLogPluginSupported();
+                boolean currentIsSupported = isSupported;
+                if (previousIsSupported && !currentIsSupported) {
+                    logger.warn("Missed Events Playback used to be supported. now it is not!");
+                    // we could be missing events here that we should be persisting...
+                    // so let's remove the data file so we are ready if it comes back
+                    try {
+                        XmlFile config = getConfigXml(serverName);
+                        config.delete();
+                        logger.warn("Deleting " + config.getFile().getAbsolutePath());
+                    } catch (IOException e) {
+                        logger.error(e.getMessage(), e);
+                    }
+                }
+                if (!previousIsSupported && currentIsSupported) {
+                    logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
+                }
+            }
+            //CS IGNORE EmptyBlock FOR NEXT 5 LINES. REASON: ignore.
+            try {
+                Thread.sleep(SLEEPTIME);
+            } catch (InterruptedException e) {
+                //e.printStackTrace();
+            }
+        }
     }
 
     /**

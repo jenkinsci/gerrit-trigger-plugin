@@ -175,6 +175,7 @@ public final class Setup {
 
         return event;
     }
+
     /**
      * Create a new patchset created event with the given data.
      * @param serverName The server name
@@ -183,6 +184,21 @@ public final class Setup {
      * @return a pactchsetCreated event
      */
     public static PatchsetCreated createPatchsetCreated(String serverName, String project, String ref) {
+        return createPatchsetCreated(serverName, project, ref, "1418133772");
+    }
+
+    /**
+     * Create a new patchset created event with the given data.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @param eventCreateOn Timestamp for eventcreateon.
+     * @return a patchsetCreated event
+     */
+    public static PatchsetCreated createPatchsetCreated(String serverName,
+                                                        String project,
+                                                        String ref,
+                                                        String eventCreateOn) {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setBranch("branch");
@@ -202,7 +218,7 @@ public final class Setup {
         patch.setRef(ref);
         event.setPatchset(patch);
         event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
-        event.setEventCreatedOn("1418133772");
+        event.setEventCreatedOn(eventCreateOn);
         return event;
     }
 

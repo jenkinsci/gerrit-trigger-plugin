@@ -77,30 +77,58 @@ public final class GerritPluginChecker {
      * Given a status code, decode its status.
      * @param statusCode HTTP code
      * @param pluginName plugin that was checked.
+     * @param quiet Should we log messages.
      * @return true/false if installed or not.
      */
-    private static boolean decodeStatus(int statusCode, String pluginName) {
+    private static boolean decodeStatus(int statusCode, String pluginName, boolean quiet) {
+        String message = "";
         switch (statusCode) {
             case HttpURLConnection.HTTP_OK:
-                logger.info(Messages.PluginInstalled(pluginName));
+                message = Messages.PluginInstalled(pluginName);
+                if (quiet) {
+                    logger.debug(message);
+                } else {
+                    logger.info(message);
+                }
                 return true;
             case HttpURLConnection.HTTP_NOT_FOUND:
-                logger.info(Messages.PluginNotInstalled(pluginName));
+                message = Messages.PluginNotInstalled(pluginName);
+                if (quiet) {
+                    logger.debug(message);
+                } else {
+                    logger.warn(message);
+                }
                 return false;
             case HttpURLConnection.HTTP_UNAUTHORIZED:
-                logger.warn(Messages.PluginHttpConnectionUnauthorized(pluginName,
-                        Messages.HttpConnectionUnauthorized()));
+                message = Messages.PluginHttpConnectionUnauthorized(pluginName,
+                        Messages.HttpConnectionUnauthorized());
+                if (quiet) {
+                    logger.debug(message);
+                } else {
+                    logger.warn(message);
+                }
                 return false;
             case HttpURLConnection.HTTP_FORBIDDEN:
-                logger.warn(Messages.PluginHttpConnectionForbidden(pluginName,
-                        Messages.HttpConnectionUnauthorized()));
+                message = Messages.PluginHttpConnectionForbidden(pluginName,
+                        Messages.HttpConnectionUnauthorized());
+                if (quiet) {
+                    logger.debug(message);
+                } else {
+                    logger.warn(message);
+                }
                 return false;
             default:
-                logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
-                        Messages.HttpConnectionError(statusCode)));
+                message = Messages.PluginHttpConnectionGeneralError(pluginName,
+                        Messages.HttpConnectionError(statusCode));
+                if (quiet) {
+                    logger.debug(message);
+                } else {
+                    logger.warn(message);
+                }
                 return false;
         }
     }
+
     /**
      * Query Gerrit to determine if plugin is enabled.
      * @param config Gerrit Server Config
@@ -108,6 +136,17 @@ public final class GerritPluginChecker {
      * @return true if enabled.
      */
     public static boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName) {
+        return isPluginEnabled(config, pluginName, false);
+    }
+
+    /**
+     * Query Gerrit to determine if plugin is enabled.
+     * @param config Gerrit Server Config
+     * @param pluginName The Gerrit Plugin name.
+     * @param quiet Whether we want to log a message.
+     * @return true if enabled.
+     */
+    public static boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
 
         String restUrl = buildURL(config);
         if (restUrl == null) {
@@ -121,7 +160,7 @@ public final class GerritPluginChecker {
             execute = HttpUtils.performHTTPGet(config, restUrl + "plugins/" + pluginName + "/");
             int statusCode = execute.getStatusLine().getStatusCode();
             logger.debug("status code: {}", statusCode);
-            return decodeStatus(statusCode, pluginName);
+            return decodeStatus(statusCode, pluginName, quiet);
         } catch (IOException e) {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
