@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import hudson.model.Job;
 import java.util.TimerTask;
 import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+
 import jenkins.model.Jenkins;
 
 /**
@@ -43,9 +45,9 @@ public class GerritTriggerTimerTask extends TimerTask {
      *
      * @param gerritTrigger the GerritTrigger that created this timerTask
      */
-    GerritTriggerTimerTask(GerritTrigger gerritTrigger) {
+    GerritTriggerTimerTask(@Nonnull GerritTrigger gerritTrigger) {
         job = gerritTrigger.getJob().getFullName();
-        GerritTriggerTimer.getInstance().schedule(this);
+        GerritTriggerTimer.getInstance().schedule(this, gerritTrigger);
     }
 
     /**
@@ -58,6 +60,11 @@ public class GerritTriggerTimerTask extends TimerTask {
             return;
         }
         trigger.updateTriggerConfigURL();
+    }
+
+    @Override
+    public String toString() {
+        return "GerritTriggerTimerTask{job='" + job + '\'' + '}';
     }
 
     /**
