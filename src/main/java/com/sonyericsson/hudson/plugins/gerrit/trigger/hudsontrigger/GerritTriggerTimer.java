@@ -30,6 +30,7 @@ import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -79,14 +80,13 @@ public final class GerritTriggerTimer {
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig#getDynamicConfigRefreshInterval()}
      * to use.
      *
-     * @param timerTask the timerTask that should be scheduled.
+     * @param trigger the trigger that needs a refresh interval.
      *
      * @return the refresh interval in ms.
      * @see #calculateAverageDynamicConfigRefreshInterval()
      */
-    private long calculateDynamicConfigRefreshInterval(GerritTriggerTimerTask timerTask) {
-        GerritTrigger trigger = timerTask.getGerritTrigger();
-        if (trigger != null && trigger.isAnyServer()) {
+    private long calculateDynamicConfigRefreshInterval(@Nonnull GerritTrigger trigger) {
+        if (trigger.isAnyServer()) {
             List<GerritServer> servers = PluginImpl.getServers_();
             if (servers.isEmpty()) {
                 return GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
@@ -94,9 +94,6 @@ public final class GerritTriggerTimer {
                 //Do an average just for giggles
                 return calculateAverageDynamicConfigRefreshInterval();
             }
-        } else if (trigger == null) {
-            //Something is wrong in the loading of things, but we shouldn't fail.
-            return calculateAverageDynamicConfigRefreshInterval();
         } else {
             //get the actual if it exists.
             GerritServer server = PluginImpl.getServer_(trigger.getServerName());
@@ -130,11 +127,13 @@ public final class GerritTriggerTimer {
     /**
      * Schedule a TimerTask according to the two constants above.
      *
+     * @param trigger the trigger associated with the task
      * @param timerTask the TimerTask to be scheduled
      */
-    public void schedule(GerritTriggerTimerTask timerTask) {
-        long timerPeriod = TimeUnit2.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(timerTask));
+    public void schedule(GerritTriggerTimerTask timerTask, @Nonnull GerritTrigger trigger) {
+        long timerPeriod = TimeUnit2.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(trigger));
         try {
+            logger.debug("Schedule task " + timerTask + " for every " + timerPeriod + "ms");
             jenkins.util.Timer.get().scheduleWithFixedDelay(timerTask, DELAY_MILLISECONDS, timerPeriod,
                                                             TimeUnit.MILLISECONDS);
 
