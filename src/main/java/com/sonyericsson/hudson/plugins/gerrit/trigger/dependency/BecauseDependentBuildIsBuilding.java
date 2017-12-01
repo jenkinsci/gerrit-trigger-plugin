@@ -26,9 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 import hudson.model.Job;
 import hudson.model.queue.CauseOfBlockage;
 
-import java.util.List;
-
-import com.google.common.base.Joiner;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 
 /**
@@ -37,18 +34,18 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  */
 public class BecauseDependentBuildIsBuilding extends CauseOfBlockage {
 
-    private List<Job> blockingProjects;
+    private Job blockingProject;
 
     /**
      * Standard constructor.
-     * @param blockingProjects The list of dependant builds which are blocking this one.
+     * @param blockingProject The dependant build which are blocking this one.
      */
-    public BecauseDependentBuildIsBuilding(List<Job> blockingProjects) {
-        this.blockingProjects = blockingProjects;
+    public BecauseDependentBuildIsBuilding(Job blockingProject) {
+        this.blockingProject = blockingProject;
     }
 
     @Override
     public String getShortDescription() {
-        return Messages.DependentBuildIsBuilding(Joiner.on(", ").join(blockingProjects));
+        return Messages.DependentBuildIsBuilding(blockingProject);
     }
 }

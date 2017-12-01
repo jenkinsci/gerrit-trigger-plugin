@@ -251,6 +251,17 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     /**
+     * Get runs triggered for event.
+     *
+     * @param event   the Gerrit Event which is being checked.
+     * @return the list of triggered runs for the event.
+     */
+    @Nullable
+    public List<Run> getRuns(GerritTriggeredEvent event) {
+        return memory.getBuilds(event);
+    }
+
+    /**
      * Updates the {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext}s for all the
      * {@link GerritCause}s in the build.
      *
