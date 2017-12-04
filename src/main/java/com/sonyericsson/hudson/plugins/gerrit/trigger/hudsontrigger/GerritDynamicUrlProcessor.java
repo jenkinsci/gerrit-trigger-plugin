@@ -30,6 +30,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePat
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
 
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +55,7 @@ import java.util.regex.Pattern;
  *
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
+@Restricted(NoExternalUse.class)
 public final class GerritDynamicUrlProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritDynamicUrlProcessor.class);
@@ -126,13 +129,12 @@ public final class GerritDynamicUrlProcessor {
      * Read and parse the dynamic trigger configuration.
      *
      * @param reader stream from which to read the config
-     * @param serverName the name of the Gerrit server configured in the project, could be null.
      *
      * @return List of Gerrit projects
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader, String serverName)
+    private static List<GerritProject> readAndParseTriggerConfig(BufferedReader reader)
             throws IOException, ParseException {
       Pattern linePattern = buildLinePattern();
 
@@ -238,12 +240,11 @@ public final class GerritDynamicUrlProcessor {
      * since the last fetch, it returns null.
      *
      * @param gerritTriggerConfigUrl the URL to fetch
-     * @param serverName name of the Gerrit server.
      * @return a list of GerritProjects if successful, or null if no change
      * @throws ParseException when the fetched content couldn't be parsed
      * @throws IOException for all other kinds of fetch errors
      */
-    public static List<GerritProject> fetch(String gerritTriggerConfigUrl, String serverName)
+    public static List<GerritProject> fetch(String gerritTriggerConfigUrl)
             throws IOException, ParseException {
 
         if (gerritTriggerConfigUrl == null) {
@@ -264,13 +265,17 @@ public final class GerritDynamicUrlProcessor {
         try {
           instream = connection.getInputStream();
           reader = new BufferedReader(new InputStreamReader(instream, Charset.forName("UTF-8")));
-          return readAndParseTriggerConfig(reader, serverName);
+          return readAndParseTriggerConfig(reader);
         } finally {
-          if (reader != null) {
-            reader.close();
-          } else if (instream != null) {
-            instream.close();
-          }
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } finally {
+                if (instream != null) {
+                    instream.close();
+                }
+            }
         }
     }
 }
