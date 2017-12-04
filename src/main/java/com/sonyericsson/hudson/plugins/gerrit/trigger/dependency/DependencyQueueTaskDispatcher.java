@@ -182,13 +182,11 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         }
 
 
-        Job blockingProject = getBlockingDependencyProjects(dependencies, event);
+        CauseOfBlockage causeOfBlockage = getCauseOfBlockage(dependencies, event);
 
-        if (blockingProject != null) {
-            return new BecauseDependentBuildIsBuilding(blockingProject);
+        if (causeOfBlockage != null) {
+            return causeOfBlockage;
         } else {
-            logger.info("No active dependencies on project: {} for event: {}, it will now build", p, event);
-
             ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
 
             if (toGerritRunListener != null) {
@@ -202,6 +200,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
                 if (parentRuns.isEmpty()) {
                     logger.info("Project {} has dependencies, but does not have known runs for {}", p, event);
+                    return null;
                 }
 
                 List<Run> actualDependencies = new ArrayList<Run>(dependencies.size());
@@ -213,6 +212,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
 
                 if (actualDependencies.isEmpty()) {
                     logger.info("Project {} has dependencies, but all of them are not interested in event {}", p, event);
+                    return null;
                 }
 
                 // TODO: returning `null` from a QueueTaskDispatcher does not mean the build will start immediately.
@@ -221,24 +221,31 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                 item.replaceAction(new GerritDependencyAction(actualDependencies));
             }
 
+            logger.info("No active dependencies on project: {} for event: {}, it will now build", p, event);
             return null;
         }
     }
 
 
     /**
-     * Gets the subset of projects which have a building element needing to complete for the same event.
+     * Gets the cause of blockage if one of dependant project was not triggered or was not finished yet.
      * @param dependencies The list of projects which need to be checked
      * @param event The event should have also caused the blocking builds.
-     * @return the sublist of dependencies which need to be completed before this event is resolved.
+     * @return the cause of blockage.
      */
-    private Job getBlockingDependencyProjects(List<Job> dependencies, GerritTriggeredEvent event) {
+    private CauseOfBlockage getCauseOfBlockage(List<Job> dependencies, GerritTriggeredEvent event) {
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         if (toGerritRunListener != null) {
             for (Job dependency : dependencies) {
-                if (toGerritRunListener.isTriggered(dependency, event)
-                        && toGerritRunListener.isBuilding(dependency, event)) {
-                    return dependency;
+                if (toGerritRunListener.isTriggered(dependency, event)) {
+                    if (toGerritRunListener.isBuilding(dependency, event)) {
+                        return new BecauseDependentBuildIsBuilding(dependency);
+                    }
+                } else {
+                    GerritTrigger gerritTrigger = GerritTrigger.getTrigger(dependency);
+                    if (gerritTrigger != null && gerritTrigger.isInteresting(event)) {
+                        return new BecauseWaitingForOtherProjectsToTrigger();
+                    }
                 }
             }
         }
