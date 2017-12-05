@@ -425,7 +425,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
         addListener((GerritEventListener)missedEventsPlaybackManager);
-        missedEventsPlaybackManager.start();
 
         logger.info(name + " started");
         started = true;
