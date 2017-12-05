@@ -34,7 +34,7 @@
                     </td>
                     <td colspan="2" style="font-weight: bold;">
                         <a href="${it.getGerritUrl(state.event)}" target="_new">
-                            <img src="${rootURL}/plugin/gerrit-trigger/images/icon16.png" border="0"/>
+                            <img src="/plugin/gerrit-trigger/images/icon16.png" border="0"/>
                             ${state.event.change.number},${state.event.patchSet.number}
                         </a>
                     </td>
@@ -59,10 +59,10 @@
                                             <img src="${imagesURL}/16x16/${build.build.iconColor.image}"/>
                                         </td>
                                         <td>
-                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
+                                            <a href="/${build.project.url}">${build.project.displayName}</a>
                                             <st:nbsp/>
                                             <st:nbsp/>
-                                            <a href="${rootURL}/${build.build.url}">${build.build.displayName}</a>
+                                            <a href="/${build.build.url}">${build.build.displayName}</a>
                                         </td>
                                     </j:when>
                                     <j:otherwise>
@@ -70,7 +70,7 @@
                                             <img src="${imagesURL}/16x16/grey_anime.gif"/>
                                         </td>
                                         <td>
-                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
+                                            <a href="/${build.project.url}">${build.project.displayName}</a>
                                         </td>
                                     </j:otherwise>
                                 </j:choose>

@@ -4,8 +4,8 @@
     <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
+                <l:task icon="images/24x24/up.gif" href="/" title="${%Back to Dashboard}"/>
+                <l:task icon="images/24x24/up.gif" href="/${it.parentUrl}/" title="${%Back to Server List}"/>
                 <l:task icon="images/24x24/edit-delete.png" href="remove" title="Remove Server" />
             </l:tasks>
         </l:side-panel>
@@ -20,7 +20,7 @@
                              help="/plugin/gerrit-trigger/help-GerritServerName.html">
                         <f:textbox name="name"
                                    value="${it.name}"
-                                   checkUrl="'${rootURL}/${serverURL}/nameFreeCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/nameFreeCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%No Connection On Startup}"
                              help="/plugin/gerrit-trigger/help-GerritNoConnectionOnStartup.html">
@@ -39,14 +39,14 @@
                         <f:textbox name="gerritFrontEndUrl"
                                    value="${it.config.gerritFrontEndUrl}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_FRONT_END_URL}"
-                                   checkUrl="'${rootURL}/${serverURL}/urlCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/urlCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%SSH Port}"
                              help="/plugin/gerrit-trigger/help-GerritSshPort.html">
                         <f:textbox name="gerritSshPort"
                                    value="${it.config.gerritSshPort}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_SSH_PORT}"
-                                   checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Proxy}"
                              help="/plugin/gerrit-trigger/help-GerritProxy.html">
@@ -70,7 +70,7 @@
                         <f:textbox name="gerritAuthKeyFile"
                                    value="${it.config.gerritAuthKeyFile}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE}"
-                                   checkUrl="'${rootURL}/${serverURL}/validKeyFileCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/validKeyFileCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%SSH Keyfile Password}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
@@ -119,31 +119,31 @@
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
                         <f:textbox name="gerritBuildStartedVerifiedValue"
                                    value="${it.config.gerritBuildStartedVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Successful}"
                              help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulVerified.html">
                         <f:textbox name="gerritBuildSuccessfulVerifiedValue"
                                    value="${it.config.gerritBuildSuccessfulVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Failed}"
                              help="/plugin/gerrit-trigger/help-GerritBuildFailedVerified.html">
                         <f:textbox name="gerritBuildFailedVerifiedValue"
                                    value="${it.config.gerritBuildFailedVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Unstable}"
                              help="/plugin/gerrit-trigger/help-GerritBuildUnstableVerified.html">
                         <f:textbox name="gerritBuildUnstableVerifiedValue"
                                    value="${it.config.gerritBuildUnstableVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Not Built}"
                              help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltVerified.html">
                         <f:textbox name="gerritBuildNotBuiltVerifiedValue"
                                    value="${it.config.gerritBuildNotBuiltVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <tr>
                         <td></td>
@@ -157,31 +157,31 @@
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
                         <f:textbox name="gerritBuildStartedCodeReviewValue"
                                    value="${it.config.gerritBuildStartedCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Successful}"
                              help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulCodeReview.html">
                         <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
                                    value="${it.config.gerritBuildSuccessfulCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Failed}"
                              help="/plugin/gerrit-trigger/help-GerritBuildFailedCodeReview.html">
                         <f:textbox name="gerritBuildFailedCodeReviewValue"
                                    value="${it.config.gerritBuildFailedCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Unstable}"
                              help="/plugin/gerrit-trigger/help-GerritBuildUnstableCodeReview.html">
                         <f:textbox name="gerritBuildUnstableCodeReviewValue"
                                    value="${it.config.gerritBuildUnstableCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                     <f:entry title="${%Not Built}"
                              help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltCodeReview.html">
                         <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
                                    value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                                   checkUrl="'/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
                 </f:section>
                 <f:advanced>
@@ -223,14 +223,14 @@
                             <f:textbox name="buildScheduleDelay"
                                        value="${it.config.buildScheduleDelay}"
                                        default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY}"
-                                       checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                                       checkUrl="'/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
                         <f:entry title="${%Dynamic Config Refresh Interval}"
                                  help="/plugin/gerrit-trigger/help-DynamicTriggerConfigRefreshInterval.html">
                             <f:textbox name="dynamicConfigRefreshInterval"
                                        value="${it.config.dynamicConfigRefreshInterval}"
                                        default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL}"
-                                       checkUrl="'${rootURL}/${serverURL}/dynamicConfigRefreshCheck?value='+escape(this.value)"/>
+                                       checkUrl="'/${serverURL}/dynamicConfigRefreshCheck?value='+escape(this.value)"/>
                         </f:entry>
                         <f:entry title="${%Enable Manual Trigger}"
                                  help="/plugin/gerrit-trigger/help-EnableManualTrigger.html">
@@ -258,7 +258,7 @@
                                      <f:textbox name="projectListFetchDelay"
                                         value="${it.config.projectListFetchDelay}"
                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_FETCH_DELAY}"
-                                        checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"
+                                        checkUrl="'/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"
                                         style="max-width: 100px;"/>
                                 </div>
                             </div>
@@ -270,7 +270,7 @@
                                      <f:textbox name="projectListRefreshInterval"
                                         value="${it.config.projectListRefreshInterval}"
                                         default="${com.sonyericsson.gerrithudsontrigger.config.Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL}"
-                                        checkUrl="'${rootURL}/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"
+                                        checkUrl="'/${serverURL}/positiveIntegerCheck?value='+escape(this.value)"
                                         style="max-width: 100px;"/>
                                 </div>
                             </div>
@@ -362,7 +362,7 @@
                                                      help="/plugin/gerrit-trigger/help-ReplicationSlaveTimeout.html">
                                                 <f:textbox name="timeout"
                                                            value="${slave.timeoutInSeconds}"
-                                                           checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                                                           checkUrl="'/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                                             </f:entry>
                                             <f:entry title="">
                                                 <div align="right">
@@ -390,7 +390,7 @@
                                  help="/plugin/gerrit-trigger/help-ConnectionWatchdogTimeout.html">
                             <f:textbox name="watchdogTimeoutMinutes"
                                        value="${it.config.watchdogTimeoutMinutes}"
-                                       checkUrl="'${rootURL}/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
+                                       checkUrl="'/${serverURL}/nonNegativeIntegerCheck?value='+escape(this.value)"/>
                         </f:entry>
                         <f:optionalBlock name="watchdogExceptions" title="${%Connection Watchdog Exceptions}" checked="${it.config.exceptionData.enabled}">
                             <f:entry title="${%Exception Days}"
@@ -423,7 +423,7 @@
                                             <td>
                                                 <f:textbox name="from"
                                                            value="${h.appendIfNotNull(t.from.hourAsString,'','00')}:${h.appendIfNotNull(t.from.minuteAsString,'','00')}"
-                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           checkUrl="'/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
                                                            +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
                                             </td>
                                         </tr>
@@ -434,7 +434,7 @@
                                             <td>
                                                 <f:textbox name="to"
                                                            value="${h.appendIfNotNull(t.to.hourAsString,'','00')}:${h.appendIfNotNull(t.to.minuteAsString,'','01')}"
-                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
+                                                           checkUrl="'/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
                                                            +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
                                             </td>
                                         </tr>

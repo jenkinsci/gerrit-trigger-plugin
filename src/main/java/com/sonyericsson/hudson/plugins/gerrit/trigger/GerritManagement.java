@@ -115,7 +115,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         Jenkins jenkins = Jenkins.getInstance();
         assert jenkins != null;
         ContextMenu menu = new ContextMenu();
-        menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
+        menu.add("newServer", Functions.joinPath("/", Functions.getResourcePath(),
                                                  "images", "24x24", "new-package.png"), Messages.AddNewServer());
         for (GerritServer server : getServers()) {
             menu.add(server);

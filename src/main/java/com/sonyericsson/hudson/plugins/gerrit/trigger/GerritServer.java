@@ -359,14 +359,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     @Override
     public String getUrlName() {
-        //Lets make an absolute url to circumvent some buggy things in core
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins != null && jenkins.getRootUrl() != null) {
-            return Functions.joinPath(jenkins.getRootUrl(),
-                    getParentUrl(), "server", getUrlEncodedName());
-        } else {
-            return Functions.joinPath("/", getParentUrl(), "server", getUrlEncodedName());
-        }
+        return Functions.joinPath("/", getParentUrl(), "server", getUrlEncodedName());
     }
 
     /**
@@ -1222,7 +1215,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         Jenkins jenkins = Jenkins.getInstance();
         if (jenkins != null) {
-            rsp.sendRedirect(jenkins.getRootUrl() + GerritManagement.get().getUrlName());
+            rsp.sendRedirect("/" + GerritManagement.get().getUrlName());
         }
     }
 
