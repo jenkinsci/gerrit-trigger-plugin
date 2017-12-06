@@ -64,6 +64,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -153,7 +154,7 @@ public class GerritMissedEventsPlaybackManagerTest {
 
         PowerMockito.mockStatic(GerritPluginChecker.class);
         PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
-                , anyString())).thenReturn(true);
+                , anyString(), anyBoolean())).thenReturn(true);
 
     }
 

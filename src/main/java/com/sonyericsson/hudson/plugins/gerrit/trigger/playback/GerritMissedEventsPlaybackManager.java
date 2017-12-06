@@ -111,6 +111,33 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
+     * Method to perform check to see if Events Plugin is enabled.
+     * @throws IOException if occurs.
+     */
+    public void performCheck() throws IOException {
+        if (playBackComplete) {
+            boolean previousIsSupported = isSupported;
+            checkIfEventsLogPluginSupported();
+            boolean currentIsSupported = isSupported;
+            if (previousIsSupported && !currentIsSupported) {
+                logger.warn("Missed Events Playback used to be supported. now it is not!");
+                // we could be missing events here that we should be persisting...
+                // so let's remove the data file so we are ready if it comes back
+                try {
+                    XmlFile config = getConfigXml(serverName);
+                    config.delete();
+                    logger.warn("Deleting " + config.getFile().getAbsolutePath());
+                } catch (IOException e) {
+                    logger.error(e.getMessage(), e);
+                }
+            }
+            if (!previousIsSupported && currentIsSupported) {
+                logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
+            }
+        }
+    }
+
+    /**
      * The name of the {@link GerritServer} this is managing.
      *
      * @return the {@link GerritServer#getName()}.
@@ -126,7 +153,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null && server.getConfig() != null) {
             isSupported = GerritPluginChecker.isPluginEnabled(
-                    server.getConfig(), EVENTS_LOG_PLUGIN_NAME);
+                    server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
         }
     }
 
@@ -138,6 +165,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         XmlFile xml = getConfigXml(serverName);
         if (xml.exists()) {
             serverTimestamp  = (EventTimeSlice)xml.unmarshal(serverTimestamp);
+        } else {
+            serverTimestamp = null;
         }
     }
 
@@ -517,4 +546,5 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public String getDisplayName() {
         return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
     }
+
 }
