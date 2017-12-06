@@ -31,6 +31,8 @@ import hudson.model.Job;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 
+import javax.annotation.Nonnull;
+
 /**
  * Wrapper class for smoother serialization of {@link Run } and {@link Job }.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -201,25 +203,50 @@ public class TriggeredItemEntity {
         }
 
         /**
-         * If this object represents the same build as aBuild.
-         * @param aBuild the build.
+         * If this object represents the same build as specified by parameters.
+         * @param otherBuildNumber build number
+         * @param otherParentName project full name
          * @return true if it is so.
          */
-        public boolean equals(Run aBuild) {
-            if (this.buildNumber != null) {
-                return projectId.equals(aBuild.getParent().getFullName())
-                        && this.buildNumber.equals(aBuild.getNumber());
-            }
-            return false;
+        public boolean isSameBuild(int otherBuildNumber, String otherParentName) {
+            return this.buildNumber != null
+                    && this.buildNumber == otherBuildNumber
+                    && projectId.equals(otherParentName);
         }
 
         /**
-         * If this object represents the same project as aProject.
-         * @param aProject the project to compare.
+         * If this object represents the same build as aBuild.
+         *
+         * @deprecated Use {@link #isSameBuild(int, String)} instead
+         *
+         * @param aBuild the build to compare.
          * @return true if it is so.
          */
-        public boolean equals(Job aProject) {
-            return projectId.equals(aProject.getFullName());
+        @Deprecated
+        public boolean equals(@Nonnull Run aBuild) {
+            return isSameBuild(aBuild.getNumber(), aBuild.getParent().getFullName());
+        }
+
+        /**
+         * If this object represents the same project as aProjectFullname.
+         * @param aProjectFullname the project to compare.
+         * @return true if it is so.
+         */
+        public boolean equals(String aProjectFullname) {
+            return projectId.equals(aProjectFullname);
+        }
+
+        /**
+         * If this object represents the same project as other.
+         *
+         * @deprecated Use {@link #equals(String)} instead
+         *
+         * @param other the project to compare.
+         * @return true if it is so.
+         */
+        @Deprecated
+        public boolean equals(Job other) {
+            return equals(other.getFullName());
         }
 
         @Override

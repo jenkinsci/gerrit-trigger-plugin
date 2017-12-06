@@ -206,8 +206,9 @@ public class TriggerContext {
      * @return the other object if there is one, null if there is none.
      */
     private synchronized TriggeredItemEntity findOtherBuild(Run build) {
+        String parentName = build.getParent().getFullName();
         for (TriggeredItemEntity other : others) {
-            if (other.equals(build)) {
+            if (other.isSameBuild(build.getNumber(), parentName)) {
                 return other;
             }
         }
@@ -221,8 +222,9 @@ public class TriggerContext {
      * @return the other object, or null if none.
      */
     private synchronized TriggeredItemEntity findOtherProject(Job project) {
+        String fullName = project.getFullName();
         for (TriggeredItemEntity other : others) {
-            if (other.equals(project)) {
+            if (other.equals(fullName)) {
                 return other;
             }
         }
