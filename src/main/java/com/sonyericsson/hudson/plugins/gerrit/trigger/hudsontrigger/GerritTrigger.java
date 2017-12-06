@@ -1388,6 +1388,10 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
+        if (!dynamicTriggerConfiguration) {
+            dynamicGerritProjects = Collections.emptyList();
+        }
+
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
     }
 
