@@ -213,37 +213,32 @@ public class GerritProject implements Describable<GerritProject> {
      * @return true is the rules match.
      */
     public boolean isInteresting(String project, String branch, String topic, List<String> files) {
-        if (compareType.matches(pattern, project)) {
-            for (Branch b : branches) {
-                boolean foundInterestingForbidden = false;
-                boolean foundInterestingTopicOrFile = false;
-                if (b.isInteresting(branch)) {
-                    if (forbiddenFilePaths != null) {
-                        for (FilePath ffp : forbiddenFilePaths) {
-                            if (ffp.isInteresting(files)) {
-                                foundInterestingForbidden = true;
-                                break;
-                            }
-                        }
+        if (!compareType.matches(pattern, project)) {
+            return false;
+        }
+        for (Branch b : branches) {
+            if (!b.isInteresting(branch)) {
+                continue;
+            }
+
+            if (forbiddenFilePaths != null) {
+                // Forbidden file paths take precedence over included file paths.
+                if (disableStrictForbiddenFileVerification) {
+                    // We need to check if all paths match forbidden file paths.
+                    if (areAllFilesForbidden(files)) {
+                        return false;
                     }
-                    if (isInterestingTopic(topic) && isInterestingFile(files)) {
-                        foundInterestingTopicOrFile = true;
-                    }
-                    if (disableStrictForbiddenFileVerification) {
-                        // Here we want to be able to trigger a build if the event contains
-                        // wanted topics or file paths even though there may be a forbidden file
-                        return foundInterestingTopicOrFile;
-                    } else {
-                        if (foundInterestingForbidden) {
-                            // we have a forbidden file and a wanted file path.
+                } else {
+                    for (FilePath ffp : forbiddenFilePaths) {
+                        if (ffp.isInteresting(files)) {
                             return false;
-                        } else if (foundInterestingTopicOrFile) {
-                            // we DO not have a forbidden file and but we have a wanted file path.
-                            return true;
                         }
                     }
                 }
             }
+
+            return isInterestingTopic(topic) && isInterestingFile(files);
+
         }
         return false;
     }
@@ -300,6 +295,39 @@ public class GerritProject implements Describable<GerritProject> {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Check if all files from the list match any of forbidden file paths.
+     *
+     * @param files the files to check.
+     * @return true if all files match forbidden file paths.
+     */
+    private boolean areAllFilesForbidden(List<String> files) {
+        for (String file : files) {
+            if (!isForbiddenFile(file)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Checks if file matches any of the forbidden file paths.
+     *
+     * @param file the file path to check.
+     * @return true if any of the forbidden path rules match.
+     */
+    private boolean isForbiddenFile(String file) {
+        if (forbiddenFilePaths == null || forbiddenFilePaths.size() == 0) {
+            return false;
+        }
+        for (FilePath f : forbiddenFilePaths) {
+            if (f.isInterestingFile(file)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
