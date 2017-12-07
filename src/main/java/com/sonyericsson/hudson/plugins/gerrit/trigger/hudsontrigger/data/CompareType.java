@@ -26,6 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareUtil.AntCompareUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareUtil.PlainCompareUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareUtil.RegExpCompareUtil;
+import hudson.EnvVars;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -88,7 +90,7 @@ public enum CompareType {
         return PLAIN;
     }
 
-    private CompareUtil util;
+    CompareUtil util;
 
     /**
      * Private Constructor.
@@ -102,10 +104,11 @@ public enum CompareType {
      * Tells if the given string matches the given pattern based on the algorithm of this CompareType instance.
      * @param pattern the pattern
      * @param str the string
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the string matches the pattern.
      */
-    public boolean matches(String pattern, String str) {
-        return util.matches(pattern, str);
+    public boolean matches(String pattern, String str, EnvVars envVars) {
+        return util.matches(pattern, str, envVars);
     }
 
     /**

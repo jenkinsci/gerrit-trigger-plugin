@@ -49,6 +49,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 
+import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
@@ -758,7 +759,7 @@ public class GerritTriggerTest {
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritProject gP = mock(GerritProject.class);
-        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class), any(EnvVars.class));
         when(gP.getFilePaths()).thenReturn(null);
 
 
@@ -838,7 +839,7 @@ public class GerritTriggerTest {
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritProject gP = mock(GerritProject.class);
-        doReturn(false).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        doReturn(false).when(gP).isInteresting(any(String.class), any(String.class), any(String.class), any(EnvVars.class));
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -882,7 +883,7 @@ public class GerritTriggerTest {
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritProject gP = mock(GerritProject.class);
-        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class), any(EnvVars.class));
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -1029,7 +1030,7 @@ public class GerritTriggerTest {
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritProject gP = mock(GerritProject.class);
-        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class), any(EnvVars.class));
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(null);
@@ -1060,7 +1061,7 @@ public class GerritTriggerTest {
         PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
 
         GerritProject gP = mock(GerritProject.class);
-        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class), any(EnvVars.class));
         when(gP.getFilePaths()).thenReturn(null);
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);

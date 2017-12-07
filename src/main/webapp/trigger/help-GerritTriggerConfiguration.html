@@ -8,7 +8,8 @@
     You can specify the name pattern in three different ways, as provided by the &quot;Type&quot; drop-down menu.
 </p>
 <ul>
-    <li><strong>Plain:</strong> The exact name in Gerrit, case sensitive equality.</li>
+    <li><strong>Plain:</strong> The exact name in Gerrit, case insensitive equality, allows usage of system environment
+        variables defined on the jenkins host (e.g. <code>${ENVIRONMENT}</code>).</li>
     <li><strong>Path:</strong> ANT style pattern. <i>Ex: &quot;**/base/*&quot;</i></li>
     <li><strong>RegExp:</strong> Regular expression. The expression should match the whole line, so to use the example
                 with base above, .*\/base\/?.*</li>

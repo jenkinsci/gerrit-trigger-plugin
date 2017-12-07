@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -92,11 +93,12 @@ public class FilePath extends AbstractDescribableImpl<FilePath> {
     /**
      * Tells if the given files are matched by this rule.
      * @param files the files in the patch set.
+     * @param envVars the environment variables exisiting on the jenkins host.
      * @return true if the files match.
      */
-    public boolean isInteresting(List<String> files) {
+    public boolean isInteresting(List<String> files, EnvVars envVars) {
         for (String file : files) {
-            if (compareType.matches(pattern, file)) {
+            if (compareType.matches(pattern, file, envVars)) {
                 return true;
             }
         }

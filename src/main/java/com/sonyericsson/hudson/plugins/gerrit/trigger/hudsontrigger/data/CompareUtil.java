@@ -23,11 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import java.io.File;
+import hudson.EnvVars;
 import org.apache.tools.ant.types.selectors.SelectorUtils;
+
+import java.io.File;
 
 /**
  * Base interface for the compare-algorithms.
+ *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public interface CompareUtil {
@@ -37,8 +40,18 @@ public interface CompareUtil {
      * @param pattern the pattern to use.
      * @param str the string to match on.
      * @return true if the string matches the pattern.
+     * @deprecated use {@link #matches(String, String, EnvVars)} instead.
      */
     boolean matches(String pattern, String str);
+
+    /**
+     * Tells if the given pattern matches the string according to the implemented comparer/algorithm.
+     * @param pattern the pattern to use.
+     * @param str the string to match on.
+     * @param envVars the environment variables exisiting on the jenkins host. Can be {@code null}.
+     * @return true if the string matches the pattern.
+     */
+    boolean matches(String pattern, String str, EnvVars envVars);
 
     /**
      * Returns the human-readable name of the util.
@@ -52,20 +65,42 @@ public interface CompareUtil {
      */
     char getOperator();
 
+    abstract class AbstractCompareUtil implements CompareUtil {
+        @Override
+        public boolean matches(String pattern, String str) {
+            return matches(pattern, str, null);
+        }
+
+        /**
+         * Expands the pattern in case it contains tokens that can be resolved with the given envVars.
+         * @param pattern the pattern to expand.
+         * @param envVars the envVars to use for expansion, if {@code null} then the unmodified pattern will be returned
+         * @return the expanded string, if no envVars were provided will return the initial unmodified pattern
+         */
+        protected String expandWithEnvVarsIfPossible(String pattern, EnvVars envVars) {
+            if (envVars != null) {
+                return envVars.expand(pattern);
+            } else {
+                return pattern;
+            }
+        }
+    }
+
     /**
      * Compares based on Ant-style paths.
      * like <code>my/&#042;&#042;/something&#042;.git</code>
      */
-    static class AntCompareUtil implements CompareUtil {
+    class AntCompareUtil extends AbstractCompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
+        public boolean matches(String pattern, String str, EnvVars envVars) {
             // Replace the Git directory separator character (always '/')
             // with the platform specific directory separator before
             // invoking Ant's platform specific path matching.
             String safePattern = pattern.replace('/', File.separatorChar);
+            String expandedPattern = expandWithEnvVarsIfPossible(safePattern, envVars);
             String safeStr = str.replace('/', File.separatorChar);
-            return SelectorUtils.matchPath(safePattern, safeStr);
+            return SelectorUtils.matchPath(expandedPattern, safeStr);
         }
 
         @Override
@@ -80,13 +115,15 @@ public interface CompareUtil {
     }
 
     /**
-     * Compares with pattern.equals(str).
+     * Compares with pattern.equalsIgnoreCase(str).
      */
-    static class PlainCompareUtil implements CompareUtil {
+    class PlainCompareUtil extends AbstractCompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
-            return pattern.equalsIgnoreCase(str);
+        public boolean matches(String pattern, String str, EnvVars envVars) {
+            String expandedPattern = expandWithEnvVarsIfPossible(pattern, envVars);
+
+            return expandedPattern.equalsIgnoreCase(str);
         }
 
         @Override
@@ -105,11 +142,12 @@ public interface CompareUtil {
      * string.matches(pattern)
      * @see java.util.regex.Pattern
      */
-    static class RegExpCompareUtil implements CompareUtil {
+    class RegExpCompareUtil extends AbstractCompareUtil {
 
         @Override
-        public boolean matches(String pattern, String str) {
-            return str.matches(pattern);
+        public boolean matches(String pattern, String str, EnvVars envVars) {
+            String expandedPattern = expandWithEnvVarsIfPossible(pattern, envVars);
+            return str.matches(expandedPattern);
         }
 
         @Override
