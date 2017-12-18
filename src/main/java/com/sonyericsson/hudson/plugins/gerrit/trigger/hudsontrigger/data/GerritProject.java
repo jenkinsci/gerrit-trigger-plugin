@@ -34,6 +34,7 @@ import hudson.util.ComboBoxModel;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -216,32 +217,29 @@ public class GerritProject implements Describable<GerritProject> {
         if (compareType.matches(pattern, project)) {
             for (Branch b : branches) {
                 boolean foundInterestingForbidden = false;
-                boolean foundInterestingTopicOrFile = false;
                 if (b.isInteresting(branch)) {
                     if (forbiddenFilePaths != null) {
-                        for (FilePath ffp : forbiddenFilePaths) {
-                            if (ffp.isInteresting(files)) {
-                                foundInterestingForbidden = true;
-                                break;
+                        Iterator<String> i = files.iterator();
+                        while (i.hasNext()) {
+                            String file = i.next();
+                            for (FilePath ffp : forbiddenFilePaths) {
+                                if (ffp.isInteresting(file)) {
+                                    if (!disableStrictForbiddenFileVerification) {
+                                        return false;
+                                    } else {
+                                        foundInterestingForbidden = true;
+                                        i.remove();
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
-                    if (isInterestingTopic(topic) && isInterestingFile(files)) {
-                        foundInterestingTopicOrFile = true;
+                    if (foundInterestingForbidden && files.isEmpty()) {
+                        // All changed files are forbidden, so this is not interesting
+                        return false;
                     }
-                    if (disableStrictForbiddenFileVerification) {
-                        // Here we want to be able to trigger a build if the event contains
-                        // wanted topics or file paths even though there may be a forbidden file
-                        return foundInterestingTopicOrFile;
-                    } else {
-                        if (foundInterestingForbidden) {
-                            // we have a forbidden file and a wanted file path.
-                            return false;
-                        } else if (foundInterestingTopicOrFile) {
-                            // we DO not have a forbidden file and but we have a wanted file path.
-                            return true;
-                        }
-                    }
+                    return isInterestingTopic(topic) && isInterestingFile(files);
                 }
             }
         }

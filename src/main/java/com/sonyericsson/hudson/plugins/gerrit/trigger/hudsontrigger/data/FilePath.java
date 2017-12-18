@@ -96,11 +96,20 @@ public class FilePath extends AbstractDescribableImpl<FilePath> {
      */
     public boolean isInteresting(List<String> files) {
         for (String file : files) {
-            if (compareType.matches(pattern, file)) {
+            if (isInteresting(file)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Tells if the given file is matched by this rule.
+     * @param file the file in the patch set.
+     * @return true if the files match.
+     */
+    public boolean isInteresting(String file) {
+        return compareType.matches(pattern, file);
     }
 
     /**
