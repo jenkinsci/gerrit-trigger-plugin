@@ -1,0 +1,3 @@
+# Remove once https://github.com/jenkinsci/jenkins/pull/3234 is integrated?
+java.util.Collections$SynchronizedList
+java.util.Collections$SynchronizedRandomAccessList
