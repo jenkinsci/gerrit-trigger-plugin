@@ -937,6 +937,11 @@ public class GerritTrigger extends Trigger<Job> {
      * @return true if we should.
      */
     public boolean isInteresting(GerritTriggeredEvent event) {
+        if (job == null) {
+            logger.trace("Job is not fully initialised.");
+            return false;
+        }
+
         if (!job.isBuildable()) {
             logger.trace("Disabled.");
             return false;
