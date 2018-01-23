@@ -155,7 +155,6 @@ public class GerritMissedEventsPlaybackManagerTest {
         PowerMockito.mockStatic(GerritPluginChecker.class);
         PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
                 , anyString(), anyBoolean())).thenReturn(true);
-
     }
 
     /**
@@ -335,4 +334,65 @@ public class GerritMissedEventsPlaybackManagerTest {
 
     }
 
+    /**
+     * This tests that the initial `isSupported` state is false.
+     */
+    @Test
+    public void testInitialSupportedState() {
+       // Option 1a: not supported
+       PowerMockito.mockStatic(GerritPluginChecker.class);
+       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+               , anyString(), anyBoolean())).thenReturn(false);
+
+        GerritMissedEventsPlaybackManager missingEventsPlaybackManager
+                = new GerritMissedEventsPlaybackManager("defaultServer");
+        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+
+       // Option 1b: not supported
+       PowerMockito.mockStatic(GerritPluginChecker.class);
+       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+               , anyString(), anyBoolean())).thenReturn(null);
+
+        missingEventsPlaybackManager
+                = new GerritMissedEventsPlaybackManager("defaultServer");
+        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+
+       // Option 2: supported
+       PowerMockito.mockStatic(GerritPluginChecker.class);
+       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+               , anyString(), anyBoolean())).thenReturn(true);
+
+        missingEventsPlaybackManager
+                = new GerritMissedEventsPlaybackManager("defaultServer");
+        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+    }
+
+    /**
+     * This tests that the supported state does not change if GerritPluginChecker
+     * cannot determine the state successfully.
+     */
+    @Test
+    public void testStateOnlyChangesWhenValid() {
+       PowerMockito.mockStatic(GerritPluginChecker.class);
+       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+               , anyString(), anyBoolean())).thenReturn(false);
+
+        GerritMissedEventsPlaybackManager missingEventsPlaybackManager
+                = new GerritMissedEventsPlaybackManager("defaultServer");
+        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+
+        PowerMockito.mockStatic(GerritPluginChecker.class);
+        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+                , anyString(), anyBoolean())).thenReturn(true);
+
+        missingEventsPlaybackManager.checkIfEventsLogPluginSupported();
+        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+
+        PowerMockito.mockStatic(GerritPluginChecker.class);
+        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+                , anyString(), anyBoolean())).thenReturn(null);
+
+        missingEventsPlaybackManager.checkIfEventsLogPluginSupported();
+        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+    }
 }
