@@ -32,7 +32,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 
 /**
@@ -133,21 +132,22 @@ public final class GerritPluginChecker {
      * Query Gerrit to determine if plugin is enabled.
      * @param config Gerrit Server Config
      * @param pluginName The Gerrit Plugin name.
-     * @return true if enabled.
+     * @return true if enabled, false if not, and null if we couldn't tell.
      */
-    public static boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName) {
+    public static Boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName) {
         return isPluginEnabled(config, pluginName, false);
     }
 
     /**
      * Query Gerrit to determine if plugin is enabled.
+     *
+     * In the event that this cannot determine the status, it will throw an Exception.
      * @param config Gerrit Server Config
      * @param pluginName The Gerrit Plugin name.
      * @param quiet Whether we want to log a message.
-     * @return true if enabled.
+     * @return true if enabled, false if not, and null if we couldn't tell.
      */
-    public static boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
-
+    public static Boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
         String restUrl = buildURL(config);
         if (restUrl == null) {
             logger.warn(Messages.PluginInstalledRESTApiNull(pluginName));
@@ -161,11 +161,9 @@ public final class GerritPluginChecker {
             int statusCode = execute.getStatusLine().getStatusCode();
             logger.debug("status code: {}", statusCode);
             return decodeStatus(statusCode, pluginName, quiet);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
-            return false;
-        } finally {
             if (execute != null) {
                 try {
                     execute.close();
@@ -173,6 +171,7 @@ public final class GerritPluginChecker {
                     logger.trace("Error happened when close http client.", exp);
                 }
             }
+            return null;
         }
     }
 }

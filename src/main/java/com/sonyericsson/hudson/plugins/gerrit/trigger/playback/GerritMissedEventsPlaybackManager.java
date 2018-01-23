@@ -152,8 +152,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public void checkIfEventsLogPluginSupported() {
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null && server.getConfig() != null) {
-            isSupported = GerritPluginChecker.isPluginEnabled(
-                    server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
+            Boolean newValue = GerritPluginChecker.isPluginEnabled(server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
+            if (newValue == null) {
+                logger.warn("Could not determine plugin support for " + EVENTS_LOG_PLUGIN_NAME
+                    + "; leaving status as " + String.valueOf(isSupported));
+            } else {
+                isSupported = newValue;
+            }
         }
     }
 
