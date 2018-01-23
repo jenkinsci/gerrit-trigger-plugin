@@ -451,19 +451,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * @return true if was able to persist event.
      */
     synchronized boolean persist(GerritTriggeredEvent evt) {
-
+        // If there is not timestamp, then ignore this event.
         if (evt == null || evt.getEventCreatedOn() == null) {
-            logger.warn("Event CreatedOn is null...Gerrit Server might not support attribute eventCreatedOn. "
-                    + "Will NOT persist this event and Missed Events will be disabled!");
-            isSupported = false;
+            logger.debug("'eventCreatedOn' is null; skipping event.");
             return false;
         }
 
         long ts = evt.getEventCreatedOn().getTime();
+        // If the timestamp is invalid, then ignore this event.
         if (ts == 0) {
-            logger.warn("Event CreatedOn is 0...Gerrit Server does not support attribute eventCreatedOn. "
-                    + "Will NOT persist this event and Missed Events will be disabled!");
-            isSupported = false;
+            logger.debug("'eventCreatedOn' is 0; skipping event.");
             return false;
         }
 
