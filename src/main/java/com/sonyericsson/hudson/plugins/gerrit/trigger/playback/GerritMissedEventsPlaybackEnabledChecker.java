@@ -67,8 +67,12 @@ public class GerritMissedEventsPlaybackEnabledChecker extends AsyncPeriodicWork 
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         List<GerritServer> servers = PluginImpl.getServers_();
         for (GerritServer gs: servers) {
-            logger.debug("Performing plugin check for server: {0}", gs.getName());
-            gs.getMissedEventsPlaybackManager().performCheck();
+            if (gs != null && gs.getMissedEventsPlaybackManager() != null) {
+                logger.debug("Performing plugin check for server: {0}", gs.getName());
+                gs.getMissedEventsPlaybackManager().performCheck();
+            } else {
+                logger.debug("Skip plugin check, because server is not completely initialised");
+            }
         }
     }
 
