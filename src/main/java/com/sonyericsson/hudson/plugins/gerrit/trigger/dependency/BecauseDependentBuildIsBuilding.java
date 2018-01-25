@@ -46,6 +46,6 @@ public class BecauseDependentBuildIsBuilding extends CauseOfBlockage {
 
     @Override
     public String getShortDescription() {
-        return Messages.DependentBuildIsBuilding(blockingProject);
+        return Messages.DependentBuildIsBuilding(blockingProject.getFullDisplayName());
     }
 }

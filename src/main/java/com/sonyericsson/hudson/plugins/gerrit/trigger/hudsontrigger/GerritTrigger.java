@@ -936,7 +936,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param event the event
      * @return true if we should.
      */
-    /*package*/ boolean isInteresting(GerritTriggeredEvent event) {
+    public boolean isInteresting(GerritTriggeredEvent event) {
         if (!job.isBuildable()) {
             logger.trace("Disabled.");
             return false;
