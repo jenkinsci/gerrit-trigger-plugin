@@ -265,4 +265,36 @@ public class TriggerContext {
         }
         return list;
     }
+
+    /**
+     * Gets all the other entities in the most user friendly order.
+     *      on-going builds
+     *      already finished builds
+     *      builds without build number
+     *
+     * @return a sorted list of entities from this context.
+     */
+    public synchronized List<TriggeredItemEntity> getSortedOthers() {
+        int lastBuilding = 0;
+        LinkedList<TriggeredItemEntity> result = new LinkedList<TriggeredItemEntity>();
+        if (others != null) {
+            for (TriggeredItemEntity entity : others) {
+                Run build = entity.getBuild();
+                if (build != null) {
+                    if (build.isBuilding()) {
+                        result.addFirst(entity);
+                        lastBuilding++;
+                    } else {
+                        result.add(lastBuilding, entity);
+                    }
+                } else {
+                    if (entity.getProject() != null) {
+                        result.addLast(entity);
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
 }
