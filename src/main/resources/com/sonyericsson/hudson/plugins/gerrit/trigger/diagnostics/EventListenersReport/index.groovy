@@ -98,7 +98,7 @@ l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), no
                 tr {
                     td {
                         if (job != null) {
-                            a(href: "${rootURL}/${job.shortUrl}", job.getFullDisplayName())
+                            a(href: "${rootURL}/${job.url}", job.getFullDisplayName())
                         } else {
                             span(_("_unknown"))
                         }
