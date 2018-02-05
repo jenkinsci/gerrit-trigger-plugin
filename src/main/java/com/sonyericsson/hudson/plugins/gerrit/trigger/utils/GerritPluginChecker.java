@@ -61,7 +61,7 @@ public final class GerritPluginChecker {
         }
 
         if (!config.isUseRestApi()) {
-            logger.warn("REST API is not enabled.");
+            logger.debug("REST API is not enabled.");
             return null;
         }
 
@@ -150,7 +150,11 @@ public final class GerritPluginChecker {
 
         String restUrl = buildURL(config);
         if (restUrl == null) {
-            logger.warn(Messages.PluginInstalledRESTApiNull(pluginName));
+            if (quiet) {
+                logger.debug(Messages.PluginInstalledRESTApiNull(pluginName));
+            } else {
+                logger.warn(Messages.PluginInstalledRESTApiNull(pluginName));
+            }
             return false;
         }
         logger.trace("{}plugins/{}/", restUrl, pluginName);
