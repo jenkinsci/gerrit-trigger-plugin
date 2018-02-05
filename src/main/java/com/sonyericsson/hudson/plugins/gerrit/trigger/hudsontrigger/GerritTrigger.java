@@ -964,7 +964,6 @@ public class GerritTrigger extends Trigger<Job> {
         }
         // Another thread could be updating the dynamic project list, so make sure that
         // we access it in a thread-safe manner.
-        logger.debug("isInteresting: lock: {}", DYNAMIC_GERRIT_PROJECTS_LOCK);
         synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
             if (dynamicGerritProjects != null) {
                 allGerritProjects.addAll(dynamicGerritProjects);
