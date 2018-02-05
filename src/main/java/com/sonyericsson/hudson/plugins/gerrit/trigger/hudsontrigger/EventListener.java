@@ -103,7 +103,7 @@ public final class EventListener implements GerritEventListener {
 
     @Override
     public void gerritEvent(GerritEvent event) {
-        logger.trace("event: {}", event);
+        logger.trace("job: {}; event: {}", job, event);
         GerritTrigger t = getTrigger();
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
@@ -125,7 +125,7 @@ public final class EventListener implements GerritEventListener {
      * @param event the event
      */
     public void gerritEvent(ManualPatchsetCreated event) {
-        logger.trace("event: {}", event);
+        logger.trace("job: {}; event: {}", job, event);
         GerritTrigger t = getTrigger();
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
@@ -144,7 +144,7 @@ public final class EventListener implements GerritEventListener {
      * @param event the event.
      */
     public void gerritEvent(CommentAdded event) {
-        logger.trace("event: {}", event);
+        logger.trace("job: {}; event: {}", job, event);
         GerritTrigger t = getTrigger();
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
