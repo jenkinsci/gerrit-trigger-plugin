@@ -616,6 +616,12 @@ public class GerritTrigger extends Trigger<Job> {
 
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
+            // We *must* update list of projects immediately *before* we can be labeled as "started".
+            // When using imperative Jenkinsfiles, every run will "update" the job's configuration.
+            // When the job's configuration is updated, all triggers are stopped and restarted.
+            // Thus, if we do *not* update the project list, then Gerrit events in quick succession
+            // will be missed due to the start/stop cycle.
+            updateTriggerConfigURL();
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         }
 
