@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 
 /**
@@ -50,6 +51,15 @@ public class GerritMissedEventsPlaybackEnabledChecker extends AsyncPeriodicWork 
     private static final Logger logger =
             LoggerFactory.getLogger(GerritMissedEventsPlaybackEnabledChecker.class);
 
+
+    /**
+     * No spam in log file.
+     * @return FINEST level for logging.
+     */
+    @Override
+    protected Level getNormalLoggingLevel() {
+        return Level.FINEST;
+    }
 
     /**
      * Default constructor.
