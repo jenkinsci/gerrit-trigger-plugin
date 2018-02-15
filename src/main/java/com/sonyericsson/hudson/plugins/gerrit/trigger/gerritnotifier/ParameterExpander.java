@@ -37,6 +37,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
+import hudson.matrix.MatrixBuild;
+import hudson.matrix.MatrixRun;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -642,6 +644,22 @@ public class ParameterExpander {
                             if (extensionMessage != null) {
                                 str.append("\n\n").append(extensionMessage);
                             }
+                        }
+                    }
+
+                    if (build instanceof MatrixBuild && trigger.getIncludeMatrixResults()) {
+                        for (MatrixRun childBuild : ((MatrixBuild)build).getRuns()) {
+                            Result childResult = childBuild.getResult();
+
+                            if (childResult == null) {
+                                childResult = Result.NOT_BUILT;
+                            }
+
+                            str.append("\n\n");
+                            str.append("\\__ ");
+                            str.append(rootUrl).append(childBuild.getUrl());
+                            str.append(MESSAGE_DELIMITER);
+                            str.append(childResult.toString());
                         }
                     }
                 }

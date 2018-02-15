@@ -188,6 +188,14 @@
                         <f:textbox/>
                     </f:entry>
                 </j:if>
+                <j:if test="${descriptor.isMatrixProject(it)}">
+                    <f:entry title="${%Include Matrix Results}"
+                             field="includeMatrixResults"
+                             help="/plugin/gerrit-trigger/trigger/help-IncludeMatrixResults.html">
+                        <f:checkbox name="includeMatrixResults"
+                                    checked="${it.includeMatrixResults}"/>
+                    </f:entry>
+                </j:if>
             </f:section>
         </f:advanced>
 
