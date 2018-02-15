@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
@@ -956,16 +957,12 @@ public class GerritTrigger extends Trigger<Job> {
         if (!shouldTriggerOnEventType(event)) {
             return false;
         }
-        List<GerritProject> allGerritProjects = new LinkedList<GerritProject>();
-        if (gerritProjects != null) {
-            allGerritProjects.addAll(gerritProjects);
-        }
-        if (dynamicGerritProjects != null) {
-            allGerritProjects.addAll(dynamicGerritProjects);
-        }
-        logger.trace("entering isInteresting projects configured: {} the event: {}", allGerritProjects.size(), event);
 
-        for (GerritProject p : allGerritProjects) {
+        logger.trace("entering isInteresting for the event: {}", event);
+
+        Iterator<GerritProject> allGerritProjects = getAllGerritProjectsIterator();
+        while (allGerritProjects.hasNext()) {
+            GerritProject p = allGerritProjects.next();
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
@@ -1077,15 +1074,16 @@ public class GerritTrigger extends Trigger<Job> {
         return false;
     }
 
-
-
     /**
      * The list of GerritProject triggering rules.
      *
      * @return the rule-set.
      */
     public List<GerritProject> getGerritProjects() {
-        return gerritProjects;
+        if (gerritProjects == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(gerritProjects);
     }
 
     /**
@@ -1094,7 +1092,10 @@ public class GerritTrigger extends Trigger<Job> {
      *  @return the rule-set.
      */
     public List<GerritProject> getDynamicGerritProjects() {
-        return dynamicGerritProjects;
+        if (dynamicGerritProjects == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(dynamicGerritProjects);
     }
 
     /**
@@ -1344,6 +1345,27 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setTriggerOnEvents(List<PluginGerritEvent> triggerOnEvents) {
         this.triggerOnEvents = triggerOnEvents;
+    }
+
+    /**
+     * Returns an iterator over the all gerrit projects configured for the trigger.
+     *
+     * @return an iterator over the all gerrit projects configured for the trigger.
+     */
+    private Iterator<GerritProject> getAllGerritProjectsIterator() {
+        if (gerritProjects != null && dynamicGerritProjects != null) {
+            return Iterators.concat(gerritProjects.iterator(), dynamicGerritProjects.iterator());
+        }
+
+        if (gerritProjects == null && dynamicGerritProjects != null) {
+            return dynamicGerritProjects.iterator();
+        }
+
+        if (gerritProjects != null) {
+            return gerritProjects.iterator();
+        }
+
+        return Iterators.emptyIterator();
     }
 
     /**
