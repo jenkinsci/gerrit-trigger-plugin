@@ -75,4 +75,12 @@ final class DynamicConfigurationCacheProxy {
         long updateInterval = GerritTriggerTimer.getInstance().calculateAverageDynamicConfigRefreshInterval();
         return TimeUnit2.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastTimeUpdated) > updateInterval;
     }
+
+    /**
+     * Clears the cache.
+     */
+    void clear() {
+        ttl.clear();
+        cache.clear();
+    }
 }
