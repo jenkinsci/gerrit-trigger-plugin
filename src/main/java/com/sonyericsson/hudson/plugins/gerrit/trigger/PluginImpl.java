@@ -282,6 +282,7 @@ public class PluginImpl extends Plugin {
      * @param servers the list to be set.
      */
     public void setServers(List<GerritServer> servers) {
+        checkAdmin();
         if (this.servers != servers) {
             this.servers.clear();
             this.servers.addAll(servers);
@@ -295,6 +296,7 @@ public class PluginImpl extends Plugin {
      * @return the list after adding the server.
      */
     public List<GerritServer> addServer(GerritServer s) {
+        checkAdmin();
         servers.add(s);
         return servers;
     }
@@ -306,8 +308,21 @@ public class PluginImpl extends Plugin {
      * @return the list after removing the server.
      */
     public List<GerritServer> removeServer(GerritServer s) {
+        checkAdmin();
         servers.remove(s);
         return servers;
+    }
+
+    /**
+     * Checks that the current user has {@link Jenkins#ADMINISTER} permission.
+     * If Jenkins is currently active.
+     */
+    private void checkAdmin() {
+        final Jenkins jenkins = Jenkins.getInstance(); //Hoping this method doesn't change meaning again
+        if (jenkins != null) {
+            //If Jenkins is not alive then we are not started, so no unauthorised user might do anything
+            jenkins.checkPermission(Jenkins.ADMINISTER);
+        }
     }
 
 

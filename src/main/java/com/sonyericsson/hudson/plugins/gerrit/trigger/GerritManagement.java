@@ -41,6 +41,7 @@ import hudson.model.Failure;
 import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
+import hudson.security.Permission;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithContextMenu;
@@ -52,6 +53,7 @@ import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +114,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+        checkPermission();
         Jenkins jenkins = Jenkins.getInstance();
         assert jenkins != null;
         ContextMenu menu = new ContextMenu();
@@ -189,6 +192,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      */
     @SuppressWarnings("unused") //Called from Jelly
     public List<GerritServer> getServers() {
+        checkPermission();
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin == null) {
             return Collections.emptyList();
@@ -204,6 +208,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      */
     @SuppressWarnings("unused") //Called from Jelly
     public GerritServer getServer(String encodedServerName) {
+        checkPermission();
         String serverName;
         try {
             serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
@@ -259,7 +264,9 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return the new GerritServer
      * @throws IOException when error sending redirect back to the list of servers
      */
+    @RequirePOST
     public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
+        checkPermission();
         String serverName = req.getParameter("name");
         PluginImpl plugin = PluginImpl.getInstance();
         assert plugin != null;
@@ -384,6 +391,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @return ok or error.
      */
     public FormValidation doNameFreeCheck(@QueryParameter("value") final String value) {
+        checkPermission();
         PluginImpl plugin = PluginImpl.getInstance();
         assert plugin != null;
         if (plugin.containsServer(value)) {
@@ -404,9 +412,11 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @throws IOException          if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
+    @RequirePOST
     public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
             IOException,
             InterruptedException {
+        checkPermission();
         if (logger.isDebugEnabled()) {
             logger.debug("submit {}", req.toString());
         }
@@ -420,6 +430,28 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         //TODO reconfigure the incoming worker threads as well
 
         rsp.sendRedirect(".");
+    }
+
+    /**
+     * Checks that the current user has {@link #getRequiredPermission()} permission.
+     * If Jenkins is currently active.
+     */
+    private void checkPermission() {
+        final Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null) {
+            jenkins.checkPermission(getRequiredPermission());
+        }
+    }
+
+    /**
+     * {@link Jenkins#ADMINISTER} permission.
+     * Also used by Jelly
+     *
+     * @return the permission
+     */
+    @Override
+    public Permission getRequiredPermission() {
+        return Jenkins.ADMINISTER;
     }
 
 }

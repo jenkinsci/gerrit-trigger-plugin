@@ -22,6 +22,8 @@
  *  THE SOFTWARE.
  */
 
+/*global crumb*/
+
 function serverTable() {
     'use strict';
     // private funcs
@@ -158,17 +160,21 @@ function serverTable() {
     dataTable.subscribe("buttonClickEvent", function(oArgs) {
         var elButton = oArgs.target;
         var oRecord = this.getRecord(elButton);
+        var crumbStr = "";
+        if (crumb.fieldName !== null) {
+            crumbStr = crumb.fieldName + "=" + crumb.value;
+        }
 
         if (elButton.name === "server") {
             // for BtnServer
             if (oRecord.getData("status") === "up") {
                 YAHOO.log("Stop connection.");
                 elButton.firstElementChild.src = urlSysImg(24, "blue_anime.gif");
-                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/sleep", connectionCallBack);
+                YAHOO.util.Connect.asyncRequest('POST', oRecord.getData("serverUrl") + "/sleep", connectionCallBack, crumbStr);
             } else if (oRecord.getData("status") === "down") {
                 YAHOO.log("Start connection.");
                 elButton.firstElementChild.src = urlSysImg(24, "red_anime.gif");
-                YAHOO.util.Connect.asyncRequest('GET', oRecord.getData("serverUrl") + "/wakeup", connectionCallBack);
+                YAHOO.util.Connect.asyncRequest('POST', oRecord.getData("serverUrl") + "/wakeup", connectionCallBack, crumbStr);
             }
         } else if (elButton.name === "edit") {
             // for btnEdit
