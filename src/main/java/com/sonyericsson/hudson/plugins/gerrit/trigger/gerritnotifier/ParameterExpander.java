@@ -743,6 +743,10 @@ public class ParameterExpander {
                 } else {
                     return o1 - o2;
                 }
+            } else if (b1 != null) {
+                return 1;
+            } else if (b2 != null) {
+                return -1;
             }
             return 0;
         }

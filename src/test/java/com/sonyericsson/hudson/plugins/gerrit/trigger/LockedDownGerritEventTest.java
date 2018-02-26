@@ -2,6 +2,7 @@
  * The MIT License
  *
  * Copyright 2015 Ericsson.
+ * Copyright (c) 2018, CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,20 +25,34 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.Page;
+import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.Item;
 import hudson.model.Result;
 
+import jenkins.model.Jenkins;
 import org.apache.sshd.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -47,6 +62,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
 
 /**
  * Unit test to ensure build can be triggered even if
@@ -144,5 +160,111 @@ public class LockedDownGerritEventTest {
         assertSame(PluginImpl.DEFAULT_SERVER_NAME,
             buildOne.getCause(GerritCause.class).getEvent().getProvider().getName());
 
+    }
+
+    /**
+     * Just verify that {@link PluginImpl#getServer(String)} et. al. hasn't been locked down too tightly.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    @Issue({"SECURITY-402", "SECURITY-403" })
+    public void testUserCanConfigureAJob() throws Exception {
+
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        GerritServer otherServer = new GerritServer("theOtherServer");
+        SshdServerMock.configureFor(sshd, otherServer);
+        PluginImpl.getInstance().addServer(otherServer);
+        otherServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)otherServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        otherServer.start();
+
+        FreeStyleProject project = new TestUtils.JobBuilder(j)
+                .name(projectName)
+                .silentStartMode(false)
+                .serverName("theOtherServer").build();
+
+
+        Setup.lockDown(j);
+        j.getInstance().setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Item.READ, Item.DISCOVER).everywhere().toAuthenticated()
+                        .grant(Jenkins.READ, Item.DISCOVER).everywhere().toEveryone()
+                        .grant(Item.CONFIGURE).everywhere().to("bob"));
+
+        final JenkinsRule.WebClient webClient = j.createWebClient().login("bob", "bob");
+        HtmlPage page = webClient.getPage(project, "configure");
+        j.submit(page.getFormByName("config"));
+
+        final FreeStyleProject freshJob = j.jenkins.getItem(projectName, j.jenkins, FreeStyleProject.class);
+        final String serverName = GerritTrigger.getTrigger(freshJob).getServerName();
+        assertEquals("theOtherServer", serverName);
+    }
+
+    // CS IGNORE MagicNumber FOR NEXT 32 LINES. REASON: test data.
+
+    /**
+     * Tests that only an admin can read server configuration and manipulate server state.
+     * @throws Exception if so
+     */
+    @Test
+    @Issue({"SECURITY-402", "SECURITY-403" })
+    public void testOnlyAdminCanPerformServerConfigurationActions() throws Exception {
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        Setup.lockDown(j);
+        j.getInstance().setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Item.READ, Item.DISCOVER).everywhere().toAuthenticated()
+                        .grant(Jenkins.READ, Item.DISCOVER).everywhere().toEveryone()
+                        .grant(Item.CONFIGURE).everywhere().to("bob")
+                        .grant(Jenkins.ADMINISTER).everywhere().to("alice"));
+        j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
+        JenkinsRule.WebClient webClient = j.createWebClient().login("alice", "alice");
+        HtmlPage page = webClient.goTo("plugin/gerrit-trigger/servers/0/");
+        HtmlForm config = page.getFormByName("config");
+        assertNotNull(config);
+        post(webClient, "plugin/gerrit-trigger/servers/0/sleep", "application/json", null);
+
+        webClient = j.createWebClient().login("bob", "bob");
+        webClient.assertFails("plugin/gerrit-trigger/servers/0/", 403);
+        post(webClient, "plugin/gerrit-trigger/servers/0/wakeup", null, 403);
+    }
+
+    /**
+     * Performs an HTTP POST request to the relative url.
+     *
+     * @param webClient the client
+     * @param relative the url relative to the context path
+     * @param expectedContentType if expecting specific content type or null if not
+     * @param expectedStatus if expecting a failing http status code or null if not
+     * @throws IOException if so
+     */
+    private static void post(JenkinsRule.WebClient webClient, String relative,
+                             String expectedContentType, Integer expectedStatus) throws IOException {
+        WebRequest request = new WebRequest(
+                UrlUtils.toUrlUnsafe(webClient.getContextPath() + relative),
+                HttpMethod.POST);
+        try {
+            Page p = webClient.getPage(request);
+            if (expectedContentType != null) {
+                assertThat(p.getWebResponse().getContentType(), is(expectedContentType));
+            }
+        } catch (FailingHttpStatusCodeException e) {
+            if (expectedStatus != null) {
+                assertEquals(expectedStatus.intValue(), e.getStatusCode());
+            } else {
+                throw e;
+            }
+        }
     }
 }

@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.any;
@@ -68,6 +69,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.mockito.internal.matchers.InstanceOf;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -225,18 +227,66 @@ public class DependencyQueueTaskDispatcherTest {
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
         dispatcher.onDoneTriggeringAll(patchsetCreated);
+
         //Setting the dependency as "triggered but not built"
-        doReturn(true).when(toGerritRunListenerMock).
-                isBuilding(abstractProjectDependencyMock, patchsetCreated);
-        doReturn(true).when(toGerritRunListenerMock).
-                isTriggered(abstractProjectDependencyMock, patchsetCreated);
+        setBuilding(patchsetCreated, true);
         cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
+
         //Setting the dependency as "triggered and built"
-        doReturn(false).when(toGerritRunListenerMock).
-                isBuilding(abstractProjectDependencyMock, patchsetCreated);
+        setBuilding(patchsetCreated, false);
         cause = dispatcher.canRun(item);
         assertNull("Build should not be blocked", cause);
+    }
+
+    /**
+     * Test that an job is waiting for parent if parent was not triggered, but is interested in event.
+     */
+    @Test
+    public void shouldBlockNonTriggeringButInterestingEvents() {
+        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
+                "refs/changes/1/1/1");
+        Queue.Item item = createItem(patchsetCreated, "upstream");
+        makeGerritInterestedInEvent(patchsetCreated);
+
+        setTriggered(patchsetCreated, false);
+
+        CauseOfBlockage cause = dispatcher.canRun(item);
+        assertNotNull("Build should be blocked", cause);
+        assertThat(cause, new InstanceOf(BecauseWaitingForOtherProjectsToTrigger.class));
+    }
+
+    /**
+     * Sets GerritTrigger interested in specifed gerrit event.
+     * @param patchsetCreated patch set.
+     */
+    public void makeGerritInterestedInEvent(PatchsetCreated patchsetCreated) {
+        GerritTrigger upstreamGerritTriggerMock = mock(GerritTrigger.class);
+        when(abstractProjectDependencyMock.getTriggers()).thenReturn(
+                Collections.<TriggerDescriptor, Trigger<?>>singletonMap(
+                        new GerritTrigger.DescriptorImpl(), upstreamGerritTriggerMock));
+        when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(upstreamGerritTriggerMock);
+        when(upstreamGerritTriggerMock.isInteresting(patchsetCreated)).thenReturn(true);
+    }
+
+    /**
+     * Moves patchset to specified triggered state.
+     * @param patchsetCreated patch set.
+     * @param triggered was patch set triggered or not.
+     */
+    public void setTriggered(PatchsetCreated patchsetCreated, boolean triggered) {
+        when(toGerritRunListenerMock.isTriggered(abstractProjectDependencyMock, patchsetCreated)).thenReturn(triggered);
+        when(toGerritRunListenerMock.isBuilding(abstractProjectDependencyMock, patchsetCreated)).thenReturn(false);
+    }
+
+    /**
+     * Moves patchset to state "was triggered" and in specified isBuilding state.
+     * @param patchsetCreated patch set.
+     * @param isBuilding is patch set still building.
+     */
+    public void setBuilding(PatchsetCreated patchsetCreated, boolean isBuilding) {
+        when(toGerritRunListenerMock.isTriggered(abstractProjectDependencyMock, patchsetCreated)).thenReturn(true);
+        when(toGerritRunListenerMock.isBuilding(abstractProjectDependencyMock, patchsetCreated)).thenReturn(isBuilding);
     }
 
     /**
@@ -281,11 +331,9 @@ public class DependencyQueueTaskDispatcherTest {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, "upstream");
+        makeGerritInterestedInEvent(patchsetCreated);
         //Setting the dependency as "triggered and built"
-        doReturn(false).when(toGerritRunListenerMock).
-                isTriggered(abstractProjectDependencyMock, patchsetCreated);
-        doReturn(false).when(toGerritRunListenerMock).
-                isBuilding(abstractProjectDependencyMock, patchsetCreated);
+        setBuilding(patchsetCreated, false);
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNull("Build should not be blocked", cause);
     }
@@ -308,10 +356,7 @@ public class DependencyQueueTaskDispatcherTest {
         //Lifecycle handler should be notified of remove listener
         verify(manualPatchsetCreated, times(1)).removeListener(dispatcher);
         //Setting the dependency as "triggered but not built"
-        doReturn(true).when(toGerritRunListenerMock).
-                isTriggered(abstractProjectDependencyMock, manualPatchsetCreated);
-        doReturn(true).when(toGerritRunListenerMock).
-                isBuilding(abstractProjectDependencyMock, manualPatchsetCreated);
+        setBuilding(manualPatchsetCreated, true);
         cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
         //Setting the dependency as "triggered and built"
@@ -354,12 +399,12 @@ public class DependencyQueueTaskDispatcherTest {
         abstractProjectDependencyMock = mock(AbstractProject.class);
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         when(gerritTriggerMock.getDependencyJobsNames()).thenReturn(dependency);
-        when(jenkinsMock.getItem(eq("upstream"), any(Item.class), Item.class)).thenReturn(abstractProjectDependencyMock);
+        when(jenkinsMock.getItem(eq(dependency), any(Item.class), Item.class)).thenReturn(abstractProjectDependencyMock);
 
         ItemGroup abstractProjectDependencyMockParent = mock(ItemGroup.class);
         when(abstractProjectDependencyMockParent.getFullName()).thenReturn("");
         when(abstractProjectDependencyMock.getParent()).thenReturn(abstractProjectDependencyMockParent);
-        when(abstractProjectDependencyMock.getName()).thenReturn("upstream");
+        when(abstractProjectDependencyMock.getName()).thenReturn(dependency);
 
         WaitingItem waitingItem = PowerMockito.spy(new WaitingItem(Calendar.getInstance(),
                 abstractProjectMock, actions));

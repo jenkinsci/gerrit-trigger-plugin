@@ -42,6 +42,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,13 +127,13 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         GerritCause cause = getGerritCause(item);
         //Not gerrit-triggered
         if (cause == null) {
-            logger.debug("Not Gerrit cause");
+            logger.debug("Not Gerrit cause for {}", item);
             return null;
         }
         GerritTriggeredEvent event = cause.getEvent();
         //The GerritCause should contain an event, but just in case.
         if (event == null) {
-            logger.debug("Does not contain an event");
+            logger.debug("{} does not contain an event", item);
             return null;
         }
         //we do not block an item when it reached the buildable state: a buildable item is
@@ -140,21 +141,20 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         //waiting for an executor. Once the executor is avail, an extra check is done, but
         //we already determined in the previous canRun checks that its dependencies were done.
         if (item.isBuildable()) {
-            logger.debug("Item is already buildable");
+            logger.debug("{} is already buildable for {}", item, event);
             return null;
         }
         Job p = (Job)item.task;
         GerritTrigger trigger = GerritTrigger.getTrigger(p);
         //The project being checked has no Gerrit Trigger
         if (trigger == null) {
-            logger.debug("Project does not contain a trigger");
+            logger.debug("Project {} does not contain a trigger", p);
             return null;
         }
         //Dependency projects in the build queue
-        List<Job> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(),
-                p);
-        if ((dependencies == null) || (dependencies.size() == 0)) {
-            logger.debug("No dependencies on project: {}", p);
+        List<Job> dependencies = getProjectsFromString(trigger.getDependencyJobsNames(), p);
+        if (dependencies == null || dependencies.isEmpty()) {
+            logger.debug("No dependencies on project: {} for event {}", p, event);
             return null;
         }
         //logger.debug("We have dependencies on project {} : {}", p, trigger.getDependencyJobsNames());
@@ -164,7 +164,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         long inQueueSince = item.getInQueueSince();
         if (System.currentTimeMillis() - inQueueSince < TimeUnit.SECONDS
                 .toMillis(GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY)) {
-            logger.debug("We need to wait to ensure dependent jobs {} are in queue", event);
+            logger.debug("We need to wait to ensure dependent jobs {} are in queue for {}", event, p);
             return new BecauseWaitingToEnsureOtherJobsAreInQueue();
         }
 
@@ -177,25 +177,29 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
          * time, because specific code exists for it in GerritTrigger, fortunately.
          */
         if (currentlyTriggeringEvents.contains(event)) {
-            logger.debug("We need to wait while {} is being triggered", event);
+            logger.debug("We need to wait while {} is being triggered for {}", event, p);
             return new BecauseWaitingForOtherProjectsToTrigger();
         }
 
 
-        Job blockingProject = getBlockingDependencyProjects(dependencies, event);
+        CauseOfBlockage causeOfBlockage = getCauseOfBlockage(dependencies, event);
 
-        if (blockingProject != null) {
-            return new BecauseDependentBuildIsBuilding(blockingProject);
+        if (causeOfBlockage != null) {
+            return causeOfBlockage;
         } else {
-            logger.info("No active dependencies on project: {} , it will now build", p);
-
             ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
+
             if (toGerritRunListener != null) {
                 List<Run> parentRuns = toGerritRunListener.getRuns(event);
 
                 if (parentRuns == null) {
-                    logger.info("All dependencies on project: {}, are triggered in silent mode. "
-                            + "Can not get list of actual dependencies", p);
+                    logger.info("All dependencies for event: {} on project: {}, are triggered in silent mode. "
+                            + "Can not get list of actual dependencies", event, p);
+                    return null;
+                }
+
+                if (parentRuns.isEmpty()) {
+                    logger.info("Project {} has dependencies, but does not have known runs for {}", p, event);
                     return null;
                 }
 
@@ -206,30 +210,42 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                     }
                 }
 
+                if (actualDependencies.isEmpty()) {
+                    logger.info("Project {} has dependencies, but all of them are not interested in event {}", p, event);
+                    return null;
+                }
+
                 // TODO: returning `null` from a QueueTaskDispatcher does not mean the build will start immediately.
                 // So, this line can be called multiple times. In case of performance/stability issues it makes sense to
                 // mode to TransientActionFactory or maybe a QueueListener would be better.
                 item.replaceAction(new GerritDependencyAction(actualDependencies));
             }
 
+            logger.info("No active dependencies on project: {} for event: {}, it will now build", p, event);
             return null;
         }
     }
 
 
     /**
-     * Gets the subset of projects which have a building element needing to complete for the same event.
+     * Gets the cause of blockage if one of dependant project was not triggered or was not finished yet.
      * @param dependencies The list of projects which need to be checked
      * @param event The event should have also caused the blocking builds.
-     * @return the sublist of dependencies which need to be completed before this event is resolved.
+     * @return the cause of blockage.
      */
-    private Job getBlockingDependencyProjects(List<Job> dependencies, GerritTriggeredEvent event) {
+    private CauseOfBlockage getCauseOfBlockage(List<Job> dependencies, GerritTriggeredEvent event) {
         ToGerritRunListener toGerritRunListener = ToGerritRunListener.getInstance();
         if (toGerritRunListener != null) {
             for (Job dependency : dependencies) {
-                if (toGerritRunListener.isTriggered(dependency, event)
-                        && toGerritRunListener.isBuilding(dependency, event)) {
-                    return dependency;
+                if (toGerritRunListener.isTriggered(dependency, event)) {
+                    if (toGerritRunListener.isBuilding(dependency, event)) {
+                        return new BecauseDependentBuildIsBuilding(dependency);
+                    }
+                } else {
+                    GerritTrigger gerritTrigger = GerritTrigger.getTrigger(dependency);
+                    if (gerritTrigger != null && gerritTrigger.isInteresting(event)) {
+                        return new BecauseWaitingForOtherProjectsToTrigger();
+                    }
                 }
             }
         }
@@ -258,7 +274,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     public static List<Job> getProjectsFromString(String projects, Item context) {
         List<Job> dependencyJobs = new ArrayList<Job>();
-        if ((projects == null) || projects.equals("")) {
+        if (StringUtils.isEmpty(projects)) {
             return null;
         } else {
             Jenkins jenkins = Jenkins.getInstance();
@@ -266,7 +282,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             StringTokenizer tokens = new StringTokenizer(projects, ",");
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();
-                if (!projectName.equals("")) {
+                if (!projectName.isEmpty()) {
                     Item item = jenkins.getItem(projectName, context, Item.class);
                     if ((item != null) && (item instanceof Job)) {
                         dependencyJobs.add((Job)item);

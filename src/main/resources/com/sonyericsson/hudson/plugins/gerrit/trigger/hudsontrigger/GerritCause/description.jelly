@@ -39,7 +39,7 @@
                     ${%OtherTriggeredBuilds}
                 </th>
             </tr>
-            <j:forEach items="${it.context.others}" var="other">
+            <j:forEach items="${it.context.getSortedOthers()}" var="other">
                 <tr>
                     <j:choose>
                         <j:when test="${other.hasBuild()}">

@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 
 /**
@@ -52,6 +53,15 @@ public class GerritMissedEventsPlaybackEnabledChecker extends AsyncPeriodicWork 
 
 
     /**
+     * No spam in log file.
+     * @return FINEST level for logging.
+     */
+    @Override
+    protected Level getNormalLoggingLevel() {
+        return Level.FINEST;
+    }
+
+    /**
      * Default constructor.
      */
     public GerritMissedEventsPlaybackEnabledChecker() {
@@ -67,8 +77,12 @@ public class GerritMissedEventsPlaybackEnabledChecker extends AsyncPeriodicWork 
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
         List<GerritServer> servers = PluginImpl.getServers_();
         for (GerritServer gs: servers) {
-            logger.debug("Performing plugin check for server: {0}", gs.getName());
-            gs.getMissedEventsPlaybackManager().performCheck();
+            if (gs != null && gs.getMissedEventsPlaybackManager() != null) {
+                logger.debug("Performing plugin check for server: {0}", gs.getName());
+                gs.getMissedEventsPlaybackManager().performCheck();
+            } else {
+                logger.debug("Skip plugin check, because server is not completely initialised");
+            }
         }
     }
 

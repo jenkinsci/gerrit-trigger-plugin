@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
@@ -147,8 +148,6 @@ public class GerritTrigger extends Trigger<Job> {
     private transient RunningJobs runningJobs = new RunningJobs();
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
-    //! Lock to control `dynamicGerritProjects`
-    private static final Object DYNAMIC_GERRIT_PROJECTS_LOCK = new Object();
     private SkipVote skipVote;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
@@ -944,7 +943,12 @@ public class GerritTrigger extends Trigger<Job> {
      * @param event the event
      * @return true if we should.
      */
-    /*package*/ boolean isInteresting(GerritTriggeredEvent event) {
+    public boolean isInteresting(GerritTriggeredEvent event) {
+        if (job == null) {
+            logger.trace("Job is not fully initialised.");
+            return false;
+        }
+
         if (!job.isBuildable()) {
             logger.trace("Disabled.");
             return false;
@@ -964,20 +968,12 @@ public class GerritTrigger extends Trigger<Job> {
         if (!shouldTriggerOnEventType(event)) {
             return false;
         }
-        List<GerritProject> allGerritProjects = new LinkedList<GerritProject>();
-        if (gerritProjects != null) {
-            allGerritProjects.addAll(gerritProjects);
-        }
-        // Another thread could be updating the dynamic project list, so make sure that
-        // we access it in a thread-safe manner.
-        synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
-            if (dynamicGerritProjects != null) {
-                allGerritProjects.addAll(dynamicGerritProjects);
-            }
-        }
-        logger.trace("entering isInteresting; projects configured: {}; event: {}", allGerritProjects.size(), event);
 
-        for (GerritProject p : allGerritProjects) {
+        logger.trace("entering isInteresting for the event: {}", event);
+
+        Iterator<GerritProject> allGerritProjects = getAllGerritProjectsIterator();
+        while (allGerritProjects.hasNext()) {
+            GerritProject p = allGerritProjects.next();
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
@@ -1089,15 +1085,16 @@ public class GerritTrigger extends Trigger<Job> {
         return false;
     }
 
-
-
     /**
      * The list of GerritProject triggering rules.
      *
      * @return the rule-set.
      */
     public List<GerritProject> getGerritProjects() {
-        return gerritProjects;
+        if (gerritProjects == null) {
+            return null;
+        }
+        return Collections.unmodifiableList(gerritProjects);
     }
 
     /**
@@ -1106,14 +1103,10 @@ public class GerritTrigger extends Trigger<Job> {
      *  @return the rule-set.
      */
     public List<GerritProject> getDynamicGerritProjects() {
-        synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
-            if (dynamicGerritProjects == null) {
-                return null;
-            }
-            List<GerritProject> result = new ArrayList<GerritProject>();
-            result.addAll(dynamicGerritProjects);
-            return result;
+        if (dynamicGerritProjects == null) {
+            return null;
         }
+        return Collections.unmodifiableList(dynamicGerritProjects);
     }
 
     /**
@@ -1366,6 +1359,27 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Returns an iterator over the all gerrit projects configured for the trigger.
+     *
+     * @return an iterator over the all gerrit projects configured for the trigger.
+     */
+    private Iterator<GerritProject> getAllGerritProjectsIterator() {
+        if (gerritProjects != null && dynamicGerritProjects != null) {
+            return Iterators.concat(gerritProjects.iterator(), dynamicGerritProjects.iterator());
+        }
+
+        if (gerritProjects == null && dynamicGerritProjects != null) {
+            return dynamicGerritProjects.iterator();
+        }
+
+        if (gerritProjects != null) {
+            return gerritProjects.iterator();
+        }
+
+        return Iterators.emptyIterator();
+    }
+
+    /**
      * Initializes the triggerOnEvents list.  If it is empty or null, adds patch set created
      * and draft published events (the latter only if supported by the current Gerrit version).
      */
@@ -1408,9 +1422,7 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
         if (!dynamicTriggerConfiguration) {
-            synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
-                dynamicGerritProjects = Collections.emptyList();
-            }
+            dynamicGerritProjects = Collections.emptyList();
         }
 
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
@@ -1746,22 +1758,7 @@ public class GerritTrigger extends Trigger<Job> {
                         + "a specific configured server");
             } else {
                 List<GerritProject> fetchedProjects = GerritDynamicUrlProcessor.fetch(triggerConfigURL, serverName);
-                // Since other threads may be accessing the dynamic project list, we need to make sure
-                // that we update its contents in a thread-safe way.
-                synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
-                    if (dynamicGerritProjects == null) {
-                        logger.debug("Project number changed from null to {} for {}.",
-                                new Object[]{fetchedProjects.size(), triggerConfigURL});
-                        dynamicGerritProjects = fetchedProjects;
-                    } else {
-                        if (fetchedProjects.size() != dynamicGerritProjects.size()) {
-                            logger.debug("Project number changed from {} to {} for {}.",
-                                new Object[]{dynamicGerritProjects.size(), fetchedProjects.size(), triggerConfigURL});
-                        }
-                        dynamicGerritProjects.clear();
-                        dynamicGerritProjects.addAll(fetchedProjects);
-                    }
-                }
+                dynamicGerritProjects = fetchedProjects;
             }
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(

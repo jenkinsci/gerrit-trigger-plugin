@@ -322,4 +322,39 @@ public class TriggerContextTest {
         assertEquals(3, others.get(0).getNumber());
     }
 
+    /**
+     * Test of getSortedOthers method with no others, of class TriggerContext.
+     * With a list of "others" containing several builds in different stage.
+     */
+    @Test
+    public void testGetSortedOthers() {
+        AbstractBuild buildInProgress0 = mockBuild("p0", 1);
+        when(buildInProgress0.isBuilding()).thenReturn(true);
+
+        AbstractBuild buildInProgress1 = mockBuild("p1", 1);
+        when(buildInProgress1.isBuilding()).thenReturn(true);
+
+        AbstractProject project = mockProject("p7");
+        when(project.getBuildByNumber(777)).thenReturn(null);
+        TriggeredItemEntity itemWithNullBuild = new TriggeredItemEntity(project);
+        itemWithNullBuild.setBuildNumber(777);
+
+        List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
+        bah.add(new TriggeredItemEntity(mockBuild("p4", 1)));
+        bah.add(new TriggeredItemEntity(mockProject("p5")));
+        bah.add(new TriggeredItemEntity(buildInProgress1));
+        bah.add(new TriggeredItemEntity(mockBuild("p3", 1)));
+        bah.add(new TriggeredItemEntity(mockProject("p6")));
+        bah.add(new TriggeredItemEntity(mockBuild("p2", 1)));
+        bah.add(itemWithNullBuild);
+        bah.add(new TriggeredItemEntity(buildInProgress0));
+
+        TriggerContext context = new TriggerContext(mockBuild("p", 1), null, bah);
+        List<TriggeredItemEntity> others = context.getSortedOthers();
+        assertNotNull(others);
+        assertEquals(8, others.size());
+        for (int i = 0; i < others.size(); i++) {
+            assertEquals("p" + i, others.get(i).getProjectId());
+        }
+    }
 }

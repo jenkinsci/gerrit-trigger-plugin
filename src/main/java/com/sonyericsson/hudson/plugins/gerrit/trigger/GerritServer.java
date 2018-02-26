@@ -39,6 +39,7 @@ import hudson.model.Describable;
 import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -88,6 +89,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,6 +237,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param config the config.
      */
     public void setConfig(IGerritHudsonTriggerConfig config) {
+        checkPermission();
         this.config = config;
     }
 
@@ -395,10 +398,32 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * Checks that the current user has {@link #getRequiredPermission()} permission.
+     * If Jenkins is currently active.
+     */
+    private void checkPermission() {
+        final Jenkins jenkins = Jenkins.getInstance();
+        if (jenkins != null) {
+            jenkins.checkPermission(getRequiredPermission());
+        }
+    }
+
+    /**
+     * {@link Jenkins#ADMINISTER} permission for viewing and changing the configuration.
+     * Also used by Jelly
+     *
+     * @return the permission
+     */
+    public final Permission getRequiredPermission() {
+        return Jenkins.ADMINISTER;
+    }
+
+    /**
      * Starts the server's project list updater, send command queue and event manager.
      *
      */
     public void start() {
+        checkPermission();
         logger.info("Starting GerritServer: " + name);
 
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
@@ -445,6 +470,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public void stop() {
+        checkPermission();
         logger.info("Stopping GerritServer " + name);
 
         if (projectListUpdater != null) {
@@ -521,6 +547,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public synchronized void startConnection() {
+        checkPermission();
         if (!config.hasDefaultValues()) {
             if (gerritConnection == null) {
                 logger.debug("Starting Gerrit connection...");
@@ -545,6 +572,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      */
     public synchronized void stopConnection() {
+        checkPermission();
         if (gerritConnection != null) {
             gerritConnection.shutdown(true);
             gerritConnection.removeListener(gerritConnectionListener);
@@ -868,9 +896,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
+   @RequirePOST
     public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
     IOException,
     InterruptedException {
+        checkPermission();
         if (logger.isDebugEnabled()) {
             logger.debug("submit {}", req.toString());
         }
@@ -908,6 +938,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param newName the new name
      */
     private void rename(String newName) {
+        checkPermission();
         if (isConnected()) {
             stopConnection();
             stop();
@@ -1002,7 +1033,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return connection status.
      */
+    @RequirePOST
     public JSONObject doWakeup() {
+        checkPermission();
         Timer timer = new Timer();
         try {
             startConnection();
@@ -1047,7 +1080,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @return connection status.
      */
+    @RequirePOST
     public JSONObject doSleep() {
+        checkPermission();
         Timer timer = new Timer();
         try {
             stopConnection();
@@ -1207,10 +1242,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
+    @RequirePOST
     public void doRemoveConfirm(StaplerRequest req, StaplerResponse rsp) throws ServletException,
     IOException,
     InterruptedException {
 
+        checkPermission();
         stopConnection();
         stop();
         PluginImpl plugin = PluginImpl.getInstance();
@@ -1404,6 +1441,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public FormValidation doNameFreeCheck(
             @QueryParameter("value")
             final String value) {
+        checkPermission();
         if (!value.equals(name)) {
             if (PluginImpl.containsServer_(value)) {
                 return FormValidation.error("The server name " + value + " is already in use!");
