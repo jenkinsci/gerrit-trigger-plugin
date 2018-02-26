@@ -1750,13 +1750,13 @@ public class GerritTrigger extends Trigger<Job> {
                 // that we update its contents in a thread-safe way.
                 synchronized (DYNAMIC_GERRIT_PROJECTS_LOCK) {
                     if (dynamicGerritProjects == null) {
-                        logger.debug("Project number changed from null to "
-                                + fetchedProjects.size() + " for " + triggerConfigURL);
+                        logger.debug("Project number changed from null to {} for {}.",
+                                new Object[]{fetchedProjects.size(), triggerConfigURL});
                         dynamicGerritProjects = fetchedProjects;
                     } else {
                         if (fetchedProjects.size() != dynamicGerritProjects.size()) {
-                            logger.debug("Project number changed from " + dynamicGerritProjects.size() + " to "
-                                    + fetchedProjects.size() + " for " + triggerConfigURL);
+                            logger.debug("Project number changed from {} to {} for {}.",
+                                new Object[]{dynamicGerritProjects.size(), fetchedProjects.size(), triggerConfigURL});
                         }
                         dynamicGerritProjects.clear();
                         dynamicGerritProjects.addAll(fetchedProjects);
