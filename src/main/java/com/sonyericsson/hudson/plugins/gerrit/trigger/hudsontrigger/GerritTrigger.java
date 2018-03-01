@@ -2277,11 +2277,6 @@ public class GerritTrigger extends Trigger<Job> {
                             continue;
                         }
 
-
-                        if (!shouldCancelPatchsetNumber) {
-                            continue;
-                        }
-
                         outdatedEvents.add(runningChangeBasedEvent);
                         it.remove();
                     }
