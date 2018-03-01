@@ -1,0 +1,17 @@
+Controls whether the results of individual child builds from matrix jobs
+get included in the build message that is sent back to Gerrit.<br/>
+<br/>
+<b>Example message:</b>
+<pre>
+Build Successful
+
+http://jenkins/job/MyJob/1/ : SUCCESS
+
+\__ http://jenkins/job/MyJob/Axis1=one,Axis2=A/1/ : SUCCESS
+
+\__ http://jenkins/job/MyJob/Axis1=one,Axis2=B/1/ : SUCCESS
+
+\__ http://jenkins/job/MyJob/Axis1=two,Axis2=A/1/ : SUCCESS
+
+\__ http://jenkins/job/MyJob/Axis1=two,Axis2=B/1/ : SUCCESS
+<pre>

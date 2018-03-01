@@ -72,6 +72,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import hudson.Extension;
 import hudson.ExtensionList;
 import hudson.Util;
+import hudson.matrix.MatrixProject;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.AutoCompletionCandidates;
@@ -174,6 +175,7 @@ public class GerritTrigger extends Trigger<Job> {
     private String buildUnstableMessage;
     private String buildNotBuiltMessage;
     private String buildUnsuccessfulFilepath;
+    private boolean includeMatrixResults;
     private String customUrl;
     private String serverName;
     private String gerritSlaveId;
@@ -1334,6 +1336,26 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Whether the build results of MatrixBuild children will be included in the results posted to Gerrit.
+     *
+     * @return whether matrix results are included or not
+     */
+    public boolean getIncludeMatrixResults() {
+        return includeMatrixResults;
+    }
+
+    /**
+     * Sets whether the build results of MatrixBuild children should be included in the results posted to Gerrit.
+     *
+     * @param includeMatrixResults
+     *         whether matrix results should be included or not
+     */
+    @DataBoundSetter
+    public void setIncludeMatrixResults(boolean includeMatrixResults) {
+        this.includeMatrixResults = includeMatrixResults;
+    }
+
+    /**
      * Getter for the triggerOnEvents list.
      * @return the list.
      */
@@ -1914,6 +1936,16 @@ public class GerritTrigger extends Trigger<Job> {
          */
         public boolean isUnsuccessfulMessageFileSupported(Job job) {
             return job instanceof AbstractProject;
+        }
+
+        /**
+         * Checks if the provided job is a {@link MatrixProject}.
+         *
+         * @param job the job to check.
+         * @return true if so.
+         */
+        public boolean isMatrixProject(Job job) {
+            return job instanceof MatrixProject;
         }
 
         /**
