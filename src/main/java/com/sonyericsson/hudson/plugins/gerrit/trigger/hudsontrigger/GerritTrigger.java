@@ -2222,8 +2222,8 @@ public class GerritTrigger extends Trigger<Job> {
             }
 
             List<ChangeBasedEvent> outdatedEvents = new ArrayList<ChangeBasedEvent>();
-            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
             synchronized (runningJobs) {
+                Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
                 while (it.hasNext()) {
                     GerritTriggeredEvent runningEvent = it.next();
                     // Find all entries in runningJobs with the same Change #.
