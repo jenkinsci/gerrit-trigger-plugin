@@ -2374,7 +2374,7 @@ public class GerritTrigger extends Trigger<Job> {
          */
         public boolean remove(ChangeBasedEvent event) {
             logger.debug("Removing future job " + event.getPatchSet().getNumber());
-            return runningJobs.add(event);
+            return runningJobs.remove(event);
         }
     }
 
