@@ -238,7 +238,11 @@ public enum GerritTriggerParameters {
     /**
      * Comment posted to Gerrit in a comment-added event.
      */
-    GERRIT_EVENT_COMMENT_TEXT;
+    GERRIT_EVENT_COMMENT_TEXT,
+    /**
+     * Set to true if file based match.
+     */
+    GERRIT_EVENT_FILE_BASED;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -373,6 +377,7 @@ public enum GerritTriggerParameters {
         boolean escapeQuotes = false;
         ParameterMode commitMessageMode = ParameterMode.BASE64;
         ParameterMode changeSubjectMode = ParameterMode.PLAIN;
+        boolean getfileBasedMatch = false;
         ParameterMode commentTextMode = ParameterMode.BASE64;
         if (project != null) {
             GerritTrigger trigger = GerritTrigger.getTrigger(project);
@@ -382,9 +387,12 @@ public enum GerritTriggerParameters {
                 commitMessageMode = trigger.getCommitMessageParameterMode();
                 changeSubjectMode = trigger.getChangeSubjectParameterMode();
                 commentTextMode = trigger.getCommentTextParameterMode();
+                getfileBasedMatch = trigger.getfileBasedMatch();
             }
         }
 
+        GERRIT_EVENT_FILE_BASED.setOrCreateStringParameterValue(
+                parameters, String.valueOf(getfileBasedMatch), escapeQuotes);
         GERRIT_EVENT_TYPE.setOrCreateStringParameterValue(
                 parameters, gerritEvent.getEventType().getTypeValue(), escapeQuotes);
         GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
