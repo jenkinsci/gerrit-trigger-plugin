@@ -2243,8 +2243,8 @@ public class GerritTrigger extends Trigger<Job> {
             }
 
             List<ChangeBasedEvent> outdatedEvents = new ArrayList<ChangeBasedEvent>();
-            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
             synchronized (runningJobs) {
+                Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
                 while (it.hasNext()) {
                     GerritTriggeredEvent runningEvent = it.next();
                     // Find all entries in runningJobs with the same Change #.
@@ -2395,7 +2395,7 @@ public class GerritTrigger extends Trigger<Job> {
          */
         public boolean remove(ChangeBasedEvent event) {
             logger.debug("Removing future job " + event.getPatchSet().getNumber());
-            return runningJobs.add(event);
+            return runningJobs.remove(event);
         }
     }
 
