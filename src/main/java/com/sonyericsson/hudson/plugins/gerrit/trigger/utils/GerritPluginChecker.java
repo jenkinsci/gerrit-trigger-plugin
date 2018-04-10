@@ -161,7 +161,8 @@ public final class GerritPluginChecker {
 
         CloseableHttpResponse execute = null;
         try {
-            execute = HttpUtils.performHTTPGet(config, restUrl + "plugins/" + pluginName + "/");
+            execute = HttpUtils.performHTTPGet(config, 
+                    restUrl + "plugins/" + pluginName + "/Documentation/index.html");
             int statusCode = execute.getStatusLine().getStatusCode();
             logger.debug("status code: {}", statusCode);
             return decodeStatus(statusCode, pluginName, quiet);
