@@ -45,11 +45,10 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+import java.util.HashMap;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
@@ -59,32 +58,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldS
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildMemory {
-
-    /**
-     * Compares GerritTriggeredEvents using the Object.hashCode() method. This ensures that every event received from
-     * Gerrit is kept track of individually.
-     *
-     * @author James E. Blair &lt;jeblair@hp.com&gt;
-     */
-    static class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
-        @Override
-        public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
-            if (o1 == null && o2 == null) {
-                return 0;
-            }
-            if (o1 != null && o2 == null) {
-                return 1;
-            }
-            if (o1 == null && o2 != null) {
-                return -1;
-            }
-            return Integer.valueOf(o1.hashCode()).compareTo(o2.hashCode());
-        }
-    }
-
-    private Map<GerritTriggeredEvent, MemoryImprint> memory =
-            new TreeMap<GerritTriggeredEvent, MemoryImprint>(
-                    new GerritTriggeredEventComparator());
+    private Map<GerritTriggeredEvent, MemoryImprint> memory = new HashMap<GerritTriggeredEvent, MemoryImprint>();
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
 
     /**
