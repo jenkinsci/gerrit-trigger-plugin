@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
@@ -28,21 +29,32 @@ public class BuildMemoryReportContainerTest {
     private final int expected;
     private final BuildMemory memory;
 
-    static class PatchsetCreatedWithPrefinedHash extends PatchsetCreated {
+    static class PatchsetCreatedWithPredefinedHash extends PatchsetCreated {
         private final int hashCode;
+        private final UUID uuid;
 
-        private PatchsetCreatedWithPrefinedHash(int hashCode) {
+        private PatchsetCreatedWithPredefinedHash(int hashCode) {
             this.hashCode = hashCode;
+            this.uuid = UUID.randomUUID();
         }
 
         @Override
         public boolean equals(Object o) {
-            return false;
+            return o instanceof PatchsetCreatedWithPredefinedHash &&
+                    uuid.equals(((PatchsetCreatedWithPredefinedHash) o).uuid);
+
         }
 
         @Override
         public int hashCode() {
             return hashCode;
+        }
+
+        @Override
+        public String toString() {
+            return "PatchsetCreatedWithPredefinedHash{" +
+                    "uuid=" + uuid +
+                    '}';
         }
     }
 
@@ -54,8 +66,8 @@ public class BuildMemoryReportContainerTest {
      */
     @Parameterized.Parameters(name = "{index}: {0}, {1} == {2}")
     public static Iterable<Object[]> permutations() {
-        ChangeBasedEvent event1 = new PatchsetCreatedWithPrefinedHash(777);
-        ChangeBasedEvent event2 = new PatchsetCreatedWithPrefinedHash(777);
+        ChangeBasedEvent event1 = new PatchsetCreatedWithPredefinedHash(777);
+        ChangeBasedEvent event2 = new PatchsetCreatedWithPredefinedHash(777);
         return Arrays.asList(new Object[][]{
                 {null, null, 1},
                 {null, event1, 2},
