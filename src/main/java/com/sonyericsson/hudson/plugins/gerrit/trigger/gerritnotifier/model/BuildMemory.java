@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
@@ -81,7 +82,7 @@ public class BuildMemory {
         }
     }
 
-    private TreeMap<GerritTriggeredEvent, MemoryImprint> memory =
+    private Map<GerritTriggeredEvent, MemoryImprint> memory =
             new TreeMap<GerritTriggeredEvent, MemoryImprint>(
                     new GerritTriggeredEventComparator());
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
@@ -94,6 +95,15 @@ public class BuildMemory {
      */
     public synchronized MemoryImprint getMemoryImprint(GerritTriggeredEvent event) {
         return memory.get(event);
+    }
+
+    /**
+     * Gets the entire memory representation for all events
+     * @return memory representation for all events.
+     */
+    @VisibleForTesting
+    Map<GerritTriggeredEvent, MemoryImprint> getMemory() {
+        return memory;
     }
 
     /**
