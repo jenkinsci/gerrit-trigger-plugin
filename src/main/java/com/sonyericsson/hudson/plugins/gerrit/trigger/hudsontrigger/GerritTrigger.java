@@ -2334,18 +2334,17 @@ public class GerritTrigger extends Trigger<Job> {
                     return;
                 }
 
-                // Interrupt any currently running jobs.
-                Jenkins jenkins = Jenkins.getInstance();
-                assert jenkins != null;
+                // Interrupt any currently running builds of the job.
+                Jenkins jenkins = Jenkins.getActiveInstance();
                 for (Computer c : jenkins.getComputers()) {
-                    List<Executor> executors = new ArrayList<Executor>();
+                    List<Executor> executors = new ArrayList<Executor>(c.getExecutors());
                     executors.addAll(c.getOneOffExecutors());
-                    executors.addAll(c.getExecutors());
                     for (Executor e : executors) {
                         Queue.Executable currentExecutable = e.getCurrentExecutable();
                         if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
                             Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                            if (checkCausedByGerrit(event, run.getCauses())) {
+                            if (run.getParent().equals(job) && checkCausedByGerrit(event, run.getCauses())) {
+                                logger.debug("Abort run {} because of the event {}", run, event);
                                 e.interrupt(
                                         Result.ABORTED,
                                         new NewPatchSetInterruption()
