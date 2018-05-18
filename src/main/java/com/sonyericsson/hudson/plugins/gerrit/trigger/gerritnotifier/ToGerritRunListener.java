@@ -332,18 +332,13 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @param project the project that will be built.
      * @param event   the event that caused the build to be scheduled.
      */
-    public synchronized void onTriggered(Job project, GerritTriggeredEvent event) {
+    public void onTriggered(Job project, GerritTriggeredEvent event) {
         //TODO stop builds for earlier patch-sets on same change.
         memory.triggered(event, project);
         if (event instanceof GerritEventLifecycle) {
             ((GerritEventLifecycle)event).fireProjectTriggered(project);
         }
-        //Logging
-        String name = null;
-        if (project != null) {
-            name = project.getName();
-        }
-        logger.info("Project [{}] triggered by Gerrit: [{}]", name, event);
+        logger.info("Project [{}] triggered by Gerrit: [{}]", project.getName(), event);
     }
 
     /**
