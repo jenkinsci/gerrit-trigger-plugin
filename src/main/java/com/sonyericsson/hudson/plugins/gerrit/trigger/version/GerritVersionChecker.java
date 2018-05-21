@@ -48,6 +48,11 @@ public final class GerritVersionChecker {
         fileTrigger("Trigger on files", "2.3"),
 
         /**
+         * Triggering on private state changed, added in Gerrit 2.15.
+         */
+        triggerOnPrivateStateChanged("Trigger on private state changed", "2.15"),
+
+        /**
          * Triggering on draft change published, added in Gerrit 2.5.
          */
         triggerOnDraftPublished("Trigger on draft published", "2.5"),

@@ -313,6 +313,29 @@ public class GerritTriggerTest {
     }
 
     /**
+     * Tests that testInitializeTriggerOnPrivateStateChangedEvents is run correctly by the start method.
+     */
+    @Test
+    public void testInitializeTriggerOnPrivateStateChangedEvents() {
+        mockPluginConfig(0);
+        AbstractProject project = mockProject();
+        boolean silentStartMode = false;
+        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                true, silentStartMode, true, false, false, "", "", "", "", "", "", "", null, null, null,
+                null, false,  "", null);
+        trigger = spy(trigger);
+        Object triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
+
+        assertNull(triggerOnEvents);
+        doReturn(true).when(trigger).isTriggerOnPrivateStateChangedEnabled();
+        trigger.start(project, true);
+        triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
+        assertNotNull(triggerOnEvents);
+        List<PluginGerritEvent> events = (List<PluginGerritEvent>)triggerOnEvents;
+        assertEquals(events.size(), 2);
+    }
+
+    /**
      * Tests the schedule method of GerritTrigger.
      * It verifies that {@link AbstractProject#scheduleBuild2(int, hudson.model.Cause, hudson.model.Action...)}
      * gets called with an negative buildScheduleDelay -20.

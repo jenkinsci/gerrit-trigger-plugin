@@ -53,6 +53,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -1386,6 +1387,9 @@ public class GerritTrigger extends Trigger<Job> {
             if (isTriggerOnDraftPublishedEnabled()) {
                 triggerOnEvents.add(new PluginDraftPublishedEvent());
             }
+            if (isTriggerOnPrivateStateChangedEnabled()) {
+                triggerOnEvents.add(new PluginPrivateStateChangedEvent());
+            }
         }
     }
 
@@ -1791,6 +1795,15 @@ public class GerritTrigger extends Trigger<Job> {
     public boolean isTriggerOnDraftPublishedEnabled() {
         return GerritVersionChecker
                 .isCorrectVersion(GerritVersionChecker.Feature.triggerOnDraftPublished, serverName);
+    }
+
+    /**
+     * Convenience method for finding it out if triggering on private changed is enabled in the Gerrit version.
+     * @return true if triggering on private state changed is enabled in the Gerrit version.
+     */
+    public boolean isTriggerOnPrivateStateChangedEnabled() {
+        return GerritVersionChecker
+                .isCorrectVersion(GerritVersionChecker.Feature.triggerOnPrivateStateChanged, serverName);
     }
 
     /**

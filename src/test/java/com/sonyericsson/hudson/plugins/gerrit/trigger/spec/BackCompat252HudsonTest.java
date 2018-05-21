@@ -38,6 +38,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import hudson.matrix.MatrixBuild;
 import hudson.matrix.MatrixProject;
@@ -78,6 +79,10 @@ public class BackCompat252HudsonTest {
      * The stream-events command.
      */
     protected static final String GERRIT_STREAM_EVENTS = "gerrit stream-events";
+    /**
+     * The assert that trigger.
+     */
+    public static final int ASSERT_THAT_TRIGGER = 3;
     /**
      * An instance of Jenkins Rule.
      */
@@ -145,9 +150,10 @@ public class BackCompat252HudsonTest {
         Branch branch = branches.get(0);
         assertThat(branch.getPattern(), equalTo("bra.*"));
         List<PluginGerritEvent> triggerOnEvents = trigger.getTriggerOnEvents();
-        assertThat(triggerOnEvents.size(), equalTo(2));
+        assertThat(triggerOnEvents.size(), equalTo(ASSERT_THAT_TRIGGER));
         assertSame(triggerOnEvents.get(0).getCorrespondingEventClass(), PatchsetCreated.class);
         assertSame(triggerOnEvents.get(1).getCorrespondingEventClass(), DraftPublished.class);
+        assertSame(triggerOnEvents.get(2).getCorrespondingEventClass(), PrivateStateChanged.class);
     }
 
     /**
@@ -172,9 +178,10 @@ public class BackCompat252HudsonTest {
         Branch branch = branches.get(0);
         assertThat(branch.getPattern(), equalTo(".*er"));
         List<PluginGerritEvent> triggerOnEvents = trigger.getTriggerOnEvents();
-        assertThat(triggerOnEvents.size(), equalTo(2));
+        assertThat(triggerOnEvents.size(), equalTo(ASSERT_THAT_TRIGGER));
         assertSame(triggerOnEvents.get(0).getCorrespondingEventClass(), PatchsetCreated.class);
         assertSame(triggerOnEvents.get(1).getCorrespondingEventClass(), DraftPublished.class);
+        assertSame(triggerOnEvents.get(2).getCorrespondingEventClass(), PrivateStateChanged.class);
     }
 
     /**

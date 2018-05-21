@@ -52,6 +52,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -270,6 +271,34 @@ public final class Setup {
     }
 
     /**
+     * Gives you a PrivateStateChanged mock.
+     * @return PrivateStateChanged mock.
+     */
+    public static PrivateStateChanged createPrivateStateChanged() {
+        PrivateStateChanged event = new PrivateStateChanged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        patch.setRef("ref");
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
+        return event;
+    }
+
+    /**
      * Gives you a ChangeAbandoned mock.
      * @return ChangeAbandoned mock.
      */
@@ -348,6 +377,17 @@ public final class Setup {
     }
 
     /**
+     * Gives you a PrivateStateChanged mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return PrivateStateChanged mock.
+     */
+    public static PrivateStateChanged createPrivateStateChanged(String serverName, String project, String ref) {
+        return createPrivateStateChangedWithPatchSetDate(serverName, project, ref, new Date());
+    }
+
+    /**
      * Gives you a ChangeMerged mock.
      * @return ChangeMerged mock.
      */
@@ -418,6 +458,40 @@ public final class Setup {
     public static DraftPublished createDraftPublishedWithPatchSetDate(String serverName, String project,
             String ref, Date date) {
         DraftPublished event = new DraftPublished();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject(project);
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+        patch.setRef(ref);
+        patch.setCreatedOn(date);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
+        return event;
+    }
+
+    /**
+     * Gives you a PrivateStateChanged mock.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @param date The patchset's createdOn date
+     * @return PrivateStateChanged mock.
+     */
+    public static PrivateStateChanged createPrivateStateChangedWithPatchSetDate(String serverName, String project,
+            String ref, Date date) {
+        PrivateStateChanged event = new PrivateStateChanged();
         Change change = new Change();
         change.setBranch("branch");
         change.setId("Iddaaddaa123456789");
