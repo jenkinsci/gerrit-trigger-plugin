@@ -45,6 +45,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -463,6 +464,18 @@ public class BuildMemory {
     }
 
     /**
+     * Removes project from all memory imprints.
+     *
+     * @param project to be removed.
+     */
+    public synchronized void removeProject(Job project) {
+        String projectFullName = project.getFullName();
+        for (MemoryImprint memoryImprint : memory.values()) {
+            memoryImprint.removeProject(projectFullName);
+        }
+    }
+
+    /**
      * Creates a snapshot clone of the current coordination memory status.
      *
      * @return the report
@@ -569,6 +582,20 @@ public class BuildMemory {
             } else {
                 entry.setBuild(null);
                 entry.setBuildCompleted(false);
+            }
+        }
+
+        /**
+         * Removes the specified project from memory.
+         * @param project the project to removeProject.
+         */
+        private synchronized void removeProject(String project) {
+            Iterator<Entry> iterator = list.iterator();
+            while (iterator.hasNext()) {
+                Entry entry = iterator.next();
+                if (entry.isProject(project)) {
+                    iterator.remove();
+                }
             }
         }
 
