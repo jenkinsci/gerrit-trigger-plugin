@@ -73,23 +73,27 @@ public final class EventListener implements GerritEventListener {
     private static final Logger logger = LoggerFactory.getLogger(EventListener.class);
 
     private final String job;
+    private final transient GerritTrigger trigger;
 
     /**
      * Standard constructor.
      *
      * @param job the job to handle.
+     * @param trigger the trigger
      */
-    EventListener(@Nonnull Job job) {
-        this(job.getFullName());
+    EventListener(@Nonnull Job job, GerritTrigger trigger) {
+        this(job.getFullName(), trigger);
     }
 
     /**
      * Standard constructor.
      *
      * @param fullName the job to handle full name.
+     * @param trigger the trigger
      */
-    EventListener(@Nonnull String fullName) {
+    EventListener(@Nonnull String fullName, GerritTrigger trigger) {
         this.job = fullName;
+        this.trigger = trigger;
     }
 
     /**
@@ -104,7 +108,7 @@ public final class EventListener implements GerritEventListener {
     @Override
     public void gerritEvent(GerritEvent event) {
         logger.trace("event: {}", event);
-        GerritTrigger t = getTrigger();
+        GerritTrigger t = trigger;
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
             return;
@@ -126,7 +130,7 @@ public final class EventListener implements GerritEventListener {
      */
     public void gerritEvent(ManualPatchsetCreated event) {
         logger.trace("event: {}", event);
-        GerritTrigger t = getTrigger();
+        GerritTrigger t = trigger;
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
             return;
@@ -145,7 +149,7 @@ public final class EventListener implements GerritEventListener {
      */
     public void gerritEvent(CommentAdded event) {
         logger.trace("event: {}", event);
-        GerritTrigger t = getTrigger();
+        GerritTrigger t = trigger;
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
             return;
@@ -370,11 +374,7 @@ public final class EventListener implements GerritEventListener {
     @CheckForNull
     @Restricted(NoExternalUse.class)
     public GerritTrigger getTrigger() {
-        Job p = findJob();
-        if (p == null) {
-            return null;
-        }
-        return GerritTrigger.getTrigger(p);
+        return trigger;
     }
 
     /**

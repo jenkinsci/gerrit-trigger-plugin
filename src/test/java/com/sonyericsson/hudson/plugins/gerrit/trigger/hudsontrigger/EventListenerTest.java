@@ -49,9 +49,9 @@ public class EventListenerTest {
     public void setup() {
         project = mock(AbstractProject.class);
         doReturn("MockProject").when(project).getFullName();
-        listener = new EventListener(project);
-        listener = spy(listener);
         trigger = mock(GerritTrigger.class);
+        listener = new EventListener(project, trigger);
+        listener = spy(listener);
         doNothing().when(listener).schedule(same(trigger), any(GerritCause.class), any(GerritTriggeredEvent.class));
 
         jenkins = mock(Jenkins.class);
