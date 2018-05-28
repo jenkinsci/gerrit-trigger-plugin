@@ -73,7 +73,7 @@ public class GerritProjectListUpdaterFunctionalTest {
     @Before
     public void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         // We need to do this so that subsequent calls will be served with another command define later
