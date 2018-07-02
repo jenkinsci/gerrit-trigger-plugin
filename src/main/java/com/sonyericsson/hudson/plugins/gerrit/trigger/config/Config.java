@@ -329,23 +329,23 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
                 "gerrit review <CHANGE>,<PATCHSET> --message 'Build Started <BUILDURL> <STARTED_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW> --tag " + Constants.TAG_VALUE);
         gerritVerifiedCmdBuildFailed = formData.optString(
                 "gerritVerifiedCmdBuildFailed",
                 "gerrit review <CHANGE>,<PATCHSET> --message 'Build Failed <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW> --tag " + Constants.TAG_VALUE);
         gerritVerifiedCmdBuildSuccessful = formData.optString(
                 "gerritVerifiedCmdBuildSuccessful",
                 "gerrit review <CHANGE>,<PATCHSET> --message 'Build Successful <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW> --tag " + Constants.TAG_VALUE);
         gerritVerifiedCmdBuildUnstable = formData.optString(
                 "gerritVerifiedCmdBuildUnstable",
                 "gerrit review <CHANGE>,<PATCHSET> --message 'Build Unstable <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW> --tag " + Constants.TAG_VALUE);
         gerritVerifiedCmdBuildNotBuilt = formData.optString(
                 "gerritVerifiedCmdBuildNotBuilt",
                 "gerrit review <CHANGE>,<PATCHSET> --message 'No Builds Executed <BUILDS_STATS>' "
-                        + "--verified <VERIFIED> --code-review <CODE_REVIEW>");
+                        + "--verified <VERIFIED> --code-review <CODE_REVIEW> --tag " + Constants.TAG_VALUE);
         gerritFrontEndUrl = formData.optString(
                 "gerritFrontEndUrl",
                 DEFAULT_GERRIT_HOSTNAME);
