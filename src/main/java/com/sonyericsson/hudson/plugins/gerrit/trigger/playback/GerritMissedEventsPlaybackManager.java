@@ -125,8 +125,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 // so let's remove the data file so we are ready if it comes back
                 try {
                     XmlFile config = getConfigXml(serverName);
-                    config.delete();
-                    logger.warn("Deleting " + config.getFile().getAbsolutePath());
+                    if (config != null) {
+                        config.delete();
+                        logger.warn("Deleting " + config.getFile().getAbsolutePath());
+                    }
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -168,7 +170,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     protected void load() throws IOException {
         XmlFile xml = getConfigXml(serverName);
-        if (xml.exists()) {
+        if (xml != null && xml.exists()) {
             serverTimestamp  = (EventTimeSlice)xml.unmarshal(serverTimestamp);
         } else {
             serverTimestamp = null;
@@ -489,6 +491,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         try {
             XmlFile config = getConfigXml(serverName);
+            if (config == null) {
+            	logger.error("XML " + serverName + " is null, please check file permissions.");
+            	return false;
+            }
             config.write(serverTimestamp);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
