@@ -199,7 +199,7 @@ public class GerritMissedEventsFunctionalTest {
         createAndWaitforPatchset(gerritServer, project, ++buildNum);
         createAndWaitforPatchset(gerritServer, project, ++buildNum);
 
-        EventTimeSlice lastTimeStamp = gerritServer.getMissedEventsPlaybackManager().getServerTimestamp();
+        EventTimeSlice lastTimeStamp = gerritServer.getMissedEventsPlaybackManager().serverTimestamp;
 
         // now we force the plugin is supported to false...
         stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME + "/"))
@@ -331,7 +331,7 @@ public class GerritMissedEventsFunctionalTest {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName, gServer.getName());
         createAndWaitforPatchset(gServer, project, 1);
 
-        assertNotNull(gServer.getMissedEventsPlaybackManager().getServerTimestamp());
+        assertNotNull(gServer.getMissedEventsPlaybackManager().serverTimestamp);
         FreeStyleBuild buildOne = project.getLastCompletedBuild();
         assertSame(Result.SUCCESS, buildOne.getResult());
         assertEquals(1, project.getLastCompletedBuild().getNumber());

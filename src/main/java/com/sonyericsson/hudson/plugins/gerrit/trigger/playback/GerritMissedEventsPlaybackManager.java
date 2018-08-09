@@ -517,14 +517,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * Return server timestamp.
-     * @return timestamp.
-     */
-    public EventTimeSlice getServerTimestamp() {
-        return serverTimestamp;
-    }
-
-    /**
      * @param serverName The Name of the Gerrit Server to load config for.
      * @return XmlFile corresponding to gerrit-trigger-server-timestamps.xml.
      * @throws IOException if it occurs.
