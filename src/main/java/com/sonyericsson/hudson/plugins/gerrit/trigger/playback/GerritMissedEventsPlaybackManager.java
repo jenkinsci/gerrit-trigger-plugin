@@ -76,7 +76,7 @@ import jenkins.model.Jenkins;
  * some events while the connection was down.
  *
  * Once the server is re-connected, the missed event will be played back as if they had been
- * received orginally.
+ * received originally.
  *
  * @author scott.hebert@ericsson.com
  */
