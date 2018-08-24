@@ -492,8 +492,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         try {
             XmlFile config = getConfigXml(serverName);
             if (config == null) {
-            	logger.error("XML " + serverName + " is null, please check file permissions.");
-            	return false;
+                logger.error("XML " + serverName + " is null, please check file permissions.");
+                return false;
             }
             config.write(serverTimestamp);
         } catch (IOException e) {
