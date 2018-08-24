@@ -199,7 +199,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     @Override
     public void connectionEstablished() {
-
         playBackComplete = false;
         checkIfEventsLogPluginSupported();
         if (!isSupported) {
