@@ -44,31 +44,41 @@ import java.io.Serializable;
 public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Serializable {
     private static final long serialVersionUID = 970946986242309088L;
 
-    private boolean excludeDrafts = false;
-    private boolean excludeTrivialRebase = false;
-    private boolean excludeNoCodeChange = false;
+    /**
+     * Uncheck {@link #triggerForDrafts} to have the same effect.
+     */
+    protected transient boolean excludeDrafts;
+    private boolean triggerForPublishedPatchsets;
+    private boolean triggerForDrafts;
+    private boolean excludeTrivialRebase;
+    private boolean excludeNoCodeChange;
+
 
     /**
      * Default constructor.
      */
     public PluginPatchsetCreatedEvent() {
-        this(false, false, false);
+        this(true, true, false, false);
     }
 
     /**
      * Standard DataBoundConstructor.
-     * @param excludeDrafts if drafts should be excluded or not.
+     * @param triggerForPublishedPatchsets if should trigger for published patchSets.
+     * @param triggerForDrafts if should trigger for drafts.
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
      * @param excludeNoCodeChange if message-only changes should be excluded.
      */
     @DataBoundConstructor
-    public PluginPatchsetCreatedEvent(boolean excludeDrafts,
+    public PluginPatchsetCreatedEvent(boolean triggerForPublishedPatchsets,
+        boolean triggerForDrafts,
         boolean excludeTrivialRebase,
         boolean excludeNoCodeChange) {
-        this.excludeDrafts = excludeDrafts;
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
+        this.triggerForDrafts = triggerForDrafts;
+        this.triggerForPublishedPatchsets = triggerForPublishedPatchsets;
     }
+
 
     /**
      * Getter for the Descriptor.
@@ -84,13 +94,18 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         return PatchsetCreated.class;
     }
 
+
     /**
-     * Getter for the excludeDrafts field.
-     * @return excludeDrafts
+     * Getter for the triggerForPublishedPatchsets field.
+     * @return triggerForPublishedPatchsets
      */
-    public boolean isExcludeDrafts() {
-        return excludeDrafts;
-    }
+    public boolean isTriggerForPublishedPatchsets() { return triggerForPublishedPatchsets; }
+
+    /**
+     * Getter for the triggerForDrafts field.
+     * @return triggerForDrafts
+     */
+    public boolean isTriggerForDrafts() { return triggerForDrafts; }
 
     /**
      * Getter for the excludeTrivialRebase field.
@@ -113,9 +128,6 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         if (!super.shouldTriggerOn(event)) {
             return false;
         }
-        if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
-            return false;
-        }
         if (event instanceof ManualPatchsetCreated) {
             // always trigger build when the build is triggered manually
             return true;
@@ -128,7 +140,26 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
             return false;
         }
+        if (((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForDrafts) {
+            return false;
+        }
+        if (!((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForPublishedPatchsets) {
+            return false;
+        }
         return true;
+    }
+
+    /**
+     * This method migrates data from versions previous to 2.27.6 of this plugin to keep backwards compatibility.
+     * @return this
+     */
+    protected Object readResolve() {
+        triggerForPublishedPatchsets = true;
+        triggerForDrafts = true;
+        if (excludeDrafts) {
+            triggerForDrafts = false;
+        }
+        return this;
     }
 
     /**

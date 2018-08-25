@@ -22,7 +22,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldFireOnAllTypeOfPatchset() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, false, false
+        );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -37,7 +38,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnDraftPatchsetWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, false, false, false
+        );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -48,12 +50,30 @@ public class PluginPatchsetCreatedEventTest {
     }
 
     /**
+     * Tests that it should fire on draft patchset when triggerForDrafts is true.
+     */
+    @Test
+    public void shouldFireOnDraftPatchsetWhenChecked() {
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, true, false, false
+        );
+        PatchsetCreated patchsetCreated = new PatchsetCreated();
+        patchsetCreated.setPatchset(new PatchSet());
+
+        //should fire only on draft patchset
+        patchsetCreated.getPatchSet().setDraft(true);
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+        //should not not fire for regular patchsets
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+    }
+
+    /**
      * Tests that it should not fire on trivial rebase when they are excluded.
      * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
      */
     @Test
     public void shouldNotFireOnTrivialRebaseWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, true, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, true, false
+        );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -69,7 +89,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnNoCodeChangeWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, true);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, false, true
+        );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
