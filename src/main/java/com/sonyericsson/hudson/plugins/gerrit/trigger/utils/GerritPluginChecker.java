@@ -168,6 +168,8 @@ public final class GerritPluginChecker {
         } catch (Exception e) {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
+            return null;
+        } finally {
             if (execute != null) {
                 try {
                     execute.close();
@@ -175,7 +177,6 @@ public final class GerritPluginChecker {
                     logger.trace("Error happened when close http client.", exp);
                 }
             }
-            return null;
         }
     }
 }
