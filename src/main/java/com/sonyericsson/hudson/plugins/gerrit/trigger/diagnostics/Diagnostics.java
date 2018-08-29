@@ -132,7 +132,6 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#report()
      */
     @CheckForNull
-    @SuppressWarnings("unused")
     public BuildMemoryReport getBuildMemory() {
         ToGerritRunListener instance = ToGerritRunListener.getInstance();
         if (instance != null) {
@@ -150,7 +149,6 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      * @return the listeners report.
      */
     @CheckForNull
-    @SuppressWarnings("unused")
     public EventListenersReport getEventListeners() {
         return EventListenersReport.report();
     }
