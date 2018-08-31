@@ -22,7 +22,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldFireOnAllTypeOfPatchset() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, false, false
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(
+                PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL, false, false
         );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
@@ -38,7 +39,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnDraftPatchsetWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, false, false, false
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(
+                PluginPatchsetCreatedEvent.TRIGGER_FOR_PUBLISHED, false, false
         );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
@@ -54,7 +56,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldFireOnDraftPatchsetWhenChecked() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, true, false, false
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(
+                PluginPatchsetCreatedEvent.TRIGGER_FOR_DRAFT, false, false
         );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
@@ -72,7 +75,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnTrivialRebaseWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, true, false
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(
+                PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL, true, false
         );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
@@ -89,7 +93,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnNoCodeChangeWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, true, false, true
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(
+                PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL, false, true
         );
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());

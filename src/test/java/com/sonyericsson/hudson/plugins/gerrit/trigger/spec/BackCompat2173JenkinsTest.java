@@ -128,8 +128,7 @@ public class BackCompat2173JenkinsTest {
         assertThat(trigger.getTriggerOnEvents(), hasItem(
                 allOf(
                         isA(PluginPatchsetCreatedEvent.class),
-                        hasProperty("triggerForDrafts", is(true)),
-                        hasProperty("triggerForPublishedPatchsets", is(true)),
+                        hasProperty("triggerFor", equalTo(PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL)),
                         hasProperty("excludeTrivialRebase", is(false)),
                         hasProperty("excludeNoCodeChange", is(false))
                 )
@@ -201,8 +200,7 @@ public class BackCompat2173JenkinsTest {
         assertThat(trigger.getTriggerOnEvents(), hasItem(
                 allOf(
                         isA(PluginPatchsetCreatedEvent.class),
-                        hasProperty("triggerForDrafts", is(true)),
-                        hasProperty("triggerForPublishedPatchsets", is(true)),
+                        hasProperty("triggerFor", equalTo(PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL)),
                         hasProperty("excludeTrivialRebase", is(true)),
                         hasProperty("excludeNoCodeChange", is(false))
                 )

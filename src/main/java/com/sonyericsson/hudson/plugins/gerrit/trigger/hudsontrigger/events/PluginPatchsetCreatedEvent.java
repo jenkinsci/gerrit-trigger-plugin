@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.util.ListBoxModel;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -45,11 +46,23 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private static final long serialVersionUID = 970946986242309088L;
 
     /**
-     * Uncheck {@link #triggerForDrafts} to have the same effect.
+     * String value of TRIGGER_FOR_ALL.
+     */
+    public static final String TRIGGER_FOR_ALL = "all";
+    /**
+     * String value of TRIGGER_FOR_PUBLISHED.
+     */
+    public static final String TRIGGER_FOR_PUBLISHED = "published";
+    /**
+     * String value of TRIGGER_FOR_DRAFT.
+     */
+    public static final String TRIGGER_FOR_DRAFT = "draft";
+
+    /**
+     * Set {@link #triggerFor} = PluginPatchsetCreatedEvent.TRIGGER_FOR_PUBLISHED to have the same effect.
      */
     protected transient boolean excludeDrafts;
-    private boolean triggerForPublishedPatchsets;
-    private boolean triggerForDrafts;
+    private String triggerFor;
     private boolean excludeTrivialRebase;
     private boolean excludeNoCodeChange;
 
@@ -58,25 +71,22 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * Default constructor.
      */
     public PluginPatchsetCreatedEvent() {
-        this(true, true, false, false);
+        this(TRIGGER_FOR_ALL, false, false);
     }
 
     /**
      * Standard DataBoundConstructor.
-     * @param triggerForPublishedPatchsets if should trigger for published patchSets.
-     * @param triggerForDrafts if should trigger for drafts.
+     * @param triggerFor which type of patchset should trigger this the job.
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
      * @param excludeNoCodeChange if message-only changes should be excluded.
      */
     @DataBoundConstructor
-    public PluginPatchsetCreatedEvent(boolean triggerForPublishedPatchsets,
-        boolean triggerForDrafts,
+    public PluginPatchsetCreatedEvent(String triggerFor,
         boolean excludeTrivialRebase,
         boolean excludeNoCodeChange) {
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
-        this.triggerForDrafts = triggerForDrafts;
-        this.triggerForPublishedPatchsets = triggerForPublishedPatchsets;
+        this.triggerFor = triggerFor;
     }
 
 
@@ -96,16 +106,10 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
 
     /**
-     * Getter for the triggerForPublishedPatchsets field.
-     * @return triggerForPublishedPatchsets
+     * Getter for the triggerFor field.
+     * @return triggerFor
      */
-    public boolean isTriggerForPublishedPatchsets() { return triggerForPublishedPatchsets; }
-
-    /**
-     * Getter for the triggerForDrafts field.
-     * @return triggerForDrafts
-     */
-    public boolean isTriggerForDrafts() { return triggerForDrafts; }
+    public String getTriggerFor() { return triggerFor; }
 
     /**
      * Getter for the excludeTrivialRebase field.
@@ -121,6 +125,22 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      */
     public boolean isExcludeNoCodeChange() {
         return excludeNoCodeChange;
+    }
+
+    /**
+     * Check if job should be trigger by draft patchsets.
+     * @return true or false
+     */
+    public boolean triggerForDrafts() {
+        return (triggerFor.equals(TRIGGER_FOR_ALL) || triggerFor.equals(TRIGGER_FOR_DRAFT));
+    }
+
+    /**
+     * Check if job should be trigger by published patchsets.
+     * @return true or false
+     */
+    public boolean triggerForPublishedPatchsets() {
+        return (triggerFor.equals(TRIGGER_FOR_ALL) || triggerFor.equals(TRIGGER_FOR_PUBLISHED));
     }
 
     @Override
@@ -140,24 +160,23 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
             return false;
         }
-        if (((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForDrafts) {
+        if (((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForDrafts()) {
             return false;
         }
-        if (!((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForPublishedPatchsets) {
+        if (!((PatchsetCreated)event).getPatchSet().isDraft() && !triggerForPublishedPatchsets()) {
             return false;
         }
         return true;
     }
 
     /**
-     * This method migrates data from versions previous to 2.27.6 of this plugin to keep backwards compatibility.
+     * Migrate data from versions previous to 2.27.6 to keep backward compatibility.
      * @return this
      */
     protected Object readResolve() {
-        triggerForPublishedPatchsets = true;
-        triggerForDrafts = true;
+        triggerFor = TRIGGER_FOR_ALL;
         if (excludeDrafts) {
-            triggerForDrafts = false;
+            triggerFor = TRIGGER_FOR_PUBLISHED;
         }
         return this;
     }
@@ -172,6 +191,18 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         @Override
         public String getDisplayName() {
             return Messages.PatchsetCreatedDisplayName();
+        }
+
+        /**
+         * Fill the item for triggerFor select items.
+         * @return ListBoxModel
+         */
+        public ListBoxModel doFillTriggerForItems() {
+            return new ListBoxModel(
+                    new ListBoxModel.Option("Draft And Published Patchsets", PluginPatchsetCreatedEvent.TRIGGER_FOR_ALL),
+                    new ListBoxModel.Option("Published Patchsets", PluginPatchsetCreatedEvent.TRIGGER_FOR_PUBLISHED),
+                    new ListBoxModel.Option("Draft Patchsets", PluginPatchsetCreatedEvent.TRIGGER_FOR_DRAFT)
+            );
         }
     }
 }
