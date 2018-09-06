@@ -63,6 +63,9 @@ public class GerritTriggerTimerTask extends TimerTask {
         if (StringUtils.isEmpty(trigger.getTriggerConfigURL())) {
             return;
         }
+        if (!trigger.getJob().isBuildable()) {
+        	return;
+        }
         trigger.updateTriggerConfigURL();
     }
 
