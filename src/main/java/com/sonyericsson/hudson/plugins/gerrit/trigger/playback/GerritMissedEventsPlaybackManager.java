@@ -302,7 +302,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             //add to cache
             if (!playBackComplete) {
                 boolean receivedEvtFound = false;
-                synchronized (receivedEventCache) {
+                synchronized (this) {
                   Iterator<GerritTriggeredEvent> i = receivedEventCache.iterator(); // Must be in synchronized block
                   while (i.hasNext()) {
                       GerritTriggeredEvent rEvt = i.next();
