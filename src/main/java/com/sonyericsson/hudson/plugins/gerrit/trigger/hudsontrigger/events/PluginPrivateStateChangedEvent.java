@@ -32,12 +32,13 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * An event configuration that causes the build to be triggered when a change's private state changed.
+ * An event configuration that causes the build to be triggered when a change's
+ * private state changed.
  */
 public class PluginPrivateStateChangedEvent extends PluginGerritEvent implements Serializable {
-	private static final long serialVersionUID = 782691143033502579L;
+    private static final long serialVersionUID = 782691143033502579L;
 
-	/**
+    /**
      * Standard constructor.
      */
     @DataBoundConstructor

@@ -32,7 +32,8 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * An event configuration that causes the build to be triggered when a change's WIP state changed.
+ * An event configuration that causes the build to be triggered when a change's
+ * WIP state changed.
  */
 public class PluginWipStateChangedEvent extends PluginGerritEvent implements Serializable {
     private static final long serialVersionUID = -8490721342780735276L;

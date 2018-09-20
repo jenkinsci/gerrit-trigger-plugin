@@ -400,9 +400,9 @@ public enum GerritTriggerParameters {
         if (gerritEvent instanceof ChangeBasedEvent) {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
             GERRIT_CHANGE_WIP_STATE.setOrCreateStringParameterValue(
-            		parameters, String.valueOf(event.getChange().isWip()), escapeQuotes);
+                    parameters, String.valueOf(event.getChange().isWip()), escapeQuotes);
             GERRIT_CHANGE_PRIVATE_STATE.setOrCreateStringParameterValue(
-            		parameters, String.valueOf(event.getChange().isPrivate()), escapeQuotes);
+                    parameters, String.valueOf(event.getChange().isPrivate()), escapeQuotes);
             GERRIT_BRANCH.setOrCreateStringParameterValue(
                     parameters, event.getChange().getBranch(), escapeQuotes);
             GERRIT_TOPIC.setOrCreateStringParameterValue(
