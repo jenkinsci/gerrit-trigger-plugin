@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -47,12 +48,14 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private boolean excludeDrafts = false;
     private boolean excludeTrivialRebase = false;
     private boolean excludeNoCodeChange = false;
+    private boolean excludePrivateState = false;
+    private boolean excludeWipState = false;
 
     /**
      * Default constructor.
      */
     public PluginPatchsetCreatedEvent() {
-        this(false, false, false);
+        this(false, false, false, false, false);
     }
 
     /**
@@ -64,10 +67,14 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     @DataBoundConstructor
     public PluginPatchsetCreatedEvent(boolean excludeDrafts,
         boolean excludeTrivialRebase,
-        boolean excludeNoCodeChange) {
+        boolean excludeNoCodeChange,
+        boolean excludePrivateState,
+        boolean excludeWipState) {
         this.excludeDrafts = excludeDrafts;
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
+        this.excludePrivateState = excludePrivateState;
+        this.excludeWipState = excludeWipState;
     }
 
     /**
@@ -107,6 +114,22 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     public boolean isExcludeNoCodeChange() {
         return excludeNoCodeChange;
     }
+    
+    /**
+     * Getter for the excludePrivateState field.
+     * @return excludePrivateState
+     */
+    public boolean isExcludePrivateState() {
+        return excludePrivateState;
+    }
+
+    /**
+     * Getter for the excludeWipState field.
+     * @return excludeWipState
+     */
+    public boolean isExcludeWipState() {
+        return excludeWipState;
+    }
 
     @Override
     public boolean shouldTriggerOn(GerritTriggeredEvent event) {
@@ -126,6 +149,12 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         }
         if (excludeNoCodeChange
             && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+            return false;
+        }
+        if (excludePrivateState && ((PatchsetCreated)event).getChange().isPrivate()) {
+            return false;
+        }
+        if (excludeWipState && ((PatchsetCreated)event).getChange().isWip()) {
             return false;
         }
         return true;
