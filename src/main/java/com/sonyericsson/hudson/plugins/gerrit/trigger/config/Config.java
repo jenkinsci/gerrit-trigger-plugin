@@ -135,6 +135,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_ENABLE_PLUGIN_MESSAGES = true;
     /**
+     * Default value for the option to allow triggering on messages for any user.
+     */
+    public static final boolean DEFAULT_TRIGGER_ON_ALL_COMMENTS = false;
+    /**
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
@@ -178,6 +182,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Integer gerritBuildNotBuiltCodeReviewValue = null;
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
+    private boolean triggerOnAllComments;
     @Deprecated
     private transient int numberOfSendingWorkerThreads;
     private int buildScheduleDelay;
@@ -243,6 +248,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritFrontEndUrl = config.getGerritFrontEndUrl();
         enableManualTrigger = config.isEnableManualTrigger();
         enablePluginMessages = config.isEnablePluginMessages();
+        triggerOnAllComments = config.isTriggerOnAllComments();
         buildScheduleDelay = config.getBuildScheduleDelay();
         dynamicConfigRefreshInterval = config.getDynamicConfigRefreshInterval();
         enableProjectAutoCompletion = config.isEnableProjectAutoCompletion();
@@ -355,6 +361,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         enablePluginMessages = formData.optBoolean(
                 "enablePluginMessages",
                 DEFAULT_ENABLE_PLUGIN_MESSAGES);
+        triggerOnAllComments = formData.optBoolean(
+                "triggerOnAllComments",
+                DEFAULT_TRIGGER_ON_ALL_COMMENTS);
         buildScheduleDelay = formData.optInt(
                 "buildScheduleDelay",
                 DEFAULT_BUILD_SCHEDULE_DELAY);
@@ -997,6 +1006,19 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public boolean isEnablePluginMessages() {
         return enablePluginMessages;
+    }
+
+    @Override
+    public boolean isTriggerOnAllComments() { return triggerOnAllComments; }
+
+    /**
+     * Sets triggerOnAllComments.
+     *
+     * @param triggerOnAllComments true if so
+     * @see  #isTriggerOnAllComments()
+     */
+    public void setTriggerOnAllComments(boolean triggerOnAllComments) {
+        this.triggerOnAllComments = triggerOnAllComments;
     }
 
     @Override

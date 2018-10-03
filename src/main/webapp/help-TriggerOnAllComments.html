@@ -1,0 +1,14 @@
+<p>
+    By default the Gerrit trigger plugin filters out comments posted by the
+    configured user from the event stream. This means that it is not possible
+    to trigger builds on these messages. Setting this option will give access to
+    the unfiltered stream.
+</p>
+<p>
+    <strong>Note</strong> that with this option enabled, it is possible to create infinite loops.
+    For example, a trigger on a Verified +1 will loop infinitally on successful
+    builds.
+</p>
+<p>
+    Default is disabled.
+</p>
