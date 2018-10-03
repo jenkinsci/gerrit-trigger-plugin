@@ -68,8 +68,7 @@ public class GerritTriggeredBuildListenerTest {
     public final JenkinsRule j = new JenkinsRule();
 
     private SshServer sshd;
-    @SuppressWarnings("unused")
-    private SshdServerMock.KeyPairFiles sshKey;
+
     private SshdServerMock server;
 
     private static CountDownLatch buildListenerLatch;
@@ -81,14 +80,14 @@ public class GerritTriggeredBuildListenerTest {
      */
     @Before
     public void setUp() throws Exception {
-        sshKey = SshdServerMock.generateKeyPair();
+        SshdServerMock.generateKeyPair();
+
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
-        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         GerritServer gserver = PluginImpl.getFirstServer_();
         assertNotNull(gserver);
         SshdServerMock.configureFor(sshd, gserver);

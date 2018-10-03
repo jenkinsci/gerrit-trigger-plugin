@@ -89,7 +89,6 @@ public class SpecGerritTriggerHudsonTest {
     //TODO Fix the SshdServerMock so that asserts can be done on review commands.
 
     private SshServer sshd;
-    private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock serverMock;
     private GerritServer gerritServer;
 
@@ -100,7 +99,8 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Before
     public void setUp() throws Exception {
-        sshKey = SshdServerMock.generateKeyPair();
+        SshdServerMock.generateKeyPair();
+
         serverMock = new SshdServerMock();
         sshd = SshdServerMock.startServer(serverMock);
         serverMock.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
@@ -109,7 +109,6 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         serverMock.returnCommandFor("gerrit version", SshdServerMock.SendVersionCommand.class);
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
-        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         gerritServer = PluginImpl.getFirstServer_();
         SshdServerMock.configureFor(sshd, gerritServer, true);
     }
