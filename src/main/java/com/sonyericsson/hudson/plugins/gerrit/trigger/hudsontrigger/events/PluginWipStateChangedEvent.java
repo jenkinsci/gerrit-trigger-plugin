@@ -23,20 +23,24 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
+import java.io.Serializable;
+
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import java.io.Serializable;
-import org.kohsuke.stapler.DataBoundConstructor;
+import jenkins.model.Jenkins;
 
 /**
  * An event configuration that causes the build to be triggered when a change's
  * WIP state changed.
  */
 public class PluginWipStateChangedEvent extends PluginGerritEvent implements Serializable {
-    private static final long serialVersionUID = -8490721342780735276L;
+    private static final long serialVersionUID = 5530163420962242330L;
 
     /**
      * Standard constructor.
@@ -52,7 +56,7 @@ public class PluginWipStateChangedEvent extends PluginGerritEvent implements Ser
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginWorkInProgressStateChangedEventDescriptor.class);
+        return Jenkins.getInstance().getDescriptorByType(PluginWorkInProgressStateChangedEventDescriptor.class);
     }
 
     @Override
@@ -64,6 +68,7 @@ public class PluginWipStateChangedEvent extends PluginGerritEvent implements Ser
      * The descriptor for the PluginWipStateChangedEvent.
      */
     @Extension
+    @Symbol("wipStateChanged")
     public static class PluginWorkInProgressStateChangedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override

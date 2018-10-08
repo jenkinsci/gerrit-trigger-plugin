@@ -23,13 +23,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
+import java.io.Serializable;
+
+import org.jenkinsci.Symbol;
+import org.kohsuke.stapler.DataBoundConstructor;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
+
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import java.io.Serializable;
-import org.kohsuke.stapler.DataBoundConstructor;
+import jenkins.model.Jenkins;
 
 /**
  * An event configuration that causes the build to be triggered when a change's
@@ -52,7 +56,7 @@ public class PluginPrivateStateChangedEvent extends PluginGerritEvent implements
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginPrivateStateChangedEventDescriptor.class);
+        return Jenkins.getInstance().getDescriptorByType(PluginPrivateStateChangedEventDescriptor.class);
     }
 
     @Override
@@ -64,6 +68,7 @@ public class PluginPrivateStateChangedEvent extends PluginGerritEvent implements
      * The descriptor for the PluginPrivateStateChangedEvent.
      */
     @Extension
+    @Symbol("privateStateChanged")
     public static class PluginPrivateStateChangedEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override
