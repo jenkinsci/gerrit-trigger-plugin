@@ -63,6 +63,8 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * @param excludeDrafts if drafts should be excluded or not.
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
      * @param excludeNoCodeChange if message-only changes should be excluded.
+     * @param excludePrivateState if private state changes should be excluded.
+     * @param excludeWipState if wip state changes should be excluded.
      */
     @DataBoundConstructor
     public PluginPatchsetCreatedEvent(boolean excludeDrafts,
