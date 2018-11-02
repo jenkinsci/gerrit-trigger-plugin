@@ -24,6 +24,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.support;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport.TS_FORMAT;
 import com.cloudbees.jenkins.support.api.Component;
 import com.cloudbees.jenkins.support.api.Container;
 import com.cloudbees.jenkins.support.api.PrintedContent;
@@ -41,7 +42,6 @@ import hudson.security.Permission;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -82,7 +82,6 @@ public class BuildMemoryComponent extends Component {
                     //logging is performed by getInstance() above
                     return;
                 }
-                SimpleDateFormat tsFormat = BuildMemoryReport.TS_FORMAT;
                 BuildMemoryReport report = toGerritRunListener.report();
                 out.println("#" + getDisplayName());
                 out.println();
@@ -111,11 +110,11 @@ public class BuildMemoryComponent extends Component {
                         }
                         String startedAt = "";
                         if (en.getStartedTimestamp() != null) {
-                            startedAt = tsFormat.format(new Date(en.getStartedTimestamp()));
+                            startedAt = TS_FORMAT.get().format(new Date(en.getStartedTimestamp()));
                         }
                         String completedAt = "";
                         if (en.getCompletedTimestamp() != null) {
-                            completedAt = tsFormat.format(new Date(en.getCompletedTimestamp()));
+                            completedAt = TS_FORMAT.get().format(new Date(en.getCompletedTimestamp()));
                         }
 
                         out.println(" * Job: " + name);
@@ -123,7 +122,7 @@ public class BuildMemoryComponent extends Component {
                         out.println("    - Completed: " + en.isBuildCompleted());
                         out.println("    - Cancelled: " + en.isCancelled());
                         out.println("    - Result: " + result);
-                        out.println("    - Triggered@ " + tsFormat.format(en.getTriggeredTimestamp()));
+                        out.println("    - Triggered@ " + TS_FORMAT.get().format(en.getTriggeredTimestamp()));
                         out.println("    - Started@ " + startedAt);
                         out.println("    - Completed@ " + completedAt);
                     }
