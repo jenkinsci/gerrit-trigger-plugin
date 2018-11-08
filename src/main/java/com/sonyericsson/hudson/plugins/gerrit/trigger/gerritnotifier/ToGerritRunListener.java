@@ -427,6 +427,15 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     /**
+     * Cleans the project from run listener related data structures.
+     *
+     * @param project the project to be removed.
+     */
+    public void notifyProjectRemoved(Job project) {
+        memory.removeProject(project);
+    }
+
+    /**
      * Finds the GerritCause for a build if there is one.
      *
      * @param build the build to look in.

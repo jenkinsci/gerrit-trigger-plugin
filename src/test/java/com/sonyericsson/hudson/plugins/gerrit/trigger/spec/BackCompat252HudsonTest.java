@@ -85,7 +85,6 @@ public class BackCompat252HudsonTest {
     @Rule
     public JenkinsRule j = new JenkinsRule();
     private SshServer sshd;
-    private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock server;
 
     /**
@@ -95,7 +94,8 @@ public class BackCompat252HudsonTest {
      */
     @Before
     public void setUp() throws Exception {
-        sshKey = SshdServerMock.generateKeyPair();
+        SshdServerMock.generateKeyPair();
+
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         GerritServer gerritServer = PluginImpl.getFirstServer_();
@@ -107,7 +107,6 @@ public class BackCompat252HudsonTest {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
-        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
         SshdServerMock.configureFor(sshd, PluginImpl.getFirstServer_());
     }
 

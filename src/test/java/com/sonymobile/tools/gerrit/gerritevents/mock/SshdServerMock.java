@@ -27,6 +27,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import org.apache.commons.lang.StringUtils;
@@ -447,6 +448,7 @@ public class SshdServerMock implements CommandFactory {
         File tmp = new File(System.getProperty("java.io.tmpdir"));
         File priv = new File(tmp, "jenkins-testkey");
         File pub = new File(tmp, "jenkins-testkey.pub");
+        final KeyPairFiles sshKey;
         if (!(priv.exists() && pub.exists())) {
             if (priv.exists()) {
                 if (!priv.delete()) {
@@ -466,11 +468,14 @@ public class SshdServerMock implements CommandFactory {
             kpair.writePublicKey(new FileOutputStream(pub), "Test");
             System.out.println("Finger print: " + kpair.getFingerPrint());
             kpair.dispose();
-            return new KeyPairFiles(priv, pub);
+            sshKey = new KeyPairFiles(priv, pub);
         } else {
             System.out.println("Test key-pair seems to already exist.");
-            return new KeyPairFiles(priv, pub);
+            sshKey = new KeyPairFiles(priv, pub);
         }
+
+        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+        return sshKey;
     }
 
     /**

@@ -103,7 +103,7 @@ public class GerritMissedEventsFunctionalTest {
     @Before
     public void setUp() throws Exception {
         sshKey = SshdServerMock.generateKeyPair();
-        System.setProperty(PluginImpl.TEST_SSH_KEYFILE_LOCATION_PROPERTY, sshKey.getPrivateKey().getAbsolutePath());
+
         server = new SshdServerMock();
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);

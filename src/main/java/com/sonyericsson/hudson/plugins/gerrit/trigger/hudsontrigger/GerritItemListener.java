@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,10 @@ public class GerritItemListener extends ItemListener {
      * (Job or any of its subclasses), then we check if it has a GerritTrigger
      * among its triggers. If so, call the trigger's stop() method.
      *
-     * This class is unfortunately needed because Jenkins doesn't call Trigger.stop() when
+     * It removes deleted project from all ongoing builds, so, GerritTrigger
+     * will not wait projects that do not have chance to be finished.
+     *
+     * Also this class is unfortunately needed because Jenkins doesn't call Trigger.stop() when
      * a project is deleted, only when a project is reconfigured. Thus we need this class
      * to remove the listener and cancel the timer when a project is deleted.
      *
@@ -66,6 +70,11 @@ public class GerritItemListener extends ItemListener {
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger != null) {
                 gerritTrigger.stop();
+
+                ToGerritRunListener gerritRunListener = ToGerritRunListener.getInstance();
+                if (gerritRunListener != null) {
+                    gerritRunListener.notifyProjectRemoved(project);
+                }
             }
         }
     }

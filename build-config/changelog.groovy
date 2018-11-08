@@ -140,6 +140,7 @@ def fetchMavenInfo() {
     ep.deleteOnExit()
     def process = "mvn help:effective-pom -Doutput=${ep.absolutePath}".execute()
     if (!process.waitFor(10, TimeUnit.SECONDS)) {
+        println "Cannot get effective pom in a timely manner."
         return null
     }
     def xml = new XmlSlurper().parse(ep)
