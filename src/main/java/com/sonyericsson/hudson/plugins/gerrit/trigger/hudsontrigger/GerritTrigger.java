@@ -180,7 +180,8 @@ public class GerritTrigger extends Trigger<Job> {
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
-
+    private EventProcessor eventProcessor;
+    private Thread eventProcessorThread;
     private GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
 
@@ -601,12 +602,22 @@ public class GerritTrigger extends Trigger<Job> {
         return createListener(job);
     }
 
+    /**
+     * Creates an {@link EventProcessor} for this trigger's job.
+     * @return a new event processor instance.
+     */
+    /*package*/ EventProcessor createProcessor() {
+        return new EventProcessor(this, job.getFullName());
+    }
+
     @Override
     public void start(Job project, boolean newInstance) {
         logger.debug("Start project: {}", project);
+
         super.start(project, newInstance);
         initializeServerName();
         initializeTriggerOnEvents();
+        initializeEventProcessor();
         try {
             addThisTriggerAsListener(project);
         } catch (IllegalStateException e) {
@@ -615,14 +626,18 @@ public class GerritTrigger extends Trigger<Job> {
 
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
-            // We *must* update list of projects immediately *before* we can be labeled as "started".
-            // When using imperative Jenkinsfiles, every run will "update" the job's configuration.
-            // When the job's configuration is updated, all triggers are stopped and restarted.
-            // Thus, if we do *not* update the project list, then Gerrit events in quick succession
-            // will be missed due to the start/stop cycle.
-            updateTriggerConfigURL();
+            // Don't process any events until the configuration has been loaded.
+            eventProcessor.pause();
+            // Start the timer task to periodically update the dynamic configuration.
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
+        } else {
+            // We can safely process events immediately; the configuration has
+            // already been set.
+            eventProcessor.unpause();
         }
+        // Start the event processor thread.
+        eventProcessorThread = new Thread(eventProcessor);
+        eventProcessorThread.start();
 
         GerritProjectList.removeTriggerFromProjectList(this);
     }
@@ -630,6 +645,16 @@ public class GerritTrigger extends Trigger<Job> {
     @Override
     public void stop() {
         logger.debug("Stop");
+
+        // Tell the event processor to stop processing events.
+        // This will not impact the queue; it just tells the processor to stop
+        // its main loop.
+        eventProcessor.shutdown();
+        // Interrupt the thread so that it wakes up, sees that it should shutdown,
+        // and exits its main loop.
+        eventProcessorThread.interrupt();
+        eventProcessorThread = null;
+
         GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
@@ -712,7 +737,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event) {
-        createListener().schedule(this, cause, event, job);
+        eventProcessor.schedule(this, cause, event, job);
     }
 
     /**
@@ -726,7 +751,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @Deprecated
     protected void schedule(GerritCause cause, GerritTriggeredEvent event, Job project) {
-        createListener().schedule(this, cause, event, project);
+        eventProcessor.schedule(this, cause, event, project);
     }
 
     /**
@@ -740,7 +765,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @Deprecated
     protected ParametersAction createParameters(GerritTriggeredEvent event, Job project) {
-        return createListener().createParameters(event, project);
+        return eventProcessor.createParameters(event, project);
     }
 
 
@@ -859,7 +884,7 @@ public class GerritTrigger extends Trigger<Job> {
                                 context.getOtherBuilds());
                     }
                     final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
-                    createListener().schedule(this, cause, context.getEvent(), context.getThisBuild().getProject());
+                    eventProcessor.schedule(this, cause, context.getEvent(), context.getThisBuild().getProject());
                 }
             }
         }
@@ -935,6 +960,15 @@ public class GerritTrigger extends Trigger<Job> {
             }
         }
         return false;
+    }
+
+    /**
+     * This adds a Gerrit event to the {@link EventProcessor} queue.  The
+     * EventProcessor will only process the event once this trigger has loaded
+     * its configuration.
+     */
+    public void addEvent(GerritTriggeredEvent event) {
+        eventProcessor.addEvent(event);
     }
 
     /**
@@ -1405,6 +1439,16 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Initializes the EventProcessor instance.  If the EventProcessor instance has already
+     * been created, then this does nothing.
+     */
+    private void initializeEventProcessor() {
+        if (eventProcessor == null) {
+            eventProcessor = createProcessor();
+        }
+    }
+
+    /**
      * If trigger configuration should be fetched from a URL or not.
      *
      * @return true if trigger configuration should be fetched from a URL.
@@ -1754,6 +1798,12 @@ public class GerritTrigger extends Trigger<Job> {
         triggerInformationAction.setErrorMessage("");
         try {
             dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
+            // Now that we have successfully loaded a dynamic configuration, we can
+            // unpause the event processor.  We will never pause it again.
+            eventProcessor.unpause();
+            // Interrupt the event processor thread to wake it up so it starts
+            // processing events.
+            eventProcessorThread.interrupt();
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",

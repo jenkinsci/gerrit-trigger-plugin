@@ -805,16 +805,20 @@ public class GerritTriggerTest {
         eventListener = PowerMockito.spy(eventListener);
         eventListener.gerritEvent(event);
 
+        EventProcessor eventProcessor = trigger.createProcessor();
+        eventProcessor = PowerMockito.spy(eventProcessor);
+        eventProcessor.addEvent(event);
+
         verifyZeroInteractions(listener);
         verify(project).addTrigger(same(trigger));
         verify(project).getTriggers();
         verify(project).isBuildable();
         verify(queue, never()).schedule2(same(project), anyInt(), any(List.class));
-        verify(eventListener, never()).schedule(
+        verify(eventProcessor, never()).schedule(
                 any(GerritTrigger.class),
                 any(GerritCause.class),
                 any(GerritTriggeredEvent.class));
-        verify(eventListener, never()).schedule(
+        verify(eventProcessor, never()).schedule(
                 any(GerritTrigger.class),
                 any(GerritCause.class),
                 any(GerritTriggeredEvent.class),
@@ -854,13 +858,17 @@ public class GerritTriggerTest {
         eventListener = PowerMockito.spy(eventListener);
         eventListener.gerritEvent(event);
 
+        EventProcessor eventProcessor = trigger.createProcessor();
+        eventProcessor = PowerMockito.spy(eventProcessor);
+        eventProcessor.addEvent(event);
+
         verify(listener, never()).onTriggered(same(project), same(event));
         verify(project).isBuildable();
-        verify(eventListener, never()).schedule(
+        verify(eventProcessor, never()).schedule(
                 any(GerritTrigger.class),
                 any(GerritCause.class),
                 any(GerritTriggeredEvent.class));
-        verify(eventListener, never()).schedule(
+        verify(eventProcessor, never()).schedule(
                 any(GerritTrigger.class),
                 any(GerritCause.class),
                 any(GerritTriggeredEvent.class),
@@ -1074,8 +1082,12 @@ public class GerritTriggerTest {
         eventListener = spy(eventListener);
         eventListener.gerritEvent(event);
 
+        EventProcessor eventProcessor = trigger.createProcessor();
+        eventProcessor = PowerMockito.spy(eventProcessor);
+        eventProcessor.addEvent(event);
+
         verify(listener, never()).onTriggered(same(project), same(event));
-        verify(eventListener).schedule(same(trigger), argThat(new IsAManualCause(true)), same(event));
+        verify(eventProcessor).schedule(same(trigger), argThat(new IsAManualCause(true)), same(event));
         verify(queue).schedule2(same(project), eq(0), hasCauseActionContainingCause(null));
     }
 
