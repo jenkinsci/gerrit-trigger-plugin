@@ -147,7 +147,7 @@ public class ConfigTest {
         String formString = "{\"projectListRefreshInterval\":\"0\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
-        assertEquals(config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL, config.getProjectListRefreshInterval());
+        assertEquals(Config.DEFAULT_PROJECT_LIST_REFRESH_INTERVAL, config.getProjectListRefreshInterval());
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.

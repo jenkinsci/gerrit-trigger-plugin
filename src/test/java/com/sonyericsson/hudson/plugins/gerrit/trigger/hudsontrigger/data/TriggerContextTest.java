@@ -111,7 +111,7 @@ public class TriggerContextTest {
         AbstractBuild build = mockBuild("myProject", 1);
         TriggerContext context = new TriggerContext(build, null, null);
         assertNotNull(context.getThisBuild());
-        assertEquals(new Integer(1), context.getThisBuild().getBuildNumber());
+        assertEquals(Integer.valueOf(1), context.getThisBuild().getBuildNumber());
         assertEquals("myProject", context.getThisBuild().getProjectId());
     }
 
@@ -124,7 +124,7 @@ public class TriggerContextTest {
         TriggeredItemEntity wrap = new TriggeredItemEntity(1, "myProject");
         context.setThisBuild(wrap);
         assertNotNull(context.getThisBuild());
-        assertEquals(new Integer(1), context.getThisBuild().getBuildNumber());
+        assertEquals(Integer.valueOf(1), context.getThisBuild().getBuildNumber());
         assertEquals("myProject", context.getThisBuild().getProjectId());
     }
 
@@ -137,7 +137,7 @@ public class TriggerContextTest {
         AbstractBuild build = mockBuild("myProject", 1);
         context.setThisBuild(build);
         assertNotNull(context.getThisBuild());
-        assertEquals(new Integer(1), context.getThisBuild().getBuildNumber());
+        assertEquals(Integer.valueOf(1), context.getThisBuild().getBuildNumber());
         assertEquals("myProject", context.getThisBuild().getProjectId());
     }
 
