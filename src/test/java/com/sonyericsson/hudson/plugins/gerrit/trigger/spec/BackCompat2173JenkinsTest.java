@@ -90,9 +90,6 @@ public class BackCompat2173JenkinsTest {
         assertNotNull(trigger);
         assertNotNull(trigger.getSkipVote());
         assertFalse("Skip not built", trigger.getSkipVote().isOnNotBuilt());
-        assertNotNull(trigger.getGerritBuildFailedCodeReviewValue());
-        assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                trigger.getGerritBuildFailedCodeReviewValue());
         assertFalse("Silent Mode", trigger.isSilentMode());
         assertEquals("Notification level", "ALL", trigger.getNotificationLevel());
         assertFalse("Silent start", trigger.isSilentStartMode());
@@ -164,9 +161,6 @@ public class BackCompat2173JenkinsTest {
         assertNotNull(trigger);
         assertNotNull(trigger.getSkipVote());
         assertTrue("Skip not built", trigger.getSkipVote().isOnNotBuilt());
-        assertNotNull(trigger.getGerritBuildNotBuiltCodeReviewValue());
-        assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                trigger.getGerritBuildNotBuiltCodeReviewValue());
         assertFalse("Silent Mode", trigger.isSilentMode());
         assertEquals("Notification level", "OWNER", trigger.getNotificationLevel());
         assertTrue("Silent start", trigger.isSilentStartMode());
