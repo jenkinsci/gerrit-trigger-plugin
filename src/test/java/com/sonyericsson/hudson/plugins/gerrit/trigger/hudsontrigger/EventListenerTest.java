@@ -30,14 +30,13 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
- * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventProcessor}.
+ * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, EventProcessor.class, AbstractProject.class, })
-public class EventProcessorTest {
+@PrepareForTest({Jenkins.class, EventListener.class, AbstractProject.class, })
+public class EventListenerTest {
 
     private EventListener listener;
-    private EventProcessor processor;
     private AbstractProject project;
     private GerritTrigger trigger;
     private Jenkins jenkins;
@@ -50,11 +49,10 @@ public class EventProcessorTest {
     public void setup() {
         project = mock(AbstractProject.class);
         doReturn("MockProject").when(project).getFullName();
-        trigger = mock(GerritTrigger.class);
         listener = new EventListener(project);
-        processor = new EventProcessor(trigger, "some-job");
-        processor = spy(processor);
-        doNothing().when(processor).schedule(same(trigger), any(GerritCause.class), any(GerritTriggeredEvent.class));
+        listener = spy(listener);
+        trigger = mock(GerritTrigger.class);
+        doNothing().when(listener).schedule(same(trigger), any(GerritCause.class), any(GerritTriggeredEvent.class));
 
         jenkins = mock(Jenkins.class);
         mockStatic(Jenkins.class);
@@ -69,7 +67,7 @@ public class EventProcessorTest {
 
 
     /**
-     * Tests that {@link EventProcessor#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * is called/reflected when a {@link PatchsetCreated} event arrives.
      *
      * @throws Exception if so.
@@ -79,11 +77,11 @@ public class EventProcessorTest {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
         handler.notifyListeners(patchsetCreated);
         verify(listener).gerritEvent(same(patchsetCreated));
-        verify(processor).schedule(same(trigger), isExactClass(GerritCause.class), same(patchsetCreated));
+        verify(listener).schedule(same(trigger), isExactClass(GerritCause.class), same(patchsetCreated));
     }
 
     /**
-     * Tests that {@link EventProcessor#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
+     * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * is called/reflected when a {@link ChangeMerged} event arrives.
      *
      * @throws Exception if so.
@@ -93,12 +91,12 @@ public class EventProcessorTest {
         ChangeMerged changeMerged = Setup.createChangeMerged();
         handler.notifyListeners(changeMerged);
         verify(listener).gerritEvent(same(changeMerged));
-        verify(processor).schedule(same(trigger), isExactClass(GerritCause.class), same(changeMerged));
+        verify(listener).schedule(same(trigger), isExactClass(GerritCause.class), same(changeMerged));
     }
 
 
     /**
-     * Tests that {@link EventProcessor#gerritEvent(ManualPatchsetCreated)}
+     * Tests that {@link EventListener#gerritEvent(ManualPatchsetCreated)}
      * is called/reflected when a {@link ManualPatchsetCreated} event arrives.
      *
      * @throws Exception if so.
@@ -108,11 +106,11 @@ public class EventProcessorTest {
         ManualPatchsetCreated manualPatchsetCreated = Setup.createManualPatchsetCreated();
         handler.notifyListeners(manualPatchsetCreated);
         verify(listener).gerritEvent(same(manualPatchsetCreated));
-        verify(processor).schedule(same(trigger), isExactClass(GerritManualCause.class), same(manualPatchsetCreated));
+        verify(listener).schedule(same(trigger), isExactClass(GerritManualCause.class), same(manualPatchsetCreated));
     }
 
     /**
-     * Tests that {@link EventProcessor#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded)}
+     * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded)}
      * is called/reflected when a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event arrives.
      *
      * @throws Exception if so.
@@ -125,7 +123,7 @@ public class EventProcessorTest {
         handler.notifyListeners(commentAdded);
         verify(listener).gerritEvent(same(commentAdded));
         verify(trigger).commentAddedMatch(same(commentAdded));
-        verify(processor).schedule(same(trigger), isExactClass(GerritCause.class), same(commentAdded));
+        verify(listener).schedule(same(trigger), isExactClass(GerritCause.class), same(commentAdded));
     }
 
     /**
