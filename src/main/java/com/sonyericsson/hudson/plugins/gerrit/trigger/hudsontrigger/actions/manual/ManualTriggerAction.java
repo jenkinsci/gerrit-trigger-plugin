@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.man
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
@@ -712,11 +713,11 @@ public class ManualTriggerAction implements RootAction {
         /**
          * A Code Review Approval type <i>Code-Review</i>.
          */
-        CODE_REVIEW("Code-Review"),
+        CODE_REVIEW(Config.CODE_REVIEW),
         /**
          * A Verified Approval type <i>Verified</i>.
          */
-        VERIFIED("Verified");
+        VERIFIED(Config.VERIFIED);
         private String type;
 
         /**

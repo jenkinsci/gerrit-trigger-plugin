@@ -82,6 +82,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.spy;
@@ -496,7 +497,7 @@ public final class Setup {
         event.setPatchset(patch);
         List<Approval> approvals = new LinkedList<Approval>();
         Approval approval = new Approval();
-        approval.setType("Code-Review");
+        approval.setType(CODE_REVIEW);
         approval.setValue("1");
         approvals.add(approval);
         event.setApprovals(approvals);
@@ -719,7 +720,7 @@ public final class Setup {
      * @return the List.
      */
     public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
-        VerdictCategory cat = new VerdictCategory("Code-Review", "Code review");
+        VerdictCategory cat = new VerdictCategory(CODE_REVIEW, "Code review");
         List<VerdictCategory> list = new LinkedList<VerdictCategory>();
         list.add(cat);
         return list;

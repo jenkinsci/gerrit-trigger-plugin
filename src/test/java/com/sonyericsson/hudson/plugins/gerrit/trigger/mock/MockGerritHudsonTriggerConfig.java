@@ -194,6 +194,10 @@ public class MockGerritHudsonTriggerConfig implements
         return;
     }
 
+    @Override public VerdictCategory getVerdictCategory(String verdictCategoryName) {
+        return null;
+    }
+
     @Override
     public void setValues(JSONObject form) {
         //Empty
@@ -212,50 +216,44 @@ public class MockGerritHudsonTriggerConfig implements
     private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
     private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
 
-    @Override
-    public Integer getGerritBuildStartedVerifiedValue() {
-        return gerritBuildStartedVerifiedValue;
+    @Override public Integer getGerritBuildStartedVerifiedValue() {
+        return 0;
     }
 
-    @Override
-    public Integer getGerritBuildSuccessfulVerifiedValue() {
-        return gerritBuildSuccessfulVerifiedValue;
+    @Override public Integer getGerritBuildStartedCodeReviewValue() {
+        return 0;
     }
 
-    @Override
-    public Integer getGerritBuildFailedVerifiedValue() {
-        return gerritBuildFailedVerifiedValue;
+    @Override public Integer getGerritBuildSuccessfulVerifiedValue() {
+        return 0;
     }
 
-    @Override
-    public Integer getGerritBuildUnstableVerifiedValue() {
-        return gerritBuildUnstableVerifiedValue;
+    @Override public Integer getGerritBuildSuccessfulCodeReviewValue() {
+        return 0;
     }
 
-    @Override
-    public Integer getGerritBuildNotBuiltVerifiedValue() {
-        return gerritBuildNotBuiltVerifiedValue;
+    @Override public Integer getGerritBuildFailedVerifiedValue() {
+        return 0;
     }
 
-    @Override
-    public Integer getGerritBuildStartedCodeReviewValue() {
-        return gerritBuildStartedCodeReviewValue;
+    @Override public Integer getGerritBuildFailedCodeReviewValue() {
+        return 0;
     }
-    @Override
-    public Integer getGerritBuildSuccessfulCodeReviewValue() {
-        return gerritBuildSuccessfulCodeReviewValue;
+
+    @Override public Integer getGerritBuildUnstableVerifiedValue() {
+        return 0;
     }
-    @Override
-    public Integer getGerritBuildFailedCodeReviewValue() {
-        return gerritBuildFailedCodeReviewValue;
+
+    @Override public Integer getGerritBuildUnstableCodeReviewValue() {
+        return 0;
     }
-    @Override
-    public Integer getGerritBuildUnstableCodeReviewValue() {
-        return gerritBuildUnstableCodeReviewValue;
+
+    @Override public Integer getGerritBuildNotBuiltVerifiedValue() {
+        return 0;
     }
-    @Override
-    public Integer getGerritBuildNotBuiltCodeReviewValue() {
-        return gerritBuildNotBuiltCodeReviewValue;
+
+    @Override public Integer getGerritBuildNotBuiltCodeReviewValue() {
+        return 0;
     }
 
     /**

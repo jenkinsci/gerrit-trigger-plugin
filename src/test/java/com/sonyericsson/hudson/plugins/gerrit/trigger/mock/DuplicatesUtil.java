@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
@@ -157,7 +159,7 @@ public abstract class DuplicatesUtil {
         List<GerritProject> projects = new LinkedList<GerritProject>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null, false));
-        PluginCommentAddedEvent event = new PluginCommentAddedEvent("Code-Review", "1");
+        PluginCommentAddedEvent event = new PluginCommentAddedEvent(CODE_REVIEW, "1");
         List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,

@@ -11,7 +11,7 @@
     <property name="severity" value="error"/>
     <module name="FileLength">
         <!-- TODO: Need refactoring -->
-        <property name="max" value="2500"/>
+        <property name="max" value="2550"/>
     </module>
     <module name="FileTabCharacter">
         <property name="fileExtensions" value="java,groovy,jelly,xml,html,js,css"/>
@@ -43,7 +43,7 @@
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
         <module name="LineLength">
-                    <property name="max" value="121"/>
+                    <property name="max" value="144"/>
         </module>
         <module name="MethodLength"/>
         <module name="EmptyForIteratorPad"/>
@@ -74,7 +74,6 @@
         <module name="LeftCurly"/>
         <module name="NeedBraces"/>
         <module name="RightCurly"/>
-        <module name="AvoidInlineConditionals"/>
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="HiddenField">
@@ -82,7 +81,6 @@
             <property name="ignoreConstructorParameter" value="true"/>
         </module>
         <module name="IllegalInstantiation"/>
-        <module name="InnerAssignment"/>
         <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
         <module name="SimplifyBooleanExpression"/>
