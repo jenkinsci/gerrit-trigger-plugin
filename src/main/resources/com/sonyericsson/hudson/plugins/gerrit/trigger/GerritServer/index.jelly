@@ -107,82 +107,41 @@
                                       with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
                 </f:section>
                 <f:section title="${%Gerrit Reporting Values}">
-                    <tr>
-                        <td></td>
-                        <td>
-                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
-                                ${%Verify}
-                            </div>
-                        </td>
-                    </tr>
-                    <f:entry title="${%Started}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
-                        <f:textbox name="gerritBuildStartedVerifiedValue"
-                                   value="${it.config.gerritBuildStartedVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Successful}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulVerified.html">
-                        <f:textbox name="gerritBuildSuccessfulVerifiedValue"
-                                   value="${it.config.gerritBuildSuccessfulVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Failed}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildFailedVerified.html">
-                        <f:textbox name="gerritBuildFailedVerifiedValue"
-                                   value="${it.config.gerritBuildFailedVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Unstable}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildUnstableVerified.html">
-                        <f:textbox name="gerritBuildUnstableVerifiedValue"
-                                   value="${it.config.gerritBuildUnstableVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Not Built}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltVerified.html">
-                        <f:textbox name="gerritBuildNotBuiltVerifiedValue"
-                                   value="${it.config.gerritBuildNotBuiltVerifiedValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <tr>
-                        <td></td>
-                        <td>
-                            <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
-                                ${%Code Review}
-                            </div>
-                        </td>
-                    </tr>
-                    <f:entry title="${%Started}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
-                        <f:textbox name="gerritBuildStartedCodeReviewValue"
-                                   value="${it.config.gerritBuildStartedCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Successful}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildSuccessfulCodeReview.html">
-                        <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
-                                   value="${it.config.gerritBuildSuccessfulCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Failed}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildFailedCodeReview.html">
-                        <f:textbox name="gerritBuildFailedCodeReviewValue"
-                                   value="${it.config.gerritBuildFailedCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Unstable}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildUnstableCodeReview.html">
-                        <f:textbox name="gerritBuildUnstableCodeReviewValue"
-                                   value="${it.config.gerritBuildUnstableCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
-                    <f:entry title="${%Not Built}"
-                             help="/plugin/gerrit-trigger/help-GerritBuildNotBuiltCodeReview.html">
-                        <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
-                                   value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
-                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                    </f:entry>
+                    <j:forEach items="${it.config.categories}" var="p">
+                        <tr>
+                            <td></td>
+                            <td>
+                                <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
+                                    ${p.verdictValue}
+                                </div>
+                            </td>
+                        </tr>
+                        <f:entry title="${%Started}">
+                            <f:textbox name="${p.verdictValue}Started"
+                                       value="${p.getDefaultBuildStartedReportingValue()}"
+                                       checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Successful}">
+                            <f:textbox name="${p.verdictValue}Successful"
+                                       value="${p.getDefaultBuildSuccessfulReportingValue()}"
+                                       checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Failed}">
+                            <f:textbox name="${p.verdictValue}Failed"
+                                       value="${p.getDefaultBuildFailedReportingValue()}"
+                                       checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Unstable}">
+                            <f:textbox name="${p.verdictValue}Unstable"
+                                       value="${p.getDefaultBuildUnstableReportingValue()}"
+                                       checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                        <f:entry title="${%Not Built}">
+                            <f:textbox name="${p.verdictValue}Not Built"
+                                       value="${p.getDefaultBuildNotBuiltReportingValue()}"
+                                       checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                        </f:entry>
+                    </j:forEach>
                 </f:section>
                 <f:advanced>
                     <f:section title="${%Gerrit Verified Commands}">

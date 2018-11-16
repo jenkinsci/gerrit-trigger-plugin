@@ -166,15 +166,25 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritVerifiedCmdBuildStarted;
     private String gerritVerifiedCmdBuildNotBuilt;
     private String gerritFrontEndUrl;
+    @Deprecated
     private Integer gerritBuildStartedVerifiedValue = null;
+    @Deprecated
     private Integer gerritBuildSuccessfulVerifiedValue = null;
+    @Deprecated
     private Integer gerritBuildFailedVerifiedValue = null;
+    @Deprecated
     private Integer gerritBuildUnstableVerifiedValue = null;
+    @Deprecated
     private Integer gerritBuildNotBuiltVerifiedValue = null;
+    @Deprecated
     private Integer gerritBuildStartedCodeReviewValue = null;
+    @Deprecated
     private Integer gerritBuildSuccessfulCodeReviewValue = null;
+    @Deprecated
     private Integer gerritBuildFailedCodeReviewValue = null;
+    @Deprecated
     private Integer gerritBuildUnstableCodeReviewValue = null;
+    @Deprecated
     private Integer gerritBuildNotBuiltCodeReviewValue = null;
     private boolean enableManualTrigger;
     private boolean enablePluginMessages;
@@ -222,19 +232,12 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
         restCodeReview = config.isRestCodeReview();
         restVerified = config.isRestVerified();
+        
+        //these fields deprecated but kept for the sake of compatibility
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
-        gerritBuildStartedVerifiedValue = config.getGerritBuildStartedVerifiedValue();
-        gerritBuildStartedCodeReviewValue = config.getGerritBuildStartedCodeReviewValue();
-        gerritBuildSuccessfulVerifiedValue = config.getGerritBuildSuccessfulVerifiedValue();
-        gerritBuildSuccessfulCodeReviewValue = config.getGerritBuildSuccessfulCodeReviewValue();
-        gerritBuildFailedVerifiedValue = config.getGerritBuildFailedVerifiedValue();
-        gerritBuildFailedCodeReviewValue = config.getGerritBuildFailedCodeReviewValue();
-        gerritBuildUnstableVerifiedValue = config.getGerritBuildUnstableVerifiedValue();
-        gerritBuildUnstableCodeReviewValue = config.getGerritBuildUnstableCodeReviewValue();
-        gerritBuildNotBuiltVerifiedValue = config.getGerritBuildNotBuiltVerifiedValue();
-        gerritBuildNotBuiltCodeReviewValue = config.getGerritBuildNotBuiltCodeReviewValue();
+        
         gerritVerifiedCmdBuildStarted = config.getGerritCmdBuildStarted();
         gerritVerifiedCmdBuildFailed = config.getGerritCmdBuildFailed();
         gerritVerifiedCmdBuildSuccessful = config.getGerritCmdBuildSuccessful();
@@ -253,12 +256,66 @@ public class Config implements IGerritHudsonTriggerConfig {
             for (VerdictCategory cat : config.getCategories()) {
                 categories.add(new VerdictCategory(cat.getVerdictValue(), cat.getVerdictDescription()));
             }
+            assertDefaultCategories();
+            
+            //migration
+            getVerifyCategory().setDefaultBuildStartedReportingValue(config.getGerritBuildStartedVerifiedValue());
+            getCodeReviewCategory().setDefaultBuildStartedReportingValue(config.getGerritBuildStartedCodeReviewValue());
+            getVerifyCategory().setDefaultBuildSuccessfulReportingValue(config.getGerritBuildSuccessfulVerifiedValue());
+            getCodeReviewCategory().setDefaultBuildSuccessfulReportingValue(config.getGerritBuildSuccessfulCodeReviewValue());
+            getVerifyCategory().setDefaultBuildFailedReportingValue(config.getGerritBuildFailedVerifiedValue());
+            getCodeReviewCategory().setDefaultBuildFailedReportingValue(config.getGerritBuildFailedCodeReviewValue());
+            getVerifyCategory().setDefaultBuildUnstableReportingValue(config.getGerritBuildUnstableVerifiedValue());
+            getCodeReviewCategory().setDefaultBuildUnstableReportingValue(config.getGerritBuildUnstableCodeReviewValue());
+            getVerifyCategory().setDefaultBuildNotBuiltReportingValue(config.getGerritBuildNotBuiltVerifiedValue());
+            getCodeReviewCategory().setDefaultBuildNotBuiltReportingValue(config.getGerritBuildNotBuiltCodeReviewValue());
+        
         }
         if (config.getReplicationConfig() != null) {
             replicationConfig = new ReplicationConfig(config.getReplicationConfig());
         }
         watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
+    }
+
+    // make sure that there is a CR and VER category
+    private void assertDefaultCategories() {
+        VerdictCategory[] defaultCategories = new VerdictCategory[]{
+                new VerdictCategory("CRVW", "Code-Review", 
+                        DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE,
+                        DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE,
+                        DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE,
+                        DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE,
+                        DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE),
+                new VerdictCategory("VRIF", "Verified",
+                        DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE,
+                        DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE,
+                        DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE,
+                        DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE,
+                        DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE)
+        };
+        for (VerdictCategory category: defaultCategories) {
+            if (!categories.contains(category)) {
+                categories.add(category);
+            }
+        }
+    }
+    
+    private VerdictCategory getCodeReviewCategory(){
+        return getVerdictCategory("CRVW");
+    }
+
+    private VerdictCategory getVerifyCategory() {
+        return getVerdictCategory("VRIF");
+    }
+    
+    private VerdictCategory getVerdictCategory(String value) {
+        for (VerdictCategory category : categories) {
+            if (category.getVerdictValue().equals(value)) {
+                return category;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -299,32 +356,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         if (numberOfSendingWorkerThreads <= 0) {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
         }
-
-        if (formData.isEmpty()) {
-            gerritBuildStartedVerifiedValue = DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE;
-            gerritBuildSuccessfulVerifiedValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE;
-            gerritBuildFailedVerifiedValue = DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE;
-            gerritBuildUnstableVerifiedValue = DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE;
-            gerritBuildNotBuiltVerifiedValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE;
-            gerritBuildStartedCodeReviewValue = DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE;
-            gerritBuildSuccessfulCodeReviewValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE;
-            gerritBuildFailedCodeReviewValue = DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE;
-            gerritBuildUnstableCodeReviewValue = DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE;
-            gerritBuildNotBuiltCodeReviewValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE;
-        } else {
-            gerritBuildStartedVerifiedValue = getValueFromFormData(formData, "gerritBuildStartedVerifiedValue");
-            gerritBuildSuccessfulVerifiedValue = getValueFromFormData(formData, "gerritBuildSuccessfulVerifiedValue");
-            gerritBuildFailedVerifiedValue = getValueFromFormData(formData, "gerritBuildFailedVerifiedValue");
-            gerritBuildUnstableVerifiedValue = getValueFromFormData(formData, "gerritBuildUnstableVerifiedValue");
-            gerritBuildNotBuiltVerifiedValue = getValueFromFormData(formData, "gerritBuildNotBuiltVerifiedValue");
-            gerritBuildStartedCodeReviewValue = getValueFromFormData(formData, "gerritBuildStartedCodeReviewValue");
-            gerritBuildSuccessfulCodeReviewValue = getValueFromFormData(formData,
-                    "gerritBuildSuccessfulCodeReviewValue");
-            gerritBuildFailedCodeReviewValue = getValueFromFormData(formData, "gerritBuildFailedCodeReviewValue");
-            gerritBuildUnstableCodeReviewValue = getValueFromFormData(formData, "gerritBuildUnstableCodeReviewValue");
-            gerritBuildNotBuiltCodeReviewValue = getValueFromFormData(formData, "gerritBuildNotBuiltCodeReviewValue");
-        }
-
 
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
@@ -387,6 +418,7 @@ public class Config implements IGerritHudsonTriggerConfig {
                 categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)cat));
             }
         }
+        assertDefaultCategories();
         watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
         watchTimeExceptionData = addWatchTimeExceptionData(formData);
 
@@ -868,52 +900,52 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Integer getGerritBuildStartedVerifiedValue() {
-        return gerritBuildStartedVerifiedValue;
+        return getVerifyCategory().getDefaultBuildStartedReportingValue();
     }
 
     @Override
     public Integer getGerritBuildStartedCodeReviewValue() {
-        return gerritBuildStartedCodeReviewValue;
+        return getCodeReviewCategory().getDefaultBuildStartedReportingValue();
     }
 
     @Override
     public Integer getGerritBuildSuccessfulVerifiedValue() {
-        return gerritBuildSuccessfulVerifiedValue;
+        return getVerifyCategory().getDefaultBuildSuccessfulReportingValue();
     }
 
     @Override
     public Integer getGerritBuildSuccessfulCodeReviewValue() {
-        return gerritBuildSuccessfulCodeReviewValue;
+        return getCodeReviewCategory().getDefaultBuildSuccessfulReportingValue();
     }
 
     @Override
     public Integer getGerritBuildFailedVerifiedValue() {
-        return gerritBuildFailedVerifiedValue;
+        return getVerifyCategory().getDefaultBuildFailedReportingValue();
     }
 
     @Override
     public Integer getGerritBuildFailedCodeReviewValue() {
-        return gerritBuildFailedCodeReviewValue;
+        return getCodeReviewCategory().getDefaultBuildFailedReportingValue();
     }
 
     @Override
     public Integer getGerritBuildUnstableVerifiedValue() {
-        return gerritBuildUnstableVerifiedValue;
+        return getVerifyCategory().getDefaultBuildUnstableReportingValue();
     }
 
     @Override
     public Integer getGerritBuildUnstableCodeReviewValue() {
-        return gerritBuildUnstableCodeReviewValue;
+        return getCodeReviewCategory().getDefaultBuildUnstableReportingValue();
     }
 
     @Override
     public Integer getGerritBuildNotBuiltVerifiedValue() {
-        return gerritBuildNotBuiltVerifiedValue;
+        return getVerifyCategory().getDefaultBuildNotBuiltReportingValue();
     }
 
     @Override
     public Integer getGerritBuildNotBuiltCodeReviewValue() {
-        return gerritBuildNotBuiltCodeReviewValue;
+        return getCodeReviewCategory().getDefaultBuildNotBuiltReportingValue();
     }
 
     @Override
@@ -1117,6 +1149,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             this.buildCurrentPatchesOnly.setAbortManualPatchsets(false);
             this.buildCurrentPatchesOnly.setAbortNewPatchsets(false);
         }
+        this.assertDefaultCategories();
         return this;
     }
 }

@@ -72,87 +72,52 @@
                         <label class="attach-previous">${%Not Built}</label>
                     </div>
                 </f:entry>
-                <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
-                <f:entry title="${%Started}"
-                         field="gerritBuildStartedVerifiedValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedVerified.html">
-                    <f:textbox name="gerritBuildStartedVerifiedValue"
-                               value="${it.gerritBuildStartedVerifiedValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Successful}"
-                         field="gerritBuildSuccessfulVerifiedValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulVerified.html">
-                    <f:textbox name="gerritBuildSuccessfulVerifiedValue"
-                               value="${it.gerritBuildSuccessfulVerifiedValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Failed}"
-                         field="gerritBuildFailedVerifiedValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedVerified.html">
-                    <f:textbox name="gerritBuildFailedVerifiedValue"
-                               value="${it.gerritBuildFailedVerifiedValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Unstable}"
-                         field="gerritBuildUnstableVerifiedValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableVerified.html">
-                    <f:textbox name="gerritBuildUnstableVerifiedValue"
-                               value="${it.gerritBuildUnstableVerifiedValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Not Built}"
-                         field="gerritBuildNotBuiltVerifiedValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltVerified.html">
-                    <f:textbox name="gerritBuildNotBuiltVerifiedValue"
-                               value="${it.gerritBuildNotBuiltVerifiedValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
-                <f:entry title="${%Started}"
-                         field="gerritBuildStartedCodeReviewValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedCodeReview.html">
-                    <f:textbox name="gerritBuildStartedCodeReviewValue"
-                               value="${it.gerritBuildStartedCodeReviewValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Successful}"
-                         field="gerritBuildSuccessfulCodeReviewValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildSuccessfulCodeReview.html">
-                    <f:textbox name="gerritBuildSuccessfulCodeReviewValue"
-                               value="${it.gerritBuildSuccessfulCodeReviewValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Failed}"
-                         field="gerritBuildFailedCodeReviewValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedCodeReview.html">
-                    <f:textbox name="gerritBuildFailedCodeReviewValue"
-                               value="${it.gerritBuildFailedCodeReviewValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Unstable}"
-                         field="gerritBuildUnstableCodeReviewValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildUnstableCodeReview.html">
-                    <f:textbox name="gerritBuildUnstableCodeReviewValue"
-                               value="${it.gerritBuildUnstableCodeReviewValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
-                </f:entry>
-                <f:entry title="${%Not Built}"
-                         field="gerritBuildNotBuiltCodeReviewValue"
-                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltCodeReview.html">
-                    <f:textbox name="gerritBuildNotBuiltCodeReviewValue"
-                               value="${it.gerritBuildNotBuiltCodeReviewValue}"
-                               default=""
-                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+
+                <f:entry title="Labels">
+                    <f:repeatable field="labelValues" noAddButton="true">
+                        <table width="100%">
+                            <tr>
+                                <td>
+                                    <b>${instance.name}</b>
+                                </td>
+                                <td></td>
+                                <input type="hidden" name="name" value="${instance.name}"/>
+                            </tr>
+                            <tr>
+                                <td>${%Started}</td>
+                                <td>
+                                    <f:textbox field="buildStartedVoteValue"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>${%Successful}</td>
+                                <td>
+                                    <f:textbox field="buildSuccessfulVoteValue"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>${%Failed}</td>
+                                <td>
+                                    <f:textbox field="buildFailedVoteValue"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>${%Unstable}</td>
+                                <td>
+                                    <f:textbox field="buildUnstableVoteValue"/>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td>${%Not Built}</td>
+                                <td>
+                                    <f:textbox field="buildNotBuiltVoteValue"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </f:repeatable>
                 </f:entry>
             </f:section>
             <f:section title="${%Custom Build Messages}">

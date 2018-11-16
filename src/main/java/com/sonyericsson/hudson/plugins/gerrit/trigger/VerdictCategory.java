@@ -36,6 +36,11 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
 
     private String verdictValue;
     private String verdictDescription;
+    private int defaultBuildStartedReportingValue;
+    private int defaultBuildSuccessfulReportingValue;
+    private int defaultBuildFailedReportingValue;
+    private int defaultBuildUnstableReportingValue;
+    private int defaultBuildNotBuiltReportingValue;
 
     /**
      * Standard constructor.
@@ -45,6 +50,21 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
     public VerdictCategory(String value, String description) {
         verdictValue = value;
         verdictDescription = description;
+        defaultBuildStartedReportingValue = 0;
+        defaultBuildSuccessfulReportingValue = 0;
+        defaultBuildFailedReportingValue = 0;
+        defaultBuildUnstableReportingValue = 0;
+        defaultBuildNotBuiltReportingValue = 0;
+    }
+
+    public VerdictCategory(String verdictValue, String verdictDescription, int defaultBuildStartedReportingValue, int defaultBuildSuccessfulReportingValue, int defaultBuildFailedReportingValue, int defaultBuildUnstableReportingValue, int defaultBuildNotBuiltReportingValue) {
+        this.verdictValue = verdictValue;
+        this.verdictDescription = verdictDescription;
+        this.defaultBuildStartedReportingValue = defaultBuildStartedReportingValue;
+        this.defaultBuildSuccessfulReportingValue = defaultBuildSuccessfulReportingValue;
+        this.defaultBuildFailedReportingValue = defaultBuildFailedReportingValue;
+        this.defaultBuildUnstableReportingValue = defaultBuildUnstableReportingValue;
+        this.defaultBuildNotBuiltReportingValue = defaultBuildNotBuiltReportingValue;
     }
 
     /**
@@ -71,7 +91,104 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
     public static VerdictCategory createVerdictCategoryFromJSON(JSONObject obj) {
         String value = obj.getString("verdictValue");
         String description = obj.getString("verdictDescription");
-        return new VerdictCategory(value, description);
+        int defaultBuildStartedReportingValue = obj.getInt(value + "Started");
+        int defaultBuildSuccessfulReportingValue = obj.getInt(value + "Successful");
+        int defaultBuildFailedReportingValue = obj.getInt(value + "Failed");
+        int defaultBuildUnstableReportingValue = obj.getInt(value + "Unstable");
+        int defaultBuildNotBuiltReportingValue = obj.getInt(value + "Not Built");
+        return new VerdictCategory(value, description, defaultBuildStartedReportingValue,
+                defaultBuildSuccessfulReportingValue, defaultBuildFailedReportingValue,
+                defaultBuildUnstableReportingValue, defaultBuildNotBuiltReportingValue);
+    }
+    
+    /**
+     * Standard getter for the build started reporting value.
+     *
+     * @return the description.
+     */
+    public int getDefaultBuildStartedReportingValue() {
+        return defaultBuildStartedReportingValue;
+    }
+
+    /**
+     * Standard setter for the build started reporting value.
+     */
+    public void setDefaultBuildStartedReportingValue(int defaultBuildStartedReportingValue) {
+        this.defaultBuildStartedReportingValue = defaultBuildStartedReportingValue;
+    }
+
+    /**
+     * Standard getter for the build successful reporting value.
+     *
+     * @return the description.
+     */
+    public int getDefaultBuildSuccessfulReportingValue() {
+        return defaultBuildSuccessfulReportingValue;
+    }
+
+    /**
+     * Standard setter for the build successful reporting value.
+     */
+    public void setDefaultBuildSuccessfulReportingValue(int defaultBuildSuccessfulReportingValue) {
+        this.defaultBuildSuccessfulReportingValue = defaultBuildSuccessfulReportingValue;
+    }
+
+    /**
+     * Standard getter for the build failed reporting value.
+     *
+     * @return the description.
+     */
+    public int getDefaultBuildFailedReportingValue() {
+        return defaultBuildFailedReportingValue;
+    }
+
+    /**
+     * Standard setter for the build failed reporting value.
+     */
+    public void setDefaultBuildFailedReportingValue(int defaultBuildFailedReportingValue) {
+        this.defaultBuildFailedReportingValue = defaultBuildFailedReportingValue;
+    }
+
+    /**
+     * Standard getter for the build unstable reporting value.
+     *
+     * @return the description.
+     */
+    public int getDefaultBuildUnstableReportingValue() {
+        return defaultBuildUnstableReportingValue;
+    }
+
+    /**
+     * Standard setter for the build unstable reporting value.
+     */
+    public void setDefaultBuildUnstableReportingValue(int defaultBuildUnstableReportingValue) {
+        this.defaultBuildUnstableReportingValue = defaultBuildUnstableReportingValue;
+    }
+
+    /**
+     * Standard getter for the build not built reporting value.
+     *
+     * @return the description.
+     */
+    public int getDefaultBuildNotBuiltReportingValue() {
+        return defaultBuildNotBuiltReportingValue;
+    }
+
+    /**
+     * Standard setter for the build not built reporting value.
+     */
+    public void setDefaultBuildNotBuiltReportingValue(int defaultBuildNotBuiltReportingValue) {
+        this.defaultBuildNotBuiltReportingValue = defaultBuildNotBuiltReportingValue;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        VerdictCategory category = (VerdictCategory) o;
+
+        return verdictValue != null ? verdictValue.equals(category.verdictValue) : category.verdictValue == null;
     }
 
     /**
