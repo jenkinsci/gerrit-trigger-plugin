@@ -109,6 +109,19 @@ public final class EventListener implements GerritEventListener {
             logger.warn("Couldn't find a configured trigger for {}", job);
             return;
         }
+        // Wait for the project list to be ready before we try to process the event.
+        try {
+            t.waitForProjectListToBeReady();
+        } catch (InterruptedException e) {
+            // This thread has been interrupted.
+            //
+            // This is only possible if the configuration had not been loaded yet
+            // and we were waiting for it.
+            //
+            // We are going to assume we've been asked to cancel, so we're going
+            // to just return now without processing the event.
+            return;
+        }
         if (event instanceof GerritTriggeredEvent) {
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
             if (t.isInteresting(triggeredEvent)) {
@@ -129,6 +142,19 @@ public final class EventListener implements GerritEventListener {
         GerritTrigger t = getTrigger();
         if (t == null) {
             logger.warn("Couldn't find a configured trigger for {}", job);
+            return;
+        }
+        // Wait for the project list to be ready before we try to process the event.
+        try {
+            t.waitForProjectListToBeReady();
+        } catch (InterruptedException e) {
+            // This thread has been interrupted.
+            //
+            // This is only possible if the configuration had not been loaded yet
+            // and we were waiting for it.
+            //
+            // We are going to assume we've been asked to cancel, so we're going
+            // to just return now without processing the event.
             return;
         }
         if (t.isInteresting(event)) {
@@ -156,6 +182,19 @@ public final class EventListener implements GerritEventListener {
                 logger.trace("Already building.");
                 return;
             }
+        }
+        // Wait for the project list to be ready before we try to process the event.
+        try {
+            t.waitForProjectListToBeReady();
+        } catch (InterruptedException e) {
+            // This thread has been interrupted.
+            //
+            // This is only possible if the configuration had not been loaded yet
+            // and we were waiting for it.
+            //
+            // We are going to assume we've been asked to cancel, so we're going
+            // to just return now without processing the event.
+            return;
         }
         if (t.isInteresting(event) && t.commentAddedMatch(event)) {
             logger.trace("The event is interesting.");

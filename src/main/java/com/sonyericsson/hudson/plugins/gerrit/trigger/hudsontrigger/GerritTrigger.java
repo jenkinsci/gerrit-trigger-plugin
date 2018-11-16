@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import java.util.concurrent.CountDownLatch;
 import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 
@@ -148,6 +149,11 @@ public class GerritTrigger extends Trigger<Job> {
     private transient RunningJobs runningJobs = new RunningJobs();
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
+    //! This latch will be used to signal that the project list is ready for use.
+    //! For static configuration, this will be ready immediately.
+    //! For dynamic configuration, this will be ready after the first time that
+    //! the project list has been fetched.
+    private CountDownLatch projectListIsReady;
     private SkipVote skipVote;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
@@ -180,6 +186,13 @@ public class GerritTrigger extends Trigger<Job> {
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
+    //! This boolean keeps track of whether or not the dynamic trigger configuration
+    //! has changed between stop/start calls.
+    //!
+    //! If the dynamic configuration settings have stayed the same (that is, the
+    //! trigger URL is the same), then we don't have to pause the EventListener thread
+    //! from processing events; the configuration that we already have is fine.
+    private boolean dynamicConfigurationChangedFromLastStart = false;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
@@ -615,13 +628,26 @@ public class GerritTrigger extends Trigger<Job> {
 
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
-            // We *must* update list of projects immediately *before* we can be labeled as "started".
-            // When using imperative Jenkinsfiles, every run will "update" the job's configuration.
-            // When the job's configuration is updated, all triggers are stopped and restarted.
-            // Thus, if we do *not* update the project list, then Gerrit events in quick succession
-            // will be missed due to the start/stop cycle.
-            updateTriggerConfigURL();
+            // Set up the latch so that the EventListener thread has to wait for
+            // the project list to be ready before processing any events.
+            //
+            // If the trigger configuration URL hasn't changed from the last time
+            // that we called "start()", then we don't have to mess with our latch
+            // because we've already set up the latch for that configuration.
+            // Otherwise, set up a new latch so that the EventListener has to wait
+            // until we've fetched the URL.
+            if (projectListIsReady == null || this.dynamicConfigurationChangedFromLastStart) {
+                logger.debug("Start project: {}; dynamic project list; resetting latch to 1", project);
+                projectListIsReady = new CountDownLatch(1);
+            } else {
+                logger.debug("Start project: {}; dynamic project list; leaving latch value at {}", project, projectListIsReady.getCount());
+            }
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
+        } else {
+            logger.debug("Start project: {}; static project list; setting latch to 0", project);
+            // Set up the latch so that the EventListener thread doesn't have to
+            // wait at all and can immediately begin to process events.
+            projectListIsReady = new CountDownLatch(0);
         }
 
         GerritProjectList.removeTriggerFromProjectList(this);
@@ -1447,6 +1473,24 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setTriggerConfigURL(String triggerConfigURL) {
+        // If the trigger URL has changed from the previous value, then we can't use
+        // the project list that we might already have loaded from the last time this trigger
+        // was started.  Just make a note of that here; we'll deal with it in "start()".
+        if (triggerConfigURL == null) {
+            if (this.triggerConfigURL != null) {
+                // We need to start fresh when the URL has changed.
+                this.dynamicConfigurationChangedFromLastStart = true;
+            }
+        } else {
+            if (!triggerConfigURL.equals(this.triggerConfigURL)) {
+                // We need to start fresh when the URL has changed.
+                this.dynamicConfigurationChangedFromLastStart = true;
+            } else {
+                // We had this same configuration before.
+                this.dynamicConfigurationChangedFromLastStart = false;
+            }
+        }
+
         this.triggerConfigURL = triggerConfigURL;
     }
 
@@ -1754,6 +1798,10 @@ public class GerritTrigger extends Trigger<Job> {
         triggerInformationAction.setErrorMessage("");
         try {
             dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
+
+            // Now that the dynamic project list has been loaded, we can "count down"
+            // the latch so that the EventListener thread can begin to process events.
+            projectListIsReady.countDown();
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
@@ -1847,6 +1895,18 @@ public class GerritTrigger extends Trigger<Job> {
      */
     public SkipVote getSkipVote() {
         return skipVote;
+    }
+
+    /**
+     * Wait for the project list to be ready.
+     *
+     * This is here so that the EventListener can call it before it asks if an
+     * event is interesting (via {@link #isInteresting(GerritTriggeredEvent)}).
+     *
+     * @throws InterruptedException if the thread was interrupted while waiting.
+     */
+    public void waitForProjectListToBeReady() throws InterruptedException {
+        projectListIsReady.await();
     }
 
     /*
