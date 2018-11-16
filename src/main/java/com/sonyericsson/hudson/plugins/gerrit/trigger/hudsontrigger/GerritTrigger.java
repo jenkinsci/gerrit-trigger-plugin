@@ -153,7 +153,10 @@ public class GerritTrigger extends Trigger<Job> {
     //! For static configuration, this will be ready immediately.
     //! For dynamic configuration, this will be ready after the first time that
     //! the project list has been fetched.
-    private CountDownLatch projectListIsReady;
+    //!
+    //! Default the latch to the non-waiting zero state, which corresponds to
+    //! static project configurations.
+    private CountDownLatch projectListIsReady = new CountDownLatch(0);
     private SkipVote skipVote;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
@@ -192,7 +195,10 @@ public class GerritTrigger extends Trigger<Job> {
     //! If the dynamic configuration settings have stayed the same (that is, the
     //! trigger URL is the same), then we don't have to pause the EventListener thread
     //! from processing events; the configuration that we already have is fine.
-    private boolean dynamicConfigurationChangedFromLastStart = false;
+    //!
+    //! Default this to true, since the first run will need to do the same kind of
+    //! things that a second, different run would do.
+    private boolean dynamicConfigurationChangedFromLastStart = true;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
@@ -636,7 +642,7 @@ public class GerritTrigger extends Trigger<Job> {
             // because we've already set up the latch for that configuration.
             // Otherwise, set up a new latch so that the EventListener has to wait
             // until we've fetched the URL.
-            if (projectListIsReady == null || this.dynamicConfigurationChangedFromLastStart) {
+            if (this.dynamicConfigurationChangedFromLastStart) {
                 logger.debug("Start project: {}; dynamic project list; resetting latch to 1", project);
                 projectListIsReady = new CountDownLatch(1);
             } else {
