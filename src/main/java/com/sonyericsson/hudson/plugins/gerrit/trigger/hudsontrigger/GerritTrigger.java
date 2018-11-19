@@ -646,7 +646,8 @@ public class GerritTrigger extends Trigger<Job> {
                 logger.debug("Start project: {}; dynamic project list; resetting latch to 1", project);
                 projectListIsReady = new CountDownLatch(1);
             } else {
-                logger.debug("Start project: {}; dynamic project list; leaving latch value at {}", project, projectListIsReady.getCount());
+                logger.debug("Start project: {}; dynamic project list; leaving latch value at {}", project,
+                        projectListIsReady.getCount());
             }
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         } else {
