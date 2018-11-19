@@ -155,6 +155,16 @@ public class GerritTrigger extends Trigger<Job> {
     //! Default the latch to the non-waiting zero state, which corresponds to
     //! static project configurations.
     private transient CountDownLatch projectListIsReady = new CountDownLatch(0);
+    //! This boolean keeps track of whether or not the dynamic trigger configuration
+    //! has changed between stop/start calls.
+    //!
+    //! If the dynamic configuration settings have stayed the same (that is, the
+    //! trigger URL is the same), then we don't have to pause the EventListener thread
+    //! from processing events; the configuration that we already have is fine.
+    //!
+    //! Default this to true, since the first run will need to do the same kind of
+    //! things that a second, different run would do.
+    private transient boolean dynamicConfigurationChangedFromLastStart = true;
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
     private SkipVote skipVote;
@@ -189,16 +199,6 @@ public class GerritTrigger extends Trigger<Job> {
     private List<PluginGerritEvent> triggerOnEvents;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
-    //! This boolean keeps track of whether or not the dynamic trigger configuration
-    //! has changed between stop/start calls.
-    //!
-    //! If the dynamic configuration settings have stayed the same (that is, the
-    //! trigger URL is the same), then we don't have to pause the EventListener thread
-    //! from processing events; the configuration that we already have is fine.
-    //!
-    //! Default this to true, since the first run will need to do the same kind of
-    //! things that a second, different run would do.
-    private boolean dynamicConfigurationChangedFromLastStart = true;
 
     private GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
@@ -244,6 +244,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.triggerConfigURL = "";
 
         this.projectListIsReady = new CountDownLatch(0);
+        this.dynamicConfigurationChangedFromLastStart = true;
     }
 
     /**
@@ -359,6 +360,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.notificationLevel = notificationLevel;
 
         this.projectListIsReady = new CountDownLatch(0);
+        this.dynamicConfigurationChangedFromLastStart = true;
     }
 
     /**
@@ -544,7 +546,6 @@ public class GerritTrigger extends Trigger<Job> {
             }
         }
     }
-
 
     /**
      * Finds the GerritTrigger in a project.
@@ -2462,7 +2463,6 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
-
         /**
          * Removes any reference to the current build for this change.
          *
@@ -2474,7 +2474,6 @@ public class GerritTrigger extends Trigger<Job> {
             return runningJobs.remove(event);
         }
     }
-
 
     /**
      * Checks that execution must be aborted because of topic.
