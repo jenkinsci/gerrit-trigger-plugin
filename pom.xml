@@ -235,7 +235,7 @@
                             <value>33849</value>
                         </property>
                     </systemProperties>
-                    <argLine>-Xmx1024m -XX:MaxPermSize=380m</argLine>
+                    <argLine>-Xmx1024m -XX:MaxPermSize=380m -Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
                     <reuseForks>false</reuseForks>
                     <forkCount>${concurrency}</forkCount>
                 </configuration>

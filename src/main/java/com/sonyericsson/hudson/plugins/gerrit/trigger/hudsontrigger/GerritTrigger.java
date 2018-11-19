@@ -147,8 +147,6 @@ public class GerritTrigger extends Trigger<Job> {
 
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
-    private List<GerritProject> gerritProjects;
-    private List<GerritProject> dynamicGerritProjects;
     //! This latch will be used to signal that the project list is ready for use.
     //! For static configuration, this will be ready immediately.
     //! For dynamic configuration, this will be ready after the first time that
@@ -156,7 +154,9 @@ public class GerritTrigger extends Trigger<Job> {
     //!
     //! Default the latch to the non-waiting zero state, which corresponds to
     //! static project configurations.
-    private CountDownLatch projectListIsReady = new CountDownLatch(0);
+    private transient CountDownLatch projectListIsReady = new CountDownLatch(0);
+    private List<GerritProject> gerritProjects;
+    private List<GerritProject> dynamicGerritProjects;
     private SkipVote skipVote;
     private Integer gerritBuildStartedVerifiedValue;
     private Integer gerritBuildStartedCodeReviewValue;
@@ -242,6 +242,8 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildNotBuiltMessage = "";
         this.buildUnsuccessfulFilepath = "";
         this.triggerConfigURL = "";
+
+        this.projectListIsReady = new CountDownLatch(0);
     }
 
     /**
@@ -355,6 +357,8 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
+
+        this.projectListIsReady = new CountDownLatch(0);
     }
 
     /**
@@ -1808,7 +1812,11 @@ public class GerritTrigger extends Trigger<Job> {
 
             // Now that the dynamic project list has been loaded, we can "count down"
             // the latch so that the EventListener thread can begin to process events.
-            projectListIsReady.countDown();
+            if (projectListIsReady.getCount() > 0) {
+                logger.debug("Trigger config URL updated: {}; latch is current {}; decrementing it.", job.getName(),
+                        projectListIsReady.getCount());
+                projectListIsReady.countDown();
+            }
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
