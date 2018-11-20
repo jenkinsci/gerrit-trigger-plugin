@@ -242,9 +242,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildNotBuiltMessage = "";
         this.buildUnsuccessfulFilepath = "";
         this.triggerConfigURL = "";
-
-        this.projectListIsReady = new CountDownLatch(0);
-        this.dynamicConfigurationChangedFromLastStart = true;
+        logger.debug("GerritTrigger(List): constructed.");
     }
 
     /**
@@ -358,9 +356,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
-
-        this.projectListIsReady = new CountDownLatch(0);
-        this.dynamicConfigurationChangedFromLastStart = true;
+        logger.debug("GerritTrigger(List, ...): constructed.");
     }
 
     /**
@@ -1814,7 +1810,7 @@ public class GerritTrigger extends Trigger<Job> {
             // Now that the dynamic project list has been loaded, we can "count down"
             // the latch so that the EventListener thread can begin to process events.
             if (projectListIsReady.getCount() > 0) {
-                logger.debug("Trigger config URL updated: {}; latch is current {}; decrementing it.", job.getName(),
+                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
                         projectListIsReady.getCount());
                 projectListIsReady.countDown();
             }
@@ -1974,6 +1970,11 @@ public class GerritTrigger extends Trigger<Job> {
         if (commentTextParameterMode == null) {
             commentTextParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         }
+        if (projectListIsReady == null) {
+            projectListIsReady = new CountDownLatch(0);
+            dynamicConfigurationChangedFromLastStart = true;
+        }
+        logger.debug("readResolve: loaded.");
         return super.readResolve();
     }
     /*
