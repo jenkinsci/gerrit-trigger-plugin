@@ -37,6 +37,8 @@ import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * Start position that notifies Gerrit of events.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -70,18 +72,24 @@ public class GerritNotifier {
 
     /**
      * Generates the build-started command based on configured templates and build-values and sends it to Gerrit.
-     * @param build the build.
+     * @param builds the builds.
      * @param taskListener the taskListener.
      * @param event the event.
      * @param stats the stats.
      */
-    public void buildStarted(Run build, TaskListener taskListener,
-            GerritTriggeredEvent event, BuildsStartedStats stats) {
+    public void buildStarted(List<Run> builds, TaskListener taskListener,
+                             GerritTriggeredEvent event, BuildsStartedStats stats) {
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
             if (event instanceof ChangeBasedEvent) {
-                String command =
-                        parameterExpander.getBuildStartedCommand(build, taskListener, (ChangeBasedEvent)event, stats);
+                String command;
+                if (builds.size() == 1) {
+                    command = parameterExpander.getBuildStartedCommand(builds.get(0), taskListener,
+                            (ChangeBasedEvent)event, stats);
+                } else {
+                    command = parameterExpander.getBuildsStartedCommand(builds, taskListener,
+                            (ChangeBasedEvent)event, stats);
+                }
                 if (command != null) {
                     if (!command.isEmpty()) {
                         logger.info("Notifying BuildStarted to gerrit: {}", command);

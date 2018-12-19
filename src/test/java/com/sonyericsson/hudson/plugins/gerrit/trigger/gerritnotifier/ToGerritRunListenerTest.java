@@ -25,6 +25,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -44,7 +46,9 @@ import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.triggers.Trigger;
 import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,10 +59,11 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -68,6 +73,7 @@ import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.timeout;
 import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -87,16 +93,17 @@ import static org.powermock.api.mockito.PowerMockito.when;
         AbstractProject.class,
         NotificationFactory.class,
         PluginImpl.class,
-        ToGerritRunListener.class,
-
+        ToGerritRunListener.class
 })
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
     private NotificationFactory mockNotificationFactory;
-    private PluginImpl plugin;
-    private GerritServer server;
     private Jenkins jenkins;
+    private PluginConfig config;
+    private GerritTrigger trigger;
+
+    private static final int TIMEOUT = 5000;
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -112,15 +119,19 @@ public class ToGerritRunListenerTest {
         mockStatic(NotificationFactory.class);
         mockStatic(PluginImpl.class);
         mockNotificationFactory = mock(NotificationFactory.class);
-        plugin = mock(PluginImpl.class);
+        PluginImpl plugin = mock(PluginImpl.class);
+        trigger = mock(GerritTrigger.class);
         mockNotifier = mock(GerritNotifier.class);
-        server = mock(GerritServer.class);
+        GerritServer server = mock(GerritServer.class);
         doReturn(mockNotifier).when(mockNotificationFactory)
                 .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
         when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
         when(PluginImpl.class, "getInstance").thenReturn(plugin);
         when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
+
+        config = mock(PluginConfig.class);
+        when(plugin.getPluginConfig()).thenReturn(config);
     }
 
     /**
@@ -133,9 +144,34 @@ public class ToGerritRunListenerTest {
     private AbstractProject mockProject(String fullName) throws Exception {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
         doReturn(fullName).when(project).getFullName();
+        doReturn(fullName).when(project).getName();
         when(jenkins.getItemByFullName(eq(fullName), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq(fullName), same(Job.class))).thenReturn(project);
         return project;
+    }
+
+    /**
+     * Returns a mocked AbstractBuild. The build will contain a mocked AbstractProject with the provided name and have
+     * the provided buildNumber.
+     *
+     * @param projectFullName the project's name
+     * @param buildNumber     the buildNumber.
+     * @param event the gerrit event
+     * @param isBuilding is build in progress.
+     * @return a mock.
+     * @throws Exception if so.
+     */
+    private Run mockBuild(String projectFullName, int buildNumber,
+                                    ManualPatchsetCreated event, boolean isBuilding) throws Exception {
+        Run build = mockBuild(projectFullName, buildNumber);
+        GerritCause cause = new GerritCause(event, false);
+        when(build.getCause(GerritCause.class)).thenReturn(cause);
+        CauseAction causeAction = mock(CauseAction.class);
+        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+
+        when(build.isBuilding()).thenReturn(isBuilding);
+        return build;
     }
 
     /**
@@ -148,7 +184,6 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     private AbstractBuild mockBuild(String projectFullName, int buildNumber) throws Exception {
-
         AbstractProject project = mockProject(projectFullName);
 
         String buildId = projectFullName + "#" + buildNumber;
@@ -160,13 +195,17 @@ public class ToGerritRunListenerTest {
         when(build.getNumber()).thenReturn(buildNumber);
         EnvVars envVars = Setup.createEnvVars();
 
-        doReturn(envVars).when(build).getEnvironment();
         doReturn(envVars).when(build).getEnvironment(any(TaskListener.class));
 
         Map<String, String> buildVarsMap = new HashMap<String, String>();
         buildVarsMap.put("BUILD_NUM", Integer.toString(buildNumber));
         when(build.getBuildVariables()).thenReturn(buildVarsMap);
+        when(build.toString()).thenReturn(buildId);
 
+        Map<String, Trigger> triggerMap = new HashMap<String, Trigger>();
+        triggerMap.put("Trigger", trigger);
+
+        when(project.getTriggers()).thenReturn(triggerMap);
         return build;
     }
 
@@ -178,14 +217,8 @@ public class ToGerritRunListenerTest {
      */
     @Test
     public void testOnCompleted() throws Exception {
-        AbstractBuild build = mockBuild("projectX", 2);
-        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
-        event = spy(event);
-        GerritCause cause = new GerritCause(event, false);
-        when(build.getCause(GerritCause.class)).thenReturn(cause);
-        CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
-        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+        Run build = mockBuild("projectX", 2, event, false);
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
@@ -310,24 +343,238 @@ public class ToGerritRunListenerTest {
      */
     @Test
     public void testOnStarted() throws Exception {
-        AbstractBuild build = mockBuild("projectX", 2);
-        ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
-        event = spy(event);
-        GerritCause cause = new GerritCause(event, false);
-        when(build.getCause(GerritCause.class)).thenReturn(cause);
-        CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
-        when(build.getAction(CauseAction.class)).thenReturn(causeAction);
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+        List<Run> runs = Collections.singletonList(
+                mockBuild("projectX", 2, event, true));
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
-        toGerritRunListener.onStarted(build, mock(TaskListener.class));
+        startBuilds(runs, toGerritRunListener);
 
-        verify(event).fireBuildStarted(same(build));
-        verify(mockNotificationFactory).queueBuildStarted(same(build),
+        verify(event).fireBuildStarted(same(runs.get(0)));
+        verify(mockNotificationFactory).queueBuildsStarted(eq(runs),
                 any(TaskListener.class),
                 same(event),
                 any(BuildsStartedStats.class));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.Run, hudson.model.TaskListener)}.
+     * Two events start at same time, but first one is already completed.
+     * Notification is must be sent for both builds anyway.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnStartedTwoBuildsOneIsCompletedButNotNotified() throws Exception {
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+        when(config.getAggregateJobStartedInterval()).thenReturn(1);
+
+        List<Run> runs = new ArrayList<Run>();
+        runs.add(mockBuild("projectX", 1, event, true));
+        runs.add(mockBuild("projectY", 0, event, true));
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        toGerritRunListener.onStarted(runs.get(0), mock(TaskListener.class));
+        toGerritRunListener.onStarted(runs.get(1), mock(TaskListener.class));
+        toGerritRunListener.onCompleted(runs.get(0), mock(TaskListener.class));
+
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(runs),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+        verify(event).fireBuildStarted(same(runs.get(0)));
+        verify(event).fireBuildStarted(same(runs.get(1)));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.Run, hudson.model.TaskListener)}.
+     * First build is started and completed, after that second build starts.
+     * Notification must be sent only for both builds separately.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnStartedTwoBuildsOneIsCompleteAndNotified() throws Exception {
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+        when(config.getAggregateJobStartedInterval()).thenReturn(1);
+
+        Run firstBuild = mockBuild("projectX", 1, event, true);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+        toGerritRunListener.onStarted(firstBuild, mock(TaskListener.class));
+
+        verify(event).fireBuildStarted(same(firstBuild));
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(Collections.singletonList(firstBuild)),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+
+        toGerritRunListener.onCompleted(firstBuild, mock(TaskListener.class));
+
+        Run secondBuild = mockBuild("projectY", 0, event, true);
+        toGerritRunListener.onStarted(secondBuild, mock(TaskListener.class));
+
+        verify(event).fireBuildStarted(same(secondBuild));
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(Collections.singletonList(secondBuild)),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.Run, hudson.model.TaskListener)}.
+     * Two builds start at same time.
+     * Notification must be sent for both builds.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnStartedTwoBuildsWithAggregation() throws Exception {
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+
+        when(config.getAggregateJobStartedInterval()).thenReturn(1);
+
+        List<Run> runs = new ArrayList<Run>();
+        runs.add(mockBuild("projectX", 1, event, true));
+        runs.add(mockBuild("projectY", 0, event, true));
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        startBuilds(runs, toGerritRunListener);
+
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(runs),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+        verify(event).fireBuildStarted(same(runs.get(0)));
+        verify(event).fireBuildStarted(same(runs.get(1)));
+    }
+
+    /**
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.Run, hudson.model.TaskListener)}.
+     * Two builds start at same time. After that one build is re-triggered.
+     * Notification must be sent for both builds at first place.
+     * And only for re-triggered build after that.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnStartedTwoBuildsWithAggregationAndRetriggerOne() throws Exception {
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+
+        List<Run> runs = new ArrayList<Run>();
+        runs.add(mockBuild("projectX", 1, event, true));
+        runs.add(mockBuild("projectY", 0, event, true));
+
+        when(config.getAggregateJobStartedInterval()).thenReturn(1);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        startBuilds(runs, toGerritRunListener);
+
+        // synchronisation point
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(runs),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+
+        completeBuilds(runs, event, toGerritRunListener);
+
+        Run retriggeredBuild = mockBuild("projectX", 2, event, true);
+        toGerritRunListener.onRetriggered(retriggeredBuild.getParent(), event,
+                Collections.singletonList(runs.get(1)));
+
+        toGerritRunListener.onStarted(retriggeredBuild, mock(TaskListener.class));
+
+        List<Run> retriggeredBuilds = Collections.singletonList(retriggeredBuild);
+
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(
+                eq(retriggeredBuilds),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+    }
+
+
+    /**
+     * Tests {@link ToGerritRunListener#onStarted(hudson.model.Run, hudson.model.TaskListener)}.
+     * Two builds start at same time. After that both builds are re-triggered.
+     * Notification must be sent for both builds in both cases.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnStartedTwoBuildsWithAggregationAndRetriggerTwo() throws Exception {
+        ManualPatchsetCreated event = spy(Setup.createManualPatchsetCreated());
+
+        List<Run> runs = new ArrayList<Run>();
+        runs.add(mockBuild("projectX", 1, event, true));
+        runs.add(mockBuild("projectY", 0, event, true));
+
+        when(config.getAggregateJobStartedInterval()).thenReturn(1);
+
+        ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
+
+        startBuilds(runs, toGerritRunListener);
+
+        // synchronisation point
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(eq(runs),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+
+        completeBuilds(runs, event, toGerritRunListener);
+
+        Run retriggeredBuild = mockBuild("projectX", 2, event, true);
+        toGerritRunListener.onRetriggered(retriggeredBuild.getParent(), event,
+                Collections.singletonList(runs.get(1)));
+
+        toGerritRunListener.onStarted(retriggeredBuild, mock(TaskListener.class));
+
+        Run retriggeredSecondBuild = mockBuild("projectY", 1, event, true);
+        toGerritRunListener.onRetriggered(retriggeredSecondBuild.getParent(), event,
+                Collections.singletonList(retriggeredBuild));
+
+        toGerritRunListener.onStarted(retriggeredSecondBuild, mock(TaskListener.class));
+
+        List<Run> retriggeredBuilds = new ArrayList<Run>(2);
+        retriggeredBuilds.add(retriggeredSecondBuild);
+        retriggeredBuilds.add(retriggeredBuild);
+
+        verify(mockNotificationFactory, timeout(TIMEOUT)).queueBuildsStarted(
+                eq(retriggeredBuilds),
+                any(TaskListener.class),
+                same(event),
+                any(BuildsStartedStats.class));
+    }
+
+    /**
+     * Start all builds from the list.
+     * @param runs the builds
+     * @param toGerritRunListener the gerrit listener
+     */
+    private void startBuilds(List<Run> runs, ToGerritRunListener toGerritRunListener) {
+        for (Run run : runs) {
+            toGerritRunListener.onStarted(run, mock(TaskListener.class));
+        }
+    }
+
+    /**
+     * Complete all builds from the list.
+     * @param runs the builds
+     * @param event the event
+     * @param toGerritRunListener the gerrit listener
+     */
+    private void completeBuilds(List<Run> runs, ManualPatchsetCreated event, ToGerritRunListener toGerritRunListener) {
+        for (Run build : runs) {
+            toGerritRunListener.onCompleted(build, mock(TaskListener.class));
+            when(build.isBuilding()).thenReturn(false);
+        }
+
+        toGerritRunListener.allBuildsCompleted(event, (GerritCause)runs.get(0).getCause(GerritCause.class)
+                , mock(TaskListener.class));
     }
 
     /**

@@ -39,6 +39,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import hudson.model.TaskListener;
 import hudson.security.ACL;
 
+import java.util.List;
+
 /**
  * A send-command-job that calculates and sends the build started command.
  *
@@ -46,7 +48,7 @@ import hudson.security.ACL;
  */
 public class BuildStartedCommandJob extends AbstractSendCommandJob {
 
-    private Run build;
+    private List<Run> builds;
     private TaskListener taskListener;
     private GerritTriggeredEvent event;
     private BuildsStartedStats stats;
@@ -55,17 +57,17 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
      * Standard constructor with all the required data for the job.
      *
      * @param config       the config.
-     * @param build        a build.
+     * @param builds      a build.
      * @param taskListener a listener.
      * @param event        the event.
-     * @param stats        the stats.
-     * @see GerritNotifier#buildStarted(Run, TaskListener, GerritTriggeredEvent, BuildsStartedStats)
+     * @param stats        the stats. FIXME (first argument has a wrong type)
+     * @see GerritNotifier#buildStarted(List, TaskListener, GerritTriggeredEvent, BuildsStartedStats)
      */
-    public BuildStartedCommandJob(IGerritHudsonTriggerConfig config, Run build,
+    public BuildStartedCommandJob(IGerritHudsonTriggerConfig config, List<Run> builds,
                                   TaskListener taskListener, GerritTriggeredEvent event,
                                   BuildsStartedStats stats) {
         super(config);
-        this.build = build;
+        this.builds = builds;
         this.taskListener = taskListener;
         this.event = event;
         this.stats = stats;
@@ -77,7 +79,7 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
         try {
             GerritNotifier notifier = NotificationFactory.getInstance()
                 .createGerritNotifier((IGerritHudsonTriggerConfig)getConfig(), this);
-            notifier.buildStarted(build, taskListener, event, stats);
+            notifier.buildStarted(builds, taskListener, event, stats);
         } finally {
             SecurityContextHolder.setContext(old);
         }

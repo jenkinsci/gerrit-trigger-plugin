@@ -67,6 +67,12 @@
                                    value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
                     </f:entry>
+                    <f:entry title="${%Aggregation time}"
+                              help="/plugin/gerrit-trigger/help-AggregateJobStartedInterval.html">
+                        <f:textbox name="aggregateJobStartedInterval"
+                                   value="${it.pluginConfig.aggregateJobStartedInterval}"
+                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_AGGREGATION_TIME}"/>
+                    </f:entry>
                 </f:section>
                 <f:block>
                     <f:submit value="${%Save}" />

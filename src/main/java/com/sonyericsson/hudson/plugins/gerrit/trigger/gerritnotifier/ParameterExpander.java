@@ -41,10 +41,12 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jenkins.model.Jenkins;
@@ -105,7 +107,7 @@ public class ParameterExpander {
 
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         String gerritCmd = config.getGerritCmdBuildStarted();
-        Map<String, String> parameters = createStandardParameters(r, event,
+        Map<String, String> parameters = createStandardParameters(event,
                 getBuildStartedCodeReviewValue(r),
                 getBuildStartedVerifiedValue(r),
                 Notify.ALL.name());
@@ -127,9 +129,74 @@ public class ParameterExpander {
             }
         }
 
+        parameters.put("BUILDURL", jenkins.getRootUrl() + r.getUrl());
         parameters.put("STARTED_STATS", startedStats.toString());
 
         return expandParameters(gerritCmd, r, taskListener, parameters);
+    }
+
+    /**
+     * Gets the expanded string to send to Gerrit for a build-started event.
+     * @param runs the builds.
+     * @param taskListener the taskListener.
+     * @param event the event.
+     * @param stats the statistics.
+     * @return the "expanded" command string.
+     */
+    public String getBuildsStartedCommand(List<Run> runs, TaskListener taskListener,
+                                         ChangeBasedEvent event, BuildsStartedStats stats) {
+
+        String gerritCmd = config.getGerritCmdBuildStarted();
+
+        Integer minCodeReview = Integer.MAX_VALUE;
+        Integer minVerified = Integer.MAX_VALUE;
+
+        StringBuilder aggregatedBuilds = new StringBuilder();
+
+        int offset = runs.size() - 1;
+
+        for (Run r : runs) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
+
+            minCodeReview = Math.min(minCodeReview, getBuildStartedCodeReviewValue(r));
+            minVerified = Math.min(minVerified, getBuildStartedVerifiedValue(r));
+
+            aggregatedBuilds.append("\n\n");
+
+            String buildStartMessage = trigger.getBuildStartMessage();
+            if (buildStartMessage != null && !buildStartMessage.isEmpty()) {
+                aggregatedBuilds.append("\n\n").append(buildStartMessage);
+            }
+
+            String buildUrl = jenkins.getRootUrl() + r.getUrl();
+            aggregatedBuilds.append(buildUrl);
+
+            if (stats.getTotalBuildsToStart() > 1) {
+                aggregatedBuilds.append(" ");
+                aggregatedBuilds.append(stats.stringWithOffset(offset));
+                aggregatedBuilds.append(" ");
+                offset--;
+            }
+
+            if (config.isEnablePluginMessages()) {
+                for (GerritMessageProvider messageProvider : emptyIfNull(GerritMessageProvider.all())) {
+                    String extensionMessage = messageProvider.getBuildStartedMessage(r);
+                    if (extensionMessage != null) {
+                        aggregatedBuilds.append("\n\n").append(extensionMessage);
+                    }
+                }
+            }
+        }
+
+        Map<String, String> parameters = createStandardParameters(event,
+                minCodeReview,
+                minVerified,
+                Notify.ALL.name());
+
+        parameters.put("BUILDURL", "");
+        parameters.put("STARTED_STATS", aggregatedBuilds.toString());
+
+        return expandParameters(gerritCmd, runs.get(0), taskListener, parameters);
     }
 
     /**
@@ -213,14 +280,13 @@ public class ParameterExpander {
      *  <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
      *  <li><strong>NOTIFICATION_LEVEL</strong>: The notification level.</li>
      * </ul>
-     * @param r the build.
      * @param gerritEvent the event.
      * @param codeReview the code review vote.
      * @param verified the verified vote.
      * @param notifyLevel the notify level.
      * @return the parameters and their values.
      */
-    private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent,
+    private Map<String, String> createStandardParameters(GerritTriggeredEvent gerritEvent,
             Integer codeReview, Integer verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
         Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
@@ -239,9 +305,7 @@ public class ParameterExpander {
                 map.put("REFSPEC", StringUtil.makeRefSpec(event));
             }
         }
-        if (r != null) {
-            map.put("BUILDURL", jenkins.getRootUrl() + r.getUrl());
-        }
+
         map.put("VERIFIED", String.valueOf(verified));
         map.put("CODE_REVIEW", String.valueOf(codeReview));
         map.put("NOTIFICATION_LEVEL", notifyLevel);
@@ -405,6 +469,24 @@ public class ParameterExpander {
     }
 
     /**
+     * Convert entries of memoryImprint object to list of builds
+     *
+     * @param memoryImprint the memory
+     * @return the list of run objects from memory
+     */
+    private List<Run> fromMemoryImprintToBuilds(MemoryImprint memoryImprint) {
+        final List<Run> runs = new ArrayList<Run>(memoryImprint.getEntries().length);
+        for (Entry entry : memoryImprint.getEntries()) {
+            if (entry == null || entry.getBuild() == null) {
+                continue;
+            }
+            runs.add(entry.getBuild());
+        }
+
+        return runs;
+    }
+
+    /**
      * Returns the minimum code review value for the build results in the memory.
      * If no builds have contributed to code review value, this method returns null
      * @param memoryImprint the memory
@@ -449,21 +531,30 @@ public class ParameterExpander {
      * @return the highest configured notification level.
      */
     public Notify getHighestNotificationLevel(MemoryImprint memoryImprint, boolean onlyBuilt) {
+        return getHighestNotificationLevel(fromMemoryImprintToBuilds(memoryImprint), onlyBuilt);
+    }
+
+    /**
+     * Returns the highest configured notification level.
+     *
+     * @param builds the list of builds
+     * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
+     * @return the highest configured notification level.
+     */
+    public Notify getHighestNotificationLevel(List<Run> builds, boolean onlyBuilt) {
         Notify highestLevel = Notify.NONE;
-        for (Entry entry : memoryImprint.getEntries()) {
-            if (entry == null) {
-                continue;
-            }
-            Run build = entry.getBuild();
+
+        for (Run build : builds) {
             if (build == null) {
                 continue;
             }
+
             Result result = build.getResult();
             if (onlyBuilt && result == Result.NOT_BUILT) {
                 continue;
             }
 
-            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
             if (trigger == null || shouldSkip(trigger.getSkipVote(), result)) {
                 continue;
             }
@@ -473,6 +564,7 @@ public class ParameterExpander {
                 highestLevel = level;
             }
         }
+
         return highestLevel;
     }
 
@@ -530,7 +622,7 @@ public class ParameterExpander {
             notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
 
-        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(),
+        Map<String, String> parameters = createStandardParameters(memoryImprint.getEvent(),
                 codeReview, verified, notifyLevel.name());
         // escapes ' as '"'"' in order to avoid breaking command line param
         // Details: http://stackoverflow.com/a/26165123/99834
@@ -668,15 +760,21 @@ public class ParameterExpander {
     /**
      * Returns cover message to be send after build has been started.
      *
-     * @param build build
+     * @param builds build
      * @param listener listener
      * @param event event
      * @param stats stats
      * @return the message for the build started command.
      */
-    public String getBuildStartedMessage(Run build, TaskListener listener, ChangeBasedEvent event,
-                                         BuildsStartedStats stats) {
-        String startedCommand = getBuildStartedCommand(build, listener, event, stats);
+    public String getBuildsStartedMessage(List<Run> builds, TaskListener listener, ChangeBasedEvent event,
+                                          BuildsStartedStats stats) {
+        String startedCommand;
+        if (builds.size() == 1) {
+            startedCommand = getBuildStartedCommand(builds.get(0), listener, event, stats);
+        } else {
+            startedCommand = getBuildsStartedCommand(builds, listener, event, stats);
+        }
+
         return findMessage(startedCommand);
     }
 

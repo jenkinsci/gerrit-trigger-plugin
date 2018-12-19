@@ -44,6 +44,8 @@ import hudson.model.TaskListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * A factory for creating notification entities.
  * This factory is mainly created and used to ease unit testing.
@@ -183,24 +185,24 @@ public class NotificationFactory {
     /**
      * Queues a build started command on the send-command queue.
      *
-     * @param build    the build.
+     * @param builds    the build.
      * @param listener a listener.
      * @param event    the event.
      * @param stats    the started stats.
      * @see GerritSendCommandQueue#queue(com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob)
      * @see BuildStartedCommandJob
      */
-    public void queueBuildStarted(Run build, TaskListener listener,
+    public void queueBuildsStarted(List<Run> builds, TaskListener listener,
                                   GerritTriggeredEvent event, BuildsStartedStats stats) {
         String serverName = getServerName(event);
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
                 if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
-                    GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
+                    GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, builds, listener,
                             (ChangeBasedEvent)event, stats));
                 } else {
-                    GerritSendCommandQueue.queue(new BuildStartedCommandJob(config, build, listener, event, stats));
+                    GerritSendCommandQueue.queue(new BuildStartedCommandJob(config, builds, listener, event, stats));
                 }
             } else {
                 logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);

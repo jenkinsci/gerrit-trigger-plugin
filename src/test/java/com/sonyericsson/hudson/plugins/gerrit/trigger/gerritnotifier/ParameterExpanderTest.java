@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -43,6 +44,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -125,20 +127,96 @@ public class ParameterExpanderTest {
 
         String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
         System.out.println("result: " + result);
+
+        String expectedUrl = Jenkins.getInstance().getRootUrl() + r.getUrl();
         assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
                 result.indexOf("START_MESSAGE_VAL") >= 0);
-        assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
-        assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
-        assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
-        assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
-        assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
-        assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
-        assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGE", result.indexOf("CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
-        assertTrue("Newlines are stripped", result.indexOf("Message\nwith newline") >= 0);
+        assertTrue("Missing CHANGE_ID", result.contains("CHANGE_ID=Iddaaddaa123456789"));
+        assertTrue("Missing PATCHSET", result.contains("PATCHSET=1"));
+        assertTrue("Missing VERIFIED", result.contains("VERIFIED=1"));
+        assertTrue("Missing CODEREVIEW", result.contains("CODEREVIEW=32"));
+        assertTrue("Missing NOTIFICATION_LEVEL", result.contains("NOTIFICATION_LEVEL=ALL"));
+        assertTrue("Missing REFSPEC", result.contains("REFSPEC=" + expectedRefSpec));
+        assertTrue("Missing ENV_BRANCH", result.contains("ENV_BRANCH=branch"));
+        assertTrue("Missing ENV_CHANGE", result.contains("ENV_CHANGE=1000"));
+        assertTrue("Missing ENV_REFSPEC", result.contains("ENV_REFSPEC=" + expectedRefSpec));
+        assertTrue("Missing ENV_CHANGEURL", result.contains("ENV_CHANGEURL=http://gerrit/1000"));
+        assertTrue("Missing CUSTOM_MESSAGE", result.contains("CUSTOM_MESSAGE_BUILD_STARTED"));
+        assertTrue("Missing BUILDURL", result.contains("BUILDURL=" + expectedUrl));
+        assertTrue("Missing STARTED_STATS", result.contains("STARTED_STATS=(1/3)"));
+        assertTrue("Newlines are stripped", result.contains("Message\nwith newline"));
+    }
+
+    /**
+     * test.
+     * @throws Exception Exception
+     */
+    @Test
+    public void testGetBuildsStartedCommand() throws Exception {
+        TaskListener taskListener = mock(TaskListener.class);
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
+        when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
+        AbstractProject project = mock(AbstractProject.class);
+        Setup.setTrigger(trigger, project);
+
+        GerritTrigger secondTrigger = mock(GerritTrigger.class);
+        when(secondTrigger.getGerritBuildStartedVerifiedValue()).thenReturn(-2);
+        when(secondTrigger.getGerritBuildStartedCodeReviewValue()).thenReturn(-25);
+        AbstractProject secondProject = mock(AbstractProject.class);
+        Setup.setTrigger(secondTrigger, secondProject);
+
+        AbstractBuild build = Setup.createBuild(project, taskListener, Setup.createEnvVars());
+        AbstractBuild secondBuild = Setup.createBuild(secondProject, taskListener, Setup.createEnvVars());
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        BuildsStartedStats stats = new BuildsStartedStats(event, 2, 2);
+        MockGerritHudsonTriggerConfig config = Setup.createConfig();
+
+        config.setGerritCmdBuildStarted("CHANGE=<CHANGE>"
+                + " CHANGE_ID=<CHANGE_ID>"
+                + " PATCHSET=<PATCHSET>"
+                + " VERIFIED=<VERIFIED>"
+                + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+                + " REFSPEC=<REFSPEC> MSG=I started a build."
+                + " STARTED_STATS=<BUILDURL><STARTED_STATS>"
+                + " ENV_BRANCH=$BRANCH"
+                + " ENV_CHANGE=$CHANGE"
+                + " ENV_PATCHSET=$PATCHSET"
+                + " ENV_REFSPEC=$REFSPEC"
+                + " ENV_CHANGEURL=$CHANGE_URL");
+
+        PowerMockito.mockStatic(GerritMessageProvider.class);
+        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+        messageProviderExtensionList.add(new GerritMessageProviderExtension());
+        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
+
+        final String expectedRefSpec = StringUtil.makeRefSpec(event);
+
+        List<Run> builds = new ArrayList<Run>(2);
+        builds.add(build);
+        builds.add(secondBuild);
+
+        String result = instance.getBuildsStartedCommand(builds, taskListener, event, stats);
+        System.out.println("result: " + result);
+
+        assertTrue("Missing CHANGE_ID", result.contains("CHANGE_ID=Iddaaddaa123456789"));
+        assertTrue("BUILDURL must be erased", !result.contains("BUILDURL="));
+        assertTrue("Missing PATCHSET", result.contains("PATCHSET=1"));
+        assertTrue("Missing VERIFIED", result.contains("VERIFIED=-2"));
+        assertTrue("Missing CODEREVIEW", result.contains("CODEREVIEW=-25"));
+        assertTrue("Missing NOTIFICATION_LEVEL", result.contains("NOTIFICATION_LEVEL=ALL"));
+        assertTrue("Missing REFSPEC", result.contains("REFSPEC=" + expectedRefSpec));
+        assertTrue("Missing ENV_BRANCH", result.contains("ENV_BRANCH=branch"));
+        assertTrue("Missing ENV_CHANGE", result.contains("ENV_CHANGE=1000"));
+        assertTrue("Missing ENV_REFSPEC", result.contains("ENV_REFSPEC=" + expectedRefSpec));
+        assertTrue("Missing ENV_CHANGEURL", result.contains("ENV_CHANGEURL=http://gerrit/1000"));
+        assertTrue("Missing CUSTOM_MESSAGE", result.contains("CUSTOM_MESSAGE_BUILD_STARTED"));
     }
 
     /**
@@ -299,7 +377,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -329,7 +407,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(Integer.valueOf(-2));
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(-2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -359,7 +437,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -521,7 +599,7 @@ public class ParameterExpanderTest {
                     throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
                 new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
-                Setup.createChangeRestored(), null, null);
+                event, expectedVerifiedVote, expectedCodeReviewVote);
     }
 
     /**
@@ -669,7 +747,7 @@ public class ParameterExpanderTest {
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildStats) >= 0);
+        assertTrue("Missing BS", result.contains(" BS=" + expectedBuildStats));
     }
 
     /**
@@ -722,7 +800,7 @@ public class ParameterExpanderTest {
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertTrue("Missing Build has Failed", result.indexOf("This Build has Failed") >= 0);
+        assertTrue("Missing Build has Failed", result.contains("This Build has Failed"));
     }
 
     /**
@@ -808,7 +886,7 @@ public class ParameterExpanderTest {
          *
          * @param substrings the substrings to check
          */
-        public SubstringMatcher(final String... substrings) {
+        SubstringMatcher(final String... substrings) {
             this.substrings = substrings;
         }
 
