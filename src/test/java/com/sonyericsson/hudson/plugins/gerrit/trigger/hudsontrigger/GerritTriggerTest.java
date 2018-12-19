@@ -144,6 +144,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
+        GerritTrigger.class,
         AbstractProject.class,
         ToGerritRunListener.class,
         PluginImpl.class,
@@ -1731,6 +1732,78 @@ public class GerritTriggerTest {
         when(veryUpstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedProject");
         assertSame(FormValidation.Kind.ERROR,
                 descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+    }
+
+    /**
+     * Tests that dynamic project configurations do not miss an event from the time
+     * at which the trigger was started until the time at which the URL was fetched.
+     * @throws Exception on failure
+     */
+    @Test
+    public void testDynamicTriggerConfigurationTimeGap() throws Exception {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        // Set up a temporary file to use as our dynamic configuration URL.
+        java.nio.file.Path temporaryConfigFile = java.nio.file.Files.createTempFile("GerritTriggerTest", null);
+        java.nio.file.Files.write(temporaryConfigFile, "p=my-project\nb^**".getBytes());
+        System.out.println("Temporary file: " + temporaryConfigFile.toString());
+
+        GerritTrigger trigger = new GerritTrigger(null);
+        trigger.setDynamicTriggerConfiguration(true);
+        trigger.setTriggerConfigURL("file://" + temporaryConfigFile.toString());
+
+        // Set up the job within the trigger.
+        Whitebox.setInternalState(trigger, "job", project);
+
+        // We need to make sure that whenever anyone asks for the trigger for any job
+        // that it returns this one.
+        PowerMockito.mockStatic(GerritTrigger.class);
+        // TODO: Why doesn't this work?
+        // TODO: PowerMockito.stub(PowerMockito.method(GerritTrigger.class, "getTrigger")).toReturn(trigger);
+        when(GerritTrigger.getTrigger(any(Job.class))).thenReturn(trigger);
+        assertEquals(trigger, GerritTrigger.getTrigger(project));
+
+        // Because the "stub" methodology doesn't work, we also need to manually replace the "createListener"
+        // static method.
+        EventListener myListener = new EventListener(project);
+        PowerMockito.when(GerritTrigger.createListener(any(Job.class))).thenReturn(myListener);
+        assertNotNull(trigger.createListener());
+
+        // Start the trigger.
+        trigger.start(project, true);
+
+        // Make sure that the timer task started.
+        assertNotNull(Whitebox.getInternalState(trigger, "gerritTriggerTimerTask"));
+
+        // There should be no dynamic projects yet.  They won't show up until the timer
+        // task runs once, and there's a constant delay before that happens.
+        List<GerritProject> dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertNull(dynamicGerritProjects);
+
+        PatchsetCreated event = Setup.createPatchsetCreated("my-servername", "my-project", "my-ref");
+        trigger.createListener().gerritEvent(event);
+
+        // Wait until the timer task has run for the first time.
+        Thread.sleep(GerritTriggerTimer.DELAY_MILLISECONDS + 1000);
+
+        // Now check the dynamic projects again.  This time, there should be one.
+        dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertEquals(1, dynamicGerritProjects.size());
+
+        // Make sure that a job got scheduled.
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+
+        // Get rid of the temporary file.
+        java.nio.file.Files.delete(temporaryConfigFile);
     }
 
     /**
