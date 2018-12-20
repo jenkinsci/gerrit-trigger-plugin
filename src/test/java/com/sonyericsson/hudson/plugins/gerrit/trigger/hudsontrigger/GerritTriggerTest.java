@@ -144,7 +144,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        GerritTrigger.class,
         AbstractProject.class,
         ToGerritRunListener.class,
         PluginImpl.class,
@@ -1739,6 +1738,15 @@ public class GerritTriggerTest {
      * at which the trigger was started until the time at which the URL was fetched.
      * @throws Exception on failure
      */
+    @PrepareForTest({
+            GerritTrigger.class,
+            AbstractProject.class,
+            ToGerritRunListener.class,
+            PluginImpl.class,
+            Hudson.class,
+            Jenkins.class,
+            DependencyQueueTaskDispatcher.class,
+            EventListener.class })
     @Test
     public void testDynamicTriggerConfigurationTimeGap() throws Exception {
         AbstractProject project = PowerMockito.mock(AbstractProject.class);
