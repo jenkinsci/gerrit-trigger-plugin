@@ -389,6 +389,7 @@ public final class EventListener implements GerritEventListener {
         if (jenkins == null) {
             return null;
         }
+        // With security handler, this method return null, if current user could not read this project.
         return jenkins.getItemByFullName(job, Job.class);
     }
 
