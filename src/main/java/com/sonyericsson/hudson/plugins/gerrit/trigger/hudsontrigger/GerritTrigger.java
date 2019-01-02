@@ -1932,7 +1932,7 @@ public class GerritTrigger extends Trigger<Job> {
                     Integer.parseInt(value);
                     return FormValidation.ok();
                 } catch (NumberFormatException e) {
-                    return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+                    return FormValidation.error(Messages.NotANumber());
                 }
             }
         }
@@ -1976,7 +1976,7 @@ public class GerritTrigger extends Trigger<Job> {
                             path = nearest.getRelativeNameFrom(project);
                         }
                         return FormValidation.error(
-                                hudson.model.Messages.AbstractItem_NoSuchJobExists(
+                                Messages.NoSuchJobExists(
                                         projectName,
                                         path));
                     }

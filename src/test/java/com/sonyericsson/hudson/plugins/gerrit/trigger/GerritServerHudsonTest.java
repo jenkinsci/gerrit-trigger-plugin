@@ -254,7 +254,7 @@ public class GerritServerHudsonTest {
         HtmlPage removalPage = j.createWebClient().getPage(url);
 
         HtmlForm form = removalPage.getFormByName(removalFormName);
-        List<HtmlElement> buttons = form.getHtmlElementsByTagName("button");
+        List<HtmlElement> buttons = form.getElementsByTagName("button");
         textContent = form.getTextContent();
         if (buttons.size() >= 1) {
             j.submit(form);
