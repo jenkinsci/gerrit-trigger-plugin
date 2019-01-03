@@ -38,13 +38,11 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
 
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 
 /**
 * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
@@ -79,8 +77,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     @Override
     protected ReviewInput createReview() {
-        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
-        try {
+        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
             String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
             Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
             if (memoryImprint.getEvent().isScorable()) {
@@ -119,8 +116,6 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
             return new ReviewInput(message, scoredLabels, commentedFiles).setNotify(notificationLevel)
                 .setTag(Constants.TAG_VALUE);
-        } finally {
-            SecurityContextHolder.setContext(old);
         }
     }
 }

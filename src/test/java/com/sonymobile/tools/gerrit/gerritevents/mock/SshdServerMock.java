@@ -445,7 +445,11 @@ public class SshdServerMock implements CommandFactory {
      * @throws JSchException        if creation of the keys goes wrong.
      */
     public static KeyPairFiles generateKeyPair() throws IOException, InterruptedException, JSchException {
-        File tmp = new File(System.getProperty("java.io.tmpdir"));
+        // Can't use java.io.tmp: '/tmp' is explicitely set in some XML config files.`
+        File tmp = new File("/tmp");
+        if (!tmp.exists()) {
+            tmp.mkdirs();
+        }
         File priv = new File(tmp, "jenkins-testkey");
         File pub = new File(tmp, "jenkins-testkey.pub");
         final KeyPairFiles sshKey;

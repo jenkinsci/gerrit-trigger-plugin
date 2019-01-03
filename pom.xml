@@ -53,8 +53,7 @@
     </developers>
 
     <properties>
-        <jenkins.version>1.609.3</jenkins.version>
-        <!-- <jenkins.version>1.625.1</jenkins.version> First LTS for java 7 and java 8 (remove java 6) / 2015 -->
+        <jenkins.version>2.14</jenkins.version> <!-- First version with auto-closeable ACLs / 2016 -->
         <!-- <jenkins.version>2.60.1</jenkins.version> First LTS for java 8 only / 2017 -->
         <java.level>8</java.level>
         <no-test-jar>false</no-test-jar>
@@ -136,6 +135,13 @@
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-step-api</artifactId>
             <version>${workflow.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <!-- Used for test with matrix permissions -->
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-auth</artifactId>
+            <version>2.3</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -319,8 +325,8 @@
                 <configuration>
                     <signature>
                         <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java16</artifactId>
-                        <version>1.1</version>
+                        <artifactId>java18</artifactId>
+                        <version>1.0</version>
                     </signature>
                 </configuration>
                 <executions>

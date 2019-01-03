@@ -69,7 +69,7 @@ To test in a local Jenkins instance
 # Clean test environment
 
     mvn clean
-    rm $TMPDIR/jenkins-testkey* hostkey.ser # Needing when changing SSH components versions
+    rm /tmp/jenkins-testkey* hostkey.ser # Needed when changing SSH components versions
 
 # License
 
