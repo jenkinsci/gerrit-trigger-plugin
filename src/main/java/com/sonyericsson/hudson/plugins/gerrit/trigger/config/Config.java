@@ -412,10 +412,10 @@ public class Config implements IGerritHudsonTriggerConfig {
             Object cat = formData.get("verdictCategories");
             if (cat instanceof JSONArray) {
                 for (Object jsonObject : (JSONArray)cat) {
-                    categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)jsonObject));
+                    categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)jsonObject, formData));
                 }
             } else if (cat instanceof JSONObject) {
-                categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)cat));
+                categories.add(VerdictCategory.createVerdictCategoryFromJSON((JSONObject)cat, formData));
             }
         }
         assertDefaultCategories();

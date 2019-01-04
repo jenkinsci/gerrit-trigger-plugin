@@ -88,17 +88,18 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      * @param obj the JSONObject.
      * @return a VerdictCategory.
      */
-    public static VerdictCategory createVerdictCategoryFromJSON(JSONObject obj) {
+    public static VerdictCategory createVerdictCategoryFromJSON(JSONObject obj, JSONObject topLevelJSON) {
         String value = obj.getString("verdictValue");
         String description = obj.getString("verdictDescription");
-        int defaultBuildStartedReportingValue = obj.getInt(value + "Started");
-        int defaultBuildSuccessfulReportingValue = obj.getInt(value + "Successful");
-        int defaultBuildFailedReportingValue = obj.getInt(value + "Failed");
-        int defaultBuildUnstableReportingValue = obj.getInt(value + "Unstable");
-        int defaultBuildNotBuiltReportingValue = obj.getInt(value + "Not Built");
+        int defaultBuildStartedReportingValue = topLevelJSON.containsKey(value + "Started") ? topLevelJSON.getInt(value + "Started") : 0;
+        int defaultBuildSuccessfulReportingValue = topLevelJSON.containsKey(value + "Successful") ? topLevelJSON.getInt(value + "Successful") : 0;
+        int defaultBuildFailedReportingValue = topLevelJSON.containsKey(value + "Failed") ? topLevelJSON.getInt(value + "Failed") : 0;
+        int defaultBuildUnstableReportingValue = topLevelJSON.containsKey(value + "Unstable") ? topLevelJSON.getInt(value + "Unstable") : 0;
+        int defaultBuildNotBuiltReportingValue = topLevelJSON.containsKey(value + "Not Built") ? topLevelJSON.getInt(value + "Not Built") : 0;
+
         return new VerdictCategory(value, description, defaultBuildStartedReportingValue,
-                defaultBuildSuccessfulReportingValue, defaultBuildFailedReportingValue,
-                defaultBuildUnstableReportingValue, defaultBuildNotBuiltReportingValue);
+            defaultBuildSuccessfulReportingValue, defaultBuildFailedReportingValue,
+            defaultBuildUnstableReportingValue, defaultBuildNotBuiltReportingValue);
     }
     
     /**
