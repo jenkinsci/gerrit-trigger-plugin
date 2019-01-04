@@ -248,7 +248,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 }
                 sshConnection.disconnect();
             } else {
-              logger.warn("Could not connect to Gerrit server when updating Gerrit project list: Server is not connected (timeout)");
+                logger.warn("Could not connect to Gerrit server when updating Gerrit project list: "
+                    + "Server is not connected (timeout)");
             }
         } catch (SshException ex) {
             logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);

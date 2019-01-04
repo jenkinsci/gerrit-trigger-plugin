@@ -24,7 +24,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
@@ -116,7 +115,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     public boolean isExcludeNoCodeChange() {
         return excludeNoCodeChange;
     }
-    
+
     /**
      * Getter for the excludePrivateState field.
      * @return excludePrivateState

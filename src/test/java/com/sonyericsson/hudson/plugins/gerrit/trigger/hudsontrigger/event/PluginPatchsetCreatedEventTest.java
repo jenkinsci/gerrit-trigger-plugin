@@ -22,7 +22,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldFireOnAllTypeOfPatchset() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, false, false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+            new PluginPatchsetCreatedEvent(false, false, false, false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -37,7 +38,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnDraftPatchsetWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(true, false, false, false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+            new PluginPatchsetCreatedEvent(true, false, false, false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -53,7 +55,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnTrivialRebaseWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, true, false, false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+            new PluginPatchsetCreatedEvent(false, true, false, false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -69,7 +72,8 @@ public class PluginPatchsetCreatedEventTest {
      */
     @Test
     public void shouldNotFireOnNoCodeChangeWhenExcluded() {
-        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent = new PluginPatchsetCreatedEvent(false, false, true,  false, false);
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+            new PluginPatchsetCreatedEvent(false, false, true,  false, false);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 

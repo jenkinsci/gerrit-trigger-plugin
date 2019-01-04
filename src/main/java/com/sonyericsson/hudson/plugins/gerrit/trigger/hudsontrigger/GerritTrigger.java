@@ -53,7 +53,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent.PluginWorkInProgressStateChangedEventDescriptor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY;
@@ -78,7 +77,6 @@ import hudson.model.Action;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Cause;
 import hudson.model.Computer;
-import hudson.model.Descriptor;
 import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
@@ -1904,7 +1902,7 @@ public class GerritTrigger extends Trigger<Job> {
     public TriggerDescriptor getDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
     }
-    
+
     /**
      * The Descriptor for the Trigger.
      */
