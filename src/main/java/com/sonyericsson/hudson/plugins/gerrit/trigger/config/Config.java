@@ -446,11 +446,20 @@ public class Config implements IGerritHudsonTriggerConfig {
             stringLabels.add("code-review");
             if (!label.getVerdictValue().equalsIgnoreCase("CRVW") && !label.getVerdictValue().equalsIgnoreCase("VRIF")) {
                 String commandAddition = " --" + label.getVerdictValue().toLowerCase() + " <" + label.getVerdictValue().toUpperCase() + "> ";
-                gerritVerifiedCmdBuildStarted += commandAddition;
-                gerritVerifiedCmdBuildSuccessful += commandAddition;
-                gerritVerifiedCmdBuildFailed += commandAddition;
-                gerritVerifiedCmdBuildUnstable += commandAddition;
-                gerritVerifiedCmdBuildNotBuilt += commandAddition;
+                gerritVerifiedCmdBuildStarted = gerritVerifiedCmdBuildStarted.contains(commandAddition) ? gerritVerifiedCmdBuildStarted :
+                    (gerritVerifiedCmdBuildStarted += commandAddition);
+
+                gerritVerifiedCmdBuildSuccessful = gerritVerifiedCmdBuildSuccessful.contains(commandAddition) ? gerritVerifiedCmdBuildSuccessful :
+                    (gerritVerifiedCmdBuildSuccessful += commandAddition);
+
+                gerritVerifiedCmdBuildFailed = gerritVerifiedCmdBuildFailed.contains(commandAddition) ? gerritVerifiedCmdBuildFailed :
+                    (gerritVerifiedCmdBuildFailed += commandAddition);
+
+                gerritVerifiedCmdBuildUnstable = gerritVerifiedCmdBuildUnstable.contains(commandAddition) ? gerritVerifiedCmdBuildUnstable :
+                    (gerritVerifiedCmdBuildUnstable += commandAddition);
+
+                gerritVerifiedCmdBuildNotBuilt = gerritVerifiedCmdBuildNotBuilt.contains(commandAddition) ? gerritVerifiedCmdBuildNotBuilt :
+                    (gerritVerifiedCmdBuildNotBuilt += commandAddition);
             }
         }
         String gerritCmdRegex = "(--([\\S]+) (<[\\S]+>)){1}";
