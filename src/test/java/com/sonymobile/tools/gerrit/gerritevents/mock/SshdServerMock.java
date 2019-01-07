@@ -345,7 +345,7 @@ public class SshdServerMock implements CommandFactory {
     public static SshServer startServer(SshdServerMock server) throws IOException {
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(0);
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser", "RSA"));
         List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
         userAuthFactories.add(new UserAuthNone.Factory());
         sshd.setUserAuthFactories(userAuthFactories);

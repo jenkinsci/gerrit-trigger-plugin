@@ -81,7 +81,6 @@ import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import hudson.model.Items;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -1958,13 +1957,10 @@ public class GerritTrigger extends Trigger<Job> {
                     assert jenkins != null;
                     Item item = jenkins.getItem(projectName, project, Item.class);
                     if ((item == null) || !(item instanceof Job)) {
-                        Job nearest = Items.findNearest(Job.class,
-                                projectName,
-                                project.getParent()
-                        );
+                        AbstractProject nearest = AbstractProject.findNearest(projectName);
                         String path = "<null>";
                         if (nearest != null) {
-                            path = nearest.getRelativeNameFrom(project);
+                            path = nearest.getFullName();
                         }
                         return FormValidation.error(
                                 Messages.NoSuchJobExists(

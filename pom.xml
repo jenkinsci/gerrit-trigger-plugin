@@ -53,8 +53,8 @@
     </developers>
 
     <properties>
-        <jenkins.version>2.14</jenkins.version> <!-- First version with auto-closeable ACLs / 2016 -->
-        <!-- <jenkins.version>2.60.1</jenkins.version> First LTS for java 8 only / 2017 -->
+        <!-- <jenkins.version>2.14</jenkins.version>  First version with auto-closeable ACLs / 2016 -->
+        <jenkins.version>2.60.1</jenkins.version> <!-- First LTS for java 8 only / 2017 -->
         <java.level>8</java.level>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
@@ -163,7 +163,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
             <scope>test</scope>
         </dependency>
         <dependency>
