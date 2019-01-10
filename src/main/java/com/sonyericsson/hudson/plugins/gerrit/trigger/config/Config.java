@@ -36,6 +36,7 @@ import static com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAU
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
@@ -439,11 +440,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     private void initializeGerritCommands() {
-        List<String> stringLabels = new ArrayList<String>();
+        List<String> stringLabels = new ArrayList<String>(Arrays.asList("verified", "code-review"));
+
         for (VerdictCategory label : categories) {
-            stringLabels.add(label.getVerdictValue());
-            stringLabels.add("verified");
-            stringLabels.add("code-review");
+            stringLabels.add(label.getVerdictValue().toLowerCase());
+
             if (!label.getVerdictValue().equalsIgnoreCase("CRVW") && !label.getVerdictValue().equalsIgnoreCase("VRIF")) {
                 String commandAddition = " --" + label.getVerdictValue().toLowerCase() + " <" + label.getVerdictValue().toUpperCase() + "> ";
                 gerritVerifiedCmdBuildStarted = gerritVerifiedCmdBuildStarted.contains(commandAddition) ? gerritVerifiedCmdBuildStarted :
