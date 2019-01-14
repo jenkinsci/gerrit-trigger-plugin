@@ -785,7 +785,6 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     public List<LabelValue> getLabelValues() {
-        initLabelValues();
         return labelValues;
     }
 
