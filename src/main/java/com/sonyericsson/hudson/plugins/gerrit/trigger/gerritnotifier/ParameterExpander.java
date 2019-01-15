@@ -31,12 +31,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import org.omg.PortableInterceptor.Interceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
-import hudson.model.Label;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -70,7 +67,8 @@ public class ParameterExpander {
      * The delimiter used to separate build URLs from their messages.
      */
     public static final String MESSAGE_DELIMITER = " : ";
-
+    public static final String CODE_REVIEW = "Code-Review";
+    public static final String VERIFIED = "Verified";
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
     private Jenkins jenkins;
@@ -124,11 +122,11 @@ public class ParameterExpander {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
 
         Map<String, Integer> labelVotes = new HashMap<>();
-        labelVotes.put("CODE_REVIEW", getBuildStartedLabelValue(r, trigger.getCodeReviewLabel()));
-        labelVotes.put("VERIFIED", getBuildStartedLabelValue(r, trigger.getVerifyLabel()));
+        labelVotes.put("CODE_REVIEW", getBuildStartedLabelValue(trigger.getCodeReviewLabel()));
+        labelVotes.put("VERIFIED", getBuildStartedLabelValue(trigger.getVerifiedLabel()));
         for (LabelValue label : trigger.getLabelValues()) {
-            if (!label.equals(trigger.getCodeReviewLabel()) && !label.equals(trigger.getVerifyLabel())) {
-                labelVotes.put(label.getName().toUpperCase(), getBuildStartedLabelValue(r, label));
+            if (!label.equals(trigger.getCodeReviewLabel()) && !label.equals(trigger.getVerifiedLabel())) {
+                labelVotes.put(label.getName().toUpperCase(), getBuildStartedLabelValue(label));
             }
         }
 
@@ -213,25 +211,24 @@ public class ParameterExpander {
         }
     }
 
-    private Integer getBuildStartedLabelValue(Run r, LabelValue label) {
-        GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
+    private Integer getBuildStartedLabelValue(LabelValue label) {
+        Integer triggerValue = null;
+        if (label != null)
+            triggerValue = label.getBuildStartedVoteValue();
 
-        Integer triggerValue = Objects.requireNonNull(trigger.getLabelValues()
-            .stream()
-            .filter(labelValue -> label.getName().equals(labelValue.getName()))
-            .findAny().orElse(null))
-            .getBuildStartedVoteValue();
+        Integer globalConfigValue = 0;
 
-        Integer globalConfigValue = Objects.requireNonNull(config.getCategories()
-            .stream()
-            .filter(labelValue -> label.getName().equals(labelValue.getVerdictValue()))
-            .findAny().orElse(null))
-            .getDefaultBuildStartedReportingValue();
+        for (VerdictCategory cat : config.getCategories()) {
+            if (label != null && label.getName().equals(cat.getVerdictValue())) {
+                globalConfigValue = cat.getDefaultBuildStartedReportingValue();
+            }
+        }
 
-        if(triggerValue != null) {
+        if (triggerValue != null) {
             logger.trace("BuildStartedCodeReview overridden in project config. returning {}", triggerValue);
             return triggerValue;
-        } else {
+        }
+        else {
             logger.trace("BuildStartedLabel standard value used {}", globalConfigValue);
             return globalConfigValue;
         }
@@ -292,6 +289,32 @@ public class ParameterExpander {
 
         return map;
     }
+
+    /**
+     * Creates a list of the "standard" trigger parameters.
+     * They are present both for build started and completed.
+     * The parameters are:
+     * <ul>
+     * <li><strong>GERRIT_NAME</strong>: The Gerrit project name.</li>
+     * <li><strong>CHANGE_ID</strong>: The Gerrit change-id (SHA-1).</li>
+     * <li><strong>BRANCH</strong>: The branch of the project.</li>
+     * <li><strong>TOPIC</strong>: Topic name for change series.</li>
+     * <li><strong>CHANGE</strong>: The change number.</li>
+     * <li><strong>PATCHSET</strong>: The patchset number.</li>
+     * <li><strong>PATCHSET_REVISION</strong>: The patchset revision.</li>
+     * <li><strong>REFSPEC</strong>: The ref-spec. (refs/changes/xx/xxxx/z).</li>
+     * <li><strong>BUILDURL</strong>: The URL to the build.</li>
+     * <li><strong>VERIFIED</strong>: The verified vote.</li>
+     * <li><strong>CODE_REVIEW</strong>: The code review vote.</li>
+     * <li><strong>NOTIFICATION_LEVEL</strong>: The notification level.</li>
+     * </ul>
+     *
+     * @param r           the build.
+     * @param gerritEvent the event.
+     * @param labelVotes  all the labels added in Gerrit trigger config.
+     * @param notifyLevel the notify level.
+     * @return the parameters and their values.
+     */
 
     private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent, Map<String, Integer> labelVotes, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
@@ -360,10 +383,113 @@ public class ParameterExpander {
     /**
      * Finds the code review value for the specified build result on the configured trigger.
      *
+     * @param res       the build result.
+     * @param trigger   the trigger that might have overridden values.
+     * @param labelName the name of the label for which votes are needed.
+     * @return the value.
+     */
+    protected Integer getLabelVoteValue(Result res, GerritTrigger trigger, String labelName) {
+        LabelValue labelValue = null;
+        for (LabelValue label : trigger.getLabelValues()) {
+            if (label.getName().equalsIgnoreCase(labelName)) {
+                labelValue = label;
+            }
+        }
+
+        //same for all the other cases
+        if (res == Result.SUCCESS) {
+            if (labelValue != null && labelValue.getBuildSuccessfulVoteValue() != null) {
+                return labelValue.getBuildSuccessfulVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildSuccessfulReportingValue() : null;
+            }
+        }
+        else if (res == Result.FAILURE || res == Result.ABORTED) {
+            if (labelValue != null && labelValue.getBuildFailedVoteValue() != null) {
+                return labelValue.getBuildFailedVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildFailedReportingValue() : null;
+            }
+        }
+        else if (res == Result.UNSTABLE) {
+            if (labelValue != null && labelValue.getBuildUnstableVoteValue() != null) {
+                return labelValue.getBuildUnstableVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildUnstableReportingValue() : null;
+            }
+        }
+        else if (res == Result.NOT_BUILT) {
+            if (labelValue != null && labelValue.getBuildNotBuiltVoteValue() != null) {
+                return labelValue.getBuildNotBuiltVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildNotBuiltReportingValue() : null;
+            }
+        }
+        else {
+            //As bad as failure, for now
+            if (labelValue != null && labelValue.getBuildFailedVoteValue() != null) {
+                return labelValue.getBuildFailedVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildSuccessfulReportingValue() : null;
+            }
+        }
+    }
+
+    /**
+     * Returns the minimum verified value for the build results in the memory.
+     * If no builds have contributed to verified value, this method returns null
+     *
+     * @param memoryImprint the memory.
+     * @param onlyBuilt     only count builds that completed (no NOT_BUILT builds)
+     * @param labelName     the label for which you want to return the vote value
+     * @return the lowest verified value.
+     */
+    @CheckForNull
+    public Integer getMinimumLabelVoteValue(MemoryImprint memoryImprint, boolean onlyBuilt, String labelName) {
+        Integer labelVote = Integer.MAX_VALUE;
+        for (Entry entry : memoryImprint.getEntries()) {
+            if (entry == null) {
+                continue;
+            }
+            Run build = entry.getBuild();
+            if (build == null) {
+                continue;
+            }
+            Result result = build.getResult();
+            if (onlyBuilt && result == Result.NOT_BUILT) {
+                continue;
+            }
+
+            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            if (shouldSkip(trigger.getSkipVote(), result)) {
+                continue;
+            }
+            Integer labelObj = getLabelVoteValue(result, trigger, labelName);
+            if (labelObj != null) {
+                labelVote = Math.min(labelVote, labelObj);
+            }
+        }
+
+        if (labelVote == Integer.MAX_VALUE) {
+            return null;
+        }
+
+        return labelVote;
+    }
+
+    /**
+     * Finds the code review value for the specified build result on the configured trigger.
+     *
      * @param res     the build result.
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
+    @Deprecated
     protected Integer getCodeReviewValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulCodeReviewValue() != null) {
@@ -415,6 +541,7 @@ public class ParameterExpander {
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
+    @Deprecated
     protected Integer getVerifiedValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulVerifiedValue() != null) {
@@ -467,6 +594,7 @@ public class ParameterExpander {
      * @param onlyBuilt     only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
+    @Deprecated
     @CheckForNull
     public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         Integer verified = Integer.MAX_VALUE;
@@ -508,6 +636,7 @@ public class ParameterExpander {
      * @param onlyBuilt     only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
+    @Deprecated
     @CheckForNull
     public Integer getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         Integer codeReview = Integer.MAX_VALUE;
@@ -622,18 +751,20 @@ public class ParameterExpander {
             command = config.getGerritCmdBuildFailed();
         }
 
-        Integer verified = null;
-        Integer codeReview = null;
         Notify notifyLevel = Notify.ALL;
         Map<String, Integer> labelVotes = new HashMap<>();
 
         if (memoryImprint.getEvent().isScorable()) {
-            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
-            codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
             notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
-        labelVotes.put("CODE_REVIEW", verified);
-        labelVotes.put("VERIFIED", codeReview);
+
+        labelVotes.put("CODE_REVIEW", getMinimumLabelVoteValue(memoryImprint, onlyCountBuilt, CODE_REVIEW));
+        labelVotes.put("VERIFIED", getMinimumLabelVoteValue(memoryImprint, onlyCountBuilt, VERIFIED));
+        for (VerdictCategory vc : config.getCategories()) {
+            if (!vc.getVerdictValue().equalsIgnoreCase(CODE_REVIEW) && !vc.getVerdictValue().equalsIgnoreCase(VERIFIED)) {
+                labelVotes.put(vc.getVerdictValue().toUpperCase(), getMinimumLabelVoteValue(memoryImprint, onlyCountBuilt, vc.getVerdictValue()));
+            }
+        }
 
         Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), labelVotes, notifyLevel.name());
         // escapes ' as '"'"' in order to avoid breaking command line param

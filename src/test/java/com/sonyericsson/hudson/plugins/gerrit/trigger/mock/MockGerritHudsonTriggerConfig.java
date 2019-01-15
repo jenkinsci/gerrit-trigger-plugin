@@ -194,6 +194,10 @@ public class MockGerritHudsonTriggerConfig implements
         return;
     }
 
+    @Override public VerdictCategory getVerdictCategory(String verdictCategoryName) {
+        return null;
+    }
+
     @Override
     public void setValues(JSONObject form) {
         //Empty

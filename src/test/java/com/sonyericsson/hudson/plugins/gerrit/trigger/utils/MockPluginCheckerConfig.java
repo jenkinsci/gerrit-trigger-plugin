@@ -243,6 +243,10 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
 
     }
 
+    @Override public VerdictCategory getVerdictCategory(String verdictCategoryName) {
+        return null;
+    }
+
     @Override
     public int getNumberOfReceivingWorkerThreads() {
         return 0;

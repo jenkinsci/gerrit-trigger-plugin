@@ -281,15 +281,15 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
         initLabelValues();
-        getVerifyLabel().setBuildStartedVoteValue(gerritBuildStartedVerifiedValue);
+        getVerifiedLabel().setBuildStartedVoteValue(gerritBuildStartedVerifiedValue);
         getCodeReviewLabel().setBuildStartedVoteValue(gerritBuildStartedCodeReviewValue);
-        getVerifyLabel().setBuildSuccessfulVoteValue(gerritBuildSuccessfulVerifiedValue);
+        getVerifiedLabel().setBuildSuccessfulVoteValue(gerritBuildSuccessfulVerifiedValue);
         getCodeReviewLabel().setBuildSuccessfulVoteValue(gerritBuildSuccessfulCodeReviewValue);
-        getVerifyLabel().setBuildFailedVoteValue(gerritBuildFailedVerifiedValue);
+        getVerifiedLabel().setBuildFailedVoteValue(gerritBuildFailedVerifiedValue);
         getCodeReviewLabel().setBuildFailedVoteValue(gerritBuildFailedCodeReviewValue);
-        getVerifyLabel().setBuildUnstableVoteValue(gerritBuildUnstableVerifiedValue);
+        getVerifiedLabel().setBuildUnstableVoteValue(gerritBuildUnstableVerifiedValue);
         getCodeReviewLabel().setBuildFailedVoteValue(gerritBuildUnstableCodeReviewValue);
-        getVerifyLabel().setBuildNotBuiltVoteValue(gerritBuildNotBuiltVerifiedValue);
+        getVerifiedLabel().setBuildNotBuiltVoteValue(gerritBuildNotBuiltVerifiedValue);
         getCodeReviewLabel().setBuildNotBuiltVoteValue(gerritBuildNotBuiltCodeReviewValue);
         this.silentMode = silentMode;
         this.silentStartMode = silentStartMode;
@@ -730,7 +730,10 @@ public class GerritTrigger extends Trigger<Job> {
             List<VerdictCategory> labels = new ArrayList<VerdictCategory>();
             List<GerritServer> servers = PluginImpl.getServers_();
             for (GerritServer server : servers) {
-                labels.addAll(server.getConfig().getCategories());
+                if(server.getConfig() != null) {
+                    List<VerdictCategory> categories = server.getConfig().getCategories();
+                    if (categories != null) labels.addAll(server.getConfig().getCategories());
+                }
             }
             return labels;
         }
@@ -748,11 +751,11 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     public LabelValue getCodeReviewLabel() {
-        return getLabel("CRVW");
+        return getLabel("Code-Review");
     }
 
-    public LabelValue getVerifyLabel() {
-        return getLabel("VRIF");
+    public LabelValue getVerifiedLabel() {
+        return getLabel("Verified");
     }
 
     private LabelValue getLabel(String name) {
@@ -769,13 +772,13 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     private void initLabelValues() {
-        labelValues = new ArrayList<LabelValue>();
+        labelValues = new ArrayList<>();
         for (VerdictCategory label : getVerdictCategoriesList()) {
             labelValues.add(new LabelValue(label.getVerdictValue()));
         }
         LabelValue[] defaultLabels = new LabelValue[]{
-            new LabelValue("CRVW", 0, 0, 0, 0, 0),
-            new LabelValue("VRIF", 0, 0, 0, 0, 0)
+            new LabelValue("Code-Review", 0, 0, 0, 0, 0),
+            new LabelValue("Verified", 0, 0, 0, 0, 0)
         };
         for (LabelValue label : defaultLabels) {
             if (!labelValues.contains(label)) {
@@ -1189,7 +1192,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the vote value.
      */
     public Integer getGerritBuildFailedVerifiedValue() {
-        return getVerifyLabel().getBuildFailedVoteValue();
+        return getVerifiedLabel().getBuildFailedVoteValue();
     }
 
     /**
@@ -1200,7 +1203,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
-        this.getVerifyLabel().setBuildFailedVoteValue(gerritBuildFailedVerifiedValue);
+        this.getVerifiedLabel().setBuildFailedVoteValue(gerritBuildFailedVerifiedValue);
     }
 
     /**
@@ -1229,7 +1232,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the vote value.
      */
     public Integer getGerritBuildStartedVerifiedValue() {
-        return getVerifyLabel().getBuildStartedVoteValue();
+        return getVerifiedLabel().getBuildStartedVoteValue();
     }
 
     /**
@@ -1240,7 +1243,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
-        getVerifyLabel().setBuildStartedVoteValue(gerritBuildStartedVerifiedValue);
+        getVerifiedLabel().setBuildStartedVoteValue(gerritBuildStartedVerifiedValue);
     }
 
     /**
@@ -1270,7 +1273,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the vote value.
      */
     public Integer getGerritBuildSuccessfulVerifiedValue() {
-        return getVerifyLabel().getBuildSuccessfulVoteValue();
+        return getVerifiedLabel().getBuildSuccessfulVoteValue();
     }
 
     /**
@@ -1281,7 +1284,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
-        this.getVerifyLabel().setBuildSuccessfulVoteValue(gerritBuildSuccessfulVerifiedValue);
+        this.getVerifiedLabel().setBuildSuccessfulVoteValue(gerritBuildSuccessfulVerifiedValue);
     }
 
     /**
@@ -1310,7 +1313,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the vote value.
      */
     public Integer getGerritBuildUnstableVerifiedValue() {
-        return getVerifyLabel().getBuildUnstableVoteValue();
+        return getVerifiedLabel().getBuildUnstableVoteValue();
     }
 
     /**
@@ -1321,7 +1324,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
-        this.getVerifyLabel().setBuildUnstableVoteValue(gerritBuildUnstableVerifiedValue);
+        this.getVerifiedLabel().setBuildUnstableVoteValue(gerritBuildUnstableVerifiedValue);
     }
 
     /**
@@ -1350,7 +1353,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the vote value.
      */
     public Integer getGerritBuildNotBuiltVerifiedValue() {
-        return getVerifyLabel().getBuildNotBuiltVoteValue();
+        return getVerifiedLabel().getBuildNotBuiltVoteValue();
     }
 
     /**
@@ -1361,7 +1364,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
-        this.getVerifyLabel().setBuildNotBuiltVoteValue(gerritBuildNotBuiltVerifiedValue);
+        this.getVerifiedLabel().setBuildNotBuiltVoteValue(gerritBuildNotBuiltVerifiedValue);
     }
 
     /**

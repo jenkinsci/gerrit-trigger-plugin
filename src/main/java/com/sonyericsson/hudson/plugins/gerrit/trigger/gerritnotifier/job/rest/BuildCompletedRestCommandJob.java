@@ -85,7 +85,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
             if (memoryImprint.getEvent().isScorable()) {
                 if (config.isRestCodeReview()) {
-                    Integer crValue = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
+                    Integer crValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, LABEL_CODEREVIEW);
                     if (crValue != null && crValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
                                 LABEL_CODEREVIEW,
@@ -93,7 +93,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                     }
                 }
                 if (config.isRestVerified()) {
-                    Integer verValue = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
+                    Integer verValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, LABEL_VERIFIED);
                     if (verValue != null && verValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
                                 LABEL_VERIFIED,

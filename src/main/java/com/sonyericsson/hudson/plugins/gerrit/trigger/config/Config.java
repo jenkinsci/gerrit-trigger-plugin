@@ -311,13 +311,13 @@ public class Config implements IGerritHudsonTriggerConfig {
     // make sure that there is a CR and VER category
     private void assertDefaultCategories() {
         VerdictCategory[] defaultCategories = new VerdictCategory[]{
-            new VerdictCategory("CRVW", "Code-Review",
+            new VerdictCategory("Code-Review", "Code-Review",
                 DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE,
                 DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE,
                 DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE,
                 DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE,
                 DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE),
-            new VerdictCategory("VRIF", "Verified",
+            new VerdictCategory("Verified", "Verified",
                 DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE,
                 DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE,
                 DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE,
@@ -329,17 +329,21 @@ public class Config implements IGerritHudsonTriggerConfig {
                 categories.add(category);
             }
         }
+        for (VerdictCategory cat : categories) {
+            if (cat.getVerdictValue().equalsIgnoreCase("CRVW") || cat.getVerdictValue().equalsIgnoreCase("VRIF"))
+                categories.remove(cat);
+        }
     }
 
     private VerdictCategory getCodeReviewCategory() {
-        return getVerdictCategory("CRVW");
+        return getVerdictCategory("Code-Review");
     }
 
     private VerdictCategory getVerifyCategory() {
-        return getVerdictCategory("VRIF");
+        return getVerdictCategory("Verified");
     }
 
-    private VerdictCategory getVerdictCategory(String value) {
+    public VerdictCategory getVerdictCategory(String value) {
         for (VerdictCategory category : categories) {
             if (category.getVerdictValue().equals(value)) {
                 return category;
@@ -407,7 +411,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         projectListRefreshInterval = formData.optInt("projectListRefreshInterval", DEFAULT_PROJECT_LIST_REFRESH_INTERVAL);
         enableProjectAutoCompletion = formData.optBoolean("enableProjectAutoCompletion", DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION);
 
-        categories = new LinkedList<VerdictCategory>();
+        categories = new LinkedList<>();
         if (formData.has("verdictCategories")) {
             Object cat = formData.get("verdictCategories");
             if (cat instanceof JSONArray) {
@@ -420,6 +424,20 @@ public class Config implements IGerritHudsonTriggerConfig {
             }
         }
         assertDefaultCategories();
+        //cover the migration of default gerrit reporting values
+        for (VerdictCategory cat : categories) {
+            if (formData.has(cat.getVerdictValue() + "Successful"))
+                cat.setDefaultBuildSuccessfulReportingValue(getIntegerFromString((String) formData.get(cat.getVerdictValue() + "Successful")));
+            if (formData.has(cat.getVerdictValue() + "Failed"))
+                cat.setDefaultBuildFailedReportingValue(getIntegerFromString((String) formData.get(cat.getVerdictValue() + "Failed")));
+            if (formData.has(cat.getVerdictValue() + "Started"))
+                cat.setDefaultBuildStartedReportingValue(getIntegerFromString((String) formData.get(cat.getVerdictValue() + "Started")));
+            if (formData.has(cat.getVerdictValue() + "Unstable"))
+                cat.setDefaultBuildUnstableReportingValue(getIntegerFromString((String) formData.get(cat.getVerdictValue() + "Unstable")));
+            if (formData.has(cat.getVerdictValue() + "Not Built"))
+                cat.setDefaultBuildNotBuiltReportingValue(getIntegerFromString((String) formData.get(cat.getVerdictValue() + "Not Built")));
+        }
+
         initializeGerritCommands();
         watchdogTimeoutMinutes = formData.optInt("watchdogTimeoutMinutes", DEFAULT_GERRIT_WATCHDOG_TIMEOUT_MINUTES);
         watchTimeExceptionData = addWatchTimeExceptionData(formData);
@@ -439,13 +457,19 @@ public class Config implements IGerritHudsonTriggerConfig {
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
 
+    public static Integer getIntegerFromString(String str) {
+        if (str != null && !str.equals(""))
+            return Integer.parseInt(str);
+        return null;
+    }
+
     private void initializeGerritCommands() {
         List<String> stringLabels = new ArrayList<String>(Arrays.asList("verified", "code-review"));
 
         for (VerdictCategory label : categories) {
             stringLabels.add(label.getVerdictValue().toLowerCase());
 
-            if (!label.getVerdictValue().equalsIgnoreCase("CRVW") && !label.getVerdictValue().equalsIgnoreCase("VRIF")) {
+            if (!label.getVerdictValue().equalsIgnoreCase("Code-Review") && !label.getVerdictValue().equalsIgnoreCase("Verified")) {
                 String commandAddition = " --" + label.getVerdictValue().toLowerCase() + " <" + label.getVerdictValue().toUpperCase() + "> ";
                 gerritVerifiedCmdBuildStarted = gerritVerifiedCmdBuildStarted.contains(commandAddition) ? gerritVerifiedCmdBuildStarted :
                     (gerritVerifiedCmdBuildStarted += commandAddition);

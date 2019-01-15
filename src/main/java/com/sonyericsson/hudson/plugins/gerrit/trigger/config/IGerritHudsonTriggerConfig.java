@@ -295,6 +295,14 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * The number of threads to handle incoming events with.
      * @return the number of worker threads.
      */
+
+    /**
+     * Method to retrieve a specific VerdictCategory.
+     *
+     * @param verdictCategoryName the name of the VerdictCategory to be retrieved.
+     */
+    VerdictCategory getVerdictCategory(String verdictCategoryName);
+
     @Deprecated
     int getNumberOfReceivingWorkerThreads();
 

@@ -27,6 +27,7 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 
 /**
  * A verdict category for setting comments in Gerrit, i.e. code-review, verify
@@ -36,11 +37,11 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
 
     private String verdictValue;
     private String verdictDescription;
-    private int defaultBuildStartedReportingValue;
-    private int defaultBuildSuccessfulReportingValue;
-    private int defaultBuildFailedReportingValue;
-    private int defaultBuildUnstableReportingValue;
-    private int defaultBuildNotBuiltReportingValue;
+    private Integer defaultBuildStartedReportingValue;
+    private Integer defaultBuildSuccessfulReportingValue;
+    private Integer defaultBuildFailedReportingValue;
+    private Integer defaultBuildUnstableReportingValue;
+    private Integer defaultBuildNotBuiltReportingValue;
 
     /**
      * Standard constructor.
@@ -57,7 +58,7 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
         defaultBuildNotBuiltReportingValue = 0;
     }
 
-    public VerdictCategory(String verdictValue, String verdictDescription, int defaultBuildStartedReportingValue, int defaultBuildSuccessfulReportingValue, int defaultBuildFailedReportingValue, int defaultBuildUnstableReportingValue, int defaultBuildNotBuiltReportingValue) {
+    public VerdictCategory(String verdictValue, String verdictDescription, Integer defaultBuildStartedReportingValue, Integer defaultBuildSuccessfulReportingValue, Integer defaultBuildFailedReportingValue, Integer defaultBuildUnstableReportingValue, Integer defaultBuildNotBuiltReportingValue) {
         this.verdictValue = verdictValue;
         this.verdictDescription = verdictDescription;
         this.defaultBuildStartedReportingValue = defaultBuildStartedReportingValue;
@@ -91,11 +92,11 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
     public static VerdictCategory createVerdictCategoryFromJSON(JSONObject obj, JSONObject topLevelJSON) {
         String value = obj.getString("verdictValue");
         String description = obj.getString("verdictDescription");
-        int defaultBuildStartedReportingValue = topLevelJSON.containsKey(value + "Started") ? topLevelJSON.getInt(value + "Started") : 0;
-        int defaultBuildSuccessfulReportingValue = topLevelJSON.containsKey(value + "Successful") ? topLevelJSON.getInt(value + "Successful") : 0;
-        int defaultBuildFailedReportingValue = topLevelJSON.containsKey(value + "Failed") ? topLevelJSON.getInt(value + "Failed") : 0;
-        int defaultBuildUnstableReportingValue = topLevelJSON.containsKey(value + "Unstable") ? topLevelJSON.getInt(value + "Unstable") : 0;
-        int defaultBuildNotBuiltReportingValue = topLevelJSON.containsKey(value + "Not Built") ? topLevelJSON.getInt(value + "Not Built") : 0;
+        Integer defaultBuildStartedReportingValue = topLevelJSON.containsKey(value + "Started") ? Config.getIntegerFromString(topLevelJSON.getString(value + "Started")) : null;
+        Integer defaultBuildSuccessfulReportingValue = topLevelJSON.containsKey(value + "Successful") ? Config.getIntegerFromString(topLevelJSON.getString(value + "Successful")) : null;
+        Integer defaultBuildFailedReportingValue = topLevelJSON.containsKey(value + "Failed") ? Config.getIntegerFromString(topLevelJSON.getString(value + "Failed")) : null;
+        Integer defaultBuildUnstableReportingValue = topLevelJSON.containsKey(value + "Unstable") ? Config.getIntegerFromString(topLevelJSON.getString(value + "Unstable")) : null;
+        Integer defaultBuildNotBuiltReportingValue = topLevelJSON.containsKey(value + "Not Built") ? Config.getIntegerFromString(topLevelJSON.getString(value + "Not Built")) : null;
 
         return new VerdictCategory(value, description, defaultBuildStartedReportingValue,
             defaultBuildSuccessfulReportingValue, defaultBuildFailedReportingValue,
@@ -107,14 +108,14 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      *
      * @return the description.
      */
-    public int getDefaultBuildStartedReportingValue() {
+    public Integer getDefaultBuildStartedReportingValue() {
         return defaultBuildStartedReportingValue;
     }
 
     /**
      * Standard setter for the build started reporting value.
      */
-    public void setDefaultBuildStartedReportingValue(int defaultBuildStartedReportingValue) {
+    public void setDefaultBuildStartedReportingValue(Integer defaultBuildStartedReportingValue) {
         this.defaultBuildStartedReportingValue = defaultBuildStartedReportingValue;
     }
 
@@ -123,14 +124,14 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      *
      * @return the description.
      */
-    public int getDefaultBuildSuccessfulReportingValue() {
+    public Integer getDefaultBuildSuccessfulReportingValue() {
         return defaultBuildSuccessfulReportingValue;
     }
 
     /**
      * Standard setter for the build successful reporting value.
      */
-    public void setDefaultBuildSuccessfulReportingValue(int defaultBuildSuccessfulReportingValue) {
+    public void setDefaultBuildSuccessfulReportingValue(Integer defaultBuildSuccessfulReportingValue) {
         this.defaultBuildSuccessfulReportingValue = defaultBuildSuccessfulReportingValue;
     }
 
@@ -139,14 +140,14 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      *
      * @return the description.
      */
-    public int getDefaultBuildFailedReportingValue() {
+    public Integer getDefaultBuildFailedReportingValue() {
         return defaultBuildFailedReportingValue;
     }
 
     /**
      * Standard setter for the build failed reporting value.
      */
-    public void setDefaultBuildFailedReportingValue(int defaultBuildFailedReportingValue) {
+    public void setDefaultBuildFailedReportingValue(Integer defaultBuildFailedReportingValue) {
         this.defaultBuildFailedReportingValue = defaultBuildFailedReportingValue;
     }
 
@@ -155,14 +156,14 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      *
      * @return the description.
      */
-    public int getDefaultBuildUnstableReportingValue() {
+    public Integer getDefaultBuildUnstableReportingValue() {
         return defaultBuildUnstableReportingValue;
     }
 
     /**
      * Standard setter for the build unstable reporting value.
      */
-    public void setDefaultBuildUnstableReportingValue(int defaultBuildUnstableReportingValue) {
+    public void setDefaultBuildUnstableReportingValue(Integer defaultBuildUnstableReportingValue) {
         this.defaultBuildUnstableReportingValue = defaultBuildUnstableReportingValue;
     }
 
@@ -171,14 +172,14 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
      *
      * @return the description.
      */
-    public int getDefaultBuildNotBuiltReportingValue() {
+    public Integer getDefaultBuildNotBuiltReportingValue() {
         return defaultBuildNotBuiltReportingValue;
     }
 
     /**
      * Standard setter for the build not built reporting value.
      */
-    public void setDefaultBuildNotBuiltReportingValue(int defaultBuildNotBuiltReportingValue) {
+    public void setDefaultBuildNotBuiltReportingValue(Integer defaultBuildNotBuiltReportingValue) {
         this.defaultBuildNotBuiltReportingValue = defaultBuildNotBuiltReportingValue;
     }
 
