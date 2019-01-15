@@ -17,3 +17,5 @@ generated-sources
 hostkey.ser
 *.xml~
 /eclipse-classes
+.vscode/
+.factorypath
