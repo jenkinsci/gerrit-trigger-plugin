@@ -31,13 +31,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import org.apache.commons.lang.StringUtils;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
 import org.apache.sshd.server.UserAuth;
+import org.apache.sshd.common.auth.UserAuthInstance;
 import org.apache.sshd.server.auth.UserAuthNone;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 

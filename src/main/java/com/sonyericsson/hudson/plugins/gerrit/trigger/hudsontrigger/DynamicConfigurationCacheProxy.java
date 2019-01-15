@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +74,7 @@ final class DynamicConfigurationCacheProxy {
         }
 
         long updateInterval = GerritTriggerTimer.getInstance().calculateAverageDynamicConfigRefreshInterval();
-        return TimeUnit2.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastTimeUpdated) > updateInterval;
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastTimeUpdated) > updateInterval;
     }
 
     /**

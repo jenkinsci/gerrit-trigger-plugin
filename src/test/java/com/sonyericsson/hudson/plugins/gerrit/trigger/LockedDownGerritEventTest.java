@@ -47,7 +47,7 @@ import hudson.model.Item;
 import hudson.model.Result;
 
 import jenkins.model.Jenkins;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
