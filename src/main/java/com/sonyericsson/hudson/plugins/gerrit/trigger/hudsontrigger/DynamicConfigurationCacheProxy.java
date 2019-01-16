@@ -1,7 +1,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
