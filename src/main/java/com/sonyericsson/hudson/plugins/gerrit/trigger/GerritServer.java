@@ -143,6 +143,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final int RESPONSE_INTERVAL_MS = 1000;
     private static final int RESPONSE_TIMEOUT_S = 10;
     private String name;
+    private String projectPrefix;
     @Deprecated
     private transient boolean pseudoMode;
     private boolean noConnectionOnStartup;
@@ -249,6 +250,26 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Exported
     public String getName() {
         return name;
+    }
+
+    /**
+     * Get the prefix for fetching all project names.
+     *
+     * @return projects prefix.
+     */
+    @Exported
+    public String getProjectPrefix() {
+        return projectPrefix;
+    }
+
+    /**
+     * Set the prefix for fetching all project names.
+     *
+     * @param projectPrefix prefix of the projects to list from the Gerrit Server.
+     */
+    @Exported
+    public void setProjectPrefix(String projectPrefix) {
+        this.projectPrefix = projectPrefix;
     }
 
     /**
@@ -445,7 +466,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         initializeConnectionListener();
 
         projectListUpdater =
-                new GerritProjectListUpdater(name);
+                new GerritProjectListUpdater(name, projectPrefix);
         projectListUpdater.start();
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
