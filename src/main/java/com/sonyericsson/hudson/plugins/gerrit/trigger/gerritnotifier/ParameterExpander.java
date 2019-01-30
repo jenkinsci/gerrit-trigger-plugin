@@ -378,7 +378,7 @@ public class ParameterExpander {
         Pattern pattern = Pattern.compile(regexToIdentifyNullOrIntegerMaxValue);
         Matcher matcher = pattern.matcher(command);
         while (matcher.find()) {
-            if (matcher.group(3).equalsIgnoreCase("null") || Integer.valueOf(matcher.group(3)) == Integer.MAX_VALUE) {
+            if (matcher.group(3).equalsIgnoreCase("null") || matcher.group(3).equalsIgnoreCase(String.valueOf(Integer.MAX_VALUE))) {
                 command = command.replaceAll(matcher.group(1), "");
             }
         }
