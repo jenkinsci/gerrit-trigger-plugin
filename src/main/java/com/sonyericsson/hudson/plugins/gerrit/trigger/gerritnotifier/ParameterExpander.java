@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -371,11 +373,15 @@ public class ParameterExpander {
         for (Map.Entry<String, String> param : parameters.entrySet()) {
             command = command.replace("<" + param.getKey() + ">", param.getValue());
         }
-        //replace null and Integer.MAX_VALUE code review value
-        command = command.replace("--code-review null", "");
-        command = command.replace("--code-review " + Integer.MAX_VALUE, "");
-        command = command.replace("--verified null", "");
-        command = command.replace("--verified " + Integer.MAX_VALUE, "");
+
+        String regexToIdentifyNullOrIntegerMaxValue = "(--([\\S]+) (\\w+)){1}";
+        Pattern pattern = Pattern.compile(regexToIdentifyNullOrIntegerMaxValue);
+        Matcher matcher = pattern.matcher(command);
+        while (matcher.find()) {
+            if (matcher.group(3).equalsIgnoreCase("null") || Integer.valueOf(matcher.group(3)) == Integer.MAX_VALUE) {
+                command = command.replaceAll(matcher.group(1), "");
+            }
+        }
 
         return command;
     }

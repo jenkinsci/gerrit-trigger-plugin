@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.LabelValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -43,6 +44,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,10 +99,14 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildStartedCommand() throws Exception {
         TaskListener taskListener = mock(TaskListener.class);
-
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
-        when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
+
+        LabelValue cr = new LabelValue("Code-Review", 2, 1, 0, 0, 0);
+        LabelValue v = new LabelValue("Verified", 1, 2, -1, -1, -1);
+
+        when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
+        when(trigger.getCodeReviewLabel()).thenReturn(cr);
+        when(trigger.getVerifiedLabel()).thenReturn(v);
         when(trigger.getBuildStartMessage()).thenReturn("${START_MESSAGE_VAR}");
         AbstractProject project = mock(AbstractProject.class);
 
@@ -126,11 +132,11 @@ public class ParameterExpanderTest {
         String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
         System.out.println("result: " + result);
         assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
-                result.indexOf("START_MESSAGE_VAL") >= 0);
+            result.indexOf("START_MESSAGE_VAL") >= 0);
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
+        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=2") >= 0);
         assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
         assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
@@ -378,11 +384,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessful("",
-                "\n\nhttp://localhost/test/ : SUCCESS");
+            "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
-                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console",
-                "\n\nhttp://localhost/test/console : SUCCESS");
+            "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -394,11 +400,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeAbandoned() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("",
-                "\n\nhttp://localhost/test/ : SUCCESS");
+            "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("http://example.org/<CHANGE_ID>",
-                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("${BUILD_URL}console",
-                "\n\nhttp://localhost/test/console : SUCCESS");
+            "\n\nhttp://localhost/test/console : SUCCESS");
     }
     /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeMerged event instead.
@@ -409,11 +415,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeMerged() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeMerged("",
-                "\n\nhttp://localhost/test/ : SUCCESS");
+            "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeMerged("http://example.org/<CHANGE_ID>",
-                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeMerged("${BUILD_URL}console",
-                "\n\nhttp://localhost/test/console : SUCCESS");
+            "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -425,11 +431,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeRestored() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeRestored("",
-                "\n\nhttp://localhost/test/ : SUCCESS");
+            "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeRestored("http://example.org/<CHANGE_ID>",
-                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeRestored("${BUILD_URL}console",
-                "\n\nhttp://localhost/test/console : SUCCESS");
+            "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -441,12 +447,12 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandMulipleBuildsMessageOrder() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults("",
-                new String[] { // messages must be in order
-                    "\n\nhttp://localhost/test/ : FAILURE",
-                    "\n\nhttp://localhost/test/ : UNSTABLE",
-                    "\n\nhttp://localhost/test/ : SUCCESS", },
-                new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
-                Setup.createPatchsetCreated(), -1, 0);
+            new String[] { // messages must be in order
+                "\n\nhttp://localhost/test/ : FAILURE",
+                "\n\nhttp://localhost/test/ : UNSTABLE",
+                "\n\nhttp://localhost/test/ : SUCCESS", },
+            new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
+            Setup.createPatchsetCreated(), -1, 0);
     }
 
     /**
@@ -458,7 +464,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createPatchsetCreated(), 3, 32);
     }
 
@@ -471,9 +477,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeAbandoned(String customUrl, String expectedBuildsStats)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-                                                   Setup.createChangeAbandoned(), null, null);
+            Setup.createChangeAbandoned(), null, null);
     }
 
     /**
@@ -485,9 +491,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-                                                   Setup.createChangeMerged(), null, null);
+            Setup.createChangeMerged(), null, null);
     }
 
     /**
@@ -499,9 +505,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeRestored(String customUrl, String expectedBuildsStats)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-                                                   Setup.createChangeRestored(), null, null);
+            Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -517,11 +523,11 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulEvent(String customUrl, String expectedBuildsStats,
-            GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
-                    throws IOException, InterruptedException {
+        GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+        throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
-                new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
-                Setup.createChangeRestored(), null, null);
+            new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
+            Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -539,17 +545,22 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
-            Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
-            Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
-                    throws IOException, InterruptedException {
+        Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
+        Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+        throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
+
+        LabelValue cr = new LabelValue("Code-Review", 32, expectedCodeReviewVote, 0, 0, 0);
+        LabelValue v = new LabelValue("Verified", 1, expectedVerifiedVote, -1, -1, -1);
+
+        when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
+        when(trigger.getCodeReviewLabel()).thenReturn(cr);
+        when(trigger.getVerifiedLabel()).thenReturn(v);
         when(trigger.getCustomUrl()).thenReturn(customUrl);
         AbstractProject project = mock(AbstractProject.class);
         Setup.setTrigger(trigger, project);
@@ -610,7 +621,7 @@ public class ParameterExpanderTest {
     @Test
     public void testBuildStatsWithUnsuccessfulMessage() throws Exception {
         tryBuildStatsFailureCommand("This was an unsuccessful message. ",
-                "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
+            "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
         tryBuildStatsFailureCommand(null, "\n\nhttp://localhost/test/ : FAILURE");
         tryBuildStatsFailureCommand("", "\n\nhttp://localhost/test/ : FAILURE");
     }
@@ -826,7 +837,7 @@ public class ParameterExpanderTest {
 
         @Override
         public void describeMismatchSafely(String item, Description mismatchDescription) {
-          mismatchDescription.appendText("was \"").appendText(item).appendText("\"");
+            mismatchDescription.appendText("was \"").appendText(item).appendText("\"");
         }
 
         @Override
