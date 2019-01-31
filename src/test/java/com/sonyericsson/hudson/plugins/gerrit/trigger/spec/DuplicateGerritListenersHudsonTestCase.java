@@ -123,8 +123,6 @@ public class DuplicateGerritListenersHudsonTestCase {
         HtmlForm form = j.createWebClient().getPage(p, "confirm-rename").getFormByName("config");
         form.getInputByName("newName").setValueAttribute("testJob33");
         HtmlPage confirmPage = j.submit(form);
-        //j.submit(getFormWithAction("doRename", confirmPage.getForms()));
-        //configRoundtrip(p);
         assertEquals("testJob33", p.getName());
         assertNbrOfGerritEventListeners(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));

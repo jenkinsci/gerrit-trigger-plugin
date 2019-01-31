@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
-// import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
