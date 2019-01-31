@@ -24,12 +24,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.LabelValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -45,11 +47,16 @@ import jenkins.model.Jenkins;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -147,10 +154,15 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
+        String crvw = "Code-Review";
+        String vrif = "Verified";
         String parameterString = "gerrit review MSG=OK VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildSuccessful()).thenReturn(parameterString);
-        when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
-        when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+        VerdictCategory verified = new VerdictCategory(vrif, vrif, 0, 1, -1, 0, 0);
+        VerdictCategory codeReview = new VerdictCategory(crvw, crvw, 0, 1, -1, 0, 0);
+        Mockito.when(config.getCategories()).thenReturn(Arrays.asList(codeReview, verified));
+        Mockito.when(config.getVerdictCategory(crvw)).thenReturn(codeReview);
+        Mockito.when(config.getVerdictCategory(vrif)).thenReturn(verified);
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
@@ -177,10 +189,15 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
+        String crvw = "Code-Review";
+        String vrif = "Verified";
         String parameterString = "gerrit review MSG=Failed VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildFailed()).thenReturn(parameterString);
-        when(config.getGerritBuildFailedVerifiedValue()).thenReturn(-1);
-        when(config.getGerritBuildFailedCodeReviewValue()).thenReturn(-1);
+        VerdictCategory verified = new VerdictCategory(vrif, vrif, 0, 1, -1, 0, 0);
+        VerdictCategory codeReview = new VerdictCategory(crvw, crvw, 0, 1, -1, 0, 0);
+        Mockito.when(config.getCategories()).thenReturn(Arrays.asList(codeReview, verified));
+        Mockito.when(config.getVerdictCategory(crvw)).thenReturn(codeReview);
+        Mockito.when(config.getVerdictCategory(vrif)).thenReturn(verified);
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
@@ -219,9 +236,17 @@ public class SpecGerritVerifiedSetterTest {
         when(jenkins.getItemByFullName(eq("MockProject2"), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq("MockProject2"), same(Job.class))).thenReturn(project);
 
-        trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
+        //trigger = mock(GerritTrigger.class);
+
+        String crvw = "Code-Review";
+        String vrif = "Verified";
+        final LabelValue cr = new LabelValue(crvw, 0, 0, null, 0, 0);
+        final LabelValue v = new LabelValue(vrif, 0, 0, null, 0, 0);
+
+        Mockito.when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
+        //Mockito.when(trigger.getLabelValues()).thenAnswer(Arrays.asList(cr, v));
+        Mockito.when(trigger.getCodeReviewLabel()).thenReturn(cr);
+        Mockito.when(trigger.getVerifiedLabel()).thenReturn(v);
         Setup.setTrigger(trigger, project);
 
         memory.completed(event, build);
@@ -229,11 +254,13 @@ public class SpecGerritVerifiedSetterTest {
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
         String parameterString = "gerrit review MSG=FAILED VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
+
+        VerdictCategory verified = new VerdictCategory(vrif, vrif, 0, 1, -1, 0, 0);
+        VerdictCategory codeReview = new VerdictCategory(crvw, crvw, 0, 1, -1, 0, 0);
+        Mockito.when(config.getCategories()).thenReturn(Arrays.asList(codeReview, verified));
+        Mockito.when(config.getVerdictCategory(crvw)).thenReturn(codeReview);
+        Mockito.when(config.getVerdictCategory(vrif)).thenReturn(verified);
         when(config.getGerritCmdBuildFailed()).thenReturn(parameterString);
-        when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
-        when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
-        when(config.getGerritBuildFailedCodeReviewValue()).thenReturn(-1);
-        when(config.getGerritBuildFailedVerifiedValue()).thenReturn(-1);
 
         GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
