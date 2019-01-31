@@ -31,15 +31,15 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import org.apache.commons.lang.StringUtils;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.UserAuthNoneFactory;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.common.NamedFactory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.UserAuth;
-import org.apache.sshd.server.auth.UserAuthNone;
-import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.auth.UserAuth;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -343,11 +343,16 @@ public class SshdServerMock implements CommandFactory {
      * @throws IOException if so.
      */
     public static SshServer startServer(SshdServerMock server) throws IOException {
+        File hostKey = new File(System.getProperty("java.io.tmpdir") + "/hostkey.ser");
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(0);
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider("hostkey.ser"));
-        List<NamedFactory<UserAuth>>userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
-        userAuthFactories.add(new UserAuthNone.Factory());
+        // Lifted entirely from
+        // ssh-agent-plugin/src/test/java/com/cloudbees/jenkins/plugins/sshagent/SSHAgentBase.java
+        SimpleGeneratorHostKeyProvider hostKeyProvider = new SimpleGeneratorHostKeyProvider(new File(hostKey.getPath()));
+        hostKeyProvider.setAlgorithm("RSA");
+        sshd.setKeyPairProvider(hostKeyProvider);
+        List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+        userAuthFactories.add(new UserAuthNoneFactory());
         sshd.setUserAuthFactories(userAuthFactories);
         sshd.setCommandFactory(server);
         sshd.start();
@@ -445,7 +450,11 @@ public class SshdServerMock implements CommandFactory {
      * @throws JSchException        if creation of the keys goes wrong.
      */
     public static KeyPairFiles generateKeyPair() throws IOException, InterruptedException, JSchException {
-        File tmp = new File(System.getProperty("java.io.tmpdir"));
+        // Can't use java.io.tmp: '/tmp' is explicitely set in some XML config files.`
+        File tmp = new File("/tmp");
+        if (!tmp.exists()) {
+            tmp.mkdirs();
+        }
         File priv = new File(tmp, "jenkins-testkey");
         File pub = new File(tmp, "jenkins-testkey.pub");
         final KeyPairFiles sshKey;
