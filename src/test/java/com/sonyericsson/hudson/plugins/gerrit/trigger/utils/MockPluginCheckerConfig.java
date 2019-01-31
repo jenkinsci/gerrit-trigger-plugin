@@ -104,52 +104,92 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public Integer getGerritBuildStartedVerifiedValue() {
+    public Integer getGerritBuildStartedVerifiedValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildStartedCodeReviewValue() {
+    public Integer getGerritBuildStartedCodeReviewValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildSuccessfulVerifiedValue() {
+    public Integer getGerritBuildSuccessfulVerifiedValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildSuccessfulCodeReviewValue() {
+    public Integer getGerritBuildSuccessfulCodeReviewValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildFailedVerifiedValue() {
+    public Integer getGerritBuildFailedVerifiedValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildFailedCodeReviewValue() {
+    public Integer getGerritBuildFailedCodeReviewValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildUnstableVerifiedValue() {
+    public Integer getGerritBuildUnstableVerifiedValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildUnstableCodeReviewValue() {
+    public Integer getGerritBuildUnstableCodeReviewValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildNotBuiltVerifiedValue() {
+    public Integer getGerritBuildNotBuiltVerifiedValueAfterMigration() {
         return 0;
     }
 
     @Override
-    public Integer getGerritBuildNotBuiltCodeReviewValue() {
+    public Integer getGerritBuildNotBuiltCodeReviewValueAfterMigration() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildStartedVerifiedValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildStartedCodeReviewValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildSuccessfulVerifiedValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildSuccessfulCodeReviewValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildFailedVerifiedValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildFailedCodeReviewValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildUnstableVerifiedValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildUnstableCodeReviewValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildNotBuiltVerifiedValue() {
+        return 0;
+    }
+
+    @Override public Integer getGerritBuildNotBuiltCodeReviewValue() {
         return 0;
     }
 

@@ -161,7 +161,7 @@ public class ParameterExpander {
      * Finds the verified vote for build started of the specified build.
      * If there is a {@link GerritTrigger} and it has a {@link GerritTrigger#getGerritBuildStartedVerifiedValue()}
      * specified, that value will be used, otherwise the global config value in
-     * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedVerifiedValue()} will be used.
+     * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedVerifiedValueAfterMigration()} will be used.
      *
      * @param r the build.
      * @return the value.
@@ -171,7 +171,7 @@ public class ParameterExpander {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
-            return config.getGerritBuildStartedVerifiedValue();
+            return config.getGerritBuildStartedVerifiedValueAfterMigration();
         }
         else if (trigger.getGerritBuildStartedVerifiedValue() != null) {
             final Integer value = trigger.getGerritBuildStartedVerifiedValue();
@@ -179,7 +179,7 @@ public class ParameterExpander {
             return value;
         }
         else {
-            final Integer value = config.getGerritBuildStartedVerifiedValue();
+            final Integer value = config.getGerritBuildStartedVerifiedValueAfterMigration();
             logger.trace("BuildStartedVerified standard value used {}", value);
             return value;
         }
@@ -189,7 +189,7 @@ public class ParameterExpander {
      * Finds the code review vote for build started of the specified build.
      * If there is a {@link GerritTrigger} and it has a {@link GerritTrigger#getGerritBuildStartedCodeReviewValue()}
      * specified, that value will be used, otherwise the global config value in
-     * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedCodeReviewValue()} will be used.
+     * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedCodeReviewValueAfterMigration()} will be used.
      *
      * @param r the build.
      * @return the value.
@@ -199,7 +199,7 @@ public class ParameterExpander {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
-            return config.getGerritBuildStartedCodeReviewValue();
+            return config.getGerritBuildStartedCodeReviewValueAfterMigration();
         }
         else if (trigger.getGerritBuildStartedCodeReviewValue() != null) {
             final Integer value = trigger.getGerritBuildStartedCodeReviewValue();
@@ -207,7 +207,7 @@ public class ParameterExpander {
             return value;
         }
         else {
-            final Integer value = config.getGerritBuildStartedCodeReviewValue();
+            final Integer value = config.getGerritBuildStartedCodeReviewValueAfterMigration();
             logger.trace("BuildStartedCodeReview standard value used {}", value);
             return value;
         }
@@ -502,7 +502,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildSuccessfulCodeReviewValue();
             }
             else {
-                return config.getGerritBuildSuccessfulCodeReviewValue();
+                return config.getGerritBuildSuccessfulCodeReviewValueAfterMigration();
             }
         }
         else if (res == Result.FAILURE || res == Result.ABORTED) {
@@ -510,7 +510,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildFailedCodeReviewValue();
             }
             else {
-                return config.getGerritBuildFailedCodeReviewValue();
+                return config.getGerritBuildFailedCodeReviewValueAfterMigration();
             }
         }
         else if (res == Result.UNSTABLE) {
@@ -518,7 +518,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildUnstableCodeReviewValue();
             }
             else {
-                return config.getGerritBuildUnstableCodeReviewValue();
+                return config.getGerritBuildUnstableCodeReviewValueAfterMigration();
             }
         }
         else if (res == Result.NOT_BUILT) {
@@ -526,7 +526,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildNotBuiltCodeReviewValue();
             }
             else {
-                return config.getGerritBuildNotBuiltCodeReviewValue();
+                return config.getGerritBuildNotBuiltCodeReviewValueAfterMigration();
             }
         }
         else {
@@ -535,7 +535,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildFailedCodeReviewValue();
             }
             else {
-                return config.getGerritBuildFailedCodeReviewValue();
+                return config.getGerritBuildFailedCodeReviewValueAfterMigration();
             }
         }
     }
@@ -554,7 +554,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildSuccessfulVerifiedValue();
             }
             else {
-                return config.getGerritBuildSuccessfulVerifiedValue();
+                return config.getGerritBuildSuccessfulVerifiedValueAfterMigration();
             }
         }
         else if (res == Result.FAILURE || res == Result.ABORTED) {
@@ -562,7 +562,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildFailedVerifiedValue();
             }
             else {
-                return config.getGerritBuildFailedVerifiedValue();
+                return config.getGerritBuildFailedVerifiedValueAfterMigration();
             }
         }
         else if (res == Result.UNSTABLE) {
@@ -570,7 +570,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildUnstableVerifiedValue();
             }
             else {
-                return config.getGerritBuildUnstableVerifiedValue();
+                return config.getGerritBuildUnstableVerifiedValueAfterMigration();
             }
         }
         else if (res == Result.NOT_BUILT) {
@@ -578,7 +578,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildNotBuiltVerifiedValue();
             }
             else {
-                return config.getGerritBuildNotBuiltVerifiedValue();
+                return config.getGerritBuildNotBuiltVerifiedValueAfterMigration();
             }
         }
         else {
@@ -587,7 +587,7 @@ public class ParameterExpander {
                 return trigger.getGerritBuildFailedVerifiedValue();
             }
             else {
-                return config.getGerritBuildFailedVerifiedValue();
+                return config.getGerritBuildFailedVerifiedValueAfterMigration();
             }
         }
     }

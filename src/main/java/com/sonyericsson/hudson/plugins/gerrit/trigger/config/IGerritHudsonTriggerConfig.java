@@ -93,64 +93,135 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritCmdBuildNotBuilt();
 
     /**
+     * The default verified value for build started after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildStartedVerifiedValueAfterMigration();
+
+    /**
+     * The default code review value for build started after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildStartedCodeReviewValueAfterMigration();
+
+    /**
+     * The default verified value for build successful after the migration from version 2.28.0.
+     * @return the falue.
+     */
+    Integer getGerritBuildSuccessfulVerifiedValueAfterMigration();
+
+    /**
+     * The default code review value for build successful after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildSuccessfulCodeReviewValueAfterMigration();
+
+    /**
+     * The default verified value for build failed after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildFailedVerifiedValueAfterMigration();
+
+    /**
+     * The default code review value for build failed after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildFailedCodeReviewValueAfterMigration();
+
+    /**
+     * The default verified value for build unstable after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildUnstableVerifiedValueAfterMigration();
+
+    /**
+     * The default code review value for build unstable after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildUnstableCodeReviewValueAfterMigration();
+
+    /**
+     * The default verified value for build not built after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildNotBuiltVerifiedValueAfterMigration();
+
+    /**
+     * The default code review value for build not built after the migration from version 2.28.0.
+     * @return the value.
+     */
+    Integer getGerritBuildNotBuiltCodeReviewValueAfterMigration();
+
+    /**
      * The default verified value for build started.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildStartedVerifiedValue();
 
     /**
      * The default code review value for build started.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildStartedCodeReviewValue();
 
     /**
      * The default verified value for build successful.
      * @return the falue.
      */
+    @Deprecated
     Integer getGerritBuildSuccessfulVerifiedValue();
 
     /**
      * The default code review value for build successful.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildSuccessfulCodeReviewValue();
 
     /**
      * The default verified value for build failed.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildFailedVerifiedValue();
 
     /**
      * The default code review value for build failed.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildFailedCodeReviewValue();
 
     /**
      * The default verified value for build unstable.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildUnstableVerifiedValue();
 
     /**
      * The default code review value for build unstable.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildUnstableCodeReviewValue();
 
     /**
      * The default verified value for build not built.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildNotBuiltVerifiedValue();
 
     /**
      * The default code review value for build not built.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildNotBuiltCodeReviewValue();
+
 
     /**
      * Sets all config values from the provided JSONObject.
