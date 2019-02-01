@@ -516,7 +516,7 @@ public class GerritTrigger extends Trigger<Job> {
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
             if (handler != null) {
-                handler.removeListener(new EventListener(oldFullName));
+                handler.removeListener(new EventListener(oldFullName, this));
                 handler.addListener(createListener());
             }
         }
@@ -562,7 +562,7 @@ public class GerritTrigger extends Trigger<Job> {
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
             if (handler != null) {
-                handler.addListener(createListener(project));
+                handler.addListener(createListener(project, this));
             } else {
                 logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
                         project.getFullDisplayName());
@@ -576,19 +576,20 @@ public class GerritTrigger extends Trigger<Job> {
     /**
      * Creates an {@link EventListener} for the provided project.
      * @param project the project
+     * @param trigger the trigger
      * @return a new listener instance
      */
-    /*package*/ static EventListener createListener(Job project) {
-        return new EventListener(project);
+    /*package*/ static EventListener createListener(Job project, GerritTrigger trigger) {
+        return new EventListener(project, trigger);
     }
 
     /**
      * Creates an {@link EventListener} for this trigger's job.
      * @return a new listener instance.
-     * @see #createListener(hudson.model.Job)
+     * @see #createListener(hudson.model.Job, GerritTrigger)
      */
     /*package*/ EventListener createListener() {
-        return createListener(job);
+        return createListener(job, this);
     }
 
     @Override
