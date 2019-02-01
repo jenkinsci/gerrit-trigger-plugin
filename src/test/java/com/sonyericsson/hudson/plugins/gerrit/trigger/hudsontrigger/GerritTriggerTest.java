@@ -1774,8 +1774,6 @@ public class GerritTriggerTest {
         // We need to make sure that whenever anyone asks for the trigger for any job
         // that it returns this one.
         PowerMockito.mockStatic(GerritTrigger.class);
-        // TODO: Why doesn't this work?
-        // TODO: PowerMockito.stub(PowerMockito.method(GerritTrigger.class, "getTrigger")).toReturn(trigger);
         when(GerritTrigger.getTrigger(any(Job.class))).thenReturn(trigger);
         assertEquals(trigger, GerritTrigger.getTrigger(project));
 
