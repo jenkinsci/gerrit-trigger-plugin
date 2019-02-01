@@ -143,6 +143,7 @@ public class GerritTrigger extends Trigger<Job> {
      * abort running jobs by setting this to 'false'.
      */
     public static final String JOB_ABORT = GerritTrigger.class.getName() + "_job_abort";
+    private transient GerritTriggerRuntimeParam triggerParamRuntime = new GerritTriggerRuntimeParam();
 
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
@@ -978,6 +979,10 @@ public class GerritTrigger extends Trigger<Job> {
                                                     changeBasedEvent.getFiles(
                                                         new GerritQueryHandler(getServerConfig(event))))) {
                                 logger.trace("According to {} the event is interesting.", p);
+                                if (triggerParamRuntime == null) {
+                                        triggerParamRuntime = new GerritTriggerRuntimeParam();
+                                }
+                                triggerParamRuntime.setfileBasedMatch(true);
                                 return true;
                             }
                         } else {
@@ -1649,6 +1654,14 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     *
+     * @return True or False
+     */
+    public boolean getfileBasedMatch() {
+        return this.triggerParamRuntime.getfileBasedMatch();
+    }
+
+    /**
      * Message to write to Gerrit when all builds are not built.
      *
      * @param buildNotBuiltMessage The build not built message
@@ -2199,6 +2212,34 @@ public class GerritTrigger extends Trigger<Job> {
             ExtensionList<PluginGerritEvent.PluginGerritEventDescriptor> extensionList =
                     Hudson.getInstance().getExtensionList(PluginGerritEvent.PluginGerritEventDescriptor.class);
             return extensionList;
+        }
+    }
+
+    /**
+     * Class for maintaining the Gerrit Trigger parameters.
+     * These are parameters whose values are known only after querying Gerrit, for example,
+     * the criterion by which something was 'isInteresting', say because the file modified
+     * in a changeset matched the file-based trigger file list.
+     */
+    public class GerritTriggerRuntimeParam {
+        private boolean fileBasedMatch = false;
+
+        /**
+         * Set file based match if found so.
+         *
+         * @param i true or false
+         */
+        public void setfileBasedMatch(boolean i) {
+            this.fileBasedMatch = i;
+        }
+
+        /**
+         * Returns true or false.
+         *
+         * @return true or false
+         */
+        public boolean getfileBasedMatch() {
+            return this.fileBasedMatch;
         }
     }
 
