@@ -155,16 +155,6 @@ public class GerritTrigger extends Trigger<Job> {
     //! Default the latch to the non-waiting zero state, which corresponds to
     //! static project configurations.
     private transient CountDownLatch projectListIsReady = new CountDownLatch(0);
-    //! This boolean keeps track of whether or not the dynamic trigger configuration
-    //! has changed between stop/start calls.
-    //!
-    //! If the dynamic configuration settings have stayed the same (that is, the
-    //! trigger URL is the same), then we don't have to pause the EventListener thread
-    //! from processing events; the configuration that we already have is fine.
-    //!
-    //! Default this to true, since the first run will need to do the same kind of
-    //! things that a second, different run would do.
-    private transient boolean dynamicConfigurationChangedFromLastStart = true;
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
     private SkipVote skipVote;
@@ -627,19 +617,8 @@ public class GerritTrigger extends Trigger<Job> {
         if (dynamicTriggerConfiguration) {
             // Set up the latch so that the EventListener thread has to wait for
             // the project list to be ready before processing any events.
-            //
-            // If the trigger configuration URL hasn't changed from the last time
-            // that we called "start()", then we don't have to mess with our latch
-            // because we've already set up the latch for that configuration.
-            // Otherwise, set up a new latch so that the EventListener has to wait
-            // until we've fetched the URL.
-            if (this.dynamicConfigurationChangedFromLastStart) {
-                logger.debug("Start project: {}; dynamic project list; resetting latch to 1", project);
-                projectListIsReady = new CountDownLatch(1);
-            } else {
-                logger.debug("Start project: {}; dynamic project list; leaving latch value at {}", project,
-                        projectListIsReady.getCount());
-            }
+            logger.debug("Start project: {}; dynamic project list; setting latch to 1", project);
+            projectListIsReady = new CountDownLatch(1);
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         } else {
             logger.debug("Start project: {}; static project list; setting latch to 0", project);
@@ -1471,24 +1450,6 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setTriggerConfigURL(String triggerConfigURL) {
-        // If the trigger URL has changed from the previous value, then we can't use
-        // the project list that we might already have loaded from the last time this trigger
-        // was started.  Just make a note of that here; we'll deal with it in "start()".
-        if (triggerConfigURL == null) {
-            if (this.triggerConfigURL != null) {
-                // We need to start fresh when the URL has changed.
-                this.dynamicConfigurationChangedFromLastStart = true;
-            }
-        } else {
-            if (!triggerConfigURL.equals(this.triggerConfigURL)) {
-                // We need to start fresh when the URL has changed.
-                this.dynamicConfigurationChangedFromLastStart = true;
-            } else {
-                // We had this same configuration before.
-                this.dynamicConfigurationChangedFromLastStart = false;
-            }
-        }
-
         this.triggerConfigURL = triggerConfigURL;
     }
 
@@ -1962,7 +1923,6 @@ public class GerritTrigger extends Trigger<Job> {
         }
         if (projectListIsReady == null) {
             projectListIsReady = new CountDownLatch(0);
-            dynamicConfigurationChangedFromLastStart = true;
         }
         logger.debug("readResolve: loaded.");
         return super.readResolve();
