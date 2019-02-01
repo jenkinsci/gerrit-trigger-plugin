@@ -1,12 +1,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +73,7 @@ final class DynamicConfigurationCacheProxy {
         }
 
         long updateInterval = GerritTriggerTimer.getInstance().calculateAverageDynamicConfigRefreshInterval();
-        return TimeUnit2.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastTimeUpdated) > updateInterval;
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - lastTimeUpdated) > updateInterval;
     }
 
     /**

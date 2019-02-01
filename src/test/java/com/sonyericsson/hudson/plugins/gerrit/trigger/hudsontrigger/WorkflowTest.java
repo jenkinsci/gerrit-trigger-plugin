@@ -123,9 +123,9 @@ public class WorkflowTest {
 
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
-                + "   stage 'Build'\n"
+                + "   stage ('Build') {\n"
                 + "   setGerritReview customUrl: 'myCustomUrl'\n"
-                + "}\n");
+                + "}}\n");
 
             PluginImpl.getHandler_().post(event);
 
@@ -163,10 +163,10 @@ public class WorkflowTest {
 
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
-                + "   stage 'Build'\n"
+                + "   stage ('Build') {\n"
                 + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
                 + "   currentBuild.setResult('FAILURE')\n"
-                + "}\n");
+                + "}}\n");
 
             PluginImpl.getHandler_().post(event);
 
@@ -205,9 +205,9 @@ public class WorkflowTest {
 
             WorkflowJob job = createWorkflowJob(event, ""
                 + "node {\n"
-                + "   stage 'Build'\n"
+                + "   stage ('Build') {\n"
                 + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
-                + "}\n");
+                + "}}\n");
 
             PluginImpl.getHandler_().post(event);
 
@@ -266,9 +266,9 @@ public class WorkflowTest {
     private WorkflowJob createWorkflowJob(PatchsetCreated event) throws IOException {
         return createWorkflowJob(event, ""
                 + "node {\n"
-                + "   stage 'Build'\n"
+                + "   stage ('Build') {\n"
                 + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n"
-                + "}\n");
+                + "}}\n");
     }
 
     /**

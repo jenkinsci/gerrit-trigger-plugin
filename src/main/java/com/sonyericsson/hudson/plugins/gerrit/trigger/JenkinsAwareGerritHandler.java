@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import hudson.security.ACL;
+import hudson.security.ACLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,8 +75,10 @@ public class JenkinsAwareGerritHandler extends GerritHandler {
             }
         }
 
-        // The read deal
-        super.notifyListeners(event);
+        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
+            // The read deal
+            super.notifyListeners(event);
+        }
 
         // //Notify lifecycle listeners.
         if (event instanceof GerritEventLifecycle) {

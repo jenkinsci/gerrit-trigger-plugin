@@ -238,6 +238,13 @@
                                         checked="${it.config.enableManualTrigger}"
                                         default="${true}"/>
                         </f:entry>
+                        <f:entry title="${%TriggerOnAllComments}"
+                                 help="/plugin/gerrit-trigger/help-TriggerOnAllComments.html">
+                            <f:checkbox name="triggerOnAllComments"
+                                        checked="${it.config.triggerOnAllComments}"
+                                        default="false"/>
+                        </f:entry>
+
                         <f:entry title="${%Fetch Project List Settings}"
                                  help="/plugin/gerrit-trigger/help-GerritFetchProjectList.html">
                             <div>

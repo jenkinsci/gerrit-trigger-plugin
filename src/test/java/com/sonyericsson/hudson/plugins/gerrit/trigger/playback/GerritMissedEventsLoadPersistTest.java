@@ -214,7 +214,7 @@ public class GerritMissedEventsLoadPersistTest {
         Random randomGenerator = new Random();
         int randomInt = randomGenerator.nextInt(MAXRANDOMNUMBER);
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
-                = new GerritMissedEventsPlaybackManager(new Integer(randomInt).toString() + "-server");
+                = new GerritMissedEventsPlaybackManager(Integer.valueOf(randomInt).toString() + "-server");
         try {
             missingEventsPlaybackManager.load();
         } catch (IOException e) {

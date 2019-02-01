@@ -237,6 +237,13 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     boolean isEnablePluginMessages();
 
     /**
+     * If comments added by the default user should trigger events.  Enabling this could
+     * be risky as infinite loops might be created.
+     * @return true if so
+     */
+    boolean isTriggerOnAllComments();
+
+    /**
      * If the HTTP REST API should be used for change approval instead of the sh API.
      *
      * @return true if so.

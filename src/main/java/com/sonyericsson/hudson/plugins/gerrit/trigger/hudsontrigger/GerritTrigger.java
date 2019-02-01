@@ -82,7 +82,6 @@ import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import hudson.model.Items;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -115,6 +114,7 @@ import java.util.StringTokenizer;
 import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
@@ -554,17 +554,7 @@ public class GerritTrigger extends Trigger<Job> {
             return null;
         }
 
-        if (project instanceof ParameterizedJob) {
-            // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
-            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
-            for (Trigger p : parameterizedJob.getTriggers().values()) {
-                if (GerritTrigger.class.isInstance(p)) {
-                    return GerritTrigger.class.cast(p);
-                }
-            }
-        }
-
-        return null;
+        return ParameterizedJobMixIn.getTrigger(project, GerritTrigger.class);
     }
 
     /**
@@ -2015,7 +2005,7 @@ public class GerritTrigger extends Trigger<Job> {
                     Integer.parseInt(value);
                     return FormValidation.ok();
                 } catch (NumberFormatException e) {
-                    return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+                    return FormValidation.error(Messages.NotANumber());
                 }
             }
         }
@@ -2050,16 +2040,13 @@ public class GerritTrigger extends Trigger<Job> {
                     assert jenkins != null;
                     Item item = jenkins.getItem(projectName, project, Item.class);
                     if ((item == null) || !(item instanceof Job)) {
-                        Job nearest = Items.findNearest(Job.class,
-                                projectName,
-                                project.getParent()
-                        );
+                        AbstractProject nearest = AbstractProject.findNearest(projectName);
                         String path = "<null>";
                         if (nearest != null) {
-                            path = nearest.getRelativeNameFrom(project);
+                            path = nearest.getFullName();
                         }
                         return FormValidation.error(
-                                hudson.model.Messages.AbstractItem_NoSuchJobExists(
+                                Messages.NoSuchJobExists(
                                         projectName,
                                         path));
                     }

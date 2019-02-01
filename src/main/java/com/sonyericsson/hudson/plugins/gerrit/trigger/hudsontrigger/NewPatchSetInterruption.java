@@ -32,6 +32,8 @@ import jenkins.model.CauseOfInterruption;
  * @author rinrinne (rinrin.ne@gmail.com)
  */
 public final class NewPatchSetInterruption extends CauseOfInterruption {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public String getShortDescription() {
         return Messages.AbortedByNewPatchSet();
