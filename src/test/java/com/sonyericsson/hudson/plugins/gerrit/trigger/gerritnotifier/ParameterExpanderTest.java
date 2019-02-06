@@ -44,7 +44,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -384,11 +383,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessful("",
-            "\n\nhttp://localhost/test/ : SUCCESS");
+                "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
-            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("${BUILD_URL}console",
-            "\n\nhttp://localhost/test/console : SUCCESS");
+                "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -400,11 +399,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeAbandoned() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("",
-            "\n\nhttp://localhost/test/ : SUCCESS");
+                "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("http://example.org/<CHANGE_ID>",
-            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("${BUILD_URL}console",
-            "\n\nhttp://localhost/test/console : SUCCESS");
+                "\n\nhttp://localhost/test/console : SUCCESS");
     }
     /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeMerged event instead.
@@ -415,11 +414,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeMerged() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeMerged("",
-            "\n\nhttp://localhost/test/ : SUCCESS");
+                "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeMerged("http://example.org/<CHANGE_ID>",
-            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeMerged("${BUILD_URL}console",
-            "\n\nhttp://localhost/test/console : SUCCESS");
+                "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -431,11 +430,11 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandSuccessfulChangeRestored() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeRestored("",
-            "\n\nhttp://localhost/test/ : SUCCESS");
+                "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeRestored("http://example.org/<CHANGE_ID>",
-            "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
+                "\n\nhttp://example.org/Iddaaddaa123456789 : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeRestored("${BUILD_URL}console",
-            "\n\nhttp://localhost/test/console : SUCCESS");
+                "\n\nhttp://localhost/test/console : SUCCESS");
     }
 
     /**
@@ -447,12 +446,12 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildCompletedCommandMulipleBuildsMessageOrder() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults("",
-            new String[] { // messages must be in order
-                "\n\nhttp://localhost/test/ : FAILURE",
-                "\n\nhttp://localhost/test/ : UNSTABLE",
-                "\n\nhttp://localhost/test/ : SUCCESS", },
-            new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
-            Setup.createPatchsetCreated(), -1, 0);
+                new String[] { // messages must be in order
+                    "\n\nhttp://localhost/test/ : FAILURE",
+                    "\n\nhttp://localhost/test/ : UNSTABLE",
+                    "\n\nhttp://localhost/test/ : SUCCESS", },
+                new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
+                Setup.createPatchsetCreated(), -1, 0);
     }
 
     /**
@@ -464,7 +463,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessful(String customUrl, String expectedBuildsStats)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats, Setup.createPatchsetCreated(), 3, 32);
     }
 
@@ -477,9 +476,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeAbandoned(String customUrl, String expectedBuildsStats)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-            Setup.createChangeAbandoned(), null, null);
+                                                   Setup.createChangeAbandoned(), null, null);
     }
 
     /**
@@ -491,9 +490,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeMerged(String customUrl, String expectedBuildsStats)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-            Setup.createChangeMerged(), null, null);
+                                                   Setup.createChangeMerged(), null, null);
     }
 
     /**
@@ -505,9 +504,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulChangeRestored(String customUrl, String expectedBuildsStats)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulEvent(customUrl, expectedBuildsStats,
-            Setup.createChangeRestored(), null, null);
+                                                   Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -523,11 +522,11 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandSuccessfulEvent(String customUrl, String expectedBuildsStats,
-        GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
-        throws IOException, InterruptedException {
+            GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+                    throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
-            new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
-            Setup.createChangeRestored(), null, null);
+                new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
+                Setup.createChangeRestored(), null, null);
     }
 
     /**
@@ -545,9 +544,9 @@ public class ParameterExpanderTest {
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
-        Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
-        Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
-        throws IOException, InterruptedException {
+            Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
+            Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+                    throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
@@ -621,7 +620,7 @@ public class ParameterExpanderTest {
     @Test
     public void testBuildStatsWithUnsuccessfulMessage() throws Exception {
         tryBuildStatsFailureCommand("This was an unsuccessful message. ",
-            "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
+                "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
         tryBuildStatsFailureCommand(null, "\n\nhttp://localhost/test/ : FAILURE");
         tryBuildStatsFailureCommand("", "\n\nhttp://localhost/test/ : FAILURE");
     }
@@ -837,7 +836,7 @@ public class ParameterExpanderTest {
 
         @Override
         public void describeMismatchSafely(String item, Description mismatchDescription) {
-            mismatchDescription.appendText("was \"").appendText(item).appendText("\"");
+          mismatchDescription.appendText("was \"").appendText(item).appendText("\"");
         }
 
         @Override

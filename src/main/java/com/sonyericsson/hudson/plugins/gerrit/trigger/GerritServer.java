@@ -24,11 +24,26 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_HOUR;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MAX_MINUTE;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
+import hudson.Extension;
+import hudson.Functions;
+import hudson.RelativePath;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.model.Action;
+import hudson.model.Describable;
+import hudson.model.Failure;
+import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.security.Permission;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.Secret;
+import hudson.util.ListBoxModel.Option;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,9 +57,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +67,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import javax.servlet.ServletException;
+
+import jenkins.model.Jenkins;
+import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.CharEncoding;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -72,36 +92,12 @@ import org.kohsuke.stapler.export.ExportedBean;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import hudson.Extension;
-import hudson.Functions;
-import hudson.RelativePath;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.Describable;
-import hudson.model.Descriptor;
-import hudson.model.Failure;
-import hudson.model.Hudson;
-import hudson.model.Job;
-import hudson.security.Permission;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import hudson.util.ListBoxModel.Option;
-import hudson.util.Secret;
-import jenkins.model.Jenkins;
-import net.sf.json.JSONObject;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+
 import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
-import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -111,6 +107,14 @@ import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshUtil;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 /**
  * Every instance of this class represents a Gerrit server having its own unique name,
@@ -120,18 +124,19 @@ import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
+ *
  */
 @ExportedBean(defaultVisibility = 2)
 public class GerritServer implements Describable<GerritServer>, Action {
-    /**
-     * Key that is used to select to trigger a build on events from any server.
-     */
-    public static final String ANY_SERVER = "__ANY__";
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
     private static final String START_FAILURE = "Error establising conection";
     private static final String STOP_SUCCESS = "Connection stopped";
     private static final String STOP_FAILURE = "Error terminating connection";
+    /**
+     * Key that is used to select to trigger a build on events from any server.
+     */
+    public static final String ANY_SERVER = "__ANY__";
     private static final int THREADS_FOR_TEST_CONNECTION = 1;
     private static final int TIMEOUT_FOR_TEST_CONNECTION = 10;
     private static final int RESPONSE_COUNT = 1;
@@ -151,6 +156,38 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private transient GerritConnectionListener gerritConnectionListener;
     private transient GerritMissedEventsPlaybackManager missedEventsPlaybackManager;
 
+    @Override
+    public DescriptorImpl getDescriptor() {
+        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
+
+    /**
+     * Returns the Missed Events playback manager.
+     * @return GerritMissedEventsPlaybackManager
+     */
+    public GerritMissedEventsPlaybackManager getMissedEventsPlaybackManager() {
+        return missedEventsPlaybackManager;
+    }
+
+     /**
+     * Convenience method for jelly to get url of the server list's page relative to root.
+     *
+     * @see GerritManagement#getUrlName()
+     * @return the relative url
+     */
+    public String getParentUrl() {
+        return GerritManagement.get().getUrlName();
+    }
+
+    /**
+     * Convenience method for jelly to get url of this server's config page relative to root.
+     *
+     * @see GerritManagement#getUrlName()
+     * @return the relative url
+     */
+    public String getUrl() {
+        return GerritManagement.get().getUrlName() + "/server/" + getUrlEncodedName();
+    }
     /**
      * Constructor.
      *
@@ -163,7 +200,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     /**
      * Constructor.
      *
-     * @param name                  the name of the server.
+     * @param name the name of the server.
      * @param noConnectionOnStartup if noConnectionOnStartup or not.
      */
     public GerritServer(String name, boolean noConnectionOnStartup) {
@@ -183,54 +220,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public static boolean isAnyServer(String serverName) {
         return serverName == null || serverName.isEmpty() || ANY_SERVER.equals(serverName);
-    }
-
-    /**
-     * Returns localized texts for each known notification value.
-     *
-     * @return a map with level id to level text.
-     */
-    public static Map<Notify, String> notificationLevelTextsById() {
-        ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
-        Map<Notify, String> textsById = new LinkedHashMap<Notify, String>(Notify.values().length, 1);
-        for (Notify level : Notify.values()) {
-            textsById.put(level, holder.format("NotificationLevel_" + level));
-        }
-        return textsById;
-    }
-
-    @Override
-    public DescriptorImpl getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
-    }
-
-    /**
-     * Returns the Missed Events playback manager.
-     *
-     * @return GerritMissedEventsPlaybackManager
-     */
-    public GerritMissedEventsPlaybackManager getMissedEventsPlaybackManager() {
-        return missedEventsPlaybackManager;
-    }
-
-    /**
-     * Convenience method for jelly to get url of the server list's page relative to root.
-     *
-     * @return the relative url
-     * @see GerritManagement#getUrlName()
-     */
-    public String getParentUrl() {
-        return GerritManagement.get().getUrlName();
-    }
-
-    /**
-     * Convenience method for jelly to get url of this server's config page relative to root.
-     *
-     * @return the relative url
-     * @see GerritManagement#getUrlName()
-     */
-    public String getUrl() {
-        return GerritManagement.get().getUrlName() + "/server/" + getUrlEncodedName();
     }
 
     /**
@@ -377,9 +366,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
         Jenkins jenkins = Jenkins.getInstance();
         if (jenkins != null && jenkins.getRootUrl() != null) {
             return Functions.joinPath(jenkins.getRootUrl(),
-                getParentUrl(), "server", getUrlEncodedName());
-        }
-        else {
+                    getParentUrl(), "server", getUrlEncodedName());
+        } else {
             return Functions.joinPath("/", getParentUrl(), "server", getUrlEncodedName());
         }
     }
@@ -393,8 +381,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         String urlName;
         try {
             urlName = URLEncoder.encode(name, CharEncoding.UTF_8);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             urlName = URLEncoder.encode(name);
         }
         return urlName;
@@ -433,6 +420,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Starts the server's project list updater, send command queue and event manager.
+     *
      */
     public void start() {
         checkPermission();
@@ -455,11 +443,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
         initializeConnectionListener();
 
         projectListUpdater =
-            new GerritProjectListUpdater(name);
+                new GerritProjectListUpdater(name);
         projectListUpdater.start();
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
-        addListener((GerritEventListener) missedEventsPlaybackManager);
+        addListener((GerritEventListener)missedEventsPlaybackManager);
 
         logger.info(name + " started");
         started = true;
@@ -477,6 +465,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Stops the server's project list updater, send command queue and event manager.
+     *
      */
     public void stop() {
         checkPermission();
@@ -486,8 +475,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             projectListUpdater.shutdown();
             try {
                 projectListUpdater.join();
-            }
-            catch (InterruptedException ie) {
+            } catch (InterruptedException ie) {
                 logger.error("project list updater of " + name + "interrupted", ie);
             }
             projectListUpdater = null;
@@ -544,7 +532,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Get the GerritConnectionListener for GerritAdministrativeMonitor.
-     *
      * @return the GerritConnectionListener, or null if it has not yet been initialized.
      */
     public GerritConnectionListener getGerritConnectionListener() {
@@ -555,6 +542,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Starts the connection to Gerrit stream of events.
      * During startup it is called by
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritItemListener}.
+     *
      */
     public synchronized void startConnection() {
         checkPermission();
@@ -571,8 +559,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 gerritConnection.addListener(missedEventsPlaybackManager);
 
                 gerritConnection.start();
-            }
-            else {
+            } else {
                 logger.warn("Already started!");
             }
         }
@@ -580,6 +567,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Stops the connection to Gerrit stream of events.
+     *
      */
     public synchronized void stopConnection() {
         checkPermission();
@@ -589,8 +577,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             gerritConnection.removeListener(missedEventsPlaybackManager);
             gerritConnection = null;
             gerritEventManager.setIgnoreEMail(name, null);
-        }
-        else {
+        } else {
             logger.warn("Was told to shutdown again?");
         }
     }
@@ -610,6 +597,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Restarts the connection to Gerrit stream of events.
+     *
      */
     public void restartConnection() {
         stopConnection();
@@ -638,8 +626,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public List<String> getGerritProjects() {
         if (projectListUpdater != null) {
             return projectListUpdater.getGerritProjects();
-        }
-        else {
+        } else {
             return new ArrayList<String>();
         }
     }
@@ -655,8 +642,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public void triggerEvent(GerritEvent event) {
         if (gerritEventManager != null) {
             gerritEventManager.post(event);
-        }
-        else {
+        } else {
             throw new IllegalStateException("Manager not started!");
         }
     }
@@ -669,15 +655,13 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public String getGerritVersion() {
         if (gerritConnection != null) {
             return gerritConnection.getGerritVersion();
-        }
-        else {
+        } else {
             return null;
         }
     }
 
     /**
      * Return if the current server support replication events.
-     *
      * @return true if replication events are supported, otherwise false
      */
     public boolean isReplicationEventsSupported() {
@@ -686,6 +670,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks whether the current server support project-created events or not.
+     *
      * Note: We need to exclude snapshot versions from this check. Otherwise, snapshot versions
      * that are &lt; Gerrit 2.12 will default to waiting for Project Created events which are only
      * supported in Gerrit &gt;= 2.12.
@@ -694,22 +679,226 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public boolean isProjectCreatedEventsSupported() {
         return GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.projectCreatedEvents, name,
-            true);
+                true);
     }
 
     /**
+     * Descriptor is only used for UI form bindings.
+     */
+    @Extension
+    public static final class DescriptorImpl extends Descriptor<GerritServer> {
+
+        @Override
+        public String getDisplayName() {
+            return "Gerrit Server with Default Configurations";
+        }
+
+        /**
+         * Tests if the provided parameters can connect to Gerrit.
+         * @param gerritHostName the hostname
+         * @param gerritSshPort the ssh-port
+         * @param gerritProxy the proxy url
+         * @param gerritUserName the username
+         * @param gerritAuthKeyFile the private key file
+         * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
+         * @return {@link FormValidation#ok() } if can be done,
+         *         {@link FormValidation#error(java.lang.String) } otherwise.
+         */
+        public FormValidation doTestConnection(
+                @QueryParameter("gerritHostName") final String gerritHostName,
+                @QueryParameter("gerritSshPort") final int gerritSshPort,
+                @QueryParameter("gerritProxy") final String gerritProxy,
+                @QueryParameter("gerritUserName") final String gerritUserName,
+                @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
+                @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("gerritHostName = {}\n"
+                        + "gerritSshPort = {}\n"
+                        + "gerritProxy = {}\n"
+                        + "gerritUserName = {}\n"
+                        + "gerritAuthKeyFile = {}\n"
+                        + "gerritAuthKeyFilePassword = {}",
+                        new Object[]{gerritHostName,
+                            gerritSshPort,
+                            gerritProxy,
+                            gerritUserName,
+                            gerritAuthKeyFile,
+                            gerritAuthKeyFilePassword,  });
+            }
+
+            File file = new File(gerritAuthKeyFile);
+            String password = null;
+            if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() > 0) {
+                password = Secret.fromString(gerritAuthKeyFilePassword).getPlainText();
+            }
+            if (SshUtil.checkPassPhrase(file, password)) {
+                if (file.exists() && file.isFile()) {
+                    try {
+                        final SshConnection sshConnection = SshConnectionFactory.getConnection(
+                                gerritHostName,
+                                gerritSshPort,
+                                gerritProxy,
+                                new Authentication(file, gerritUserName, password));
+                        ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
+                        Future<Integer> future = service.submit(new Callable<Integer>() {
+                            @Override
+                            public Integer call() throws Exception {
+                                return sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read();
+                            }
+                        });
+                        int readChar;
+                        try {
+                            readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);
+                        } catch (TimeoutException ex) {
+                            readChar = 0;
+                        } finally {
+                            sshConnection.disconnect();
+                        }
+                        if (readChar < 0) {
+                            return FormValidation.error(Messages.StreamEventsCapabilityException(gerritUserName));
+                        } else {
+                            return FormValidation.ok(Messages.Success());
+                        }
+                    } catch (SshConnectException ex) {
+                        return FormValidation.error(Messages.SshConnectException());
+                    } catch (SshAuthenticationException ex) {
+                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
+                    } catch (Exception e) {
+                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+                    }
+                } else {
+                    return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
+                }
+            } else {
+                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+            }
+
+        }
+
+        /**
+         * Tests if the REST API settings can connect to Gerrit.
+         *
+         * @param gerritFrontEndUrl the url
+         * @param gerritHttpUserName the user name
+         * @param gerritHttpPassword the password
+         * @return {@link FormValidation#ok()} if it works.
+         */
+        public FormValidation doTestRestConnection(
+                @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
+                @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
+                @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
+
+            String password = Secret.fromString(gerritHttpPassword).getPlainText();
+
+            String restUrl = gerritFrontEndUrl;
+            if (gerritFrontEndUrl != null && !gerritFrontEndUrl.endsWith("/")) {
+                restUrl = gerritFrontEndUrl + "/";
+            }
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(new AuthScope(null, -1),
+                new UsernamePasswordCredentials(gerritHttpUserName,
+                        password));
+            HttpClient httpclient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider)
+                .build();
+            HttpGet httpGet = new HttpGet(restUrl + "a/projects/?d");
+            HttpResponse execute;
+            try {
+                execute = httpclient.execute(httpGet);
+            } catch (IOException e) {
+                return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+            }
+
+            int statusCode = execute.getStatusLine().getStatusCode();
+            switch (statusCode) {
+                case HttpURLConnection.HTTP_OK:
+                    return FormValidation.ok(Messages.Success());
+                case HttpURLConnection.HTTP_UNAUTHORIZED:
+                    return FormValidation.error(Messages.HttpConnectionUnauthorized());
+                default:
+                    return FormValidation.error(Messages.HttpConnectionError(statusCode));
+            }
+
+        }
+
+        /**
+         * Fill the Gerrit slave dropdown with the list of slaves configured with the selected server.
+         * Expected to be called only when slave config is enabled at job level.
+         *
+         * @param serverName name of the server
+         * @return list of slaves.
+         */
+        public ListBoxModel doFillDefaultSlaveIdItems(
+            @QueryParameter("name") @RelativePath("../..") final String serverName) {
+            ListBoxModel items = new ListBoxModel();
+            logger.trace("filling default gerrit slave drop down for sever {}", serverName);
+            GerritServer server = PluginImpl.getServer_(serverName);
+            if (server == null) {
+                logger.warn(Messages.CouldNotFindServer(serverName));
+                items.add(Messages.CouldNotFindServer(serverName), "");
+                return items;
+            }
+            ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
+            if (replicationConfig == null || !replicationConfig.isEnableReplication()
+                || replicationConfig.getGerritSlaves().size() == 0) {
+                logger.trace(Messages.GerritSlaveNotDefined());
+                items.add(Messages.GerritSlaveNotDefined(), "");
+                return items;
+            }
+            for (GerritSlave slave : replicationConfig.getGerritSlaves()) {
+                boolean selected;
+                if (slave.getId().equals(replicationConfig.getDefaultSlaveId())) {
+                    selected = true;
+                } else {
+                    selected = false;
+                }
+                items.add(new ListBoxModel.Option(slave.getName(), slave.getId(), selected));
+            }
+            return items;
+        }
+
+        /**
+         * Fill the dropdown for notification levels.
+         *
+         * @return the values.
+         */
+        public ListBoxModel doFillNotificationLevelItems() {
+            Map<Notify, String> levelTextsById = notificationLevelTextsById();
+            ListBoxModel items = new ListBoxModel(levelTextsById.size());
+            for (Entry<Notify, String> level : levelTextsById.entrySet()) {
+                items.add(new Option(level.getValue(), level.getKey().toString()));
+            }
+            return items;
+        }
+    }
+
+    /**
+     * Returns localized texts for each known notification value.
+     *
+     * @return a map with level id to level text.
+     */
+    public static Map<Notify, String> notificationLevelTextsById() {
+        ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
+        Map<Notify, String> textsById = new LinkedHashMap<Notify, String>(Notify.values().length, 1);
+        for (Notify level : Notify.values()) {
+            textsById.put(level, holder.format("NotificationLevel_" + level));
+        }
+        return textsById;
+    }
+
+   /**
      * Saves the form to the configuration and disk.
      *
      * @param req StaplerRequest
      * @param rsp StaplerResponse
-     * @throws ServletException     if something unfortunate happens.
-     * @throws IOException          if something unfortunate happens.
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
-    @RequirePOST
+   @RequirePOST
     public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-        IOException,
-        InterruptedException {
+    IOException,
+    InterruptedException {
         checkPermission();
         if (logger.isDebugEnabled()) {
             logger.debug("submit {}", req.toString());
@@ -720,8 +909,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (!name.equals(newName)) {
             if (PluginImpl.containsServer_(newName)) {
                 throw new Failure("A server already exists with the name '" + newName + "'");
-            }
-            else if (ANY_SERVER.equals(newName)) {
+            } else if (ANY_SERVER.equals(newName)) {
                 throw new Failure("Illegal name '" + newName + "'");
             }
             rename(newName);
@@ -733,8 +921,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         if (!started) {
             this.start();
-        }
-        else {
+        } else {
             if (missedEventsPlaybackManager != null) {
                 missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
             }
@@ -759,8 +946,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             start();
             startConnection();
             changeSelectedServerInJobs(oldName);
-        }
-        else {
+        } else {
             stop();
             String oldName = name;
             name = newName;
@@ -788,23 +974,22 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
             if (!(job instanceof AbstractProject)) {
                 logger.warn("Unable to modify Gerrit Trigger configurations for job [" + job.getName()
-                    + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]."
-                    + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
+                        + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]."
+                        + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
                 return;
             }
-            AbstractProject project = (AbstractProject) job;
+            AbstractProject project = (AbstractProject)job;
 
-            GerritTrigger trigger = (GerritTrigger) project.getTrigger(GerritTrigger.class);
+            GerritTrigger trigger = (GerritTrigger)project.getTrigger(GerritTrigger.class);
             if (trigger != null) {
                 try {
                     trigger.setServerName(name);
                     trigger.start(job, false);
                     project.addTrigger(trigger);
                     project.save();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     logger.error("Error saving Gerrit Trigger configurations for job [" + job.getName()
-                        + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
+                            + "] after Gerrit server has been renamed from [" + oldName + "] to [" + name + "]");
                 }
             }
         }
@@ -818,27 +1003,25 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
             if (!(job instanceof AbstractProject)) {
                 logger.warn("Unable to remove Gerrit Trigger ffrom job [" + job.getName() + "]. "
-                    + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
+                        + " This feature is only supported for AbstractProject types e.g. Freestyle Jobs.");
                 return;
             }
-            AbstractProject project = (AbstractProject) job;
+            AbstractProject project = (AbstractProject)job;
 
-            GerritTrigger trigger = (GerritTrigger) project.getTrigger(GerritTrigger.class);
+            GerritTrigger trigger = (GerritTrigger)project.getTrigger(GerritTrigger.class);
             trigger.stop();
             try {
                 project.removeTrigger(trigger.getDescriptor());
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 logger.error("Error removing Gerrit trigger from job [" + job.getName()
-                    + "]. Please check job config");
+                        + "]. Please check job config");
             }
             trigger = null;
             try {
                 job.save();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 logger.error("Error saving configuration of job [" + job.getName()
-                    + "] while trying to remove Gerrit server [" + name + "]. Please check job config.");
+                        + "] while trying to remove Gerrit server [" + name + "]. Please check job config.");
             }
         }
     }
@@ -869,13 +1052,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
             if (responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
                 timeoutWakeup = false;
                 setConnectionResponse(START_SUCCESS);
-            }
-            else {
+            } else {
                 timeoutWakeup = true;
                 throw new InterruptedException("time out.");
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             setConnectionResponse(START_FAILURE);
             logger.error("Could not start connection. ", ex);
         }
@@ -917,12 +1098,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
             if (responseLatch.await(RESPONSE_TIMEOUT_S, TimeUnit.SECONDS)) {
                 setConnectionResponse(STOP_SUCCESS);
-            }
-            else {
+            } else {
                 throw new InterruptedException("time out.");
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             setConnectionResponse(STOP_FAILURE);
             logger.error("Could not stop connection. ", ex);
         }
@@ -1040,7 +1219,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Get the response after a start/stop/restartConnection; Used by jelly.
-     *
      * @return the connection response
      */
     public String getConnectionResponse() {
@@ -1049,7 +1227,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Set the connection status.
-     *
      * @param response the response to be set.
      */
     private void setConnectionResponse(String response) {
@@ -1058,17 +1235,16 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Saves the form to the configuration and disk.
-     *
      * @param req StaplerRequest
      * @param rsp StaplerResponse
-     * @throws ServletException     if something unfortunate happens.
-     * @throws IOException          if something unfortunate happens.
+     * @throws ServletException if something unfortunate happens.
+     * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
     @RequirePOST
     public void doRemoveConfirm(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-        IOException,
-        InterruptedException {
+    IOException,
+    InterruptedException {
 
         checkPermission();
         stopConnection();
@@ -1088,12 +1264,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks that the provided parameter is an integer and not negative.
-     *
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
      */
     public FormValidation doPositiveIntegerCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         return FormValidation.validatePositiveInteger(value);
     }
@@ -1105,7 +1281,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @return {@link FormValidation#validateNonNegativeInteger(String)}
      */
     public FormValidation doNonNegativeIntegerCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         return FormValidation.validateNonNegativeInteger(value);
     }
@@ -1113,22 +1290,21 @@ public class GerritServer implements Describable<GerritServer>, Action {
     /**
      * Checks that the provided parameter is an integer, not negative, that is larger
      * than the minimum value.
-     *
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
      */
     public FormValidation doDynamicConfigRefreshCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         FormValidation validatePositive = FormValidation.validatePositiveInteger(value);
         if (!validatePositive.kind.equals(FormValidation.Kind.OK)) {
             return validatePositive;
-        }
-        else {
+        } else {
             int intValue = Integer.parseInt(value);
             if (intValue < GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL) {
                 return FormValidation.error(Messages.DynamicConfRefreshTooLowError(
-                    GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL));
+                        GerritDefaultValues.MINIMUM_DYNAMIC_CONFIG_REFRESH_INTERVAL));
             }
         }
         return FormValidation.ok();
@@ -1136,40 +1312,37 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks that the provided parameter is an integer.
-     *
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
      */
     public FormValidation doIntegerCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         try {
             Integer.parseInt(value);
             return FormValidation.ok();
-        }
-        catch (NumberFormatException e) {
+        } catch (NumberFormatException e) {
             return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
         }
     }
 
     /**
      * Checks that the provided parameter is an empty string or an integer.
-     *
      * @param value the value.
      * @return {@link FormValidation#validatePositiveInteger(String)}
      */
     public FormValidation doEmptyOrIntegerCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         if (value == null || value.length() <= 0) {
             return FormValidation.ok();
-        }
-        else {
+        } else {
             try {
                 Integer.parseInt(value);
                 return FormValidation.ok();
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
             }
         }
@@ -1177,23 +1350,21 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks if the value is a valid URL. It does not check if the URL is reachable.
-     *
      * @param value the value
      * @return {@link FormValidation#ok() } if it is so.
      */
     public FormValidation doUrlCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         if (value == null || value.length() <= 0) {
             return FormValidation.error(Messages.EmptyError());
-        }
-        else {
+        } else {
             try {
                 new URL(value);
 
                 return FormValidation.ok();
-            }
-            catch (MalformedURLException ex) {
+            } catch (MalformedURLException ex) {
                 return FormValidation.error(Messages.BadUrlError());
             }
         }
@@ -1201,25 +1372,22 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks to see if the provided value is a file path to a valid private key file.
-     *
      * @param value the value.
      * @return {@link FormValidation#ok() } if it is so.
      */
     public FormValidation doValidKeyFileCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
 
         File f = new File(value);
         if (!f.exists()) {
             return FormValidation.error(Messages.FileNotFoundError(value));
-        }
-        else if (!f.isFile()) {
+        } else if (!f.isFile()) {
             return FormValidation.error(Messages.NotFileError(value));
-        }
-        else {
+        } else {
             if (SshUtil.isPrivateKeyFileValid(f)) {
                 return FormValidation.ok();
-            }
-            else {
+            } else {
                 return FormValidation.error(Messages.InvalidKeyFileError(value));
             }
         }
@@ -1230,11 +1398,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * Also checks that from is before to.
      *
      * @param fromValue the from value.
-     * @param toValue   the to value.
+     * @param toValue the to value.
      * @return {@link FormValidation#ok() } if it is so.
      */
     public FormValidation doValidTimeCheck(
-        @QueryParameter final String fromValue, @QueryParameter final String toValue) {
+            @QueryParameter final String fromValue, @QueryParameter final String toValue) {
         String[] splitFrom = fromValue.split(":");
         String[] splitTo = toValue.split(":");
         int fromHour;
@@ -1250,13 +1418,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
             toHour = Integer.parseInt(splitTo[0]);
             toMinute = Integer.parseInt(splitTo[1]);
 
-        }
-        catch (NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             return FormValidation.error(Messages.InvalidTimeString());
         }
 
         if (fromHour < MIN_HOUR || fromHour > MAX_HOUR || fromMinute < MIN_MINUTE || fromMinute > MAX_MINUTE
-            || toHour < MIN_HOUR || toHour > MAX_HOUR || toMinute < MIN_MINUTE || toMinute > MAX_MINUTE) {
+                || toHour < MIN_HOUR || toHour > MAX_HOUR || toMinute < MIN_MINUTE || toMinute > MAX_MINUTE) {
             return FormValidation.error(Messages.InvalidTimeString());
         }
         if (fromHour > toHour || (fromHour == toHour && fromMinute > toMinute)) {
@@ -1267,25 +1434,22 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks whether server name already exists.
-     *
      * @param value the value of the name field.
      * @return ok or error.
      */
     public FormValidation doNameFreeCheck(
-        @QueryParameter("value") final String value) {
+            @QueryParameter("value")
+            final String value) {
         checkPermission();
         if (!value.equals(name)) {
             if (PluginImpl.containsServer_(value)) {
                 return FormValidation.error("The server name " + value + " is already in use!");
-            }
-            else if (ANY_SERVER.equals(value)) {
+            } else if (ANY_SERVER.equals(value)) {
                 return FormValidation.error("Illegal name " + value + "!");
-            }
-            else {
+            } else {
                 return FormValidation.warning("The server " + name + " will be renamed");
             }
-        }
-        else {
+        } else {
             return FormValidation.ok();
         }
     }
@@ -1306,206 +1470,5 @@ public class GerritServer implements Describable<GerritServer>, Action {
         list.add(new ExceptionDataHelper(Messages.SaturdayDisplayName(), Calendar.SATURDAY, data));
         list.add(new ExceptionDataHelper(Messages.SundayDisplayName(), Calendar.SUNDAY, data));
         return list;
-    }
-
-    /**
-     * Descriptor is only used for UI form bindings.
-     */
-    @Extension
-    public static final class DescriptorImpl extends Descriptor<GerritServer> {
-
-        @Override
-        public String getDisplayName() {
-            return "Gerrit Server with Default Configurations";
-        }
-
-        /**
-         * Tests if the provided parameters can connect to Gerrit.
-         *
-         * @param gerritHostName            the hostname
-         * @param gerritSshPort             the ssh-port
-         * @param gerritProxy               the proxy url
-         * @param gerritUserName            the username
-         * @param gerritAuthKeyFile         the private key file
-         * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
-         * @return {@link FormValidation#ok() } if can be done,
-         * {@link FormValidation#error(java.lang.String) } otherwise.
-         */
-        public FormValidation doTestConnection(
-            @QueryParameter("gerritHostName") final String gerritHostName,
-            @QueryParameter("gerritSshPort") final int gerritSshPort,
-            @QueryParameter("gerritProxy") final String gerritProxy,
-            @QueryParameter("gerritUserName") final String gerritUserName,
-            @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
-            @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("gerritHostName = {}\n"
-                        + "gerritSshPort = {}\n"
-                        + "gerritProxy = {}\n"
-                        + "gerritUserName = {}\n"
-                        + "gerritAuthKeyFile = {}\n"
-                        + "gerritAuthKeyFilePassword = {}",
-                    new Object[]{gerritHostName,
-                        gerritSshPort,
-                        gerritProxy,
-                        gerritUserName,
-                        gerritAuthKeyFile,
-                        gerritAuthKeyFilePassword,});
-            }
-
-            File file = new File(gerritAuthKeyFile);
-            String password = null;
-            if (gerritAuthKeyFilePassword != null && gerritAuthKeyFilePassword.length() > 0) {
-                password = Secret.fromString(gerritAuthKeyFilePassword).getPlainText();
-            }
-            if (SshUtil.checkPassPhrase(file, password)) {
-                if (file.exists() && file.isFile()) {
-                    try {
-                        final SshConnection sshConnection = SshConnectionFactory.getConnection(
-                            gerritHostName,
-                            gerritSshPort,
-                            gerritProxy,
-                            new Authentication(file, gerritUserName, password));
-                        ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
-                        Future<Integer> future = service.submit(new Callable<Integer>() {
-                            @Override
-                            public Integer call() throws Exception {
-                                return sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read();
-                            }
-                        });
-                        int readChar;
-                        try {
-                            readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);
-                        }
-                        catch (TimeoutException ex) {
-                            readChar = 0;
-                        }
-                        finally {
-                            sshConnection.disconnect();
-                        }
-                        if (readChar < 0) {
-                            return FormValidation.error(Messages.StreamEventsCapabilityException(gerritUserName));
-                        }
-                        else {
-                            return FormValidation.ok(Messages.Success());
-                        }
-                    }
-                    catch (SshConnectException ex) {
-                        return FormValidation.error(Messages.SshConnectException());
-                    }
-                    catch (SshAuthenticationException ex) {
-                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
-                    }
-                    catch (Exception e) {
-                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
-                    }
-                }
-                else {
-                    return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
-                }
-            }
-            else {
-                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
-            }
-
-        }
-
-        /**
-         * Tests if the REST API settings can connect to Gerrit.
-         *
-         * @param gerritFrontEndUrl  the url
-         * @param gerritHttpUserName the user name
-         * @param gerritHttpPassword the password
-         * @return {@link FormValidation#ok()} if it works.
-         */
-        public FormValidation doTestRestConnection(
-            @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
-            @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
-            @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
-
-            String password = Secret.fromString(gerritHttpPassword).getPlainText();
-
-            String restUrl = gerritFrontEndUrl;
-            if (gerritFrontEndUrl != null && !gerritFrontEndUrl.endsWith("/")) {
-                restUrl = gerritFrontEndUrl + "/";
-            }
-            CredentialsProvider credsProvider = new BasicCredentialsProvider();
-            credsProvider.setCredentials(new AuthScope(null, -1),
-                new UsernamePasswordCredentials(gerritHttpUserName,
-                    password));
-            HttpClient httpclient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
-            HttpGet httpGet = new HttpGet(restUrl + "a/projects/?d");
-            HttpResponse execute;
-            try {
-                execute = httpclient.execute(httpGet);
-            }
-            catch (IOException e) {
-                return FormValidation.error(Messages.ConnectionError(e.getMessage()));
-            }
-
-            int statusCode = execute.getStatusLine().getStatusCode();
-            switch (statusCode) {
-                case HttpURLConnection.HTTP_OK:
-                    return FormValidation.ok(Messages.Success());
-                case HttpURLConnection.HTTP_UNAUTHORIZED:
-                    return FormValidation.error(Messages.HttpConnectionUnauthorized());
-                default:
-                    return FormValidation.error(Messages.HttpConnectionError(statusCode));
-            }
-
-        }
-
-        /**
-         * Fill the Gerrit slave dropdown with the list of slaves configured with the selected server.
-         * Expected to be called only when slave config is enabled at job level.
-         *
-         * @param serverName name of the server
-         * @return list of slaves.
-         */
-        public ListBoxModel doFillDefaultSlaveIdItems(
-            @QueryParameter("name") @RelativePath("../..") final String serverName) {
-            ListBoxModel items = new ListBoxModel();
-            logger.trace("filling default gerrit slave drop down for sever {}", serverName);
-            GerritServer server = PluginImpl.getServer_(serverName);
-            if (server == null) {
-                logger.warn(Messages.CouldNotFindServer(serverName));
-                items.add(Messages.CouldNotFindServer(serverName), "");
-                return items;
-            }
-            ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
-            if (replicationConfig == null || !replicationConfig.isEnableReplication()
-                || replicationConfig.getGerritSlaves().size() == 0) {
-                logger.trace(Messages.GerritSlaveNotDefined());
-                items.add(Messages.GerritSlaveNotDefined(), "");
-                return items;
-            }
-            for (GerritSlave slave : replicationConfig.getGerritSlaves()) {
-                boolean selected;
-                if (slave.getId().equals(replicationConfig.getDefaultSlaveId())) {
-                    selected = true;
-                }
-                else {
-                    selected = false;
-                }
-                items.add(new ListBoxModel.Option(slave.getName(), slave.getId(), selected));
-            }
-            return items;
-        }
-
-        /**
-         * Fill the dropdown for notification levels.
-         *
-         * @return the values.
-         */
-        public ListBoxModel doFillNotificationLevelItems() {
-            Map<Notify, String> levelTextsById = notificationLevelTextsById();
-            ListBoxModel items = new ListBoxModel(levelTextsById.size());
-            for (Entry<Notify, String> level : levelTextsById.entrySet()) {
-                items.add(new Option(level.getValue(), level.getKey().toString()));
-            }
-            return items;
-        }
     }
 }
