@@ -32,6 +32,8 @@ public class GerritTriggerBuildChooserTest {
      * Ideally we can find a way to have this work somehow without needing to have this copy...
      */
     static class BuildChooserContextImpl implements BuildChooserContext, Serializable {
+        private static final long serialVersionUID = 1L;
+
         final Job project;
         final Run build;
         final EnvVars environment;

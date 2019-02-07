@@ -19,7 +19,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -254,7 +254,7 @@ public class GerritServerHudsonTest {
         HtmlPage removalPage = j.createWebClient().getPage(url);
 
         HtmlForm form = removalPage.getFormByName(removalFormName);
-        List<HtmlElement> buttons = form.getHtmlElementsByTagName("button");
+        List<HtmlElement> buttons = form.getElementsByTagName("button");
         textContent = form.getTextContent();
         if (buttons.size() >= 1) {
             j.submit(form);

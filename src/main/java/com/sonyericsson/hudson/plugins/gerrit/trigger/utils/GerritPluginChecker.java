@@ -84,48 +84,37 @@ public final class GerritPluginChecker {
         switch (statusCode) {
             case HttpURLConnection.HTTP_OK:
                 message = Messages.PluginInstalled(pluginName);
-                if (quiet) {
-                    logger.debug(message);
-                } else {
-                    logger.info(message);
-                }
-                return true;
+                break;
             case HttpURLConnection.HTTP_NOT_FOUND:
                 message = Messages.PluginNotInstalled(pluginName);
-                if (quiet) {
-                    logger.debug(message);
-                } else {
-                    logger.warn(message);
-                }
-                return false;
+                break;
             case HttpURLConnection.HTTP_UNAUTHORIZED:
                 message = Messages.PluginHttpConnectionUnauthorized(pluginName,
                         Messages.HttpConnectionUnauthorized());
-                if (quiet) {
-                    logger.debug(message);
-                } else {
-                    logger.warn(message);
-                }
-                return false;
+                break;
             case HttpURLConnection.HTTP_FORBIDDEN:
                 message = Messages.PluginHttpConnectionForbidden(pluginName,
                         Messages.HttpConnectionUnauthorized());
-                if (quiet) {
-                    logger.debug(message);
-                } else {
-                    logger.warn(message);
-                }
-                return false;
+                break;
             default:
                 message = Messages.PluginHttpConnectionGeneralError(pluginName,
                         Messages.HttpConnectionError(statusCode));
-                if (quiet) {
-                    logger.debug(message);
-                } else {
-                    logger.warn(message);
-                }
-                return false;
         }
+        logMsg(message, quiet);
+        return HttpURLConnection.HTTP_OK == statusCode;
+    }
+
+    /**
+     * Helper method to write a specific message to the logger on level depending on value of quiet boolean.
+     * @param message the message to be logged.
+     * @param quiet true if message should go to debug, false otherwise.
+     */
+    private static void logMsg(String message, boolean quiet) {
+        if (quiet) {
+            logger.debug(message);
+        } else {
+            logger.warn(message);
+      }
     }
 
     /**
@@ -150,11 +139,7 @@ public final class GerritPluginChecker {
     public static Boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
         String restUrl = buildURL(config);
         if (restUrl == null) {
-            if (quiet) {
-                logger.debug(Messages.PluginInstalledRESTApiNull(pluginName));
-            } else {
-                logger.warn(Messages.PluginInstalledRESTApiNull(pluginName));
-            }
+            logMsg(Messages.PluginInstalledRESTApiNull(pluginName), quiet);
             return false;
         }
         logger.trace("{}plugins/{}/", restUrl, pluginName);

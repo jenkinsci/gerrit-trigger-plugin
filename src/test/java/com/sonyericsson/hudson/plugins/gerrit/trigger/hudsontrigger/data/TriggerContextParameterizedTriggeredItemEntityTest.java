@@ -89,12 +89,12 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
                     new TriggeredItemEntity(Integer.MAX_VALUE, "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(new Integer(4), "project"),
-                    new TriggeredItemEntity(new Integer(4), "project"),
+                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
+                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(new Integer(4), new String("project")),
-                    new TriggeredItemEntity(new Integer(4), new String("project")),
+                    new TriggeredItemEntity(Integer.valueOf(4), new String("project")),
+                    new TriggeredItemEntity(Integer.valueOf(4), new String("project")),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
                     new TriggeredItemEntity(null, "project"),

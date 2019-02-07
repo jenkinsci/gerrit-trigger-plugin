@@ -48,7 +48,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils.getFormWithAction;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -121,11 +120,9 @@ public class DuplicateGerritListenersHudsonTestCase {
     public void testNewProjectCreationWithReName() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob3");
 
-        HtmlForm form = j.createWebClient().getPage(p, "configure").getFormByName("config");
-        form.getInputByName("name").setValueAttribute("testJob33");
+        HtmlForm form = j.createWebClient().getPage(p, "confirm-rename").getFormByName("config");
+        form.getInputByName("newName").setValueAttribute("testJob33");
         HtmlPage confirmPage = j.submit(form);
-        j.submit(getFormWithAction("doRename", confirmPage.getForms()));
-        //configRoundtrip(p);
         assertEquals("testJob33", p.getName());
         assertNbrOfGerritEventListeners(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));

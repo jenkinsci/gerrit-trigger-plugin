@@ -23,10 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
-
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 
 import com.sonymobile.tools.gerrit.gerritevents.workers.Coordinator;
 import com.sonymobile.tools.gerrit.gerritevents.workers.EventThread;
@@ -61,11 +59,8 @@ public class SystemEventThread extends EventThread {
      */
     @Override
     public void run() {
-        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
-        try {
+        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
             super.run();
-        } finally {
-            SecurityContextHolder.setContext(old);
         }
     }
 }

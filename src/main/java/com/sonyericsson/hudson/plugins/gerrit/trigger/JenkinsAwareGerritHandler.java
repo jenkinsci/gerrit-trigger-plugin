@@ -24,8 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import hudson.security.ACL;
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
+import hudson.security.ACLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,12 +75,9 @@ public class JenkinsAwareGerritHandler extends GerritHandler {
             }
         }
 
-        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
-        try {
+        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
             // The read deal
             super.notifyListeners(event);
-        } finally {
-            SecurityContextHolder.setContext(old);
         }
 
         // //Notify lifecycle listeners.

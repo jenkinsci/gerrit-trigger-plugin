@@ -200,17 +200,17 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock object.
-    private Integer gerritBuildStartedCodeReviewValue = new Integer(2);
-    private Integer gerritBuildSuccessfulCodeReviewValue = new Integer(4);
-    private Integer gerritBuildFailedCodeReviewValue = new Integer(-2);
-    private Integer gerritBuildUnstableCodeReviewValue = new Integer(-4);
-    private Integer gerritBuildNotBuiltCodeReviewValue = new Integer(-6);
+    private Integer gerritBuildStartedCodeReviewValue = Integer.valueOf(2);
+    private Integer gerritBuildSuccessfulCodeReviewValue = Integer.valueOf(4);
+    private Integer gerritBuildFailedCodeReviewValue = Integer.valueOf(-2);
+    private Integer gerritBuildUnstableCodeReviewValue = Integer.valueOf(-4);
+    private Integer gerritBuildNotBuiltCodeReviewValue = Integer.valueOf(-6);
 
-    private Integer gerritBuildStartedVerifiedValue = new Integer(1);
-    private Integer gerritBuildSuccessfulVerifiedValue = new Integer(3);
-    private Integer gerritBuildFailedVerifiedValue = new Integer(-1);
-    private Integer gerritBuildUnstableVerifiedValue = new Integer(-3);
-    private Integer gerritBuildNotBuiltVerifiedValue = new Integer(-5);
+    private Integer gerritBuildStartedVerifiedValue = Integer.valueOf(1);
+    private Integer gerritBuildSuccessfulVerifiedValue = Integer.valueOf(3);
+    private Integer gerritBuildFailedVerifiedValue = Integer.valueOf(-1);
+    private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
+    private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
 
     @Override
     public Integer getGerritBuildStartedVerifiedValue() {
@@ -412,6 +412,9 @@ public class MockGerritHudsonTriggerConfig implements
     public boolean isEnablePluginMessages() {
         return true;
     }
+
+    @Override
+    public boolean isTriggerOnAllComments() { return true; }
 
     @Override
     public boolean isUseRestApi() {

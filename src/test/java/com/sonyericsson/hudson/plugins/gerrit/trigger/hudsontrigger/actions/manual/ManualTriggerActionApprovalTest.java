@@ -34,7 +34,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
-import org.apache.sshd.SshServer;
+import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

@@ -552,7 +552,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
             if (gerritConnection == null) {
                 logger.debug("Starting Gerrit connection...");
                 gerritConnection = new GerritConnection(name, config);
-                gerritEventManager.setIgnoreEMail(name, config.getGerritEMail());
+                if (config.isTriggerOnAllComments()) {
+                    logger.info("Will trigger on all comments, even from the configured user.");
+                } else {
+                    logger.info("Will skip comments added by " + config.getGerritUserName());
+                    gerritEventManager.setIgnoreEMail(name, config.getGerritEMail());
+                }
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
@@ -1324,7 +1329,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             Integer.parseInt(value);
             return FormValidation.ok();
         } catch (NumberFormatException e) {
-            return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+            return FormValidation.error(Messages.NotANumber());
         }
     }
 
@@ -1344,7 +1349,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 Integer.parseInt(value);
                 return FormValidation.ok();
             } catch (NumberFormatException e) {
-                return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+                return FormValidation.error(Messages.NotANumber());
             }
         }
     }

@@ -28,12 +28,10 @@ Each job can be configured with one Gerrit server.
 
 # Environments
 * `linux`
-    * `java-1.7`
+    * `java-1.8`
         * `maven-3.3.3`
 
-* Java 1.7: minimum development environment.
-* Java 8: Works.
-* Java 6 Runtime compatible
+* Java 8: needed development environment.
 
 You should have no problem running the plugin on a Windows server.
 
@@ -52,7 +50,7 @@ The _(build-config)_ directory contains "special" CheckStyle configurations and 
 fail during the verification phase if you don't follow them.
 
     mvn clean package
-    
+
 Run findbugs for future reference or to make sure you haven't introduced any
 new warnings
 
@@ -68,6 +66,10 @@ To test in a local Jenkins instance
 
     mvn hpi:run
 
+# Clean test environment
+
+    mvn clean
+    rm /tmp/jenkins-testkey* hostkey.ser # Needed when changing SSH components versions
 
 # License
 
@@ -93,4 +95,3 @@ To test in a local Jenkins instance
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     THE SOFTWARE.
-

@@ -32,6 +32,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.ModelObject;
 
 import javax.annotation.Nonnull;
+
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,8 +60,12 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
      *
      * A variant of ISO 8601 with the 'T' replaced by a space for simpler ocular parsing.
      */
-    public static final SimpleDateFormat TS_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
-
+    public static final ThreadLocal<DateFormat> TS_FORMAT = new ThreadLocal<DateFormat>() {
+        @Override
+        public DateFormat get() {
+            return new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
+        }
+      };
 
     /**
      * Default Constructor.
@@ -71,7 +77,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
             public int compare(GerritTriggeredEvent a, GerritTriggeredEvent b) {
                 int to = a.getEventCreatedOn().compareTo(b.getEventCreatedOn()) * -1;
                 if (to == 0) {
-                    return new Integer(a.hashCode()).compareTo(b.hashCode()) * -1;
+                    return Integer.valueOf(a.hashCode()).compareTo(b.hashCode()) * -1;
                 }
                 return to;
             }
@@ -121,7 +127,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
             display.append(((RefUpdated)event).getRefUpdate().getProject());
         }
         display.append(" @ ");
-        display.append(TS_FORMAT.format(event.getEventCreatedOn()));
+        display.append(TS_FORMAT.get().format(event.getEventCreatedOn()));
         return display.toString();
     }
 
