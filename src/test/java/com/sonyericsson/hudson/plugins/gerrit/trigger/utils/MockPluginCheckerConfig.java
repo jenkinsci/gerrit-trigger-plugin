@@ -103,56 +103,6 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
         return null;
     }
 
-    @Override
-    public Integer getGerritBuildStartedVerifiedValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildStartedCodeReviewValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildSuccessfulVerifiedValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildSuccessfulCodeReviewValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildFailedVerifiedValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildFailedCodeReviewValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildUnstableVerifiedValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildUnstableCodeReviewValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildNotBuiltVerifiedValueAfterMigration() {
-        return 0;
-    }
-
-    @Override
-    public Integer getGerritBuildNotBuiltCodeReviewValueAfterMigration() {
-        return 0;
-    }
-
     @Override public Integer getGerritBuildStartedVerifiedValue() {
         return 0;
     }

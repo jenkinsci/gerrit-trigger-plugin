@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritMessageProvider;
@@ -58,6 +59,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.*;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
@@ -154,8 +156,8 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
-        String crvw = "Code-Review";
-        String vrif = "Verified";
+        String crvw = CODE_REVIEW;
+        String vrif = VERIFIED;
         String parameterString = "gerrit review MSG=OK VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildSuccessful()).thenReturn(parameterString);
         VerdictCategory verified = new VerdictCategory(vrif, vrif, 0, 1, -1, 0, 0);
@@ -189,8 +191,8 @@ public class SpecGerritVerifiedSetterTest {
 
         IGerritHudsonTriggerConfig config = mock(IGerritHudsonTriggerConfig.class);
 
-        String crvw = "Code-Review";
-        String vrif = "Verified";
+        String crvw = CODE_REVIEW;
+        String vrif = VERIFIED;
         String parameterString = "gerrit review MSG=Failed VERIFIED=<VERIFIED> CODEREVIEW=<CODE_REVIEW>";
         when(config.getGerritCmdBuildFailed()).thenReturn(parameterString);
         VerdictCategory verified = new VerdictCategory(vrif, vrif, 0, 1, -1, 0, 0);
@@ -238,8 +240,8 @@ public class SpecGerritVerifiedSetterTest {
 
         //trigger = mock(GerritTrigger.class);
 
-        String crvw = "Code-Review";
-        String vrif = "Verified";
+        String crvw = CODE_REVIEW;
+        String vrif = VERIFIED;
         final LabelValue cr = new LabelValue(crvw, 0, 0, null, 0, 0);
         final LabelValue v = new LabelValue(vrif, 0, 0, null, 0, 0);
 

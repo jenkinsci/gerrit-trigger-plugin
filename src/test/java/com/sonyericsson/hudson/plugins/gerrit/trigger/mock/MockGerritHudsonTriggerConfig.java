@@ -216,52 +216,6 @@ public class MockGerritHudsonTriggerConfig implements
     private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
     private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
 
-    @Override
-    public Integer getGerritBuildStartedVerifiedValueAfterMigration() {
-        return gerritBuildStartedVerifiedValue;
-    }
-
-    @Override
-    public Integer getGerritBuildSuccessfulVerifiedValueAfterMigration() {
-        return gerritBuildSuccessfulVerifiedValue;
-    }
-
-    @Override
-    public Integer getGerritBuildFailedVerifiedValueAfterMigration() {
-        return gerritBuildFailedVerifiedValue;
-    }
-
-    @Override
-    public Integer getGerritBuildUnstableVerifiedValueAfterMigration() {
-        return gerritBuildUnstableVerifiedValue;
-    }
-
-    @Override
-    public Integer getGerritBuildNotBuiltVerifiedValueAfterMigration() {
-        return gerritBuildNotBuiltVerifiedValue;
-    }
-
-    @Override
-    public Integer getGerritBuildStartedCodeReviewValueAfterMigration() {
-        return gerritBuildStartedCodeReviewValue;
-    }
-    @Override
-    public Integer getGerritBuildSuccessfulCodeReviewValueAfterMigration() {
-        return gerritBuildSuccessfulCodeReviewValue;
-    }
-    @Override
-    public Integer getGerritBuildFailedCodeReviewValueAfterMigration() {
-        return gerritBuildFailedCodeReviewValue;
-    }
-    @Override
-    public Integer getGerritBuildUnstableCodeReviewValueAfterMigration() {
-        return gerritBuildUnstableCodeReviewValue;
-    }
-    @Override
-    public Integer getGerritBuildNotBuiltCodeReviewValueAfterMigration() {
-        return gerritBuildNotBuiltCodeReviewValue;
-    }
-
     @Override public Integer getGerritBuildStartedVerifiedValue() {
         return 0;
     }

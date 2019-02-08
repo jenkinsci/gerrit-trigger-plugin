@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.workers.rest.AbstractRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Constants;
@@ -51,9 +52,6 @@ import org.acegisecurity.context.SecurityContextHolder;
 * sends a build completed message.
 */
 public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
-
-    private static final String LABEL_CODEREVIEW = "Code-Review";
-    private static final String LABEL_VERIFIED   = "Verified";
 
     private final BuildMemory.MemoryImprint memoryImprint;
     private final TaskListener listener;
@@ -85,18 +83,18 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
             if (memoryImprint.getEvent().isScorable()) {
                 if (config.isRestCodeReview()) {
-                    Integer crValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, LABEL_CODEREVIEW);
+                    Integer crValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, Config.CODE_REVIEW);
                     if (crValue != null && crValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
-                                LABEL_CODEREVIEW,
+                                Config.CODE_REVIEW,
                                 crValue));
                     }
                 }
                 if (config.isRestVerified()) {
-                    Integer verValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, LABEL_VERIFIED);
+                    Integer verValue = parameterExpander.getMinimumLabelVoteValue(memoryImprint, true, Config.VERIFIED);
                     if (verValue != null && verValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
-                                LABEL_VERIFIED,
+                                Config.VERIFIED,
                                 verValue));
                     }
                 }

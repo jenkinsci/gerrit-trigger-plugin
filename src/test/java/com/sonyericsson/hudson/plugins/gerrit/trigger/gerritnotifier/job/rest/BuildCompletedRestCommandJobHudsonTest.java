@@ -129,8 +129,8 @@ public class BuildCompletedRestCommandJobHudsonTest {
 
         j.assertStringContains(json.getString("message"), "Build Successful");
         JSONObject labels = json.getJSONObject("labels");
-        assertEquals(1, labels.getInt("Code-Review"));
-        assertEquals(1, labels.getInt("Verified"));
+        assertEquals(1, labels.getInt(Config.CODE_REVIEW));
+        assertEquals(1, labels.getInt(Config.VERIFIED));
     }
     /**
      * The test with a locked down instance.

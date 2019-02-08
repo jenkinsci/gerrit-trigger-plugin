@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -59,6 +60,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.*;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
@@ -100,8 +102,8 @@ public class ParameterExpanderTest {
         TaskListener taskListener = mock(TaskListener.class);
         GerritTrigger trigger = mock(GerritTrigger.class);
 
-        LabelValue cr = new LabelValue("Code-Review", 2, 1, 0, 0, 0);
-        LabelValue v = new LabelValue("Verified", 1, 2, -1, -1, -1);
+        LabelValue cr = new LabelValue(CODE_REVIEW, 2, 1, 0, 0, 0);
+        LabelValue v = new LabelValue(VERIFIED, 1, 2, -1, -1, -1);
 
         when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
         when(trigger.getCodeReviewLabel()).thenReturn(cr);
@@ -554,8 +556,8 @@ public class ParameterExpanderTest {
 
         GerritTrigger trigger = mock(GerritTrigger.class);
 
-        LabelValue cr = new LabelValue("Code-Review", 32, expectedCodeReviewVote, 0, 0, 0);
-        LabelValue v = new LabelValue("Verified", 1, expectedVerifiedVote, -1, -1, -1);
+        LabelValue cr = new LabelValue(CODE_REVIEW, 32, expectedCodeReviewVote, 0, 0, 0);
+        LabelValue v = new LabelValue(VERIFIED, 1, expectedVerifiedVote, -1, -1, -1);
 
         when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
         when(trigger.getCodeReviewLabel()).thenReturn(cr);

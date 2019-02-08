@@ -806,32 +806,32 @@ public class SshdServerMock implements CommandFactory {
             JSONArray approvals = new JSONArray();
 
             JSONObject crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "2");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "-1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "2");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "-1");
             approvals.add(crw);
 
@@ -905,32 +905,32 @@ public class SshdServerMock implements CommandFactory {
             JSONArray approvals = new JSONArray();
 
             JSONObject crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "2");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Code-Review");
+            crw.put(TYPE, Config.CODE_REVIEW);
             crw.put(VALUE, "-1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "2");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "1");
             approvals.add(crw);
 
             crw = new JSONObject();
-            crw.put(TYPE, "Verified");
+            crw.put(TYPE, Config.VERIFIED);
             crw.put(VALUE, "-1");
             approvals.add(crw);
 

@@ -427,11 +427,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
         logger.info("Starting GerritServer: " + name);
 
         //do not try to connect to gerrit unless there is a URL or a hostname in the text fields
-        List<VerdictCategory> categories = config.getCategories() != null ? config.getCategories() : new LinkedList<VerdictCategory>();
+        List<VerdictCategory> categories = config.getCategories();
+        if (categories == null) {
+            categories = new LinkedList<VerdictCategory>();
+        }
 
         if (categories.isEmpty()) {
-            categories.add(new VerdictCategory("Code-Review", "Code Review"));
-            categories.add(new VerdictCategory("Verified", "Verified"));
+            categories.add(new VerdictCategory(Config.CODE_REVIEW, Config.CODE_REVIEW));
+            categories.add(new VerdictCategory(Config.VERIFIED, Config.VERIFIED));
         }
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getHandler_();
