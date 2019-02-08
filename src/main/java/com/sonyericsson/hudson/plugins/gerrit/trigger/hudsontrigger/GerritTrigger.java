@@ -232,7 +232,6 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildNotBuiltMessage = "";
         this.buildUnsuccessfulFilepath = "";
         this.triggerConfigURL = "";
-        logger.debug("GerritTrigger(List): constructed.");
     }
 
     /**
@@ -346,7 +345,6 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
         this.notificationLevel = notificationLevel;
-        logger.debug("GerritTrigger(List, ...): constructed.");
     }
 
     /**
@@ -1924,7 +1922,6 @@ public class GerritTrigger extends Trigger<Job> {
         if (projectListIsReady == null) {
             projectListIsReady = new CountDownLatch(0);
         }
-        logger.debug("readResolve: loaded.");
         return super.readResolve();
     }
     /*
