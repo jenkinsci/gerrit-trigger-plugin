@@ -34,6 +34,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.Serializable;
 
@@ -53,6 +54,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     /**
      * Default constructor.
      */
+    @DataBoundConstructor
     public PluginPatchsetCreatedEvent() {
         this(false, false, false, false, false);
     }
@@ -65,7 +67,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * @param excludePrivateState if private state changes should be excluded.
      * @param excludeWipState if wip state changes should be excluded.
      */
-    @DataBoundConstructor
+    @Deprecated
     public PluginPatchsetCreatedEvent(boolean excludeDrafts,
         boolean excludeTrivialRebase,
         boolean excludeNoCodeChange,
@@ -75,6 +77,32 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
         this.excludePrivateState = excludePrivateState;
+        this.excludeWipState = excludeWipState;
+    }
+
+
+    @DataBoundSetter
+    public void setExcludeDrafts(boolean excludeDrafts) {
+        this.excludeDrafts = excludeDrafts;
+    }
+
+    @DataBoundSetter
+    public void setExcludeTrivialRebase(boolean excludeTrivialRebase) {
+        this.excludeTrivialRebase = excludeTrivialRebase;
+    }
+
+    @DataBoundSetter
+    public void setExcludeNoCodeChange(boolean excludeNoCodeChange) {
+        this.excludeNoCodeChange = excludeNoCodeChange;
+    }
+
+    @DataBoundSetter
+    public void setExcludePrivateState(boolean excludePrivateState) {
+        this.excludePrivateState = excludePrivateState;
+    }
+
+    @DataBoundSetter
+    public void setExcludeWipState(boolean excludeWipState) {
         this.excludeWipState = excludeWipState;
     }
 

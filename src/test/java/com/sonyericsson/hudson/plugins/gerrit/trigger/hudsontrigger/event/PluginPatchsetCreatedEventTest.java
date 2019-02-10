@@ -23,7 +23,7 @@ public class PluginPatchsetCreatedEventTest {
     @Test
     public void shouldFireOnAllTypeOfPatchset() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
-            new PluginPatchsetCreatedEvent(false, false, false, false, false);
+            new PluginPatchsetCreatedEvent();
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -39,7 +39,8 @@ public class PluginPatchsetCreatedEventTest {
     @Test
     public void shouldNotFireOnDraftPatchsetWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
-            new PluginPatchsetCreatedEvent(true, false, false, false, false);
+                new PluginPatchsetCreatedEvent();
+        pluginPatchsetCreatedEvent.setExcludeDrafts(true);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -56,7 +57,8 @@ public class PluginPatchsetCreatedEventTest {
     @Test
     public void shouldNotFireOnTrivialRebaseWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
-            new PluginPatchsetCreatedEvent(false, true, false, false, false);
+                new PluginPatchsetCreatedEvent();
+        pluginPatchsetCreatedEvent.setExcludeTrivialRebase(true);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
@@ -73,7 +75,8 @@ public class PluginPatchsetCreatedEventTest {
     @Test
     public void shouldNotFireOnNoCodeChangeWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
-            new PluginPatchsetCreatedEvent(false, false, true,  false, false);
+                new PluginPatchsetCreatedEvent();
+        pluginPatchsetCreatedEvent.setExcludeNoCodeChange(true);
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());
 
