@@ -37,7 +37,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
@@ -1737,7 +1736,7 @@ public class GerritTriggerTest {
         assertSame(FormValidation.Kind.ERROR,
                 descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
     }
-    
+
     /**
      * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
      * With a RefUpdated event with long ref name.
@@ -1773,7 +1772,7 @@ public class GerritTriggerTest {
         verify(listener).onTriggered(same(project), same(event));
         verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
     }
-    
+
     /**
      * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
      * With a RefUpdated event with long ref name.

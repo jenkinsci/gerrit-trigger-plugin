@@ -37,13 +37,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -882,13 +879,12 @@ public final class Setup {
     public static void unLock(JenkinsRule j) throws Exception {
         j.getInstance().setSecurityRealm(SecurityRealm.NO_AUTHENTICATION);
     }
-    
+
     /**
      * Create a new private-state change created event with the given data.
      * @param serverName The server name
      * @param project The project
      * @param ref The ref
-     * @param eventCreateOn Timestamp for eventcreateon.
      * @return a patchsetCreated event
      */
     public static PrivateStateChanged createPrivateStateChanged(String serverName,
@@ -917,13 +913,12 @@ public final class Setup {
         event.setEventCreatedOn("1418133772");
         return event;
     }
-    
+
     /**
      * Create a new WIP-state change created event with the given data.
      * @param serverName The server name
      * @param project The project
      * @param ref The ref
-     * @param eventCreateOn Timestamp for eventcreateon.
      * @return a patchsetCreated event
      */
     public static WipStateChanged createWipStateChanged(String serverName,
@@ -952,6 +947,5 @@ public final class Setup {
         event.setEventCreatedOn("1418133772");
         return event;
     }
-    
 
 }
