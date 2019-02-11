@@ -80,27 +80,46 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         this.excludeWipState = excludeWipState;
     }
 
-
+    /**
+     * Setter for excludeDrafts.
+     * @param excludeDrafts if drafts should be excluded or not.
+     */
     @DataBoundSetter
     public void setExcludeDrafts(boolean excludeDrafts) {
         this.excludeDrafts = excludeDrafts;
     }
 
+    /**
+     * Setter for excludeTrivialRebase.
+     * @param excludeTrivialRebase if trivial rebases should be excluded or not.
+     */
     @DataBoundSetter
     public void setExcludeTrivialRebase(boolean excludeTrivialRebase) {
         this.excludeTrivialRebase = excludeTrivialRebase;
     }
 
+    /**
+     * Setter for excludeNoCodeChange.
+     * @param excludeNoCodeChange if message-only changes should be excluded.
+     */
     @DataBoundSetter
     public void setExcludeNoCodeChange(boolean excludeNoCodeChange) {
         this.excludeNoCodeChange = excludeNoCodeChange;
     }
 
+    /**
+     * Setter for excludePrivateState.
+     * @param excludePrivateState if private state changes should be excluded.
+     */
     @DataBoundSetter
     public void setExcludePrivateState(boolean excludePrivateState) {
         this.excludePrivateState = excludePrivateState;
     }
 
+    /**
+     * Setter for excludeWipState.
+     * @param excludeWipState if wip state changes should be excluded.
+     */
     @DataBoundSetter
     public void setExcludeWipState(boolean excludeWipState) {
         this.excludeWipState = excludeWipState;
