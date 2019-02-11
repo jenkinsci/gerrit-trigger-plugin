@@ -40,6 +40,7 @@ public final class GerritVersionChecker {
 
     /**
      * The feature version we want to compare the current Gerrit version with.
+     * Skipping WIPStateChanged & PrivateStateChanged version check due to not necessary for now.
      */
     public static enum Feature {
         /**
@@ -66,17 +67,8 @@ public final class GerritVersionChecker {
         /**
          * Gerrit CommentAdded always contains approval information, added in Gerrit 2.13.
          */
-        commentAlwaysApproval("CommentAdded always contains approval", "2.13"),
+        commentAlwaysApproval("CommentAdded always contains approval", "2.13");
 
-        /**
-         * WIPStateChanged events, added in Gerrit 2.15.
-         */
-        wipStateChanged("WIPStateChanged events", "2.15"),
-
-        /**
-         * PrivateStateChanged events, added in Gerrit 2.15.
-         */
-        privateStateChanged("privateStateChanged events", "2.15");
 
         private final String displayName;
         private final String version;
