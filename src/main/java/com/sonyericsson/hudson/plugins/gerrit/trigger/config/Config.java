@@ -24,9 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.google.common.primitives.Ints;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -42,7 +40,6 @@ import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -314,17 +311,32 @@ public class Config implements IGerritHudsonTriggerConfig {
                 gerritBuildUnstableVerifiedValue != null ? gerritBuildUnstableVerifiedValue : DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE,
                 gerritBuildNotBuiltVerifiedValue != null ? gerritBuildNotBuiltVerifiedValue : DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE)
         };
+        if(categories == null)
+            categories = new ArrayList<VerdictCategory>();
+
+        if(allCategoriesHaveNullReportingValues(categories)) {
+            categories.remove(getVerdictCategory(CODE_REVIEW));
+            categories.remove(getVerdictCategory(VERIFIED));
+        }
+
         for (VerdictCategory category : defaultCategories) {
             if (!categories.contains(category)) {
                 categories.add(category);
             }
         }
-        List<VerdictCategory> categoriesToRemove = new ArrayList<VerdictCategory>();
+    }
+
+    private boolean allCategoriesHaveNullReportingValues(List<VerdictCategory> categories) {
         for (VerdictCategory cat : categories) {
-            if (cat.getVerdictValue().equalsIgnoreCase("CRVW") || cat.getVerdictValue().equalsIgnoreCase("VRIF"))
-                categoriesToRemove.add(cat);
+            if(cat.getDefaultBuildStartedReportingValue() != null
+                || cat.getDefaultBuildSuccessfulReportingValue() != null
+                || cat.getDefaultBuildFailedReportingValue() != null
+                || cat.getDefaultBuildUnstableReportingValue() != null
+                || cat.getDefaultBuildNotBuiltReportingValue() != null) {
+                return false;
+            }
         }
-        categories.removeAll(categoriesToRemove);
+        return true;
     }
 
     private VerdictCategory getCodeReviewCategory() {
@@ -1200,6 +1212,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             this.buildCurrentPatchesOnly.setAbortManualPatchsets(false);
             this.buildCurrentPatchesOnly.setAbortNewPatchsets(false);
         }
+        this.assertDefaultCategories();
         return this;
     }
 }
