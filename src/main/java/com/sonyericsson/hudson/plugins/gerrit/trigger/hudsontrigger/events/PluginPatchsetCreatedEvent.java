@@ -34,6 +34,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.Serializable;
 
@@ -47,12 +48,19 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private boolean excludeDrafts = false;
     private boolean excludeTrivialRebase = false;
     private boolean excludeNoCodeChange = false;
+    private boolean excludePrivateState = false;
+    private boolean excludeWipState = false;
 
     /**
      * Default constructor.
      */
+    @DataBoundConstructor
     public PluginPatchsetCreatedEvent() {
-        this(false, false, false);
+        this.excludeDrafts = false;
+        this.excludeTrivialRebase = false;
+        this.excludeNoCodeChange = false;
+        this.excludePrivateState = false;
+        this.excludeWipState = false;
     }
 
     /**
@@ -61,13 +69,58 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
      * @param excludeNoCodeChange if message-only changes should be excluded.
      */
-    @DataBoundConstructor
+    @Deprecated
     public PluginPatchsetCreatedEvent(boolean excludeDrafts,
         boolean excludeTrivialRebase,
         boolean excludeNoCodeChange) {
         this.excludeDrafts = excludeDrafts;
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
+    }
+
+    /**
+     * Setter for excludeDrafts.
+     * @param excludeDrafts if drafts should be excluded or not.
+     */
+    @DataBoundSetter
+    public void setExcludeDrafts(boolean excludeDrafts) {
+        this.excludeDrafts = excludeDrafts;
+    }
+
+    /**
+     * Setter for excludeTrivialRebase.
+     * @param excludeTrivialRebase if trivial rebases should be excluded or not.
+     */
+    @DataBoundSetter
+    public void setExcludeTrivialRebase(boolean excludeTrivialRebase) {
+        this.excludeTrivialRebase = excludeTrivialRebase;
+    }
+
+    /**
+     * Setter for excludeNoCodeChange.
+     * @param excludeNoCodeChange if message-only changes should be excluded.
+     */
+    @DataBoundSetter
+    public void setExcludeNoCodeChange(boolean excludeNoCodeChange) {
+        this.excludeNoCodeChange = excludeNoCodeChange;
+    }
+
+    /**
+     * Setter for excludePrivateState.
+     * @param excludePrivateState if private state changes should be excluded.
+     */
+    @DataBoundSetter
+    public void setExcludePrivateState(boolean excludePrivateState) {
+        this.excludePrivateState = excludePrivateState;
+    }
+
+    /**
+     * Setter for excludeWipState.
+     * @param excludeWipState if wip state changes should be excluded.
+     */
+    @DataBoundSetter
+    public void setExcludeWipState(boolean excludeWipState) {
+        this.excludeWipState = excludeWipState;
     }
 
     /**
@@ -108,6 +161,22 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         return excludeNoCodeChange;
     }
 
+    /**
+     * Getter for the excludePrivateState field.
+     * @return excludePrivateState
+     */
+    public boolean isExcludePrivateState() {
+        return excludePrivateState;
+    }
+
+    /**
+     * Getter for the excludeWipState field.
+     * @return excludeWipState
+     */
+    public boolean isExcludeWipState() {
+        return excludeWipState;
+    }
+
     @Override
     public boolean shouldTriggerOn(GerritTriggeredEvent event) {
         if (!super.shouldTriggerOn(event)) {
@@ -126,6 +195,12 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         }
         if (excludeNoCodeChange
             && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+            return false;
+        }
+        if (excludePrivateState && ((PatchsetCreated)event).getChange().isPrivate()) {
+            return false;
+        }
+        if (excludeWipState && ((PatchsetCreated)event).getChange().isWip()) {
             return false;
         }
         return true;
