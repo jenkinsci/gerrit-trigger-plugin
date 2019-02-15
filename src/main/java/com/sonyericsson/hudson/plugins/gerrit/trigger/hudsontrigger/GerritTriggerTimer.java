@@ -42,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 public final class GerritTriggerTimer {
 
     /**
-     * Wait this many milliseconds before the first call to a TimerTask
+     * Wait this many milliseconds before the first call to a TimerTask.
      */
-    private static final long DELAY_MILLISECONDS  =  5000;
+    protected static final long DELAY_MILLISECONDS = 5000;
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerTimer.class);
 
     /**
