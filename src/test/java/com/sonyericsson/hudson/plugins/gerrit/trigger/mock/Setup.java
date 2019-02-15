@@ -49,9 +49,12 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
+
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -875,6 +878,74 @@ public final class Setup {
      */
     public static void unLock(JenkinsRule j) throws Exception {
         j.getInstance().setSecurityRealm(SecurityRealm.NO_AUTHENTICATION);
+    }
+
+    /**
+     * Create a new private-state change created event with the given data.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return a patchsetCreated event
+     */
+    public static PrivateStateChanged createPrivateStateChanged(String serverName,
+                                                        String project,
+                                                        String ref) {
+        PrivateStateChanged event = new PrivateStateChanged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        change.setPrivate(true);
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject(project);
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9527");
+        patch.setRef(ref);
+        event.setPatchset(patch);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
+        return event;
+    }
+
+    /**
+     * Create a new WIP-state change created event with the given data.
+     * @param serverName The server name
+     * @param project The project
+     * @param ref The ref
+     * @return a patchsetCreated event
+     */
+    public static WipStateChanged createWipStateChanged(String serverName,
+                                                        String project,
+                                                        String ref) {
+        WipStateChanged event = new WipStateChanged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        change.setWip(true);
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject(project);
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        event.setChange(change);
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9527");
+        patch.setRef(ref);
+        event.setPatchset(patch);
+        event.setProvider(new Provider(serverName, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        event.setEventCreatedOn("1418133772");
+        return event;
     }
 
 }

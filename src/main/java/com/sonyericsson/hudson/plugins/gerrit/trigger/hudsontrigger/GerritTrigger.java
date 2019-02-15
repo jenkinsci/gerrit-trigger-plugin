@@ -1928,6 +1928,11 @@ public class GerritTrigger extends Trigger<Job> {
      * /DEPRECATION HANDLING
      */
 
+    @Override
+    public TriggerDescriptor getDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
+
     /**
      * The Descriptor for the Trigger.
      */

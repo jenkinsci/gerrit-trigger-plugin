@@ -37,6 +37,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -47,7 +49,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -1731,6 +1735,78 @@ public class GerritTriggerTest {
         when(veryUpstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedProject");
         assertSame(FormValidation.Kind.ERROR,
                 descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with long ref name.
+     */
+    @Test
+    public void testGerritEventPrivateStateChanged() {
+        AbstractProject project = mockProject();
+        Queue queue = mockConfig(project);
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        PluginPrivateStateChangedEvent pluginEvent = new PluginPrivateStateChangedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        PrivateStateChanged event = Setup.createPrivateStateChanged(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with long ref name.
+     */
+    @Test
+    public void testGerritEventWipStateChanged() {
+        AbstractProject project = mockProject();
+        Queue queue = mockConfig(project);
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        PluginWipStateChangedEvent pluginEvent = new PluginWipStateChangedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        WipStateChanged event = Setup.createWipStateChanged(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
     }
 
     /**

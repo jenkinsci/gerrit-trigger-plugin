@@ -1,7 +1,7 @@
 <!--
   ~ The MIT License
   ~
-  ~ Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+  ~ Copyright 2012 Intel, Inc. All rights reserved.
   ~
   ~ Permission is hereby granted, free of charge, to any person obtaining a copy
   ~ of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +22,5 @@
   ~ THE SOFTWARE.
   -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry title="${%Exclude Drafts}"
-             field="excludeDrafts">
-        <f:checkbox/>
-    </f:entry>
-    <f:entry title="${%Exclude Trivial Rebase}"
-             field="excludeTrivialRebase"
-             help="/plugin/gerrit-trigger/trigger/help-ExcludeTrivialRebase.html">
-        <f:checkbox/>
-    </f:entry>
-    <f:entry title="${%Exclude No Code Change}"
-             field="excludeNoCodeChange"
-             help="/plugin/gerrit-trigger/trigger/help-ExcludeNoCodeChange.html">
-        <f:checkbox/>
-    </f:entry>
-    <f:entry title="${%Exclude Private Changes}"
-             field="excludePrivateState">
-        <f:checkbox/>
-    </f:entry>
-    <f:entry title="${%Exclude WIP Changes}"
-             field="excludeWipState">
-        <f:checkbox/>
-    </f:entry>
+<j:jelly xmlns:j="jelly:core">
 </j:jelly>

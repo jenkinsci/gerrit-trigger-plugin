@@ -230,8 +230,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
             }
         }
         try {
-            logger.info("Trying to load project list.");
             if (isConnected()) {
+                logger.info("Trying to load project list.");
                 IGerritHudsonTriggerConfig activeConfig = getConfig();
                 SshConnection sshConnection = SshConnectionFactory.getConnection(
                         activeConfig.getGerritHostName(),
@@ -247,6 +247,9 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                     logger.warn("Project list from {} contains 0 projects", serverName);
                 }
                 sshConnection.disconnect();
+            } else {
+                logger.warn("Could not connect to Gerrit server when updating Gerrit project list: "
+                    + "Server is not connected (timeout)");
             }
         } catch (SshException ex) {
             logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);
@@ -341,4 +344,3 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
         return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
     }
 }
-
