@@ -40,21 +40,37 @@ public class SkipVote implements Serializable {
     private boolean onFailed;
     private boolean onUnstable;
     private boolean onNotBuilt;
+    private boolean onAborted;
 
     /**
      * Standard DataBound Constructor.
-     *
      * @param onSuccessful if the vote should be skipped (not counted) for {@link hudson.model.Result#SUCCESS} builds.
      * @param onFailed if the vote should be skipped (not counted) for {@link hudson.model.Result#FAILURE} builds.
      * @param onUnstable if the vote should be skipped (not counted) for {@link hudson.model.Result#UNSTABLE} builds.
      * @param onNotBuilt if the vote should be skipped (not counted) for {@link hudson.model.Result#NOT_BUILT} builds.
+     * @param onAborted if the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
      */
     @DataBoundConstructor
-    public SkipVote(boolean onSuccessful, boolean onFailed, boolean onUnstable, boolean onNotBuilt) {
+    public SkipVote(boolean onSuccessful, boolean onFailed, boolean onUnstable, boolean onNotBuilt, boolean onAborted) {
         this.onSuccessful = onSuccessful;
         this.onFailed = onFailed;
         this.onUnstable = onUnstable;
         this.onNotBuilt = onNotBuilt;
+        this.onAborted = onAborted;
+    }
+
+    /**
+     * Old Standard DataBound Constructor left here for backwards compatiblity.
+     * @param onSuccessful if the vote should be skipped (not counted) for {@link hudson.model.Result#SUCCESS} builds.
+     * @param onFailed if the vote should be skipped (not counted) for {@link hudson.model.Result#FAILURE} builds.
+     * @param onUnstable if the vote should be skipped (not counted) for {@link hudson.model.Result#UNSTABLE} builds.
+     * @param onNotBuilt if the vote should be skipped (not counted) for {@link hudson.model.Result#NOT_BUILT} builds.
+     * @deprecated replaced with {@link #SkipVote(boolean, boolean, boolean, boolean, boolean) }
+     */
+    @Deprecated
+    public SkipVote(boolean onSuccessful, boolean onFailed, boolean onUnstable, boolean onNotBuilt) {
+        /* by default and for backward compatibility onAborted is set to the value of onFailed */
+        this(onSuccessful, onFailed, onUnstable, onNotBuilt, onFailed);
     }
 
     /**
@@ -132,5 +148,21 @@ public class SkipVote implements Serializable {
      */
     public void setOnNotBuilt(boolean onNotBuilt) {
         this.onNotBuilt = onNotBuilt;
+    }
+
+    /**
+     * If the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
+     * @return true if it should be skipped.
+     */
+    public boolean isOnAborted() {
+        return onAborted;
+    }
+
+    /**
+     * If the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
+     * @param onAborted true if it should be skipped.
+     */
+    public void setOnAborted(boolean onAborted) {
+        this.onAborted = onAborted;
     }
 }

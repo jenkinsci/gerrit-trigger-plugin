@@ -145,6 +145,12 @@
                                    value="${it.config.gerritBuildNotBuiltVerifiedValue}"
                                    checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Aborted}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildAbortedVerified.html">
+                        <f:textbox name="gerritBuildAbortedVerifiedValue"
+                                   value="${it.config.gerritBuildAbortedVerifiedValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
                     <tr>
                         <td></td>
                         <td>
@@ -183,6 +189,12 @@
                                    value="${it.config.gerritBuildNotBuiltCodeReviewValue}"
                                    checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
+                    <f:entry title="${%Aborted}"
+                             help="/plugin/gerrit-trigger/help-GerritBuildAbortedCodeReview.html">
+                        <f:textbox name="gerritBuildAbortedCodeReviewValue"
+                                   value="${it.config.gerritBuildAbortedCodeReviewValue}"
+                                   checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                    </f:entry>
                 </f:section>
                 <f:advanced>
                     <f:section title="${%Gerrit Verified Commands}">
@@ -215,6 +227,12 @@
                             <f:textarea name="gerritVerifiedCmdBuildNotBuilt"
                                        value="${it.config.gerritCmdBuildNotBuilt}"
                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'No Builds Executed &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
+                        </f:entry>
+                        <f:entry title="${%Aborted}"
+                                 help="/plugin/gerrit-trigger/help-GerritVerifiedCmdBuildAborted.html">
+                            <f:textarea name="gerritVerifiedCmdBuildAborted"
+                                        value="${it.config.gerritCmdBuildAborted}"
+                                        default="gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Aborted &lt;BUILDS_STATS&gt;' --verified &lt;VERIFIED&gt; --code-review &lt;CODE_REVIEW&gt;"/>
                         </f:entry>
                     </f:section>
                     <f:section title="${%Miscellaneous}">

@@ -91,6 +91,8 @@ public abstract class GerritTriggeredBuildListener implements ExtensionPoint {
              result = Result.UNSTABLE;
          } else if (memoryImprint.wereAllBuildsNotBuilt()) {
              result = Result.NOT_BUILT;
+         } else if (memoryImprint.wereAnyBuildsAborted()) {
+             result = Result.ABORTED;
          }
          for (GerritTriggeredBuildListener listener : all()) {
              try {
