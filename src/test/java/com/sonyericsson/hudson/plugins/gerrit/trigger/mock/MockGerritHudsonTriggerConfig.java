@@ -106,6 +106,24 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
+    public String getGerritCmdBuildAborted() {
+        return "CHANGE=<CHANGE>"
+                + " CHANGE_ID=<CHANGE_ID>"
+                + " PATCHSET=<PATCHSET>"
+                + " VERIFIED=-1"
+                + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+                + " REFSPEC=<REFSPEC> MSG='The build was Aborted. BS=<BUILDS_STATS>'"
+                + " BUILDURL=<BUILDURL>"
+                + " STARTED_STATS=<STARTED_STATS>"
+                + " ENV_BRANCH=$BRANCH"
+                + " ENV_CHANGE=$CHANGE"
+                + " ENV_PATCHSET=$PATCHSET"
+                + " ENV_REFSPEC=$REFSPEC"
+                + " ENV_CHANGEURL=$CHANGE_URL";
+    }
+
+    @Override
     public String getGerritCmdBuildUnstable() {
         return "CHANGE=<CHANGE>"
                 + " CHANGE_ID=<CHANGE_ID>"
@@ -203,12 +221,14 @@ public class MockGerritHudsonTriggerConfig implements
     private Integer gerritBuildStartedCodeReviewValue = Integer.valueOf(2);
     private Integer gerritBuildSuccessfulCodeReviewValue = Integer.valueOf(4);
     private Integer gerritBuildFailedCodeReviewValue = Integer.valueOf(-2);
+    private Integer gerritBuildAbortedCodeReviewValue = Integer.valueOf(-2);
     private Integer gerritBuildUnstableCodeReviewValue = Integer.valueOf(-4);
     private Integer gerritBuildNotBuiltCodeReviewValue = Integer.valueOf(-6);
 
     private Integer gerritBuildStartedVerifiedValue = Integer.valueOf(1);
     private Integer gerritBuildSuccessfulVerifiedValue = Integer.valueOf(3);
     private Integer gerritBuildFailedVerifiedValue = Integer.valueOf(-1);
+    private Integer gerritBuildAbortedVerifiedValue = Integer.valueOf(-1);
     private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
     private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
 
@@ -225,6 +245,11 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public Integer getGerritBuildFailedVerifiedValue() {
         return gerritBuildFailedVerifiedValue;
+    }
+
+    @Override
+    public Integer getGerritBuildAbortedVerifiedValue() {
+        return gerritBuildAbortedVerifiedValue;
     }
 
     @Override
@@ -248,6 +273,10 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public Integer getGerritBuildFailedCodeReviewValue() {
         return gerritBuildFailedCodeReviewValue;
+    }
+    @Override
+    public Integer getGerritBuildAbortedCodeReviewValue() {
+        return gerritBuildAbortedCodeReviewValue;
     }
     @Override
     public Integer getGerritBuildUnstableCodeReviewValue() {
@@ -280,6 +309,14 @@ public class MockGerritHudsonTriggerConfig implements
      */
     public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildAbortedCodeReviewValue value to set.
+     */
+    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
     }
 
     /**
@@ -320,6 +357,14 @@ public class MockGerritHudsonTriggerConfig implements
      */
     public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
+    }
+
+    /**
+     * Set value.
+     * @param gerritBuildAbortedVerifiedValue value to set.
+     */
+    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
     }
 
     /**

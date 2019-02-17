@@ -38,6 +38,7 @@ public class SkipVote implements Serializable {
     private static final long serialVersionUID = -372913758160165355L;
     private boolean onSuccessful;
     private boolean onFailed;
+    private boolean onAborted;
     private boolean onUnstable;
     private boolean onNotBuilt;
 
@@ -46,13 +47,15 @@ public class SkipVote implements Serializable {
      *
      * @param onSuccessful if the vote should be skipped (not counted) for {@link hudson.model.Result#SUCCESS} builds.
      * @param onFailed if the vote should be skipped (not counted) for {@link hudson.model.Result#FAILURE} builds.
+     * @param onAborted if the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.                
      * @param onUnstable if the vote should be skipped (not counted) for {@link hudson.model.Result#UNSTABLE} builds.
      * @param onNotBuilt if the vote should be skipped (not counted) for {@link hudson.model.Result#NOT_BUILT} builds.
      */
     @DataBoundConstructor
-    public SkipVote(boolean onSuccessful, boolean onFailed, boolean onUnstable, boolean onNotBuilt) {
+    public SkipVote(boolean onSuccessful, boolean onFailed, boolean onAborted, boolean onUnstable, boolean onNotBuilt) {
         this.onSuccessful = onSuccessful;
         this.onFailed = onFailed;
+        this.onAborted = onAborted;
         this.onUnstable = onUnstable;
         this.onNotBuilt = onNotBuilt;
     }
@@ -96,6 +99,22 @@ public class SkipVote implements Serializable {
      */
     public void setOnFailed(boolean onFailed) {
         this.onFailed = onFailed;
+    }
+
+    /**
+     * If the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
+     * @return true if it should be skipped.
+     */
+    public boolean isOnAborted() {
+        return onAborted;
+    }
+
+    /**
+     * If the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
+     * @param onAborted true if it should be skipped.
+     */
+    public void setOnAborted(boolean onAborted) {
+        this.onAborted = onAborted;
     }
 
     /**

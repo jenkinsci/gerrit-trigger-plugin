@@ -801,6 +801,25 @@ public class BuildMemory {
         }
 
         /**
+         * Returns if any started and completed build has the result {@link Result#ABORTED}.
+         *
+         * @return true if it is so.
+         */
+        public synchronized boolean wereAnyBuildsAborted() {
+            for (Entry entry : list) {
+                if (entry == null) {
+                    continue;
+                }
+                Run build = entry.getBuild();
+                if (build != null && entry.isBuildCompleted()
+                        && build.getResult() == Result.ABORTED) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
          * Returns if any started and completed build has the result {@link Result#UNSTABLE}.
          *
          * @return true if it is so.

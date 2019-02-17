@@ -66,6 +66,8 @@
                         <label class="attach-previous">${%Successful}</label>
                         <input type="checkbox" name="_.onFailed" checked="${skipIt.onFailed?'true':null}"/>
                         <label class="attach-previous">${%Failed}</label>
+                        <input type="checkbox" name="_.onAborted" checked="${skipIt.onAborted?'true':null}"/>
+                        <label class="attach-previous">${%Aborted}</label>
                         <input type="checkbox" name="_.onUnstable" checked="${skipIt.onUnstable?'true':null}"/>
                         <label class="attach-previous">${%Unstable}</label>
                         <input type="checkbox" name="_.onNotBuilt" checked="${skipIt.onNotBuilt?'true':null}"/>
@@ -94,6 +96,14 @@
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedVerified.html">
                     <f:textbox name="gerritBuildFailedVerifiedValue"
                                value="${it.gerritBuildFailedVerifiedValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Aborted}"
+                         field="gerritBuildAbortedVerifiedValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildAbortedVerified.html">
+                    <f:textbox name="gerritBuildAbortedVerifiedValue"
+                               value="${it.gerritBuildAbortedVerifiedValue}"
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
@@ -135,6 +145,14 @@
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildFailedCodeReview.html">
                     <f:textbox name="gerritBuildFailedCodeReviewValue"
                                value="${it.gerritBuildFailedCodeReviewValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Aborted}"
+                         field="gerritBuildAbortedCodeReviewValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildAbortedCodeReview.html">
+                    <f:textbox name="gerritBuildAbortedCodeReviewValue"
+                               value="${it.gerritBuildAbortedCodeReviewValue}"
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>

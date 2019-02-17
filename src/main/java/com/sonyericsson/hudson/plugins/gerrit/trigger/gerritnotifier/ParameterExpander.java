@@ -295,11 +295,17 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildSuccessfulCodeReviewValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        } else if (res == Result.FAILURE) {
             if (trigger.getGerritBuildFailedCodeReviewValue() != null) {
                 return trigger.getGerritBuildFailedCodeReviewValue();
             } else {
                 return config.getGerritBuildFailedCodeReviewValue();
+            }
+        } else if(res == Result.ABORTED) {
+            if (trigger.getGerritBuildAbortedCodeReviewValue() != null) {
+                return trigger.getGerritBuildAbortedCodeReviewValue();
+            } else {
+                return config.getGerritBuildAbortedCodeReviewValue();
             }
         } else if (res == Result.UNSTABLE) {
             if (trigger.getGerritBuildUnstableCodeReviewValue() != null) {
@@ -336,9 +342,15 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildSuccessfulVerifiedValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        } else if (res == Result.FAILURE) {
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
                 return trigger.getGerritBuildFailedVerifiedValue();
+            } else {
+                return config.getGerritBuildFailedVerifiedValue();
+            }
+        } else if(res == Result.ABORTED) {
+            if (trigger.getGerritBuildAbortedVerifiedValue() != null) {
+                return trigger.getGerritBuildAbortedVerifiedValue();
             } else {
                 return config.getGerritBuildFailedVerifiedValue();
             }
@@ -511,6 +523,8 @@ public class ParameterExpander {
             command = config.getGerritCmdBuildSuccessful();
         } else if (memoryImprint.wereAnyBuildsFailed()) {
             command = config.getGerritCmdBuildFailed();
+        } else if (memoryImprint.wereAnyBuildsAborted()) {
+            command = config.getGerritCmdBuildAborted();
         } else if (memoryImprint.wereAnyBuildsUnstable()) {
             command = config.getGerritCmdBuildUnstable();
         } else if (memoryImprint.wereAllBuildsNotBuilt()) {

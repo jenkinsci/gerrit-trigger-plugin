@@ -164,6 +164,8 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildSuccessfulCodeReviewValue;
     private Integer gerritBuildFailedVerifiedValue;
     private Integer gerritBuildFailedCodeReviewValue;
+    private Integer gerritBuildAbortedVerifiedValue;
+    private Integer gerritBuildAbortedCodeReviewValue;
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
     private Integer gerritBuildNotBuiltVerifiedValue;
@@ -202,7 +204,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritProjects = gerritProjects;
         this.gerritTriggerTimerTask = null;
         this.triggerInformationAction = new GerritTriggerInformationAction();
-        this.skipVote = new SkipVote(false, false, false, false);
+        this.skipVote = new SkipVote(false, false, false, false, false);
         this.escapeQuotes = true;
         this.serverName = ANY_SERVER;
         try {
@@ -257,6 +259,12 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildFailedCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is failed, null means
      *                                       that the global value should be used.
+     * @param gerritBuildAbortedVerifiedValue 
+     *                                       Job specific Gerrit verified vote when a build is aborted, null means that
+     *                                       the global value should be used.
+     * @param gerritBuildAbortedCodeReviewValue
+     *                                       Job specific Gerrit code review vote when a build is aborted, null means
+     *                                       that the global value should be used.                                       
      * @param gerritBuildUnstableVerifiedValue
      *                                       Job specific Gerrit verified vote when a build is unstable, null means that
      *                                       the global value should be used.
@@ -294,7 +302,8 @@ public class GerritTrigger extends Trigger<Job> {
     public GerritTrigger(List<GerritProject> gerritProjects, SkipVote skipVote, Integer gerritBuildStartedVerifiedValue,
             Integer gerritBuildStartedCodeReviewValue, Integer gerritBuildSuccessfulVerifiedValue,
             Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
-            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
+            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildAbortedVerifiedValue, 
+            Integer gerritBuildAbortedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
             Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
             boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
@@ -310,6 +319,8 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
@@ -1158,6 +1169,46 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
+    }
+
+    /**
+     * Job specific Gerrit code review vote when a build is aborted, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildAbortedCodeReviewValue() {
+        return gerritBuildAbortedCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit code review vote when a build is aborted, providing null means that the global value should be
+     * used.
+     *
+     * @param gerritBuildAbortedCodeReviewValue the vote value.
+     */
+    @DataBoundSetter
+    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is aborted, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildAbortedVerifiedValue() {
+        return gerritBuildAbortedVerifiedValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is aborted, providing null means that the global value should be
+     * used.
+     *
+     * @param gerritBuildAbortedVerifiedValue the vote value.
+     */
+    @DataBoundSetter
+    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
     }
 
     /**

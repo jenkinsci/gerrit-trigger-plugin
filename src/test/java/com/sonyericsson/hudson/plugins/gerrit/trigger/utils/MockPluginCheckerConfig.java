@@ -94,6 +94,11 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     }
 
     @Override
+    public String getGerritCmdBuildAborted() {
+        return null;
+    }
+
+    @Override
     public String getGerritCmdBuildUnstable() {
         return null;
     }
@@ -130,6 +135,16 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
 
     @Override
     public Integer getGerritBuildFailedCodeReviewValue() {
+        return 0;
+    }
+
+    @Override
+    public Integer getGerritBuildAbortedVerifiedValue() {
+        return 0;
+    }
+
+    @Override
+    public Integer getGerritBuildAbortedCodeReviewValue() {
         return 0;
     }
 
