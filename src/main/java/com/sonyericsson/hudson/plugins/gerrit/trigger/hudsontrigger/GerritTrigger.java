@@ -259,12 +259,12 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildFailedCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is failed, null means
      *                                       that the global value should be used.
-     * @param gerritBuildAbortedVerifiedValue 
+     * @param gerritBuildAbortedVerifiedValue
      *                                       Job specific Gerrit verified vote when a build is aborted, null means that
      *                                       the global value should be used.
      * @param gerritBuildAbortedCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is aborted, null means
-     *                                       that the global value should be used.                                       
+     *                                       that the global value should be used.
      * @param gerritBuildUnstableVerifiedValue
      *                                       Job specific Gerrit verified vote when a build is unstable, null means that
      *                                       the global value should be used.
@@ -302,7 +302,7 @@ public class GerritTrigger extends Trigger<Job> {
     public GerritTrigger(List<GerritProject> gerritProjects, SkipVote skipVote, Integer gerritBuildStartedVerifiedValue,
             Integer gerritBuildStartedCodeReviewValue, Integer gerritBuildSuccessfulVerifiedValue,
             Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
-            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildAbortedVerifiedValue, 
+            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildAbortedVerifiedValue,
             Integer gerritBuildAbortedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
             Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
             Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,

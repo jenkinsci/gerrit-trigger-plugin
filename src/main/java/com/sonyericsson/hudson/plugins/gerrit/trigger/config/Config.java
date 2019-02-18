@@ -122,6 +122,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION = true;
     /**
+     * Default value for the dynamic config refresh interval.
+     */
+    public static final int DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL = 30;
+
+    /**
      * Default value showing how many seconds between startup and initial project list fetch.
      */
     public static final int DEFAULT_PROJECT_LIST_FETCH_DELAY = 0;
@@ -320,35 +325,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             numberOfSendingWorkerThreads = DEFAULT_NR_OF_SENDING_WORKER_THREADS;
         }
 
-        if (formData.isEmpty()) {
-            gerritBuildStartedVerifiedValue = DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE;
-            gerritBuildSuccessfulVerifiedValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE;
-            gerritBuildFailedVerifiedValue = DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE;
-            gerritBuildAbortedVerifiedValue = DEFAULT_GERRIT_BUILD_ABORTED_VERIFIED_VALUE;
-            gerritBuildUnstableVerifiedValue = DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE;
-            gerritBuildNotBuiltVerifiedValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE;
-            gerritBuildStartedCodeReviewValue = DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE;
-            gerritBuildSuccessfulCodeReviewValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE;
-            gerritBuildFailedCodeReviewValue = DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE;
-            gerritBuildAbortedCodeReviewValue = DEFAULT_GERRIT_BUILD_ABORTED_CODE_REVIEW_VALUE;
-            gerritBuildUnstableCodeReviewValue = DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE;
-            gerritBuildNotBuiltCodeReviewValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE;
-        } else {
-            gerritBuildStartedVerifiedValue = getValueFromFormData(formData, "gerritBuildStartedVerifiedValue");
-            gerritBuildSuccessfulVerifiedValue = getValueFromFormData(formData, "gerritBuildSuccessfulVerifiedValue");
-            gerritBuildFailedVerifiedValue = getValueFromFormData(formData, "gerritBuildFailedVerifiedValue");
-            gerritBuildAbortedVerifiedValue = getValueFromFormData(formData, "gerritBuildAbortedVerifiedValue");
-            gerritBuildUnstableVerifiedValue = getValueFromFormData(formData, "gerritBuildUnstableVerifiedValue");
-            gerritBuildNotBuiltVerifiedValue = getValueFromFormData(formData, "gerritBuildNotBuiltVerifiedValue");
-            gerritBuildStartedCodeReviewValue = getValueFromFormData(formData, "gerritBuildStartedCodeReviewValue");
-            gerritBuildSuccessfulCodeReviewValue = getValueFromFormData(formData,
-                    "gerritBuildSuccessfulCodeReviewValue");
-            gerritBuildFailedCodeReviewValue = getValueFromFormData(formData, "gerritBuildFailedCodeReviewValue");
-            gerritBuildAbortedCodeReviewValue = getValueFromFormData(formData, "gerritBuildAbortedCodeReviewValue");
-            gerritBuildUnstableCodeReviewValue = getValueFromFormData(formData, "gerritBuildUnstableCodeReviewValue");
-            gerritBuildNotBuiltCodeReviewValue = getValueFromFormData(formData, "gerritBuildNotBuiltCodeReviewValue");
-        }
-
+        setVoteValues(formData);
 
         gerritVerifiedCmdBuildStarted = formData.optString(
                 "gerritVerifiedCmdBuildStarted",
@@ -433,6 +410,41 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
+    }
+
+    /**
+     * Sets all config vote values from the provided JSONObject.
+     * @param formData the JSON object with form data.
+     */
+    private void setVoteValues(JSONObject formData) {
+        if (formData.isEmpty()) {
+            gerritBuildStartedVerifiedValue = DEFAULT_GERRIT_BUILD_STARTED_VERIFIED_VALUE;
+            gerritBuildSuccessfulVerifiedValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_VERIFIED_VALUE;
+            gerritBuildFailedVerifiedValue = DEFAULT_GERRIT_BUILD_FAILURE_VERIFIED_VALUE;
+            gerritBuildAbortedVerifiedValue = DEFAULT_GERRIT_BUILD_ABORTED_VERIFIED_VALUE;
+            gerritBuildUnstableVerifiedValue = DEFAULT_GERRIT_BUILD_UNSTABLE_VERIFIED_VALUE;
+            gerritBuildNotBuiltVerifiedValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_VERIFIED_VALUE;
+            gerritBuildStartedCodeReviewValue = DEFAULT_GERRIT_BUILD_STARTED_CODE_REVIEW_VALUE;
+            gerritBuildSuccessfulCodeReviewValue = DEFAULT_GERRIT_BUILD_SUCCESSFUL_CODE_REVIEW_VALUE;
+            gerritBuildFailedCodeReviewValue = DEFAULT_GERRIT_BUILD_FAILURE_CODE_REVIEW_VALUE;
+            gerritBuildAbortedCodeReviewValue = DEFAULT_GERRIT_BUILD_ABORTED_CODE_REVIEW_VALUE;
+            gerritBuildUnstableCodeReviewValue = DEFAULT_GERRIT_BUILD_UNSTABLE_CODE_REVIEW_VALUE;
+            gerritBuildNotBuiltCodeReviewValue = DEFAULT_GERRIT_BUILD_NOT_BUILT_CODE_REVIEW_VALUE;
+        } else {
+            gerritBuildStartedVerifiedValue = getValueFromFormData(formData, "gerritBuildStartedVerifiedValue");
+            gerritBuildSuccessfulVerifiedValue = getValueFromFormData(formData, "gerritBuildSuccessfulVerifiedValue");
+            gerritBuildFailedVerifiedValue = getValueFromFormData(formData, "gerritBuildFailedVerifiedValue");
+            gerritBuildAbortedVerifiedValue = getValueFromFormData(formData, "gerritBuildAbortedVerifiedValue");
+            gerritBuildUnstableVerifiedValue = getValueFromFormData(formData, "gerritBuildUnstableVerifiedValue");
+            gerritBuildNotBuiltVerifiedValue = getValueFromFormData(formData, "gerritBuildNotBuiltVerifiedValue");
+            gerritBuildStartedCodeReviewValue = getValueFromFormData(formData, "gerritBuildStartedCodeReviewValue");
+            gerritBuildSuccessfulCodeReviewValue = getValueFromFormData(formData,
+                    "gerritBuildSuccessfulCodeReviewValue");
+            gerritBuildFailedCodeReviewValue = getValueFromFormData(formData, "gerritBuildFailedCodeReviewValue");
+            gerritBuildAbortedCodeReviewValue = getValueFromFormData(formData, "gerritBuildAbortedCodeReviewValue");
+            gerritBuildUnstableCodeReviewValue = getValueFromFormData(formData, "gerritBuildUnstableCodeReviewValue");
+            gerritBuildNotBuiltCodeReviewValue = getValueFromFormData(formData, "gerritBuildNotBuiltCodeReviewValue");
+        }
     }
 
     /**

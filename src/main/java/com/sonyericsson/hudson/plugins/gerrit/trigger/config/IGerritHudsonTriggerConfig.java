@@ -140,10 +140,10 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      */
     Integer getGerritBuildAbortedVerifiedValue();
 
-	/**
-	 * The default code review value for build aborted.
-	 * @return the value.
-	 */
+    /**
+     * The default code review value for build aborted.
+     * @return the value.
+     */
     Integer getGerritBuildAbortedCodeReviewValue();
 
     /**

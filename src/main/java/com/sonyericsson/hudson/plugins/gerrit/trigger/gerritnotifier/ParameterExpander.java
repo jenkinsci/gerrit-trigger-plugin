@@ -301,7 +301,7 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildFailedCodeReviewValue();
             }
-        } else if(res == Result.ABORTED) {
+        } else if (res == Result.ABORTED) {
             if (trigger.getGerritBuildAbortedCodeReviewValue() != null) {
                 return trigger.getGerritBuildAbortedCodeReviewValue();
             } else {
@@ -348,7 +348,7 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildFailedVerifiedValue();
             }
-        } else if(res == Result.ABORTED) {
+        } else if (res == Result.ABORTED) {
             if (trigger.getGerritBuildAbortedVerifiedValue() != null) {
                 return trigger.getGerritBuildAbortedVerifiedValue();
             } else {

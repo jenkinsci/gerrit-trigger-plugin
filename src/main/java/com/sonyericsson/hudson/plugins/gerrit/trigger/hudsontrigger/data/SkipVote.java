@@ -47,7 +47,7 @@ public class SkipVote implements Serializable {
      *
      * @param onSuccessful if the vote should be skipped (not counted) for {@link hudson.model.Result#SUCCESS} builds.
      * @param onFailed if the vote should be skipped (not counted) for {@link hudson.model.Result#FAILURE} builds.
-     * @param onAborted if the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.                
+     * @param onAborted if the vote should be skipped (not counted) for {@link hudson.model.Result#ABORTED} builds.
      * @param onUnstable if the vote should be skipped (not counted) for {@link hudson.model.Result#UNSTABLE} builds.
      * @param onNotBuilt if the vote should be skipped (not counted) for {@link hudson.model.Result#NOT_BUILT} builds.
      */
