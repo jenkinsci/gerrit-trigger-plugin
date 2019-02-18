@@ -154,7 +154,7 @@ public class ParameterExpanderParameterizedTest {
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, -2, -1)});
+        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 3, -2)});
         //ABORTED overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(41);

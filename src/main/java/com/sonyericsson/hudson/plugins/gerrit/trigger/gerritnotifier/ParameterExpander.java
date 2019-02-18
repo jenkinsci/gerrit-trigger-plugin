@@ -364,7 +364,7 @@ public class ParameterExpander {
             if (trigger.getGerritBuildAbortedVerifiedValue() != null) {
                 return trigger.getGerritBuildAbortedVerifiedValue();
             } else {
-                return config.getGerritBuildFailedVerifiedValue();
+                return config.getGerritBuildAbortedVerifiedValue();
             }
         } else {
             //As bad as failure, for now
