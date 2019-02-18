@@ -189,6 +189,11 @@
                          help="/plugin/gerrit-trigger/trigger/help-BuildFailureMessage.html">
                    <f:textarea/>
                 </f:entry>
+                <f:entry title="${%Build Aborted Message}"
+                         field="buildAbortedMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildAbortedMessage.html">
+                    <f:textarea/>
+                </f:entry>
                 <f:entry title="${%Build Unstable Message}"
                          field="buildUnstableMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildUnstableMessage.html">

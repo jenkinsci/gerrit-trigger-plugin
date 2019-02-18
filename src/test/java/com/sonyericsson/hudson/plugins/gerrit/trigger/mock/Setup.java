@@ -129,6 +129,7 @@ public final class Setup {
     public static MockGerritHudsonTriggerConfig createConfigWithCodeReviewsNull() {
         MockGerritHudsonTriggerConfig config = new MockGerritHudsonTriggerConfig();
         config.setGerritBuildFailedCodeReviewValue(null);
+        config.setGerritBuildAbortedCodeReviewValue(null);
         config.setGerritBuildSuccessfulCodeReviewValue(null);
         config.setGerritBuildNotBuiltCodeReviewValue(null);
         config.setGerritBuildStartedCodeReviewValue(null);
@@ -629,6 +630,8 @@ public final class Setup {
         trigger.setGerritBuildSuccessfulCodeReviewValue(0);
         trigger.setGerritBuildFailedVerifiedValue(0);
         trigger.setGerritBuildFailedCodeReviewValue(0);
+        trigger.setGerritBuildAbortedVerifiedValue(0);
+        trigger.setGerritBuildAbortedCodeReviewValue(0);
         trigger.setGerritBuildUnstableVerifiedValue(0);
         trigger.setGerritBuildUnstableCodeReviewValue(0);
         trigger.setGerritBuildNotBuiltVerifiedValue(0);
@@ -668,7 +671,7 @@ public final class Setup {
         boolean silentStart = false;
 
         GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
+                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", "", null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
 
         if (job != null) {
@@ -798,8 +801,8 @@ public final class Setup {
                 skipVote = new SkipVote(false, true, false, false, false);
             }
         } else if (result == Result.ABORTED) {
-            when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
-            when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(resultsVerifiedVote);
+            when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
                 skipVote = new SkipVote(false, false, true, false, false);
             }

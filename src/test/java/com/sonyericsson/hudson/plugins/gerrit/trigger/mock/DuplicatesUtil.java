@@ -89,7 +89,7 @@ public abstract class DuplicatesUtil {
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null, false));
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                false, false, true, false, false, null, null, null, null, null, null, null,
+                false, false, true, false, false, null, null, null, null, null, null, null, null,
                 null, serverName, null, null, false, null, null));
         return rule.configRoundtrip(p);
     }
@@ -119,7 +119,7 @@ public abstract class DuplicatesUtil {
         String filepath = uri.toURL().toString();
         GerritTrigger trigger = new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, false, false,
-                false, false, false, null, null, null, null, null, null, null, null,
+                false, false, false, null, null, null, null, null, null, null, null, null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, list, true, filepath, null);
         p.addTrigger(trigger);
         rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
@@ -162,7 +162,7 @@ public abstract class DuplicatesUtil {
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null, null, null,
-                false, false, true, false, false, null, null, null, null, null, null, null,
+                false, false, true, false, false, null, null, null, null, null, null, null, null,
                 null, serverName, null, list, false, null, null));
         rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;

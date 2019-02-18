@@ -618,8 +618,10 @@ public class ParameterExpander {
                     String customMessage = null;
                     if (res == Result.SUCCESS) {
                         customMessage = trigger.getBuildSuccessfulMessage();
-                    } else if (res == Result.FAILURE || res == Result.ABORTED) {
+                    } else if (res == Result.FAILURE) {
                         customMessage = trigger.getBuildFailureMessage();
+                    } else if(res == Result.ABORTED) {
+                        customMessage = trigger.getBuildAbortedMessage();
                     } else if (res == Result.UNSTABLE) {
                         customMessage = trigger.getBuildUnstableMessage();
                     } else if (res == Result.NOT_BUILT) {

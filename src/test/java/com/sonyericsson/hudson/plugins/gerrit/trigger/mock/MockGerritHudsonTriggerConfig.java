@@ -221,14 +221,14 @@ public class MockGerritHudsonTriggerConfig implements
     private Integer gerritBuildStartedCodeReviewValue = Integer.valueOf(2);
     private Integer gerritBuildSuccessfulCodeReviewValue = Integer.valueOf(4);
     private Integer gerritBuildFailedCodeReviewValue = Integer.valueOf(-2);
-    private Integer gerritBuildAbortedCodeReviewValue = Integer.valueOf(-2);
+    private Integer gerritBuildAbortedCodeReviewValue = Integer.valueOf(3);
     private Integer gerritBuildUnstableCodeReviewValue = Integer.valueOf(-4);
     private Integer gerritBuildNotBuiltCodeReviewValue = Integer.valueOf(-6);
 
     private Integer gerritBuildStartedVerifiedValue = Integer.valueOf(1);
     private Integer gerritBuildSuccessfulVerifiedValue = Integer.valueOf(3);
     private Integer gerritBuildFailedVerifiedValue = Integer.valueOf(-1);
-    private Integer gerritBuildAbortedVerifiedValue = Integer.valueOf(-1);
+    private Integer gerritBuildAbortedVerifiedValue = Integer.valueOf(-2);
     private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
     private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
 

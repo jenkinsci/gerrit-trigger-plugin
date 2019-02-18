@@ -181,6 +181,7 @@ public class GerritTrigger extends Trigger<Job> {
     private GerritTriggerParameters.ParameterMode commentTextParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
+    private String buildAbortedMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
     private String buildNotBuiltMessage;
@@ -231,6 +232,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildSuccessfulMessage = "";
         this.buildUnstableMessage = "";
         this.buildFailureMessage = "";
+        this.buildAbortedMessage = "";
         this.buildNotBuiltMessage = "";
         this.buildUnsuccessfulFilepath = "";
         this.triggerConfigURL = "";
@@ -308,7 +310,7 @@ public class GerritTrigger extends Trigger<Job> {
             Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
             boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
             String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
-            String buildFailureMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
+            String buildFailureMessage, String buildAbortedMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
             String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
         this.gerritProjects = gerritProjects;
@@ -345,6 +347,7 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
+        this.buildAbortedMessage = buildAbortedMessage;
         this.buildNotBuiltMessage = buildNotBuiltMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
@@ -1705,6 +1708,25 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setBuildFailureMessage(String buildFailureMessage) {
         this.buildFailureMessage = buildFailureMessage;
+    }
+
+    /**
+     * The message to show users when a build is aborted, if custom messages are enabled.
+     *
+     * @return The build aborted message
+     */
+    public String getBuildAbortedMessage() {
+        return buildAbortedMessage;
+    }
+
+    /**
+     * Message to write to Gerrit when a build is aborted.
+     *
+     * @param buildAbortedMessage The build aborted message
+     */
+    @DataBoundSetter
+    public void setBuildAbortedMessage(String buildAbortedMessage) {
+        this.buildAbortedMessage = buildAbortedMessage;
     }
 
     /**

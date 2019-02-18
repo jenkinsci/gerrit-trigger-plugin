@@ -64,6 +64,8 @@ public class ConfigTest {
     public void testSetValues() {
         String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review <CHANGE>,<PATCHSET>"
@@ -76,6 +78,8 @@ public class ConfigTest {
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
                 + "\"gerritBuildFailedCodeReviewValue\":\"1\","
                 + "\"gerritBuildFailedVerifiedValue\":\"-1\","
+                + "\"gerritBuildAbortedCodeReviewValue\":\"6\","
+                + "\"gerritBuildAbortedVerifiedValue\":\"-6\","
                 + "\"gerritBuildStartedCodeReviewValue\":\"2\","
                 + "\"gerritBuildStartedVerifiedValue\":\"-2\","
                 + "\"gerritBuildSuccessfulCodeReviewValue\":\"3\","
@@ -99,6 +103,9 @@ public class ConfigTest {
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildFailed());
         assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                        + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildAborted());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildStarted());
         assertEquals("gerrit review <CHANGE>,<PATCHSET>"
@@ -115,6 +122,8 @@ public class ConfigTest {
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
         assertEquals(Integer.valueOf(1), config.getGerritBuildFailedCodeReviewValue());
         assertEquals(Integer.valueOf(-1), config.getGerritBuildFailedVerifiedValue());
+        assertEquals(Integer.valueOf(6), config.getGerritBuildAbortedCodeReviewValue());
+        assertEquals(Integer.valueOf(-6), config.getGerritBuildAbortedVerifiedValue());
         assertEquals(Integer.valueOf(2), config.getGerritBuildStartedCodeReviewValue());
         assertEquals(Integer.valueOf(-2), config.getGerritBuildStartedVerifiedValue());
         assertEquals(Integer.valueOf(3), config.getGerritBuildSuccessfulCodeReviewValue());
@@ -159,6 +168,8 @@ public class ConfigTest {
     public void testCopyConfig() {
         String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
+                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review <CHANGE>,<PATCHSET>"
@@ -171,6 +182,8 @@ public class ConfigTest {
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
                 + "\"gerritBuildFailedCodeReviewValue\":\"1\","
                 + "\"gerritBuildFailedVerifiedValue\":\"-1\","
+                + "\"gerritBuildAbortedCodeReviewValue\":\"6\","
+                + "\"gerritBuildAbortedVerifiedValue\":\"-6\","
                 + "\"gerritBuildStartedCodeReviewValue\":\"2\","
                 + "\"gerritBuildStartedVerifiedValue\":\"-2\","
                 + "\"gerritBuildSuccessfulCodeReviewValue\":\"3\","
@@ -195,6 +208,9 @@ public class ConfigTest {
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildFailed());
         assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+                        + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                config.getGerritCmdBuildAborted());
+        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildStarted());
         assertEquals("gerrit review <CHANGE>,<PATCHSET>"
@@ -211,6 +227,8 @@ public class ConfigTest {
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
         assertEquals(Integer.valueOf(1), config.getGerritBuildFailedCodeReviewValue());
         assertEquals(Integer.valueOf(-1), config.getGerritBuildFailedVerifiedValue());
+        assertEquals(Integer.valueOf(6), config.getGerritBuildAbortedCodeReviewValue());
+        assertEquals(Integer.valueOf(-6), config.getGerritBuildAbortedVerifiedValue());
         assertEquals(Integer.valueOf(2), config.getGerritBuildStartedCodeReviewValue());
         assertEquals(Integer.valueOf(-2), config.getGerritBuildStartedVerifiedValue());
         assertEquals(Integer.valueOf(3), config.getGerritBuildSuccessfulCodeReviewValue());
