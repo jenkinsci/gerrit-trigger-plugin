@@ -164,12 +164,12 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildSuccessfulCodeReviewValue;
     private Integer gerritBuildFailedVerifiedValue;
     private Integer gerritBuildFailedCodeReviewValue;
-    private Integer gerritBuildAbortedVerifiedValue;
-    private Integer gerritBuildAbortedCodeReviewValue;
     private Integer gerritBuildUnstableVerifiedValue;
     private Integer gerritBuildUnstableCodeReviewValue;
     private Integer gerritBuildNotBuiltVerifiedValue;
     private Integer gerritBuildNotBuiltCodeReviewValue;
+    private Integer gerritBuildAbortedVerifiedValue;
+    private Integer gerritBuildAbortedCodeReviewValue;
     private boolean silentMode;
     private String notificationLevel;
     private boolean silentStartMode;
@@ -181,10 +181,10 @@ public class GerritTrigger extends Trigger<Job> {
     private GerritTriggerParameters.ParameterMode commentTextParameterMode;
     private String buildStartMessage;
     private String buildFailureMessage;
-    private String buildAbortedMessage;
     private String buildSuccessfulMessage;
     private String buildUnstableMessage;
     private String buildNotBuiltMessage;
+    private String buildAbortedMessage;
     private String buildUnsuccessfulFilepath;
     private String customUrl;
     private String serverName;
@@ -232,15 +232,14 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildSuccessfulMessage = "";
         this.buildUnstableMessage = "";
         this.buildFailureMessage = "";
-        this.buildAbortedMessage = "";
         this.buildNotBuiltMessage = "";
+        this.buildAbortedMessage = "";
         this.buildUnsuccessfulFilepath = "";
         this.triggerConfigURL = "";
     }
 
     /**
      * Old DataBound Constructor. Replaced with {@link #GerritTrigger(List)} and {@link DataBoundSetter}s.
-     *
      * @param gerritProjects                 the set of triggering rules.
      * @param skipVote                       what votes if any should be skipped in the final
      *                                       verified/code review calculation.
@@ -261,12 +260,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildFailedCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is failed, null means
      *                                       that the global value should be used.
-     * @param gerritBuildAbortedVerifiedValue
-     *                                       Job specific Gerrit verified vote when a build is aborted, null means that
-     *                                       the global value should be used.
-     * @param gerritBuildAbortedCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is aborted, null means
-     *                                       that the global value should be used.
      * @param gerritBuildUnstableVerifiedValue
      *                                       Job specific Gerrit verified vote when a build is unstable, null means that
      *                                       the global value should be used.
@@ -279,6 +272,12 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildNotBuiltCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is not built, null means
      *                                       that the global value should be used.
+     * @param gerritBuildAbortedVerifiedValue
+     *                                       Job specific Gerrit verified vote when a build is aborted, null means that
+     *                                       the global value should be used.
+     * @param gerritBuildAbortedCodeReviewValue
+     *                                       Job specific Gerrit code review vote when a build is aborted, null means
+     *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param silentStartMode                Silent Start Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
@@ -289,8 +288,8 @@ public class GerritTrigger extends Trigger<Job> {
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
-     * @param buildAbortedMessage            Message to write to Gerrit when a build is aborted
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
+     * @param buildAbortedMessage            Message to write to Gerrit when a build is aborted
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
      * @param customUrl                      Custom URL to send to Gerrit instead of build URL
@@ -303,18 +302,20 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @Deprecated
     public GerritTrigger(List<GerritProject> gerritProjects, SkipVote skipVote, Integer gerritBuildStartedVerifiedValue,
-            Integer gerritBuildStartedCodeReviewValue, Integer gerritBuildSuccessfulVerifiedValue,
-            Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
-            Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildAbortedVerifiedValue,
-            Integer gerritBuildAbortedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
-            Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
-            Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
-            boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
-            String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
-            String buildFailureMessage, String buildAbortedMessage, String buildNotBuiltMessage,
-            String buildUnsuccessfulFilepath, String customUrl,
-            String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
-            boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
+                         Integer gerritBuildStartedCodeReviewValue, Integer gerritBuildSuccessfulVerifiedValue,
+                         Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
+                         Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
+                         Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
+                         Integer gerritBuildNotBuiltCodeReviewValue, Integer gerritBuildAbortedVerifiedValue,
+                         Integer gerritBuildAbortedCodeReviewValue,
+                         boolean silentMode, boolean silentStartMode,
+                         boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage,
+                         String dependencyJobsNames,
+                         String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
+                         String buildFailureMessage, String buildNotBuiltMessage, String buildAbortedMessage,
+                         String buildUnsuccessfulFilepath, String customUrl,
+                         String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
+                         boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
         this.gerritProjects = gerritProjects;
         this.skipVote = skipVote;
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
@@ -323,12 +324,12 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
-        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
-        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
         this.silentMode = silentMode;
         this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
@@ -349,8 +350,8 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildSuccessfulMessage = buildSuccessfulMessage;
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
-        this.buildAbortedMessage = buildAbortedMessage;
         this.buildNotBuiltMessage = buildNotBuiltMessage;
+        this.buildAbortedMessage = buildAbortedMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
         this.serverName = serverName;
@@ -1177,46 +1178,6 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Job specific Gerrit code review vote when a build is aborted, null means that the global value should be used.
-     *
-     * @return the vote value.
-     */
-    public Integer getGerritBuildAbortedCodeReviewValue() {
-        return gerritBuildAbortedCodeReviewValue;
-    }
-
-    /**
-     * Job specific Gerrit code review vote when a build is aborted, providing null means that the global value should be
-     * used.
-     *
-     * @param gerritBuildAbortedCodeReviewValue the vote value.
-     */
-    @DataBoundSetter
-    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
-        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
-    }
-
-    /**
-     * Job specific Gerrit verified vote when a build is aborted, null means that the global value should be used.
-     *
-     * @return the vote value.
-     */
-    public Integer getGerritBuildAbortedVerifiedValue() {
-        return gerritBuildAbortedVerifiedValue;
-    }
-
-    /**
-     * Job specific Gerrit verified vote when a build is aborted, providing null means that the global value should be
-     * used.
-     *
-     * @param gerritBuildAbortedVerifiedValue the vote value.
-     */
-    @DataBoundSetter
-    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
-        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
-    }
-
-    /**
      * Job specific Gerrit code review vote when a build is started, null means that the global value should be used.
      *
      * @return the vote value.
@@ -1383,6 +1344,46 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
+    }
+
+    /**
+     * Job specific Gerrit code review vote when a build is aborted, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildAbortedCodeReviewValue() {
+        return gerritBuildAbortedCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit code review vote when a build is aborted, providing null means that the global value should be
+     * used.
+     *
+     * @param gerritBuildAbortedCodeReviewValue the vote value.
+     */
+    @DataBoundSetter
+    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is aborted, null means that the global value should be used.
+     *
+     * @return the vote value.
+     */
+    public Integer getGerritBuildAbortedVerifiedValue() {
+        return gerritBuildAbortedVerifiedValue;
+    }
+
+    /**
+     * Job specific Gerrit verified vote when a build is aborted, providing null means that the global value should be
+     * used.
+     *
+     * @param gerritBuildAbortedVerifiedValue the vote value.
+     */
+    @DataBoundSetter
+    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
     }
 
     /**
@@ -1713,25 +1714,6 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * The message to show users when a build is aborted, if custom messages are enabled.
-     *
-     * @return The build aborted message
-     */
-    public String getBuildAbortedMessage() {
-        return buildAbortedMessage;
-    }
-
-    /**
-     * Message to write to Gerrit when a build is aborted.
-     *
-     * @param buildAbortedMessage The build aborted message
-     */
-    @DataBoundSetter
-    public void setBuildAbortedMessage(String buildAbortedMessage) {
-        this.buildAbortedMessage = buildAbortedMessage;
-    }
-
-    /**
      * The message to show users when all builds are not built, if custom messages are enabled.
      *
      * @return The build not built message
@@ -1748,6 +1730,25 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setBuildNotBuiltMessage(String buildNotBuiltMessage) {
         this.buildNotBuiltMessage = buildNotBuiltMessage;
+    }
+
+    /**
+     * The message to show users when a build is aborted, if custom messages are enabled.
+     *
+     * @return The build aborted message
+     */
+    public String getBuildAbortedMessage() {
+        return buildAbortedMessage;
+    }
+
+    /**
+     * Message to write to Gerrit when a build is aborted.
+     *
+     * @param buildAbortedMessage The build aborted message
+     */
+    @DataBoundSetter
+    public void setBuildAbortedMessage(String buildAbortedMessage) {
+        this.buildAbortedMessage = buildAbortedMessage;
     }
 
     /**

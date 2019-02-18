@@ -129,11 +129,11 @@ public final class Setup {
     public static MockGerritHudsonTriggerConfig createConfigWithCodeReviewsNull() {
         MockGerritHudsonTriggerConfig config = new MockGerritHudsonTriggerConfig();
         config.setGerritBuildFailedCodeReviewValue(null);
-        config.setGerritBuildAbortedCodeReviewValue(null);
         config.setGerritBuildSuccessfulCodeReviewValue(null);
         config.setGerritBuildNotBuiltCodeReviewValue(null);
         config.setGerritBuildStartedCodeReviewValue(null);
         config.setGerritBuildUnstableCodeReviewValue(null);
+        config.setGerritBuildAbortedCodeReviewValue(null);
         return config;
     }
 
@@ -630,12 +630,12 @@ public final class Setup {
         trigger.setGerritBuildSuccessfulCodeReviewValue(0);
         trigger.setGerritBuildFailedVerifiedValue(0);
         trigger.setGerritBuildFailedCodeReviewValue(0);
-        trigger.setGerritBuildAbortedVerifiedValue(0);
-        trigger.setGerritBuildAbortedCodeReviewValue(0);
         trigger.setGerritBuildUnstableVerifiedValue(0);
         trigger.setGerritBuildUnstableCodeReviewValue(0);
         trigger.setGerritBuildNotBuiltVerifiedValue(0);
         trigger.setGerritBuildNotBuiltCodeReviewValue(0);
+        trigger.setGerritBuildAbortedVerifiedValue(0);
+        trigger.setGerritBuildAbortedCodeReviewValue(0);
         trigger.setServerName(PluginImpl.DEFAULT_SERVER_NAME);
 
         if (job != null) {
@@ -800,21 +800,21 @@ public final class Setup {
             if (shouldSkip) {
                 skipVote = new SkipVote(false, true, false, false, false);
             }
-        } else if (result == Result.ABORTED) {
-            when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
-            when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(resultsVerifiedVote);
-            if (shouldSkip) {
-                skipVote = new SkipVote(false, false, true, false, false);
-            }
         } else if (result == Result.UNSTABLE) {
             when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(resultsCodeReviewVote);
             when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
-                skipVote = new SkipVote(false, false, false, true, false);
+                skipVote = new SkipVote(false, false, true, false, false);
             }
         } else if (result == Result.NOT_BUILT) {
             when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
             when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
+            if (shouldSkip) {
+                skipVote = new SkipVote(false, false, false, true, false);
+            }
+        } else if (result == Result.ABORTED) {
+            when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
                 skipVote = new SkipVote(false, false, false, false, true);
             }
