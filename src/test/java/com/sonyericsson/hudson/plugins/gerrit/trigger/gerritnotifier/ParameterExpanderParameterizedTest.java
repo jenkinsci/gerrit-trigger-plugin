@@ -137,13 +137,13 @@ public class ParameterExpanderParameterizedTest {
         list.add(new TestParameters[]{new TestParameters(config, Result.FAILURE, trigger, 31, 32)});
         //ABORTED Not overridden
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
+        when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(null);
+        when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(null);
         list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, -2, -1)});
         //ABORTED overridden
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(41);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(42);
+        when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(41);
+        when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(42);
         list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 41, 42)});
         //UNSTABLE Not overridden
         trigger = mock(GerritTrigger.class);
