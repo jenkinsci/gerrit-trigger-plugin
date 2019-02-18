@@ -289,6 +289,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param buildSuccessfulMessage         Message to write to Gerrit when a build succeeds
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
+     * @param buildAbortedMessage            Message to write to Gerrit when a build is aborted
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
@@ -310,7 +311,8 @@ public class GerritTrigger extends Trigger<Job> {
             Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
             boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
             String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
-            String buildFailureMessage, String buildAbortedMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
+            String buildFailureMessage, String buildAbortedMessage, String buildNotBuiltMessage,
+            String buildUnsuccessfulFilepath, String customUrl,
             String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
         this.gerritProjects = gerritProjects;
