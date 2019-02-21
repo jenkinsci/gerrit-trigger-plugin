@@ -431,9 +431,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (categories == null) {
             categories = new LinkedList<VerdictCategory>();
         }
+
         if (categories.isEmpty()) {
-            categories.add(new VerdictCategory("Code-Review", "Code Review"));
-            categories.add(new VerdictCategory("Verified", "Verified"));
+            categories.add(new VerdictCategory(Config.CODE_REVIEW, Config.CODE_REVIEW));
+            categories.add(new VerdictCategory(Config.VERIFIED, Config.VERIFIED));
         }
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getHandler_();
@@ -890,6 +891,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
    /**
      * Saves the form to the configuration and disk.
+     *
      * @param req StaplerRequest
      * @param rsp StaplerResponse
      * @throws ServletException if something unfortunate happens.

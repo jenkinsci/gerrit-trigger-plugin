@@ -103,53 +103,43 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
         return null;
     }
 
-    @Override
-    public Integer getGerritBuildStartedVerifiedValue() {
+    @Override public Integer getGerritBuildStartedVerifiedValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildStartedCodeReviewValue() {
+    @Override public Integer getGerritBuildStartedCodeReviewValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildSuccessfulVerifiedValue() {
+    @Override public Integer getGerritBuildSuccessfulVerifiedValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildSuccessfulCodeReviewValue() {
+    @Override public Integer getGerritBuildSuccessfulCodeReviewValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildFailedVerifiedValue() {
+    @Override public Integer getGerritBuildFailedVerifiedValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildFailedCodeReviewValue() {
+    @Override public Integer getGerritBuildFailedCodeReviewValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildUnstableVerifiedValue() {
+    @Override public Integer getGerritBuildUnstableVerifiedValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildUnstableCodeReviewValue() {
+    @Override public Integer getGerritBuildUnstableCodeReviewValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildNotBuiltVerifiedValue() {
+    @Override public Integer getGerritBuildNotBuiltVerifiedValue() {
         return 0;
     }
 
-    @Override
-    public Integer getGerritBuildNotBuiltCodeReviewValue() {
+    @Override public Integer getGerritBuildNotBuiltCodeReviewValue() {
         return 0;
     }
 
@@ -241,6 +231,10 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     @Override
     public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
 
+    }
+
+    @Override public VerdictCategory getVerdictCategory(String verdictCategoryName) {
+        return null;
     }
 
     @Override

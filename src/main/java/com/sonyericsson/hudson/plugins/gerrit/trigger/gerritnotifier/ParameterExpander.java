@@ -25,12 +25,14 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.LabelValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -46,11 +48,15 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.VERIFIED;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
 /**
@@ -69,10 +75,11 @@ public class ParameterExpander {
      * The delimiter used to separate build URLs from their messages.
      */
     public static final String MESSAGE_DELIMITER = " : ";
-
     private static final Logger logger = LoggerFactory.getLogger(ParameterExpander.class);
     private IGerritHudsonTriggerConfig config;
     private Jenkins jenkins;
+    private static final String CODE_REVIEW = "CODE_REVIEW";
+    private static final String VERIFIED = "VERIFIED";
 
     /**
      * Constructor.
@@ -104,11 +111,19 @@ public class ParameterExpander {
             ChangeBasedEvent event, BuildsStartedStats stats) {
 
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
+
+        Map<String, Integer> labelVotes = new HashMap<String, Integer>();
+
+        for (LabelValue label : trigger.getLabelValues()) {
+            if(label.getName().contains("-")) {
+                labelVotes.put(label.getName().toUpperCase().replace("-", "_"), getBuildStartedLabelValue(label));
+            } else {
+                labelVotes.put(label.getName().toUpperCase(), getBuildStartedLabelValue(label));
+            }
+        }
+
         String gerritCmd = config.getGerritCmdBuildStarted();
-        Map<String, String> parameters = createStandardParameters(r, event,
-                getBuildStartedCodeReviewValue(r),
-                getBuildStartedVerifiedValue(r),
-                Notify.ALL.name());
+        Map<String, String> parameters = createStandardParameters(r, event, labelVotes, Notify.ALL.name());
         StringBuilder startedStats = new StringBuilder();
         if (stats.getTotalBuildsToStart() > 1) {
             startedStats.append(stats.toString());
@@ -152,19 +167,23 @@ public class ParameterExpander {
      * If there is a {@link GerritTrigger} and it has a {@link GerritTrigger#getGerritBuildStartedVerifiedValue()}
      * specified, that value will be used, otherwise the global config value in
      * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedVerifiedValue()} will be used.
+     *
      * @param r the build.
      * @return the value.
      */
+    @Deprecated
     private Integer getBuildStartedVerifiedValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedVerifiedValue();
-        } else if (trigger.getGerritBuildStartedVerifiedValue() != null) {
+        }
+        else if (trigger.getGerritBuildStartedVerifiedValue() != null) {
             final Integer value = trigger.getGerritBuildStartedVerifiedValue();
             logger.trace("BuildStartedVerified overridden in project config. returning {}", value);
             return value;
-        } else {
+        }
+        else {
             final Integer value = config.getGerritBuildStartedVerifiedValue();
             logger.trace("BuildStartedVerified standard value used {}", value);
             return value;
@@ -176,22 +195,43 @@ public class ParameterExpander {
      * If there is a {@link GerritTrigger} and it has a {@link GerritTrigger#getGerritBuildStartedCodeReviewValue()}
      * specified, that value will be used, otherwise the global config value in
      * {@link IGerritHudsonTriggerConfig#getGerritBuildStartedCodeReviewValue()} will be used.
+     *
      * @param r the build.
      * @return the value.
      */
+    @Deprecated
     private Integer getBuildStartedCodeReviewValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
             return config.getGerritBuildStartedCodeReviewValue();
-        } else if (trigger.getGerritBuildStartedCodeReviewValue() != null) {
+        }
+        else if (trigger.getGerritBuildStartedCodeReviewValue() != null) {
             final Integer value = trigger.getGerritBuildStartedCodeReviewValue();
             logger.trace("BuildStartedCodeReview overridden in project config. returning {}", value);
             return value;
-        } else {
+        }
+        else {
             final Integer value = config.getGerritBuildStartedCodeReviewValue();
             logger.trace("BuildStartedCodeReview standard value used {}", value);
             return value;
+        }
+    }
+
+    private Integer getBuildStartedLabelValue(LabelValue label) {
+        Integer globalConfigValue = 0;
+
+        if (label != null && label.getBuildStartedVoteValue() != null) {
+            logger.trace("BuildStarted value for " + label.getName() + " overridden in project config. returning {}", label.getBuildStartedVoteValue());
+            return label.getBuildStartedVoteValue();
+        } else {
+            for (VerdictCategory cat : config.getCategories()) {
+                if (label != null && label.getName().equals(cat.getVerdictValue())) {
+                    globalConfigValue = cat.getDefaultBuildStartedReportingValue();
+                    logger.trace("BuildStarted value for" + cat.getVerdictValue() +  "standard value used {}", globalConfigValue);
+                }
+            }
+            return globalConfigValue;
         }
     }
 
@@ -242,10 +282,28 @@ public class ParameterExpander {
         if (r != null) {
             map.put("BUILDURL", jenkins.getRootUrl() + r.getUrl());
         }
-        map.put("VERIFIED", String.valueOf(verified));
-        map.put("CODE_REVIEW", String.valueOf(codeReview));
+        map.put(VERIFIED, String.valueOf(verified));
+        map.put(CODE_REVIEW, String.valueOf(codeReview));
         map.put("NOTIFICATION_LEVEL", notifyLevel);
 
+        return map;
+    }
+
+    private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent, Map<String, Integer> labelVotes, String notifyLevel) {
+        int codeReviewValue = 0;
+        int verifiedValue = 0;
+
+        if(labelVotes.containsKey(CODE_REVIEW))
+            codeReviewValue = labelVotes.get(CODE_REVIEW);
+        if(labelVotes.containsKey(VERIFIED))
+            verifiedValue = labelVotes.get(VERIFIED);
+        
+        Map<String, String> map = createStandardParameters(r, gerritEvent, codeReviewValue, verifiedValue, notifyLevel);
+
+        for (String label : labelVotes.keySet()) {
+            if(!label.equalsIgnoreCase(CODE_REVIEW) && !label.equalsIgnoreCase(VERIFIED))
+                map.put(label.toUpperCase(), String.valueOf(labelVotes.get(label)));
+        }
         return map;
     }
 
@@ -259,12 +317,13 @@ public class ParameterExpander {
      * @return the expanded string.
      */
     private String expandParameters(String gerritCommand, Run r, TaskListener taskListener,
-            Map<String, String> parameters) {
+        Map<String, String> parameters) {
         String command = gerritCommand;
         if (r != null && taskListener != null) {
             try {
                 command = r.getEnvironment(taskListener).expand(command);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 logger.error("Failed to expand env vars into gerrit cmd. Gerrit won't be notified!!", ex);
                 return null;
             }
@@ -273,51 +332,168 @@ public class ParameterExpander {
         for (Map.Entry<String, String> param : parameters.entrySet()) {
             command = command.replace("<" + param.getKey() + ">", param.getValue());
         }
-        //replace null and Integer.MAX_VALUE code review value
-        command = command.replace("--code-review null", "");
-        command = command.replace("--code-review " + Integer.MAX_VALUE, "");
-        command = command.replace("--verified null", "");
-        command = command.replace("--verified " + Integer.MAX_VALUE, "");
+
+        String regexToIdentifyNullOrIntegerMaxValue = "(--([\\S]+) (\\w+)){1}";
+        Pattern pattern = Pattern.compile(regexToIdentifyNullOrIntegerMaxValue);
+        Matcher matcher = pattern.matcher(command);
+        while (matcher.find()) {
+            if (matcher.group(3).equalsIgnoreCase("null") || matcher.group(3).equalsIgnoreCase(String.valueOf(Integer.MAX_VALUE))) {
+                command = command.replaceAll(matcher.group(1), "");
+            }
+        }
 
         return command;
     }
 
     /**
      * Finds the code review value for the specified build result on the configured trigger.
-     * @param res the build result.
+     *
+     * @param res       the build result.
+     * @param trigger   the trigger that might have overridden values.
+     * @param labelName the name of the label for which votes are needed.
+     * @return the value.
+     */
+    protected Integer getLabelVoteValue(Result res, GerritTrigger trigger, String labelName) {
+        LabelValue labelValue = null;
+        for (LabelValue label : trigger.getLabelValues()) {
+            if (label.getName().equalsIgnoreCase(labelName)) {
+                labelValue = label;
+            }
+        }
+
+        //same for all the other cases
+        if (res == Result.SUCCESS) {
+            if (labelValue != null && labelValue.getBuildSuccessfulVoteValue() != null) {
+                return labelValue.getBuildSuccessfulVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildSuccessfulReportingValue() : null;
+            }
+        }
+        else if (res == Result.FAILURE || res == Result.ABORTED) {
+            if (labelValue != null && labelValue.getBuildFailedVoteValue() != null) {
+                return labelValue.getBuildFailedVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildFailedReportingValue() : null;
+            }
+        }
+        else if (res == Result.UNSTABLE) {
+            if (labelValue != null && labelValue.getBuildUnstableVoteValue() != null) {
+                return labelValue.getBuildUnstableVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildUnstableReportingValue() : null;
+            }
+        }
+        else if (res == Result.NOT_BUILT) {
+            if (labelValue != null && labelValue.getBuildNotBuiltVoteValue() != null) {
+                return labelValue.getBuildNotBuiltVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildNotBuiltReportingValue() : null;
+            }
+        }
+        else {
+            //As bad as failure, for now
+            if (labelValue != null && labelValue.getBuildFailedVoteValue() != null) {
+                return labelValue.getBuildFailedVoteValue();
+            }
+            else {
+                return config.getVerdictCategory(labelName) != null ? config.getVerdictCategory(labelName).getDefaultBuildSuccessfulReportingValue() : null;
+            }
+        }
+    }
+
+    /**
+     * Returns the minimum verified value for the build results in the memory.
+     * If no builds have contributed to verified value, this method returns null
+     *
+     * @param memoryImprint the memory.
+     * @param onlyBuilt     only count builds that completed (no NOT_BUILT builds)
+     * @param labelName     the label for which you want to return the vote value
+     * @return the lowest verified value.
+     */
+    @CheckForNull
+    public Integer getMinimumLabelVoteValue(MemoryImprint memoryImprint, boolean onlyBuilt, String labelName) {
+        Integer labelVote = Integer.MAX_VALUE;
+        for (Entry entry : memoryImprint.getEntries()) {
+            if (entry == null) {
+                continue;
+            }
+            Run build = entry.getBuild();
+            if (build == null) {
+                continue;
+            }
+            Result result = build.getResult();
+            if (onlyBuilt && result == Result.NOT_BUILT) {
+                continue;
+            }
+
+            GerritTrigger trigger = GerritTrigger.getTrigger(entry.getProject());
+            if (shouldSkip(trigger.getSkipVote(), result)) {
+                continue;
+            }
+            Integer labelObj = getLabelVoteValue(result, trigger, labelName);
+            if (labelObj != null) {
+                labelVote = Math.min(labelVote, labelObj);
+            }
+        }
+
+        if (labelVote == Integer.MAX_VALUE) {
+            return null;
+        }
+
+        return labelVote;
+    }
+
+    /**
+     * Finds the code review value for the specified build result on the configured trigger.
+     *
+     * @param res     the build result.
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
+    @Deprecated
     protected Integer getCodeReviewValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulCodeReviewValue() != null) {
                 return trigger.getGerritBuildSuccessfulCodeReviewValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildSuccessfulCodeReviewValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        }
+        else if (res == Result.FAILURE || res == Result.ABORTED) {
             if (trigger.getGerritBuildFailedCodeReviewValue() != null) {
                 return trigger.getGerritBuildFailedCodeReviewValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildFailedCodeReviewValue();
             }
-        } else if (res == Result.UNSTABLE) {
+        }
+        else if (res == Result.UNSTABLE) {
             if (trigger.getGerritBuildUnstableCodeReviewValue() != null) {
                 return trigger.getGerritBuildUnstableCodeReviewValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildUnstableCodeReviewValue();
             }
-        } else if (res == Result.NOT_BUILT) {
+        }
+        else if (res == Result.NOT_BUILT) {
             if (trigger.getGerritBuildNotBuiltCodeReviewValue() != null) {
                 return trigger.getGerritBuildNotBuiltCodeReviewValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildNotBuiltCodeReviewValue();
             }
-        } else {
+        }
+        else {
             //As bad as failue, for now
             if (trigger.getGerritBuildFailedCodeReviewValue() != null) {
                 return trigger.getGerritBuildFailedCodeReviewValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildFailedCodeReviewValue();
             }
         }
@@ -329,36 +505,46 @@ public class ParameterExpander {
      * @param trigger the trigger that might have overridden values.
      * @return the value.
      */
+    @Deprecated
     protected Integer getVerifiedValue(Result res, GerritTrigger trigger) {
         if (res == Result.SUCCESS) {
             if (trigger.getGerritBuildSuccessfulVerifiedValue() != null) {
                 return trigger.getGerritBuildSuccessfulVerifiedValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildSuccessfulVerifiedValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        }
+        else if (res == Result.FAILURE || res == Result.ABORTED) {
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
                 return trigger.getGerritBuildFailedVerifiedValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildFailedVerifiedValue();
             }
-        } else if (res == Result.UNSTABLE) {
+        }
+        else if (res == Result.UNSTABLE) {
             if (trigger.getGerritBuildUnstableVerifiedValue() != null) {
                 return trigger.getGerritBuildUnstableVerifiedValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildUnstableVerifiedValue();
             }
-        } else if (res == Result.NOT_BUILT) {
+        }
+        else if (res == Result.NOT_BUILT) {
             if (trigger.getGerritBuildNotBuiltVerifiedValue() != null) {
                 return trigger.getGerritBuildNotBuiltVerifiedValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildNotBuiltVerifiedValue();
             }
-        } else {
+        }
+        else {
             //As bad as failure, for now
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
                 return trigger.getGerritBuildFailedVerifiedValue();
-            } else {
+            }
+            else {
                 return config.getGerritBuildFailedVerifiedValue();
             }
         }
@@ -371,6 +557,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest verified value.
      */
+    @Deprecated
     @CheckForNull
     public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         Integer verified = Integer.MAX_VALUE;
@@ -411,6 +598,7 @@ public class ParameterExpander {
      * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
      * @return the lowest code review value.
      */
+    @Deprecated
     @CheckForNull
     public Integer getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
         Integer codeReview = Integer.MAX_VALUE;
@@ -521,17 +709,22 @@ public class ParameterExpander {
             command = config.getGerritCmdBuildFailed();
         }
 
-        Integer verified = null;
-        Integer codeReview = null;
         Notify notifyLevel = Notify.ALL;
+        Map<String, Integer> labelVotes = new HashMap<String, Integer>();
+
         if (memoryImprint.getEvent().isScorable()) {
-            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
-            codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
             notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
 
-        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(),
-                codeReview, verified, notifyLevel.name());
+        for (VerdictCategory vc : config.getCategories()) {
+            if(vc.getVerdictValue().contains("-")) {
+                labelVotes.put(vc.getVerdictValue().toUpperCase().replace("-", "_"), getMinimumLabelVoteValue(memoryImprint, onlyCountBuilt, vc.getVerdictValue()));
+            } else {
+                labelVotes.put(vc.getVerdictValue().toUpperCase(), getMinimumLabelVoteValue(memoryImprint, onlyCountBuilt, vc.getVerdictValue()));
+            }
+        }
+
+        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(), labelVotes, notifyLevel.name());
         // escapes ' as '"'"' in order to avoid breaking command line param
         // Details: http://stackoverflow.com/a/26165123/99834
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint,
