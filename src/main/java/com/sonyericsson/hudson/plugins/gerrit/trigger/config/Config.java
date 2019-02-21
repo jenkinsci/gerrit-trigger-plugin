@@ -280,6 +280,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         projectListFetchDelay = config.getProjectListFetchDelay();
         projectListRefreshInterval = config.getProjectListRefreshInterval();
 
+
         assertDefaultCategories();
 
         if (config.getReplicationConfig() != null) {
