@@ -42,6 +42,7 @@ public final class GerritVersionChecker {
      * The feature version we want to compare the current Gerrit version with.
      */
     public static enum Feature {
+        // Skipping WIPStateChanged & PrivateStateChanged version check due to not necessary for now.
         /**
          * Triggering on files, added in Gerrit 2.3.
          */
@@ -67,6 +68,7 @@ public final class GerritVersionChecker {
          * Gerrit CommentAdded always contains approval information, added in Gerrit 2.13.
          */
         commentAlwaysApproval("CommentAdded always contains approval", "2.13");
+
 
         private final String displayName;
         private final String version;

@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
-import hudson.util.TimeUnit2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 public final class GerritTriggerTimer {
 
     /**
-     * Wait this many milliseconds before the first call to a TimerTask
+     * Wait this many milliseconds before the first call to a TimerTask.
      */
-    private static final long DELAY_MILLISECONDS  =  5000;
+    protected static final long DELAY_MILLISECONDS = 5000;
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerTimer.class);
 
     /**
@@ -131,7 +130,7 @@ public final class GerritTriggerTimer {
      * @param timerTask the TimerTask to be scheduled
      */
     public void schedule(GerritTriggerTimerTask timerTask, @Nonnull GerritTrigger trigger) {
-        long timerPeriod = TimeUnit2.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(trigger));
+        long timerPeriod = TimeUnit.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(trigger));
         try {
             logger.debug("Schedule task " + timerTask + " for every " + timerPeriod + "ms");
             jenkins.util.Timer.get().scheduleWithFixedDelay(timerTask, DELAY_MILLISECONDS, timerPeriod,

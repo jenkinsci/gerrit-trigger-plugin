@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import java.util.concurrent.CountDownLatch;
 import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 
@@ -82,7 +83,6 @@ import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
-import hudson.model.Items;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
 import hudson.model.Queue;
@@ -115,6 +115,7 @@ import java.util.StringTokenizer;
 import java.util.regex.PatternSyntaxException;
 
 import jenkins.model.Jenkins;
+import jenkins.model.ParameterizedJobMixIn;
 
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
@@ -147,6 +148,14 @@ public class GerritTrigger extends Trigger<Job> {
 
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs();
+    //! This latch will be used to signal that the project list is ready for use.
+    //! For static configuration, this will be ready immediately.
+    //! For dynamic configuration, this will be ready after the first time that
+    //! the project list has been fetched.
+    //!
+    //! Default the latch to the non-waiting zero state, which corresponds to
+    //! static project configurations.
+    private transient CountDownLatch projectListIsReady = new CountDownLatch(0);
     private List<GerritProject> gerritProjects;
     private List<GerritProject> dynamicGerritProjects;
     private SkipVote skipVote;
@@ -516,7 +525,6 @@ public class GerritTrigger extends Trigger<Job> {
         }
     }
 
-
     /**
      * Finds the GerritTrigger in a project.
      *
@@ -528,17 +536,7 @@ public class GerritTrigger extends Trigger<Job> {
             return null;
         }
 
-        if (project instanceof ParameterizedJob) {
-            // TODO: After 1.621, use ParameterizedJobMixIn.getTrigger
-            ParameterizedJob parameterizedJob = (ParameterizedJob)project;
-            for (Trigger p : parameterizedJob.getTriggers().values()) {
-                if (GerritTrigger.class.isInstance(p)) {
-                    return GerritTrigger.class.cast(p);
-                }
-            }
-        }
-
-        return null;
+        return ParameterizedJobMixIn.getTrigger(project, GerritTrigger.class);
     }
 
     /**
@@ -609,7 +607,16 @@ public class GerritTrigger extends Trigger<Job> {
 
         // Create a new timer task if there is a URL
         if (dynamicTriggerConfiguration) {
+            // Set up the latch so that the EventListener thread has to wait for
+            // the project list to be ready before processing any events.
+            logger.debug("Start project: {}; dynamic project list; setting latch to 1", project);
+            projectListIsReady = new CountDownLatch(1);
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
+        } else {
+            logger.debug("Start project: {}; static project list; setting latch to 0", project);
+            // Set up the latch so that the EventListener thread doesn't have to
+            // wait at all and can immediately begin to process events.
+            projectListIsReady = new CountDownLatch(0);
         }
 
         GerritProjectList.removeTriggerFromProjectList(this);
@@ -1045,11 +1052,11 @@ public class GerritTrigger extends Trigger<Job> {
                                                     changeBasedEvent.getChange().getTopic(),
                                                     changeBasedEvent.getFiles(
                                                         new GerritQueryHandler(getServerConfig(event))))) {
-                                logger.trace("According to {} the event is interesting.", p);
+                                logger.trace("According to {} the event is interesting; event: {}", p, event);
                                 return true;
                             }
                         } else {
-                            logger.trace("According to {} the event is interesting.", p);
+                            logger.trace("According to {} the event is interesting; event: {}", p, event);
                             return true;
                         }
                     }
@@ -1057,7 +1064,7 @@ public class GerritTrigger extends Trigger<Job> {
                     RefUpdated refUpdated = (RefUpdated)event;
                     if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
                                                                       refUpdated.getRefUpdate().getRefName(), null)) {
-                        logger.trace("According to {} the event is interesting.", p);
+                        logger.trace("According to {} the event is interesting; event: {}", p, event);
                         return true;
                     }
                 }
@@ -1066,7 +1073,7 @@ public class GerritTrigger extends Trigger<Job> {
                        new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
             }
         }
-        logger.trace("Nothing interesting here, move along folks!");
+        logger.trace("Event is not interesting; event: {}", event);
         return false;
     }
 
@@ -1790,6 +1797,14 @@ public class GerritTrigger extends Trigger<Job> {
         triggerInformationAction.setErrorMessage("");
         try {
             dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
+
+            // Now that the dynamic project list has been loaded, we can "count down"
+            // the latch so that the EventListener thread can begin to process events.
+            if (projectListIsReady.getCount() > 0) {
+                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
+                        projectListIsReady.getCount());
+                projectListIsReady.countDown();
+            }
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
                     "ParseException for project: {0} and URL: {1} Message: {2}",
@@ -1885,6 +1900,18 @@ public class GerritTrigger extends Trigger<Job> {
         return skipVote;
     }
 
+    /**
+     * Wait for the project list to be ready.
+     *
+     * This is here so that the EventListener can call it before it asks if an
+     * event is interesting (via {@link #isInteresting(GerritTriggeredEvent)}).
+     *
+     * @throws InterruptedException if the thread was interrupted while waiting.
+     */
+    public void waitForProjectListToBeReady() throws InterruptedException {
+        projectListIsReady.await();
+    }
+
     /*
      * DEPRECATION HANDLING
      */
@@ -1934,11 +1961,19 @@ public class GerritTrigger extends Trigger<Job> {
         if (commentTextParameterMode == null) {
             commentTextParameterMode = GerritTriggerParameters.ParameterMode.PLAIN;
         }
+        if (projectListIsReady == null) {
+            projectListIsReady = new CountDownLatch(0);
+        }
         return super.readResolve();
     }
     /*
      * /DEPRECATION HANDLING
      */
+
+    @Override
+    public TriggerDescriptor getDescriptor() {
+        return Jenkins.getInstance().getDescriptorByType(DescriptorImpl.class);
+    }
 
     /**
      * The Descriptor for the Trigger.
@@ -1974,7 +2009,7 @@ public class GerritTrigger extends Trigger<Job> {
                     Integer.parseInt(value);
                     return FormValidation.ok();
                 } catch (NumberFormatException e) {
-                    return FormValidation.error(hudson.model.Messages.Hudson_NotANumber());
+                    return FormValidation.error(Messages.NotANumber());
                 }
             }
         }
@@ -2009,16 +2044,13 @@ public class GerritTrigger extends Trigger<Job> {
                     assert jenkins != null;
                     Item item = jenkins.getItem(projectName, project, Item.class);
                     if ((item == null) || !(item instanceof Job)) {
-                        Job nearest = Items.findNearest(Job.class,
-                                projectName,
-                                project.getParent()
-                        );
+                        AbstractProject nearest = AbstractProject.findNearest(projectName);
                         String path = "<null>";
                         if (nearest != null) {
-                            path = nearest.getRelativeNameFrom(project);
+                            path = nearest.getFullName();
                         }
                         return FormValidation.error(
-                                hudson.model.Messages.AbstractItem_NoSuchJobExists(
+                                Messages.NoSuchJobExists(
                                         projectName,
                                         path));
                     }
@@ -2423,7 +2455,6 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
-
         /**
          * Removes any reference to the current build for this change.
          *
@@ -2435,7 +2466,6 @@ public class GerritTrigger extends Trigger<Job> {
             return runningJobs.remove(event);
         }
     }
-
 
     /**
      * Checks that execution must be aborted because of topic.

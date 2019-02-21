@@ -37,6 +37,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -47,7 +49,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -1731,6 +1735,157 @@ public class GerritTriggerTest {
         when(veryUpstreamGerritTriggerMock.getDependencyJobsNames()).thenReturn("MockedProject");
         assertSame(FormValidation.Kind.ERROR,
                 descriptor.doCheckDependencyJobsNames(downstreamProject, "MockedUpstreamProject").kind);
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with long ref name.
+     */
+    @Test
+    public void testGerritEventPrivateStateChanged() {
+        AbstractProject project = mockProject();
+        Queue queue = mockConfig(project);
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        PluginPrivateStateChangedEvent pluginEvent = new PluginPrivateStateChangedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        PrivateStateChanged event = Setup.createPrivateStateChanged(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+    }
+
+    /**
+     * Tests {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
+     * With a RefUpdated event with long ref name.
+     */
+    @Test
+    public void testGerritEventWipStateChanged() {
+        AbstractProject project = mockProject();
+        Queue queue = mockConfig(project);
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritProject gP = mock(GerritProject.class);
+        doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+        when(gP.getFilePaths()).thenReturn(null);
+
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        Setup.setTrigger(trigger, project);
+        trigger.setGerritProjects(Collections.nCopies(1, gP));
+        trigger.setEscapeQuotes(false);
+        trigger.setSilentMode(false);
+        PluginWipStateChangedEvent pluginEvent = new PluginWipStateChangedEvent();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        triggerOnEvents.add(pluginEvent);
+        trigger.setTriggerOnEvents(triggerOnEvents);
+        Whitebox.setInternalState(trigger, "job", project);
+
+        WipStateChanged event = Setup.createWipStateChanged(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+
+        trigger.createListener().gerritEvent(event);
+
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+    }
+
+    /**
+     * Tests that dynamic project configurations do not miss an event from the time
+     * at which the trigger was started until the time at which the URL was fetched.
+     * @throws Exception on failure
+     */
+    @PrepareForTest({
+            GerritTrigger.class,
+            AbstractProject.class,
+            ToGerritRunListener.class,
+            PluginImpl.class,
+            Hudson.class,
+            Jenkins.class,
+            DependencyQueueTaskDispatcher.class,
+            EventListener.class })
+    @Test
+    public void testDynamicTriggerConfigurationTimeGap() throws Exception {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        // Set up a temporary file to use as our dynamic configuration URL.
+        java.nio.file.Path temporaryConfigFile = java.nio.file.Files.createTempFile("GerritTriggerTest", null);
+        java.nio.file.Files.write(temporaryConfigFile, "p=my-project\nb^**".getBytes());
+        System.out.println("Temporary file: " + temporaryConfigFile.toString());
+
+        GerritTrigger trigger = new GerritTrigger(null);
+        trigger.setDynamicTriggerConfiguration(true);
+        trigger.setTriggerConfigURL("file://" + temporaryConfigFile.toString());
+
+        // Set up the job within the trigger.
+        Whitebox.setInternalState(trigger, "job", project);
+
+        // We need to make sure that whenever anyone asks for the trigger for any job
+        // that it returns this one.
+        PowerMockito.mockStatic(GerritTrigger.class);
+        when(GerritTrigger.getTrigger(any(Job.class))).thenReturn(trigger);
+        assertEquals(trigger, GerritTrigger.getTrigger(project));
+
+        // Because the "stub" methodology doesn't work, we also need to manually replace the "createListener"
+        // static method.
+        EventListener myListener = new EventListener(project);
+        PowerMockito.when(GerritTrigger.createListener(any(Job.class))).thenReturn(myListener);
+        assertNotNull(trigger.createListener());
+
+        // Start the trigger.
+        trigger.start(project, true);
+
+        // Make sure that the timer task started.
+        assertNotNull(Whitebox.getInternalState(trigger, "gerritTriggerTimerTask"));
+
+        // There should be no dynamic projects yet.  They won't show up until the timer
+        // task runs once, and there's a constant delay before that happens.
+        List<GerritProject> dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertNull(dynamicGerritProjects);
+
+        PatchsetCreated event = Setup.createPatchsetCreated("my-servername", "my-project", "my-ref");
+        trigger.createListener().gerritEvent(event);
+
+        // Wait until the timer task has run for the first time.
+        Thread.sleep(GerritTriggerTimer.DELAY_MILLISECONDS + 1000);
+
+        // Now check the dynamic projects again.  This time, there should be one.
+        dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertEquals(1, dynamicGerritProjects.size());
+
+        // Make sure that a job got scheduled.
+        verify(listener).onTriggered(same(project), same(event));
+        verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+
+        // Get rid of the temporary file.
+        java.nio.file.Files.delete(temporaryConfigFile);
     }
 
     /**

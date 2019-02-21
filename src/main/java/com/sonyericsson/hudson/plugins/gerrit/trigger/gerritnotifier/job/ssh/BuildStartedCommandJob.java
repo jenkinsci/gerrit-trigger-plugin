@@ -26,8 +26,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh;
 
 import hudson.model.Run;
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
@@ -38,6 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 
 /**
  * A send-command-job that calculates and sends the build started command.
@@ -73,13 +72,10 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
 
     @Override
     public void run() {
-        SecurityContext old = ACL.impersonate(ACL.SYSTEM);
-        try {
+        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
             GerritNotifier notifier = NotificationFactory.getInstance()
                 .createGerritNotifier((IGerritHudsonTriggerConfig)getConfig(), this);
             notifier.buildStarted(build, taskListener, event, stats);
-        } finally {
-            SecurityContextHolder.setContext(old);
         }
     }
 }
