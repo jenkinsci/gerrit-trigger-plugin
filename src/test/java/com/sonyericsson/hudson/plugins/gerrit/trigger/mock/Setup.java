@@ -670,8 +670,8 @@ public final class Setup {
         boolean silentMode = true;
         boolean silentStart = false;
 
-        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", "", null,
+        GerritTrigger trigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                silentMode, silentStart, true, false, false, "", "", "", "", "", "", "", null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, triggerOnEvents, false, "", null);
 
         if (job != null) {

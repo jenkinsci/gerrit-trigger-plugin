@@ -240,6 +240,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     /**
      * Old DataBound Constructor. Replaced with {@link #GerritTrigger(List)} and {@link DataBoundSetter}s.
+     *
      * @param gerritProjects                 the set of triggering rules.
      * @param skipVote                       what votes if any should be skipped in the final
      *                                       verified/code review calculation.
@@ -272,12 +273,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param gerritBuildNotBuiltCodeReviewValue
      *                                       Job specific Gerrit code review vote when a build is not built, null means
      *                                       that the global value should be used.
-     * @param gerritBuildAbortedVerifiedValue
-     *                                       Job specific Gerrit verified vote when a build is aborted, null means that
-     *                                       the global value should be used.
-     * @param gerritBuildAbortedCodeReviewValue
-     *                                       Job specific Gerrit code review vote when a build is aborted, null means
-     *                                       that the global value should be used.
      * @param silentMode                     Silent Mode on or off.
      * @param silentStartMode                Silent Start Mode on or off.
      * @param escapeQuotes                   EscapeQuotes on or off.
@@ -289,7 +284,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param buildUnstableMessage           Message to write to Gerrit when a build is unstable
      * @param buildFailureMessage            Message to write to Gerrit when a build fails
      * @param buildNotBuiltMessage           Message to write to Gerrit when all builds are not built
-     * @param buildAbortedMessage            Message to write to Gerrit when a build is aborted
      * @param buildUnsuccessfulFilepath      Filename to retrieve Gerrit comment message from, in the case of an
      *                                       unsuccessful build.
      * @param customUrl                      Custom URL to send to Gerrit instead of build URL
@@ -306,14 +300,10 @@ public class GerritTrigger extends Trigger<Job> {
                          Integer gerritBuildSuccessfulCodeReviewValue, Integer gerritBuildFailedVerifiedValue,
                          Integer gerritBuildFailedCodeReviewValue, Integer gerritBuildUnstableVerifiedValue,
                          Integer gerritBuildUnstableCodeReviewValue, Integer gerritBuildNotBuiltVerifiedValue,
-                         Integer gerritBuildNotBuiltCodeReviewValue, Integer gerritBuildAbortedVerifiedValue,
-                         Integer gerritBuildAbortedCodeReviewValue,
-                         boolean silentMode, boolean silentStartMode,
-                         boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage,
-                         String dependencyJobsNames,
+            Integer gerritBuildNotBuiltCodeReviewValue, boolean silentMode, boolean silentStartMode,
+            boolean escapeQuotes, boolean noNameAndEmailParameters, boolean readableMessage, String dependencyJobsNames,
                          String buildStartMessage, String buildSuccessfulMessage, String buildUnstableMessage,
-                         String buildFailureMessage, String buildNotBuiltMessage, String buildAbortedMessage,
-                         String buildUnsuccessfulFilepath, String customUrl,
+            String buildFailureMessage, String buildNotBuiltMessage, String buildUnsuccessfulFilepath, String customUrl,
                          String serverName, String gerritSlaveId, List<PluginGerritEvent> triggerOnEvents,
                          boolean dynamicTriggerConfiguration, String triggerConfigURL, String notificationLevel) {
         this.gerritProjects = gerritProjects;
@@ -328,8 +318,6 @@ public class GerritTrigger extends Trigger<Job> {
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
-        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
-        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
         this.silentMode = silentMode;
         this.silentStartMode = silentStartMode;
         this.escapeQuotes = escapeQuotes;
@@ -351,7 +339,6 @@ public class GerritTrigger extends Trigger<Job> {
         this.buildUnstableMessage = buildUnstableMessage;
         this.buildFailureMessage = buildFailureMessage;
         this.buildNotBuiltMessage = buildNotBuiltMessage;
-        this.buildAbortedMessage = buildAbortedMessage;
         this.buildUnsuccessfulFilepath = buildUnsuccessfulFilepath;
         this.customUrl = customUrl;
         this.serverName = serverName;
