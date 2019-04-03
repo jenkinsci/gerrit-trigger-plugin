@@ -46,6 +46,10 @@ The plugin depends on a [gerrit-events](https://github.com/sonyxperiadev/gerrit-
 that used to be part of this project but later broken out. Although we will try to avoid it,
 sometimes you might need to _mvn install_ it locally if dependant changes there haven't been released yet.
 
+If you run `mvn install` it's recommended not to run with a display. Otherwise Java will steal focus
+while it's running integration tests. Tests take a while and eat all cores available, so be sure
+you are ready when tests are being run.
+
 The _(build-config)_ directory contains "special" CheckStyle configurations and the build will
 fail during the verification phase if you don't follow them.
 
@@ -70,6 +74,12 @@ To test in a local Jenkins instance
 
     mvn clean
     rm /tmp/jenkins-testkey* hostkey.ser # Needed when changing SSH components versions
+
+# To build for deploy:
+
+    mvn hpi:hpi
+
+hpi to deploy will be in target/gerrit-trigger.hpi
 
 # License
 
