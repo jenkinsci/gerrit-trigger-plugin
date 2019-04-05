@@ -32,6 +32,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -219,7 +220,7 @@ public class GerritProject implements Describable<GerritProject> {
                 boolean foundInterestingForbidden = false;
                 if (b.isInteresting(branch)) {
                     if (forbiddenFilePaths != null) {
-                        Iterator<String> i = files.iterator();
+                        Iterator<String> i = new ArrayList<String>(files).iterator();
                         while (i.hasNext()) {
                             String file = i.next();
                             for (FilePath ffp : forbiddenFilePaths) {
