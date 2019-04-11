@@ -343,16 +343,15 @@
                             </f:entry>
                         </f:optionalBlock>
                     </f:section>
-                    <f:section title="Events Playback">
-                        <f:entry title="Timestamp Persistence" name="timePersistence" field="timePersistence" help="/plugin/gerrit-trigger/help-TimestampPersistence.html">
-                            <select name="timePersistence">
-                                <option value="saveOnEveryEvent">Save on every event</option>
-                                <option value="saveOnInterval">Save on interval</option>
-                            </select>
-                            <f:select value="${it.config.timePersistence}" />
+                    <f:section title="${%Events Playback}">
+                        <f:entry title="${%Timestamp Persistency}" field="persistencySetting" help="/plugin/gerrit-trigger/help-TimestampPersistency.html">
+                            <f:select value="${it.config.persistencySetting}"
+                                      default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_PERSISTENCY_SETTING}"/>
                         </f:entry>
-                        <f:entry title="Save Interval" help="/plugin/gerrit-trigger/help-TimestampInterval.html">
-                            <f:textbox name="saveInterval" value="1"/>
+                        <f:entry title="${%Save Interval}" help="/plugin/gerrit-trigger/help-TimestampInterval.html">
+                            <f:textbox name="saveInterval" value="${it.config.saveInterval}"
+                                      default="${com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.DEFAULT_SAVE_INTERVAL}"
+                                      checkUrl="'${rootURL}/${serverURL}/positiveLongCheck?value='+escape(this.value)"/>
                         </f:entry>
                     </f:section>
                     <j:if test="${instance.isReplicationEventsSupported()}">

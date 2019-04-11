@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.Persistency;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -177,6 +178,11 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public Notify getNotificationLevel() {
         return Notify.ALL;
+    }
+
+    @Override
+    public Persistency getPersistencySetting() {
+        return Persistency.SAVE_ON_EVERY_EVENT;
     }
 
     @Override
@@ -469,5 +475,10 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public boolean isRestVerified() {
         return true;
+    }
+
+    @Override
+    public long getSaveInterval() {
+        return 0;
     }
 }
