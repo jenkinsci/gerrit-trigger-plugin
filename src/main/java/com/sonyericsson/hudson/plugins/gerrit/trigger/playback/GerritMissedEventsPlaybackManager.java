@@ -63,7 +63,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.CheckForNull;
 
@@ -103,9 +102,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     private boolean isSupported = false;
     private boolean playBackComplete = false;
 
-    private boolean saveOnEveryEvent = false;
-    private final long intervalInMilliseconds = 60000;
-    private long lastTimestamp = 0;
+    private Persistency persistencySetting;
+    private long saveInterval;
+    private long nextInterval = 0;
 
     /**
      * @param name Gerrit Server Name.
@@ -300,9 +299,17 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             return;
         }
 
-        long currentTime = System.currentTimeMillis();
-        if (!saveOnEveryEvent && currentTime < lastTimestamp) {
-            return;
+        IGerritHudsonTriggerConfig activeConfig = getConfig();
+        if (activeConfig != null) {
+            persistencySetting = activeConfig.getPersistencySetting();
+            saveInterval = activeConfig.getSaveInterval();
+            long currentTime = System.currentTimeMillis();
+            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && (nextInterval - currentTime) > saveInterval) {
+                nextInterval = 0;
+            }
+            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && currentTime < nextInterval) {
+                return;
+            }
         }
 
         if (event instanceof GerritTriggeredEvent) {
@@ -501,9 +508,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         try {
             XmlFile config = getConfigXml(serverName);
             long currentTime = System.currentTimeMillis();
-            long interval = TimeUnit.MILLISECONDS.toMillis(intervalInMilliseconds);
-            lastTimestamp = currentTime + interval;
-            logger.info("Writing to playback persistent file.");
+            nextInterval = currentTime + saveInterval;
+            logger.info("Persistency setting: {}, Save Interval: {}", persistencySetting.toString(), saveInterval);
             config.write(serverTimestamp);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
@@ -564,4 +570,25 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
     }
 
+    /**
+     * Get the the server config.
+     * @return the server config or null if config not found.
+     */
+    private IGerritHudsonTriggerConfig getConfig() {
+        PluginImpl plugin = PluginImpl.getInstance();
+        if (plugin != null) {
+            GerritServer server = plugin.getServer(serverName);
+            if (server != null) {
+                IGerritHudsonTriggerConfig config = server.getConfig();
+                if (config != null) {
+                    return config;
+                } else {
+                    logger.error("Could not find the server config");
+                }
+            } else {
+                logger.error("Could not find server {}", serverName);
+            }
+        }
+        return null;
+    }
 }
