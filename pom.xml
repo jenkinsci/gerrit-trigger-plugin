@@ -9,7 +9,7 @@
 
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-trigger</artifactId>
-    <version>2.29.1-SNAPSHOT</version>
+    <version>2.30.0-uninterested</version>
     <packaging>hpi</packaging>
     <name>Gerrit Trigger</name>
     <description>Integrates with Gerrit code review.</description>
