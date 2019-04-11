@@ -102,9 +102,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
-    
+
     private boolean saveOnEveryEvent = false;
-    private long intervalInMilliseconds = 60000;
+    private final long intervalInMilliseconds = 60000;
     private long lastTimestamp = 0;
 
     /**
@@ -500,18 +500,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         try {
             XmlFile config = getConfigXml(serverName);
-            if (config == null) {
-                logger.error("XML " + serverName + " is null, please check file permissions.");
-                return false;
-            }
-            config.write(serverTimestamp);
             long currentTime = System.currentTimeMillis();
             long interval = TimeUnit.MILLISECONDS.toMillis(intervalInMilliseconds);
-            if (!saveOnEveryEvent && currentTime >= lastTimestamp) {
-                logger.info("Writing to playback persistent file.");
-                lastTimestamp = currentTime + interval;
-            } else if (saveOnEveryEvent) {
-            }
+            lastTimestamp = currentTime + interval;
+            logger.info("Writing to playback persistent file.");
+            config.write(serverTimestamp);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             return false;
