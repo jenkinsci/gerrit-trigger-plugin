@@ -63,6 +63,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.CheckForNull;
 
@@ -101,6 +102,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
+    
+    private boolean saveOnEveryEvent = false;
+    private long intervalInMilliseconds = 60000;
+    private long lastTimestamp = 0;
 
     /**
      * @param name Gerrit Server Name.
@@ -292,6 +297,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     @Override
     public void gerritEvent(GerritEvent event) {
         if (!isSupported()) {
+            return;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if (!saveOnEveryEvent && currentTime < lastTimestamp) {
             return;
         }
 
@@ -495,6 +505,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 return false;
             }
             config.write(serverTimestamp);
+            long currentTime = System.currentTimeMillis();
+            long interval = TimeUnit.MILLISECONDS.toMillis(intervalInMilliseconds);
+            if (!saveOnEveryEvent && currentTime >= lastTimestamp) {
+                logger.info("Writing to playback persistent file.");
+                lastTimestamp = currentTime + interval;
+            } else if (saveOnEveryEvent) {
+            }
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             return false;

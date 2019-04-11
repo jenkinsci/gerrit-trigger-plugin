@@ -343,6 +343,18 @@
                             </f:entry>
                         </f:optionalBlock>
                     </f:section>
+                    <f:section title="Events Playback">
+                        <f:entry title="Timestamp Persistence" name="timePersistence" field="timePersistence" help="/plugin/gerrit-trigger/help-TimestampPersistence.html">
+                            <select name="timePersistence">
+                                <option value="saveOnEveryEvent">Save on every event</option>
+                                <option value="saveOnInterval">Save on interval</option>
+                            </select>
+                            <f:select value="${it.config.timePersistence}" />
+                        </f:entry>
+                        <f:entry title="Save Interval" help="/plugin/gerrit-trigger/help-TimestampInterval.html">
+                            <f:textbox name="saveInterval" value="1"/>
+                        </f:entry>
+                    </f:section>
                     <j:if test="${instance.isReplicationEventsSupported()}">
                         <f:section title="${%Replication Events}">
                             <f:optionalBlock name="enableReplication"
