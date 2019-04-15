@@ -103,7 +103,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     private boolean playBackComplete = false;
 
     private Persistency persistencySetting;
-    private long saveInterval;
+    private long saveInterval = -1;
     private long nextInterval = 0;
 
     /**
@@ -301,14 +301,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         IGerritHudsonTriggerConfig activeConfig = getConfig();
         if (activeConfig != null) {
-            persistencySetting = activeConfig.getPersistencySetting();
-            saveInterval = activeConfig.getSaveInterval();
-            long currentTime = System.currentTimeMillis();
-            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && (nextInterval - currentTime) > saveInterval) {
+            Persistency newPersistencySetting = activeConfig.getPersistencySetting();
+            long newSaveInterval = activeConfig.getSaveInterval();
+            if ((persistencySetting == null && saveInterval == -1)
+                    || (persistencySetting != newPersistencySetting || saveInterval != newSaveInterval)) {
+                persistencySetting = newPersistencySetting;
+                saveInterval = newSaveInterval;
                 nextInterval = 0;
-            }
-            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && currentTime < nextInterval) {
-                return;
             }
         }
 
@@ -506,10 +505,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         }
 
         try {
-            XmlFile config = getConfigXml(serverName);
             long currentTime = System.currentTimeMillis();
+            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && currentTime < nextInterval) {
+                return false;
+            }
             nextInterval = currentTime + saveInterval;
             logger.info("Persistency setting: {}, Save Interval: {}", persistencySetting.toString(), saveInterval);
+            XmlFile config = getConfigXml(serverName);
             config.write(serverTimestamp);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
