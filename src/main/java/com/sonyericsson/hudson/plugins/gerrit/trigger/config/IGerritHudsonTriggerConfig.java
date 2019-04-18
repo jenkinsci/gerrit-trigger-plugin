@@ -331,6 +331,4 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      int getEventTypesSize();
 
      List<String> getFilterIn();
-
-     List<String> getFilterOut();
 }

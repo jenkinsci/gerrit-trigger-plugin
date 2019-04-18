@@ -206,7 +206,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
     private List<String> filterIn;
-    private List<String> filterOut;
 
     /**
      * Constructor.
@@ -275,7 +274,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
         filterIn = config.getFilterIn();
-        filterOut = config.getFilterOut();
     }
 
     @Override
@@ -422,19 +420,14 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
 
         filterIn = new ArrayList<>();
-        String stringIn = formData.optString("filterIn");
         String[] arrayIn = new String[0];
-        if (stringIn.length() > 2) {
+        String stringIn = formData.optString("filterIn");
+        if (stringIn.length() > 0) {
             arrayIn = stringIn.substring(1, stringIn.length()-1).split(", ");
+            filterIn = Arrays.asList(arrayIn);
+        } else {
+            filterIn = null;
         }
-        filterIn = Arrays.asList(arrayIn);
-        filterOut = new ArrayList<>();
-        String stringOut = formData.optString("filterOut");
-        String[] arrayOut = new String[0];
-        if (stringOut.length() > 2) {
-           arrayOut = stringOut.substring(1, stringOut.length()-1).split(", ");
-        }
-        filterOut = Arrays.asList(arrayOut);
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
@@ -761,11 +754,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public List<String> getFilterIn() {
         return filterIn;
-    }
-
-    @Override
-    public List<String> getFilterOut() {
-        return filterOut;
     }
 
     /**

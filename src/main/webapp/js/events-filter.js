@@ -25,33 +25,17 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
     var filterDefaultList = document.getElementById("filterDefault").value.slice(1, -1).split(", ");
-    var filterInForm = document.getElementById("filterInForm").value.slice(1, -1).split(", ");
-    var filterOutForm = document.getElementById("filterOutForm").value.slice(1, -1).split(", ");
+    var filterInList = document.getElementById("filterInForm").value.slice(1, -1).split(", ");
+    var filterInForm = document.getElementById("filterInForm");
     var filterInSelect = document.getElementById("filterInSelect");
     var filterOutSelect = document.getElementById("filterOutSelect");
     var transfer = document.getElementById("transfer");
     var save = document.getElementById("save");
     var i;
 
-    //Fill the select lists based on form data.
-    //If settings are opened for the first time, default list with all events will be displayed.
-    if (filterInForm[0] === "" && filterOutForm[0] === "") {
-        for (i = 0; i < filterDefaultList.length; i++) {
-            filterInSelect.add(new Option(filterDefaultList[i], filterDefaultList[i], false, false));
-        }
-    } else {
-        if (filterInForm.length > 0 && filterInForm[0] !== "") {
-            filterInSelect.innerHTML = "";
-            for (i = 0; i < filterInForm.length; i++) {
-                filterInSelect.add(new Option(filterInForm[i], filterInForm[i], false, false));
-            }
-        }
-        if (filterOutForm.length > 0 && filterOutForm[0] !== "") {
-            filterOutSelect.innerHTML = "";
-            for (i = 0; i < filterOutForm.length; i++) {
-                filterOutSelect.add(new Option(filterOutForm[i], filterOutForm[i], false, false));
-            }
-        }
+    //Remove a value from an array.
+    function removeFromArray(array, value) {
+        return array.filter(function (e) { return e !== value; });
     }
 
     //Get values that have been selected in the list.
@@ -98,6 +82,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    //Fill the select lists based on form data.
+    //If there is no form data, the default full list of events will be filtered in.
+    //If there is form data, then any event that is filtered in will be removed from
+    //the full list of events and the remaining events will be listed as filtered out.
+    if (filterInForm.value === "") {
+        for (i = 0; i < filterDefaultList.length; i++) {
+            filterInSelect.add(new Option(filterDefaultList[i], filterDefaultList[i], false, false));
+        }
+    } else {
+        if (filterInList.length > 0 && filterInList[0] !== "") {
+            filterInSelect.innerHTML = "";
+            var search;
+            for (i = 0; i < filterInList.length; i++) {
+                search = filterInList[i];
+                if (filterDefaultList.includes(search)) {
+                    filterDefaultList = removeFromArray(filterDefaultList, search);
+                    filterInSelect.add(new Option(filterInList[i], filterInList[i], false, false));
+                } else {
+                    filterInList = removeFromArray(filterInList, search);
+                    i--;
+                }
+            }
+        }
+        if (filterDefaultList.length > 0 && filterDefaultList[0] !== "") {
+            filterOutSelect.innerHTML = "";
+            for (i = 0; i < filterDefaultList.length; i++) {
+                filterOutSelect.add(new Option(filterDefaultList[i], filterDefaultList[i], false, false));
+            }
+        }
+    }
+
     //Prevent items from being selected in both lists at once.
     filterInSelect.addEventListener('change', function () {
         filterOutSelect.value = undefined;
@@ -114,24 +129,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     //Prepare form data when save button is clicked.
     save.addEventListener('click', function (e) {
-        e.stopImmediatePropagation();
-        var filterInString = "[";
-        var filterOutString = "[";
-        for (i = 0; i < filterInSelect.options.length; i++) {
-            filterInString = filterInString + filterInSelect.options[i].value;
-            if (filterInSelect.options.length - 1 !== i) {
-                filterInString = filterInString + ", ";
+        if (filterOutSelect.options.length !== 0) {
+            var filterInString = "[";
+            for (i = 0; i < filterInSelect.options.length; i++) {
+                filterInString = filterInString + filterInSelect.options[i].value;
+                if (filterInSelect.options.length - 1 !== i) {
+                    filterInString = filterInString + ", ";
+                }
             }
+            filterInString = filterInString + "]";
+            document.getElementById("filterInForm").value = filterInString;
+        } else {
+            document.getElementById("filterInForm").value = "";
         }
-        filterInString = filterInString + "]";
-        for (i = 0; i < filterOutSelect.options.length; i++) {
-            filterOutString = filterOutString + filterOutSelect.options[i].value;
-            if (filterOutSelect.options.length - 1 !== i) {
-                filterOutString = filterOutString + ", ";
-            }
-        }
-        filterOutString = filterOutString + "]";
-        document.getElementById("filterInForm").value = filterInString;
-        document.getElementById("filterOutForm").value = filterOutString;
     }, true);
 });
