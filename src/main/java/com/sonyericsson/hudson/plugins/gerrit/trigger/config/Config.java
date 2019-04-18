@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -45,7 +46,10 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -142,11 +146,14 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
-
     /**
      * Global default for notification level.
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
+    /**
+     * Default filter event list.
+     */
+    public static final List<String> DEFAULT_FILTER_EVENT_LIST = getFilterEventList();
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -198,6 +205,8 @@ public class Config implements IGerritHudsonTriggerConfig {
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
+    private List<String> filterIn;
+    private List<String> filterOut;
 
     /**
      * Constructor.
@@ -265,6 +274,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
+        filterIn = config.getFilterIn();
+        filterOut = config.getFilterOut();
     }
 
     @Override
@@ -409,6 +420,21 @@ public class Config implements IGerritHudsonTriggerConfig {
         } else {
             useRestApi = false;
         }
+
+        filterIn = new ArrayList<>();
+        String stringIn = formData.optString("filterIn");
+        String[] arrayIn = new String[0];
+        if (stringIn.length() > 2) {
+            arrayIn = stringIn.substring(1, stringIn.length()-1).split(", ");
+        }
+        filterIn = Arrays.asList(arrayIn);
+        filterOut = new ArrayList<>();
+        String stringOut = formData.optString("filterOut");
+        String[] arrayOut = new String[0];
+        if (stringOut.length() > 2) {
+           arrayOut = stringOut.substring(1, stringOut.length()-1).split(", ");
+        }
+        filterOut = Arrays.asList(arrayOut);
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
@@ -730,6 +756,16 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Notify getNotificationLevel() {
         return notificationLevel;
+    }
+
+    @Override
+    public List<String> getFilterIn() {
+        return filterIn;
+    }
+
+    @Override
+    public List<String> getFilterOut() {
+        return filterOut;
     }
 
     /**
@@ -1125,6 +1161,25 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setRestVerified(boolean restVerified) {
         this.restVerified = restVerified;
+    }
+
+    @Override
+    public int getEventTypesSize() {
+        return GerritEventType.values().length;
+    }
+
+    /**
+     * Get the full list of supported events.
+     * @return the event list
+     */
+    public static List<String> getFilterEventList() {
+        GerritEventType[] types = GerritEventType.values();
+        List<String> typeList = new ArrayList<>();
+        for (GerritEventType type : types) {
+            typeList.add(type.getTypeValue());
+        }
+        Collections.sort(typeList);
+        return typeList;
     }
 
     /**
