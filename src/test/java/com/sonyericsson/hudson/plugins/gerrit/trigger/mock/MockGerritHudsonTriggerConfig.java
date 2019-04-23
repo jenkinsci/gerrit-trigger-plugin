@@ -470,4 +470,14 @@ public class MockGerritHudsonTriggerConfig implements
     public boolean isRestVerified() {
         return true;
     }
+
+    @Override
+    public int getEventTypesSize() {
+        return 0;
+    }
+
+    @Override
+    public List<String> getFilterIn() {
+        return null;
+    }
 }

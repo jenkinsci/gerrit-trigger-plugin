@@ -34,8 +34,6 @@ import hudson.util.Secret;
 
 import java.util.List;
 
-import org.apache.http.auth.Credentials;
-
 /**
  * Interface for the Global configuration.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
@@ -328,7 +326,17 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
       */
      Secret getGerritAuthKeyFileSecretPassword();
 
+     /**
+      * Get the number of events that are supported.
+      *
+      * @return the size of gerrit event type enum.
+      */
      int getEventTypesSize();
 
+     /**
+      * Get the list of events that are filtered in.
+      *
+      * @return the list of events that are filtered in, if all events are included then it will return null.
+      */
      List<String> getFilterIn();
 }

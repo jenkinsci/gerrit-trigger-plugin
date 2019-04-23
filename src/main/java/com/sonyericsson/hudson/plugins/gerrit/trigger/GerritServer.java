@@ -565,6 +565,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
                 gerritConnection.addListener(missedEventsPlaybackManager);
 
+                setEventFilter(config.getFilterIn());
+
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");
@@ -609,6 +611,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public void restartConnection() {
         stopConnection();
         startConnection();
+    }
+
+    /**
+     * Set the event type filter.
+     * @param eventFilter the event type filter
+     */
+    public void setEventFilter(List<String> eventFilter) {
+        gerritConnection.setEventFilter(eventFilter);
     }
 
     /**

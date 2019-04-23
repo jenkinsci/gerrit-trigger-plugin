@@ -35,6 +35,8 @@ import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 
 import hudson.util.Secret;
@@ -419,17 +421,39 @@ public class Config implements IGerritHudsonTriggerConfig {
             useRestApi = false;
         }
 
-        filterIn = new ArrayList<>();
+        filterIn = getFilterInFromFormData(formData);
+        updateServerEventFilter(formData.optString("name"));
+
+        replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
+    }
+
+    /**
+     * Get the filter event list from formdata.
+     * @param formData JSONObject
+     * @return value.
+     */
+    private List<String> getFilterInFromFormData(JSONObject formData) {
+        List<String> filter = new ArrayList<>();
         String[] arrayIn = new String[0];
         String stringIn = formData.optString("filterIn");
         if (stringIn.length() > 0) {
-            arrayIn = stringIn.substring(1, stringIn.length()-1).split(", ");
-            filterIn = Arrays.asList(arrayIn);
+            arrayIn = stringIn.substring(1, stringIn.length() - 1).split(", ");
+            filter = Arrays.asList(arrayIn);
         } else {
-            filterIn = null;
+            filter = null;
         }
+        return filter;
+    }
 
-        replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
+    /**
+     * Update the server event filter.
+     * @param serverName name of the server.
+     */
+    private void updateServerEventFilter(String serverName) {
+        GerritServer server = PluginImpl.getServer_(serverName);
+        if(server != null) {
+            server.setEventFilter(filterIn);
+        }
     }
 
     /**
