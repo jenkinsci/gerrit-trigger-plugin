@@ -460,30 +460,30 @@
                             </f:entry>
                         </f:optionalBlock>
                     </f:section>
+                    <f:section title="${%Filter Received Event Types}">
+                        <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
+                            <div style="display:flex">
+                                <div style="display: inline; width: 45%;">
+                                    <span><b>Filtered In</b></span>
+                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
+                                    </select>
+                                </div>
+                                <div style="margin: auto; width: 10%; min-width: 60px; text-align: center;">
+                                    <button id="transfer" type="button" style="font-size: medium; padding: 5px 10px 5px 10px;">&#8646;</button>
+                                </div>
+                                <div style="display: inline; width: 45%;">
+                                    <span><b>Filtered Out</b></span>
+                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: none;">
+                                <f:textbox id="filterInForm" field="filterIn" value="${it.config.filterIn}"/>
+                                <f:textbox id="filterDefault" field="filterDefault" value="${it.config.DEFAULT_FILTER_EVENT_LIST}"/>
+                            </div>
+                        </f:entry>
+                    </f:section>
                 </f:advanced>
-                <f:section title="${%Filter Received Event Types}">
-                    <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
-                        <div style="display:flex">
-                            <div style="display: inline; width: 45%;">
-                                <span><b>Filtered In</b></span>
-                                <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
-                                </select>
-                            </div>
-                            <div style="margin: auto; width: 10%; min-width: 60px; text-align: center;">
-                                <button id="transfer" type="button" style="font-size: medium; padding: 5px 10px 5px 10px;">&#8646;</button>
-                            </div>
-                            <div style="display: inline; width: 45%;">
-                                <span><b>Filtered Out</b></span>
-                                <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
-                                </select>
-                            </div>
-                        </div>
-                        <div style="display: none;">
-                            <f:textbox id="filterInForm" field="filterIn" value="${it.config.filterIn}"/>
-                            <f:textbox id="filterDefault" field="filterDefault" value="${it.config.DEFAULT_FILTER_EVENT_LIST}"/>
-                        </div>
-                    </f:entry>
-                </f:section>
                 <f:entry title="${%EnablePluginMessages}">
                     <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
                 </f:entry>
