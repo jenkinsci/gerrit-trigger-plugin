@@ -24,7 +24,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.Persistency;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
@@ -326,18 +325,4 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
       * @return the instance of {@link Secret}.
       */
      Secret getGerritAuthKeyFileSecretPassword();
-
-     /**
-      * Returns persistency setting.
-      *
-      * @return the notification level value
-      */
-     Persistency getPersistencySetting();
-
-     /**
-      * The save interval for playback persistency.
-      *
-      * @return the interval value
-      */
-     long getSaveInterval();
 }

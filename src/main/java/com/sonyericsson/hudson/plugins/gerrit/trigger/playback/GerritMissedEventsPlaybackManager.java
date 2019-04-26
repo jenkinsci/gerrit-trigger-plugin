@@ -63,6 +63,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.CheckForNull;
 
@@ -92,7 +93,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     /**
      * Server Timestamp.
      */
-    protected EventTimeSlice serverTimestamp = null;
+    protected static EventTimeSlice serverTimestamp = null;
+    static long previousTimeSlice = 0;
     /**
      * List that contains received Gerrit Events.
      */
@@ -101,10 +103,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
-
-    private Persistency persistencySetting;
-    private long saveInterval = -1;
-    private long nextInterval = 0;
+    private GerritMissedEventsPlaybackPersistRunnable persistenceCheck;
 
     /**
      * @param name Gerrit Server Name.
@@ -112,6 +111,24 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public GerritMissedEventsPlaybackManager(String name) {
         this.serverName = name;
         checkIfEventsLogPluginSupported();
+        persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable(name);
+        if (isSupported()) {
+            startPersistenceCheck();
+        }
+    }
+
+    /**
+     * Start the persistenceCheck thread.
+     */
+    private void startPersistenceCheck() {
+        persistenceCheck.start();
+    }
+
+    /**
+     * Stop the persistenceCheck thread.
+     */
+    private void stopPersistenceCheck() {
+        persistenceCheck.stop();
     }
 
     /**
@@ -136,9 +153,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
+                stopPersistenceCheck();
             }
             if (!previousIsSupported && currentIsSupported) {
                 logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
+                startPersistenceCheck();
             }
         }
     }
@@ -299,22 +318,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             return;
         }
 
-        IGerritHudsonTriggerConfig activeConfig = getConfig();
-        if (activeConfig != null) {
-            Persistency newPersistencySetting = activeConfig.getPersistencySetting();
-            long newSaveInterval = activeConfig.getSaveInterval();
-            if ((persistencySetting == null && saveInterval == -1)
-                    || (persistencySetting != newPersistencySetting || saveInterval != newSaveInterval)) {
-                persistencySetting = newPersistencySetting;
-                saveInterval = newSaveInterval;
-                nextInterval = 0;
-            }
-        }
-
         if (event instanceof GerritTriggeredEvent) {
             logger.debug("Recording timestamp due to an event {} for server: {}", event, serverName);
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
-            persist(triggeredEvent);
+            saveTimestamp(triggeredEvent);
             //add to cache
             if (!playBackComplete) {
                 boolean receivedEvtFound = false;
@@ -463,11 +470,12 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * Takes a timestamp and persists to xml file.
-     * @param evt Gerrit Event to persist.
-     * @return true if was able to persist event.
+     * Takes an event timestamp and saves it.
+     * The thread persistenceCheck stores this to xml.
+     * @param evt Gerrit Event to save.
+     * @return true if successfully saved.
      */
-    synchronized boolean persist(GerritTriggeredEvent evt) {
+    synchronized boolean saveTimestamp(GerritTriggeredEvent evt) {
         // If there is not timestamp, then ignore this event.
         if (evt == null || evt.getEventCreatedOn() == null) {
             logger.debug("'eventCreatedOn' is null; skipping event.");
@@ -502,20 +510,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                     }
                 }
             }
-        }
-
-        try {
-            long currentTime = System.currentTimeMillis();
-            if (persistencySetting == Persistency.SAVE_ON_INTERVAL && currentTime < nextInterval) {
-                return false;
-            }
-            nextInterval = currentTime + saveInterval;
-            logger.info("Persistency setting: {}, Save Interval: {}", persistencySetting.toString(), saveInterval);
-            XmlFile config = getConfigXml(serverName);
-            config.write(serverTimestamp);
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            return false;
         }
         return true;
     }
@@ -573,24 +567,78 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * Get the the server config.
-     * @return the server config or null if config not found.
+     * Responsible for persisting timestamps to xml.
+     * Time slices jump by a 1000ms so the thread only checks every 1 second.
      */
-    private IGerritHudsonTriggerConfig getConfig() {
-        PluginImpl plugin = PluginImpl.getInstance();
-        if (plugin != null) {
-            GerritServer server = plugin.getServer(serverName);
-            if (server != null) {
-                IGerritHudsonTriggerConfig config = server.getConfig();
-                if (config != null) {
-                    return config;
-                } else {
-                    logger.error("Could not find the server config");
+    static class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
+        private static String serverName;
+        private Thread worker;
+        private final AtomicBoolean running = new AtomicBoolean(false);
+        private static final long CHECK_INTERVAL = 1000;
+
+        /**
+         * Constructor.
+         * @param serverName name of server to persist timestamps for.
+         */
+        public GerritMissedEventsPlaybackPersistRunnable(String serverName) {
+            GerritMissedEventsPlaybackPersistRunnable.serverName = serverName;
+        }
+
+        /**
+         * Start the persistence thread loop.
+         */
+        public void start() {
+            worker = new Thread(this);
+            worker.start();
+        }
+
+        /**
+         * Stop the persistence thread loop.
+         */
+        public void stop() {
+            running.set(false);
+        }
+
+        /**
+         * Interrupt the persistence thread loop.
+         */
+        public void interrupt() {
+            running.set(false);
+            worker.interrupt();
+        }
+
+        @Override
+        public void run() {
+            running.set(true);
+            while (running.get()) {
+                try {
+                    Thread.sleep(CHECK_INTERVAL);
+                } catch (InterruptedException e) {
+                    persistTimeStamp();
+                    logger.error(e.getMessage(), e);
                 }
-            } else {
-                logger.error("Could not find server {}", serverName);
+                if (serverTimestamp != null && previousTimeSlice < serverTimestamp.getTimeSlice()) {
+                    previousTimeSlice = serverTimestamp.getTimeSlice();
+                    persistTimeStamp();
+                }
             }
         }
-        return null;
+
+        /**
+         * Saves the current event timestamp to xml.
+         */
+        static void persistTimeStamp() {
+            try {
+                XmlFile config = getConfigXml(serverName);
+                if (config == null) {
+                    logger.error("XML " + serverName + " is null, please check file permissions.");
+                } else {
+                    EventTimeSlice serverTimestampCopy = EventTimeSlice.shallowCopy(serverTimestamp);
+                    config.write(serverTimestampCopy);
+                }
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
     }
 }

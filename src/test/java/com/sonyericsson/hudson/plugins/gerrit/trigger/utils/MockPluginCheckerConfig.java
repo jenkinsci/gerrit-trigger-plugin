@@ -4,7 +4,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.Persistency;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -263,11 +262,6 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public Persistency getPersistencySetting() {
-        return null;
-    }
-
-    @Override
     public Secret getGerritAuthKeyFileSecretPassword() {
         return null;
     }
@@ -347,11 +341,6 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
 
     @Override
     public int getProjectListFetchDelay() {
-        return 0;
-    }
-
-    @Override
-    public long getSaveInterval() {
         return 0;
     }
 }

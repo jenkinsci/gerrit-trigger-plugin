@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.Persistency;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -147,14 +146,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Global default for notification level.
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
-    /**
-     * Global default for playback persistency.
-     */
-    public static final Persistency DEFAULT_PERSISTENCY_SETTING = Persistency.SAVE_ON_EVERY_EVENT;
-    /**
-     * Global default for playback persistency.
-     */
-    public static final long DEFAULT_SAVE_INTERVAL = 60000;
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -206,8 +197,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
-    private Persistency persistencySetting;
-    private long saveInterval;
 
     /**
      * Constructor.
@@ -275,8 +264,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
-        persistencySetting = config.getPersistencySetting();
-        saveInterval = config.getSaveInterval();
     }
 
     @Override
@@ -421,10 +408,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         } else {
             useRestApi = false;
         }
-
-        persistencySetting = Persistency.valueOf(formData.optString("persistencySetting",
-                Config.DEFAULT_PERSISTENCY_SETTING.toString()));
-        saveInterval = formData.optLong("saveInterval", DEFAULT_SAVE_INTERVAL);
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
@@ -746,16 +729,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Notify getNotificationLevel() {
         return notificationLevel;
-    }
-
-    @Override
-    public Persistency getPersistencySetting() {
-        return persistencySetting;
-    }
-
-    @Override
-    public long getSaveInterval() {
-        return saveInterval;
     }
 
     /**
