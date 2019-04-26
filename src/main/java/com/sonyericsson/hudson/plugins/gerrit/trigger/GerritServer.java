@@ -1355,27 +1355,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     * Checks that the provided parameter is a long and that is equal or greater than 0.
-     * @param value the value
-     * @return {@link FormValidation#ok() } if it is so.
-     */
-    public FormValidation doPositiveLongCheck(
-            @QueryParameter("value")
-            final String value) {
-        long number;
-        try {
-            number = Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            return FormValidation.error(Messages.NotANumber());
-        }
-        if (number >= 0) {
-            return FormValidation.ok();
-        } else {
-            return FormValidation.error(Messages.NotAPostiveLong());
-        }
-    }
-
-    /**
      * Checks if the value is a valid URL. It does not check if the URL is reachable.
      * @param value the value
      * @return {@link FormValidation#ok() } if it is so.
