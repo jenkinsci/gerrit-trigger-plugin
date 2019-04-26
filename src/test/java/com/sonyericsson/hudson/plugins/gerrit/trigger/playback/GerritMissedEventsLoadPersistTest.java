@@ -156,7 +156,7 @@ public class GerritMissedEventsLoadPersistTest {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
         = new GerritMissedEventsPlaybackManager("defaultServer");
 
-        assertTrue(!missingEventsPlaybackManager.persist(gEvt));
+        assertTrue(!missingEventsPlaybackManager.saveTimestamp(gEvt));
 
     }
     /**

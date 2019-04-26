@@ -114,7 +114,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnec
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.Persistency;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 /**
@@ -878,20 +877,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
             return items;
         }
-
-        /**
-         * Fill the dropdown for persistency settings.
-         *
-         * @return the values.
-         */
-        public ListBoxModel doFillPersistencySettingItems() {
-            Map<Persistency, String> levelTextsById = persistencySettingTextsById();
-            ListBoxModel items = new ListBoxModel(levelTextsById.size());
-            for (Entry<Persistency, String> level : levelTextsById.entrySet()) {
-                items.add(new Option(level.getValue(), level.getKey().toString()));
-            }
-            return items;
-        }
     }
 
     /**
@@ -904,20 +889,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
         Map<Notify, String> textsById = new LinkedHashMap<Notify, String>(Notify.values().length, 1);
         for (Notify level : Notify.values()) {
             textsById.put(level, holder.format("NotificationLevel_" + level));
-        }
-        return textsById;
-    }
-
-    /**
-     * Returns texts for each known persistency setting.
-     *
-     * @return a map with level id to level text.
-     */
-    public static Map<Persistency, String> persistencySettingTextsById() {
-        ResourceBundleHolder holder = ResourceBundleHolder.get(Messages.class);
-        Map<Persistency, String> textsById = new LinkedHashMap<Persistency, String>(Persistency.values().length, 1);
-        for (Persistency level : Persistency.values()) {
-            textsById.put(level, holder.format("TimePersistence_" + level));
         }
         return textsById;
     }
