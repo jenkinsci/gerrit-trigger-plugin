@@ -94,7 +94,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Server Timestamp.
      */
     protected static EventTimeSlice serverTimestamp = null;
-    static long previousTimeSlice = 0;
+    private static long previousTimeSlice = 0;
     /**
      * List that contains received Gerrit Events.
      */
@@ -568,7 +568,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     /**
      * Responsible for persisting timestamps to xml.
-     * Time slices jump by a 1000ms so the thread only checks every 1 second.
+     * Time slices jump by 1000ms so the thread only checks every 1 second.
      */
     static class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
         private static String serverName;
