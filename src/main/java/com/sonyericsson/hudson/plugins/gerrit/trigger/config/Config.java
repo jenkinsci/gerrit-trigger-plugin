@@ -451,7 +451,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     private void updateServerEventFilter(String serverName) {
         GerritServer server = PluginImpl.getServer_(serverName);
-        if(server != null) {
+        if (server != null) {
             server.setEventFilter(filterIn);
         }
     }
