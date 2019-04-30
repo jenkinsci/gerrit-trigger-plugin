@@ -433,14 +433,16 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @return value.
      */
     private List<String> getFilterInFromFormData(JSONObject formData) {
-        List<String> filter = new ArrayList<>();
-        String[] arrayIn = new String[0];
+        // Getting the list as a JSONArray is not utilized since if the string is empty
+        // the get method will throw an exception. The logic is such that if the filter
+        // is null then the default of every event being interesting is assumed.
         String stringIn = formData.optString("filterIn");
+        List<String> filter = null;
+        String[] arrayIn = null;
         if (stringIn.length() > 0) {
+            filter = new ArrayList<>();
             arrayIn = stringIn.substring(1, stringIn.length() - 1).split(", ");
             filter = Arrays.asList(arrayIn);
-        } else {
-            filter = null;
         }
         return filter;
     }
