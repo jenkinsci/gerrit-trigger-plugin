@@ -138,8 +138,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public void performCheck() throws IOException {
         if (playBackComplete) {
             checkIfEventsLogPluginSupported();
-            boolean currentIsSupported = isSupported;
-            if (previousIsSupported && !currentIsSupported) {
+            if (previousIsSupported && !isSupported) {
                 logger.warn("Missed Events Playback used to be supported. now it is not!");
                 // we could be missing events here that we should be persisting...
                 // so let's remove the data file so we are ready if it comes back
@@ -153,11 +152,12 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                     logger.error(e.getMessage(), e);
                 }
                 stopPersistenceCheck();
-                previousIsSupported = currentIsSupported;
             }
-            if (!previousIsSupported && currentIsSupported) {
+            if (!previousIsSupported && isSupported) {
                 logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
-                previousIsSupported = currentIsSupported;
+            }
+            if(previousIsSupported != isSupported) {
+                previousIsSupported = isSupported;
             }
         }
     }
