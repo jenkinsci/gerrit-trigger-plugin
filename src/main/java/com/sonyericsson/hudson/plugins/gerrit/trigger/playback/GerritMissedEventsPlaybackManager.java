@@ -156,7 +156,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             if (!previousIsSupported && isSupported) {
                 logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
             }
-            if(previousIsSupported != isSupported) {
+            if (previousIsSupported != isSupported) {
                 previousIsSupported = isSupported;
             }
         }
