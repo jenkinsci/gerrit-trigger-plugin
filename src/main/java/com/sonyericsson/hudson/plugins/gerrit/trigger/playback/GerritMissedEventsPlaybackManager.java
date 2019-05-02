@@ -103,6 +103,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
+    private boolean previousIsSupported;
     private GerritMissedEventsPlaybackPersistRunnable persistenceCheck;
 
     /**
@@ -111,16 +112,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public GerritMissedEventsPlaybackManager(String name) {
         this.serverName = name;
         checkIfEventsLogPluginSupported();
+        previousIsSupported = isSupported;
         persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable(name);
-        if (isSupported()) {
-            startPersistenceCheck();
-        }
     }
 
     /**
      * Start the persistenceCheck thread.
      */
     private void startPersistenceCheck() {
+        previousTimeSlice = 0;
         persistenceCheck.start();
     }
 
@@ -137,7 +137,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     public void performCheck() throws IOException {
         if (playBackComplete) {
-            boolean previousIsSupported = isSupported;
             checkIfEventsLogPluginSupported();
             boolean currentIsSupported = isSupported;
             if (previousIsSupported && !currentIsSupported) {
@@ -154,10 +153,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                     logger.error(e.getMessage(), e);
                 }
                 stopPersistenceCheck();
+                previousIsSupported = currentIsSupported;
             }
             if (!previousIsSupported && currentIsSupported) {
                 logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
-                startPersistenceCheck();
+                previousIsSupported = currentIsSupported;
             }
         }
     }
@@ -305,6 +305,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     @Override
     public void connectionDown() {
         logger.info("connectionDown for server: {}", serverName);
+        stopPersistenceCheck();
     }
 
     /**
@@ -316,6 +317,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public void gerritEvent(GerritEvent event) {
         if (!isSupported()) {
             return;
+        }
+        if (!persistenceCheck.isRunning()) {
+            startPersistenceCheck();
         }
 
         if (event instanceof GerritTriggeredEvent) {
@@ -524,6 +528,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         } else {
             logger.error("Could not find server {}", serverName);
         }
+        stopPersistenceCheck();
     }
 
     /**
@@ -587,9 +592,12 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         /**
          * Start the persistence thread loop.
          */
-        public void start() {
-            worker = new Thread(this);
-            worker.start();
+        public synchronized void start() {
+            if (!isRunning()) {
+                running.set(true);
+                worker = new Thread(this);
+                worker.start();
+            }
         }
 
         /**
@@ -600,16 +608,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         }
 
         /**
-         * Interrupt the persistence thread loop.
+         * @return if thread is currently running or not
          */
-        public void interrupt() {
-            running.set(false);
-            worker.interrupt();
+        public boolean isRunning() {
+            return running.get();
         }
 
         @Override
         public void run() {
-            running.set(true);
             while (running.get()) {
                 try {
                     Thread.sleep(CHECK_INTERVAL);
