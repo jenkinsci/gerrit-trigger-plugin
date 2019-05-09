@@ -618,7 +618,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @param eventFilter the event type filter
      */
     public void setEventFilter(List<String> eventFilter) {
-        gerritConnection.setEventFilter(eventFilter);
+        if (gerritConnection != null) {
+            gerritConnection.setEventFilter(eventFilter);
+        }
     }
 
     /**
