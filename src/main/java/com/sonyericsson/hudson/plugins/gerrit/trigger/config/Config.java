@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
-import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -35,8 +34,6 @@ import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 
 import hudson.util.Secret;
@@ -48,10 +45,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -152,10 +146,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Global default for notification level.
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
-    /**
-     * Default filter event list.
-     */
-    public static final List<String> DEFAULT_FILTER_EVENT_LIST = getFilterEventList();
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -207,7 +197,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
-    private List<String> filterIn;
 
     /**
      * Constructor.
@@ -275,7 +264,6 @@ public class Config implements IGerritHudsonTriggerConfig {
         }
         watchdogTimeoutMinutes = config.getWatchdogTimeoutMinutes();
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
-        filterIn = config.getFilterIn();
     }
 
     @Override
@@ -421,41 +409,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             useRestApi = false;
         }
 
-        filterIn = getFilterInFromFormData(formData);
-        updateServerEventFilter(formData.optString("name"));
-
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
-    }
-
-    /**
-     * Get the filter event list from formdata.
-     * @param formData JSONObject
-     * @return value.
-     */
-    private List<String> getFilterInFromFormData(JSONObject formData) {
-        // Getting the list as a JSONArray is not utilized since if the string is empty
-        // the get method will throw an exception. The logic is such that if the filter
-        // is null then the default of every event being interesting is assumed.
-        String stringIn = formData.optString("filterIn");
-        List<String> filter = null;
-        String[] arrayIn = null;
-        if (stringIn.length() > 0) {
-            filter = new ArrayList<>();
-            arrayIn = stringIn.substring(1, stringIn.length() - 1).split(", ");
-            filter = Arrays.asList(arrayIn);
-        }
-        return filter;
-    }
-
-    /**
-     * Update the server event filter.
-     * @param serverName name of the server.
-     */
-    private void updateServerEventFilter(String serverName) {
-        GerritServer server = PluginImpl.getServer_(serverName);
-        if (server != null) {
-            server.setEventFilter(filterIn);
-        }
     }
 
     /**
@@ -775,11 +729,6 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Notify getNotificationLevel() {
         return notificationLevel;
-    }
-
-    @Override
-    public List<String> getFilterIn() {
-        return filterIn;
     }
 
     /**
@@ -1175,25 +1124,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setRestVerified(boolean restVerified) {
         this.restVerified = restVerified;
-    }
-
-    @Override
-    public int getEventTypesSize() {
-        return GerritEventType.values().length;
-    }
-
-    /**
-     * Get the full list of supported events.
-     * @return the event list
-     */
-    public static List<String> getFilterEventList() {
-        GerritEventType[] types = GerritEventType.values();
-        List<String> typeList = new ArrayList<>();
-        for (GerritEventType type : types) {
-            typeList.add(type.getTypeValue());
-        }
-        Collections.sort(typeList);
-        return typeList;
     }
 
     /**

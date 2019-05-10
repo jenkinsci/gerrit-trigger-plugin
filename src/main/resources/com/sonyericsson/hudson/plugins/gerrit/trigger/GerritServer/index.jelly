@@ -2,9 +2,6 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
-        <l:header>
-            <script src="${rootURL}/plugin/${it.parentUrl}/js/events-filter.js"/>
-        </l:header>
         <l:side-panel>
             <l:tasks>
                 <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
@@ -460,39 +457,13 @@
                             </f:entry>
                         </f:optionalBlock>
                     </f:section>
-                    <f:section title="${%Filter Received Event Types}">
-                        <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
-                            <div style="display:flex">
-                                <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered In</b></span>
-                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
-                                    </select>
-                                </div>
-                                <div style="margin: auto; width: 10%; min-width: 60px; text-align: center;">
-                                    <button id="transfer" type="button" style="font-size: medium; padding: 5px 10px 5px 10px;">&#8646;</button>
-                                </div>
-                                <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered Out</b></span>
-                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.config.eventTypesSize}">
-                                    </select>
-                                </div>
-                            </div>
-                            <div style="display: none;">
-                                <f:textbox id="filterInForm" field="filterIn" value="${it.config.filterIn}"/>
-                                <f:textbox id="filterDefault" field="filterDefault" value="${it.config.DEFAULT_FILTER_EVENT_LIST}"/>
-                            </div>
-                        </f:entry>
-                    </f:section>
                 </f:advanced>
                 <f:entry title="${%EnablePluginMessages}">
                     <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
                 </f:entry>
                 <f:block>
-                    <div id="save" style="display: inherit;">
-                        <f:submit value="${%Save}"/>
-                    </div>
+                    <f:submit value="${%Save}"/>
                 </f:block>
-
             </f:form>
         </l:main-panel>
     </l:layout>

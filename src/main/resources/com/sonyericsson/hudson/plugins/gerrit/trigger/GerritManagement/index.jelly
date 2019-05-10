@@ -13,6 +13,7 @@
             <l:yui module="container" />
             <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
             <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/server-table.js"/>
+            <script src="${rootURL}/plugin/${it.urlName}/js/events-filter.js"/>
             <script type="text/javascript">
                 var textMessages = {
                     confirm: "${%Remove?}",
@@ -68,8 +69,35 @@
                                    default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
                     </f:entry>
                 </f:section>
+                <f:advanced>
+                    <f:section title="${%Filter Received Event Types}">
+                        <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
+                            <div style="display:flex">
+                                <div style="display: inline; width: 45%;">
+                                    <span><b>Filtered In</b></span>
+                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                                    </select>
+                                </div>
+                                <div style="margin: auto; width: 10%; min-width: 60px; text-align: center;">
+                                    <button id="transfer" type="button" style="font-size: medium; padding: 5px 10px 5px 10px;">&#8646;</button>
+                                </div>
+                                <div style="display: inline; width: 45%;">
+                                    <span><b>Filtered Out</b></span>
+                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: none;">
+                                <f:textbox id="filterInForm" field="filterIn" value="${it.pluginConfig.filterIn}"/>
+                                <f:textbox id="filterDefault" field="filterDefault" value="${it.pluginConfig.DEFAULT_FILTER_EVENT_LIST}"/>
+                            </div>
+                        </f:entry>
+                    </f:section>
+                </f:advanced>
                 <f:block>
-                    <f:submit value="${%Save}" />
+                    <div id="save" style="display: inherit;">
+                        <f:submit value="${%Save}"/>
+                    </div>
                 </f:block>
             </f:form>
             <div class="gerrit-trigger-section">
