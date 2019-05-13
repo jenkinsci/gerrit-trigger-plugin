@@ -129,7 +129,8 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
 
-        updateEventFilter(formData);
+        filterIn = getFilterInFromFormData(formData);
+        updateEventFilter();
     }
 
     /**
@@ -242,8 +243,7 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
      * Update the server event filter.
      * @param formData the JSON object with form data.
      */
-    private void updateEventFilter(JSONObject formData) {
-        filterIn = getFilterInFromFormData(formData);
+    public void updateEventFilter() {
         for (GerritEventType type : GerritEventType.values()) {
             if (filterIn != null) {
                 type.setInteresting(filterIn.contains(type.getTypeValue()));
