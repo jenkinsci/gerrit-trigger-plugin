@@ -31,9 +31,12 @@ import java.util.Collections;
 import java.util.List;
 
 import org.kohsuke.stapler.StaplerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.workers.GerritWorkersConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache;
 
 /**
@@ -60,6 +63,7 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
      */
     public static final List<String> ALL_EVENTS = getAllEvents();
 
+    private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
     private int replicationCacheExpirationInMinutes;
@@ -243,14 +247,15 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
      * Update the server event filter.
      */
     public void updateEventFilter() {
+        List<String> filter;
+        if (filterIn != null) {
+            filter = filterIn;
+        } else {
+            filter = getDefaultEventFilter();
+        }
+        logger.info("Listening to event types: {}", filter);
         for (GerritEventType type : GerritEventType.values()) {
-            if (filterIn != null) {
-                type.setInteresting(filterIn.contains(type.getTypeValue()));
-            } else {
-                // TODO if an event type is added with a default other than true
-                // in the future then this needs to be updated.
-                type.setInteresting(true);
-            }
+            type.setInteresting(filter.contains(type.getTypeValue()));
         }
     }
 
@@ -263,7 +268,8 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
         List<String> typeList = new ArrayList<>();
         for (GerritEventType type : types) {
             // TODO if an event type is added with a default other than true
-            // in the future then this needs to be updated.
+            // in the future then this needs to be updated to check each
+            // events default value.
             // At the moment it gives the same result as getAllEvents()
             if (true) {
                 typeList.add(type.getTypeValue());
