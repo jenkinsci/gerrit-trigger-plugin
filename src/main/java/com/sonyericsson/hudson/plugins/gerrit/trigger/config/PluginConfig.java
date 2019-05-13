@@ -52,9 +52,13 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
      */
     public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
     /**
-     * Default filter event list.
+     * Default event filter.
      */
-    public static final List<String> DEFAULT_FILTER_EVENT_LIST = getFilterEventList();
+    public static final List<String> DEFAULT_EVENT_FILTER = getDefaultEventFilter();
+    /**
+     * Full event list.
+     */
+    public static final List<String> ALL_EVENTS = getAllEvents();
 
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
@@ -251,11 +255,30 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
         }
     }
 
+    /**
+     * Get the default event filter.
+     * @return the event list
+     */
+    public static List<String> getDefaultEventFilter() {
+        GerritEventType[] types = GerritEventType.values();
+        List<String> typeList = new ArrayList<>();
+        for (GerritEventType type : types) {
+            // TODO if an event type is added with a default other than true
+            // in the future then this needs to be updated.
+            // At the moment it gives the same result as getAllEvents()
+            if (true) {
+                typeList.add(type.getTypeValue());
+            }
+        }
+        Collections.sort(typeList);
+        return typeList;
+    }
+
      /**
      * Get the full list of supported events.
      * @return the event list
      */
-    public static List<String> getFilterEventList() {
+    public static List<String> getAllEvents() {
         GerritEventType[] types = GerritEventType.values();
         List<String> typeList = new ArrayList<>();
         for (GerritEventType type : types) {

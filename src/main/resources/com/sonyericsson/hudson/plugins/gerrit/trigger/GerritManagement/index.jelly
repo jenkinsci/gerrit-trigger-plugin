@@ -78,8 +78,9 @@
                                     <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
                                     </select>
                                 </div>
-                                <div style="margin: auto; width: 10%; min-width: 60px; text-align: center;">
-                                    <button id="transfer" type="button" style="font-size: medium; padding: 5px 10px 5px 10px;">&#8646;</button>
+                                <div style="margin: auto; display:flex; flex-direction: column;">
+                                    <button id="transfer" type="button" title="Transfer" style="font-size: large; padding: 5px 10px 5px 10px;">&#8646;</button>
+                                    <button id="reset" type="button" title="Reset" style="font-size: large; padding: 5px 10px 5px 10px;">&#8630;</button>
                                 </div>
                                 <div style="display: inline; width: 45%;">
                                     <span><b>Filtered Out</b></span>
@@ -89,7 +90,8 @@
                             </div>
                             <div style="display: none;">
                                 <f:textbox id="filterInForm" field="filterIn" value="${it.pluginConfig.filterIn}"/>
-                                <f:textbox id="filterDefault" field="filterDefault" value="${it.pluginConfig.DEFAULT_FILTER_EVENT_LIST}"/>
+                                <f:textbox id="defaultFilter" field="defaultFilter" value="${it.pluginConfig.DEFAULT_EVENT_FILTER}"/>
+                                <f:textbox id="allEvents" field="allEvents" value="${it.pluginConfig.ALL_EVENTS}"/>
                             </div>
                         </f:entry>
                     </f:section>

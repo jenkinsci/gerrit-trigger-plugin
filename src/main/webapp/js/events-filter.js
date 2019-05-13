@@ -24,12 +24,13 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
-    var filterDefaultList = document.getElementById("filterDefault").value.slice(1, -1).split(", ");
+    var defaultFilterList = document.getElementById("defaultFilter").value.slice(1, -1).split(", ");
     var filterInList = document.getElementById("filterInForm").value.slice(1, -1).split(", ");
     var filterInForm = document.getElementById("filterInForm");
     var filterInSelect = document.getElementById("filterInSelect");
     var filterOutSelect = document.getElementById("filterOutSelect");
     var transfer = document.getElementById("transfer");
+    var reset = document.getElementById("reset");
     var save = document.getElementById("save");
     var i;
 
@@ -82,36 +83,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    //Fill the select lists based on form data.
-    //If there is no form data, the default full list of events will be filtered in.
-    //If there is form data, then any event that is filtered in will be removed from
-    //the full list of events and the remaining events will be listed as filtered out.
-    if (filterInForm.value === "") {
-        for (i = 0; i < filterDefaultList.length; i++) {
-            filterInSelect.add(new Option(filterDefaultList[i], filterDefaultList[i], false, false));
-        }
-    } else {
-        if (filterInList.length > 0 && filterInList[0] !== "") {
+    //Fill the select lists based on filter array.
+    //Any event that is filtered in will be removed from the full list of events
+    //and the remaining events will be listed as filtered out.
+    //If an event exists in the filter that does not exist in the full list it will not be displayed.
+    function fillFilters(filter) {
+        if (filter !== null) {
+            var allEventsList = document.getElementById("allEvents").value.slice(1, -1).split(", ");
             filterInSelect.innerHTML = "";
-            var search;
-            for (i = 0; i < filterInList.length; i++) {
-                search = filterInList[i];
-                if (filterDefaultList.indexOf(search) !== -1) {
-                    filterDefaultList = removeFromArray(filterDefaultList, search);
-                    filterInSelect.add(new Option(filterInList[i], filterInList[i], false, false));
-                } else {
-                    filterInList = removeFromArray(filterInList, search);
-                    i--;
+            if (filter.length > 0 && filter[0] !== "") {
+                var search;
+                for (i = 0; i < filter.length; i++) {
+                    search = filter[i];
+                    if (allEventsList.indexOf(search) !== -1) {
+                        allEventsList = removeFromArray(allEventsList, search);
+                        filterInSelect.add(new Option(filter[i], filter[i], false, false));
+                    }
+                }
+            }
+            filterOutSelect.innerHTML = "";
+            if (allEventsList.length > 0 && allEventsList[0] !== "") {
+                for (i = 0; i < allEventsList.length; i++) {
+                    filterOutSelect.add(new Option(allEventsList[i], allEventsList[i], false, false));
                 }
             }
         }
-        if (filterDefaultList.length > 0 && filterDefaultList[0] !== "") {
-            filterOutSelect.innerHTML = "";
-            for (i = 0; i < filterDefaultList.length; i++) {
-                filterOutSelect.add(new Option(filterDefaultList[i], filterDefaultList[i], false, false));
-            }
-        }
     }
+    fillFilters(filterInList);
 
     //Prevent items from being selected in both lists at once.
     filterInSelect.addEventListener('change', function () {
@@ -120,6 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     filterOutSelect.addEventListener('change', function () {
         filterInSelect.value = undefined;
     });
+
     //Transfer selections and sort lists when button is clicked.
     transfer.addEventListener('click', function () {
         transferToFilter(filterInSelect, filterOutSelect);
@@ -127,20 +126,57 @@ document.addEventListener('DOMContentLoaded', function () {
         sortSelect(filterInSelect);
         sortSelect(filterOutSelect);
     });
+
+    //Reset filter to default values
+    reset.addEventListener('click', function () {
+        fillFilters(defaultFilterList);
+    });
+
     //Prepare form data when save button is clicked.
+    //If the filter matches the default then nothing will be returned.
+    //This leads to all events being set to their default values in the gerrit trigger.
+    //If the filter differs from the default then the filter list will be prepared.
     save.addEventListener('click', function (e) {
-        if (filterOutSelect.options.length !== 0) {
+        var filterIn = [];
+        for (i = 0; i < filterInSelect.options.length; i++) {
+            filterIn.push(filterInSelect.options[i].value);
+        }
+        if (!filterIn.equals(defaultFilterList)) {
             var filterInString = "[";
-            for (i = 0; i < filterInSelect.options.length; i++) {
-                filterInString = filterInString + filterInSelect.options[i].value;
-                if (filterInSelect.options.length - 1 !== i) {
+            for (i = 0; i < filterIn.length; i++) {
+                filterInString = filterInString + filterIn[i];
+                if (filterIn.length - 1 !== i) {
                     filterInString = filterInString + ", ";
                 }
             }
             filterInString = filterInString + "]";
-            document.getElementById("filterInForm").value = filterInString;
+            filterInForm.value = filterInString;
         } else {
-            document.getElementById("filterInForm").value = "";
+            filterInForm.value = "";
         }
     }, true);
+
+    // tomáš-zato @ Stack Overflow
+    // Compares two arrays with eachother
+    if (Array.prototype.equals) {
+        console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
+    }
+    Array.prototype.equals = function (array) {
+        if (!array) {
+            return false;
+        }
+        if (this.length !== array.length) {
+            return false;
+        }
+        for (i = 0; i < this.length; i++) {
+            if (this[i] instanceof Array && array[i] instanceof Array) {
+                if (!this[i].equals(array[i])) {
+                    return false;
+                }
+            } else if (this[i] !== array[i]) {
+                return false;
+            }
+        }
+        return true;
+    };
 });
