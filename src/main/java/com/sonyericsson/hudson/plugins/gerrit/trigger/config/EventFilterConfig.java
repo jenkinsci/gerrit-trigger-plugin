@@ -2,6 +2,10 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import java.util.List;
 
+/**
+ * Interface for Event filter configuration.
+ * @author Christoffer Cortes, christoffer.cortes.sjowall@ericsson.com
+ */
 public interface EventFilterConfig {
     /**
      * Get the number of events that are supported.

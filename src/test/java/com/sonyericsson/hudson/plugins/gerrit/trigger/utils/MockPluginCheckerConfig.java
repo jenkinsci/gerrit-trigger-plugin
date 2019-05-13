@@ -343,14 +343,4 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     public int getProjectListFetchDelay() {
         return 0;
     }
-
-    @Override
-    public int getEventTypesSize() {
-        return 0;
-    }
-
-    @Override
-    public List<String> getFilterIn() {
-        return null;
-    }
 }

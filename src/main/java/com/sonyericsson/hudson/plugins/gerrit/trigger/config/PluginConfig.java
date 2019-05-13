@@ -34,8 +34,6 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.workers.GerritWorkersConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache;
 
 /**
@@ -196,16 +194,24 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
     }
 
     @Override
+    public int getEventTypesSize() {
+        return GerritEventType.values().length;
+    }
+
+    @Override
     public List<String> getFilterIn() {
-        GerritEventType[] types = GerritEventType.values();
-        List<String> typeList = new ArrayList<>();
-        for (GerritEventType type : types) {
-            if (type.isInteresting()) {
-                typeList.add(type.getTypeValue());
+        if (filterIn == null) {
+            GerritEventType[] types = GerritEventType.values();
+            List<String> typeList = new ArrayList<>();
+            for (GerritEventType type : types) {
+                if (type.isInteresting()) {
+                    typeList.add(type.getTypeValue());
+                }
             }
+            Collections.sort(typeList);
+            return typeList;
         }
-        Collections.sort(typeList);
-        return typeList;
+        return filterIn;
     }
 
     /**
@@ -230,24 +236,19 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
 
      /**
      * Update the server event filter.
-     * @param serverName name of the server.
+     * @param formData the JSON object with form data.
      */
     private void updateEventFilter(JSONObject formData) {
-        List<String> filter = getFilterInFromFormData(formData);
+        filterIn = getFilterInFromFormData(formData);
         for (GerritEventType type : GerritEventType.values()) {
-            if (filter != null) {
-                type.setInteresting(filter.contains(type.getTypeValue()));
+            if (filterIn != null) {
+                type.setInteresting(filterIn.contains(type.getTypeValue()));
             } else {
                 // TODO if an event type is added with a default other than true
                 // in the future then this needs to be updated.
                 type.setInteresting(true);
             }
         }
-    }
-
-    @Override
-    public int getEventTypesSize() {
-        return GerritEventType.values().length;
     }
 
      /**

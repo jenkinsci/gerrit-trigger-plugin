@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var search;
             for (i = 0; i < filterInList.length; i++) {
                 search = filterInList[i];
-                if (filterDefaultList.includes(search)) {
+                if (filterDefaultList.indexOf(search) !== -1) {
                     filterDefaultList = removeFromArray(filterDefaultList, search);
                     filterInSelect.add(new Option(filterInList[i], filterInList[i], false, false));
                 } else {
