@@ -221,7 +221,7 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
 
     /**
      * Get the filter event list from formdata.
-     * @param formData JSONObject
+     * @param formData the JSON object with form data.
      * @return value.
      */
     private List<String> getFilterInFromFormData(JSONObject formData) {
@@ -241,7 +241,6 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
 
      /**
      * Update the server event filter.
-     * @param formData the JSON object with form data.
      */
     public void updateEventFilter() {
         for (GerritEventType type : GerritEventType.values()) {
