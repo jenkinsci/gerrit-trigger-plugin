@@ -27,7 +27,11 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.junit.Test;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
+
 import static org.junit.Assert.assertEquals;
+
+import java.util.List;
 
 /**
  *
@@ -38,33 +42,74 @@ public class PluginConfigTest {
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
     /**
-     * test.
+     * Test creation of a config object from form data.
+     * filterIn using partial event list.
      */
     @Test
     public void testSetValues() {
+        String events = "[change-abandoned, change-merged, change-restored]";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
-                + "\"numberOfReceivingWorkerThreads\":\"6\"}";
+                + "\"numberOfReceivingWorkerThreads\":\"6\","
+                + "\"filterIn\":\"" + events + "\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         PluginConfig config = new PluginConfig(form);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
+        assertEquals(events, config.getFilterIn().toString());
+        for (GerritEventType type : GerritEventType.values()) {
+            if (events.contains(type.getTypeValue())) {
+                assertEquals(true, type.isInteresting());
+            } else {
+                assertEquals(false, type.isInteresting());
+            }
+        }
     }
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
     /**
      * Test creation of a config object from an existing one.
+     * filterIn using empty event list.
      */
     @Test
     public void testCopyConfig() {
+        String events = "[]";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
-                + "\"numberOfReceivingWorkerThreads\":\"6\"}";
+                + "\"numberOfReceivingWorkerThreads\":\"6\","
+                + "\"filterIn\":\"" + events + "\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         PluginConfig initialConfig = new PluginConfig(form);
         PluginConfig config = new PluginConfig(initialConfig);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
+        assertEquals(events, config.getFilterIn().toString());
+        for (GerritEventType type : GerritEventType.values()) {
+            assertEquals(false, type.isInteresting());
+        }
+    }
+
+    /**
+     * Test empty filterIn form data which should result in default settings
+     * for event filter.
+     */
+    @Test
+    public void testDefaultEventFilter() {
+        List<String> defaultEventFilter = PluginConfig.getDefaultEventFilter();
+        String events = "";
+        String formString = "{"
+                + "\"numberOfSendingWorkerThreads\":\"4\","
+                + "\"numberOfReceivingWorkerThreads\":\"6\","
+                + "\"filterIn\":\"" + events + "\"}";
+        JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
+        new PluginConfig(form);
+        for (GerritEventType type : GerritEventType.values()) {
+            if (defaultEventFilter.contains(type.getTypeValue())) {
+                assertEquals(true, type.isInteresting());
+            } else {
+                assertEquals(false, type.isInteresting());
+            }
+        }
     }
 }
