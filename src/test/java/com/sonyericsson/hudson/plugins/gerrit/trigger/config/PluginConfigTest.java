@@ -31,6 +31,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,7 +48,7 @@ public class PluginConfigTest {
      */
     @Test
     public void testSetValues() {
-        String events = "[change-abandoned, change-merged, change-restored]";
+        String events = "change-abandoned change-merged change-restored";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\","
@@ -56,7 +57,7 @@ public class PluginConfigTest {
         PluginConfig config = new PluginConfig(form);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
-        assertEquals(events, config.getFilterIn().toString());
+        assertEquals(Arrays.asList(events.split(" ")), config.getFilterIn());
         for (GerritEventType type : GerritEventType.values()) {
             if (events.contains(type.getTypeValue())) {
                 assertEquals(true, type.isInteresting());
@@ -74,7 +75,7 @@ public class PluginConfigTest {
      */
     @Test
     public void testCopyConfig() {
-        String events = "[]";
+        String events = "";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\","
@@ -84,7 +85,7 @@ public class PluginConfigTest {
         PluginConfig config = new PluginConfig(initialConfig);
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
-        assertEquals(events, config.getFilterIn().toString());
+        assertEquals(Arrays.asList(events.split(" ")), config.getFilterIn());
         for (GerritEventType type : GerritEventType.values()) {
             assertEquals(false, type.isInteresting());
         }
@@ -97,7 +98,7 @@ public class PluginConfigTest {
     @Test
     public void testDefaultEventFilter() {
         List<String> defaultEventFilter = PluginConfig.getDefaultEventFilter();
-        String events = "";
+        String events = "null";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
                 + "\"numberOfReceivingWorkerThreads\":\"6\","

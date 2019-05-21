@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             filterInForm.value = filterInString;
         } else {
-            filterInForm.value = "";
+            filterInForm.value = "null";
         }
     }, true);
 
