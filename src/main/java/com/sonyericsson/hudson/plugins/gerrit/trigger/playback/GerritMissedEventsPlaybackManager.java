@@ -93,7 +93,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     /**
      * Server Timestamp.
      */
-    protected static EventTimeSlice serverTimestamp = null;
+    protected EventTimeSlice serverTimestamp = null;
     private static long previousTimeSlice = 0;
     /**
      * List that contains received Gerrit Events.
@@ -113,7 +113,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         this.serverName = name;
         checkIfEventsLogPluginSupported();
         previousIsSupported = isSupported;
-        persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable(name);
+        persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable();
     }
 
     /**
@@ -575,18 +575,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Responsible for persisting timestamps to xml.
      * Time slices jump by 1000ms so the thread only checks every 1 second.
      */
-    static class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
-        private static String serverName;
+    class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
         private Thread worker;
         private final AtomicBoolean running = new AtomicBoolean(false);
         private static final long CHECK_INTERVAL = 1000;
 
         /**
          * Constructor.
-         * @param serverName name of server to persist timestamps for.
          */
-        public GerritMissedEventsPlaybackPersistRunnable(String serverName) {
-            GerritMissedEventsPlaybackPersistRunnable.serverName = serverName;
+        public GerritMissedEventsPlaybackPersistRunnable() {
         }
 
         /**
@@ -633,7 +630,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         /**
          * Saves the current event timestamp to xml.
          */
-        static void persistTimeStamp() {
+        private void persistTimeStamp() {
             try {
                 XmlFile config = getConfigXml(serverName);
                 if (config == null) {
