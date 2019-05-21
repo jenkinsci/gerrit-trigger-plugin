@@ -142,14 +142,13 @@ document.addEventListener('DOMContentLoaded', function () {
             filterIn.push(filterInSelect.options[i].value);
         }
         if (!filterIn.equals(defaultFilterList)) {
-            var filterInString = "[";
+            var filterInString = "";
             for (i = 0; i < filterIn.length; i++) {
                 filterInString = filterInString + filterIn[i];
                 if (filterIn.length - 1 !== i) {
-                    filterInString = filterInString + ", ";
+                    filterInString = filterInString + " ";
                 }
             }
-            filterInString = filterInString + "]";
             filterInForm.value = filterInString;
         } else {
             filterInForm.value = "";
