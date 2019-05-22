@@ -63,6 +63,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.CheckForNull;
@@ -576,9 +579,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Time slices jump by 1000ms so the thread only checks every 1 second.
      */
     class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
-        private Thread worker;
         private final AtomicBoolean running = new AtomicBoolean(false);
         private static final long CHECK_INTERVAL = 1000;
+        private ScheduledExecutorService scheduler = jenkins.util.Timer.get();
+        private ScheduledFuture<?> task = null;
 
         /**
          * Constructor.
@@ -592,8 +596,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         public synchronized void start() {
             if (!isRunning()) {
                 running.set(true);
-                worker = new Thread(this);
-                worker.start();
+                task = scheduler.scheduleAtFixedRate(this, 0, CHECK_INTERVAL, TimeUnit.MILLISECONDS);
             }
         }
 
@@ -601,7 +604,10 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
          * Stop the persistence thread loop.
          */
         public void stop() {
-            running.set(false);
+            if (isRunning()) {
+                task.cancel(true);
+                running.set(false);
+            }
         }
 
         /**
@@ -613,17 +619,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         @Override
         public void run() {
-            while (running.get()) {
-                try {
-                    Thread.sleep(CHECK_INTERVAL);
-                } catch (InterruptedException e) {
-                    persistTimeStamp();
-                    logger.error(e.getMessage(), e);
-                }
-                if (serverTimestamp != null && previousTimeSlice < serverTimestamp.getTimeSlice()) {
-                    previousTimeSlice = serverTimestamp.getTimeSlice();
-                    persistTimeStamp();
-                }
+            if (serverTimestamp != null && previousTimeSlice < serverTimestamp.getTimeSlice()) {
+                previousTimeSlice = serverTimestamp.getTimeSlice();
+                persistTimeStamp();
             }
         }
 
