@@ -78,4 +78,18 @@ public class EventTimeSlice {
     public List<GerritTriggeredEvent> getEvents() {
         return events;
     }
+
+    /**
+     * Creates a shallow copy of a given EventTimeSlice.
+     * @param ets the EventTimeSlice to copy
+     * @return the copy
+     */
+   public static EventTimeSlice shallowCopy(EventTimeSlice ets) {
+       long initialTs = ets.getTimeSlice();
+       EventTimeSlice nets = new EventTimeSlice(initialTs);
+       for (GerritTriggeredEvent event : ets.getEvents()) {
+           nets.addEvent(event);
+       }
+       return nets;
+   }
 }
