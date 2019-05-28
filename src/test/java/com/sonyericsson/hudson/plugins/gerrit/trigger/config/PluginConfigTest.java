@@ -25,6 +25,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
+
+import org.junit.After;
 import org.junit.Test;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
@@ -41,6 +43,16 @@ import java.util.List;
 public class PluginConfigTest {
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
+
+    // TODO if an event type is added with a default other than true
+    // in the future then this needs to be updated to check each
+    // events default value.
+    @After
+    public void afterTest() {
+        for (GerritEventType type : GerritEventType.values()) {
+            type.setInteresting(true);
+        }
+    }
 
     /**
      * Test creation of a config object from form data.

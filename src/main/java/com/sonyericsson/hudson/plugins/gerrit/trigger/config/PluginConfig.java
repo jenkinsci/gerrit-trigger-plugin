@@ -237,7 +237,7 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
         String[] arrayIn = null;
         if (stringIn != null && !stringIn.equals("null")) {
             filter = new ArrayList<>();
-            arrayIn = stringIn.split(" ");
+            arrayIn = stringIn.split("\\s+");
             filter = Arrays.asList(arrayIn);
         }
         return filter;
