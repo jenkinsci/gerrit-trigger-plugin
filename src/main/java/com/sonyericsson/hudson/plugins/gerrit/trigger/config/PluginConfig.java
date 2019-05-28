@@ -232,10 +232,10 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
         // Getting the list as a JSONArray is not utilized since if the string is empty
         // the get method will throw an exception. The logic is such that if the filter
         // is null then the default of every event being interesting is assumed.
-        String stringIn = formData.optString("filterIn");
+        String stringIn = formData.optString("filterIn", null);
         List<String> filter = null;
         String[] arrayIn = null;
-        if (!stringIn.equals("null")) {
+        if (stringIn != null && !stringIn.equals("null")) {
             filter = new ArrayList<>();
             arrayIn = stringIn.split(" ");
             filter = Arrays.asList(arrayIn);
