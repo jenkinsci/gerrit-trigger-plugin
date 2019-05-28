@@ -44,11 +44,14 @@ public class PluginConfigTest {
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
-    // TODO if an event type is added with a default other than true
-    // in the future then this needs to be updated to check each
-    // events default value.
+    /**
+     * Resets the GerritEventType enum.
+     */
     @After
     public void afterTest() {
+     // TODO if an event type is added with a default other than true
+        // in the future then this needs to be updated to check each
+        // events default value.
         for (GerritEventType type : GerritEventType.values()) {
             type.setInteresting(true);
         }
