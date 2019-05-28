@@ -44,7 +44,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCac
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
+public class PluginConfig implements GerritWorkersConfig {
 
     /**
      * Default number of receiving worker threads.
@@ -202,12 +202,20 @@ public class PluginConfig implements GerritWorkersConfig, EventFilterConfig {
         this.replicationCacheExpirationInMinutes = replicationCacheExpirationInMinutes;
     }
 
-    @Override
+    /**
+     * Get the number of events that are supported.
+     *
+     * @return the size of gerrit event type enum.
+     */
     public int getEventTypesSize() {
         return GerritEventType.values().length;
     }
 
-    @Override
+    /**
+     * Get the list of events that are filtered in.
+     *
+     * @return the list of events that are filtered in, if all events are included then it will return null.
+     */
     public List<String> getFilterIn() {
         if (filterIn == null) {
             GerritEventType[] types = GerritEventType.values();
