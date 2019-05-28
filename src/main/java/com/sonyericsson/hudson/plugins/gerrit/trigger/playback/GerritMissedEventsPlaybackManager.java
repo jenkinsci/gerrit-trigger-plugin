@@ -63,6 +63,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.CheckForNull;
 
@@ -93,6 +97,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Server Timestamp.
      */
     protected EventTimeSlice serverTimestamp = null;
+    private static long previousTimeSlice = 0;
     /**
      * List that contains received Gerrit Events.
      */
@@ -101,6 +106,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
+    private boolean previousIsSupported;
+    private GerritMissedEventsPlaybackPersistRunnable persistenceCheck;
 
     /**
      * @param name Gerrit Server Name.
@@ -108,6 +115,23 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     public GerritMissedEventsPlaybackManager(String name) {
         this.serverName = name;
         checkIfEventsLogPluginSupported();
+        previousIsSupported = isSupported;
+        persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable();
+    }
+
+    /**
+     * Start the persistenceCheck thread.
+     */
+    private void startPersistenceCheck() {
+        previousTimeSlice = 0;
+        persistenceCheck.start();
+    }
+
+    /**
+     * Stop the persistenceCheck thread.
+     */
+    private void stopPersistenceCheck() {
+        persistenceCheck.stop();
     }
 
     /**
@@ -116,10 +140,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     public void performCheck() throws IOException {
         if (playBackComplete) {
-            boolean previousIsSupported = isSupported;
             checkIfEventsLogPluginSupported();
-            boolean currentIsSupported = isSupported;
-            if (previousIsSupported && !currentIsSupported) {
+            if (previousIsSupported && !isSupported) {
                 logger.warn("Missed Events Playback used to be supported. now it is not!");
                 // we could be missing events here that we should be persisting...
                 // so let's remove the data file so we are ready if it comes back
@@ -132,9 +154,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
+                stopPersistenceCheck();
             }
-            if (!previousIsSupported && currentIsSupported) {
+            if (!previousIsSupported && isSupported) {
                 logger.warn("Missed Events Playback used to be NOT supported. now it IS!");
+            }
+            if (previousIsSupported != isSupported) {
+                previousIsSupported = isSupported;
             }
         }
     }
@@ -282,6 +308,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     @Override
     public void connectionDown() {
         logger.info("connectionDown for server: {}", serverName);
+        stopPersistenceCheck();
     }
 
     /**
@@ -294,11 +321,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         if (!isSupported()) {
             return;
         }
+        if (!persistenceCheck.isRunning()) {
+            startPersistenceCheck();
+        }
 
         if (event instanceof GerritTriggeredEvent) {
             logger.debug("Recording timestamp due to an event {} for server: {}", event, serverName);
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
-            persist(triggeredEvent);
+            saveTimestamp(triggeredEvent);
             //add to cache
             if (!playBackComplete) {
                 boolean receivedEvtFound = false;
@@ -447,11 +477,12 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * Takes a timestamp and persists to xml file.
-     * @param evt Gerrit Event to persist.
-     * @return true if was able to persist event.
+     * Takes an event timestamp and saves it.
+     * The thread persistenceCheck stores this to xml.
+     * @param evt Gerrit Event to save.
+     * @return true if successfully saved.
      */
-    synchronized boolean persist(GerritTriggeredEvent evt) {
+    synchronized boolean saveTimestamp(GerritTriggeredEvent evt) {
         // If there is not timestamp, then ignore this event.
         if (evt == null || evt.getEventCreatedOn() == null) {
             logger.debug("'eventCreatedOn' is null; skipping event.");
@@ -487,18 +518,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 }
             }
         }
-
-        try {
-            XmlFile config = getConfigXml(serverName);
-            if (config == null) {
-                logger.error("XML " + serverName + " is null, please check file permissions.");
-                return false;
-            }
-            config.write(serverTimestamp);
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-            return false;
-        }
         return true;
     }
 
@@ -512,6 +531,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         } else {
             logger.error("Could not find server {}", serverName);
         }
+        stopPersistenceCheck();
     }
 
     /**
@@ -554,4 +574,72 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         return StringUtil.getDefaultDisplayNameForSpecificServer(this, getServerName());
     }
 
+    /**
+     * Responsible for persisting timestamps to xml.
+     * Time slices jump by 1000ms so the thread only checks every 1 second.
+     */
+    class GerritMissedEventsPlaybackPersistRunnable implements Runnable {
+        private final AtomicBoolean running = new AtomicBoolean(false);
+        private static final long CHECK_INTERVAL = 1000;
+        private ScheduledExecutorService scheduler = jenkins.util.Timer.get();
+        private ScheduledFuture<?> task = null;
+
+        /**
+         * Constructor.
+         */
+        public GerritMissedEventsPlaybackPersistRunnable() {
+        }
+
+        /**
+         * Start the persistence thread loop.
+         */
+        public synchronized void start() {
+            if (!isRunning()) {
+                running.set(true);
+                task = scheduler.scheduleAtFixedRate(this, 0, CHECK_INTERVAL, TimeUnit.MILLISECONDS);
+            }
+        }
+
+        /**
+         * Stop the persistence thread loop.
+         */
+        public void stop() {
+            if (isRunning()) {
+                task.cancel(true);
+                running.set(false);
+            }
+        }
+
+        /**
+         * @return if thread is currently running or not
+         */
+        public boolean isRunning() {
+            return running.get();
+        }
+
+        @Override
+        public void run() {
+            if (serverTimestamp != null && previousTimeSlice < serverTimestamp.getTimeSlice()) {
+                previousTimeSlice = serverTimestamp.getTimeSlice();
+                persistTimeStamp();
+            }
+        }
+
+        /**
+         * Saves the current event timestamp to xml.
+         */
+        private void persistTimeStamp() {
+            try {
+                XmlFile config = getConfigXml(serverName);
+                if (config == null) {
+                    logger.error("XML " + serverName + " is null, please check file permissions.");
+                } else {
+                    EventTimeSlice serverTimestampCopy = EventTimeSlice.shallowCopy(serverTimestamp);
+                    config.write(serverTimestampCopy);
+                }
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+    }
 }
