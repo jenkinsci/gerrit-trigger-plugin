@@ -300,7 +300,9 @@ public enum GerritTriggerParameters {
         if (stringValue == null) {
             stringValue = "";
         }
-
+        if (description == null) {
+            description = "";
+        }
         Class<?>[] types = { String.class, String.class, String.class };
         Object[] args = { this.name(), stringValue, description };
         Constructor<? extends StringParameterValue> constructor;
