@@ -142,7 +142,6 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Default value for {@link #isGerritBuildCurrentPatchesOnly()}.
      */
     public static final boolean DEFAULT_BUILD_CURRENT_PATCHES_ONLY = false;
-
     /**
      * Global default for notification level.
      */

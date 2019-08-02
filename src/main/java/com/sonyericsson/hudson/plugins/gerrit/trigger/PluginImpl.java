@@ -523,6 +523,7 @@ public class PluginImpl extends Plugin {
             }
             save();
         }
+        pluginConfig.updateEventFilter();
         //For unit/integration testing only...
         if (System.getProperty(TEST_SSH_KEYFILE_LOCATION_PROPERTY) != null && !servers.isEmpty()) {
             File location = new File(System.getProperty(TEST_SSH_KEYFILE_LOCATION_PROPERTY));

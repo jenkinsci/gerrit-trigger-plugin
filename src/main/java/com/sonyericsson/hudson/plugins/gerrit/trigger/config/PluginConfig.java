@@ -25,9 +25,18 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
 import net.sf.json.JSONObject;
 
-import org.kohsuke.stapler.StaplerRequest;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
+import org.kohsuke.stapler.StaplerRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonymobile.tools.gerrit.gerritevents.workers.GerritWorkersConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache;
 
 /**
@@ -45,10 +54,20 @@ public class PluginConfig implements GerritWorkersConfig {
      * Default number of sending worker threads.
      */
     public static final int DEFAULT_NR_OF_SENDING_WORKER_THREADS = 1;
+    /**
+     * Default event filter.
+     */
+    public static final List<String> DEFAULT_EVENT_FILTER = getDefaultEventFilter();
+    /**
+     * Full event list.
+     */
+    public static final List<String> ALL_EVENTS = getAllEvents();
 
+    private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
     private int numberOfReceivingWorkerThreads;
     private int numberOfSendingWorkerThreads;
     private int replicationCacheExpirationInMinutes;
+    private List<String> filterIn;
 
     /**
      * Constructs a config with default data.
@@ -75,6 +94,7 @@ public class PluginConfig implements GerritWorkersConfig {
         numberOfReceivingWorkerThreads = pluginConfig.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = pluginConfig.getNumberOfSendingWorkerThreads();
         replicationCacheExpirationInMinutes = pluginConfig.getReplicationCacheExpirationInMinutes();
+        filterIn = pluginConfig.getFilterIn();
     }
 
     /**
@@ -112,6 +132,9 @@ public class PluginConfig implements GerritWorkersConfig {
         if (replicationCacheExpirationInMinutes <= 0) {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
+
+        filterIn = getFilterInFromFormData(formData);
+        updateEventFilter();
     }
 
     /**
@@ -177,5 +200,104 @@ public class PluginConfig implements GerritWorkersConfig {
      */
     public void setReplicationCacheExpirationInMinutes(int replicationCacheExpirationInMinutes) {
         this.replicationCacheExpirationInMinutes = replicationCacheExpirationInMinutes;
+    }
+
+    /**
+     * Get the number of events that are supported.
+     *
+     * @return the size of gerrit event type enum.
+     */
+    public int getEventTypesSize() {
+        return GerritEventType.values().length;
+    }
+
+    /**
+     * Get the list of events that are filtered in.
+     *
+     * @return the list of events that are filtered in, if all events are included then it will return null.
+     */
+    public List<String> getFilterIn() {
+        if (filterIn == null) {
+            GerritEventType[] types = GerritEventType.values();
+            List<String> typeList = new ArrayList<>();
+            for (GerritEventType type : types) {
+                if (type.isInteresting()) {
+                    typeList.add(type.getTypeValue());
+                }
+            }
+            Collections.sort(typeList);
+            return typeList;
+        }
+        return filterIn;
+    }
+
+    /**
+     * Get the filter event list from formdata.
+     * @param formData the JSON object with form data.
+     * @return value.
+     */
+    private List<String> getFilterInFromFormData(JSONObject formData) {
+        // Getting the list as a JSONArray is not utilized since if the string is empty
+        // the get method will throw an exception. The logic is such that if the filter
+        // is null then the default of every event being interesting is assumed.
+        String stringIn = formData.optString("filterIn", null);
+        List<String> filter = null;
+        String[] arrayIn = null;
+        if (stringIn != null && !stringIn.equals("null")) {
+            filter = new ArrayList<>();
+            arrayIn = stringIn.split("\\s+");
+            filter = Arrays.asList(arrayIn);
+        }
+        return filter;
+    }
+
+     /**
+     * Update the server event filter.
+     */
+    public void updateEventFilter() {
+        List<String> filter;
+        if (filterIn != null) {
+            filter = filterIn;
+        } else {
+            filter = getDefaultEventFilter();
+        }
+        logger.info("Listening to event types: {}", filter);
+        for (GerritEventType type : GerritEventType.values()) {
+            type.setInteresting(filter.contains(type.getTypeValue()));
+        }
+    }
+
+    /**
+     * Get the default event filter.
+     * @return the event list
+     */
+    public static List<String> getDefaultEventFilter() {
+        GerritEventType[] types = GerritEventType.values();
+        List<String> typeList = new ArrayList<>();
+        for (GerritEventType type : types) {
+            // TODO if an event type is added with a default other than true
+            // in the future then this needs to be updated to check each
+            // events default value.
+            // At the moment it gives the same result as getAllEvents()
+            if (true) {
+                typeList.add(type.getTypeValue());
+            }
+        }
+        Collections.sort(typeList);
+        return typeList;
+    }
+
+     /**
+     * Get the full list of supported events.
+     * @return the event list
+     */
+    public static List<String> getAllEvents() {
+        GerritEventType[] types = GerritEventType.values();
+        List<String> typeList = new ArrayList<>();
+        for (GerritEventType type : types) {
+            typeList.add(type.getTypeValue());
+        }
+        Collections.sort(typeList);
+        return typeList;
     }
 }
