@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.32</version>
+        <version>3.51-SNAPSHOT</version>
         <relativePath />
     </parent>
 
@@ -57,6 +57,7 @@
         <java.level>8</java.level>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
+        <violations.maxViolations>0</violations.maxViolations>
         <concurrency>1C</concurrency>
         <powermock.version>1.6.2</powermock.version>
         <checkstyle.version>2.13</checkstyle.version>
@@ -328,6 +329,7 @@
                     <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <consoleOutput>true</consoleOutput>
+                    <failsOnError>false</failsOnError>
                 </configuration>
                 <executions>
                     <execution>
@@ -336,15 +338,8 @@
                             <goal>checkstyle</goal>
                         </goals>
                         <phase>compile</phase>
-                    </execution>
-                    <execution>
-                        <id>test-check</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <phase>test</phase>
                         <configuration>
-                            <violationSeverity>warning</violationSeverity>
+                            <failsOnError>false</failsOnError>
                         </configuration>
                     </execution>
                 </executions>

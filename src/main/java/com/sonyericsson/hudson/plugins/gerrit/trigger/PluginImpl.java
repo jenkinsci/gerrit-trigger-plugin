@@ -74,7 +74,14 @@ public class PluginImpl extends Plugin {
     /**
      * What to call this plug-in to humans.
      */
-    public static final String DISPLAY_NAME = "Gerrit Trigger";
+    public static final String DISPLAY_NAME = "Gerrit Trigger";  
+
+
+//This should give a warning
+
+    public static final String dISPLAY_NAME = "Gerrit Trigger";  
+
+
 
     /**
      * Any special permissions needed by this plugin are grouped into this.
