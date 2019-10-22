@@ -1754,14 +1754,11 @@ public class GerritTrigger extends Trigger<Job> {
         }
         triggerInformationAction.setErrorMessage("");
         try {
-            dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
-
-            // Now that the dynamic project list has been loaded, we can "count down"
-            // the latch so that the EventListener thread can begin to process events.
-            if (projectListIsReady.getCount() > 0) {
-                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
-                        projectListIsReady.getCount());
-                projectListIsReady.countDown();
+            // Check if dynamic trigger was disabled in the meantime
+            if (!dynamicTriggerConfiguration || job == null || !job.isBuildable()) {
+                dynamicGerritProjects = Collections.emptyList();
+            } else {
+                dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
             }
         } catch (ParseException pe) {
             String logErrorMessage = MessageFormat.format(
@@ -1796,6 +1793,15 @@ public class GerritTrigger extends Trigger<Job> {
             String triggerInformationMessage = MessageFormat.format(
                     "IOException when fetching dynamic trigger url: {0}", ioe.getMessage());
             triggerInformationAction.setErrorMessage(triggerInformationMessage);
+        } finally {
+            // Now that the dynamic project list has been loaded, we can "count down"
+            // the latch so that the EventListener thread can begin to process events.
+            if (projectListIsReady.getCount() > 0) {
+                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
+                        projectListIsReady.getCount());
+            }
+            // Always release all locks otherwise workers will be stuck forever
+            projectListIsReady.countDown();
         }
     }
 

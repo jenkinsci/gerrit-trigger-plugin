@@ -99,6 +99,7 @@ import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 //CS IGNORE LineLength FOR NEXT 11 LINES. REASON: static imports can get long
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE;
@@ -1883,6 +1884,166 @@ public class GerritTriggerTest {
         // Make sure that a job got scheduled.
         verify(listener).onTriggered(same(project), same(event));
         verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+
+        // Get rid of the temporary file.
+        java.nio.file.Files.delete(temporaryConfigFile);
+    }
+
+    /**
+     * Tests that dynamic project configurations for disabled jobs do not block the event listener.
+     * @throws Exception on failure
+     */
+    @PrepareForTest({
+            GerritTrigger.class,
+            AbstractProject.class,
+            ToGerritRunListener.class,
+            PluginImpl.class,
+            Hudson.class,
+            Jenkins.class,
+            DependencyQueueTaskDispatcher.class,
+            EventListener.class })
+    @Test
+    public void testDynamicTriggerDoesNotBlockForDisabledJobs() throws Exception {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(false);
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritTrigger trigger = new GerritTrigger(null);
+        trigger.setDynamicTriggerConfiguration(true);
+        trigger.setTriggerConfigURL("url");
+
+        // Set up the job within the trigger.
+        Whitebox.setInternalState(trigger, "job", project);
+
+        // We need to make sure that whenever anyone asks for the trigger for any job
+        // that it returns this one.
+        PowerMockito.mockStatic(GerritTrigger.class);
+        when(GerritTrigger.getTrigger(any(Job.class))).thenReturn(trigger);
+        assertEquals(trigger, GerritTrigger.getTrigger(project));
+
+        // Because the "stub" methodology doesn't work, we also need to manually replace the "createListener"
+        // static method.
+        EventListener myListener = new EventListener(project);
+        PowerMockito.when(GerritTrigger.createListener(any(Job.class))).thenReturn(myListener);
+        assertNotNull(trigger.createListener());
+
+        // Start the trigger.
+        trigger.start(project, true);
+
+        // Make sure that the timer task started.
+        assertNotNull(Whitebox.getInternalState(trigger, "gerritTriggerTimerTask"));
+
+        // Wait until the timer task has run for the first time.
+        Thread.sleep(GerritTriggerTimer.DELAY_MILLISECONDS + 1000);
+
+        CountDownLatch latch = Whitebox.getInternalState(trigger, "projectListIsReady");
+        assertNotNull(latch);
+        assertEquals(0, latch.getCount());
+    }
+
+    /**
+     * Tests that dynamic project configurations failing with exception does not block the event listener.
+     * @throws Exception on failure
+     */
+    @PrepareForTest({
+            GerritTrigger.class,
+            AbstractProject.class,
+            ToGerritRunListener.class,
+            PluginImpl.class,
+            Hudson.class,
+            Jenkins.class,
+            DependencyQueueTaskDispatcher.class,
+            DynamicConfigurationCacheProxy.class,
+            EventListener.class })
+    @Test
+    public void testDynamicTriggerUpdateFailureDoesNotBlock() throws Exception {
+        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        when(project.getFullName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+
+        DynamicConfigurationCacheProxy configurationCacheProxy = PowerMockito.mock(DynamicConfigurationCacheProxy.class);
+        PowerMockito.mockStatic(DynamicConfigurationCacheProxy.class);
+        when(DynamicConfigurationCacheProxy.getInstance()).thenReturn(configurationCacheProxy);
+        when(configurationCacheProxy.fetchThroughCache("url")).thenThrow(new RuntimeException());
+
+        Queue queue = mockConfig(project);
+
+        PowerMockito.mockStatic(ToGerritRunListener.class);
+        ToGerritRunListener listener = PowerMockito.mock(ToGerritRunListener.class);
+        PowerMockito.when(ToGerritRunListener.getInstance()).thenReturn(listener);
+
+        GerritTrigger trigger = new GerritTrigger(null);
+        trigger.setDynamicTriggerConfiguration(true);
+        trigger.setTriggerConfigURL("url");
+
+        // Set up the job within the trigger.
+        Whitebox.setInternalState(trigger, "job", project);
+
+        // We need to make sure that whenever anyone asks for the trigger for any job
+        // that it returns this one.
+        PowerMockito.mockStatic(GerritTrigger.class);
+        when(GerritTrigger.getTrigger(any(Job.class))).thenReturn(trigger);
+        assertEquals(trigger, GerritTrigger.getTrigger(project));
+
+        // Because the "stub" methodology doesn't work, we also need to manually replace the "createListener"
+        // static method.
+        EventListener myListener = new EventListener(project);
+        PowerMockito.when(GerritTrigger.createListener(any(Job.class))).thenReturn(myListener);
+        assertNotNull(trigger.createListener());
+
+        // Start the trigger.
+        trigger.start(project, true);
+
+        // Make sure that the timer task started.
+        assertNotNull(Whitebox.getInternalState(trigger, "gerritTriggerTimerTask"));
+
+        // Wait until the timer task has run for the first time.
+        Thread.sleep(GerritTriggerTimer.DELAY_MILLISECONDS + 1000);
+
+        CountDownLatch latch = Whitebox.getInternalState(trigger, "projectListIsReady");
+        assertNotNull(latch);
+        assertEquals(0, latch.getCount());
+    }
+
+    /**
+     * Tests that dynamic project configurations is read when configured.
+     * @throws Exception on failure
+     */
+    @Test
+    public void testDynamicTriggerIsRead() throws Exception {
+        AbstractProject project = mockProject();
+        when(project.getFullName()).thenReturn("MockedProject");
+        when(project.isBuildable()).thenReturn(true);
+        Queue queue = mockConfig(project);
+
+        java.nio.file.Path temporaryConfigFile = java.nio.file.Files.createTempFile("GerritTriggerTest", null);
+        java.nio.file.Files.write(temporaryConfigFile, "p=my-project\nb^**".getBytes());
+
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setDynamicTriggerConfiguration(true);
+        trigger.setTriggerConfigURL("file://" + temporaryConfigFile.toString());
+        Setup.setTrigger(trigger, project);
+
+        trigger.start(project, true);
+
+        // There should be no dynamic projects yet.  They won't show up until the timer
+        // task runs once, and there's a constant delay before that happens.
+        List<GerritProject> dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertNull(dynamicGerritProjects);
+
+        // Wait until the timer task has run for the first time.
+        Thread.sleep(GerritTriggerTimer.DELAY_MILLISECONDS + 1000);
+
+        // Now check the dynamic projects again.  This time, there should be one.
+        dynamicGerritProjects = trigger.getDynamicGerritProjects();
+        assertNotNull(dynamicGerritProjects);
+        assertEquals(1, dynamicGerritProjects.size());
 
         // Get rid of the temporary file.
         java.nio.file.Files.delete(temporaryConfigFile);
