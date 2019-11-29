@@ -1,7 +1,11 @@
-# Gerrit Trigger Plugin
+= Gerrit Trigger Plugin
+
+image:https://img.shields.io/jenkins/plugin/v/gerrit-trigger.svg[link="https://plugins.jenkins.io/gerrit-trigger"]
+image:https://img.shields.io/github/release/jenkinsci/gerrit-trigger-plugin.svg?label=changelog[link="https://github.com/jenkinsci/gerrit-trigger-plugin/releases/latest"]
+image:https://img.shields.io/jenkins/plugin/i/gerrit-trigger.svg?color=blue[link="https://plugins.jenkins.io/gerrit-trigger"]
 
 This plugin integrates Jenkins to
-http://code.google.com/p/gerrit/[Gerrit] code review for triggering
+http://code.google.com/p/gerrit/[Gerrit code review] for triggering
 builds when a "patch set" is created.
 
 Older versions of this plugin may not be safe to use. Please review the
