@@ -29,7 +29,6 @@ import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * TimerTasks that are created from a GerritTrigger and periodically calls
@@ -60,12 +59,7 @@ public class GerritTriggerTimerTask extends TimerTask {
         if (trigger == null) {
             return;
         }
-        if (StringUtils.isEmpty(trigger.getTriggerConfigURL())) {
-            return;
-        }
-        if (trigger.getJob() != null && !trigger.getJob().isBuildable()) {
-            return;
-        }
+        // Do not skip updates since tasks might wait for the update
         trigger.updateTriggerConfigURL();
     }
 
