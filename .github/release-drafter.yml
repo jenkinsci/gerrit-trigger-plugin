@@ -1,0 +1,4 @@
+_extends: .github
+version-template: $MAJOR.$MINOR.$PATCH
+tag-template: gerrit-trigger-$NEXT_PATCH_VERSION
+name-template: Gerrit Trigger Plugin $NEXT_PATCH_VERSION
