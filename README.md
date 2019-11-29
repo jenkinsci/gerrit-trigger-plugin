@@ -18,7 +18,7 @@ Each job can be configured with one Gerrit server.
   - sandell.robert@gmail.com
 
 * Tomas Westling
-  - tomas.westling@sonymobile.com
+  - tomas.westling@axis.com
 
 ## Community Resources
  * [Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger)
@@ -27,18 +27,10 @@ Each job can be configured with one Gerrit server.
 
 
 # Environments
-* `linux`
-    * `java-1.8`
-        * `maven-3.3.3`
-
-* Java 8: needed development environment.
-
-You should have no problem running the plugin on a Windows server.
 
 The maintainers' development, tests and production environments are
 Ubuntu so we have no means of detecting or fixing any Windows issues.
 
-Java 6 compatibility will be dropped as soon as newer core version is needed for features.
 
 # Build
 
@@ -59,17 +51,6 @@ new warnings
 Run checkstyle
 
     mvn checkstyle:checkstyle
-
-# Test local instance
-
-To test in a local Jenkins instance
-
-    mvn hpi:run
-
-# Clean test environment
-
-    mvn clean
-    rm /tmp/jenkins-testkey* hostkey.ser # Needed when changing SSH components versions
 
 # License
 
