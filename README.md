@@ -21,7 +21,7 @@ Each job can be configured with one Gerrit server.
   - tomas.westling@axis.com
 
 ## Community Resources
- * [Wiki](https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger)
+ * [Homepage and documentation](https://plugins.jenkins.io/gerrit-trigger)
  * [Open Issues](http://issues.jenkins-ci.org/secure/IssueNavigator.jspa?mode=hide&reset=true&jqlQuery=project+%3D+JENKINS+AND+status+in+%28Open%2C+%22In+Progress%22%2C+Reopened%29+AND+component+%3D+%27gerrit-trigger-plugin%27)
  * [Mailing Lists](http://jenkins-ci.org/content/mailing-lists)
 
