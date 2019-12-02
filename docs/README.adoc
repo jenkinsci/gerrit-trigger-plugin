@@ -46,7 +46,9 @@ your jenkins user.
 Gerrit documentation:
 http://gerrit-documentation.googlecode.com/svn/Documentation/2.4.2/access-control.html#examples_cisystem
 
-*IMPORTANT:* On Gerrit 2.7+, you also need to grant "Stream Events"
+[IMPORTANT]
+====
+On Gerrit 2.7+, you also need to grant "Stream Events"
 capability. Without this, the plugin will not work, will try to connect
 to Gerrit repeatedly, and will eventually cause OutOfMemoryError on
 Gerrit.
@@ -60,6 +62,7 @@ Users". Add your jenkins user.
 *** *Stream Events:* ALLOW for Event Streaming Users
 
 https://gerrit-documentation.googlecode.com/svn/Documentation/2.7/access-control.html#capability_streamEvents
+====
 
 === Administrative Settings
 
