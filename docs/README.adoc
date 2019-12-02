@@ -1,3 +1,11 @@
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+
 = Gerrit Trigger Plugin
 
 image:https://img.shields.io/jenkins/plugin/v/gerrit-trigger.svg[link="https://plugins.jenkins.io/gerrit-trigger"]
