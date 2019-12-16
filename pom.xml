@@ -57,7 +57,7 @@
         <java.level>8</java.level>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <concurrency>1C</concurrency>
+        <concurrency>0.5C</concurrency>
         <powermock.version>1.6.2</powermock.version>
         <checkstyle.version>2.13</checkstyle.version>
         <mockito.version>1.10.19</mockito.version>

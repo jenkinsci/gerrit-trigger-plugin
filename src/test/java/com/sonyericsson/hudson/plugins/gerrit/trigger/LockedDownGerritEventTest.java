@@ -206,7 +206,7 @@ public class LockedDownGerritEventTest {
         assertEquals("theOtherServer", serverName);
     }
 
-    // CS IGNORE MagicNumber FOR NEXT 32 LINES. REASON: test data.
+    // CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: test data.
 
     /**
      * Tests that only an admin can read server configuration and manipulate server state.
@@ -223,11 +223,7 @@ public class LockedDownGerritEventTest {
         gerritServer.start();
 
         Setup.lockDown(j);
-        j.getInstance().setAuthorizationStrategy(
-                new MockAuthorizationStrategy().grant(Item.READ, Item.DISCOVER).everywhere().toAuthenticated()
-                        .grant(Jenkins.READ, Item.DISCOVER).everywhere().toEveryone()
-                        .grant(Item.CONFIGURE).everywhere().to("bob")
-                        .grant(Jenkins.ADMINISTER).everywhere().to("alice"));
+        grantsToAliceBobAndEveryone();
         j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
         JenkinsRule.WebClient webClient = j.createWebClient().login("alice", "alice");
         HtmlPage page = webClient.goTo("plugin/gerrit-trigger/servers/0/");
@@ -238,6 +234,145 @@ public class LockedDownGerritEventTest {
         webClient = j.createWebClient().login("bob", "bob");
         webClient.assertFails("plugin/gerrit-trigger/servers/0/", 403);
         post(webClient, "plugin/gerrit-trigger/servers/0/wakeup", null, 403);
+    }
+
+    /**
+     * Tests that you can't do an http GET request to
+     * ${@link GerritServer.DescriptorImpl#doTestConnection(String, int, String, String, String, String)}.
+     *
+     * @throws Exception if so
+     */
+    @Test @Issue("SECURITY-1527")
+    public void testGetTestConnectionNotWorking() throws Exception {
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        Setup.lockDown(j);
+        grantsToAliceBobAndEveryone();
+        j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
+        JenkinsRule.WebClient webClient = j.createWebClient(); //No login this time
+
+        webClient.assertFails("descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testConnection?"
+                        + "gerritHostName=foo&"
+                        + "gerritSshPort=29418&"
+                        + "gerritProxy=&"
+                        + "gerritUserName=foo"
+                        + "gerritAuthKeyFile=/tmp/foo"
+                        + "gerritAuthKeyFilePassword=bar"
+                        + "&foo=",
+                405);
+
+        webClient.assertFails("descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testRestConnection?"
+                        + "gerritHttpUserName=foo&"
+                        + "gerritHttpPassword=bar&"
+                        + "gerritFrontEndUrl=http://localhost:8000/?foo=",
+                405);
+
+    }
+
+    /**
+     * Tests that you can do an http POST request to
+     * ${@link GerritServer.DescriptorImpl#doTestConnection(String, int, String, String, String, String)}.
+     *
+     * @throws Exception if so
+     */
+    @Test @Issue("SECURITY-1527")
+    public void testPostTestConnectionNotWorking() throws Exception {
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        Setup.lockDown(j);
+        grantsToAliceBobAndEveryone();
+        j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
+        JenkinsRule.WebClient webClient = j.createWebClient(); //No login this time
+
+        post(webClient, "descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testConnection?"
+                        + "gerritHostName=foo&"
+                        + "gerritSshPort=29418&"
+                        + "gerritProxy=&"
+                        + "gerritUserName=foo"
+                        + "gerritAuthKeyFile=/tmp/foo"
+                        + "gerritAuthKeyFilePassword=bar",
+                null, 403);
+
+        post(webClient, "descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testRestConnection?"
+                        + "gerritHttpUserName=foo&"
+                        + "gerritHttpPassword=bar&"
+                        + "gerritFrontEndUrl=http://localhost:8000/?foo=",
+                null, 403);
+
+    }
+
+    /**
+     * Tests that you can do an http POST request to
+     * ${@link GerritServer.DescriptorImpl#doTestConnection(String, int, String, String, String, String)}.
+     *
+     * @throws Exception if so
+     */
+    @Test @Issue("SECURITY-1527")
+    public void testPostTestConnectionWorking() throws Exception {
+        GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        SshdServerMock.configureFor(sshd, gerritServer);
+        PluginImpl.getInstance().addServer(gerritServer);
+        gerritServer.getConfig().setNumberOfSendingWorkerThreads(NUMBEROFSENDERTHREADS);
+        ((Config)gerritServer.getConfig()).setGerritAuthKeyFile(sshKey.getPrivateKey());
+        gerritServer.start();
+
+        Setup.lockDown(j);
+        grantsToAliceBobAndEveryone();
+        j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
+        JenkinsRule.WebClient webClient = j.createWebClient().login("alice");
+
+        post(webClient, "descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testConnection?"
+                        + "gerritHostName=foo&"
+                        + "gerritSshPort=29418&"
+                        + "gerritProxy=&"
+                        + "gerritUserName=foo&"
+                        + "gerritAuthKeyFile=/tmp/foo&"
+                        + "gerritAuthKeyFilePassword=bar",
+                null, null);
+
+        post(webClient, "descriptorByName/"
+                        + "com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer/"
+                        + "testRestConnection?"
+                        + "gerritHttpUserName=foo&"
+                        + "gerritHttpPassword=bar&"
+                        + "gerritFrontEndUrl=http://localhost:8000/",
+                null, null);
+
+    }
+
+    /**
+     * Grants some permissions.
+     *
+     * Read and discover to everyone and authenticated.
+     * Configure everywhere to bob.
+     * Administer everywhere to alice.
+     */
+    private void grantsToAliceBobAndEveryone() {
+        j.getInstance().setAuthorizationStrategy(
+                new MockAuthorizationStrategy().grant(Item.READ, Item.DISCOVER).everywhere().toAuthenticated()
+                        .grant(Jenkins.READ, Item.DISCOVER).everywhere().toEveryone()
+                        .grant(Item.CONFIGURE).everywhere().to("bob")
+                        .grant(Jenkins.ADMINISTER).everywhere().to("alice"));
     }
 
     /**

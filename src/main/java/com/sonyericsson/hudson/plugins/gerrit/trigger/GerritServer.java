@@ -711,6 +711,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
          * @return {@link FormValidation#ok() } if can be done,
          *         {@link FormValidation#error(java.lang.String) } otherwise.
          */
+        @RequirePOST
         public FormValidation doTestConnection(
                 @QueryParameter("gerritHostName") final String gerritHostName,
                 @QueryParameter("gerritSshPort") final int gerritSshPort,
@@ -718,20 +719,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 @QueryParameter("gerritUserName") final String gerritUserName,
                 @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
                 @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("gerritHostName = {}\n"
-                        + "gerritSshPort = {}\n"
-                        + "gerritProxy = {}\n"
-                        + "gerritUserName = {}\n"
-                        + "gerritAuthKeyFile = {}\n"
-                        + "gerritAuthKeyFilePassword = {}",
-                        new Object[]{gerritHostName,
-                            gerritSshPort,
-                            gerritProxy,
-                            gerritUserName,
-                            gerritAuthKeyFile,
-                            gerritAuthKeyFilePassword,  });
-            }
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
             File file = new File(gerritAuthKeyFile);
             String password = null;
@@ -790,11 +778,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
          * @param gerritHttpPassword the password
          * @return {@link FormValidation#ok()} if it works.
          */
+        @RequirePOST
         public FormValidation doTestRestConnection(
                 @QueryParameter("gerritFrontEndUrl") final String gerritFrontEndUrl,
                 @QueryParameter("gerritHttpUserName") final String gerritHttpUserName,
                 @QueryParameter("gerritHttpPassword") final String gerritHttpPassword) {
-
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             String password = Secret.fromString(gerritHttpPassword).getPlainText();
 
             String restUrl = gerritFrontEndUrl;
