@@ -84,11 +84,11 @@ public class GerritNotifier {
                         parameterExpander.getBuildStartedCommand(build, taskListener, (ChangeBasedEvent)event, stats);
                 if (command != null) {
                     if (!command.isEmpty()) {
-                        logger.info("Notifying BuildStarted to gerrit: {}", command);
+                        logger.debug("Notifying BuildStarted to gerrit: {}", command);
                         cmdRunner.sendCommand(command);
                         GerritTriggeredBuildListener.fireOnStarted(event, command);
                     } else {
-                        logger.info("BuildStarted command is empty.  Gerrit will not be notified of BuildStarted");
+                        logger.debug("BuildStarted command is empty. Gerrit will not be notified of BuildStarted");
                     }
                 } else {
                     logger.error("Something wrong during parameter extraction. "
@@ -114,11 +114,11 @@ public class GerritNotifier {
 
                 if (command != null) {
                     if (!command.isEmpty()) {
-                        logger.info("Notifying BuildCompleted to gerrit: {}", command);
+                        logger.debug("Notifying BuildCompleted to gerrit: {}", command);
                         cmdRunner.sendCommand(command);
                         GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
                     } else {
-                        logger.info("BuildCompleted command is empty.  Gerrit will not be notified of BuildCompleted");
+                        logger.debug("BuildCompleted command is empty. Gerrit will not be notified of BuildCompleted");
                     }
                 } else {
                     logger.error("Something wrong during parameter extraction. "
