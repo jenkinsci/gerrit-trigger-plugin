@@ -32,6 +32,7 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -215,11 +216,12 @@ public class GerritProject implements Describable<GerritProject> {
      */
     public boolean isInteresting(String project, String branch, String topic, List<String> files) {
         if (compareType.matches(pattern, project)) {
+            List<String> tmpFiles = new ArrayList<String>(files);
             for (Branch b : branches) {
                 boolean foundInterestingForbidden = false;
                 if (b.isInteresting(branch)) {
                     if (forbiddenFilePaths != null) {
-                        Iterator<String> i = files.iterator();
+                        Iterator<String> i = tmpFiles.iterator();
                         while (i.hasNext()) {
                             String file = i.next();
                             for (FilePath ffp : forbiddenFilePaths) {
@@ -235,11 +237,11 @@ public class GerritProject implements Describable<GerritProject> {
                             }
                         }
                     }
-                    if (foundInterestingForbidden && files.isEmpty()) {
+                    if (foundInterestingForbidden && tmpFiles.isEmpty()) {
                         // All changed files are forbidden, so this is not interesting
                         return false;
                     }
-                    return isInterestingTopic(topic) && isInterestingFile(files);
+                    return isInterestingTopic(topic) && isInterestingFile(tmpFiles);
                 }
             }
         }
