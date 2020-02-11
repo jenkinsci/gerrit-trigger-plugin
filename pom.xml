@@ -293,7 +293,7 @@
         </repository>
         <repository>
             <id>gerrit-maven-repository</id>
-            <url>http://gerrit.googlecode.com/svn/mavenrepo/</url>
+            <url>https://gerrit.googlecode.com/svn/mavenrepo/</url>
         </repository>
     </repositories>
     <pluginRepositories>
