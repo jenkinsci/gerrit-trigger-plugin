@@ -375,7 +375,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public int getDynamicConfigRefreshInterval() {
-        return 30;
+        return Config.DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL;
     }
 
     @Override

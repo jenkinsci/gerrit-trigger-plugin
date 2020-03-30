@@ -114,6 +114,11 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION = true;
     /**
+     * Default value for the dynamic config refresh interval.
+     */
+    public static final int DEFAULT_DYNAMIC_CONFIG_REFRESH_INTERVAL = 30;
+
+    /**
      * Default value showing how many seconds between startup and initial project list fetch.
      */
     public static final int DEFAULT_PROJECT_LIST_FETCH_DELAY = 0;
