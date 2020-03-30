@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
@@ -763,7 +764,7 @@ public final class Setup {
     public static void setTrigger(GerritTrigger trigger, AbstractProject project) {
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
-        triggers.put(new GerritTrigger.DescriptorImpl(), trigger);
+        triggers.put(new GerritTriggerDescriptor(), trigger);
         PowerMockito.when(project.getTriggers()).thenReturn(triggers);
     }
 

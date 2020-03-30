@@ -179,7 +179,7 @@ public class GerritItemListenerTest {
     public void subscribeJobToEvent(FreeStyleProject job, PatchsetCreated event) throws Exception {
         GerritTrigger trigger = spy(new GerritTrigger(null));
 
-        doReturn(new GerritTrigger.DescriptorImpl()).when(trigger, "getDescriptor");
+        doReturn(new GerritTriggerDescriptor()).when(trigger, "getDescriptor");
         job.addTrigger(trigger);
 
         trigger.start(job, true);

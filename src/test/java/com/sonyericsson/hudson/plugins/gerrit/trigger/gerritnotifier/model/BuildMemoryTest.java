@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -72,7 +73,7 @@ public class BuildMemoryTest {
     private AbstractBuild build;
     private Jenkins jenkins;
     private HashMap<TriggerDescriptor, Trigger<?>> triggers;
-    private GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+    private GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
 
     /**
      * Setup the mocks, specifically {@link #jenkins}.
