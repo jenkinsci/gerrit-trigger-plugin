@@ -734,6 +734,127 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
+     * Tests trigger-level cancellation with buildCurrentOnly.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+
+        FreeStyleProject ignoreProject = new TestUtils.JobBuilder(j).name("ignore-project" + rand.nextInt()).build();
+        ignoreProject.getBuildersList().add(new SleepBuilder(3000));
+
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCurrentPatchesOnly(true);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+        TestUtils.waitForNonManualBuildToStart(ignoreProject, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+        TestUtils.waitForBuilds(ignoreProject, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+
+        assertEquals(Result.SUCCESS, ignoreProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, ignoreProject.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Tests multiple jobs being aborted by same cancellation.
+     * @throws java.lang.Exception if it happens
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedMultipleAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(6000));
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCurrentPatchesOnly(true);
+
+        FreeStyleProject cancelProject2 = new TestUtils.JobBuilder(j).name("cancel-2-project" + rand.nextInt()).build();
+        cancelProject2.getBuildersList().add(new SleepBuilder(6000));
+
+        GerritTrigger trigger2 = cancelProject2.getTrigger(GerritTrigger.class);
+        trigger2.setBuildCurrentPatchesOnly(true);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+        TestUtils.waitForNonManualBuildToStart(cancelProject2, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+        TestUtils.waitForBuilds(cancelProject2, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+
+        assertEquals(Result.ABORTED, cancelProject2.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject2.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Tests removing trigger with trigger and server are configured to cancel jobs.
+     *
+     * @throws java.lang.Exception if it happens
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedAndServerAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCurrentPatchesOnly(true);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+
+        //both should succeed since branches not the same
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+    }
+
+    /**
      * Tests that a comment added triggers a build correctly.
      *
      * @throws Exception if so.
