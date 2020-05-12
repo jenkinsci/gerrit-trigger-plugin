@@ -91,6 +91,8 @@ public class SpecGerritTriggerHudsonTest {
     private SshServer sshd;
     private SshdServerMock serverMock;
     private GerritServer gerritServer;
+    private static final int DELAY = 2000;
+    private static final int WAIT = 60000;
 
     /**
      * Runs before test method.
@@ -864,8 +866,8 @@ public class SpecGerritTriggerHudsonTest {
     public void testTriggerOnCommentAdded() throws Exception {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
-        project.getBuildersList().add(new SleepBuilder(2000));
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        project.getBuildersList().add(new SleepBuilder(DELAY));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
         TestUtils.waitForBuilds(project, 1);
@@ -884,8 +886,8 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
-        project.getBuildersList().add(new SleepBuilder(2000));
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        project.getBuildersList().add(new SleepBuilder(DELAY));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
@@ -922,17 +924,17 @@ public class SpecGerritTriggerHudsonTest {
     @LocalData
     public void testProjectRename() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
 
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        TestUtils.waitForBuilds(project, 1, 60000);
+        TestUtils.waitForBuilds(project, 1, WAIT);
 
         project.renameTo("anotherName");
         project = j.configRoundtrip(project);
 
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        TestUtils.waitForBuilds(project, 2, 60000);
+        TestUtils.waitForBuilds(project, 2, WAIT);
     }
 }
