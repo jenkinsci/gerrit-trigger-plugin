@@ -24,6 +24,8 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
@@ -44,7 +46,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SE
  * The Descriptor for the Trigger.
  */
 @Extension
-//@Symbol("gerrit")
+@Symbol("gerrit")
 public final class GerritTriggerDescriptor extends TriggerDescriptor {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerDescriptor.class);
