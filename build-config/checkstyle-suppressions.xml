@@ -11,6 +11,4 @@
               files="InjectedTest.java"/>
     <suppress checks=".+"
               files="[/\\]generated-sources[/\\]"/>
-    <suppress checks="FileLength"
-            files="GerritTrigger.java"/>
 </suppressions>
