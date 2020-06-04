@@ -4,10 +4,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger.JOB_ABORT;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -34,19 +31,23 @@ import org.slf4j.LoggerFactory;
      * Association between patches and the jobs that we're running for them.
      */
     public class RunningJobs {
-        
-        private GerritTrigger trigger; 
-        private Item job; 
-        
+
+        private final GerritTrigger trigger;
+        private final Item job;
+
         private final Set<GerritTriggeredEvent> runningJobs =
-                Collections.synchronizedSet(new HashSet<GerritTriggeredEvent>());
+                Collections.synchronizedSet(new HashSet<>());
         private static final Logger logger = LoggerFactory.getLogger(RunningJobs.class);
-        
-        
-        public RunningJobs (GerritTrigger trigger, Item job)
-        {
-            this.trigger = trigger; 
-            job = job; 
+
+        /**
+         * Constructor: embeds the trigger and it's underlying job into the tracked list.
+         *
+         * @param trigger - gerrit trigger that has multiple running jobs
+         * @param job - underlying job of running build and triggers
+         */
+        public RunningJobs(GerritTrigger trigger, Item job) {
+            this.trigger = trigger;
+            this.job = job;
         }
         /**
          * Called when trigger has cancellation policy associated with it.
@@ -55,7 +56,7 @@ import org.slf4j.LoggerFactory;
          * @param event event that is trigger builds
          * @param jobName job name to match for specific cancellation
          * @param policy policy to decide cancelling build or not
-         */ 
+         */
         public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
         {
             if (policy == null || !policy.isEnabled() && (event instanceof ManualPatchsetCreated
