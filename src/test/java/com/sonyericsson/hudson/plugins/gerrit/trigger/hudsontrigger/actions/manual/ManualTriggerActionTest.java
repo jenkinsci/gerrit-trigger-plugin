@@ -24,6 +24,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.VERIFIED;
 import static org.mockito.Mockito.any;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -68,19 +70,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "Code-Review");
+        crw.put("type", CODE_REVIEW);
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Code-Review");
+        crw.put("type", CODE_REVIEW);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Verified");
+        crw.put("type", VERIFIED);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Code-Review");
+        crw.put("type", CODE_REVIEW);
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);
@@ -130,19 +132,19 @@ public class ManualTriggerActionTest {
 
         JSONArray approvals = new JSONArray();
         JSONObject crw = new JSONObject();
-        crw.put("type", "Verified");
+        crw.put("type", VERIFIED);
         crw.put("value", "2");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Verified");
+        crw.put("type", VERIFIED);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Code-Review");
+        crw.put("type", CODE_REVIEW);
         crw.put("value", "1");
         approvals.add(crw);
         crw = new JSONObject();
-        crw.put("type", "Verified");
+        crw.put("type", VERIFIED);
         crw.put("value", "-1");
         approvals.add(crw);
         currentPatchSet.put("approvals", approvals);

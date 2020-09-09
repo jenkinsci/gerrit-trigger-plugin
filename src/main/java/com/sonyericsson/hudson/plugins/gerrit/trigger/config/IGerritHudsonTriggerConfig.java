@@ -96,61 +96,72 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * The default verified value for build started.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildStartedVerifiedValue();
 
     /**
      * The default code review value for build started.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildStartedCodeReviewValue();
 
     /**
      * The default verified value for build successful.
      * @return the falue.
      */
+    @Deprecated
     Integer getGerritBuildSuccessfulVerifiedValue();
 
     /**
      * The default code review value for build successful.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildSuccessfulCodeReviewValue();
 
     /**
      * The default verified value for build failed.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildFailedVerifiedValue();
 
     /**
      * The default code review value for build failed.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildFailedCodeReviewValue();
 
     /**
      * The default verified value for build unstable.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildUnstableVerifiedValue();
 
     /**
      * The default code review value for build unstable.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildUnstableCodeReviewValue();
 
     /**
      * The default verified value for build not built.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildNotBuiltVerifiedValue();
 
     /**
      * The default code review value for build not built.
      * @return the value.
      */
+    @Deprecated
     Integer getGerritBuildNotBuiltCodeReviewValue();
+
 
     /**
      * Sets all config values from the provided JSONObject.
@@ -297,6 +308,14 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @param numberOfSendingWorkerThreads nr of threads.
      */
     void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads);
+
+    /**
+     * Method to retrieve a specific VerdictCategory.
+     *
+     * @param verdictCategoryName the name of the VerdictCategory to be retrieved.
+     * @return the requested VerdictCategory.
+     */
+    VerdictCategory getVerdictCategory(String verdictCategoryName);
 
     /**
      * The number of threads to handle incoming events with.

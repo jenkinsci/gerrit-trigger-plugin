@@ -46,6 +46,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.VERIFIED;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
@@ -89,7 +91,7 @@ public class GerritTriggerProjectHudsonTest {
         assertNotNull(tr);
         HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
         HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
-        List<String> expected = Arrays.asList("Verified", "Code-Review");
+        List<String> expected = Arrays.asList(VERIFIED, CODE_REVIEW);
         verifyOptions(select, expected);
     }
 
@@ -129,7 +131,7 @@ public class GerritTriggerProjectHudsonTest {
         HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
         HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
 
-        List<String> expected = Arrays.asList("Verified", "Code-Review", "Code-Review2", "Verified2");
+        List<String> expected = Arrays.asList(VERIFIED, CODE_REVIEW, "Code-Review2", "Verified2");
         verifyOptions(select, expected);
     }
 

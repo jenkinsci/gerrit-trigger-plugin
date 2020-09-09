@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.LabelValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -58,6 +59,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.CODE_REVIEW;
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config.VERIFIED;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
@@ -97,10 +100,14 @@ public class ParameterExpanderTest {
     @Test
     public void testGetBuildStartedCommand() throws Exception {
         TaskListener taskListener = mock(TaskListener.class);
-
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildStartedVerifiedValue()).thenReturn(null);
-        when(trigger.getGerritBuildStartedCodeReviewValue()).thenReturn(32);
+
+        LabelValue cr = new LabelValue(CODE_REVIEW, 2, 1, 0, 0, 0);
+        LabelValue v = new LabelValue(VERIFIED, 1, 2, -1, -1, -1);
+
+        when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
+        when(trigger.getCodeReviewLabel()).thenReturn(cr);
+        when(trigger.getVerifiedLabel()).thenReturn(v);
         when(trigger.getBuildStartMessage()).thenReturn("${START_MESSAGE_VAR}");
         AbstractProject project = mock(AbstractProject.class);
 
@@ -130,7 +137,7 @@ public class ParameterExpanderTest {
         assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
         assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
         assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
+        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=2") >= 0);
         assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
         assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
         assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
@@ -548,8 +555,13 @@ public class ParameterExpanderTest {
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
+
+        LabelValue cr = new LabelValue(CODE_REVIEW, 32, expectedCodeReviewVote, 0, 0, 0);
+        LabelValue v = new LabelValue(VERIFIED, 1, expectedVerifiedVote, -1, -1, -1);
+
+        when(trigger.getLabelValues()).thenReturn(Arrays.asList(cr, v));
+        when(trigger.getCodeReviewLabel()).thenReturn(cr);
+        when(trigger.getVerifiedLabel()).thenReturn(v);
         when(trigger.getCustomUrl()).thenReturn(customUrl);
         AbstractProject project = mock(AbstractProject.class);
         Setup.setTrigger(trigger, project);
