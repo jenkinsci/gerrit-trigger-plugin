@@ -24,17 +24,46 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * Rules regarding cancellation of builds for when patchsets of the same change comes in.
+ *
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
-public class BuildCancellationPolicy {
+public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancellationPolicy> {
     private boolean enabled = false;
     private boolean abortNewPatchsets = false;
     private boolean abortManualPatchsets = false;
     private boolean abortSameTopic = false;
+
+    /**
+     * Default databound constructor.
+     *
+     * @param abortNewPatchsets abort new patch sets
+     * @param abortManualPatchsets abort manual patch sets
+     * @param abortSameTopic abort same topic
+     */
+    @DataBoundConstructor
+    public BuildCancellationPolicy(final boolean abortNewPatchsets,
+                                   final boolean abortManualPatchsets,
+                                   final boolean abortSameTopic) {
+        this.enabled = true;
+        this.abortNewPatchsets = abortNewPatchsets;
+        this.abortManualPatchsets = abortManualPatchsets;
+        this.abortSameTopic = abortSameTopic;
+    }
+
+    /**
+     * Default constructor.
+     */
+    public BuildCancellationPolicy() {
+    }
 
     /**
      * Getter for if build cancellation is turned off or on.
@@ -124,5 +153,21 @@ public class BuildCancellationPolicy {
         policy.setAbortManualPatchsets(manualPatchsets);
         policy.setAbortSameTopic(abortSameTopic);
         return policy;
+    }
+
+    /**
+     * The descriptor.
+     */
+    @Extension
+    public static class DescriptorImpl extends Descriptor<BuildCancellationPolicy> {
+        @Override
+        public BuildCancellationPolicy newInstance(final StaplerRequest req, final JSONObject formData)
+                throws FormException {
+            if (formData.has("buildCancellationPolicy")) {
+                return super.newInstance(req, formData.getJSONObject("buildCancellationPolicy"));
+            } else {
+                return null;
+            }
+        }
     }
 }
