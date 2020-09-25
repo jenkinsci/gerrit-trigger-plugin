@@ -249,7 +249,12 @@ public final class EventListener implements GerritEventListener {
 
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
+            if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled())
+            {
+                t.getRunningJobs().cancelTriggeredJob(changeBasedEvent,
+                        t.getJob().getFullName(), t.getBuildCancellationPolicy());
+            }
+            if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
                 t.getRunningJobs().scheduled(changeBasedEvent);
             }
             if (null != changeBasedEvent.getPatchSet()) {

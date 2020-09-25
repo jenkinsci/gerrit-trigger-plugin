@@ -37,7 +37,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
@@ -76,17 +75,12 @@ import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.AutoCompletionCandidates;
-import hudson.model.Cause;
-import hudson.model.Computer;
-import hudson.model.Executor;
 import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
-import hudson.model.Queue;
 import hudson.model.Run;
-import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
@@ -101,7 +95,6 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -146,7 +139,7 @@ public class GerritTrigger extends Trigger<Job> {
     public static final String JOB_ABORT = GerritTrigger.class.getName() + "_job_abort";
 
     //! Association between patches and the jobs that we're running for them
-    private transient RunningJobs runningJobs = new RunningJobs();
+    private transient RunningJobs runningJobs = new RunningJobs(this, this.job);
     //! This latch will be used to signal that the project list is ready for use.
     //! For static configuration, this will be ready immediately.
     //! For dynamic configuration, this will be ready after the first time that
@@ -172,6 +165,10 @@ public class GerritTrigger extends Trigger<Job> {
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
+    private boolean buildCancellationPolicy;
+    private boolean abortNewPatchsets;
+    private boolean abortManualPatchsets;
+    private boolean abortSameTopic;
     private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
     private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
@@ -780,7 +777,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     /*package*/ synchronized RunningJobs getRunningJobs() {
         if (runningJobs == null) {
-            runningJobs = new RunningJobs();
+            runningJobs = new RunningJobs(this, this.job);
         }
         return runningJobs;
     }
@@ -794,7 +791,8 @@ public class GerritTrigger extends Trigger<Job> {
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         if (event instanceof ChangeBasedEvent) {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-            if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
+            if ((serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly())
+                    || (this.getBuildCancellationPolicy() != null && this.getBuildCancellationPolicy().isEnabled())) {
                 getRunningJobs().remove((ChangeBasedEvent)event);
             }
         }
@@ -1601,6 +1599,79 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * @return the buildCurrentPatchesOnly
+     */
+    public BuildCancellationPolicy getBuildCancellationPolicy() {
+        BuildCancellationPolicy policy = new BuildCancellationPolicy();
+        policy.setEnabled(buildCancellationPolicy);
+        policy.setAbortManualPatchsets(abortManualPatchsets);
+        policy.setAbortNewPatchsets(abortNewPatchsets);
+        policy.setAbortSameTopic(abortSameTopic);
+        return policy;
+    }
+
+
+    /**
+     * @return the buildCurrentPatchesOnly
+     */
+    public boolean isBuildCurrentPatchesOnly() {
+        return buildCancellationPolicy;
+    }
+
+    /**
+     * @param buildCurrentPatchesOnly the buildCurrentPatchesOnly to set
+     */
+    @DataBoundSetter
+    public void setBuildCurrentPatchesOnly(boolean buildCurrentPatchesOnly) {
+        this.buildCancellationPolicy = buildCurrentPatchesOnly;
+    }
+
+    /**
+     * @return the abortNewPatchsets
+     */
+    public boolean isAbortNewPatchsets() {
+        return abortNewPatchsets;
+    }
+
+    /**
+     * @param abortNewPatchsets the abortNewPatchsets to set
+     */
+    @DataBoundSetter
+    public void setAbortNewPatchsets(boolean abortNewPatchsets) {
+        this.abortNewPatchsets = abortNewPatchsets;
+    }
+
+    /**
+     * @return the abortManualPatchsets
+     */
+    public boolean isAbortManualPatchsets() {
+        return abortManualPatchsets;
+    }
+
+    /**
+     * @param abortManualPatchsets the abortManualPatchsets to set
+     */
+    @DataBoundSetter
+    public void setAbortManualPatchsets(boolean abortManualPatchsets) {
+        this.abortManualPatchsets = abortManualPatchsets;
+    }
+
+    /**
+     * @return the abortSameTopic
+     */
+    public boolean isAbortSameTopic() {
+        return abortSameTopic;
+    }
+
+    /**
+     * @param abortSameTopic the abortSameTopic to set
+     */
+    public void setAbortSameTopic(boolean abortSameTopic) {
+        this.abortSameTopic = abortSameTopic;
+    }
+
+
+    /**
      * The message to show users when a build succeeds, if custom messages are enabled.
      *
      * @return The build successful message
@@ -2253,183 +2324,6 @@ public class GerritTrigger extends Trigger<Job> {
         }
     }
 
-    /**
-     * Class for maintaining and synchronizing the runningJobs info.
-     * Association between patches and the jobs that we're running for them.
-     */
-    public class RunningJobs {
-        private final Set<GerritTriggeredEvent> runningJobs =
-                Collections.synchronizedSet(new HashSet<GerritTriggeredEvent>());
-
-        /**
-         * Does the needful after a build has been scheduled.
-         * I.e. cancelling the old build if configured to do so and removing and storing any references.
-         *
-         * @param event the event triggering a new build.
-         */
-        public void scheduled(ChangeBasedEvent event) {
-            IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-            if (serverConfig == null) {
-                runningJobs.add(event);
-                return;
-            }
-            BuildCancellationPolicy buildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
-            if (!buildCurrentPatchesOnly.isEnabled()
-                    || (event instanceof ManualPatchsetCreated && !buildCurrentPatchesOnly.isAbortManualPatchsets())) {
-                runningJobs.add(event);
-                return;
-            }
-
-            List<ChangeBasedEvent> outdatedEvents = new ArrayList<ChangeBasedEvent>();
-            synchronized (runningJobs) {
-                Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
-                while (it.hasNext()) {
-                    GerritTriggeredEvent runningEvent = it.next();
-                    // Find all entries in runningJobs with the same Change #.
-                    // Optionally, ignore all manual patchsets and don't cancel builds due to
-                    // a retrigger of an older build.
-                    if (runningEvent instanceof ChangeBasedEvent) {
-                        ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
-
-                        boolean abortBecauseOfTopic = abortBecauseOfTopic(event,
-                                buildCurrentPatchesOnly,
-                                runningChangeBasedEvent);
-
-                        if (!abortBecauseOfTopic && !runningChangeBasedEvent.getChange().equals(event.getChange())) {
-                            continue;
-                        }
-
-                        boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
-                                && buildCurrentPatchesOnly.isAbortManualPatchsets()
-                                || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
-
-                        if (!abortBecauseOfTopic && !shouldCancelManual) {
-                            continue;
-                        }
-
-                        boolean shouldCancelPatchsetNumber = buildCurrentPatchesOnly.isAbortNewPatchsets()
-                                || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
-                                < Integer.parseInt(event.getPatchSet().getNumber());
-
-                        if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber) {
-                            continue;
-                        }
-
-                        outdatedEvents.add(runningChangeBasedEvent);
-                        it.remove();
-                    }
-                }
-                // add our new job
-                runningJobs.add(event);
-            }
-
-            // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
-            for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
-                logger.debug("Cancelling build for " + outdatedEvent);
-                try {
-                    cancelJob(outdatedEvent);
-                } catch (Exception e) {
-                    // Ignore any problems with canceling the job.
-                    logger.error("Error canceling job", e);
-                }
-            }
-        }
-
-        /**
-         * Tries to cancel any job, which was triggered by the given change event.
-         * <p>
-         * Since the event is always noted in the build cause, it is easy to
-         * identify which specific builds shall be cancelled, without having
-         * to dig down into the parameters, which might've been mutated by the
-         * build while it was running. (This was the previous implementation)
-         * <p>
-         * We look in both the build queue and currently executing jobs.
-         * This extra work is required due to race conditions when calling
-         * Future.cancel() - see
-         * https://issues.jenkins-ci.org/browse/JENKINS-13829
-         *
-         * @param event
-         *            The event that originally triggered the build.
-         */
-        private void cancelJob(GerritTriggeredEvent event) {
-            logger.debug("Cancelling build for " + event);
-            try {
-                if (!(job instanceof Queue.Task)) {
-                    logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
-                    return;
-                }
-
-                // Remove any jobs in the build queue.
-                List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
-                for (hudson.model.Queue.Item item : itemsInQueue) {
-                    if (checkCausedByGerrit(event, item.getCauses())) {
-                        Queue.getInstance().cancel(item);
-                    }
-                }
-
-                String workaround = System.getProperty(JOB_ABORT);
-                if ((workaround != null) && workaround.equals("false")) {
-                    return;
-                }
-
-                // Interrupt any currently running jobs.
-                Jenkins jenkins = Jenkins.getInstance();
-                assert jenkins != null;
-                for (Computer c : jenkins.getComputers()) {
-                    List<Executor> executors = new ArrayList<Executor>();
-                    executors.addAll(c.getOneOffExecutors());
-                    executors.addAll(c.getExecutors());
-                    for (Executor e : executors) {
-                        Queue.Executable currentExecutable = e.getCurrentExecutable();
-                        if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
-                            Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                            if (checkCausedByGerrit(event, run.getCauses())) {
-                                e.interrupt(
-                                        Result.ABORTED,
-                                        new NewPatchSetInterruption()
-                                );
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                // Ignore any problems with canceling the job.
-                logger.error("Error canceling job", e);
-            }
-        }
-
-        /**
-         * Checks if any of the given causes references the given event.
-         *
-         * @param event The event to check for. Checks for <i>identity</i>, not
-         * <i>equality</i>!
-         * @param causes the list of causes. Only {@link GerritCause}s are considered.
-         * @return true if the list of causes contains a {@link GerritCause}.
-         */
-        private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
-            for (Cause c : causes) {
-                if (!(c instanceof GerritCause)) {
-                    continue;
-                }
-                GerritCause gc = (GerritCause)c;
-                if (gc.getEvent() == event) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * Removes any reference to the current build for this change.
-         *
-         * @param event the event which started the build we want to remove.
-         * @return true if event was still running.
-         */
-        public boolean remove(ChangeBasedEvent event) {
-            logger.debug("Removing future job " + event.getPatchSet().getNumber());
-            return runningJobs.remove(event);
-        }
-    }
 
     /**
      * Checks that execution must be aborted because of topic.
@@ -2438,7 +2332,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param runningChange the ongoing change.
      * @return true if so.
      */
-    private boolean abortBecauseOfTopic(ChangeBasedEvent event,
+    protected boolean abortBecauseOfTopic(ChangeBasedEvent event,
                                         BuildCancellationPolicy policy,
                                         ChangeBasedEvent runningChange) {
         String topicName = event.getChange().getTopic();
