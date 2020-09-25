@@ -23,33 +23,10 @@
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
-           <f:optionalBlock name="buildCurrentPatchesOnly"
-                            title="${%Build Current Patches Only}"
-                            inline="true"
+           <f:optionalBlock title="${%Build Current Patches Only}" name="buildCancellationPolicy"
                             help="/plugin/gerrit-trigger/trigger/help-BuildCurrentPatchesOnly.html"
-                            field="buildCurrentPatchesOnly"
-                            checked="${it.buildCurrentPatchesOnly}">
-               <f:entry title="${%Abort new patch sets}"
-                        help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
-                   <f:checkbox name="abortNewPatchsets"
-                               field="abortNewPatchsets"
-                               checked="${it.abortNewPatchsets}"
-                               default="false"/>
-               </f:entry>
-               <f:entry title="${%Abort manual patch sets}"
-                        help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
-                   <f:checkbox name="abortManualPatchsets"
-                               field="abortManualPatchsets"
-                               checked="${it.abortManualPatchsets}"
-                               />
-               </f:entry>
-               <f:entry title="${%Abort patch sets with same topic}"
-                        help="/plugin/gerrit-trigger/help-GerritAbortPatchSetsWithSameTopic.html">
-                   <f:checkbox name="abortSameTopic"
-                               field="abortSameTopic"
-                               checked="${it.abortSameTopic}"
-                               default="false"/>
-               </f:entry>
+                            checked="${instance.buildCurrentPatchesOnly}">
+               <f:property field="buildCancellationPolicy"/>
            </f:optionalBlock>
 
             <f:entry title="${%Commit message parameter}" field="commitMessageParameterMode">

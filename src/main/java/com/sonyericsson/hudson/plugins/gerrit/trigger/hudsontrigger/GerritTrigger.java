@@ -165,10 +165,7 @@ public class GerritTrigger extends Trigger<Job> {
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
-    private boolean buildCancellationPolicy;
-    private boolean abortNewPatchsets;
-    private boolean abortManualPatchsets;
-    private boolean abortSameTopic;
+    private BuildCancellationPolicy buildCancellationPolicy;
     private GerritTriggerParameters.ParameterMode nameAndEmailParameterMode;
     private String dependencyJobsNames;
     private GerritTriggerParameters.ParameterMode commitMessageParameterMode;
@@ -1602,74 +1599,26 @@ public class GerritTrigger extends Trigger<Job> {
      * @return the buildCurrentPatchesOnly
      */
     public BuildCancellationPolicy getBuildCancellationPolicy() {
-        BuildCancellationPolicy policy = new BuildCancellationPolicy();
-        policy.setEnabled(buildCancellationPolicy);
-        policy.setAbortManualPatchsets(abortManualPatchsets);
-        policy.setAbortNewPatchsets(abortNewPatchsets);
-        policy.setAbortSameTopic(abortSameTopic);
-        return policy;
-    }
-
-
-    /**
-     * @return the buildCurrentPatchesOnly
-     */
-    public boolean isBuildCurrentPatchesOnly() {
         return buildCancellationPolicy;
     }
 
     /**
-     * @param buildCurrentPatchesOnly the buildCurrentPatchesOnly to set
+     * The build cancellation policy regarding building current patch sets only.
+     * @return the policy
+     */
+    public boolean isBuildCurrentPatchesOnly() {
+        return buildCancellationPolicy != null && buildCancellationPolicy.isEnabled();
+    }
+
+    /**
+     * The build cancellation policy regarding building current patch sets only.
+     *
+     * @param buildCancellationPolicy the policy
      */
     @DataBoundSetter
-    public void setBuildCurrentPatchesOnly(boolean buildCurrentPatchesOnly) {
-        this.buildCancellationPolicy = buildCurrentPatchesOnly;
+    public void setBuildCancellationPolicy(final BuildCancellationPolicy buildCancellationPolicy) {
+        this.buildCancellationPolicy = buildCancellationPolicy;
     }
-
-    /**
-     * @return the abortNewPatchsets
-     */
-    public boolean isAbortNewPatchsets() {
-        return abortNewPatchsets;
-    }
-
-    /**
-     * @param abortNewPatchsets the abortNewPatchsets to set
-     */
-    @DataBoundSetter
-    public void setAbortNewPatchsets(boolean abortNewPatchsets) {
-        this.abortNewPatchsets = abortNewPatchsets;
-    }
-
-    /**
-     * @return the abortManualPatchsets
-     */
-    public boolean isAbortManualPatchsets() {
-        return abortManualPatchsets;
-    }
-
-    /**
-     * @param abortManualPatchsets the abortManualPatchsets to set
-     */
-    @DataBoundSetter
-    public void setAbortManualPatchsets(boolean abortManualPatchsets) {
-        this.abortManualPatchsets = abortManualPatchsets;
-    }
-
-    /**
-     * @return the abortSameTopic
-     */
-    public boolean isAbortSameTopic() {
-        return abortSameTopic;
-    }
-
-    /**
-     * @param abortSameTopic the abortSameTopic to set
-     */
-    public void setAbortSameTopic(boolean abortSameTopic) {
-        this.abortSameTopic = abortSameTopic;
-    }
-
 
     /**
      * The message to show users when a build succeeds, if custom messages are enabled.
