@@ -239,7 +239,7 @@ public class ParameterExpanderTest {
 
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-1);
-        SkipVote skipVote = new SkipVote(false, false, true, false);
+        SkipVote skipVote = new SkipVote(false, false, true, false, false);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.UNSTABLE);
 
@@ -270,7 +270,7 @@ public class ParameterExpanderTest {
 
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
-        SkipVote skipVote = new SkipVote(true, false, false, false);
+        SkipVote skipVote = new SkipVote(true, false, false, false, false);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 

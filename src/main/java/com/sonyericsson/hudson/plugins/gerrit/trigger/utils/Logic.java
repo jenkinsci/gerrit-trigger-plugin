@@ -59,6 +59,8 @@ public abstract class Logic {
             return skipVote.isOnUnstable();
         } else if (result == Result.NOT_BUILT) {
             return skipVote.isOnNotBuilt();
+        } else if (result == Result.ABORTED) {
+            return skipVote.isOnAborted();
         } else {
             return false;
         }

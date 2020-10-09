@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -72,7 +73,7 @@ public class BuildMemoryTest {
     private AbstractBuild build;
     private Jenkins jenkins;
     private HashMap<TriggerDescriptor, Trigger<?>> triggers;
-    private GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+    private GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
 
     /**
      * Setup the mocks, specifically {@link #jenkins}.
@@ -607,7 +608,7 @@ public class BuildMemoryTest {
         BuildMemory instance = new BuildMemory();
 
         AbstractBuild build1 = build;
-        SkipVote skipVote = new SkipVote(false, false, false, false);
+        SkipVote skipVote = new SkipVote(false, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -618,7 +619,7 @@ public class BuildMemoryTest {
         setup();
         AbstractBuild build2 = build;
         when(build.getResult()).thenReturn(Result.SUCCESS);
-        skipVote = new SkipVote(false, false, false, false);
+        skipVote = new SkipVote(false, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -628,7 +629,7 @@ public class BuildMemoryTest {
         setup();
         AbstractBuild build3 = build;
         when(build.getResult()).thenReturn(Result.UNSTABLE);
-        skipVote = new SkipVote(false, false, true, false);
+        skipVote = new SkipVote(false, false, true, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -654,7 +655,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(false, false, false, false);
+        SkipVote skipVote = new SkipVote(false, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -664,7 +665,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(false, false, false, false);
+        skipVote = new SkipVote(false, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -674,7 +675,7 @@ public class BuildMemoryTest {
         instance.started(event, build2);
 
         setup();
-        skipVote = new SkipVote(false, true, true, false);
+        skipVote = new SkipVote(false, true, true, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -702,7 +703,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(false, false, false, false);
+        SkipVote skipVote = new SkipVote(false, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -712,7 +713,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(false, false, true, false);
+        skipVote = new SkipVote(false, false, true, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -722,7 +723,7 @@ public class BuildMemoryTest {
         instance.started(event, build2);
 
         setup();
-        skipVote = new SkipVote(false, true, true, false);
+        skipVote = new SkipVote(false, true, true, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -752,7 +753,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(false, false, false, false);
+        SkipVote skipVote = new SkipVote(false, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -762,7 +763,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(false, false, false, false);
+        skipVote = new SkipVote(false, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -772,7 +773,7 @@ public class BuildMemoryTest {
         instance.started(event, build2);
 
         setup();
-        skipVote = new SkipVote(true, false, false, false);
+        skipVote = new SkipVote(true, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -804,7 +805,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(true, false, false, false);
+        SkipVote skipVote = new SkipVote(true, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -814,7 +815,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(false, false, false, false);
+        skipVote = new SkipVote(false, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -824,7 +825,7 @@ public class BuildMemoryTest {
         instance.started(event, build2);
 
         setup();
-        skipVote = new SkipVote(false, false, false, false);
+        skipVote = new SkipVote(false, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -853,7 +854,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(true, false, false, false);
+        SkipVote skipVote = new SkipVote(true, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -879,7 +880,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(false, false, true, false);
+        SkipVote skipVote = new SkipVote(false, false, true, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -906,7 +907,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(true, false, true, false);
+        SkipVote skipVote = new SkipVote(true, false, true, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -916,7 +917,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(false, false, true, false);
+        skipVote = new SkipVote(false, false, true, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -944,7 +945,7 @@ public class BuildMemoryTest {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
-        SkipVote skipVote = new SkipVote(true, false, false, false);
+        SkipVote skipVote = new SkipVote(true, false, false, false, false);
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);
@@ -954,7 +955,7 @@ public class BuildMemoryTest {
         instance.started(event, build);
 
         setup();
-        skipVote = new SkipVote(true, false, false, false);
+        skipVote = new SkipVote(true, false, false, false, false);
         trigger = mock(GerritTrigger.class);
         when(trigger.getSkipVote()).thenReturn(skipVote);
         when(project.getTrigger(eq(GerritTrigger.class))).thenReturn(trigger);

@@ -154,6 +154,12 @@ public class ParameterExpanderSkipVoteParameterTest {
         parameters.add(createParameter(-1, -2,
                 Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false)
                 ));
+        parameters.add(createParameter(-5, -6,
+                Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, false)
+        ));
+        parameters.add(createParameter(null, null,
+                Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, true)
+        ));
         parameters.add(createParameter(null, null,
                 Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true)
                 ));

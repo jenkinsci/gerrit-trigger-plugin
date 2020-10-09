@@ -37,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
 import hudson.EnvVars;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
@@ -112,7 +113,7 @@ public class DependencyQueueTaskDispatcherTest {
         dispatcher = new DependencyQueueTaskDispatcher(gerritHandlerMock);
         gerritTriggerMock = mock(GerritTrigger.class);
         triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
-        triggers.put(new GerritTrigger.DescriptorImpl(), gerritTriggerMock);
+        triggers.put(new GerritTriggerDescriptor(), gerritTriggerMock);
         queueMock = mock(Queue.class);
         jenkinsMock = mock(Jenkins.class);
         when(jenkinsMock.getQueue()).thenReturn(queueMock);
@@ -264,7 +265,7 @@ public class DependencyQueueTaskDispatcherTest {
         GerritTrigger upstreamGerritTriggerMock = mock(GerritTrigger.class);
         when(abstractProjectDependencyMock.getTriggers()).thenReturn(
                 Collections.<TriggerDescriptor, Trigger<?>>singletonMap(
-                        new GerritTrigger.DescriptorImpl(), upstreamGerritTriggerMock));
+                        new GerritTriggerDescriptor(), upstreamGerritTriggerMock));
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(upstreamGerritTriggerMock);
         when(upstreamGerritTriggerMock.isInteresting(patchsetCreated)).thenReturn(true);
     }

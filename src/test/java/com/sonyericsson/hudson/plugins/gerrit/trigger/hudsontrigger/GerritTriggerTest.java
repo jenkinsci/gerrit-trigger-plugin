@@ -1680,13 +1680,13 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * Tests {@link GerritTriggerDescriptor#doCheckDependencyJobsNames(Item project, String value)}.
      * This should check that a project with no dependencies validates; and a project with itself as a dep does not.
      */
     @Test
     public void testDependencyValidationOnlyOneProjectInvolved() {
         dependencySetUp();
-        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
         // No dependencies
         assertSame(FormValidation.Kind.OK, descriptor.doCheckDependencyJobsNames(downstreamProject, "").kind);
@@ -1696,13 +1696,13 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * Tests {@link GerritTriggerDescriptor#doCheckDependencyJobsNames(Item project, String value)}.
      * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
      */
     @Test
     public void testDependencyValidationTwoProjectsInvolved() {
         dependencySetUp();
-        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
 
         // Basic dependency value
@@ -1718,13 +1718,13 @@ public class GerritTriggerTest {
     }
 
     /**
-     * Tests {@link GerritTrigger.DescriptorImpl#doCheckDependencyJobsNames(Item project, String value)}.
+     * Tests {@link GerritTriggerDescriptor#doCheckDependencyJobsNames(Item project, String value)}.
      * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
      */
     @Test
     public void testDependencyValidationThreeProjectsInvolved() {
         dependencySetUp();
-        GerritTrigger.DescriptorImpl descriptor = new GerritTrigger.DescriptorImpl();
+        GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
 
         //Setup dependencies: downstream on upstream, upstream on very-upstream

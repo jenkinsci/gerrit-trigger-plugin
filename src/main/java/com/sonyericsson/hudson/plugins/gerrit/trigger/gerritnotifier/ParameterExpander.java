@@ -295,7 +295,7 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildSuccessfulCodeReviewValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        } else if (res == Result.FAILURE) {
             if (trigger.getGerritBuildFailedCodeReviewValue() != null) {
                 return trigger.getGerritBuildFailedCodeReviewValue();
             } else {
@@ -312,6 +312,12 @@ public class ParameterExpander {
                 return trigger.getGerritBuildNotBuiltCodeReviewValue();
             } else {
                 return config.getGerritBuildNotBuiltCodeReviewValue();
+            }
+        } else if (res == Result.ABORTED) {
+            if (trigger.getGerritBuildAbortedCodeReviewValue() != null) {
+                return trigger.getGerritBuildAbortedCodeReviewValue();
+            } else {
+                return config.getGerritBuildAbortedCodeReviewValue();
             }
         } else {
             //As bad as failue, for now
@@ -336,7 +342,7 @@ public class ParameterExpander {
             } else {
                 return config.getGerritBuildSuccessfulVerifiedValue();
             }
-        } else if (res == Result.FAILURE || res == Result.ABORTED) {
+        } else if (res == Result.FAILURE) {
             if (trigger.getGerritBuildFailedVerifiedValue() != null) {
                 return trigger.getGerritBuildFailedVerifiedValue();
             } else {
@@ -353,6 +359,12 @@ public class ParameterExpander {
                 return trigger.getGerritBuildNotBuiltVerifiedValue();
             } else {
                 return config.getGerritBuildNotBuiltVerifiedValue();
+            }
+        } else if (res == Result.ABORTED) {
+            if (trigger.getGerritBuildAbortedVerifiedValue() != null) {
+                return trigger.getGerritBuildAbortedVerifiedValue();
+            } else {
+                return config.getGerritBuildAbortedVerifiedValue();
             }
         } else {
             //As bad as failure, for now
@@ -516,6 +528,8 @@ public class ParameterExpander {
         } else if (memoryImprint.wereAllBuildsNotBuilt()) {
             onlyCountBuilt = false;
             command = config.getGerritCmdBuildNotBuilt();
+        } else if (memoryImprint.wereAnyBuildsAborted()) {
+            command = config.getGerritCmdBuildAborted();
         } else {
             //Just as bad as failed for now.
             command = config.getGerritCmdBuildFailed();
@@ -604,12 +618,14 @@ public class ParameterExpander {
                     String customMessage = null;
                     if (res == Result.SUCCESS) {
                         customMessage = trigger.getBuildSuccessfulMessage();
-                    } else if (res == Result.FAILURE || res == Result.ABORTED) {
+                    } else if (res == Result.FAILURE) {
                         customMessage = trigger.getBuildFailureMessage();
                     } else if (res == Result.UNSTABLE) {
                         customMessage = trigger.getBuildUnstableMessage();
                     } else if (res == Result.NOT_BUILT) {
                         customMessage = trigger.getBuildNotBuiltMessage();
+                    } else if (res == Result.ABORTED) {
+                        customMessage = trigger.getBuildAbortedMessage();
                     } else {
                         customMessage = trigger.getBuildFailureMessage();
                     }
