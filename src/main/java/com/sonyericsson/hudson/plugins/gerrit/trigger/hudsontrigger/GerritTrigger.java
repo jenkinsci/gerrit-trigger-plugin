@@ -770,11 +770,14 @@ public class GerritTrigger extends Trigger<Job> {
     /**
      * Gives you {@link #runningJobs}. It makes sure that the reference is not null.
      *
+     * @param job - job that calling event trigger is attached to
      * @return the store of running jobs.
      */
-    /*package*/ synchronized RunningJobs getRunningJobs() {
+    /*package*/ synchronized RunningJobs getRunningJobs(Job job) {
         if (runningJobs == null) {
             runningJobs = new RunningJobs(this, this.job);
+        } else {
+            runningJobs.setJob(job);
         }
         return runningJobs;
     }
@@ -790,7 +793,7 @@ public class GerritTrigger extends Trigger<Job> {
             IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
             if ((serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly())
                     || (this.getBuildCancellationPolicy() != null && this.getBuildCancellationPolicy().isEnabled())) {
-                getRunningJobs().remove((ChangeBasedEvent)event);
+                getRunningJobs(this.job).remove((ChangeBasedEvent)event);
             }
         }
     }

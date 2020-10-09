@@ -751,7 +751,7 @@ public class SpecGerritTriggerHudsonTest {
         ignoreProject.getBuildersList().add(new SleepBuilder(3000));
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCurrentPatchesOnly(true);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
@@ -767,11 +767,10 @@ public class SpecGerritTriggerHudsonTest {
 
         TestUtils.waitForBuilds(cancelProject, 2);
         TestUtils.waitForBuilds(ignoreProject, 2);
-
-        //both should succeed since branches not the same
         assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
 
+        //ensure that other jobs without the trigger are not impacted
         assertEquals(Result.SUCCESS, ignoreProject.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, ignoreProject.getBuildByNumber(2).getResult());
     }
@@ -788,13 +787,13 @@ public class SpecGerritTriggerHudsonTest {
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new SleepBuilder(6000));
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCurrentPatchesOnly(true);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
 
         FreeStyleProject cancelProject2 = new TestUtils.JobBuilder(j).name("cancel-2-project" + rand.nextInt()).build();
         cancelProject2.getBuildersList().add(new SleepBuilder(6000));
 
         GerritTrigger trigger2 = cancelProject2.getTrigger(GerritTrigger.class);
-        trigger2.setBuildCurrentPatchesOnly(true);
+        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -809,10 +808,9 @@ public class SpecGerritTriggerHudsonTest {
         secondEvent.getChange().setTopic("abc");
         gerritServer.triggerEvent(secondEvent);
 
-        TestUtils.waitForBuilds(cancelProject, 2);
-        TestUtils.waitForBuilds(cancelProject2, 2);
+        TestUtils.waitForBuilds(cancelProject, 2, 10000);
+        TestUtils.waitForBuilds(cancelProject2, 2, 10000);
 
-        //both should succeed since branches not the same
         assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
 
@@ -835,7 +833,7 @@ public class SpecGerritTriggerHudsonTest {
         policy.setEnabled(true);
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCurrentPatchesOnly(true);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -851,7 +849,6 @@ public class SpecGerritTriggerHudsonTest {
 
         TestUtils.waitForBuilds(cancelProject, 2);
 
-        //both should succeed since branches not the same
         assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
     }

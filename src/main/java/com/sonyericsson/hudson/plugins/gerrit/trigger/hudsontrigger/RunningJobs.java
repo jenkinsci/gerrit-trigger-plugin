@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public class RunningJobs {
 
    private final GerritTrigger trigger;
-   private final Item job;
+   private Item job;
 
    private final Set<GerritTriggeredEvent> runningJobs =
            Collections.synchronizedSet(new HashSet<>());
@@ -49,6 +49,21 @@ public class RunningJobs {
        this.trigger = trigger;
        this.job = job;
    }
+
+   /**
+     * @return the job
+     */
+    public Item getJob() {
+        return job;
+    }
+
+    /**
+     * @param job the job to set
+     */
+    public void setJob(Item job) {
+        this.job = job;
+    }
+
    /**
     * Called when trigger has cancellation policy associated with it.
     *
@@ -69,6 +84,7 @@ public class RunningJobs {
    /**
     * Checks scheduled job and cancels current jobs if needed.
     * I.e. cancelling the old build if configured to do so and removing and storing any references.
+    * Only used by Server wide policy
     *
     * @param event the event triggering a new build.
     */
@@ -191,12 +207,12 @@ public class RunningJobs {
    private void cancelMatchingJobs(GerritTriggeredEvent event, String matchOnJobName) {
        try {
            if (!(this.job instanceof Queue.Task)) {
-               logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
+               logger.error("Error canceling job. The job is not of type Task. Job name: " + getJob().getName());
                return;
            }
 
            // Remove any jobs in the build queue.
-           List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
+           List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (hudson.model.Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
                    if (matchOnJobName == null || matchOnJobName.equals(item.task.getName())) {

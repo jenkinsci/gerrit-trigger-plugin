@@ -251,11 +251,11 @@ public final class EventListener implements GerritEventListener {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
             if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled())
             {
-                t.getRunningJobs().cancelTriggeredJob(changeBasedEvent,
+                t.getRunningJobs(project).cancelTriggeredJob(changeBasedEvent,
                         t.getJob().getFullName(), t.getBuildCancellationPolicy());
             }
             if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
-                t.getRunningJobs().scheduled(changeBasedEvent);
+                t.getRunningJobs(project).scheduled(changeBasedEvent);
             }
             if (null != changeBasedEvent.getPatchSet()) {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
