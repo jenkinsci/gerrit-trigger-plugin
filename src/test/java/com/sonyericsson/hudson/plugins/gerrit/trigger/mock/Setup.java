@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.mock;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
@@ -133,6 +134,7 @@ public final class Setup {
         config.setGerritBuildNotBuiltCodeReviewValue(null);
         config.setGerritBuildStartedCodeReviewValue(null);
         config.setGerritBuildUnstableCodeReviewValue(null);
+        config.setGerritBuildAbortedCodeReviewValue(null);
         return config;
     }
 
@@ -633,6 +635,8 @@ public final class Setup {
         trigger.setGerritBuildUnstableCodeReviewValue(0);
         trigger.setGerritBuildNotBuiltVerifiedValue(0);
         trigger.setGerritBuildNotBuiltCodeReviewValue(0);
+        trigger.setGerritBuildAbortedVerifiedValue(0);
+        trigger.setGerritBuildAbortedCodeReviewValue(0);
         trigger.setServerName(PluginImpl.DEFAULT_SERVER_NAME);
 
         if (job != null) {
@@ -763,7 +767,7 @@ public final class Setup {
     public static void setTrigger(GerritTrigger trigger, AbstractProject project) {
         when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
         HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
-        triggers.put(new GerritTrigger.DescriptorImpl(), trigger);
+        triggers.put(new GerritTriggerDescriptor(), trigger);
         PowerMockito.when(project.getTriggers()).thenReturn(triggers);
     }
 
@@ -789,31 +793,37 @@ public final class Setup {
             when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(resultsCodeReviewVote);
             when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
-                skipVote = new SkipVote(true, false, false, false);
+                skipVote = new SkipVote(true, false, false, false, false);
             }
         } else if (result == Result.FAILURE) {
             when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
             when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
-                skipVote = new SkipVote(false, true, false, false);
+                skipVote = new SkipVote(false, true, false, false, false);
             }
         } else if (result == Result.UNSTABLE) {
             when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(resultsCodeReviewVote);
             when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(resultsVerifiedVote);
             if (shouldSkip) {
-                skipVote = new SkipVote(false, false, true, false);
+                skipVote = new SkipVote(false, false, true, false, false);
             }
         } else if (result == Result.NOT_BUILT) {
             when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
             when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
             if (shouldSkip) {
-                skipVote = new SkipVote(false, false, false, true);
+                skipVote = new SkipVote(false, false, false, true, false);
+            }
+        } else if (result == Result.ABORTED) {
+            when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(resultsCodeReviewVote);
+            when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(resultsVerifiedVote);
+            if (shouldSkip) {
+                skipVote = new SkipVote(false, false, false, false, true);
             }
         } else {
             throw new IllegalArgumentException("Unsupported build result setup: " + result);
         }
         if (!shouldSkip) {
-            skipVote = new SkipVote(false, false, false, false);
+            skipVote = new SkipVote(false, false, false, false, false);
         }
         when(trigger.getSkipVote()).thenReturn(skipVote);
         return Setup.createAndSetupMemoryImprintEntry(trigger, result);

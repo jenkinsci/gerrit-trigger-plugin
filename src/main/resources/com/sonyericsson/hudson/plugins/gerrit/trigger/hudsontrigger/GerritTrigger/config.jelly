@@ -70,6 +70,8 @@
                         <label class="attach-previous">${%Unstable}</label>
                         <input type="checkbox" name="_.onNotBuilt" checked="${skipIt.onNotBuilt?'true':null}"/>
                         <label class="attach-previous">${%Not Built}</label>
+                        <input type="checkbox" name="_.onAborted" checked="${skipIt.onAborted?'true':null}"/>
+                        <label class="attach-previous">${%Aborted}</label>
                     </div>
                 </f:entry>
                 <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
@@ -110,6 +112,14 @@
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildNotBuiltVerified.html">
                     <f:textbox name="gerritBuildNotBuiltVerifiedValue"
                                value="${it.gerritBuildNotBuiltVerifiedValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
+                <f:entry title="${%Aborted}"
+                         field="gerritBuildAbortedVerifiedValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildAbortedVerified.html">
+                    <f:textbox name="gerritBuildAbortedVerifiedValue"
+                               value="${it.gerritBuildAbortedVerifiedValue}"
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
@@ -154,6 +164,14 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
+                <f:entry title="${%Aborted}"
+                         field="gerritBuildAbortedCodeReviewValue"
+                         help="/plugin/gerrit-trigger/trigger/help-GerritBuildAbortedCodeReview.html">
+                    <f:textbox name="gerritBuildAbortedCodeReviewValue"
+                               value="${it.gerritBuildAbortedCodeReviewValue}"
+                               default=""
+                               checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
+                </f:entry>
             </f:section>
             <f:section title="${%Custom Build Messages}">
                 <f:entry title="${%Build Start Message}"
@@ -180,6 +198,11 @@
                          field="buildNotBuiltMessage"
                          help="/plugin/gerrit-trigger/trigger/help-BuildNotBuiltMessage.html">
                    <f:textarea/>
+                </f:entry>
+                <f:entry title="${%Build Aborted Message}"
+                         field="buildAbortedMessage"
+                         help="/plugin/gerrit-trigger/trigger/help-BuildAbortedMessage.html">
+                    <f:textarea/>
                 </f:entry>
                 <j:if test="${descriptor.isUnsuccessfulMessageFileSupported(it)}">
                     <f:entry title="${%Unsuccessful Message File}"

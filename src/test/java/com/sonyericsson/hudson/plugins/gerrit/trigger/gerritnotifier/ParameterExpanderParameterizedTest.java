@@ -135,21 +135,6 @@ public class ParameterExpanderParameterizedTest {
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(31);
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(32);
         list.add(new TestParameters[]{new TestParameters(config, Result.FAILURE, trigger, 31, 32)});
-        //ABORTED Not overridden
-        trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, -2, -1)});
-        //ABORTED overridden
-        trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(41);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(42);
-        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 41, 42)});
-        //UNSTABLE Not overridden
-        trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(null);
-        when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.UNSTABLE, trigger, -4, -3)});
         //UNSTABLE overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-21);
@@ -165,6 +150,21 @@ public class ParameterExpanderParameterizedTest {
         when(trigger.getGerritBuildNotBuiltCodeReviewValue()).thenReturn(-51);
         when(trigger.getGerritBuildNotBuiltVerifiedValue()).thenReturn(-52);
         list.add(new TestParameters[]{new TestParameters(config, Result.NOT_BUILT, trigger, -51, -52)});
+        //ABORTED Not overridden
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(null);
+        when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(null);
+        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 3, -2)});
+        //ABORTED overridden
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(41);
+        when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(42);
+        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 41, 42)});
+        //UNSTABLE Not overridden
+        trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(null);
+        when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(null);
+        list.add(new TestParameters[]{new TestParameters(config, Result.UNSTABLE, trigger, -4, -3)});
 
         return list;
     }

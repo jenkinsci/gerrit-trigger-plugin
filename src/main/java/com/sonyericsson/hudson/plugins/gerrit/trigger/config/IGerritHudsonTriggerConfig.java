@@ -93,6 +93,12 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
     String getGerritCmdBuildNotBuilt();
 
     /**
+     * The command template to use when sending build-aborted messages to Gerrit.
+     * @return the command template.
+     */
+    String getGerritCmdBuildAborted();
+
+    /**
      * The default verified value for build started.
      * @return the value.
      */
@@ -151,6 +157,18 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
      * @return the value.
      */
     Integer getGerritBuildNotBuiltCodeReviewValue();
+
+    /**
+     * The default verified value for build aborted.
+     * @return the value.
+     */
+    Integer getGerritBuildAbortedVerifiedValue();
+
+    /**
+     * The default code review value for build aborted.
+     * @return the value.
+     */
+    Integer getGerritBuildAbortedCodeReviewValue();
 
     /**
      * Sets all config values from the provided JSONObject.
