@@ -2044,7 +2044,6 @@ public class GerritTrigger extends Trigger<Job> {
 
             // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
             for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
-                logger.debug("Cancelling build for " + outdatedEvent);
                 try {
                     cancelJob(outdatedEvent);
                 } catch (Exception e) {
@@ -2071,10 +2070,10 @@ public class GerritTrigger extends Trigger<Job> {
          *            The event that originally triggered the build.
          */
         private void cancelJob(GerritTriggeredEvent event) {
-            logger.debug("Cancelling build for " + event);
+            logger.debug("Cancelling job {} for {}", job, event);
             try {
                 if (!(job instanceof Queue.Task)) {
-                    logger.error("Error canceling job. The job is not of type Task. Job name: " + job.getName());
+                    logger.error("Error canceling job {} for {}. The job is not of type Task", job.getName(), event);
                     return;
                 }
 
@@ -2091,18 +2090,17 @@ public class GerritTrigger extends Trigger<Job> {
                     return;
                 }
 
-                // Interrupt any currently running jobs.
-                Jenkins jenkins = Jenkins.getInstance();
-                assert jenkins != null;
+                // Interrupt any currently running builds of the job.
+                Jenkins jenkins = Jenkins.getActiveInstance();
                 for (Computer c : jenkins.getComputers()) {
-                    List<Executor> executors = new ArrayList<Executor>();
+                    List<Executor> executors = new ArrayList<Executor>(c.getExecutors());
                     executors.addAll(c.getOneOffExecutors());
-                    executors.addAll(c.getExecutors());
                     for (Executor e : executors) {
                         Queue.Executable currentExecutable = e.getCurrentExecutable();
                         if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
                             Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                            if (checkCausedByGerrit(event, run.getCauses())) {
+                            if (run.getParent().equals(job) && checkCausedByGerrit(event, run.getCauses())) {
+                                logger.debug("Abort run {} because of the event {}", run, event);
                                 e.interrupt(
                                         Result.ABORTED,
                                         new NewPatchSetInterruption()
@@ -2145,7 +2143,7 @@ public class GerritTrigger extends Trigger<Job> {
          * @return true if event was still running.
          */
         public boolean remove(ChangeBasedEvent event) {
-            logger.debug("Removing future job " + event.getPatchSet().getNumber());
+            logger.debug("Removing future job {} for the event {},", job, event);
             return runningJobs.remove(event);
         }
     }
