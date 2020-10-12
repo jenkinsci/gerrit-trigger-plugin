@@ -808,8 +808,8 @@ public class SpecGerritTriggerHudsonTest {
         secondEvent.getChange().setTopic("abc");
         gerritServer.triggerEvent(secondEvent);
 
-        TestUtils.waitForBuilds(cancelProject, 2, 10000);
-        TestUtils.waitForBuilds(cancelProject2, 2, 10000);
+        TestUtils.waitForBuilds(cancelProject, 2);
+        TestUtils.waitForBuilds(cancelProject2, 2);
 
         assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
         assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
