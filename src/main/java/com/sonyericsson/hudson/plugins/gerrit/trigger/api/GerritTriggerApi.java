@@ -23,8 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api;
 
-import jenkins.model.Jenkins;
-
 import com.sonymobile.tools.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginNotFoundException;
@@ -45,9 +43,7 @@ public final class GerritTriggerApi {
      * @throws PluginStatusException if plugin is inactive.
      */
     private PluginImpl getActivePlugin() throws PluginNotFoundException, PluginStatusException {
-        Jenkins jenkins = Jenkins.getInstance();
-        assert jenkins != null;
-        PluginImpl plugin = jenkins.getPlugin(PluginImpl.class);
+        PluginImpl plugin = PluginImpl.getInstance();
         if (plugin == null) {
             throw new PluginNotFoundException();
         }

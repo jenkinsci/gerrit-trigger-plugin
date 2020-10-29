@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -35,16 +36,23 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Trigger
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import hudson.Plugin;
+import hudson.Extension;
+import hudson.ExtensionList;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
+import hudson.init.TermMilestone;
+import hudson.init.Terminator;
 import hudson.model.Item;
 import hudson.model.Job;
 import hudson.model.Api;
 import hudson.model.Items;
 import hudson.model.Run;
-import hudson.model.queue.QueueTaskDispatcher;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 
+import jenkins.model.GlobalConfiguration;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.slf4j.Logger;
@@ -69,7 +77,8 @@ import javax.annotation.Nonnull;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 @ExportedBean
-public class PluginImpl extends Plugin {
+@Extension
+public class PluginImpl extends GlobalConfiguration {
 
     /**
      * What to call this plug-in to humans.
@@ -139,7 +148,7 @@ public class PluginImpl extends Plugin {
     public static PluginImpl getInstance() {
         Jenkins jenkins = Jenkins.getInstance();
         if (jenkins != null) {
-            return jenkins.getPlugin(PluginImpl.class);
+            return ExtensionList.lookupSingleton(PluginImpl.class);
         } else {
             logger.debug("Error, Jenkins could not be found, so no plugin!");
             return null;
@@ -482,8 +491,7 @@ public class PluginImpl extends Plugin {
         return plugin.getConfiguredJobs(serverName);
     }
 
-    @Override
-    public void start() throws Exception {
+    public void start() {
         logger.info("Starting Gerrit-Trigger Plugin");
         doXStreamRegistrations();
         logger.trace("Loading configs");
@@ -494,18 +502,15 @@ public class PluginImpl extends Plugin {
             s.start();
         }
         active = true;
-    }
 
-    @Override
-    public void postInitialize() throws Exception {
+        // Just verify that this seemingly tautological condition is true
         //Call the following method for force initialization of the ReplicationQueueTaskDispatcher because
         //it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
-        QueueTaskDispatcher.all().size();
-        super.postInitialize();
+        ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
     }
 
     @Override
-    public void load() throws IOException {
+    public void load() {
         super.load();
         if (pluginConfig == null) {
             PluginConfig conf = new PluginConfig();
@@ -558,8 +563,7 @@ public class PluginImpl extends Plugin {
         logger.trace("XStream alias registrations done.");
     }
 
-    @Override
-    public void stop() throws Exception {
+    public void stop() {
         active = false;
         for (GerritServer s : servers) {
             s.stop();
@@ -573,4 +577,15 @@ public class PluginImpl extends Plugin {
         servers.clear();
     }
 
+    @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
+    @Restricted(DoNotUse.class)
+    public static void gerritStart() {
+        PluginImpl.getInstance().start();
+    }
+
+    @Terminator(after = TermMilestone.COMPLETED)
+    @Restricted(DoNotUse.class)
+    public static void gerritStop() {
+        PluginImpl.getInstance().stop();
+    }
 }
