@@ -53,6 +53,7 @@ import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
@@ -72,7 +73,6 @@ import jenkins.model.Jenkins;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-
 /**
  * Main Plugin entrance.
  *
@@ -80,12 +80,18 @@ import javax.annotation.Nonnull;
  */
 @ExportedBean
 @Extension
+@Symbol(PluginImpl.SYMBOL_NAME)
 public class PluginImpl extends GlobalConfiguration {
 
     /**
      * What to call this plug-in to humans.
      */
     public static final String DISPLAY_NAME = "Gerrit Trigger";
+
+    /**
+     * Machine readable plugin name.
+     */
+    public static final String SYMBOL_NAME = "gerrit-trigger";
 
     /**
      * Any special permissions needed by this plugin are grouped into this.
@@ -395,8 +401,17 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the config.
      */
-    public PluginConfig getPluginConfig() {
+    public synchronized PluginConfig getPluginConfig() {
         return pluginConfig;
+    }
+
+    /**
+     * Set plugin config.
+     *
+     * @param pluginConfig New config to set.
+     */
+    public synchronized void setPluginConfig(PluginConfig pluginConfig) {
+        this.pluginConfig = pluginConfig;
     }
 
     /**

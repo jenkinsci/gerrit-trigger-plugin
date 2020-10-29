@@ -1,0 +1,310 @@
+/*
+ *
+ * The MIT License
+ *
+ * Copyright (c) Red Hat, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
+
+import com.google.common.collect.ImmutableSet;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import hudson.Extension;
+import io.jenkins.plugins.casc.Attribute;
+import io.jenkins.plugins.casc.BaseConfigurator;
+import io.jenkins.plugins.casc.ConfigurationContext;
+import io.jenkins.plugins.casc.Configurator;
+import io.jenkins.plugins.casc.ConfiguratorException;
+import io.jenkins.plugins.casc.ConfiguratorRegistry;
+import io.jenkins.plugins.casc.impl.attributes.MultivaluedAttribute;
+import io.jenkins.plugins.casc.model.CNode;
+import io.jenkins.plugins.casc.model.Mapping;
+import io.jenkins.plugins.casc.model.Sequence;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * Configure JCasC.
+ */
+@Restricted(NoExternalUse.class)
+@Extension
+public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
+
+    /**
+     * Empty constructor.
+     */
+    public GerritJcascConfigurator() {
+        super();
+    }
+
+    @Override
+    protected PluginImpl instance(Mapping mapping, ConfigurationContext configurationContext) {
+        return PluginImpl.getInstance();
+    }
+
+    @Override
+    @Nonnull
+    public String getName() {
+        return PluginImpl.SYMBOL_NAME;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return PluginImpl.DISPLAY_NAME;
+    }
+
+    @Override
+    public Class<PluginImpl> getTarget() {
+        return PluginImpl.class;
+    }
+
+    @Override
+    protected void configure(
+        Mapping config, PluginImpl instance, boolean dryrun, ConfigurationContext context
+    ) throws ConfiguratorException {
+        List<GerritServer> oldServers = instance.getServers();
+
+        super.configure(config, instance, dryrun, context);
+
+        instance.getPluginConfig().updateEventFilter();
+
+        for (GerritServer oldServer : oldServers) {
+            oldServer.stopConnection();
+            oldServer.stop();
+        }
+
+        // Mimicking GerritManagement#doAddNewServer
+
+        List<String> serverNames = new ArrayList<>();
+        for (GerritServer server : instance.getServers()) {
+            String name = server.getName();
+            if (serverNames.contains(name)) {
+                throw new ConfiguratorException(this, "Multiple gerrit servers with name: " + name);
+            }
+            serverNames.add(name);
+        }
+        if (serverNames.contains(GerritServer.ANY_SERVER)) {
+            throw new ConfiguratorException(this, "Illegal gerrit server name: " + GerritServer.ANY_SERVER);
+        }
+
+        for (GerritServer server : instance.getServers()) {
+            server.getConfig().setNumberOfSendingWorkerThreads(
+                    instance.getPluginConfig().getNumberOfSendingWorkerThreads()
+            );
+            server.start();
+        }
+    }
+
+    /**
+     * Inject `config` field explicitly as BaseConfigurator cannot detect this ("type is abstract but not Describable").
+     * The methods are using interface, but we have to point the `config` property to concrete class.
+     */
+    @Extension
+    public static final class ServerConfigurator extends BaseConfigurator<GerritServer> {
+
+        @Override
+        protected GerritServer instance(Mapping mapping, ConfigurationContext context) {
+            return new GerritServer();
+        }
+
+        @Override
+        public Class<GerritServer> getTarget() {
+            return GerritServer.class;
+        }
+
+        @Override
+        public Set<Attribute<GerritServer, ?>> describe() {
+            Set<Attribute<GerritServer, ?>> describe = super.describe();
+            describe.add(new Attribute<GerritServer, IGerritHudsonTriggerConfig>("config", Config.class));
+            return describe;
+        }
+    }
+//
+//    /**
+//     * Make `config` configurable.
+//     *
+//     * @see ServerConfigurator
+//     */
+//    @Extension
+//    public static final class ServerConfigConfigurator extends BaseConfigurator<Config> {
+//
+//        @Override
+//        protected Config instance(Mapping mapping, ConfigurationContext configurationContext) {
+//            return new Config();
+//        }
+//
+//        @Override
+//        public String getName() {
+//            return "config";
+//        }
+//
+//        @Override
+//        public String getDisplayName() {
+//            return "Gerrit Server Config";
+//        }
+//
+//        @Override
+//        public Class<Config> getTarget() {
+//            return Config.class;
+//        }
+//    }
+
+    /**
+     * Cannot use BaseConfigurator as {@link WatchTimeExceptionData} is immutable.
+     */
+    @Extension
+    public static final class WatchTimeExceptionDataConfigurator implements Configurator<WatchTimeExceptionData> {
+
+        public static final String DAYS_OF_WEEK = "daysOfWeek";
+        public static final String TIMES_OF_DAY = "timesOfDay";
+
+        private static final Map<String, Integer> dayNameToOrdinal = new HashMap<>();
+        static {
+            dayNameToOrdinal.put("monday", Calendar.MONDAY);
+            dayNameToOrdinal.put("tuesday", Calendar.TUESDAY);
+            dayNameToOrdinal.put("wednesday", Calendar.WEDNESDAY);
+            dayNameToOrdinal.put("thursday", Calendar.THURSDAY);
+            dayNameToOrdinal.put("friday", Calendar.FRIDAY);
+            dayNameToOrdinal.put("saturday", Calendar.SATURDAY);
+            dayNameToOrdinal.put("sunday", Calendar.SUNDAY);
+        }
+
+        @Override
+        public Class<WatchTimeExceptionData> getTarget() {
+            return WatchTimeExceptionData.class;
+        }
+
+        @Override
+        public Set<Attribute<WatchTimeExceptionData, ?>> describe() {
+
+            ConfiguratorRegistry configuratorRegistry = ConfiguratorRegistry.get();
+            configuratorRegistry.lookup(getTarget());
+            return ImmutableSet.of(
+                    new MultivaluedAttribute<WatchTimeExceptionData, String>(DAYS_OF_WEEK, String.class).getter(
+                            target -> Arrays.stream(target.getDaysOfWeek())
+                                    .mapToObj(WatchTimeExceptionDataConfigurator.this::ordinalToName)
+                                    .collect(Collectors.toList()
+                    )),
+                    new MultivaluedAttribute<WatchTimeExceptionData, WatchTimeExceptionData.TimeSpan>(
+                            TIMES_OF_DAY, WatchTimeExceptionData.TimeSpan.class
+                    ).getter(WatchTimeExceptionData::getTimesOfDay)
+            );
+        }
+
+        private int nameToOrdinal(String dayName) {
+            Integer ordinal = dayNameToOrdinal.get(dayName.toLowerCase());
+            if (ordinal == null) {
+                throw new IllegalArgumentException("Unknown day of week for name: " + dayName);
+            }
+
+            return ordinal;
+        }
+
+        private String ordinalToName(int dayNumber) {
+            for (Map.Entry<String, Integer> es : dayNameToOrdinal.entrySet()) {
+                if (es.getValue() == dayNumber) {
+                    return es.getKey();
+                }
+            }
+
+            throw new IllegalArgumentException("Unknown day of week for ordinal: " + dayNumber);
+        }
+
+        @Override
+        public WatchTimeExceptionData configure(CNode config, ConfigurationContext context) throws ConfiguratorException {
+            Mapping mapping = (config != null ? config.asMapping(): Mapping.EMPTY);
+            try {
+                Sequence days = mapping.get(DAYS_OF_WEEK).asSequence();
+                int[] dayNumbers = new int[days.size()];
+                for (int i = 0; i < days.size(); i++) {
+                    dayNumbers[i] = nameToOrdinal(days.get(i).asScalar().getValue());
+                }
+
+                ArrayList<WatchTimeExceptionData.TimeSpan> timeSpans = new ArrayList<>();
+                for (CNode timeSpanNode : mapping.get(TIMES_OF_DAY).asSequence()) {
+                    Mapping tsm = timeSpanNode.asMapping();
+                    String from = tsm.get("from").asScalar().getValue();
+                    String to = tsm.get("to").asScalar().getValue();
+                    WatchTimeExceptionData.TimeSpan timeSpan = new WatchTimeExceptionData.TimeSpan(
+                            WatchTimeExceptionData.Time.createTimeFromString(from),
+                            WatchTimeExceptionData.Time.createTimeFromString(to)
+                    );
+                    timeSpans.add(timeSpan);
+                }
+                return new WatchTimeExceptionData(dayNumbers, timeSpans);
+            } catch (IllegalArgumentException ex) {
+                throw new ConfiguratorException(
+                        this,
+                        "Failed configuring " + getTarget() + " from " + mapping,
+                        ex
+                );
+            }
+        }
+
+        @Override
+        public WatchTimeExceptionData check(CNode config, ConfigurationContext context) throws ConfiguratorException {
+            // Just do what #configure does as long as #configure is a pure factory method
+            return configure(config, context);
+        }
+    }
+
+    @Extension
+    public static final class TimeSpanConfigurator implements Configurator<WatchTimeExceptionData.TimeSpan> {
+
+        @Override
+        public Class<WatchTimeExceptionData.TimeSpan> getTarget() {
+            return WatchTimeExceptionData.TimeSpan.class;
+        }
+
+        @Override
+        public Set<Attribute<WatchTimeExceptionData.TimeSpan, ?>> describe() {
+            return ImmutableSet.of(
+                    new Attribute<WatchTimeExceptionData.TimeSpan, String>("from", String.class).getter(
+                            ts -> ts.getFrom().getHourAsString() + ":" + ts.getFrom().getMinuteAsString()
+                    ),
+                    new Attribute<WatchTimeExceptionData.TimeSpan, String>("to", String.class).getter(
+                            ts -> ts.getTo().getHourAsString() + ":" + ts.getTo().getMinuteAsString()
+                    )
+            );
+        }
+
+        @Override
+        public WatchTimeExceptionData.TimeSpan configure(CNode config, ConfigurationContext context) {
+            throw new UnsupportedOperationException("Configured by " + WatchTimeExceptionDataConfigurator.class);
+        }
+
+        @Override
+        public WatchTimeExceptionData.TimeSpan check(CNode config, ConfigurationContext context) {
+            throw new UnsupportedOperationException("Configured by " + WatchTimeExceptionDataConfigurator.class);
+        }
+    }
+}

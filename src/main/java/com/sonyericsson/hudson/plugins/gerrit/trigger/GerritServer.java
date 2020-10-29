@@ -83,6 +83,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.jvnet.localizer.ResourceBundleHolder;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -188,6 +190,15 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public String getUrl() {
         return GerritManagement.get().getUrlName() + "/server/" + getUrlEncodedName();
     }
+
+    /**
+     * Empty constructor
+     */
+    @DataBoundConstructor
+    public GerritServer() {
+        this(null, false);
+    }
+
     /**
      * Constructor.
      *
@@ -236,6 +247,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @param config the config.
      */
+    @DataBoundSetter
     public void setConfig(IGerritHudsonTriggerConfig config) {
         checkPermission();
         this.config = config;
@@ -249,6 +261,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Exported
     public String getName() {
         return name;
+    }
+
+    public GerritServer setName(String name) {
+        this.name = name;
+        return this;
     }
 
     /**

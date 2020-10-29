@@ -42,6 +42,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
@@ -541,6 +542,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * Constructs a config with default data.
      */
+    @DataBoundConstructor
     public Config() {
         this(new JSONObject(false));
     }
@@ -607,6 +609,17 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritFrontEndURL(String gerritFrontEndURL) {
         this.gerritFrontEndUrl = gerritFrontEndURL;
+    }
+
+    /**
+     * This method is needed for configuration as code to discover this property.
+     *
+     * It would be ignored otherwise because of the "URL" vs. "Url" naming mismatch in old getter/setter.
+     *
+     * @param gerritFrontEndURL the Url
+     */
+    public void setGerritFrontEndUrl(String gerritFrontEndURL) {
+        setGerritFrontEndURL(gerritFrontEndURL);
     }
 
     @Override
@@ -833,6 +846,15 @@ public class Config implements IGerritHudsonTriggerConfig {
         return this.buildCurrentPatchesOnly;
     }
 
+    /**
+     * Exposed for configuration as code.
+     *
+     * @param buildCurrentPatchesOnly new polocy.
+     */
+    public void setBuildCurrentPatchesOnly(BuildCancellationPolicy buildCurrentPatchesOnly) {
+        this.buildCurrentPatchesOnly = buildCurrentPatchesOnly;
+    }
+
     @Override
     public String getGerritCmdBuildSuccessful() {
         return gerritVerifiedCmdBuildSuccessful;
@@ -983,6 +1005,54 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritBuildAbortedCodeReviewValue;
     }
 
+    public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
+        this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
+    }
+
+    public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
+        this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
+    }
+
+    public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
+        this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
+    }
+
+    public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
+        this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
+    }
+
+    public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
+        this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
+    }
+
+    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
+    }
+
+    public void setGerritBuildStartedCodeReviewValue(Integer gerritBuildStartedCodeReviewValue) {
+        this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
+    }
+
+    public void setGerritBuildSuccessfulCodeReviewValue(Integer gerritBuildSuccessfulCodeReviewValue) {
+        this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
+    }
+
+    public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
+        this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
+    }
+
+    public void setGerritBuildUnstableCodeReviewValue(Integer gerritBuildUnstableCodeReviewValue) {
+        this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
+    }
+
+    public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
+        this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
+    }
+
+    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
+    }
+
     @Override
     public String getGerritFrontEndUrlFor(String changeSetNumber, String revision) {
         StringBuilder str = new StringBuilder(getGerritFrontEndUrl());
@@ -1084,6 +1154,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         return replicationConfig;
     }
 
+    public void setReplicationConfig(ReplicationConfig replicationConfig) {
+        this.replicationConfig = replicationConfig;
+    }
+
     @Override
     public int getWatchdogTimeoutSeconds() {
         return (int)TimeUnit.MINUTES.toSeconds(watchdogTimeoutMinutes);
@@ -1099,9 +1173,17 @@ public class Config implements IGerritHudsonTriggerConfig {
         return watchdogTimeoutMinutes;
     }
 
+    public void setWatchdogTimeoutMinutes(int watchdogTimeoutMinutes) {
+        this.watchdogTimeoutMinutes = watchdogTimeoutMinutes;
+    }
+
     @Override
     public WatchTimeExceptionData getExceptionData() {
         return watchTimeExceptionData;
+    }
+
+    public void setExceptionData(WatchTimeExceptionData exceptionData) {
+        this.watchTimeExceptionData = exceptionData;
     }
 
     @Override
