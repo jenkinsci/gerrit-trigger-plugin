@@ -26,6 +26,11 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
@@ -37,6 +42,7 @@ import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,6 +58,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test data.
@@ -92,7 +99,7 @@ public class DuplicateGerritListenersHudsonTestCase {
     @Test
     public void testNewProjectCreation() throws Exception {
         createGerritTriggeredJob(j, "testJob1");
-        assertNbrOfGerritEventListeners(
+        assertAllListenersAreRegistered(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
@@ -106,7 +113,7 @@ public class DuplicateGerritListenersHudsonTestCase {
     public void testNewProjectCreationWithReSave() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob2");
         j.configRoundtrip((Item)p);
-        assertNbrOfGerritEventListeners(
+        assertAllListenersAreRegistered(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
@@ -124,7 +131,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         form.getInputByName("newName").setValueAttribute("testJob33");
         HtmlPage confirmPage = j.submit(form);
         assertEquals("testJob33", p.getName());
-        assertNbrOfGerritEventListeners(
+        assertAllListenersAreRegistered(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
     }
 
@@ -146,7 +153,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         createGerritTriggeredJob(j, "testJob4");
         GerritConnection connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNull(connection);
-        assertNbrOfGerritEventListeners(server);
+        assertAllListenersAreRegistered(server);
         Config config = (Config)server.getConfig();
         config.setGerritAuthKeyFile(keyFile.getPublicKey());
         config.setGerritHostName("localhost");
@@ -155,7 +162,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         config.setGerritProxy("");
         server.startConnection();
 
-        assertNbrOfGerritEventListeners(server);
+        assertAllListenersAreRegistered(server);
         connection = Whitebox.getInternalState(server, GerritConnection.class);
         assertNotNull(connection);
     }
@@ -164,20 +171,19 @@ public class DuplicateGerritListenersHudsonTestCase {
      * Asserts that the number of GerritEventListeners for server is as expected.
      * @param server the Gerrit server to check.
      */
-    private void assertNbrOfGerritEventListeners(GerritServer server) {
+    private void assertAllListenersAreRegistered(GerritServer server) {
         GerritHandler handler = Whitebox.getInternalState(server, GerritHandler.class);
         assertNotNull(handler);
-        Collection<GerritEventListener> gerritEventListeners =
-                Whitebox.getInternalState(handler, "gerritEventListeners");
-        int nbrOfListeners = 0;
-        nbrOfListeners++; // EventListener adds 1 listener
-        nbrOfListeners++; // DependencyQueueTaskDispatcher adds 1 listener
-        nbrOfListeners++; // ReplicationQueueTaskDispatcher adds 1 listener
+        Collection<GerritEventListener> gerritEventListeners = handler.getGerritEventListenersView();
+
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(EventListener.class)));
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(DependencyQueueTaskDispatcher.class)));
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(ReplicationQueueTaskDispatcher.class)));
         if (server.isConnected() && server.getConfig().isEnableProjectAutoCompletion()
                 && server.isProjectCreatedEventsSupported()) {
-            nbrOfListeners++; // GerritProjectListUpdater adds 1 listener
+            assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(GerritProjectListUpdater.class)));
         }
-        nbrOfListeners++; // GerritMissedEventsPlaybackManager adds 1 listeners
-        assertEquals(nbrOfListeners, gerritEventListeners.size());
+
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(GerritMissedEventsPlaybackManager.class)));
     }
 }

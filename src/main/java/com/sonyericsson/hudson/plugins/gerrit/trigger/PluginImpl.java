@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
@@ -498,6 +499,9 @@ public class PluginImpl extends GlobalConfiguration {
         return plugin.getConfiguredJobs(serverName);
     }
 
+    /**
+     * Start the plugin.
+     */
     public void start() {
         logger.info("Starting Gerrit-Trigger Plugin");
         logger.trace("Loading configs");
@@ -509,12 +513,15 @@ public class PluginImpl extends GlobalConfiguration {
         }
         active = true;
 
-        // Just verify that this seemingly tautological condition is true
-        //Call the following method for force initialization of the ReplicationQueueTaskDispatcher because
-        //it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
+        // Call the following method for force initialization of the Dispatchers because
+        // it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
         ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
+        ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
     }
 
+    /**
+     * Load plugin config.
+     */
     @Override
     public void load() {
         super.load();
@@ -569,6 +576,9 @@ public class PluginImpl extends GlobalConfiguration {
         logger.trace("XStream alias registrations done.");
     }
 
+    /**
+     * Stop the plugin.
+     */
     public void stop() {
         active = false;
         for (GerritServer s : servers) {
@@ -583,12 +593,18 @@ public class PluginImpl extends GlobalConfiguration {
         servers.clear();
     }
 
+    /**
+     * Startup hook.
+     */
     @Initializer(after = InitMilestone.PLUGINS_STARTED)
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
         PluginImpl.getInstance().start();
     }
 
+    /**
+     * Shutdown hook.
+     */
     @Terminator(after = TermMilestone.COMPLETED)
     @Restricted(DoNotUse.class)
     public static void gerritStop() {
