@@ -443,6 +443,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @return gerritEventManager
      */
     public GerritHandler getHandler() {
+        if (gerritEventManager == null) throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
         return gerritEventManager;
     }
 
@@ -596,7 +597,10 @@ public class PluginImpl extends GlobalConfiguration {
     /**
      * Startup hook.
      */
-    @Initializer(after = InitMilestone.PLUGINS_STARTED)
+    @Initializer(
+            after = InitMilestone.PLUGINS_STARTED, // Requires extensions registered
+            before = InitMilestone.EXTENSIONS_AUGMENTED // Need to be done before jobs start loading
+    )
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
         PluginImpl.getInstance().start();

@@ -45,6 +45,7 @@ import hudson.model.Item;
 import hudson.model.TopLevelItem;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -104,6 +105,13 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
     @Rule
     public final JenkinsRule j = new JenkinsRule();
+
+    private Collection<GerritEventListener> originalListeners;
+
+    @Before
+    public void setup() {
+        originalListeners = getGerritEventListeners();
+    }
 
     /**
      * Tests that the trigger is added as a listener during startup of the server.
@@ -373,13 +381,8 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
                 && server.isProjectCreatedEventsSupported()) {
             assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(GerritProjectListUpdater.class)));
         }
-        gerritEventListeners.removeIf(l -> (
-                l instanceof EventListener ||
-                l instanceof DependencyQueueTaskDispatcher ||
-                l instanceof ReplicationQueueTaskDispatcher ||
-                l instanceof GerritMissedEventsPlaybackManager ||
-                l instanceof GerritProjectListUpdater
-        ));
+
+        gerritEventListeners.removeAll(originalListeners);
 
         assertThat(gerritEventListeners, iterableWithSize(extra));
     }
