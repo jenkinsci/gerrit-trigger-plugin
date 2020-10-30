@@ -29,16 +29,22 @@ import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import hudson.model.FreeStyleProject;
 import hudson.model.Item;
 import hudson.model.TopLevelItem;
 import org.apache.commons.io.IOUtils;
+import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -75,9 +81,11 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: testdata.
@@ -355,28 +363,35 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     void assertNrOfEventListeners(int extra) {
         Collection<GerritEventListener> gerritEventListeners = getGerritEventListeners();
-        int nbrOfListeners = extra;
-        nbrOfListeners++; // EventListener adds 1 listener
-        nbrOfListeners++; // DependencyQueueTaskDispatcher adds 1 listener
-        nbrOfListeners++; // ReplicationQueueTaskDispatcher adds 1 listener
         GerritServer server = PluginImpl.getServer_(PluginImpl.DEFAULT_SERVER_NAME);
+
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(EventListener.class)));
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(DependencyQueueTaskDispatcher.class)));
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(ReplicationQueueTaskDispatcher.class)));
+        assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(GerritMissedEventsPlaybackManager.class)));
         if (server.isConnected() && server.getConfig().isEnableProjectAutoCompletion()
                 && server.isProjectCreatedEventsSupported()) {
-            nbrOfListeners++; // GerritProjectListUpdater adds 1 listener//
+            assertThat(gerritEventListeners, Matchers.hasItem(Matchers.instanceOf(GerritProjectListUpdater.class)));
         }
-        nbrOfListeners++; // GerritMissedEventsPlaybackManager adds 1 listeners
-        assertEquals(nbrOfListeners, gerritEventListeners.size());
+        gerritEventListeners.removeIf(l -> (
+                l instanceof EventListener ||
+                l instanceof DependencyQueueTaskDispatcher ||
+                l instanceof ReplicationQueueTaskDispatcher ||
+                l instanceof GerritMissedEventsPlaybackManager ||
+                l instanceof GerritProjectListUpdater
+        ));
+
+        assertThat(gerritEventListeners, iterableWithSize(extra));
     }
 
     /**
-     * Gets the internal list of listeners from
-     * {@link com.sonymobile.tools.gerrit.gerritevents.GerritHandler#gerritEventListeners}.
+     * Gets the list of listeners.
      *
      * @return the list.
      */
     private Collection<GerritEventListener> getGerritEventListeners() {
         GerritHandler handler = Whitebox.getInternalState(PluginImpl.getInstance().
                 getServer(PluginImpl.DEFAULT_SERVER_NAME), GerritHandler.class);
-        return Whitebox.getInternalState(handler, "gerritEventListeners");
+        return new ArrayList<>(handler.getGerritEventListenersView());
     }
 }
