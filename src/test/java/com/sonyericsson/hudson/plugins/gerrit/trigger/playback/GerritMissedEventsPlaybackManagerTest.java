@@ -122,7 +122,9 @@ public class GerritMissedEventsPlaybackManagerTest {
         GerritHandler handler = mock(GerritHandler.class);
         when(plugin.getHandler()).thenReturn(handler);
         when(server.getConfig()).thenReturn(config);
+        PowerMockito.mockStatic(PluginImpl.class);
         PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        PowerMockito.when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
 
         PowerMockito.mockStatic(GerritMissedEventsPlaybackManager.class);
 
