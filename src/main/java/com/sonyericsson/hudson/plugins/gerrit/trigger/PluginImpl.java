@@ -38,6 +38,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.Extension;
 import hudson.ExtensionList;
+import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.init.TermMilestone;
@@ -148,7 +149,7 @@ public class PluginImpl extends GlobalConfiguration {
     public static PluginImpl getInstance() {
         Jenkins jenkins = Jenkins.getInstance();
         if (jenkins != null) {
-            return ExtensionList.lookupSingleton(PluginImpl.class);
+            return GlobalConfiguration.all().get(PluginImpl.class);
         } else {
             logger.debug("Error, Jenkins could not be found, so no plugin!");
             return null;
@@ -429,6 +430,12 @@ public class PluginImpl extends GlobalConfiguration {
         plugin.save();
     }
 
+    // Reading from the location where the data used to be back when this implemented hudson.Plugin
+    @Override
+    protected XmlFile getConfigFile() {
+        return new XmlFile(Jenkins.XSTREAM, new File(Jenkins.get().getRootDir(), "gerrit-trigger.xml"));
+    }
+
     /**
      * Returns the GerritHandler object.
      *
@@ -493,7 +500,6 @@ public class PluginImpl extends GlobalConfiguration {
 
     public void start() {
         logger.info("Starting Gerrit-Trigger Plugin");
-        doXStreamRegistrations();
         logger.trace("Loading configs");
         load();
         GerritSendCommandQueue.initialize(pluginConfig);
@@ -577,7 +583,7 @@ public class PluginImpl extends GlobalConfiguration {
         servers.clear();
     }
 
-    @Initializer(after = InitMilestone.EXTENSIONS_AUGMENTED)
+    @Initializer(after = InitMilestone.PLUGINS_STARTED)
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
         PluginImpl.getInstance().start();
@@ -587,5 +593,9 @@ public class PluginImpl extends GlobalConfiguration {
     @Restricted(DoNotUse.class)
     public static void gerritStop() {
         PluginImpl.getInstance().stop();
+    }
+
+    static {
+        doXStreamRegistrations();
     }
 }
