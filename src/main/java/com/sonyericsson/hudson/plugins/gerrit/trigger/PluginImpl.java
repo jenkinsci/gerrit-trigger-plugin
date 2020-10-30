@@ -443,7 +443,9 @@ public class PluginImpl extends GlobalConfiguration {
      * @return gerritEventManager
      */
     public GerritHandler getHandler() {
-        if (gerritEventManager == null) throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
+        if (gerritEventManager == null) {
+            throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
+        }
         return gerritEventManager;
     }
 

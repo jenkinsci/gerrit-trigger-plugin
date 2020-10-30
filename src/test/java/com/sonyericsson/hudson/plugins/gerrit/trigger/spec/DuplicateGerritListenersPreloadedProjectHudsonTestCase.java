@@ -108,6 +108,9 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
 
     private Collection<GerritEventListener> originalListeners;
 
+    /**
+     * Save the initial listeners so verification can focus on those that are introduced during test.
+     */
     @Before
     public void setup() {
         originalListeners = getGerritEventListeners();

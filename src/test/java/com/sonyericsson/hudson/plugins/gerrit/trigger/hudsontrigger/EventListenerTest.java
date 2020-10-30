@@ -35,7 +35,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, EventListener.class, AbstractProject.class, PluginImpl.class})
+@PrepareForTest({ Jenkins.class, EventListener.class, AbstractProject.class, PluginImpl.class })
 public class EventListenerTest {
 
     private EventListener listener;
