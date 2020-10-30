@@ -70,7 +70,6 @@ import org.jvnet.hudson.test.MockAuthorizationStrategy;
  *
  * @author Scott Hebert &lt;scott.hebert@ericsson.com&gt;
  */
-
 public class LockedDownGerritEventTest {
 
     /**
@@ -226,14 +225,14 @@ public class LockedDownGerritEventTest {
         grantsToAliceBobAndEveryone();
         j.jenkins.setCrumbIssuer(null); //Not really testing csrf right now
         JenkinsRule.WebClient webClient = j.createWebClient().login("alice", "alice");
-        HtmlPage page = webClient.goTo("plugin/gerrit-trigger/servers/0/");
+        HtmlPage page = webClient.goTo("gerrit-trigger/servers/0/");
         HtmlForm config = page.getFormByName("config");
         assertNotNull(config);
-        post(webClient, "plugin/gerrit-trigger/servers/0/sleep", "application/json", null);
+        post(webClient, "gerrit-trigger/servers/0/sleep", "application/json", null);
 
         webClient = j.createWebClient().login("bob", "bob");
-        webClient.assertFails("plugin/gerrit-trigger/servers/0/", 403);
-        post(webClient, "plugin/gerrit-trigger/servers/0/wakeup", null, 403);
+        webClient.assertFails("gerrit-trigger/servers/0/", 403);
+        post(webClient, "gerrit-trigger/servers/0/wakeup", null, 403);
     }
 
     /**
