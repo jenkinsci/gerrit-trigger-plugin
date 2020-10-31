@@ -607,7 +607,9 @@ public class PluginImpl extends GlobalConfiguration {
     )
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
-        Objects.requireNonNull(PluginImpl.getInstance()).start();
+        PluginImpl instance = PluginImpl.getInstance();
+        if (instance == null) throw new IllegalStateException("Jenkins is not up");
+        instance.start();
     }
 
     /**
@@ -616,7 +618,9 @@ public class PluginImpl extends GlobalConfiguration {
     @Terminator(after = TermMilestone.COMPLETED)
     @Restricted(DoNotUse.class)
     public static void gerritStop() {
-        Objects.requireNonNull(PluginImpl.getInstance()).stop();
+        PluginImpl instance = PluginImpl.getInstance();
+        if (instance == null) throw new IllegalStateException("Jenkins is not up");
+        instance.stop();
     }
 
     static {
