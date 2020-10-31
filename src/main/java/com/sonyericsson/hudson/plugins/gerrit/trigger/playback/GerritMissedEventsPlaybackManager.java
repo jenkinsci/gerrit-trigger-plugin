@@ -62,7 +62,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -180,7 +179,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     public void checkIfEventsLogPluginSupported() {
         PluginImpl instance = PluginImpl.getInstance();
-        if (instance == null) throw new IllegalStateException("Jenkins is not up");
+        if (instance == null) {
+            throw new IllegalStateException("Jenkins is not up");
+        }
         GerritServer server = instance.getServer(serverName);
         if (server != null && server.getConfig() != null) {
             Boolean newValue = GerritPluginChecker.isPluginEnabled(server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);

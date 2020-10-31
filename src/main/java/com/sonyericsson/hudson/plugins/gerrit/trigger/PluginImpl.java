@@ -65,7 +65,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
@@ -608,7 +607,9 @@ public class PluginImpl extends GlobalConfiguration {
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
         PluginImpl instance = PluginImpl.getInstance();
-        if (instance == null) throw new IllegalStateException("Jenkins is not up");
+        if (instance == null) {
+            throw new IllegalStateException("Jenkins is not up");
+        }
         instance.start();
     }
 
@@ -619,7 +620,9 @@ public class PluginImpl extends GlobalConfiguration {
     @Restricted(DoNotUse.class)
     public static void gerritStop() {
         PluginImpl instance = PluginImpl.getInstance();
-        if (instance == null) throw new IllegalStateException("Jenkins is not up");
+        if (instance == null) {
+            throw new IllegalStateException("Jenkins is not up");
+        }
         instance.stop();
     }
 
