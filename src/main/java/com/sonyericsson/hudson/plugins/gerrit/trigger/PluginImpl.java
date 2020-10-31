@@ -65,6 +65,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
@@ -442,6 +443,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return gerritEventManager
      */
+    @Nonnull
     public GerritHandler getHandler() {
         if (gerritEventManager == null) {
             throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
@@ -605,7 +607,7 @@ public class PluginImpl extends GlobalConfiguration {
     )
     @Restricted(DoNotUse.class)
     public static void gerritStart() {
-        PluginImpl.getInstance().start();
+        Objects.requireNonNull(PluginImpl.getInstance()).start();
     }
 
     /**
@@ -614,7 +616,7 @@ public class PluginImpl extends GlobalConfiguration {
     @Terminator(after = TermMilestone.COMPLETED)
     @Restricted(DoNotUse.class)
     public static void gerritStop() {
-        PluginImpl.getInstance().stop();
+        Objects.requireNonNull(PluginImpl.getInstance()).stop();
     }
 
     static {

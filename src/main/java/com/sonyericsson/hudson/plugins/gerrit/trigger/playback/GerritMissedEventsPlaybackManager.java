@@ -62,6 +62,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -178,7 +179,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * method to verify if plugin is supported.
      */
     public void checkIfEventsLogPluginSupported() {
-        GerritServer server = PluginImpl.getInstance().getServer(serverName);
+        GerritServer server = Objects.requireNonNull(PluginImpl.getInstance()).getServer(serverName);
         if (server != null && server.getConfig() != null) {
             Boolean newValue = GerritPluginChecker.isPluginEnabled(server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
             if (newValue == null) {
