@@ -423,13 +423,13 @@
                             </f:repeatable>
                             </td>
                         </tr>
-                       <tr>
+                        <tr>
                             <td colspan="4" valign="top" style="border-left: 1px solid black; border-right: 1px solid black; border-bottom: 1px solid black;">
                                     <label>Disable Strict Forbidden File Verification</label>
                                     <f:checkbox name="disableStrictForbiddenFileVerification"
                                      checked="${loop.isDisableStrictForbiddenFileVerification()}"/>
                             </td>
-                      </tr>
+                        </tr>
                     </j:if>
                 </table>
             </f:repeatable>

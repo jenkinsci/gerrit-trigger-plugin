@@ -45,4 +45,9 @@
              field="excludeWipState">
         <f:checkbox/>
     </f:entry>
+    <f:entry title="${%Commit Message Contains Regular Expression}"
+             field="commitMessageContainsRegEx"
+             help="/plugin/gerrit-trigger/trigger/help-CommitMessageContains.html">
+        <f:textbox/>
+    </f:entry>
 </j:jelly>

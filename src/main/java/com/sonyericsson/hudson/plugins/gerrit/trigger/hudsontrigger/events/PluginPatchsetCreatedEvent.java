@@ -32,14 +32,17 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 /**
  * An event configuration that causes the build to be triggered when a patchset is created.
+ *
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Serializable {
@@ -50,6 +53,10 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private boolean excludeNoCodeChange = false;
     private boolean excludePrivateState = false;
     private boolean excludeWipState = false;
+    private String commitMessageContainsRegEx = "";
+
+    private transient Pattern commitMessagePattern = null;
+    private boolean forceUpdatePattern = true;
 
     /**
      * Default constructor.
@@ -61,18 +68,20 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         this.excludeNoCodeChange = false;
         this.excludePrivateState = false;
         this.excludeWipState = false;
+        this.commitMessageContainsRegEx = "";
     }
 
     /**
      * Standard DataBoundConstructor.
-     * @param excludeDrafts if drafts should be excluded or not.
+     *
+     * @param excludeDrafts        if drafts should be excluded or not.
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
-     * @param excludeNoCodeChange if message-only changes should be excluded.
+     * @param excludeNoCodeChange  if message-only changes should be excluded.
      */
     @Deprecated
     public PluginPatchsetCreatedEvent(boolean excludeDrafts,
-        boolean excludeTrivialRebase,
-        boolean excludeNoCodeChange) {
+                                      boolean excludeTrivialRebase,
+                                      boolean excludeNoCodeChange) {
         this.excludeDrafts = excludeDrafts;
         this.excludeTrivialRebase = excludeTrivialRebase;
         this.excludeNoCodeChange = excludeNoCodeChange;
@@ -80,6 +89,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Setter for excludeDrafts.
+     *
      * @param excludeDrafts if drafts should be excluded or not.
      */
     @DataBoundSetter
@@ -89,6 +99,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Setter for excludeTrivialRebase.
+     *
      * @param excludeTrivialRebase if trivial rebases should be excluded or not.
      */
     @DataBoundSetter
@@ -98,6 +109,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Setter for excludeNoCodeChange.
+     *
      * @param excludeNoCodeChange if message-only changes should be excluded.
      */
     @DataBoundSetter
@@ -107,6 +119,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Setter for excludePrivateState.
+     *
      * @param excludePrivateState if private state changes should be excluded.
      */
     @DataBoundSetter
@@ -116,6 +129,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Setter for excludeWipState.
+     *
      * @param excludeWipState if wip state changes should be excluded.
      */
     @DataBoundSetter
@@ -124,7 +138,19 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     }
 
     /**
+     * Setter for commitMessageContains.
+     *
+     * @param commitMessageContainsRegEx Trigger if this text is included in the commit message
+     */
+    @DataBoundSetter
+    public void setCommitMessageContainsRegEx(String commitMessageContainsRegEx) {
+        this.commitMessageContainsRegEx = commitMessageContainsRegEx;
+        this.forceUpdatePattern = true;
+    }
+
+    /**
      * Getter for the Descriptor.
+     *
      * @return the Descriptor for the PluginPatchsetCreatedEvent.
      */
     @Override
@@ -139,6 +165,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Getter for the excludeDrafts field.
+     *
      * @return excludeDrafts
      */
     public boolean isExcludeDrafts() {
@@ -147,6 +174,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Getter for the excludeTrivialRebase field.
+     *
      * @return excludeTrivialRebase
      */
     public boolean isExcludeTrivialRebase() {
@@ -155,6 +183,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Getter for the excludeNoCodeChange field.
+     *
      * @return excludeNoCodeChange
      */
     public boolean isExcludeNoCodeChange() {
@@ -163,6 +192,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Getter for the excludePrivateState field.
+     *
      * @return excludePrivateState
      */
     public boolean isExcludePrivateState() {
@@ -171,10 +201,20 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
 
     /**
      * Getter for the excludeWipState field.
+     *
      * @return excludeWipState
      */
     public boolean isExcludeWipState() {
         return excludeWipState;
+    }
+
+    /**
+     * Getter for commitMessageContains field.
+     *
+     * @return commitMessageContains
+     */
+    public String getCommitMessageContainsRegEx() {
+        return commitMessageContainsRegEx;
     }
 
     @Override
@@ -190,11 +230,11 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             return true;
         }
         if (excludeTrivialRebase
-            && GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+                && GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()) {
             return false;
         }
         if (excludeNoCodeChange
-            && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+                && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
             return false;
         }
         if (excludePrivateState && ((PatchsetCreated)event).getChange().isPrivate()) {
@@ -202,6 +242,15 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         }
         if (excludeWipState && ((PatchsetCreated)event).getChange().isWip()) {
             return false;
+        }
+        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
+            if (null == commitMessagePattern || forceUpdatePattern) {
+                commitMessagePattern = Pattern.compile(
+                        this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
+                forceUpdatePattern = false;
+            }
+            String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
+            return commitMessagePattern.matcher(commitMessage).find();
         }
         return true;
     }
