@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Run;
@@ -171,18 +172,53 @@ public class GerritItemListenerTest {
     }
 
     /**
+     * Test {@link GerritSaveableListener#onChange(hudson.model.Saveable, hudson.XmlFile)} to handle removed trigger.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    public void testOnJobUpdated() throws Exception {
+        FreeStyleProject job = j.createFreeStyleProject("MyJob");
+        GerritHandler handler = PluginImpl.getInstance().getHandler();
+
+        addTriggerToJob(job);
+
+        int before = handler.getEventListenersCount();
+
+        job.removeTrigger(DUMMY_DESCRIPTOR);
+
+        assertEquals("We leak some listeners", before - 1, handler.getEventListenersCount());
+    }
+
+    /**
+     * Dummy descriptor used during testing.
+     */
+    private static final     GerritTriggerDescriptor DUMMY_DESCRIPTOR = new GerritTriggerDescriptor();
+
+    /**
+     * Adds a Gerrit Trigger to supplied job.
+     * @param job the job
+     * @return added gerrit trigger
+     * @throws Exception if so.
+     */
+    public static GerritTrigger addTriggerToJob(AbstractProject<?, ?> job) throws Exception {
+        GerritTrigger trigger = spy(new GerritTrigger(null));
+
+        doReturn(DUMMY_DESCRIPTOR).when(trigger, "getDescriptor");
+        job.addTrigger(trigger);
+
+        trigger.start(job, true);
+        return trigger;
+    }
+
+    /**
      * Subscribes the job to the specified event.
      * @param job the job.
      * @param event the event.
      * @throws Exception if so.
      */
     public void subscribeJobToEvent(FreeStyleProject job, PatchsetCreated event) throws Exception {
-        GerritTrigger trigger = spy(new GerritTrigger(null));
-
-        doReturn(new GerritTriggerDescriptor()).when(trigger, "getDescriptor");
-        job.addTrigger(trigger);
-
-        trigger.start(job, true);
+        GerritTrigger trigger = addTriggerToJob(job);
         when(trigger.isInteresting(event)).thenReturn(true);
     }
 
