@@ -498,10 +498,8 @@ public class GerritTrigger extends Trigger<Job> {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
-            if (handler != null) {
-                handler.removeListener(new EventListener(oldFullName));
-                handler.addListener(createListener());
-            }
+            handler.removeListener(new EventListener(oldFullName));
+            handler.addListener(createListener());
         }
     }
 
@@ -543,12 +541,7 @@ public class GerritTrigger extends Trigger<Job> {
         PluginImpl plugin = PluginImpl.getInstance();
         if (plugin != null) {
             GerritHandler handler = plugin.getHandler();
-            if (handler != null) {
-                handler.addListener(createListener(project));
-            } else {
-                logger.warn("The plugin has no handler instance (BUG)! Project {} will not be triggered!",
-                        project.getFullDisplayName());
-            }
+            handler.addListener(createListener(project));
         } else {
             logger.warn("The plugin instance could not be found! Project {} will not be triggered!",
                     project.getFullDisplayName());

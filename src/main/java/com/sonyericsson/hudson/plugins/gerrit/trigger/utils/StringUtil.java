@@ -42,7 +42,7 @@ public final class StringUtil {
     public static final String REFSPEC_PREFIX = "refs/changes/";
 
     /**
-     * The base URL of this plugin.
+     * The base URL of this plugin. Only valid for web resources.
      */
     public static final String PLUGIN_URL = "/plugin/gerrit-trigger/";
 

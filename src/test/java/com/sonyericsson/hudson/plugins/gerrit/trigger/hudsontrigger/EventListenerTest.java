@@ -1,6 +1,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.JenkinsAwareGerritHandler;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
@@ -15,6 +16,7 @@ import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -33,7 +35,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, EventListener.class, AbstractProject.class, })
+@PrepareForTest({ Jenkins.class, EventListener.class, AbstractProject.class, PluginImpl.class })
 public class EventListenerTest {
 
     private EventListener listener;
@@ -57,12 +59,16 @@ public class EventListenerTest {
         jenkins = mock(Jenkins.class);
         mockStatic(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.get()).thenReturn(jenkins);
         when(jenkins.getItemByFullName("MockProject", AbstractProject.class)).thenReturn(project);
         when(jenkins.getItemByFullName("MockProject", Job.class)).thenReturn(project);
         Setup.setTrigger(trigger, project);
         when(trigger.isInteresting(any(GerritTriggeredEvent.class))).thenReturn(true);
         handler = new JenkinsAwareGerritHandler(1);
         handler.addListener(listener);
+
+        PowerMockito.mockStatic(PluginImpl.class);
+        PowerMockito.when(PluginImpl.getInstance()).thenReturn(null);
     }
 
 
