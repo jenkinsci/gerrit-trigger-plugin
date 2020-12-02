@@ -16,13 +16,19 @@
             <f:entry title="${%Silent Start Mode}"
                      field="silentStartMode"
                      help="/plugin/gerrit-trigger/trigger/help-SilentStartMode.html">
-               <f:checkbox name="silentStartMode"
+               <f:checkbox name="silentStartMode" 
                            checked="${it.silentStartMode}"/>
             </f:entry>
             <f:entry title="${%Escape Quotes in Parameter Values}"  field="escapeQuotes"
                  help="/plugin/gerrit-trigger/trigger/help-EscapeQuotes.html">
                 <f:checkbox name="escapeQuotes" default="true" checked="${it.escapeQuotes}"/>
             </f:entry>
+           <f:optionalBlock title="${%Build Current Patches Only}" name="buildCancellationPolicy"
+                            help="/plugin/gerrit-trigger/trigger/help-BuildCurrentPatchesOnly.html"
+                            checked="${instance.buildCurrentPatchesOnly}">
+               <f:property field="buildCancellationPolicy"/>
+           </f:optionalBlock>
+
             <f:entry title="${%Commit message parameter}" field="commitMessageParameterMode">
                 <ff:enum default="BASE64"> <!-- TODO change to f when core dep >= 1.640 -->
                     ${it.toString()}

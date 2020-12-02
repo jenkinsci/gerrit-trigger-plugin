@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry title="${%Abort new patch sets}"
+             help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
+        <f:checkbox name="abortNewPatchsets"
+                    field="abortNewPatchsets"
+                    checked="${it.abortNewPatchsets}"
+                    default="false"/>
+    </f:entry>
+    <f:entry title="${%Abort manual patch sets}"
+             help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
+        <f:checkbox name="abortManualPatchsets"
+                    field="abortManualPatchsets"
+                    checked="${it.abortManualPatchsets}"
+        />
+    </f:entry>
+    <f:entry title="${%Abort patch sets with same topic}"
+             help="/plugin/gerrit-trigger/help-GerritAbortPatchSetsWithSameTopic.html">
+        <f:checkbox name="abortSameTopic"
+                    field="abortSameTopic"
+                    checked="${it.abortSameTopic}"
+                    default="false"/>
+    </f:entry>
+</j:jelly>

@@ -91,6 +91,8 @@ public class SpecGerritTriggerHudsonTest {
     private SshServer sshd;
     private SshdServerMock serverMock;
     private GerritServer gerritServer;
+    private static final int DELAY = 2000;
+    private static final int WAIT = 60000;
 
     /**
      * Runs before test method.
@@ -734,6 +736,124 @@ public class SpecGerritTriggerHudsonTest {
     }
 
     /**
+     * Tests trigger-level cancellation with buildCurrentOnly.
+     *
+     * @throws Exception if so.
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+
+        FreeStyleProject ignoreProject = new TestUtils.JobBuilder(j).name("ignore-project" + rand.nextInt()).build();
+        ignoreProject.getBuildersList().add(new SleepBuilder(3000));
+
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+        TestUtils.waitForNonManualBuildToStart(ignoreProject, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+        TestUtils.waitForBuilds(ignoreProject, 2);
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+
+        //ensure that other jobs without the trigger are not impacted
+        assertEquals(Result.SUCCESS, ignoreProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, ignoreProject.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Tests multiple jobs being aborted by same cancellation.
+     * @throws java.lang.Exception if it happens
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedMultipleAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(6000));
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+
+        FreeStyleProject cancelProject2 = new TestUtils.JobBuilder(j).name("cancel-2-project" + rand.nextInt()).build();
+        cancelProject2.getBuildersList().add(new SleepBuilder(6000));
+
+        GerritTrigger trigger2 = cancelProject2.getTrigger(GerritTrigger.class);
+        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+        TestUtils.waitForNonManualBuildToStart(cancelProject2, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+        TestUtils.waitForBuilds(cancelProject2, 2);
+
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+
+        assertEquals(Result.ABORTED, cancelProject2.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject2.getBuildByNumber(2).getResult());
+    }
+
+    /**
+     * Tests removing trigger with trigger and server are configured to cancel jobs.
+     *
+     * @throws java.lang.Exception if it happens
+     */
+    @Test
+    @LocalData
+    public void testTriggerScopedAndServerAbortLatestPatchsetOnly() throws Exception {
+        Random rand = new Random();
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+        BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
+        policy.setEnabled(true);
+
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 10000);
+
+        PatchsetCreated secondEvent = Setup.createPatchsetCreated();
+        secondEvent.getPatchSet().setNumber("2");
+        secondEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(secondEvent);
+
+        TestUtils.waitForBuilds(cancelProject, 2);
+
+        assertEquals(Result.ABORTED, cancelProject.getFirstBuild().getResult());
+        assertEquals(Result.SUCCESS, cancelProject.getBuildByNumber(2).getResult());
+    }
+
+    /**
      * Tests that a comment added triggers a build correctly.
      *
      * @throws Exception if so.
@@ -743,8 +863,8 @@ public class SpecGerritTriggerHudsonTest {
     public void testTriggerOnCommentAdded() throws Exception {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
-        project.getBuildersList().add(new SleepBuilder(2000));
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        project.getBuildersList().add(new SleepBuilder(DELAY));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
         CommentAdded firstEvent = Setup.createCommentAdded();
         gerritServer.triggerEvent(firstEvent);
         TestUtils.waitForBuilds(project, 1);
@@ -763,8 +883,8 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
-        project.getBuildersList().add(new SleepBuilder(2000));
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        project.getBuildersList().add(new SleepBuilder(DELAY));
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
 
         gerritServer.triggerEvent(Setup.createCommentAdded());
         gerritServer.triggerEvent(Setup.createCommentAdded());
@@ -801,17 +921,17 @@ public class SpecGerritTriggerHudsonTest {
     @LocalData
     public void testProjectRename() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
 
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        TestUtils.waitForBuilds(project, 1, 60000);
+        TestUtils.waitForBuilds(project, 1, WAIT);
 
         project.renameTo("anotherName");
         project = j.configRoundtrip(project);
 
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        TestUtils.waitForBuilds(project, 2, 60000);
+        TestUtils.waitForBuilds(project, 2, WAIT);
     }
 }
