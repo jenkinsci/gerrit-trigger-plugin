@@ -56,7 +56,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private String commitMessageContainsRegEx = "";
 
     private transient Pattern commitMessagePattern = null;
-    private boolean forceUpdatePattern = true;
+    
 
     /**
      * Default constructor.
@@ -145,7 +145,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     @DataBoundSetter
     public void setCommitMessageContainsRegEx(String commitMessageContainsRegEx) {
         this.commitMessageContainsRegEx = commitMessageContainsRegEx;
-        this.forceUpdatePattern = true;
+        this.commitMessagePattern = null;
     }
 
     /**
@@ -244,7 +244,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             return false;
         }
         if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
-            if (null == commitMessagePattern || forceUpdatePattern) {
+            if (commitMessagePattern == null) {
                 commitMessagePattern = Pattern.compile(
                         this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
                 forceUpdatePattern = false;
