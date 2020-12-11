@@ -247,7 +247,6 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             if (commitMessagePattern == null) {
                 commitMessagePattern = Pattern.compile(
                         this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
-                forceUpdatePattern = false;
             }
             String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
             return commitMessagePattern.matcher(commitMessage).find();
