@@ -56,7 +56,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private String commitMessageContainsRegEx = "";
 
     private transient Pattern commitMessagePattern = null;
-    
+
 
     /**
      * Default constructor.
