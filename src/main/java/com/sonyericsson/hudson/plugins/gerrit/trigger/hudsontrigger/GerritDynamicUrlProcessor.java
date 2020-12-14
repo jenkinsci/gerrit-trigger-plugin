@@ -222,7 +222,7 @@ public final class GerritDynamicUrlProcessor {
           }
           FilePath filePath = new FilePath(type, text);
           forbiddenFilePaths.add(filePath);
-          dynamicGerritProject.setForbiddenFilePaths(filePaths);
+          dynamicGerritProject.setForbiddenFilePaths(forbiddenFilePaths);
         }
       }
 
