@@ -28,6 +28,7 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -159,6 +160,7 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
      * The descriptor.
      */
     @Extension
+    @Symbol("buildCancellationPolicy")
     public static class DescriptorImpl extends Descriptor<BuildCancellationPolicy> {
         @Override
         public BuildCancellationPolicy newInstance(final StaplerRequest req, final JSONObject formData)
