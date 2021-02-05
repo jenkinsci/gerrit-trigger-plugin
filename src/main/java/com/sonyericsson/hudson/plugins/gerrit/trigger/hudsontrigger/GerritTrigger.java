@@ -44,15 +44,20 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
+import com.sonymobile.tools.gerrit.gerritevents.GerritConnectionConfig2;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Topic;
+
 import hudson.model.Action;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
@@ -77,9 +82,12 @@ import java.text.MessageFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.PatternSyntaxException;
 
@@ -902,6 +910,88 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Get server by change.
+     *
+     * @param change the change
+     * @return Gerrit server.
+     */
+    private GerritServer getServerByChange(Change change) {
+        for (GerritServer server : PluginImpl.getServers_()) {
+            if (change.getUrl().contains(server.getHostName())) {
+                logger.trace("chnage: {}; server: {}", change, server.getHostName());
+                return server;
+            }
+        }
+        logger.error("can not find server for change: {}", change);
+        return null;
+    }
+
+    /**
+     * Should we trigger on this change?
+     *
+     * @param change the incoming change
+     * @param project the configured gerrit project
+     * @return true if we should.
+     */
+    private boolean isChangeInteresting(Change change, GerritProject project) {
+        boolean shouldTrigger = false;
+        boolean containsFilePathsOrForbiddenFilePaths = ((project.getFilePaths() != null
+                && project.getFilePaths().size() > 0)
+                || (project.getForbiddenFilePaths() != null && project.getForbiddenFilePaths().size() > 0));
+
+        if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
+            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic(),
+                    change.getFiles(new GerritQueryHandler(getServerByChange(change).getConfig())))) {
+                shouldTrigger = true;
+            }
+        } else {
+            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic())) {
+                shouldTrigger = true;
+            }
+        }
+
+        if (shouldTrigger) {
+            logger.trace("({},{},{}) is interesting; {}", change.getProject(),
+                    change.getBranch(), change.getTopic(), change);
+        }
+
+        return shouldTrigger;
+    }
+
+    /**
+     * Get related changes.
+     *
+     * @param changeBasedEvent the changeBasedEvent
+     * @return related changes.
+     */
+    private Set<Change> getChanges(ChangeBasedEvent changeBasedEvent) {
+        Set<Change> set = new HashSet<Change>();
+        Change change = changeBasedEvent.getChange();
+
+        set.add(change);
+
+        Topic topic = change.getTopicObject();
+        if (topic == null) {
+            logger.trace("{} has no topic", change);
+            return set;
+        }
+
+        for (GerritServer server : PluginImpl.getServers_()) {
+            topic = new Topic(topic.getName()); // Use a new topic object to avoid getting old changes
+            logger.trace("query topic {} from {} ({}:{})", topic, server.getName(), server.getHostName(),
+                    server.getSshPort());
+            Map<Change, PatchSet> changes = topic.getChanges(new GerritQueryHandler(server.getConfig()));
+            logger.trace("found {} changes with topic {} from {}", changes.size(), topic, server.getName());
+            for (Change item : changes.keySet()) {
+                logger.trace("{}", item);
+            }
+            set.addAll(changes.keySet());
+        }
+
+        return set;
+    }
+
+    /**
      * Should we trigger on this event?
      *
      * @param event the event
@@ -935,34 +1025,24 @@ public class GerritTrigger extends Trigger<Job> {
 
         logger.trace("entering isInteresting for the event: {}", event);
 
+        ChangeBasedEvent changeBasedEvent = null;
+        Set<Change> changes = null;
+
+        if (event instanceof ChangeBasedEvent) {
+            changeBasedEvent = (ChangeBasedEvent)event;
+            changes = getChanges(changeBasedEvent);
+        }
+
         Iterator<GerritProject> allGerritProjects = getAllGerritProjectsIterator();
         while (allGerritProjects.hasNext()) {
             GerritProject p = allGerritProjects.next();
             try {
-                if (event instanceof ChangeBasedEvent) {
-                    ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                    if (isServerInteresting(event)
-                         && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                            changeBasedEvent.getChange().getBranch(),
-                                            changeBasedEvent.getChange().getTopic())) {
-
-                        boolean containsFilePathsOrForbiddenFilePaths =
-                                ((p.getFilePaths() != null && p.getFilePaths().size() > 0)
-                                        || (p.getForbiddenFilePaths() != null && p.getForbiddenFilePaths().size() > 0));
-
-                        if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
-                            if (isServerInteresting(event)
-                                 && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                                    changeBasedEvent.getChange().getBranch(),
-                                                    changeBasedEvent.getChange().getTopic(),
-                                                    changeBasedEvent.getFiles(
-                                                        new GerritQueryHandler(getServerConfig(event))))) {
-                                logger.trace("According to {} the event is interesting; event: {}", p, event);
+                if (changeBasedEvent != null) {
+                    if (isServerInteresting(event)) {
+                        for (Change change : changes) {
+                            if (isChangeInteresting(change, p)) {
                                 return true;
                             }
-                        } else {
-                            logger.trace("According to {} the event is interesting; event: {}", p, event);
-                            return true;
                         }
                     }
                 } else if (event instanceof RefUpdated) {
