@@ -16,7 +16,7 @@
             <f:entry title="${%Silent Start Mode}"
                      field="silentStartMode"
                      help="/plugin/gerrit-trigger/trigger/help-SilentStartMode.html">
-               <f:checkbox name="silentStartMode" 
+               <f:checkbox name="silentStartMode"
                            checked="${it.silentStartMode}"/>
             </f:entry>
             <f:entry title="${%Escape Quotes in Parameter Values}"  field="escapeQuotes"
@@ -225,6 +225,12 @@
                  help="/plugin/gerrit-trigger/trigger/help-SilentMode.html">
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
+        </f:entry>
+        <f:entry title="${%Enable Topic Association}"
+                 field="enableTopicAssociation"
+                 help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociation.html">
+           <f:checkbox name="enableTopicAssociation"
+                       checked="${it.enableTopicAssociation}"/>
         </f:entry>
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">

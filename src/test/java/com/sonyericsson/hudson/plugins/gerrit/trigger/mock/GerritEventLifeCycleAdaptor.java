@@ -35,7 +35,7 @@ import hudson.model.Run;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritEventLifeCycleAdaptor implements GerritEventLifecycleListener {
+public abstract class GerritEventLifeCycleAdaptor implements GerritEventLifecycleListener {
     @Override
     public void triggerScanStarting(GerritEvent event) {
 
