@@ -148,35 +148,6 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
             return describe;
         }
     }
-//
-//    /**
-//     * Make `config` configurable.
-//     *
-//     * @see ServerConfigurator
-//     */
-//    @Extension
-//    public static final class ServerConfigConfigurator extends BaseConfigurator<Config> {
-//
-//        @Override
-//        protected Config instance(Mapping mapping, ConfigurationContext configurationContext) {
-//            return new Config();
-//        }
-//
-//        @Override
-//        public String getName() {
-//            return "config";
-//        }
-//
-//        @Override
-//        public String getDisplayName() {
-//            return "Gerrit Server Config";
-//        }
-//
-//        @Override
-//        public Class<Config> getTarget() {
-//            return Config.class;
-//        }
-//    }
 
     /**
      * Cannot use BaseConfigurator as {@link WatchTimeExceptionData} is immutable.
@@ -184,18 +155,18 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     @Extension
     public static final class WatchTimeExceptionDataConfigurator implements Configurator<WatchTimeExceptionData> {
 
-        public static final String DAYS_OF_WEEK = "daysOfWeek";
-        public static final String TIMES_OF_DAY = "timesOfDay";
+        private static final String DAYS_OF_WEEK = "daysOfWeek";
+        private static final String TIMES_OF_DAY = "timesOfDay";
 
-        private static final Map<String, Integer> dayNameToOrdinal = new HashMap<>();
+        private static final Map<String, Integer> DAY_NAME_TO_ORDINAL = new HashMap<>();
         static {
-            dayNameToOrdinal.put("monday", Calendar.MONDAY);
-            dayNameToOrdinal.put("tuesday", Calendar.TUESDAY);
-            dayNameToOrdinal.put("wednesday", Calendar.WEDNESDAY);
-            dayNameToOrdinal.put("thursday", Calendar.THURSDAY);
-            dayNameToOrdinal.put("friday", Calendar.FRIDAY);
-            dayNameToOrdinal.put("saturday", Calendar.SATURDAY);
-            dayNameToOrdinal.put("sunday", Calendar.SUNDAY);
+            DAY_NAME_TO_ORDINAL.put("monday", Calendar.MONDAY);
+            DAY_NAME_TO_ORDINAL.put("tuesday", Calendar.TUESDAY);
+            DAY_NAME_TO_ORDINAL.put("wednesday", Calendar.WEDNESDAY);
+            DAY_NAME_TO_ORDINAL.put("thursday", Calendar.THURSDAY);
+            DAY_NAME_TO_ORDINAL.put("friday", Calendar.FRIDAY);
+            DAY_NAME_TO_ORDINAL.put("saturday", Calendar.SATURDAY);
+            DAY_NAME_TO_ORDINAL.put("sunday", Calendar.SUNDAY);
         }
 
         @Override
@@ -220,8 +191,13 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
             );
         }
 
+        /**
+         * Translate day name into number.
+         * @param dayName Day name.
+         * @return Day number (1-7)
+         */
         private int nameToOrdinal(String dayName) {
-            Integer ordinal = dayNameToOrdinal.get(dayName.toLowerCase());
+            Integer ordinal = DAY_NAME_TO_ORDINAL.get(dayName.toLowerCase());
             if (ordinal == null) {
                 throw new IllegalArgumentException("Unknown day of week for name: " + dayName);
             }
@@ -229,8 +205,13 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
             return ordinal;
         }
 
+        /**
+         * Translate day number into day name.
+         * @param dayNumber Day number (1-7).
+         * @return Day name
+         */
         private String ordinalToName(int dayNumber) {
-            for (Map.Entry<String, Integer> es : dayNameToOrdinal.entrySet()) {
+            for (Map.Entry<String, Integer> es : DAY_NAME_TO_ORDINAL.entrySet()) {
                 if (es.getValue() == dayNumber) {
                     return es.getKey();
                 }
@@ -239,9 +220,24 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
             throw new IllegalArgumentException("Unknown day of week for ordinal: " + dayNumber);
         }
 
+        /**
+         * Configure object.
+         * @param config Text config.
+         * @param context Context
+         * @return New object.
+         * @throws ConfiguratorException In case of problems.
+         */
         @Override
-        public WatchTimeExceptionData configure(CNode config, ConfigurationContext context) throws ConfiguratorException {
-            Mapping mapping = (config != null ? config.asMapping(): Mapping.EMPTY);
+        public WatchTimeExceptionData configure(
+                CNode config, ConfigurationContext context
+        ) throws ConfiguratorException {
+            Mapping mapping;
+            if (config != null) {
+                mapping = config.asMapping();
+            } else {
+                mapping = Mapping.EMPTY;
+            }
+
             try {
                 Sequence days = mapping.get(DAYS_OF_WEEK).asSequence();
                 int[] dayNumbers = new int[days.size()];
@@ -277,6 +273,9 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
         }
     }
 
+    /**
+     * Configure {@link com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan}.
+     */
     @Extension
     public static final class TimeSpanConfigurator implements Configurator<WatchTimeExceptionData.TimeSpan> {
 

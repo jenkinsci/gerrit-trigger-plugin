@@ -1005,50 +1005,98 @@ public class Config implements IGerritHudsonTriggerConfig {
         return gerritBuildAbortedCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Started Verified Value.
+     * @param gerritBuildStartedVerifiedValue value
+     */
     public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
         this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Sucessful Verified Value.
+     * @param gerritBuildSuccessfulVerifiedValue value
+     */
     public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
         this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Failed Verified Value.
+     * @param gerritBuildFailedVerifiedValue value
+     */
     public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
         this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Unstable Verified Value.
+     * @param gerritBuildUnstableVerifiedValue value
+     */
     public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
         this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Not Build Verified Value.
+     * @param gerritBuildNotBuiltVerifiedValue value
+     */
     public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
         this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Aborted Verified Value.
+     * @param gerritBuildAbortedVerifiedValue value
+     */
     public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
         this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
     }
 
+    /**
+     * Set Gerrit Build Started Code Review Value.
+     * @param gerritBuildStartedCodeReviewValue value
+     */
     public void setGerritBuildStartedCodeReviewValue(Integer gerritBuildStartedCodeReviewValue) {
         this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Successful Code Review Value.
+     * @param gerritBuildSuccessfulCodeReviewValue value
+     */
     public void setGerritBuildSuccessfulCodeReviewValue(Integer gerritBuildSuccessfulCodeReviewValue) {
         this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Failed Code Review Value.
+     * @param gerritBuildFailedCodeReviewValue value
+     */
     public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
         this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Unstable Code Review Value.
+     * @param gerritBuildUnstableCodeReviewValue value
+     */
     public void setGerritBuildUnstableCodeReviewValue(Integer gerritBuildUnstableCodeReviewValue) {
         this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Not Build Code Review Value.
+     * @param gerritBuildNotBuiltCodeReviewValue value
+     */
     public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
         this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
     }
 
+    /**
+     * Set Gerrit Build Aborted Code Review Value.
+     * @param gerritBuildAbortedCodeReviewValue value
+     */
     public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
         this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
     }
@@ -1137,7 +1185,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public boolean isTriggerOnAllComments() { return triggerOnAllComments; }
+    public boolean isTriggerOnAllComments() {
+        return triggerOnAllComments;
+    }
 
     /**
      * Sets triggerOnAllComments.
@@ -1154,6 +1204,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         return replicationConfig;
     }
 
+    /**
+     * Set replication config.
+     * @param replicationConfig The config
+     */
     public void setReplicationConfig(ReplicationConfig replicationConfig) {
         this.replicationConfig = replicationConfig;
     }
@@ -1173,6 +1227,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         return watchdogTimeoutMinutes;
     }
 
+    /**
+     * Set watchdog timeout.
+     * @param watchdogTimeoutMinutes Number of minutes.
+     */
     public void setWatchdogTimeoutMinutes(int watchdogTimeoutMinutes) {
         this.watchdogTimeoutMinutes = watchdogTimeoutMinutes;
     }
@@ -1182,6 +1240,10 @@ public class Config implements IGerritHudsonTriggerConfig {
         return watchTimeExceptionData;
     }
 
+    /**
+     * Set exception data.
+     * @param exceptionData The data.
+     */
     public void setExceptionData(WatchTimeExceptionData exceptionData) {
         this.watchTimeExceptionData = exceptionData;
     }

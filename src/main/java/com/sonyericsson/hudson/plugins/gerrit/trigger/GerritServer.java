@@ -192,7 +192,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
-     * Empty constructor
+     * Empty constructor.
      */
     @DataBoundConstructor
     public GerritServer() {
@@ -263,9 +263,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
         return name;
     }
 
-    public GerritServer setName(String name) {
+    /**
+     * Set the server name.
+     * @param name New name
+     */
+    public void setName(String name) {
         this.name = name;
-        return this;
     }
 
     /**

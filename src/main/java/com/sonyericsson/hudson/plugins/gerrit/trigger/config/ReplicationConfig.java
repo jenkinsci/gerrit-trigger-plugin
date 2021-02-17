@@ -108,6 +108,11 @@ public class ReplicationConfig {
         return enableReplication;
     }
 
+    /**
+     * Enable replication of events.
+     *
+     * @param enableReplication enable
+     */
     public void setEnableReplication(boolean enableReplication) {
         this.enableReplication = enableReplication;
     }
@@ -128,6 +133,10 @@ public class ReplicationConfig {
         return slaves;
     }
 
+    /**
+     * Set list of configured replicas to use.
+     * @param replicas replicas.
+     */
     public void setReplicas(List<GerritSlave> replicas) {
         this.slaves = replicas;
     }
@@ -148,6 +157,10 @@ public class ReplicationConfig {
         return enableSlaveSelectionInJobs;
     }
 
+    /**
+     * Set replica selection in enabled in job config.
+     * @param enableReplicaSelectionInJobs true if so.
+     */
     public void setEnableReplicaSelectionInJobs(boolean enableReplicaSelectionInJobs) {
         this.enableSlaveSelectionInJobs = enableReplicaSelectionInJobs;
     }
@@ -168,6 +181,10 @@ public class ReplicationConfig {
         return defaultSlaveId;
     }
 
+    /**
+     * Set default replica id.
+     * @param replicaId default id
+     */
     public void setDefaultReplicaId(String replicaId) {
         this.defaultSlaveId = replicaId;
     }

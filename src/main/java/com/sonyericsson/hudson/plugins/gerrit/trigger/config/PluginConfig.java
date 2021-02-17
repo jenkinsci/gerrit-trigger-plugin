@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,10 +245,10 @@ public class PluginConfig implements GerritWorkersConfig {
     /**
      * Set events that are filtered in.
      *
-     * @param filterIn List of events.
+     * @param events List of events.
      */
-    public void setInterestingEvents(List<String> filterIn) {
-        this.filterIn = filterIn;
+    public void setInterestingEvents(List<String> events) {
+        this.filterIn = events;
     }
 
     /**

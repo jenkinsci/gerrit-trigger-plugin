@@ -26,7 +26,6 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
@@ -41,9 +40,7 @@ import org.apache.tools.ant.filters.StringInputStream;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +49,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -102,7 +99,7 @@ public class JcascTest {
         assertEquals("foo", s.getName());
         assertFalse(s.isNoConnectionOnStartup());
 
-        Config c = (Config) s.getConfig();
+        Config c = (Config)s.getConfig();
         assertEquals("gerrit-host.com", c.getGerritHostName());
         assertEquals("https://gerrit-host.com/", c.getGerritFrontEndUrl());
         assertEquals(66666, c.getGerritSshPort());
@@ -153,7 +150,7 @@ public class JcascTest {
         assertEquals("baz", c2.getVerdictValue());
         assertEquals("bax", c2.getVerdictDescription());
 
-        UsernamePasswordCredentials httpCredentials = (UsernamePasswordCredentials) c.getHttpCredentials();
+        UsernamePasswordCredentials httpCredentials = (UsernamePasswordCredentials)c.getHttpCredentials();
         if (checkPasswords) {
             assertEquals("never_use_plaintext_password", httpCredentials.getPassword());
         }
