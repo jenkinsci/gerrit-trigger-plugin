@@ -75,14 +75,11 @@ public class JcascTest {
             assertThat(exported, containsString("to: \"05:07\""));
 
             assertThat(exported, not(containsString("FAILED TO EXPORT")));
-            System.out.println(exported);
 
             ConfigurationAsCode.get().configureWith(YamlSource.of(new StringInputStream(exported)));
 
             verifyDefaultSetup(false);
         }
-
-//        j.interactiveBreak();
     }
 
     private void verifyDefaultSetup(boolean checkPasswords) {
@@ -100,10 +97,10 @@ public class JcascTest {
         assertFalse(s.isNoConnectionOnStartup());
 
         Config c = (Config)s.getConfig();
-        assertEquals("gerrit-host.com", c.getGerritHostName());
-        assertEquals("https://gerrit-host.com/", c.getGerritFrontEndUrl());
+        assertEquals("example.com", c.getGerritHostName());
+        assertEquals("https://example.com/", c.getGerritFrontEndUrl());
         assertEquals(66666, c.getGerritSshPort());
-        assertEquals("socks5://myproxy:8080", c.getGerritProxy());
+        assertEquals("http://localhost:8080", c.getGerritProxy());
         assertEquals("jenkins-user", c.getGerritUserName());
         assertEquals("gerrit@example.com", c.getGerritEMail());
         if (checkPasswords) {
@@ -132,6 +129,13 @@ public class JcascTest {
         assertEquals(4, c.getGerritBuildUnstableCodeReviewValue().intValue());
         assertEquals(4, c.getGerritBuildNotBuiltCodeReviewValue().intValue());
         assertEquals(4, c.getGerritBuildAbortedCodeReviewValue().intValue());
+
+        assertThat(c.getGerritCmdBuildStarted(), containsString("Build Started CMD"));
+        assertThat(c.getGerritCmdBuildSuccessful(), containsString("Build Successful CMD"));
+        assertThat(c.getGerritCmdBuildFailed(), containsString("Build Failed CMD"));
+        assertThat(c.getGerritCmdBuildUnstable(), containsString("Build Unstable CMD"));
+        assertThat(c.getGerritCmdBuildNotBuilt(), containsString("No Builds Executed CMD"));
+        assertThat(c.getGerritCmdBuildAborted(), containsString("Build Aborted CMD"));
 
         assertEquals(4, c.getBuildScheduleDelay());
         assertEquals(31, c.getDynamicConfigRefreshInterval());

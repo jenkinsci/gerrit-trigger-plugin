@@ -866,7 +866,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
      */
-    public void setGerritVerifiedCmdBuildSuccessful(String cmd) {
+    public void setGerritCmdBuildSuccessful(String cmd) {
         gerritVerifiedCmdBuildSuccessful = cmd;
     }
 
@@ -881,7 +881,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildUnstable()
      */
-    public void setGerritVerifiedCmdBuildUnstable(String cmd) {
+    public void setGerritCmdBuildUnstable(String cmd) {
         gerritVerifiedCmdBuildUnstable = cmd;
     }
 
@@ -894,9 +894,9 @@ public class Config implements IGerritHudsonTriggerConfig {
      * GerritVerifiedCmdBuildFailed.
      *
      * @param cmd the command
-     * @see #setGerritVerifiedCmdBuildFailed(java.lang.String)
+     * @see #getGerritCmdBuildFailed()
      */
-    public void setGerritVerifiedCmdBuildFailed(String cmd) {
+    public void setGerritCmdBuildFailed(String cmd) {
         gerritVerifiedCmdBuildFailed = cmd;
     }
 
@@ -911,7 +911,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildStarted()
      */
-    public void setGerritVerifiedCmdBuildStarted(String cmd) {
+    public void setGerritCmdBuildStarted(String cmd) {
         gerritVerifiedCmdBuildStarted = cmd;
     }
 
@@ -926,7 +926,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildNotBuilt()
      */
-    public void setGerritVerifiedCmdBuildNotBuilt(String cmd) {
+    public void setGerritCmdBuildNotBuilt(String cmd) {
         gerritVerifiedCmdBuildNotBuilt = cmd;
     }
 
@@ -939,9 +939,9 @@ public class Config implements IGerritHudsonTriggerConfig {
      * GerritVerifiedCmdBuildAborted.
      *
      * @param cmd the command
-     * @see #setGerritVerifiedCmdBuildAborted(java.lang.String)
+     * @see #getGerritCmdBuildAborted()
      */
-    public void setGerritVerifiedCmdBuildAborted(String cmd) {
+    public void setGerritCmdBuildAborted(String cmd) {
         gerritVerifiedCmdBuildAborted = cmd;
     }
 
