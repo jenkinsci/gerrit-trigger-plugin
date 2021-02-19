@@ -266,6 +266,7 @@
             <artifactId>configuration-as-code</artifactId>
             <groupId>io.jenkins</groupId>
             <version>1.36</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <artifactId>test-harness</artifactId>

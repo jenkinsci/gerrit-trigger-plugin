@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
  * Configure JCasC.
  */
 @Restricted(NoExternalUse.class)
-@Extension
+@Extension(optional = true)
 public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
     /**
@@ -166,9 +166,6 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
         @Override
         public Set<Attribute<WatchTimeExceptionData, ?>> describe() {
-
-            ConfiguratorRegistry configuratorRegistry = ConfiguratorRegistry.get();
-            configuratorRegistry.lookup(getTarget());
             return ImmutableSet.of(
                     new MultivaluedAttribute<WatchTimeExceptionData, String>(DAYS_OF_WEEK, String.class).getter(
                             target -> Arrays.stream(target.getDaysOfWeek())
