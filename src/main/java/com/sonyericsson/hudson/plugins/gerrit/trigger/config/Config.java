@@ -866,6 +866,17 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
      */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildSuccessful(String cmd) {
+        setGerritCmdBuildSuccessful(cmd);
+    }
+
+    /**
+     * GerritVerifiedCmdBuildSuccessful.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildSuccessful()
+     */
     public void setGerritCmdBuildSuccessful(String cmd) {
         gerritVerifiedCmdBuildSuccessful = cmd;
     }
@@ -873,6 +884,17 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritCmdBuildUnstable() {
         return gerritVerifiedCmdBuildUnstable;
+    }
+
+    /**
+     * GerritVerifiedCmdBuildUnstable.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildUnstable()
+     */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildUnstable(String cmd) {
+        setGerritCmdBuildUnstable(cmd);
     }
 
     /**
@@ -896,6 +918,17 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildFailed()
      */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildFailed(String cmd) {
+        setGerritCmdBuildFailed(cmd);
+    }
+
+    /**
+     * GerritVerifiedCmdBuildFailed.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildFailed()
+     */
     public void setGerritCmdBuildFailed(String cmd) {
         gerritVerifiedCmdBuildFailed = cmd;
     }
@@ -903,6 +936,17 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritCmdBuildStarted() {
         return gerritVerifiedCmdBuildStarted;
+    }
+
+    /**
+     * GerritVerifiedCmdBuildStarted.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildStarted()
+     */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildStarted(String cmd) {
+        setGerritCmdBuildStarted(cmd);
     }
 
     /**
@@ -926,6 +970,17 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param cmd the command
      * @see #getGerritCmdBuildNotBuilt()
      */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildNotBuilt(String cmd) {
+        setGerritCmdBuildNotBuilt(cmd);
+    }
+
+    /**
+     * GerritVerifiedCmdBuildNotBuilt.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildNotBuilt()
+     */
     public void setGerritCmdBuildNotBuilt(String cmd) {
         gerritVerifiedCmdBuildNotBuilt = cmd;
     }
@@ -933,6 +988,17 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public String getGerritCmdBuildAborted() {
         return gerritVerifiedCmdBuildAborted;
+    }
+
+    /**
+     * GerritVerifiedCmdBuildAborted.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildAborted()
+     */
+    @Deprecated
+    public void setGerritVerifiedCmdBuildAborted(String cmd) {
+        setGerritCmdBuildAborted(cmd);
     }
 
     /**
