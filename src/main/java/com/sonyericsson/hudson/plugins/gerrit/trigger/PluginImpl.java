@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -300,6 +301,21 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public void setServers(List<GerritServer> servers) {
         checkAdmin();
+
+        // Mimicking GerritManagement#doAddNewServer
+
+        List<String> serverNames = new ArrayList<>();
+        for (GerritServer server : servers) {
+            String name = server.getName();
+            if (serverNames.contains(name)) {
+                throw new IllegalArgumentException("Multiple gerrit servers with name: " + name);
+            }
+            serverNames.add(name);
+        }
+        if (serverNames.contains(GerritServer.ANY_SERVER)) {
+            throw new IllegalArgumentException("Illegal gerrit server name: " + GerritServer.ANY_SERVER);
+        }
+
         if (this.servers != servers) {
             this.servers.clear();
             this.servers.addAll(servers);

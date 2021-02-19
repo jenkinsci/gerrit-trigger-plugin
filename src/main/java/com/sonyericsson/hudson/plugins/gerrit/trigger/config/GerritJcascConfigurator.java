@@ -93,27 +93,17 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     ) throws ConfiguratorException {
         List<GerritServer> oldServers = instance.getServers();
 
-        super.configure(config, instance, dryrun, context);
+        try {
+            super.configure(config, instance, dryrun, context);
+        } catch (IllegalArgumentException ex) {
+            throw new ConfiguratorException(this, "Failed configuring gerrit trigger", ex);
+        }
 
         instance.getPluginConfig().updateEventFilter();
 
         for (GerritServer oldServer : oldServers) {
             oldServer.stopConnection();
             oldServer.stop();
-        }
-
-        // Mimicking GerritManagement#doAddNewServer
-
-        List<String> serverNames = new ArrayList<>();
-        for (GerritServer server : instance.getServers()) {
-            String name = server.getName();
-            if (serverNames.contains(name)) {
-                throw new ConfiguratorException(this, "Multiple gerrit servers with name: " + name);
-            }
-            serverNames.add(name);
-        }
-        if (serverNames.contains(GerritServer.ANY_SERVER)) {
-            throw new ConfiguratorException(this, "Illegal gerrit server name: " + GerritServer.ANY_SERVER);
         }
 
         for (GerritServer server : instance.getServers()) {
