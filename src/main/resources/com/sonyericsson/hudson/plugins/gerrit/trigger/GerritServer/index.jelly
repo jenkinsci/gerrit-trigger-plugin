@@ -1,78 +1,6 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:local="local">
-    <d:taglib uri="local">
-        <d:tag name="blockWrapperTable">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <table>
-                        <d:invokeBody/>
-                    </table>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-        <d:tag name="blockWrapperTr">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <tr>
-                        <d:invokeBody/>
-                    </tr>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-        <d:tag name="blockWrapperTrValidationErrorArea">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <tr class="validation-error-area">
-                        <d:invokeBody/>
-                    </tr>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-        <d:tag name="blockWrapperTd">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <td>
-                        <d:invokeBody/>
-                    </td>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-        <d:tag name="blockWrapperTdColspan">
-            <j:choose>
-                <j:when test="${divBasedFormLayout}">
-                    <div>
-                        <d:invokeBody/>
-                    </div>
-                </j:when>
-                <j:otherwise>
-                    <td colspan="1">
-                        <d:invokeBody/>
-                    </td>
-                </j:otherwise>
-            </j:choose>
-        </d:tag>
-    </d:taglib>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:p="/lib/plot">
     <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
@@ -179,14 +107,14 @@
                                       with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
                 </f:section>
                 <f:section title="${%Gerrit Reporting Values}">
-                    <local:blockWrapperTr>
-                        <local:blockWrapperTd></local:blockWrapperTd>
-                        <local:blockWrapperTd>
+                    <p:blockWrapperTr>
+                        <p:blockWrapperTd></p:blockWrapperTd>
+                        <p:blockWrapperTd>
                             <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
                                 ${%Verify}
                             </div>
-                        </local:blockWrapperTd>
-                    </local:blockWrapperTr>
+                        </p:blockWrapperTd>
+                    </p:blockWrapperTr>
                     <f:entry title="${%Started}"
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedVerified.html">
                         <f:textbox name="gerritBuildStartedVerifiedValue"
@@ -223,14 +151,14 @@
                                    value="${it.config.gerritBuildAbortedVerifiedValue}"
                                    checkUrl="'${rootURL}/${serverURL}/emptyOrIntegerCheck?value='+escape(this.value)"/>
                     </f:entry>
-                    <local:blockWrapperTr>
-                        <local:blockWrapperTd></local:blockWrapperTd>
-                        <local:blockWrapperTd>
+                    <p:blockWrapperTr>
+                        <p:blockWrapperTd></p:blockWrapperTd>
+                        <p:blockWrapperTd>
                             <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">
                                 ${%Code Review}
                             </div>
-                        </local:blockWrapperTd>
-                    </local:blockWrapperTr>
+                        </p:blockWrapperTd>
+                    </p:blockWrapperTr>
                     <f:entry title="${%Started}"
                              help="/plugin/gerrit-trigger/help-GerritBuildStartedCodeReview.html">
                         <f:textbox name="gerritBuildStartedCodeReviewValue"
@@ -381,29 +309,29 @@
                         <f:entry title="${%Verdict Categories}">
                             <f:repeatable var="v" items="${it.config.categories}" name="verdictCategories"
                                           add="${%Add Verdict Category}" minimum="0" header="">
-                                <local:blockWrapperTable>
-                                    <local:blockWrapperTr>
-                                        <local:blockWrapperTd>
+                                <p:blockWrapperTable>
+                                    <p:blockWrapperTr>
+                                        <p:blockWrapperTd>
                                             ${%Verdict Value}
-                                        </local:blockWrapperTd>
-                                        <local:blockWrapperTd>
+                                        </p:blockWrapperTd>
+                                        <p:blockWrapperTd>
                                             <f:textbox name="verdictValue" value="${v.verdictValue}"/>
-                                        </local:blockWrapperTd>
-                                    </local:blockWrapperTr>
-                                    <local:blockWrapperTr>
-                                        <local:blockWrapperTd>
+                                        </p:blockWrapperTd>
+                                    </p:blockWrapperTr>
+                                    <p:blockWrapperTr>
+                                        <p:blockWrapperTd>
                                             ${%Verdict Description}
-                                        </local:blockWrapperTd>
-                                        <local:blockWrapperTd>
+                                        </p:blockWrapperTd>
+                                        <p:blockWrapperTd>
                                             <f:textbox name="verdictDescription" value="${v.verdictDescription}"/>
-                                        </local:blockWrapperTd>
-                                    </local:blockWrapperTr>
-                                    <local:blockWrapperTr>
-                                        <local:blockWrapperTd>
+                                        </p:blockWrapperTd>
+                                    </p:blockWrapperTr>
+                                    <p:blockWrapperTr>
+                                        <p:blockWrapperTd>
                                             <f:repeatableDeleteButton/>
-                                        </local:blockWrapperTd>
-                                    </local:blockWrapperTr>
-                                </local:blockWrapperTable>
+                                        </p:blockWrapperTd>
+                                    </p:blockWrapperTr>
+                                </p:blockWrapperTable>
                             </f:repeatable>
                         </f:entry>
                     </f:section>
@@ -443,7 +371,7 @@
                                     <f:repeatable var="slave" items="${it.config.replicationConfig.gerritSlaves}"
                                                   name="slaves" add="${%Add Gerrit Slave}" minimum="1"
                                                   header="${%Gerrit Slave}">
-                                        <local:blockWrapperTable>
+                                        <p:blockWrapperTable>
                                             <f:invisibleEntry>
                                                 <f:textbox name="id" value="${slave.id}"/>
                                             </f:invisibleEntry>
@@ -466,7 +394,7 @@
                                                     <f:repeatableDeleteButton />
                                                 </div>
                                             </f:entry>
-                                        </local:blockWrapperTable>
+                                        </p:blockWrapperTable>
                                     </f:repeatable>
                                 </f:entry>
                                 <f:optionalBlock name="enableSlaveSelectionInJobs"
@@ -492,60 +420,60 @@
                         <f:optionalBlock name="watchdogExceptions" title="${%Connection Watchdog Exceptions}" checked="${it.config.exceptionData.enabled}">
                             <f:entry title="${%Exception Days}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionDays.html">
-                                <local:blockWrapperTable>
+                                <p:blockWrapperTable>
                                     <j:forEach var="helper" items="${it.generateHelper()}">
-                                        <local:blockWrapperTr>
-                                            <local:blockWrapperTd>
+                                        <p:blockWrapperTr>
+                                            <p:blockWrapperTd>
                                                 ${helper.displayName}
-                                            </local:blockWrapperTd>
-                                            <local:blockWrapperTd>
+                                            </p:blockWrapperTd>
+                                            <p:blockWrapperTd>
                                                 <f:checkbox name="${helper.id}"
                                                             checked="${helper.checked}"
                                                             default="${false}"/>
-                                            </local:blockWrapperTd>
-                                        </local:blockWrapperTr>
+                                            </p:blockWrapperTd>
+                                        </p:blockWrapperTr>
                                     </j:forEach>
-                                </local:blockWrapperTable>
+                                </p:blockWrapperTable>
                             </f:entry>
                             <f:entry title="${%Exception Times}"
                                      help="/plugin/gerrit-trigger/help-ConnectionWatchdogExceptionTimes.html">
                                 <f:repeatable var="t" items="${it.config.exceptionData.timesOfDay}"
                                               name="watchdogExceptionTimes" add="${%Add Time}" minimum="0"
                                               header="">
-                                    <local:blockWrapperTable>
-                                        <local:blockWrapperTr>
-                                            <local:blockWrapperTd>
+                                    <p:blockWrapperTable>
+                                        <p:blockWrapperTr>
+                                            <p:blockWrapperTd>
                                                 ${%From}
-                                            </local:blockWrapperTd>
-                                            <local:blockWrapperTd>
+                                            </p:blockWrapperTd>
+                                            <p:blockWrapperTd>
                                                 <f:textbox name="from"
                                                            value="${h.appendIfNotNull(t.from.hourAsString,'','00')}:${h.appendIfNotNull(t.from.minuteAsString,'','00')}"
                                                            checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
                                                            +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
-                                            </local:blockWrapperTd>
-                                        </local:blockWrapperTr>
-                                        <local:blockWrapperTr>
-                                            <local:blockWrapperTd>
+                                            </p:blockWrapperTd>
+                                        </p:blockWrapperTr>
+                                        <p:blockWrapperTr>
+                                            <p:blockWrapperTd>
                                                 ${%To}
-                                            </local:blockWrapperTd>
-                                            <local:blockWrapperTd>
+                                            </p:blockWrapperTd>
+                                            <p:blockWrapperTd>
                                                 <f:textbox name="to"
                                                            value="${h.appendIfNotNull(t.to.hourAsString,'','00')}:${h.appendIfNotNull(t.to.minuteAsString,'','01')}"
                                                            checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
                                                            +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
-                                            </local:blockWrapperTd>
-                                        </local:blockWrapperTr>
+                                            </p:blockWrapperTd>
+                                        </p:blockWrapperTr>
                                         <!--used to display the form validation error -->
-                                        <local:blockWrapperTrValidationErrorArea>
-                                            <local:blockWrapperTd></local:blockWrapperTd>
-                                            <local:blockWrapperTdColspan></local:blockWrapperTdColspan>
-                                        </local:blockWrapperTrValidationErrorArea>
-                                        <local:blockWrapperTr>
-                                            <local:blockWrapperTd>
+                                        <p:blockWrapperTrValidationErrorArea>
+                                            <p:blockWrapperTd></p:blockWrapperTd>
+                                            <p:blockWrapperTdColspan></p:blockWrapperTdColspan>
+                                        </p:blockWrapperTrValidationErrorArea>
+                                        <p:blockWrapperTr>
+                                            <p:blockWrapperTd>
                                                 <f:repeatableDeleteButton/>
-                                            </local:blockWrapperTd>
-                                        </local:blockWrapperTr>
-                                    </local:blockWrapperTable>
+                                            </p:blockWrapperTd>
+                                        </p:blockWrapperTr>
+                                    </p:blockWrapperTable>
                                 </f:repeatable>
                             </f:entry>
                         </f:optionalBlock>

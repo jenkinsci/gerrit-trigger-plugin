@@ -1,0 +1,16 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:d="jelly:define" xmlns:f="/lib/form" xmlns:l="/lib/layout">
+    <!-- TODO remove and switch to div after baseline is 2.264 or newer -->
+    <j:choose>
+        <j:when test="${divBasedFormLayout}">
+            <div>
+                <d:invokeBody/>
+            </div>
+        </j:when>
+        <j:otherwise>
+            <td colspan="1">
+                <d:invokeBody/>
+            </td>
+        </j:otherwise>
+    </j:choose>
+</j:jelly>
