@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib" xmlns:p="/lib/plot">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib" xmlns:p="/lib/gerrit-trigger">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
