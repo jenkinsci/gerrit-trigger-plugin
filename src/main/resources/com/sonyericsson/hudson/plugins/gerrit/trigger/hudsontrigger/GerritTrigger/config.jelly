@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
- <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib">
+ <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:ff="/com/sonyericsson/hudson/plugins/gerrit/trigger/lib" xmlns:p="/lib/gerrit-trigger">
     <!--<j:set var="descriptor" value="${it.descriptor}" />-->
     <j:set var="types" value="${descriptor.getCompareTypes()}"/>
     <j:set var="fileTriggerEnabled" value="${instance.isFileTriggerEnabled()}"/>
@@ -80,7 +80,12 @@
                         <label class="attach-previous">${%Aborted}</label>
                     </div>
                 </f:entry>
-                <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div></td></tr>
+                <p:blockWrapperTr>
+                    <p:blockWrapperTd></p:blockWrapperTd>
+                    <p:blockWrapperTd>
+                        <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Verify}</div>
+                    </p:blockWrapperTd>
+                </p:blockWrapperTr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedVerifiedValue"
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedVerified.html">
@@ -129,7 +134,12 @@
                                default=""
                                checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/emptyOrIntegerCheck?value='+escape(this.value)"/>
                 </f:entry>
-                <tr><td></td><td><div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div></td></tr>
+                <p:blockWrapperTr>
+                    <p:blockWrapperTd></p:blockWrapperTd>
+                    <p:blockWrapperTd>
+                        <div style="font-weight: bold; border-bottom: 1px solid black; margin-bottom: 0.2em; margin-top: 0.4em;">${%Code Review}</div>
+                    </p:blockWrapperTd>
+                </p:blockWrapperTr>
                 <f:entry title="${%Started}"
                          field="gerritBuildStartedCodeReviewValue"
                          help="/plugin/gerrit-trigger/trigger/help-GerritBuildStartedCodeReview.html">
@@ -233,7 +243,7 @@
         <f:entry title="${%Dynamic Trigger Configuration}"
                  field="dynamicTriggerConfiguration"
                  help="/plugin/gerrit-trigger/trigger/help-DynamicTriggerConfiguration.html">
-            <table width="100%">
+            <p:blockWrapperTableWidth>
                 <f:optionalBlock title="" inline="true" name="dynamicTriggerConfiguration"
                                  checked="${it.dynamicTriggerConfiguration}">
                     <f:entry title="${%Trigger Configuration URL}"
@@ -242,7 +252,7 @@
                             checkUrl="'descriptorByName/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger/urlCheck?value='+escape(this.value)"/>
                     </f:entry>
                 </f:optionalBlock>
-            </table>
+            </p:blockWrapperTableWidth>
         </f:entry>
 
         <f:entry help="/plugin/gerrit-trigger/trigger/help-GerritTriggerConfiguration.html">
