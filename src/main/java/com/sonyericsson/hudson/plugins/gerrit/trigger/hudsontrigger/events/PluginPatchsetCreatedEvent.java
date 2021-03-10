@@ -225,6 +225,14 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         if (excludeDrafts && ((PatchsetCreated)event).getPatchSet().isDraft()) {
             return false;
         }
+        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
+            if (commitMessagePattern == null) {
+                commitMessagePattern = Pattern.compile(
+                        this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
+            }
+            String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
+            return commitMessagePattern.matcher(commitMessage).find();
+        }
         if (event instanceof ManualPatchsetCreated) {
             // always trigger build when the build is triggered manually
             return true;
@@ -242,14 +250,6 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         }
         if (excludeWipState && ((PatchsetCreated)event).getChange().isWip()) {
             return false;
-        }
-        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
-            if (commitMessagePattern == null) {
-                commitMessagePattern = Pattern.compile(
-                        this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
-            }
-            String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
-            return commitMessagePattern.matcher(commitMessage).find();
         }
         return true;
     }
