@@ -54,8 +54,9 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     /**
      * The command for fetching projects.
      */
-    public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
+    public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects --prefix ";
     private static final int MAX_WAIT_TIME = 64;
+    private final String projectPrefix;
 
     private AtomicBoolean connected = new AtomicBoolean(false);
     private boolean shutdown = false;
@@ -66,11 +67,13 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     /**
      * Default constructor.
      * @param serverName the name of the Gerrit server.
+     * @param projectPrefix of the projects to list from the Gerrit server.
      */
-    public GerritProjectListUpdater(String serverName) {
+    public GerritProjectListUpdater(String serverName, String projectPrefix) {
         this.setName(this.getClass().getName() + " for " + serverName + " Thread");
         this.setDaemon(true);
         this.serverName = serverName;
+        this.projectPrefix = projectPrefix;
         addThisAsListener();
     }
 
@@ -239,7 +242,8 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                         activeConfig.getGerritProxy(),
                         activeConfig.getGerritAuthentication()
                 );
-                List<String> projects = readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
+                List<String> projects = readProjects(sshConnection
+                        .executeCommandReader(GERRIT_LS_PROJECTS + projectPrefix));
                 if (projects.size() > 0) {
                     setGerritProjects(projects);
                     logger.info("Project list from {} contains {} entries", serverName, projects.size());
