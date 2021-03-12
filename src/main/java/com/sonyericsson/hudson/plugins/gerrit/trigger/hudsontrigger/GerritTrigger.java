@@ -28,6 +28,7 @@ import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
@@ -47,12 +48,16 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Topic;
+
 import hudson.model.Action;
 import hudson.model.Job;
 import hudson.model.ParametersAction;
@@ -80,6 +85,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.PatternSyntaxException;
 
@@ -131,6 +137,7 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildAbortedVerifiedValue;
     private Integer gerritBuildAbortedCodeReviewValue;
     private boolean silentMode;
+    private boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;;
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
@@ -902,6 +909,107 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Should we trigger on this change?
+     *
+     * @param change the incoming change
+     * @param project the configured gerrit project
+     * @param gerritQueryHandler the gerrit query handler
+     * @return true if we should.
+     */
+    private boolean isChangeInteresting(Change change, GerritProject project, GerritQueryHandler gerritQueryHandler) {
+        boolean shouldTrigger = false;
+        boolean containsFilePathsOrForbiddenFilePaths = ((project.getFilePaths() != null
+                && project.getFilePaths().size() > 0)
+                || (project.getForbiddenFilePaths() != null && project.getForbiddenFilePaths().size() > 0));
+
+        if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
+            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic(),
+                    change.getFiles(gerritQueryHandler))) {
+                shouldTrigger = true;
+            }
+        } else {
+            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic())) {
+                shouldTrigger = true;
+            }
+        }
+
+        if (shouldTrigger) {
+            logger.trace("({},{},{}) is interesting; {}", change.getProject(),
+                    change.getBranch(), change.getTopic(), change);
+        }
+
+        return shouldTrigger;
+    }
+
+    /**
+     * Should we trigger on this topic?
+     *
+     * @param topic the topic
+     * @param project the configured gerrit project
+     * @return true if we should.
+     */
+    private boolean isTopicInteresting(Topic topic, GerritProject project) {
+        for (GerritServer server : PluginImpl.getServers_()) {
+            logger.trace("query topic {} from {} ({}:{})", topic, server.getName(), server.getHostName(),
+                    server.getSshPort());
+            Map<Change, PatchSet> changes = topic.getChanges(server.getQueryHandler());
+            logger.trace("found {} changes with topic {} from {}", changes.size(), topic, server.getName());
+            for (Change change : changes.keySet()) {
+                if (isChangeInteresting(change, project, server.getQueryHandler())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get gerrit query handler.
+     * @param event the gerrit triggered event.
+     * @return A GerritQueryHandler.
+     */
+    private GerritQueryHandler getGerritQueryHandler(GerritTriggeredEvent event) {
+        Provider provider = event.getProvider();
+        if (provider == null) {
+            return null;
+        }
+        GerritServer server = PluginImpl.getServer_(provider.getName());
+        if (server == null) {
+            return null;
+        }
+        return server.getQueryHandler();
+    }
+
+    /**
+     * Should we trigger on this change based event?
+     *
+     * @param event the incoming change based event
+     * @param project the configured gerrit project
+     * @return true if we should.
+     */
+    private boolean isChangeBasedEventInteresting(ChangeBasedEvent event, GerritProject project) {
+        Change change = event.getChange();
+        if (isChangeInteresting(change, project, getGerritQueryHandler(event))) {
+            return true;
+        }
+
+        if (!isEnableTopicAssociation()) {
+            return false;
+        }
+
+        Topic topic = change.getTopicObject();
+        if (topic == null) {
+            return false;
+        }
+
+        if (isTopicInteresting(topic, project)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Should we trigger on this event?
      *
      * @param event the event
@@ -933,6 +1041,10 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
+        if (!isServerInteresting(event)) {
+            return false;
+        }
+
         logger.trace("entering isInteresting for the event: {}", event);
 
         Iterator<GerritProject> allGerritProjects = getAllGerritProjectsIterator();
@@ -941,34 +1053,14 @@ public class GerritTrigger extends Trigger<Job> {
             try {
                 if (event instanceof ChangeBasedEvent) {
                     ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                    if (isServerInteresting(event)
-                         && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                            changeBasedEvent.getChange().getBranch(),
-                                            changeBasedEvent.getChange().getTopic())) {
-
-                        boolean containsFilePathsOrForbiddenFilePaths =
-                                ((p.getFilePaths() != null && p.getFilePaths().size() > 0)
-                                        || (p.getForbiddenFilePaths() != null && p.getForbiddenFilePaths().size() > 0));
-
-                        if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
-                            if (isServerInteresting(event)
-                                 && p.isInteresting(changeBasedEvent.getChange().getProject(),
-                                                    changeBasedEvent.getChange().getBranch(),
-                                                    changeBasedEvent.getChange().getTopic(),
-                                                    changeBasedEvent.getFiles(
-                                                        new GerritQueryHandler(getServerConfig(event))))) {
-                                logger.trace("According to {} the event is interesting; event: {}", p, event);
-                                return true;
-                            }
-                        } else {
-                            logger.trace("According to {} the event is interesting; event: {}", p, event);
-                            return true;
-                        }
+                    if (isChangeBasedEventInteresting(changeBasedEvent, p)) {
+                        return true;
                     }
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
-                    if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                                                                      refUpdated.getRefUpdate().getRefName(), null)) {
+                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
+                                        refUpdated.getRefUpdate().getRefName(),
+                                        null)) {
                         logger.trace("According to {} the event is interesting; event: {}", p, event);
                         return true;
                     }
@@ -1740,6 +1832,25 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setSilentMode(boolean silentMode) {
         this.silentMode = silentMode;
+    }
+
+    /**
+     * Check if topic association is enabled.
+     * @return true if so.
+     */
+    public boolean isEnableTopicAssociation() {
+        return enableTopicAssociation;
+    }
+
+    /**
+     * Set topic association enabled.
+     * When topic association is on the job can be triggered by project not in its configuration
+     * as long as there are projects of interest in the same topic.
+     * @param enableTopicAssociation true if it should be enabled.
+     */
+    @DataBoundSetter
+    public void setEnableTopicAssociation(boolean enableTopicAssociation) {
+        this.enableTopicAssociation = enableTopicAssociation;
     }
 
     /**

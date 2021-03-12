@@ -998,6 +998,123 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
+     * A Command that returns last patcheset with approvals.
+     */
+    public static class SendQueryTopic extends CommandMock {
+
+        /**
+         * Standard constructor.
+         *
+         * @param command the command
+         */
+        public SendQueryTopic(String command) {
+            super(command);
+        }
+
+        @Override
+        public void start(final Environment environment) throws IOException {
+            final int createdOn1 = 1449170072;
+            final int createdOn2 = 1449168976;
+            final int lastUpdated = 1449170950;
+
+            JSONObject jsonAccount = new JSONObject();
+            jsonAccount.put(EMAIL, "EngyCZ@gmail.com");
+            jsonAccount.put(NAME, "Engy");
+
+            JSONArray parents = new JSONArray();
+            parents.add("31581608d63510c13d7cb12d3e9a245ca4f72a62");
+
+            JSONArray approvals = new JSONArray();
+
+            JSONObject crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Code-Review");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "2");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "1");
+            approvals.add(crw);
+
+            crw = new JSONObject();
+            crw.put(TYPE, "Verified");
+            crw.put(VALUE, "-1");
+            approvals.add(crw);
+
+            JSONObject patchSet1 = new JSONObject();
+            patchSet1.put(NUMBER, "1");
+            patchSet1.put(REVISION, "009365b77a69cd5ecd05a699b19213682f7f8d79");
+            patchSet1.put(PARENTS, parents);
+            patchSet1.put(REF, "refs/changes/00/100/1");
+            patchSet1.put(UPLOADER, jsonAccount);
+            patchSet1.put(CREATED_ON, createdOn2);
+            patchSet1.put(AUTHOR, jsonAccount);
+            patchSet1.put(APPROVALS, approvals);
+
+            parents = new JSONArray();
+            parents.add("31581608d63510c13d7cb12d3e9a245ca4f72a66");
+            JSONObject patchSet2 = new JSONObject();
+            patchSet2.put(NUMBER, "1");
+            patchSet2.put(REVISION, "87861b77a7614f8e6da19b017c588b741911983c");
+            patchSet2.put(PARENTS, parents);
+            patchSet2.put(REF, "refs/changes/00/101/1");
+            patchSet2.put(UPLOADER, jsonAccount);
+            patchSet2.put(CREATED_ON, createdOn1);
+            patchSet2.put(AUTHOR, jsonAccount);
+            patchSet2.put(APPROVALS, approvals);
+
+            JSONObject change = new JSONObject();
+            change.put(PROJECT, "project");
+            change.put(BRANCH, "branch");
+            change.put(ID, "I2343434344");
+            change.put(NUMBER, "100");
+            change.put(SUBJECT, "subject");
+            change.put(OWNER, jsonAccount);
+            change.put(URL, "http://localhost:8080");
+            change.put(COMMIT_MESSAGE, "Change");
+            change.put(CREATED_ON, createdOn2);
+            change.put(LAST_UPDATED, lastUpdated);
+            change.put("open", true);
+            change.put(STATUS, "NEW");
+            change.put("currentPatchSet", patchSet1);
+            change.put("topic", "topic");
+
+            System.out.println("Starting QueryTopic: " + getCommand());
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+                System.out.println("Sending: " + change);
+                out.println(change);
+                change.put(PROJECT, "project2");
+                change.put(ID, "I2343434345");
+                change.put(NUMBER, "101");
+                change.put("currentPatchSet", patchSet2);
+                System.out.println("Sending: " + change);
+                out.println(change);
+                out.flush();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            this.stop(0);
+        }
+    }
+
+    /**
      * A Command that prints a project and then exits with 0 and is destroyed.
      */
     public static class SendOneProjectCommand extends CommandMock {

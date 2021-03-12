@@ -97,6 +97,7 @@ import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
+import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
@@ -155,6 +156,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
     private transient GerritMissedEventsPlaybackManager missedEventsPlaybackManager;
+    private transient GerritQueryHandler gerritQueryHnadler;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -239,6 +241,19 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public void setConfig(IGerritHudsonTriggerConfig config) {
         checkPermission();
         this.config = config;
+        gerritQueryHnadler = new GerritQueryHandler(config);
+    }
+
+    /**
+     * Gets the global query handler of this server.
+     *
+     * @return the query handler.
+     */
+    public GerritQueryHandler getQueryHandler() {
+        if (gerritQueryHnadler == null) {
+            gerritQueryHnadler = new GerritQueryHandler(config);
+        }
+        return gerritQueryHnadler;
     }
 
     /**
