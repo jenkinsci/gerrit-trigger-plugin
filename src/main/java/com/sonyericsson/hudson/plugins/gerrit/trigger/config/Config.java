@@ -149,6 +149,10 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final boolean DEFAULT_ENABLE_PLUGIN_MESSAGES = true;
     /**
+     * Default topic association enabled.
+     */
+    public static final boolean DEFAULT_ENABLE_TOPIC_ASSOCIATION = false;
+    /**
      * Default value for the option to allow triggering on messages for any user.
      */
     public static final boolean DEFAULT_TRIGGER_ON_ALL_COMMENTS = false;

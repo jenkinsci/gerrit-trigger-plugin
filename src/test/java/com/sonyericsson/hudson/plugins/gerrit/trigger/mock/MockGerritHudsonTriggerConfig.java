@@ -149,17 +149,17 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public File getGerritAuthKeyFile() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return new File("GerritAuthKeyFile");
     }
 
     @Override
     public String getGerritAuthKeyFilePassword() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "AuthKeyFilePassword";
     }
 
     @Override
     public Secret getGerritAuthKeyFileSecretPassword() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return Secret.decrypt("{Secret}");
     }
 
     @Override
@@ -169,27 +169,27 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public String getGerritHostName() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "gerrit";
     }
 
     @Override
     public int getGerritSshPort() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return 0;
     }
 
     @Override
     public String getGerritProxy() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "";
     }
 
     @Override
     public String getGerritUserName() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "gerrit";
     }
 
     @Override
     public String getGerritEMail() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return "gerrit@domain.com";
     }
 
     @Override
@@ -199,7 +199,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public int getNumberOfReceivingWorkerThreads() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return 1;
     }
 
     @Override
