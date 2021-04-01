@@ -459,9 +459,7 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public boolean isTriggerOnAllComments() {
-        return true;
-    }
+    public boolean isTriggerOnAllComments() { return true; }
 
     @Override
     public boolean isUseRestApi() {

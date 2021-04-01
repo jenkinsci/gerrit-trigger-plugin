@@ -851,9 +851,11 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
+     * Set build cancellation policy for current patches.
+     *
      * Exposed for configuration as code.
      *
-     * @param buildCurrentPatchesOnly new polocy.
+     * @param buildCurrentPatchesOnly new policy.
      */
     public void setBuildCurrentPatchesOnly(BuildCancellationPolicy buildCurrentPatchesOnly) {
         this.buildCurrentPatchesOnly = buildCurrentPatchesOnly;
@@ -865,7 +867,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildSuccessful.
+     * Set Gerrit Verified Cmd Build Successful.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
@@ -876,7 +878,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildSuccessful.
+     * Set Gerrit Verified Cmd Build Successful.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
@@ -891,7 +893,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildUnstable.
+     * Set Gerrit Verified Cmd Build Unstable.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildUnstable()
@@ -902,7 +904,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildUnstable.
+     * Set Gerrit Verified Cmd Build Unstable.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildUnstable()
@@ -917,7 +919,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildFailed.
+     * Set Gerrit Verified Cmd Build Failed.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildFailed()
@@ -928,7 +930,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildFailed.
+     * Set Gerrit Verified Cmd Build Failed.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildFailed()
@@ -943,7 +945,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildStarted.
+     * Set Gerrit Verified Cmd Build Started.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildStarted()
@@ -954,7 +956,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildStarted.
+     * Set Gerrit Verified Cmd Build Started.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildStarted()
@@ -969,7 +971,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildNotBuilt.
+     * Set Gerrit Verified Cmd Build NotBuilt.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildNotBuilt()
@@ -980,7 +982,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildNotBuilt.
+     * Set Gerrit Verified Cmd Build NotBuilt.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildNotBuilt()
@@ -995,7 +997,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildAborted.
+     * Set Gerrit Verified Cmd Build Aborted.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildAborted()
@@ -1006,7 +1008,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildAborted.
+     * Set Gerrit Verified Cmd Build Aborted.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildAborted()
