@@ -94,6 +94,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.sonymobile.tools.gerrit.gerritevents.ConnectionListener;
+import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
@@ -108,6 +109,7 @@ import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnection;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshConnectionFactory;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.SshUtil;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
+import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
@@ -254,6 +256,23 @@ public class GerritServer implements Describable<GerritServer>, Action {
             gerritQueryHnadler = new GerritQueryHandler(config);
         }
         return gerritQueryHnadler;
+    }
+
+    /**
+     * Get a GerritCmdRunner.
+     *
+     * @return a GerritCmdRunner.
+     */
+    public GerritCmdRunner getCmdRunner() {
+        AbstractSendCommandJob sendCommandJob = new AbstractSendCommandJob(config) {
+
+            @Override
+            public void run() {
+                // unused implementation
+            }
+
+        };
+        return sendCommandJob;
     }
 
     /**

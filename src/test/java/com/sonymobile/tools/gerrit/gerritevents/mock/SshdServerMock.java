@@ -187,16 +187,16 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
-     * Gets the first running command that matches the given regular expression.
+     * Find the first command that matches the given regular expression.
      *
      * @param commandSearch the regular expression to match.
      * @return the found command or null.
      */
-    public synchronized CommandMock getRunningCommand(String commandSearch) {
+    public synchronized CommandMock findCommand(String commandSearch) {
         if (commandHistory != null) {
             Pattern p = Pattern.compile(commandSearch);
             for (CommandMock command : commandHistory) {
-                if (!command.isDestroyed() && p.matcher(command.getCommand()).find()) {
+                if (p.matcher(command.getCommand()).find()) {
                     return command;
                 }
             }
@@ -294,7 +294,7 @@ public class SshdServerMock implements CommandFactory {
             if (System.currentTimeMillis() - startTime >= timeout) {
                 throw new RuntimeException("Timeout!");
             }
-            command = getRunningCommand(commandSearch);
+            command = findCommand(commandSearch);
             if (command == null) {
                 try {
                     Thread.sleep(MIN_SLEEP);
@@ -998,7 +998,7 @@ public class SshdServerMock implements CommandFactory {
     }
 
     /**
-     * A Command that returns last patcheset with approvals.
+     * A Command that returns patchesets with the same topic.
      */
     public static class SendQueryTopic extends CommandMock {
 

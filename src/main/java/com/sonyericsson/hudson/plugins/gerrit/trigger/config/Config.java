@@ -217,6 +217,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     private WatchTimeExceptionData watchTimeExceptionData;
     private Notify notificationLevel;
     private BuildCancellationPolicy buildCurrentPatchesOnly;
+    private boolean voteSameTopic;
 
     /**
      * Constructor.
@@ -315,6 +316,8 @@ public class Config implements IGerritHudsonTriggerConfig {
             buildCurrentPatchesOnly = new BuildCancellationPolicy();
         }
 
+        voteSameTopic = formData.optBoolean("voteSameTopic", false);
+
         numberOfWorkerThreads = formData.optInt(
                 "numberOfReceivingWorkerThreads",
                 DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
@@ -411,6 +414,8 @@ public class Config implements IGerritHudsonTriggerConfig {
         } else {
             useRestApi = false;
         }
+
+        voteSameTopic = formData.optBoolean("voteSameTopic", false);
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
@@ -835,6 +840,20 @@ public class Config implements IGerritHudsonTriggerConfig {
             this.buildCurrentPatchesOnly.setEnabled(false);
         }
         return this.buildCurrentPatchesOnly;
+    }
+
+    @Override
+    public boolean isVoteSameTopic() {
+        return voteSameTopic;
+    }
+
+    /**
+     * Standard setter for the voteSameTopic value.
+     *
+     * @param voteSameTopic true if patchsets with same topic should be voted together.
+     */
+    public void setVoteSameTopic(boolean voteSameTopic) {
+        this.voteSameTopic = voteSameTopic;
     }
 
     @Override

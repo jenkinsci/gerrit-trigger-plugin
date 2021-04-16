@@ -358,4 +358,9 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     public int getProjectListFetchDelay() {
         return 0;
     }
+
+    @Override
+    public boolean isVoteSameTopic() {
+        return false;
+    }
 }
