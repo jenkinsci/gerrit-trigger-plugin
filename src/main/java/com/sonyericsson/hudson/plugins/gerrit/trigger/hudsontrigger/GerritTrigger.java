@@ -87,6 +87,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.PatternSyntaxException;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer.ANY_SERVER;
@@ -111,6 +112,10 @@ public class GerritTrigger extends Trigger<Job> {
      */
     public static final String JOB_ABORT = GerritTrigger.class.getName() + "_job_abort";
 
+    //! A workaround for https://issues.jenkins.io/browse/JENKINS-63000
+    //! projectListIsReady waiting limit to not block event listener
+    //! so the queue won't grow in case of dynamic config fetch failure
+    private static final int DYNAMIC_CONFIG_TIMEOUT_S = 10;
     //! Association between patches and the jobs that we're running for them
     private transient RunningJobs runningJobs = new RunningJobs(this, this.job);
     //! This latch will be used to signal that the project list is ready for use.
@@ -2031,7 +2036,9 @@ public class GerritTrigger extends Trigger<Job> {
      * @throws InterruptedException if the thread was interrupted while waiting.
      */
     public void waitForProjectListToBeReady() throws InterruptedException {
-        projectListIsReady.await();
+        if (!projectListIsReady.await(DYNAMIC_CONFIG_TIMEOUT_S, TimeUnit.SECONDS)) {
+            logger.trace("Timeout at await");
+        }
     }
 
     /*
