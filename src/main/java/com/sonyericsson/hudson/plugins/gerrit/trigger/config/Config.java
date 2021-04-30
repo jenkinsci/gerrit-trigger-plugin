@@ -880,7 +880,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * Set Gerrit Verified Cmd Build Successful.
      *
-     * @param cmd the command
+     * @param cmd the Gerrit command for successful verification
      * @see #getGerritCmdBuildSuccessful()
      */
     public void setGerritCmdBuildSuccessful(String cmd) {
