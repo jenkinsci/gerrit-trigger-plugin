@@ -53,6 +53,7 @@ import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
@@ -62,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,7 +74,6 @@ import jenkins.model.Jenkins;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
-
 /**
  * Main Plugin entrance.
  *
@@ -80,12 +81,18 @@ import javax.annotation.Nonnull;
  */
 @ExportedBean
 @Extension
+@Symbol(PluginImpl.SYMBOL_NAME)
 public class PluginImpl extends GlobalConfiguration {
 
     /**
      * What to call this plug-in to humans.
      */
     public static final String DISPLAY_NAME = "Gerrit Trigger";
+
+    /**
+     * Machine readable plugin name.
+     */
+    public static final String SYMBOL_NAME = "gerrit-trigger";
 
     /**
      * Any special permissions needed by this plugin are grouped into this.
@@ -294,6 +301,21 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public void setServers(List<GerritServer> servers) {
         checkAdmin();
+
+        // Mimicking GerritManagement#doAddNewServer
+
+        List<String> serverNames = new ArrayList<>();
+        for (GerritServer server : servers) {
+            String name = server.getName();
+            if (serverNames.contains(name)) {
+                throw new IllegalArgumentException("Multiple gerrit servers with name: " + name);
+            }
+            serverNames.add(name);
+        }
+        if (serverNames.contains(GerritServer.ANY_SERVER)) {
+            throw new IllegalArgumentException("Illegal gerrit server name: " + GerritServer.ANY_SERVER);
+        }
+
         if (this.servers != servers) {
             this.servers.clear();
             this.servers.addAll(servers);
@@ -395,8 +417,17 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the config.
      */
-    public PluginConfig getPluginConfig() {
+    public synchronized PluginConfig getPluginConfig() {
         return pluginConfig;
+    }
+
+    /**
+     * Set plugin config.
+     *
+     * @param pluginConfig New config to set.
+     */
+    public synchronized void setPluginConfig(PluginConfig pluginConfig) {
+        this.pluginConfig = pluginConfig;
     }
 
     /**

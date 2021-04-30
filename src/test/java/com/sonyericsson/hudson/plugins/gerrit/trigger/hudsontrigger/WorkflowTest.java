@@ -50,10 +50,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.Is.isA;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -249,7 +249,7 @@ public class WorkflowTest {
         assertEquals(0, trigger.getGerritBuildFailedCodeReviewValue().intValue());
         assertThat(trigger.getGerritProjects(), hasItem(
                 allOf(
-                    isA(GerritProject.class),
+                    instanceOf(GerritProject.class),
                     hasProperty("compareType", is(CompareType.PLAIN)),
                     hasProperty("pattern", equalTo(event.getChange().getProject()))
                 )

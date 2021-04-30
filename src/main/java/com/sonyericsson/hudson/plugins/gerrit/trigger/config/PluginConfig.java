@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,7 @@ public class PluginConfig implements GerritWorkersConfig {
     /**
      * Constructs a config with default data.
      */
+    @DataBoundConstructor
     public PluginConfig() {
         this(new JSONObject(false));
     }
@@ -133,7 +135,7 @@ public class PluginConfig implements GerritWorkersConfig {
             replicationCacheExpirationInMinutes = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
         }
 
-        filterIn = getFilterInFromFormData(formData);
+        setInterestingEvents(getFilterInFromFormData(formData));
         updateEventFilter();
     }
 
@@ -229,6 +231,24 @@ public class PluginConfig implements GerritWorkersConfig {
             return typeList;
         }
         return filterIn;
+    }
+
+    /**
+     * Getter with improved name for configuration-as-code.
+     *
+     * @return the list of events that are filtered in, if all events are included then it will return null.
+     */
+    public List<String> getInterestingEvents() {
+        return getFilterIn();
+    }
+
+    /**
+     * Set events that are filtered in.
+     *
+     * @param events List of events.
+     */
+    public void setInterestingEvents(List<String> events) {
+        this.filterIn = events;
     }
 
     /**

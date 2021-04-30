@@ -59,12 +59,13 @@
         <findbugs.failOnError>false</findbugs.failOnError>
         <concurrency>0.5C</concurrency>
         <powermock.version>1.6.2</powermock.version>
-        <checkstyle.version>2.13</checkstyle.version>
+        <checkstyle.version>2.16</checkstyle.version>
         <mockito.version>1.10.19</mockito.version>
         <scm-api.version>2.2.6</scm-api.version>
         <!--<workflow-cps.version>2.61</workflow-cps.version>-->
         <!--<workflow-job.version>2.26</workflow-job.version>-->
         <!--<workflow-step-api.version>2.17</workflow-step-api.version>-->
+        <jackson.version>2.10.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -213,6 +214,13 @@
             <artifactId>slf4j-jdk14</artifactId>
             <version>1.7.25</version>
         </dependency>
+        <!-- https://stackoverflow.com/a/7878281/2091470 -->
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+            <version>2.1</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -237,12 +245,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>pipeline-stage-step</artifactId>
             <version>2.3</version>
@@ -260,6 +262,39 @@
             <version>2.4</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <artifactId>configuration-as-code</artifactId>
+            <groupId>io.jenkins</groupId>
+            <version>1.36</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <artifactId>test-harness</artifactId>
+            <groupId>io.jenkins.configuration-as-code</groupId>
+            <version>1.36</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
+            <version>2.56</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
     </dependencies>
     <dependencyManagement>
       <dependencies>
