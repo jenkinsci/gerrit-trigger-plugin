@@ -65,7 +65,7 @@
         <!--<workflow-cps.version>2.61</workflow-cps.version>-->
         <!--<workflow-job.version>2.26</workflow-job.version>-->
         <!--<workflow-step-api.version>2.17</workflow-step-api.version>-->
-        <jackson.version>2.10.2</jackson.version>
+        <jackson.version>2.12.3</jackson.version>
     </properties>
 
     <dependencies>
