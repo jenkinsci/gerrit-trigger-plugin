@@ -152,15 +152,14 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      */
     public void initProjectListUpdater() {
         logger.info("Init project list updater");
-        if(timer == null){
+        if (timer == null) {
             // Never query this Gerrit-server for project list.
             if (!getConfig().isEnableProjectAutoCompletion()) {
                 return;
             }
             timer = new Timer(serverName);
             scheduleProjectListUpdate(getConfig().getProjectListFetchDelay());
-        }
-        else{
+        } else {
             logger.error("Can't create two timers for the same Gerrit instance: " + serverName);
         }
     }
@@ -196,8 +195,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                     tryLoadProjectList();
                 }
             }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(TIMER_PERIOD));
-        }
-        else {
+        } else {
             logger.error("Unable to schedule project list update task because timer is null");
         }
     }
