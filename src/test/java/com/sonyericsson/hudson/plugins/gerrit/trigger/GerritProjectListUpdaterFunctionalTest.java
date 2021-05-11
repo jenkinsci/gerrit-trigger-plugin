@@ -56,8 +56,8 @@ public class GerritProjectListUpdaterFunctionalTest {
     public final JenkinsRule j = new JenkinsRule();
 
     private static final int SLEEPTIME = 1;
-    private static final int LONGSLEEPTIME = 310;
-    private static final int TIMEOUT = 350;
+    private static final int LONGSLEEPTIME = 320;
+    private static final int TIMEOUT = 370;
 
     private static final long MAXSLEEPTIME = 10;
 
