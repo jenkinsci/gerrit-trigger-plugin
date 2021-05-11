@@ -74,8 +74,8 @@
                         <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
                             <div style="display:flex">
                                 <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered In</b></span>
-                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                                    <span><b>Filtered Out</b></span>
+                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
                                     </select>
                                 </div>
                                 <div style="margin: auto; display:flex; flex-direction: column;">
@@ -83,8 +83,8 @@
                                     <button id="reset" type="button" title="Reset" style="font-size: large; padding: 5px 10px 5px 10px;">&#8630;</button>
                                 </div>
                                 <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered Out</b></span>
-                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                                    <span><b>Filtered In</b></span>
+                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
                                     </select>
                                 </div>
                             </div>
