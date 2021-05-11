@@ -40,6 +40,7 @@ import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.security.Permission;
+import hudson.triggers.SafeTimerTask;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -136,6 +137,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private static final String START_FAILURE = "Error establising conection";
     private static final String STOP_SUCCESS = "Connection stopped";
     private static final String STOP_FAILURE = "Error terminating connection";
+    /**
+     * Holds the timer initial delay, in minutes, to wait before update the gerrit project list.
+     */
+    private static final int INITIAL_DELAY = 2;
+    /**
+     * Holds the frequency period of the timer, in minutes.
+     */
+    private static final int TIMER_PERIOD = 5;
     /**
      * Key that is used to select to trigger a build on events from any server.
      */
@@ -482,12 +491,27 @@ public class GerritServer implements Describable<GerritServer>, Action {
         projectListUpdater =
                 new GerritProjectListUpdater(name);
         projectListUpdater.start();
+        scheduleProjectListUpdate(projectListUpdater);
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
         addListener((GerritEventListener)missedEventsPlaybackManager);
 
         logger.info(name + " started");
         started = true;
+    }
+
+    /**
+     * This method creates a timer that schedule the update of gerrit project list.
+     *
+     * @param projectListUpdater the project list updater object
+     */
+    public static void scheduleProjectListUpdate(GerritProjectListUpdater projectListUpdater) {
+        jenkins.util.Timer.get().scheduleAtFixedRate(new SafeTimerTask() {
+            @Override
+            protected void doRun() throws Exception {
+                projectListUpdater.tryLoadProjectList();
+            }
+        }, INITIAL_DELAY, TIMER_PERIOD, TimeUnit.MINUTES);
     }
 
     /**

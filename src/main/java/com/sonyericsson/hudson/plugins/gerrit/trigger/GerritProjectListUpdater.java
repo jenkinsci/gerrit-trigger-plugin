@@ -220,7 +220,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     /**
      * Try to load entire project list from Gerrit server.
      */
-    private void tryLoadProjectList() {
+    public void tryLoadProjectList() {
         int interval = 1;
         while (!isConnected() && !shutdown) {
             logger.info("Not connected to {}, waiting for {} second(s)", serverName, interval);
