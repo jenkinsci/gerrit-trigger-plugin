@@ -36,8 +36,8 @@ import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 
 /**
- * An event configuration that causes the build to be triggered when a change's
- * WIP state changed.
+ * An event configuration that causes the build to be (re-)triggered when the
+ * gerrit checks plugin rerun check is triggered.
  */
 public class PluginRerunCheckEvent extends PluginGerritEvent implements Serializable {
     private static final long serialVersionUID = 5530163420962242330L;
@@ -56,7 +56,7 @@ public class PluginRerunCheckEvent extends PluginGerritEvent implements Serializ
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PluginWorkInProgressStateChangedEventDescriptor.class);
+        return Jenkins.getInstance().getDescriptorByType(PluginRerunCheckEventDescriptor.class);
     }
 
     @Override
@@ -68,8 +68,8 @@ public class PluginRerunCheckEvent extends PluginGerritEvent implements Serializ
      * The descriptor for the PluginRerunCheckEvent.
      */
     @Extension
-    @Symbol("wipStateChanged")
-    public static class PluginWorkInProgressStateChangedEventDescriptor extends PluginGerritEventDescriptor {
+    @Symbol("rerunCheck")
+    public static class PluginRerunCheckEventDescriptor extends PluginGerritEventDescriptor {
 
         @Override
         public String getDisplayName() {
