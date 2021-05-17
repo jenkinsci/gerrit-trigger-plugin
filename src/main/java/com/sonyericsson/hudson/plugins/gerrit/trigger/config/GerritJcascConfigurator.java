@@ -117,7 +117,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
      * Inject `config` field explicitly as BaseConfigurator cannot detect this ("type is abstract but not Describable").
      * The methods are using interface, but we have to point the `config` property to concrete class.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class ServerConfigurator extends BaseConfigurator<GerritServer> {
 
         @Override
@@ -141,7 +141,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     /**
      * Cannot use BaseConfigurator as {@link WatchTimeExceptionData} is immutable.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class WatchTimeExceptionDataConfigurator implements Configurator<WatchTimeExceptionData> {
 
         private static final String DAYS_OF_WEEK = "daysOfWeek";
@@ -262,7 +262,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     /**
      * Configure {@link com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan}.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class TimeSpanConfigurator implements Configurator<WatchTimeExceptionData.TimeSpan> {
 
         @Override
