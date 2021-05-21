@@ -54,7 +54,7 @@
 
     <properties>
         <jenkins.version>2.121.1</jenkins.version>
-        <revision>2.33.1</revision>
+        <revision>2.34.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/gerrit-trigger-plugin</gitHubRepo>
         <java.level>8</java.level>
@@ -68,7 +68,7 @@
         <!--<workflow-cps.version>2.61</workflow-cps.version>-->
         <!--<workflow-job.version>2.26</workflow-job.version>-->
         <!--<workflow-step-api.version>2.17</workflow-step-api.version>-->
-        <jackson.version>2.10.2</jackson.version>
+        <jackson.version>2.12.3</jackson.version>
     </properties>
 
     <dependencies>
