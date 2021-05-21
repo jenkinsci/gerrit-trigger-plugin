@@ -198,7 +198,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
             return;
         }
         try {
-            walk.release(); // JGit 3
+            walk.dispose(); // JGit 3
         } catch (NoSuchMethodError noMethod) {
             closeByReflection(walk);
         }
