@@ -110,12 +110,12 @@ public class GerritMissedEventsFunctionalTest {
         server.returnCommandFor(GERRIT_STREAM_EVENTS, SshdServerMock.CommandMock.class);
         server.returnCommandFor("gerrit review.*", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
-        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME + "/"))
+        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME +
+                "/Documentation/index.html"))
                 .willReturn(aResponse()
                         .withStatus(HTTPOK)
                         .withHeader("Content-Type", "text/html")
                         .withBody("ok")));
-
     }
 
     /**
@@ -202,7 +202,8 @@ public class GerritMissedEventsFunctionalTest {
         EventTimeSlice lastTimeStamp = gerritServer.getMissedEventsPlaybackManager().getServerTimestamp();
 
         // now we force the plugin is supported to false...
-        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME + "/"))
+        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME +
+                "/Documentation/index.html"))
                 .willReturn(aResponse()
                         .withStatus(HTTPERROR)
                         .withHeader("Content-Type", "text/html")
@@ -222,7 +223,8 @@ public class GerritMissedEventsFunctionalTest {
         Thread.sleep(SLEEPTIME);
 
         // now we re-enable feature:
-        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME + "/"))
+        stubFor(get(urlEqualTo("/plugins/" + GerritMissedEventsPlaybackManager.EVENTS_LOG_PLUGIN_NAME +
+                "/Documentation/index.html"))
                 .willReturn(aResponse()
                         .withStatus(HTTPOK)
                         .withHeader("Content-Type", "text/html")
