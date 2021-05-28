@@ -3,13 +3,13 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.32</version>
+        <version>3.45</version>
         <relativePath />
     </parent>
 
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-trigger</artifactId>
-    <version>2.34.1-SNAPSHOT</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
     <name>Gerrit Trigger</name>
     <description>Integrates with Gerrit code review.</description>
@@ -54,6 +54,9 @@
 
     <properties>
         <jenkins.version>2.121.1</jenkins.version>
+        <revision>2.34.1</revision>
+        <changelist>-SNAPSHOT</changelist>
+        <gitHubRepo>jenkinsci/gerrit-trigger-plugin</gitHubRepo>
         <java.level>8</java.level>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
@@ -347,8 +350,8 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>${checkstyle.version}</version>
                 <configuration>
-                    <configLocation>build-config/swe_checkstyle.xml</configLocation>
-                    <suppressionsLocation>build-config/checkstyle-suppressions.xml</suppressionsLocation>
+                    <configLocation>${project.basedir}/build-config/swe_checkstyle.xml</configLocation>
+                    <suppressionsLocation>${project.basedir}/build-config/checkstyle-suppressions.xml</suppressionsLocation>
                     <suppressionsFileExpression>checkstyle.suppressions.file</suppressionsFileExpression>
                     <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <consoleOutput>true</consoleOutput>
@@ -435,6 +438,6 @@
         <connection>scm:git:ssh://github.com/jenkinsci/gerrit-trigger-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/gerrit-trigger-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/gerrit-trigger-plugin</url>
-        <tag>HEAD</tag>
+        <tag>${scmTag}</tag>
     </scm>
 </project>
