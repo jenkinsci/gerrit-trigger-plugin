@@ -74,12 +74,6 @@ public class GerritTriggerBuildChooserWithMergeCommitSupport extends BuildChoose
     private static final long serialVersionUID = 2003462680723330645L;
 
     /**
-     * Used by XStream for something.
-     */
-    @SuppressWarnings("unused")
-    private final String separator = "#";
-
-    /**
      * Default constructor.
      */
     @DataBoundConstructor

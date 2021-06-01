@@ -24,8 +24,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * Tests for {@link GerritTriggerBuildChooser}.
- * @author Jacob Keller
+ * Tests for {@link GerritTriggerBuildChooserWithMergeCommitSupport}.
+ * @author Eric Isakson
  */
 public class GerritTriggerBuildChooserWithMergeCommitSupportTest {
     /**
