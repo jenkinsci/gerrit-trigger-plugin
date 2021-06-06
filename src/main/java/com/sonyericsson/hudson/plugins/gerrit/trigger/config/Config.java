@@ -415,8 +415,6 @@ public class Config implements IGerritHudsonTriggerConfig {
             useRestApi = false;
         }
 
-        voteSameTopic = formData.optBoolean("voteSameTopic", false);
-
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
     }
 

@@ -85,8 +85,9 @@ public class GerritNotifier {
     private void notifySameTopic(ChangeBasedEvent event, String command) {
         Topic topic = event.getChange().getTopicObject();
         if (topic != null) {
-            String pattern = "CHANGE,PATCHSET".replace("CHANGE", event.getChange().getNumber()).replace("PATCHSET",
-                    event.getPatchSet().getNumber());
+            String pattern = new StringBuilder(event.getChange().getNumber()).append(',')
+                    .append(event.getPatchSet().getNumber()).toString();
+
             if (!command.contains(pattern)) {
                 logger.error("command {} has no pattern {}", command, pattern);
                 return;
@@ -102,8 +103,8 @@ public class GerritNotifier {
                         continue;
                     }
                     PatchSet patchSet = entry.getValue();
-                    String substitution = "CHANGE,PATCHSET".replace("CHANGE", change.getNumber())
-                            .replace("PATCHSET", patchSet.getNumber());
+                    String substitution = new StringBuilder(change.getNumber()).append(',').append(patchSet.getNumber())
+                            .toString();
                     String command2 = command.replace(pattern, substitution);
                     logger.trace("notifySameTopic: {} {} {}", topic, change, command2);
                     server.getCmdRunner().sendCommand(command2);
