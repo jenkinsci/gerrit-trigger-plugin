@@ -550,8 +550,16 @@ public class PluginImpl extends GlobalConfiguration {
 
         // Call the following method for force initialization of the Dispatchers because
         // it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
-        ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
-        ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        try {
+            ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Replication Queue.", e);
+        }
+        try {
+            ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Dependency Queue.", e);
+        }
     }
 
     /**

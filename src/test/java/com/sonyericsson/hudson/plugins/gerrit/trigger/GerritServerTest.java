@@ -155,7 +155,7 @@ public class GerritServerTest {
      */
     @Test
     public void testGetDisabledFeaturesNone() throws Exception {
-        String version = "2.15";
+        String version = "3.3";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
@@ -185,7 +185,7 @@ public class GerritServerTest {
      */
     @Test
     public void testHasDisabledFeaturesNot() throws Exception {
-        String version = "2.15";
+        String version = "3.3";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
