@@ -1,15 +1,15 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.event;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link PluginPatchsetCreatedEvent}.
@@ -131,4 +131,49 @@ public class PluginPatchsetCreatedEventTest {
         pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("MY_THING");
         assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
     }
+    /**
+     * Test that it should, or should not, fire if the commit message matches a regular expression.
+     */
+    @Test
+    public void commitMessageRegExCheckManualPatchSetCreated() {
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+                new PluginPatchsetCreatedEvent();
+        ManualPatchsetCreated patchsetCreated = new ManualPatchsetCreated();
+        patchsetCreated.setPatchset(new PatchSet());
+        StringBuilder commitMessage = new StringBuilder();
+        commitMessage.append("This is a summary\n");
+        commitMessage.append("\n");
+        commitMessage.append("This is my description.\n");
+        commitMessage.append("\n");
+        commitMessage.append("Issue: JENKINS-64091\n");
+        Change change = new Change();
+        change.setCommitMessage(commitMessage.toString());
+        patchsetCreated.setChange(change);
+
+        // Commit Message regular expression set to null
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx(null);
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Commit message Regular expression is an empty string
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Commit message Regular expression matches
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("JENKINS");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Commit message Regular expression matches
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("Issue:.*JENKINS.*");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Commit message Regular expression does not match
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("Issue:.*MY_THING.*");
+        boolean result = pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated);
+        assertFalse(result);
+
+        // Commit message Regular expression does not match
+        pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("MY_THING");
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+    }
+
 }
