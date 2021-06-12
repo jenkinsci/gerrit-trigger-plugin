@@ -53,7 +53,7 @@ public final class GerritTriggerTimer {
     /**
      * The instance used by the singleton mechanism.
      */
-    private static GerritTriggerTimer instance = null;
+    private static volatile GerritTriggerTimer instance = null;
 
     /**
      * The timer handler

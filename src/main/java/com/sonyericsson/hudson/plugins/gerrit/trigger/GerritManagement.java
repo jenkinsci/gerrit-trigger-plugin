@@ -150,7 +150,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         @Override
         public String getDisplayName() {
-            return null; // unused
+            return ""; // unused
         }
 
         /**

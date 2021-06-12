@@ -1,0 +1,11 @@
+<FindBugsFilter>
+    <Match>
+        <Class name="~.+\.Messages" />
+    </Match>
+    <Match>
+        <!-- Somehow it seems confused. The RND object is reused at many places -->
+        <Class name="com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics"/>
+        <Method name="doTriggerDebugEvent" />
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE" />
+    </Match>
+</FindBugsFilter>

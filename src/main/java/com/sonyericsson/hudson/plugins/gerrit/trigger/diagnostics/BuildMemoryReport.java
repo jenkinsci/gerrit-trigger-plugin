@@ -77,7 +77,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
             public int compare(GerritTriggeredEvent a, GerritTriggeredEvent b) {
                 int to = a.getEventCreatedOn().compareTo(b.getEventCreatedOn()) * -1;
                 if (to == 0) {
-                    return Integer.valueOf(a.hashCode()).compareTo(b.hashCode()) * -1;
+                    return Integer.compare(a.hashCode(), b.hashCode()) * -1;
                 }
                 return to;
             }

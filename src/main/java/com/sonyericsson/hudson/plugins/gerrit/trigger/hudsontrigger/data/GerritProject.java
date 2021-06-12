@@ -341,7 +341,7 @@ public class GerritProject implements Describable<GerritProject> {
         }
         @Override
         public String getDisplayName() {
-            return null;
+            return "";
         }
     }
 }

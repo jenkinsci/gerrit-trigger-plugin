@@ -557,7 +557,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param project the project
      * @return a new listener instance
      */
-    /*package*/ static EventListener createListener(Job project) {
+    /*package*/ static EventListener createListener(Job<?, ?> project) {
         return new EventListener(project);
     }
 
@@ -567,6 +567,9 @@ public class GerritTrigger extends Trigger<Job> {
      * @see #createListener(hudson.model.Job)
      */
     /*package*/ EventListener createListener() {
+        if (job == null) {
+            throw new IllegalStateException("job is not set");
+        }
         return createListener(job);
     }
 
@@ -1071,8 +1074,12 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                 }
             } catch (PatternSyntaxException pse) {
+                String name = "null";
+                if (job != null) {
+                    name = job.getName();
+                }
                 logger.error(MessageFormat.format("Exception caught for project {0} and pattern {1}, message: {2}",
-                       new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
+                        name, p.getPattern(), pse.getMessage()));
             }
         }
         logger.trace("Event is not interesting; event: {}", event);
@@ -1960,8 +1967,12 @@ public class GerritTrigger extends Trigger<Job> {
             // Now that the dynamic project list has been loaded, we can "count down"
             // the latch so that the EventListener thread can begin to process events.
             if (projectListIsReady.getCount() > 0) {
-                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
-                        projectListIsReady.getCount());
+                String name = "null";
+                if (job != null) {
+                    name = job.getName();
+                }
+                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.",
+                        name, projectListIsReady.getCount());
             }
             // Always release all locks otherwise workers will be stuck forever
             projectListIsReady.countDown();

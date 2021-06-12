@@ -69,6 +69,7 @@
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
         <reuseForks>false</reuseForks>
         <forkCount>0.5C</forkCount>
+        <spotbugs.threshold>High</spotbugs.threshold>
     </properties>
 
     <dependencies>
