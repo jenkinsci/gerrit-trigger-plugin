@@ -517,4 +517,9 @@ public class MockGerritHudsonTriggerConfig implements
     public boolean isRestVerified() {
         return true;
     }
+
+    @Override
+    public boolean isVoteSameTopic() {
+        return false;
+    }
 }

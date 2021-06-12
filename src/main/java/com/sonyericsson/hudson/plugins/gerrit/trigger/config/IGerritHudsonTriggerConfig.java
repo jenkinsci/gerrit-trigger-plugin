@@ -42,9 +42,17 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
 
     /**
      * If enabled, then old patch revision builds will be canceled.
+     *
      * @return true if so.
      */
     boolean isGerritBuildCurrentPatchesOnly();
+
+    /**
+     * If enabled, build notifications and votes will be sent to patchsets with the same topic.
+     *
+     * @return true if so.
+     */
+    boolean isVoteSameTopic();
 
     /**
      * The object containing information regarding if old builds should
