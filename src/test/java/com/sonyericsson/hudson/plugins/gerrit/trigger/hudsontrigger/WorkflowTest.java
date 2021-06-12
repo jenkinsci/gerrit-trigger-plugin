@@ -33,8 +33,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.RootAction;
+import hudson.model.Run;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -56,6 +58,7 @@ import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -92,7 +95,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("Gerrit trigger: patchset-created", run);
+            assertLogContains("Gerrit trigger: patchset-created", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server...
@@ -132,7 +135,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("setGerritReview", run);
+            assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server...
@@ -173,7 +176,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("setGerritReview", run);
+            assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server,
@@ -214,7 +217,7 @@ public class WorkflowTest {
             // Now wait for the Gerrit server to trigger the workflow build in Jenkins...
             TestUtils.waitForBuilds(job, 1);
             WorkflowRun run = job.getBuilds().iterator().next();
-            jenkinsRule.assertLogContains("setGerritReview", run);
+            assertLogContains("setGerritReview", run);
 
             // Workflow build was triggered successfully. Now lets check make sure the
             // gerrit plugin sent a verified notification back to the Gerrit Server,
@@ -294,6 +297,19 @@ public class WorkflowTest {
         trigger.setGerritBuildSuccessfulVerifiedValue(1);
         return job;
     }
+
+    /**
+     * Asserts that the log contains something.
+     *
+     * TODO remove this when we've cleared up the hamcrest classpath mess
+     * @param substring the string to look for
+     * @param run the run who's log you want to check.
+     * @throws IOException if so
+     */
+    public void assertLogContains(String substring, Run run) throws IOException {
+        MatcherAssert.assertThat(JenkinsRule.getLog(run), containsString(substring));
+    }
+
 
     /**
      * Mock Gerrit server.

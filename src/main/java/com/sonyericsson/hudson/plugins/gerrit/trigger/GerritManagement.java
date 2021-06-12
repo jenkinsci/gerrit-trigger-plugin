@@ -45,6 +45,7 @@ import hudson.security.Permission;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithContextMenu;
+import jenkins.security.stapler.StaplerDispatchable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.CharEncoding;
@@ -190,7 +191,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @return the list of GerritServer.
      */
-    @SuppressWarnings("unused") //Called from Jelly
+    @StaplerDispatchable @SuppressWarnings("unused") //Called from Jelly
     public List<GerritServer> getServers() {
         checkPermission();
         PluginImpl plugin = PluginImpl.getInstance();
@@ -206,7 +207,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @param encodedServerName the server name encoded by URLEncoder.encode(name,"UTF-8").
      * @return the GerritServer object.
      */
-    @SuppressWarnings("unused") //Called from Jelly
+    @StaplerDispatchable @SuppressWarnings("unused") //Called from Jelly
     public GerritServer getServer(String encodedServerName) {
         checkPermission();
         String serverName;

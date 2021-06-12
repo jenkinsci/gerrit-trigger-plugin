@@ -71,6 +71,7 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
+import jenkins.security.stapler.StaplerAccessibleType;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.CharEncoding;
@@ -129,7 +130,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
-@ExportedBean(defaultVisibility = 2)
+@ExportedBean(defaultVisibility = 2) @StaplerAccessibleType
 public class GerritServer implements Describable<GerritServer>, Action {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
