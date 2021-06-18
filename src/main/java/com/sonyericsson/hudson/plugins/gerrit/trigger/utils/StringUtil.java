@@ -28,6 +28,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import hudson.Functions;
+import hudson.Plugin;
+import hudson.PluginWrapper;
+import jenkins.model.Jenkins;
+
 import java.util.regex.Pattern;
 
 /**
@@ -56,10 +61,14 @@ public final class StringUtil {
      */
     public static final String PLUGIN_IMAGES_URL = PLUGIN_URL + "images/";
 
+    public static final String IMAGES_URL = "images";
+
+    public static final String JS = "js";
     /**
      * The base URL of the plugin javascripts.
      */
-    public static final String PLUGIN_JS_URL = PLUGIN_URL + "js/";
+    @Deprecated
+    public static final String PLUGIN_JS_URL = PLUGIN_URL + JS + "/";
 
     /**
      * Private Constructor for Utility Class.
@@ -104,7 +113,7 @@ public final class StringUtil {
      * @see #PLUGIN_IMAGES_URL
      */
     public static String getPluginImageUrl(String imageName) {
-        return PLUGIN_IMAGES_URL + imageName;
+        return Functions.joinPath(PLUGIN_URL, IMAGES_URL, imageName);
     }
 
     /**
@@ -114,7 +123,7 @@ public final class StringUtil {
      * @see #PLUGIN_JS_URL
      */
     public static String getPluginJsUrl(String jsName) {
-        return PLUGIN_JS_URL + jsName;
+        return Functions.joinPath(PLUGIN_URL, JS, jsName);
     }
 
     /**

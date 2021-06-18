@@ -112,7 +112,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getUrlName() {
-        return "/gerrit_manual_trigger";
+        return "gerrit_manual_trigger";
     }
 
     /**

@@ -155,7 +155,7 @@ public class PluginImpl extends GlobalConfiguration {
      */
     @CheckForNull
     public static PluginImpl getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             return GlobalConfiguration.all().get(PluginImpl.class);
         } else {

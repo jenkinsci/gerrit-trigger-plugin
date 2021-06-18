@@ -39,6 +39,7 @@ import hudson.diagnosis.OldDataMonitor;
 import hudson.matrix.MatrixRun;
 import hudson.model.Cause;
 import hudson.model.Saveable;
+import hudson.security.ACL;
 import hudson.util.XStream2;
 
 import jenkins.model.Jenkins;
@@ -93,6 +94,9 @@ public class TriggerContextConverterTest {
         PowerMockito.mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.get()).thenReturn(jenkins);
+        when(Jenkins.getAuthentication()).thenReturn(ACL.SYSTEM);
+        when(Jenkins.getAuthentication2()).thenReturn(ACL.SYSTEM2);
         when(jenkins.getFullName()).thenReturn("");
     }
 

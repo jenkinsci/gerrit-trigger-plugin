@@ -114,6 +114,8 @@ public class ReplicationQueueTaskDispatcherTest {
         when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
         PowerMockito.mockStatic(Jenkins.class);
         when(Jenkins.getInstance()).thenReturn(jenkinsMock);
+        when(Jenkins.get()).thenReturn(jenkinsMock);
+        when(Queue.getInstance()).thenReturn(queueMock);
     }
 
     /**

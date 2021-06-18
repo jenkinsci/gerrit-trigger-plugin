@@ -31,9 +31,26 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import hudson.ExtensionList;
+import hudson.model.Item;
+import hudson.model.Run;
+import hudson.model.View;
+import hudson.scm.SCM;
 import jenkins.model.Jenkins;
-import org.jvnet.hudson.test.HudsonTestCase;
-import org.jvnet.hudson.test.recipes.LocalData;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.RealJenkinsRule;
+
+import java.io.Serializable;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test-data.
 
@@ -42,8 +59,33 @@ import org.jvnet.hudson.test.recipes.LocalData;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ManualTriggerActionPermissionTest extends HudsonTestCase {
-    //TODO One test fails with a 404 on gerrit-trigger.js when executed from Parent Pom, but not from this module.
+public class ManualTriggerActionPermissionTest implements Serializable {
+
+    @Rule
+    public RealJenkinsRule rule = new RealJenkinsRule();
+
+    static class SecureTestStep implements RealJenkinsRule.Step {
+        final RealJenkinsRule.Step delegate;
+
+        SecureTestStep(final RealJenkinsRule.Step delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void run(final JenkinsRule j) throws Throwable {
+            j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+            MockAuthorizationStrategy strat = new MockAuthorizationStrategy()
+                    .grant(Jenkins.ADMINISTER).everywhere().to("admin")
+                    .grant(Jenkins.READ).everywhere().toEveryone()
+                    .grant(View.DELETE, View.CREATE, View.CONFIGURE,
+                            Item.BUILD, Run.UPDATE, Run.DELETE,
+                            Item.CONFIGURE, Item.DELETE, Item.READ, Item.CREATE, Item.WORKSPACE,
+                            SCM.TAG, PluginImpl.MANUAL_TRIGGER).everywhere().to("bobby");
+            j.jenkins.setAuthorizationStrategy(strat);
+
+            delegate.run(j);
+        }
+    }
 
     /**
      * Tests if the html-link to {@link ManualTriggerAction#getUrlName()} is visible from the main-page.
@@ -51,20 +93,22 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
-    public void testGetGetUrlNameNotPermitted() throws Exception {
-        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
-        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
-        ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = createWebClient();
-        HtmlPage page = wc.goTo("/");
-        try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
-            assertNull(a);
-        } catch (ElementNotFoundException e) {
-            return;
-        }
-        fail("Anonymous should not see the RootAction");
+    @Test
+    public void testGetGetUrlNameNotPermitted() throws Throwable {
+        rule.then(new SecureTestStep(j -> {
+            //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+            PluginImpl.getInstance().addServer(new GerritServer("testServer"));
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            JenkinsRule.WebClient wc = j.createWebClient();
+            HtmlPage page = wc.goTo("");
+            try {
+                HtmlAnchor a = page.getAnchorByHref(j.contextPath + "/" + action.getUrlName());
+                assertNull(a);
+            } catch (ElementNotFoundException e) {
+                return;
+            }
+            fail("Anonymous should not see the RootAction");
+        }));
     }
 
     /**
@@ -73,19 +117,21 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
-    public void testGetUrlName() throws Exception {
-        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
-        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
-        ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = new WebClient().login("admin", "admin");
-        HtmlPage page = wc.goTo("/");
-        try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
-            assertNotNull(a);
-        } catch (ElementNotFoundException e) {
-            fail("Admin should see the RootAction");
-        }
+    @Test
+    public void testGetUrlName() throws Throwable {
+        rule.then(new SecureTestStep(j -> {
+            //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+            PluginImpl.getInstance().addServer(new GerritServer("testServer"));
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            JenkinsRule.WebClient wc = j.createWebClient().login("admin", "admin");
+            HtmlPage page = wc.goTo("");
+            try {
+                HtmlAnchor a = page.getAnchorByHref(j.contextPath + "/" + action.getUrlName());
+                assertNotNull(a);
+            } catch (ElementNotFoundException e) {
+                fail("Admin should see the RootAction");
+            }
+        }));
     }
 
     /**
@@ -94,19 +140,21 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
-    public void testGetUrlNamePrivileged() throws Exception {
-        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
-        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
-        ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = new WebClient().login("bobby", "bobby");
-        HtmlPage page = wc.goTo("/");
-        try {
-            HtmlAnchor a = page.getAnchorByHref(action.getUrlName());
-            assertNotNull(a);
-        } catch (ElementNotFoundException e) {
-            fail("Bobby should see the RootAction");
-        }
+    @Test
+    public void testGetUrlNamePrivileged() throws Throwable {
+        rule.then(new SecureTestStep(j -> {
+            //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+            PluginImpl.getInstance().addServer(new GerritServer("testServer"));
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            JenkinsRule.WebClient wc = j.createWebClient().login("bobby", "bobby");
+            HtmlPage page = wc.goTo("");
+            try {
+                HtmlAnchor a = page.getAnchorByHref(j.contextPath + "/" + action.getUrlName());
+                assertNotNull(a);
+            } catch (ElementNotFoundException e) {
+                fail("Bobby should see the RootAction");
+            }
+        }));
     }
 
     /**
@@ -118,7 +166,7 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
+    @Test @Ignore
     public void testGetDisplayNameNotPermitted() throws Exception {
         //ManualTriggerAction action = getManualTriggerAction();
         //assertNull(action.getDisplayName());
@@ -129,9 +177,12 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    public void testGetRequiredPermission() throws Exception {
-        ManualTriggerAction action = getManualTriggerAction();
-        assertSame(PluginImpl.MANUAL_TRIGGER, action.getRequiredPermission());
+    @Test
+    public void testGetRequiredPermission() throws Throwable {
+        rule.then(r -> {
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            assertSame(PluginImpl.MANUAL_TRIGGER, action.getRequiredPermission());
+        });
     }
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc link.
@@ -142,25 +193,27 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
-    public void testDoGerritSearch() throws Exception {
-        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
-        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
-        ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = new WebClient().login("bobby", "bobby");
-        try {
-            HtmlPage page = wc.goTo(action.getUrlName());
-            HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValueAttribute("2000");
-            Page result = submit(form);
-            assertGoodStatus(result);
-        } catch (FailingHttpStatusCodeException e) {
-            if (e.getStatusCode() == 403) {
-                fail("Bobby should have been able to access the search page");
-            } else {
-                throw e;
+    @Test
+    public void testDoGerritSearch() throws Throwable {
+        rule.then(new SecureTestStep(j -> {
+            //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+            PluginImpl.getInstance().addServer(new GerritServer("testServer"));
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            JenkinsRule.WebClient wc = j.createWebClient().login("bobby", "bobby");
+            try {
+                HtmlPage page = wc.goTo(action.getUrlName());
+                HtmlForm form = page.getFormByName("theSearch");
+                form.getInputByName("queryString").setValueAttribute("2000");
+                Page result = j.submit(form);
+                //j.assertGoodStatus(result);
+            } catch (FailingHttpStatusCodeException e) {
+                if (e.getStatusCode() == 403) {
+                    fail("Bobby should have been able to access the search page");
+                } else {
+                    throw e;
+                }
             }
-        }
+        }));
     }
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc link.
@@ -171,31 +224,23 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      *
      * @throws Exception if so.
      */
-    @LocalData
-    public void testDoGerritSearchNotPermitted() throws Exception {
-        //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
-        PluginImpl.getInstance().addServer(new GerritServer("testServer"));
-        ManualTriggerAction action = getManualTriggerAction();
-        WebClient wc = createWebClient();
-        try {
-            HtmlPage page = wc.goTo(action.getUrlName());
-            HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValueAttribute("2000");
-            submit(form);
-        } catch (FailingHttpStatusCodeException e) {
-            assertEquals(403, e.getStatusCode());
-            return;
-        }
-        fail("Anonymous should not have been able to access the search page");
-    }
-
-    /**
-     * Utility method.
-     * Finds and returns the Action from the Extension register.
-     *
-     * @return the Action
-     */
-    private ManualTriggerAction getManualTriggerAction() {
-        return Jenkins.getInstance().getExtensionList(ManualTriggerAction.class).get(0);
+    @Test
+    public void testDoGerritSearchNotPermitted() throws Throwable {
+        rule.then(new SecureTestStep(j -> {
+            //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
+            PluginImpl.getInstance().addServer(new GerritServer("testServer"));
+            ManualTriggerAction action = ExtensionList.lookupSingleton(ManualTriggerAction.class);
+            JenkinsRule.WebClient wc = j.createWebClient();
+            try {
+                HtmlPage page = wc.goTo(action.getUrlName());
+                HtmlForm form = page.getFormByName("theSearch");
+                form.getInputByName("queryString").setValueAttribute("2000");
+                j.submit(form);
+            } catch (FailingHttpStatusCodeException e) {
+                assertEquals(403, e.getStatusCode());
+                return;
+            }
+            fail("Anonymous should not have been able to access the search page");
+        }));
     }
 }

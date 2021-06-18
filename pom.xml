@@ -53,7 +53,7 @@
     </developers>
 
     <properties>
-        <jenkins.version>2.164.3</jenkins.version>
+        <jenkins.version>2.289.1</jenkins.version>
         <revision>2.35.0-beta-2</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/gerrit-trigger-plugin</gitHubRepo>
@@ -93,7 +93,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>apache-httpcomponents-client-4-api</artifactId>
-            <version>4.5.13-1.0</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -222,58 +221,56 @@
             wiremock-jre8 introduces many dependencies that interferes with jth and core functionality
             during testing, the standalone jar shades all those so it doesn't break other tests.
             -->
-        <version>2.28.1</version>
-        <scope>test</scope>
-    </dependency>
-    <dependency>
-        <artifactId>configuration-as-code</artifactId>
-        <groupId>io.jenkins</groupId>
-        <version>1.36</version>
-        <optional>true</optional>
-    </dependency>
-    <dependency>
-        <artifactId>test-harness</artifactId>
-        <groupId>io.jenkins.configuration-as-code</groupId>
-        <version>1.36</version>
-        <scope>test</scope>
-    </dependency>
-        <!-- TODO change to plugin dependency when core is bumped to recent enough -->
-    <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>${jackson.version}</version>
-    </dependency>
-    <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-core</artifactId>
-        <version>${jackson.version}</version>
-    </dependency>
-    <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-annotations</artifactId>
-        <version>${jackson.version}</version>
-    </dependency>
-    <dependency>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>matrix-project</artifactId>
-        <version>1.18</version>
-        <scope>test</scope>
-    </dependency>
-
+            <version>2.28.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <artifactId>configuration-as-code</artifactId>
+            <groupId>io.jenkins</groupId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <artifactId>test-harness</artifactId>
+            <groupId>io.jenkins.configuration-as-code</groupId>
+            <scope>test</scope>
+        </dependency>
+            <!-- TODO change to plugin dependency when core is bumped to recent enough -->
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jackson2-api</artifactId>
+            <version>2.12.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-project</artifactId>
+            <version>1.18</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+            <version>1.7.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <dependencyManagement>
       <dependencies>
           <dependency>
               <groupId>io.jenkins.tools.bom</groupId>
-              <artifactId>bom-2.164.x</artifactId>
-              <version>10</version>
+              <artifactId>bom-2.289.x</artifactId>
+              <version>872.v03c18fa35487</version>
               <type>pom</type>
               <scope>import</scope>
           </dependency>
           <dependency>
               <groupId>com.google.code.gson</groupId>
               <artifactId>gson</artifactId>
-              <version>2.8.2</version>
+              <version>2.8.6</version>
+          </dependency>
+          <dependency>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-lang3</artifactId>
+              <version>3.11</version>
           </dependency>
       </dependencies>
     </dependencyManagement>
@@ -295,7 +292,7 @@
     </pluginRepositories>
     <build>
         <plugins>
-            <plugin>
+            <!--<plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <systemProperties>
@@ -308,7 +305,7 @@
                     <reuseForks>false</reuseForks>
                     <forkCount>${concurrency}</forkCount>
                 </configuration>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -368,7 +365,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+            <!--<plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
                 <configuration>
@@ -387,7 +384,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
         </plugins>
     </build>
 
