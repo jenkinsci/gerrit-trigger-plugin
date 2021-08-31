@@ -487,6 +487,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
         addListener((GerritEventListener)missedEventsPlaybackManager);
 
+        if (!this.isNoConnectionOnStartup()) {
+            this.startConnection();
+        }
+
         logger.info(name + " started");
         started = true;
     }
