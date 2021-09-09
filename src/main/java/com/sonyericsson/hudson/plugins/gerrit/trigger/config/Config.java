@@ -23,7 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
@@ -506,7 +505,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             if (jsonObject.getBoolean(String.valueOf(Calendar.SUNDAY))) {
                 days.add(Calendar.SUNDAY);
             }
-            daysAsInt = Ints.toArray(days);
+            daysAsInt = days.stream().mapToInt(Integer::intValue).toArray();
             if (jsonObject.has("watchdogExceptionTimes")) {
                 Object obj = jsonObject.get("watchdogExceptionTimes");
                 if (obj instanceof JSONArray) {

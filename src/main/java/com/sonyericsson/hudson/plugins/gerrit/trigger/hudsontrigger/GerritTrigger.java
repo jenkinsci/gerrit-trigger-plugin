@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
@@ -67,6 +66,7 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+import org.apache.commons.collections.IteratorUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -1473,7 +1473,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     private Iterator<GerritProject> getAllGerritProjectsIterator() {
         if (gerritProjects != null && dynamicGerritProjects != null) {
-            return Iterators.concat(gerritProjects.iterator(), dynamicGerritProjects.iterator());
+            return IteratorUtils.chainedIterator(gerritProjects.iterator(), dynamicGerritProjects.iterator());
         }
 
         if (gerritProjects == null && dynamicGerritProjects != null) {
@@ -1484,7 +1484,7 @@ public class GerritTrigger extends Trigger<Job> {
             return gerritProjects.iterator();
         }
 
-        return Iterators.emptyIterator();
+        return IteratorUtils.emptyIterator();
     }
 
     /**

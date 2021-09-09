@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.google.common.collect.ImmutableSet;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
@@ -45,7 +44,9 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -165,7 +166,8 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
         @Override
         public Set<Attribute<WatchTimeExceptionData, ?>> describe() {
-            return ImmutableSet.of(
+            Set<Attribute<WatchTimeExceptionData, ?>> attributes = new HashSet<>();
+            Collections.addAll(attributes,
                     new MultivaluedAttribute<WatchTimeExceptionData, String>(DAYS_OF_WEEK, String.class).getter(
                             target -> Arrays.stream(target.getDaysOfWeek())
                                     .mapToObj(WatchTimeExceptionDataConfigurator.this::ordinalToName)
@@ -175,6 +177,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
                             TIMES_OF_DAY, WatchTimeExceptionData.TimeSpan.class
                     ).getter(WatchTimeExceptionData::getTimesOfDay)
             );
+            return Collections.unmodifiableSet(attributes);
         }
 
         /**
@@ -272,7 +275,8 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
         @Override
         public Set<Attribute<WatchTimeExceptionData.TimeSpan, ?>> describe() {
-            return ImmutableSet.of(
+            Set<Attribute<WatchTimeExceptionData.TimeSpan, ?>> attributes = new HashSet<>();
+            Collections.addAll(attributes,
                     new Attribute<WatchTimeExceptionData.TimeSpan, String>("from", String.class).getter(
                             ts -> ts.getFrom().getHourAsString() + ":" + ts.getFrom().getMinuteAsString()
                     ),
@@ -280,6 +284,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
                             ts -> ts.getTo().getHourAsString() + ":" + ts.getTo().getMinuteAsString()
                     )
             );
+            return Collections.unmodifiableSet(attributes);
         }
 
         @Override
