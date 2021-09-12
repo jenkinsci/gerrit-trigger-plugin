@@ -71,6 +71,7 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.ServletException;
 
 import jenkins.model.Jenkins;
+import jenkins.security.stapler.StaplerAccessibleType;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.CharEncoding;
@@ -83,6 +84,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.jvnet.localizer.ResourceBundleHolder;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -127,7 +130,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionCheck
  * @author Mathieu Wang &lt;mathieu.wang@ericsson.com&gt;
  *
  */
-@ExportedBean(defaultVisibility = 2)
+@ExportedBean(defaultVisibility = 2) @StaplerAccessibleType
 public class GerritServer implements Describable<GerritServer>, Action {
     private static final Logger logger = LoggerFactory.getLogger(GerritServer.class);
     private static final String START_SUCCESS = "Connection started";
@@ -171,7 +174,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         return missedEventsPlaybackManager;
     }
 
-     /**
+    /**
      * Convenience method for jelly to get url of the server list's page relative to root.
      *
      * @see GerritManagement#getUrlName()
@@ -190,6 +193,15 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public String getUrl() {
         return GerritManagement.get().getUrlName() + "/server/" + getUrlEncodedName();
     }
+
+    /**
+     * Empty constructor.
+     */
+    @DataBoundConstructor
+    public GerritServer() {
+        this(null, false);
+    }
+
     /**
      * Constructor.
      *
@@ -238,6 +250,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      *
      * @param config the config.
      */
+    @DataBoundSetter
     public void setConfig(IGerritHudsonTriggerConfig config) {
         checkPermission();
         this.config = config;
@@ -264,6 +277,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Exported
     public String getName() {
         return name;
+    }
+
+    /**
+     * Set the server name.
+     * @param name New name
+     */
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
@@ -461,10 +482,13 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         projectListUpdater =
                 new GerritProjectListUpdater(name);
-        projectListUpdater.start();
 
         missedEventsPlaybackManager.checkIfEventsLogPluginSupported();
         addListener((GerritEventListener)missedEventsPlaybackManager);
+
+        if (!this.isNoConnectionOnStartup()) {
+            this.startConnection();
+        }
 
         logger.info(name + " started");
         started = true;
@@ -489,12 +513,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         logger.info("Stopping GerritServer " + name);
 
         if (projectListUpdater != null) {
-            projectListUpdater.shutdown();
-            try {
-                projectListUpdater.join();
-            } catch (InterruptedException ie) {
-                logger.error("project list updater of " + name + "interrupted", ie);
-            }
+            projectListUpdater.cancelProjectListUpdater();
             projectListUpdater = null;
         }
 
@@ -584,6 +603,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
             } else {
                 logger.warn("Already started!");
             }
+            // Initialize project list update after connection with Gerrit server
+            projectListUpdater.initProjectListUpdater();
         }
     }
 
@@ -807,11 +828,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
             CredentialsProvider credsProvider = new BasicCredentialsProvider();
             credsProvider.setCredentials(new AuthScope(null, -1),
-                new UsernamePasswordCredentials(gerritHttpUserName,
-                        password));
+                    new UsernamePasswordCredentials(gerritHttpUserName,
+                            password));
             HttpClient httpclient = HttpClients.custom()
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
+                    .setDefaultCredentialsProvider(credsProvider)
+                    .build();
             HttpGet httpGet = new HttpGet(restUrl + "a/projects/?d");
             HttpResponse execute;
             try {
@@ -840,7 +861,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
          * @return list of slaves.
          */
         public ListBoxModel doFillDefaultSlaveIdItems(
-            @QueryParameter("name") @RelativePath("../..") final String serverName) {
+                @QueryParameter("name") @RelativePath("../..") final String serverName) {
             ListBoxModel items = new ListBoxModel();
             logger.trace("filling default gerrit slave drop down for sever {}", serverName);
             GerritServer server = PluginImpl.getServer_(serverName);
@@ -851,7 +872,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
             ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
             if (replicationConfig == null || !replicationConfig.isEnableReplication()
-                || replicationConfig.getGerritSlaves().size() == 0) {
+                    || replicationConfig.getGerritSlaves().size() == 0) {
                 logger.trace(Messages.GerritSlaveNotDefined());
                 items.add(Messages.GerritSlaveNotDefined(), "");
                 return items;
@@ -897,7 +918,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         return textsById;
     }
 
-   /**
+    /**
      * Saves the form to the configuration and disk.
      * @param req StaplerRequest
      * @param rsp StaplerResponse
@@ -905,10 +926,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
-   @RequirePOST
+    @RequirePOST
     public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-    IOException,
-    InterruptedException {
+            IOException,
+            InterruptedException {
         checkPermission();
         if (logger.isDebugEnabled()) {
             logger.debug("submit {}", req.toString());
@@ -1253,8 +1274,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     @RequirePOST
     public void doRemoveConfirm(StaplerRequest req, StaplerResponse rsp) throws ServletException,
-    IOException,
-    InterruptedException {
+            IOException,
+            InterruptedException {
 
         checkPermission();
         stopConnection();

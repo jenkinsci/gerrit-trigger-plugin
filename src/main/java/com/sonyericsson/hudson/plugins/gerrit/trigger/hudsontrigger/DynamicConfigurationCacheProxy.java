@@ -40,6 +40,15 @@ final class DynamicConfigurationCacheProxy {
     synchronized List<GerritProject> fetchThroughCache(String url) throws IOException, ParseException {
         if (cache.containsKey(url) && !isExpired(url)) {
             logger.debug("Get dynamic projects from cache for URL: " + url);
+            // Maintain cache while not fetching from URL
+            for (String keyUrl : ttl.keySet()) {
+               if (isExpired(keyUrl)) {
+                   ttl.remove(keyUrl);
+                   cache.remove(keyUrl);
+                   logger.trace("Removing {} from cache", keyUrl);
+               }
+            }
+
             return cache.get(url);
         }
 

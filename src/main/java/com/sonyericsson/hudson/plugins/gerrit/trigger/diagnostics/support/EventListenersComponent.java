@@ -95,20 +95,20 @@ public class EventListenersComponent extends Component {
                     Job job = listener.findJob();
                     GerritTrigger trigger = listener.getTrigger();
                     if (job != null) {
-                        out.format(" * __Job: %s _(%s)___\n", job.getFullDisplayName(), listener.getJob());
+                        out.format(" * __Job: %s _(%s)___%n", job.getFullDisplayName(), listener.getJob());
                     } else {
-                        out.format(" * __Job: _(%s)___\n", listener.getJob());
+                        out.format(" * __Job: _(%s)___%n", listener.getJob());
                     }
                     if (trigger != null) {
                         out.println("    - Trigger on: ");
                         List<GerritProject> projects = trigger.getGerritProjects();
                         for (int i = 0; i < Math.min(MAX_PROJECT_BRANCH_LIST_LENGTH, projects.size()); i++) {
                             GerritProject pr = projects.get(i);
-                            out.format("        * _%s_: %s\n", pr.getCompareType().getDisplayName(), pr.getPattern());
+                            out.format("        * _%s_: %s%n", pr.getCompareType().getDisplayName(), pr.getPattern());
                             List<Branch> branches = pr.getBranches();
                             for (int j = 0; j < Math.min(MAX_PROJECT_BRANCH_LIST_LENGTH, branches.size()); j++) {
                                 Branch branch = branches.get(0);
-                                out.format("            - _%s_: %s\n",
+                                out.format("            - _%s_: %s%n",
                                            branch.getCompareType().getDisplayName(), branch.getPattern());
                             }
                             if (branches.size() >= MAX_PROJECT_BRANCH_LIST_LENGTH) {

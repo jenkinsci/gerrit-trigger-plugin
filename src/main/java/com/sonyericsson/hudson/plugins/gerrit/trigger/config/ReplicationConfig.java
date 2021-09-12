@@ -33,6 +33,7 @@ import net.sf.json.JSONObject;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Each instance of this class holds data needed to trigger builds on replication events,
@@ -93,6 +94,7 @@ public class ReplicationConfig {
     /**
      * Default constructor.
      */
+    @DataBoundConstructor
     public ReplicationConfig() {
         this(false, new LinkedList<GerritSlave>(), false, null);
     }
@@ -107,11 +109,36 @@ public class ReplicationConfig {
     }
 
     /**
+     * Enable replication of events.
+     *
+     * @param enableReplication enable
+     */
+    public void setEnableReplication(boolean enableReplication) {
+        this.enableReplication = enableReplication;
+    }
+
+    /**
      * Get the list of GerritSlave objects.
      * @return the list.
      */
     public List<GerritSlave> getGerritSlaves() {
         return slaves;
+    }
+
+    /**
+     * Get the list of replication servers to use.
+     * @return the list.
+     */
+    public List<GerritSlave> getReplicas() {
+        return slaves;
+    }
+
+    /**
+     * Set list of configured replicas to use.
+     * @param replicas replicas.
+     */
+    public void setReplicas(List<GerritSlave> replicas) {
+        this.slaves = replicas;
     }
 
     /**
@@ -123,11 +150,43 @@ public class ReplicationConfig {
     }
 
     /**
+     * Whether replica selection in enabled in job config.
+     * @return true if so.
+     */
+    public boolean isEnableReplicaSelectionInJobs() {
+        return enableSlaveSelectionInJobs;
+    }
+
+    /**
+     * Set replica selection in enabled in job config.
+     * @param enableReplicaSelectionInJobs true if so.
+     */
+    public void setEnableReplicaSelectionInJobs(boolean enableReplicaSelectionInJobs) {
+        this.enableSlaveSelectionInJobs = enableReplicaSelectionInJobs;
+    }
+
+    /**
      * The id of the default slave to be selected in job config.
      * @return the id of default slave.
      */
     public String getDefaultSlaveId() {
         return defaultSlaveId;
+    }
+
+    /**
+     * The id of the default replica to be selected in job config.
+     * @return the id of default replica.
+     */
+    public String getDefaultReplicaId() {
+        return defaultSlaveId;
+    }
+
+    /**
+     * Set default replica id.
+     * @param replicaId default id
+     */
+    public void setDefaultReplicaId(String replicaId) {
+        this.defaultSlaveId = replicaId;
     }
 
     /**

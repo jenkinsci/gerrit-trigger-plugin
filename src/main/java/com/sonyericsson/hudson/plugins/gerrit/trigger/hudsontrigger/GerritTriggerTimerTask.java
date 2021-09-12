@@ -64,6 +64,13 @@ public class GerritTriggerTimerTask extends TimerTask {
     }
 
     @Override
+    public boolean cancel() {
+        boolean retVal = super.cancel();
+        GerritTriggerTimer.getInstance().cancel(this);
+        return retVal;
+    }
+
+    @Override
     public String toString() {
         return "GerritTriggerTimerTask{job='" + job + '\'' + '}';
     }

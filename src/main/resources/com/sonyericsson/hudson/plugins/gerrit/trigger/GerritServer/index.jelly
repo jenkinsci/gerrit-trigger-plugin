@@ -351,7 +351,7 @@
                                               with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
                             <f:entry title="${%Enable Code-Review}">
                                 <f:checkbox name="restCodeReview"
-                                            checked="${is.config.restCodeReview}"
+                                            checked="${it.config.restCodeReview}"
                                             default="true" />
                             </f:entry>
                             <f:entry title="${%Enable Verified}">
@@ -480,7 +480,7 @@
                     </f:section>
                 </f:advanced>
                 <f:entry title="${%EnablePluginMessages}">
-                    <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
+                    <f:checkbox name="enablePluginMessages" checked="${it.config.enablePluginMessages}" default="true"/>
                 </f:entry>
                 <f:block>
                     <f:submit value="${%Save}"/>

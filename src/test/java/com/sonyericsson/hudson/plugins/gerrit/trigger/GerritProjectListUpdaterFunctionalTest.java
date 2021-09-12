@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.WithTimeout;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
@@ -55,7 +56,8 @@ public class GerritProjectListUpdaterFunctionalTest {
     public final JenkinsRule j = new JenkinsRule();
 
     private static final int SLEEPTIME = 1;
-    private static final int LONGSLEEPTIME = 10;
+    private static final int LONGSLEEPTIME = 320;
+    private static final int TIMEOUT = 370;
 
     private static final long MAXSLEEPTIME = 10;
 
@@ -100,6 +102,7 @@ public class GerritProjectListUpdaterFunctionalTest {
      * connection startup.
      * @throws Exception if occurs.
      */
+    @WithTimeout(TIMEOUT)
     @Test
     public void testProjectListUpdateActiveOnStartup() throws Exception {
         GerritServer gerritServer = new GerritServer("ABCDEF");

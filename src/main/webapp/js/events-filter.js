@@ -24,7 +24,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
-    var defaultFilterList = document.getElementById("defaultFilter").value.slice(1, -1).split(", ");
+    var defaultFilterList = document.getElementById("defaultFilter").value.slice(-1, 1).split(", ");
     var filterInList = document.getElementById("filterInForm").value.slice(1, -1).split(", ");
     var filterInForm = document.getElementById("filterInForm");
     var filterInSelect = document.getElementById("filterInSelect");

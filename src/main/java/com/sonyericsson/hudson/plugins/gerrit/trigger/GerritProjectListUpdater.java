@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -50,12 +52,19 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gustaf Lundh &lt;Gustaf.Lundh@sonyericsson.com&gt;
  */
-public class GerritProjectListUpdater extends Thread implements ConnectionListener, NamedGerritEventListener {
+public class GerritProjectListUpdater implements ConnectionListener, NamedGerritEventListener {
     /**
      * The command for fetching projects.
      */
     public static final String GERRIT_LS_PROJECTS = "gerrit ls-projects";
     private static final int MAX_WAIT_TIME = 64;
+
+    /**
+     * Holds the frequency period of the timer, in minutes.
+     */
+    private static final int TIMER_PERIOD = 5;
+
+    private Timer timer;
 
     private AtomicBoolean connected = new AtomicBoolean(false);
     private boolean shutdown = false;
@@ -68,8 +77,6 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
      * @param serverName the name of the Gerrit server.
      */
     public GerritProjectListUpdater(String serverName) {
-        this.setName(this.getClass().getName() + " for " + serverName + " Thread");
-        this.setDaemon(true);
         this.serverName = serverName;
         addThisAsListener();
     }
@@ -141,58 +148,56 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
     }
 
     /**
-     * Shutdown the thread.
+     * Initialize project list updater.
      */
-    public synchronized void shutdown() {
-        shutdown = true;
-        notify();
-    }
-
-    @Override
-    public void run() {
-        // Never query this Gerrit-server for project list.
-        if (!getConfig().isEnableProjectAutoCompletion()) {
-            return;
-        }
-        if (getConfig().getProjectListFetchDelay() == 0) {
-            tryLoadProjectList();
-        } else {
-            waitFor(getConfig().getProjectListFetchDelay());
-            tryLoadProjectList();
-        }
-
-        if (listenToProjectCreatedEvents()) {
-            logger.info("ProjectCreated events supported by Gerrit Server {}. "
-                    + "Will now listen for new projects...", serverName);
-        } else {
-            while (!shutdown) {
-                waitFor(getConfig().getProjectListRefreshInterval());
-                tryLoadProjectList();
+    public void initProjectListUpdater() {
+        logger.info("Init project list updater");
+        if (timer == null) {
+            // Never query this Gerrit-server for project list.
+            if (!getConfig().isEnableProjectAutoCompletion()) {
+                return;
             }
+            timer = new Timer(serverName);
+            scheduleProjectListUpdate(getConfig().getProjectListFetchDelay());
+        } else {
+            logger.error("Can't create two timers for the same Gerrit instance: " + serverName);
         }
     }
 
     /**
-     * Add this as GerritEventListener if project events supported.
-     * @return true is project created events are supported and listener is added.
+     * Cancel project list update timer.
      */
-    private boolean listenToProjectCreatedEvents() {
-        // Listen to project-created events.
-        PluginImpl plugin = PluginImpl.getInstance();
-        if (plugin != null) {
-            GerritServer server = plugin.getServer(serverName);
-            if (server != null) {
-                if (server.isProjectCreatedEventsSupported()) {
-                    // If run was called before.
-                    server.removeListener(this.gerritEventListener());
-                    server.addListener(this.gerritEventListener());
-                    return true;
-                }
+    public void cancelProjectListUpdater() {
+        try {
+            if (timer != null) {
+                timer.cancel();
+                shutdown = true;
+                timer = null;
             } else {
-                logger.error("Could not find the server {} to add GerritEventListener.", serverName);
+                logger.error("Unable to cancel project list update task because timer is null");
             }
+        } catch (Exception e) {
+            logger.error("Error canceling project list updater: ", e);
         }
-        return false;
+    }
+
+    /**
+     * This method creates a timer that schedule the update of the gerrit project list.
+     *
+     * @param initDelay the initial delay, in seconds.
+     */
+    public void scheduleProjectListUpdate(int initDelay) {
+        logger.info("Start timer to update project list");
+        if (timer != null) {
+            timer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    tryLoadProjectList();
+                }
+            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(TIMER_PERIOD));
+        } else {
+            logger.error("Unable to schedule project list update task because timer is null");
+        }
     }
 
     /**
@@ -249,7 +254,7 @@ public class GerritProjectListUpdater extends Thread implements ConnectionListen
                 sshConnection.disconnect();
             } else {
                 logger.warn("Could not connect to Gerrit server when updating Gerrit project list: "
-                    + "Server is not connected (timeout)");
+                        + "Server is not connected (timeout)");
             }
         } catch (SshException ex) {
             logger.warn("Could not connect to Gerrit server when updating Gerrit project list: ", ex);

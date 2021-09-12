@@ -109,8 +109,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         blockedItems = new ConcurrentHashMap<Long, BlockedItem>();
         this.replicationCache = replicationCache;
         if (gerritHandler != null) {
-            logger.warn("No GerritHandler was specified, won't register as event listener, so no function.");
             gerritHandler.addListener(this);
+        } else {
+            logger.warn("No GerritHandler was specified, won't register as event listener, so no function.");
         }
         this.replicationCache.setCreationTime(new Date().getTime());
         logger.debug("Registered to gerrit events");

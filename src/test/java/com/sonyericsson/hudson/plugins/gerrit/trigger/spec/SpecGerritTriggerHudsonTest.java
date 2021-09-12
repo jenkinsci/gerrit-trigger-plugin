@@ -355,19 +355,23 @@ public class SpecGerritTriggerHudsonTest {
         boolean started = false;
 
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
+        System.out.println("PatchSet created");
         while (!started) {
             if (project.isBuilding()) {
                 started = true;
             }
             Thread.sleep(1000);
         }
+        System.out.println("Build Started");
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
         patchsetCreated.getChange().setNumber("2000");
         gerritServer.triggerEvent(patchsetCreated);
+        System.out.println("PatchSet 2 created");
 
         while (project.isBuilding() || project.isInQueue()) {
             Thread.sleep(1000);
         }
+        System.out.println("Build 2 started");
 
         int size = 0;
         for (FreeStyleBuild build : project.getBuilds()) {

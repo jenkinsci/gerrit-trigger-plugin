@@ -23,7 +23,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.google.common.primitives.Ints;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
@@ -42,6 +41,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
@@ -505,7 +505,7 @@ public class Config implements IGerritHudsonTriggerConfig {
             if (jsonObject.getBoolean(String.valueOf(Calendar.SUNDAY))) {
                 days.add(Calendar.SUNDAY);
             }
-            daysAsInt = Ints.toArray(days);
+            daysAsInt = days.stream().mapToInt(Integer::intValue).toArray();
             if (jsonObject.has("watchdogExceptionTimes")) {
                 Object obj = jsonObject.get("watchdogExceptionTimes");
                 if (obj instanceof JSONArray) {
@@ -545,6 +545,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * Constructs a config with default data.
      */
+    @DataBoundConstructor
     public Config() {
         this(new JSONObject(false));
     }
@@ -611,6 +612,17 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setGerritFrontEndURL(String gerritFrontEndURL) {
         this.gerritFrontEndUrl = gerritFrontEndURL;
+    }
+
+    /**
+     * This method is needed for configuration as code to discover this property.
+     *
+     * It would be ignored otherwise because of the "URL" vs. "Url" naming mismatch in old getter/setter.
+     *
+     * @param gerritFrontEndURL the Url
+     */
+    public void setGerritFrontEndUrl(String gerritFrontEndURL) {
+        setGerritFrontEndURL(gerritFrontEndURL);
     }
 
     @Override
@@ -837,18 +849,40 @@ public class Config implements IGerritHudsonTriggerConfig {
         return this.buildCurrentPatchesOnly;
     }
 
+    /**
+     * Set build cancellation policy for current patches.
+     *
+     * Exposed for configuration as code.
+     *
+     * @param buildCurrentPatchesOnly new policy.
+     */
+    public void setBuildCurrentPatchesOnly(BuildCancellationPolicy buildCurrentPatchesOnly) {
+        this.buildCurrentPatchesOnly = buildCurrentPatchesOnly;
+    }
+
     @Override
     public String getGerritCmdBuildSuccessful() {
         return gerritVerifiedCmdBuildSuccessful;
     }
 
     /**
-     * GerritVerifiedCmdBuildSuccessful.
+     * Set Gerrit Verified Cmd Build Successful.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildSuccessful()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildSuccessful(String cmd) {
+        setGerritCmdBuildSuccessful(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build Successful.
+     *
+     * @param cmd the Gerrit command for successful verification
+     * @see #getGerritCmdBuildSuccessful()
+     */
+    public void setGerritCmdBuildSuccessful(String cmd) {
         gerritVerifiedCmdBuildSuccessful = cmd;
     }
 
@@ -858,12 +892,23 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildUnstable.
+     * Set Gerrit Verified Cmd Build Unstable.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildUnstable()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildUnstable(String cmd) {
+        setGerritCmdBuildUnstable(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build Unstable.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildUnstable()
+     */
+    public void setGerritCmdBuildUnstable(String cmd) {
         gerritVerifiedCmdBuildUnstable = cmd;
     }
 
@@ -873,12 +918,23 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildFailed.
+     * Set Gerrit Verified Cmd Build Failed.
      *
      * @param cmd the command
-     * @see #setGerritVerifiedCmdBuildFailed(java.lang.String)
+     * @see #getGerritCmdBuildFailed()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildFailed(String cmd) {
+        setGerritCmdBuildFailed(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build Failed.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildFailed()
+     */
+    public void setGerritCmdBuildFailed(String cmd) {
         gerritVerifiedCmdBuildFailed = cmd;
     }
 
@@ -888,12 +944,23 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildStarted.
+     * Set Gerrit Verified Cmd Build Started.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildStarted()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildStarted(String cmd) {
+        setGerritCmdBuildStarted(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build Started.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildStarted()
+     */
+    public void setGerritCmdBuildStarted(String cmd) {
         gerritVerifiedCmdBuildStarted = cmd;
     }
 
@@ -903,12 +970,23 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildNotBuilt.
+     * Set Gerrit Verified Cmd Build NotBuilt.
      *
      * @param cmd the command
      * @see #getGerritCmdBuildNotBuilt()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildNotBuilt(String cmd) {
+        setGerritCmdBuildNotBuilt(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build NotBuilt.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildNotBuilt()
+     */
+    public void setGerritCmdBuildNotBuilt(String cmd) {
         gerritVerifiedCmdBuildNotBuilt = cmd;
     }
 
@@ -918,12 +996,23 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     /**
-     * GerritVerifiedCmdBuildAborted.
+     * Set Gerrit Verified Cmd Build Aborted.
      *
      * @param cmd the command
-     * @see #setGerritVerifiedCmdBuildAborted(java.lang.String)
+     * @see #getGerritCmdBuildAborted()
      */
+    @Deprecated
     public void setGerritVerifiedCmdBuildAborted(String cmd) {
+        setGerritCmdBuildAborted(cmd);
+    }
+
+    /**
+     * Set Gerrit Verified Cmd Build Aborted.
+     *
+     * @param cmd the command
+     * @see #getGerritCmdBuildAborted()
+     */
+    public void setGerritCmdBuildAborted(String cmd) {
         gerritVerifiedCmdBuildAborted = cmd;
     }
 
@@ -985,6 +1074,102 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Integer getGerritBuildAbortedCodeReviewValue() {
         return gerritBuildAbortedCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Started Verified Value.
+     * @param gerritBuildStartedVerifiedValue value
+     */
+    public void setGerritBuildStartedVerifiedValue(Integer gerritBuildStartedVerifiedValue) {
+        this.gerritBuildStartedVerifiedValue = gerritBuildStartedVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Sucessful Verified Value.
+     * @param gerritBuildSuccessfulVerifiedValue value
+     */
+    public void setGerritBuildSuccessfulVerifiedValue(Integer gerritBuildSuccessfulVerifiedValue) {
+        this.gerritBuildSuccessfulVerifiedValue = gerritBuildSuccessfulVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Failed Verified Value.
+     * @param gerritBuildFailedVerifiedValue value
+     */
+    public void setGerritBuildFailedVerifiedValue(Integer gerritBuildFailedVerifiedValue) {
+        this.gerritBuildFailedVerifiedValue = gerritBuildFailedVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Unstable Verified Value.
+     * @param gerritBuildUnstableVerifiedValue value
+     */
+    public void setGerritBuildUnstableVerifiedValue(Integer gerritBuildUnstableVerifiedValue) {
+        this.gerritBuildUnstableVerifiedValue = gerritBuildUnstableVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Not Build Verified Value.
+     * @param gerritBuildNotBuiltVerifiedValue value
+     */
+    public void setGerritBuildNotBuiltVerifiedValue(Integer gerritBuildNotBuiltVerifiedValue) {
+        this.gerritBuildNotBuiltVerifiedValue = gerritBuildNotBuiltVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Aborted Verified Value.
+     * @param gerritBuildAbortedVerifiedValue value
+     */
+    public void setGerritBuildAbortedVerifiedValue(Integer gerritBuildAbortedVerifiedValue) {
+        this.gerritBuildAbortedVerifiedValue = gerritBuildAbortedVerifiedValue;
+    }
+
+    /**
+     * Set Gerrit Build Started Code Review Value.
+     * @param gerritBuildStartedCodeReviewValue value
+     */
+    public void setGerritBuildStartedCodeReviewValue(Integer gerritBuildStartedCodeReviewValue) {
+        this.gerritBuildStartedCodeReviewValue = gerritBuildStartedCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Successful Code Review Value.
+     * @param gerritBuildSuccessfulCodeReviewValue value
+     */
+    public void setGerritBuildSuccessfulCodeReviewValue(Integer gerritBuildSuccessfulCodeReviewValue) {
+        this.gerritBuildSuccessfulCodeReviewValue = gerritBuildSuccessfulCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Failed Code Review Value.
+     * @param gerritBuildFailedCodeReviewValue value
+     */
+    public void setGerritBuildFailedCodeReviewValue(Integer gerritBuildFailedCodeReviewValue) {
+        this.gerritBuildFailedCodeReviewValue = gerritBuildFailedCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Unstable Code Review Value.
+     * @param gerritBuildUnstableCodeReviewValue value
+     */
+    public void setGerritBuildUnstableCodeReviewValue(Integer gerritBuildUnstableCodeReviewValue) {
+        this.gerritBuildUnstableCodeReviewValue = gerritBuildUnstableCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Not Build Code Review Value.
+     * @param gerritBuildNotBuiltCodeReviewValue value
+     */
+    public void setGerritBuildNotBuiltCodeReviewValue(Integer gerritBuildNotBuiltCodeReviewValue) {
+        this.gerritBuildNotBuiltCodeReviewValue = gerritBuildNotBuiltCodeReviewValue;
+    }
+
+    /**
+     * Set Gerrit Build Aborted Code Review Value.
+     * @param gerritBuildAbortedCodeReviewValue value
+     */
+    public void setGerritBuildAbortedCodeReviewValue(Integer gerritBuildAbortedCodeReviewValue) {
+        this.gerritBuildAbortedCodeReviewValue = gerritBuildAbortedCodeReviewValue;
     }
 
     @Override
@@ -1071,7 +1256,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     }
 
     @Override
-    public boolean isTriggerOnAllComments() { return triggerOnAllComments; }
+    public boolean isTriggerOnAllComments() {
+        return triggerOnAllComments;
+    }
 
     /**
      * Sets triggerOnAllComments.
@@ -1086,6 +1273,14 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public ReplicationConfig getReplicationConfig() {
         return replicationConfig;
+    }
+
+    /**
+     * Set replication config.
+     * @param replicationConfig The config
+     */
+    public void setReplicationConfig(ReplicationConfig replicationConfig) {
+        this.replicationConfig = replicationConfig;
     }
 
     @Override
@@ -1103,9 +1298,25 @@ public class Config implements IGerritHudsonTriggerConfig {
         return watchdogTimeoutMinutes;
     }
 
+    /**
+     * Set watchdog timeout.
+     * @param watchdogTimeoutMinutes Number of minutes.
+     */
+    public void setWatchdogTimeoutMinutes(int watchdogTimeoutMinutes) {
+        this.watchdogTimeoutMinutes = watchdogTimeoutMinutes;
+    }
+
     @Override
     public WatchTimeExceptionData getExceptionData() {
         return watchTimeExceptionData;
+    }
+
+    /**
+     * Set exception data.
+     * @param exceptionData The data.
+     */
+    public void setExceptionData(WatchTimeExceptionData exceptionData) {
+        this.watchTimeExceptionData = exceptionData;
     }
 
     @Override

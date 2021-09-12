@@ -332,6 +332,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         if (event instanceof GerritTriggeredEvent) {
             logger.debug("Recording timestamp due to an event {} for server: {}", event, serverName);
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
+            Provider provider = triggeredEvent.getProvider();
+
+            if (provider != null) {
+              String eventServer = provider.getName();
+              if (!eventServer.equals(serverName)) {
+                logger.debug("{} Ignoring event since it came from different server {}", serverName, eventServer);
+                return;
+              }
+            }
+
             saveTimestamp(triggeredEvent);
             //add to cache
             if (!playBackComplete) {
