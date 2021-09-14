@@ -219,6 +219,10 @@
         <scope>test</scope>
     </dependency>
     <dependency>
+        <groupId>io.jenkins.plugins</groupId>
+        <artifactId>caffeine-api</artifactId>
+    </dependency>
+    <dependency>
         <artifactId>configuration-as-code</artifactId>
         <groupId>io.jenkins</groupId>
         <optional>true</optional>
