@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 
 /**
@@ -135,7 +135,7 @@ public class ReplicationCache {
     public boolean initialize() {
         if (events == null) {
             try {
-                events = CacheBuilder.newBuilder()
+                events = Caffeine.newBuilder()
                         .expireAfterWrite(expiration, unit)
                         .build();
                 logger.info("initialized replication cache with expiration in {}: {}", unit, expiration);
