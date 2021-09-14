@@ -1413,6 +1413,7 @@ public class GerritTriggerTest {
         mockStatic(Jenkins.class);
         Jenkins jenkins = mock(Jenkins.class);
         PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("Tester");
         PowerMockito.when(Jenkins.getAuthentication()).thenReturn(authentication);
@@ -2377,7 +2378,7 @@ public class GerritTriggerTest {
     private static Queue mockJenkinsQueue() {
         Jenkins jenkins = PowerMockito.mock(Jenkins.class);
         PowerMockito.mockStatic(Jenkins.class);
-        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
         return mockQueue(jenkins);
     }
 
