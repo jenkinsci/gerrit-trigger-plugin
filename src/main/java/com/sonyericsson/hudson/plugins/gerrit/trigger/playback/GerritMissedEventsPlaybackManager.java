@@ -570,7 +570,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     @CheckForNull
     public static XmlFile getConfigXml(String serverName) throws IOException {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

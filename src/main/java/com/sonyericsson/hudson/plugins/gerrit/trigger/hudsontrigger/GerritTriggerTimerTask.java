@@ -95,7 +95,7 @@ public class GerritTriggerTimerTask extends TimerTask {
                 return gerritTrigger;
             }
         }
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

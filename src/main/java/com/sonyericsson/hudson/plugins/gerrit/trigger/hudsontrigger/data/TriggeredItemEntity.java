@@ -132,7 +132,7 @@ public class TriggeredItemEntity {
         @WithBridgeMethods(AbstractProject.class)
         public Job getProject() {
             if (project == null) {
-                project = Jenkins.getInstance().getItemByFullName(projectId, Job.class);
+                project = Jenkins.get().getItemByFullName(projectId, Job.class);
             }
             return project;
         }

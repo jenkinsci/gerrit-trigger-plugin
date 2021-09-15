@@ -56,7 +56,7 @@ public class PluginPrivateStateChangedEvent extends PluginGerritEvent implements
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PluginPrivateStateChangedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginPrivateStateChangedEventDescriptor.class);
     }
 
     @Override

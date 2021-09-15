@@ -2112,7 +2112,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     @Override
     public TriggerDescriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(GerritTriggerDescriptor.class);
+        return Jenkins.get().getDescriptorByType(GerritTriggerDescriptor.class);
     }
 
 

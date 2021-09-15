@@ -148,14 +148,14 @@ public class PluginImpl extends GlobalConfiguration {
 
     /**
      * Returns the instance of this class.
-     * If {@link jenkins.model.Jenkins#getInstance()} isn't available
+     * If {@link Jenkins#getInstanceOrNull()} ()} isn't available
      * or the plugin class isn't registered null will be returned.
      *
      * @return the instance.
      */
     @CheckForNull
     public static PluginImpl getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             return GlobalConfiguration.all().get(PluginImpl.class);
         } else {
@@ -351,7 +351,7 @@ public class PluginImpl extends GlobalConfiguration {
      * If Jenkins is currently active.
      */
     private void checkAdmin() {
-        final Jenkins jenkins = Jenkins.getInstance(); //Hoping this method doesn't change meaning again
+        final Jenkins jenkins = Jenkins.getInstanceOrNull(); //Hoping this method doesn't change meaning again
         if (jenkins != null) {
             //If Jenkins is not alive then we are not started, so no unauthorised user might do anything
             jenkins.checkPermission(Jenkins.ADMINISTER);
@@ -505,7 +505,7 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public List<Job> getConfiguredJobs(String serverName) {
         LinkedList<Job> configuredJobs = new LinkedList<Job>();
-        for (Job<?, ?> project : Jenkins.getInstance().getItems(Job.class)) { //get the jobs
+        for (Job<?, ?> project : Jenkins.get().getItems(Job.class)) { //get the jobs
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 
             //if the job has a gerrit trigger, check whether the trigger has selected this server:

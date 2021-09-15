@@ -940,7 +940,7 @@ public class BuildMemory {
             @CheckForNull
             @WithBridgeMethods(AbstractProject.class)
             public Job getProject() {
-                Jenkins jenkins = Jenkins.getInstance();
+                Jenkins jenkins = Jenkins.getInstanceOrNull();
                 if (jenkins != null) {
                     return jenkins.getItemByFullName(project, Job.class);
                 } else {

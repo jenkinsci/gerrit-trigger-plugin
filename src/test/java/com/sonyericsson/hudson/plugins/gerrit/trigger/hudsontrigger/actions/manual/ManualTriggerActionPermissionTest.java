@@ -196,6 +196,6 @@ public class ManualTriggerActionPermissionTest extends HudsonTestCase {
      * @return the Action
      */
     private ManualTriggerAction getManualTriggerAction() {
-        return Jenkins.getInstance().getExtensionList(ManualTriggerAction.class).get(0);
+        return Jenkins.get().getExtensionList(ManualTriggerAction.class).get(0);
     }
 }

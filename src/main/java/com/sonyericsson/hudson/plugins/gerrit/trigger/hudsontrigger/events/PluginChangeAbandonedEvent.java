@@ -27,8 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import java.io.Serializable;
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -52,7 +52,7 @@ public class PluginChangeAbandonedEvent extends PluginGerritEvent implements Ser
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginChangeAbandonedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginChangeAbandonedEventDescriptor.class);
     }
 
     @Override

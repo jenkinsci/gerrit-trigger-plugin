@@ -102,7 +102,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @return the instance.
      */
     public static DependencyQueueTaskDispatcher getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             logger.error("INITIALIZATION ERROR? Could not find the Jenkins instance.");
             return null;
@@ -277,8 +277,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
         if (StringUtils.isEmpty(projects)) {
             return null;
         } else {
-            Jenkins jenkins = Jenkins.getInstance();
-            assert jenkins != null;
+            Jenkins jenkins = Jenkins.get();
             StringTokenizer tokens = new StringTokenizer(projects, ",");
             while (tokens.hasMoreTokens()) {
                 String projectName = tokens.nextToken().trim();

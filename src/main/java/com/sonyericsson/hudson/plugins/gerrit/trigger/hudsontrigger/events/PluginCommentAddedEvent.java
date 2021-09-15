@@ -35,9 +35,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.util.ListBoxModel;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -95,7 +95,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginCommentAddedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginCommentAddedEventDescriptor.class);
     }
 
     @Override

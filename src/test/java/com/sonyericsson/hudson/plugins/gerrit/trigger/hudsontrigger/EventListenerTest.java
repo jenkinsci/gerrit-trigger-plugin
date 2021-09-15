@@ -58,8 +58,7 @@ public class EventListenerTest {
 
         jenkins = mock(Jenkins.class);
         mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkins);
-        when(Jenkins.get()).thenReturn(jenkins);
+        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
         when(jenkins.getItemByFullName("MockProject", AbstractProject.class)).thenReturn(project);
         when(jenkins.getItemByFullName("MockProject", Job.class)).thenReturn(project);
         Setup.setTrigger(trigger, project);

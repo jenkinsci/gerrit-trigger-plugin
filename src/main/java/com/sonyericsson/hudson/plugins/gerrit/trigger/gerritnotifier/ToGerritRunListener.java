@@ -78,7 +78,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      */
     @CheckForNull
     public static ToGerritRunListener getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             logger.error("Jenkins instance is not available, are we not fully live yet?");
             return null;

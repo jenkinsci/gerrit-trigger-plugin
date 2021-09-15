@@ -107,7 +107,7 @@ public class GerritMissedEventsPlaybackManagerTest {
     public void setUp() throws IOException {
         Jenkins jenkinsMock = mock(Jenkins.class);
         PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkinsMock);
+        when(Jenkins.get()).thenReturn(jenkinsMock);
 
         PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
