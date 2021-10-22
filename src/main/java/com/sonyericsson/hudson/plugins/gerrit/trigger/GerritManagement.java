@@ -38,7 +38,6 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Failure;
-import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.security.Permission;
@@ -110,14 +109,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
         checkPermission();
-        Jenkins jenkins = Jenkins.getInstance();
-        assert jenkins != null;
+        Jenkins jenkins = Jenkins.get();
         ContextMenu menu = new ContextMenu();
         menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
                                                  "images", "24x24", "new-package.png"), Messages.AddNewServer());
@@ -159,8 +157,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return the list of descriptors containing GerritServer's descriptor.
          */
         public static DescriptorExtensionList<GerritServer, GerritServer.DescriptorImpl> serverDescriptorList() {
-            Jenkins jenkins = Jenkins.getInstance();
-            assert jenkins != null;
+            Jenkins jenkins = Jenkins.get();
             return jenkins
                     .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
         }
@@ -303,10 +300,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            throw new IllegalStateException("Jenkins is not alive.");
-        }
+        Jenkins jenkins = Jenkins.get();
         jenkins.checkPermission(Jenkins.ADMINISTER);
         return this;
     }
@@ -438,7 +432,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * If Jenkins is currently active.
      */
     private void checkPermission() {
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             jenkins.checkPermission(getRequiredPermission());
         }

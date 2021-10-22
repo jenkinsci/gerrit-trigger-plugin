@@ -429,7 +429,7 @@ public final class EventListener implements GerritEventListener {
     @CheckForNull
     @Restricted(NoExternalUse.class)
     public Job findJob() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

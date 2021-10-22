@@ -123,7 +123,7 @@ public class DependencyQueueTaskDispatcherTest {
         when(list.iterator()).thenReturn(iterator);
         when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
         PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkinsMock);
+        when(Jenkins.get()).thenReturn(jenkinsMock);
         toGerritRunListenerMock = mock(ToGerritRunListener.class);
         PowerMockito.mockStatic(ToGerritRunListener.class);
         when(ToGerritRunListener.getInstance()).thenReturn(toGerritRunListenerMock);

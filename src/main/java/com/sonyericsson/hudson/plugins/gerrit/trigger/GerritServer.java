@@ -38,7 +38,6 @@ import hudson.model.Action;
 import hudson.model.Describable;
 import hudson.model.Failure;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.security.Permission;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -163,7 +162,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     /**
@@ -399,7 +398,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     @Override
     public String getUrlName() {
         //Lets make an absolute url to circumvent some buggy things in core
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null && jenkins.getRootUrl() != null) {
             return Functions.joinPath(jenkins.getRootUrl(),
                     getParentUrl(), "server", getUrlEncodedName());
@@ -438,7 +437,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
      * If Jenkins is currently active.
      */
     private void checkPermission() {
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             jenkins.checkPermission(getRequiredPermission());
         }
@@ -1287,7 +1286,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             plugin.save();
         }
 
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             rsp.sendRedirect(jenkins.getRootUrl() + GerritManagement.get().getUrlName());
         }

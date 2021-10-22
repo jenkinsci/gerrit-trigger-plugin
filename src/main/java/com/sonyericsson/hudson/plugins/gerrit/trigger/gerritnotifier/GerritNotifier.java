@@ -31,9 +31,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
-import hudson.model.Hudson;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,11 +61,11 @@ public class GerritNotifier {
      * Constructor for testing.
      * @param config the config.
      * @param cmdRunner the command-runner.
-     * @param hudson the hudson instance.
+     * @param jenkins the Jenkins instance.
      */
-    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner, Hudson hudson) {
+    public GerritNotifier(IGerritHudsonTriggerConfig config, GerritCmdRunner cmdRunner, Jenkins jenkins) {
         this.cmdRunner = cmdRunner;
-        this.parameterExpander = new ParameterExpander(config, hudson);
+        this.parameterExpander = new ParameterExpander(config, jenkins);
     }
 
     /**

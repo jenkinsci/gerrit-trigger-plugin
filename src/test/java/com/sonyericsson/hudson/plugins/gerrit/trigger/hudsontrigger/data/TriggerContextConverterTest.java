@@ -92,7 +92,7 @@ public class TriggerContextConverterTest {
     public void setup() {
         PowerMockito.mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.get()).thenReturn(jenkins);
         when(jenkins.getFullName()).thenReturn("");
     }
 

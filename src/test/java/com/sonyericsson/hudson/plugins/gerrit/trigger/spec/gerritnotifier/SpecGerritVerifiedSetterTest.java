@@ -37,7 +37,6 @@ import hudson.EnvVars;
 import hudson.ExtensionList;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Hudson;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
@@ -67,7 +66,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({
-        Hudson.class,
         Jenkins.class,
         GerritMessageProvider.class,
         AbstractProject.class,
@@ -76,7 +74,6 @@ public class SpecGerritVerifiedSetterTest {
 
     private TaskListener taskListener;
     private GerritCmdRunner mockGerritCmdRunner;
-    private Hudson hudson;
     private AbstractBuild build;
     private EnvVars env;
     private AbstractProject project;
@@ -90,9 +87,6 @@ public class SpecGerritVerifiedSetterTest {
      */
     @Before
     public void setUp() throws Exception {
-        hudson = PowerMockito.mock(Hudson.class);
-        when(hudson.getRootUrl()).thenReturn("http://localhost/");
-
         PowerMockito.mockStatic(GerritMessageProvider.class);
         when(GerritMessageProvider.all()).thenReturn(null);
 
@@ -120,9 +114,10 @@ public class SpecGerritVerifiedSetterTest {
 
         mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
         when(jenkins.getItemByFullName(eq("MockProject"), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq("MockProject"), same(Job.class))).thenReturn(project);
+        when(jenkins.getRootUrl()).thenReturn("http://localhost/");
 
         mockStatic(GerritTriggeredBuildListener.class);
         when(GerritTriggeredBuildListener.all()).thenReturn(mock(ExtensionList.class));
@@ -152,7 +147,7 @@ public class SpecGerritVerifiedSetterTest {
         when(config.getGerritBuildSuccessfulVerifiedValue()).thenReturn(1);
         when(config.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(1);
 
-        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
+        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, jenkins);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
         String parameterStringExpected = "gerrit review MSG=OK VERIFIED=1 CODEREVIEW=1";
 
@@ -182,7 +177,7 @@ public class SpecGerritVerifiedSetterTest {
         when(config.getGerritBuildFailedVerifiedValue()).thenReturn(-1);
         when(config.getGerritBuildFailedCodeReviewValue()).thenReturn(-1);
 
-        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
+        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, jenkins);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
         String parameterStringExpected = "gerrit review MSG=Failed VERIFIED=-1 CODEREVIEW=-1";
 
@@ -235,7 +230,7 @@ public class SpecGerritVerifiedSetterTest {
         when(config.getGerritBuildFailedCodeReviewValue()).thenReturn(-1);
         when(config.getGerritBuildFailedVerifiedValue()).thenReturn(-1);
 
-        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, hudson);
+        GerritNotifier notifier = new GerritNotifier(config, mockGerritCmdRunner, jenkins);
         notifier.buildCompleted(memory.getMemoryImprint(event), taskListener);
         String parameterStringExpected = "gerrit review MSG=FAILED VERIFIED=-1 CODEREVIEW=-1";
 

@@ -89,7 +89,7 @@ public class ParameterExpander {
      * @param config the global config.
      */
     public ParameterExpander(IGerritHudsonTriggerConfig config) {
-        this(config, Jenkins.getInstance());
+        this(config, Jenkins.get());
     }
 
     /**

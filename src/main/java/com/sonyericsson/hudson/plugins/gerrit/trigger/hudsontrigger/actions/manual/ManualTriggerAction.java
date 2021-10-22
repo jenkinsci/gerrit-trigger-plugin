@@ -38,7 +38,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.Extension;
-import hudson.model.Hudson;
 import hudson.model.ParameterValue;
 import hudson.model.RootAction;
 import hudson.security.Permission;
@@ -94,7 +93,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getIconFileName() {
-        if (hasEnabledServers() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
+        if (hasEnabledServers() && Jenkins.get().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return getPluginImageUrl("icon_retrigger24.png");
         } else {
             return null;
@@ -103,7 +102,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getDisplayName() {
-        if (hasEnabledServers() && Hudson.getInstance().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
+        if (hasEnabledServers() && Jenkins.get().hasPermission(PluginImpl.MANUAL_TRIGGER)) {
             return Messages.ManualGerritTrigger();
         } else {
         return null;
@@ -323,8 +322,7 @@ public class ManualTriggerAction implements RootAction {
             response.sendRedirect2(".");
             return;
         }
-        Jenkins jenkins = Jenkins.getInstance();
-        assert jenkins != null;
+        Jenkins jenkins = Jenkins.get();
         jenkins.checkPermission(PluginImpl.MANUAL_TRIGGER);
         IGerritHudsonTriggerConfig config = getServerConfig(selectedServer);
 
@@ -387,7 +385,7 @@ public class ManualTriggerAction implements RootAction {
             response.sendRedirect2(".");
             return;
         }
-        Hudson.getInstance().checkPermission(PluginImpl.MANUAL_TRIGGER);
+        Jenkins.get().checkPermission(PluginImpl.MANUAL_TRIGGER);
 
         session.removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
@@ -629,7 +627,7 @@ public class ManualTriggerAction implements RootAction {
                 JSONObject change = indexed.get(changeId);
                 if (change != null) {
                     logger.debug("Found the change: {}", change);
-                    return new ManualPatchsetCreated(change, patch, Hudson.getAuthentication().getName());
+                    return new ManualPatchsetCreated(change, patch, Jenkins.getAuthentication().getName());
                 } else {
                     logger.trace("No change found with id {}", changeId);
                     return null;

@@ -56,7 +56,7 @@ public class PluginRerunCheckEvent extends PluginGerritEvent implements Serializ
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PluginRerunCheckEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginRerunCheckEventDescriptor.class);
     }
 
     @Override

@@ -53,7 +53,7 @@ public class PluginTopicChangedEvent extends PluginGerritEvent implements Serial
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PluginTopicChangedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginTopicChangedEventDescriptor.class);
     }
 
     @Override

@@ -29,7 +29,6 @@ import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 
 import java.util.ArrayList;
@@ -38,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -313,7 +313,7 @@ public class GerritProject implements Describable<GerritProject> {
 
     @Override
     public Descriptor<GerritProject> getDescriptor() {
-        return Hudson.getInstance().getDescriptor(getClass());
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     /**

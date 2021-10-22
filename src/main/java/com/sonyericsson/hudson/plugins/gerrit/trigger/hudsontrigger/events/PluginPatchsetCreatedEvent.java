@@ -31,7 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -155,7 +155,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginPatchsetCreatedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginPatchsetCreatedEventDescriptor.class);
     }
 
     @Override

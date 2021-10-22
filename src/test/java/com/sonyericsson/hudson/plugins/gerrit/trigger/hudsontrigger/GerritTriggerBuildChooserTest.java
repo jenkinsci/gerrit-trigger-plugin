@@ -3,6 +3,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import hudson.plugins.git.util.BuildChooserContext;
 import hudson.plugins.git.Revision;
 import static org.junit.Assert.assertEquals;
+
+import jenkins.model.Jenkins;
 import org.junit.Test;
 import java.util.Collection;
 import hudson.model.Job;
@@ -12,7 +14,6 @@ import hudson.model.FreeStyleBuild;
 import hudson.EnvVars;
 import java.io.IOException;
 import java.io.Serializable;
-import hudson.model.Hudson;
 import org.jenkinsci.plugins.gitclient.GitClient;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -60,7 +61,7 @@ public class GerritTriggerBuildChooserTest {
          */
         public <T> T actOnBuild(ContextCallable<Run<?, ?>, T> callable)
             throws IOException, InterruptedException {
-            return callable.invoke(build, Hudson.MasterComputer.localChannel);
+            return callable.invoke(build, Jenkins.MasterComputer.localChannel);
         }
 
         /**
@@ -73,7 +74,7 @@ public class GerritTriggerBuildChooserTest {
          */
         public <T> T actOnProject(ContextCallable<Job<?, ?>, T> callable)
             throws IOException, InterruptedException {
-            return callable.invoke(project, Hudson.MasterComputer.localChannel);
+            return callable.invoke(project, Jenkins.MasterComputer.localChannel);
         }
 
         /**

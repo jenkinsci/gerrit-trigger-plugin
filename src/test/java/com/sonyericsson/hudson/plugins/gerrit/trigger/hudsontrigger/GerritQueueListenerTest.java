@@ -124,7 +124,7 @@ public class GerritQueueListenerTest {
      * @throws InterruptedException if interrupted
      */
     private Item waitForBlockedItem(FreeStyleProject project, int timeout) throws InterruptedException {
-        Queue jenkinsQueue = Jenkins.getInstance().getQueue();
+        Queue jenkinsQueue = Jenkins.get().getQueue();
         Item queueItem = null;
 
         int elapsedSeconds = 0;

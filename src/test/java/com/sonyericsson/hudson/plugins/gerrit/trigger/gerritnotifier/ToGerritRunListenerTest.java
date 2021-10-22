@@ -107,7 +107,7 @@ public class ToGerritRunListenerTest {
     public void setup() throws Exception {
         jenkins = mock(Jenkins.class);
         mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
 
         mockStatic(NotificationFactory.class);
         mockStatic(PluginImpl.class);

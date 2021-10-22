@@ -31,8 +31,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -59,7 +59,7 @@ public class PluginDraftPublishedEvent extends PluginGerritEvent implements Seri
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginDraftPublishedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginDraftPublishedEventDescriptor.class);
     }
 
     @Override
