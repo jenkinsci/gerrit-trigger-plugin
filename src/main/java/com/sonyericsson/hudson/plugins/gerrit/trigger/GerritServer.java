@@ -690,6 +690,16 @@ public class GerritServer implements Describable<GerritServer>, Action {
     }
 
     /**
+     * Returns the GerritProjectListUpdater of this server so that it can
+     * be configured.
+     *
+     * @return the GerritProjectListUpdater used in this server
+     */
+    public GerritProjectListUpdater getProjectListUpdater() {
+        return projectListUpdater;
+    }
+
+    /**
      * Returns the current Gerrit version.
      *
      * @return the current Gerrit version as a String if connected, or null otherwise.
