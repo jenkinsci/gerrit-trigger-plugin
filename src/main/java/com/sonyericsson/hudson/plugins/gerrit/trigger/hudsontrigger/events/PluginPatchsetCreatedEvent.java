@@ -54,8 +54,10 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     private boolean excludePrivateState = false;
     private boolean excludeWipState = false;
     private String commitMessageContainsRegEx = "";
+    private String uploaderNameContainsRegEx = "";
 
     private transient Pattern commitMessagePattern = null;
+    private transient Pattern uploaderNamePattern = null;
 
 
     /**
@@ -69,6 +71,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         this.excludePrivateState = false;
         this.excludeWipState = false;
         this.commitMessageContainsRegEx = "";
+        this.uploaderNameContainsRegEx = "";
     }
 
     /**
@@ -149,6 +152,17 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
     }
 
     /**
+     * Setter for uploaderNameContainsRegEx.
+     *
+     * @param uploaderNameContainsRegEx Trigger if uploader name is validated against this RegEx.
+     */
+    @DataBoundSetter
+    public void setUploaderNameContainsRegEx(String uploaderNameContainsRegEx) {
+        this.uploaderNameContainsRegEx = uploaderNameContainsRegEx;
+        this.uploaderNamePattern = null;
+    }
+
+    /**
      * Getter for the Descriptor.
      *
      * @return the Descriptor for the PluginPatchsetCreatedEvent.
@@ -217,6 +231,15 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         return commitMessageContainsRegEx;
     }
 
+    /**
+     * Getter for uploaderNameContainsRegEx field.
+     *
+     * @return uploaderNameContainsRegEx
+     */
+    public String getUploaderNameContainsRegEx() {
+        return uploaderNameContainsRegEx;
+    }
+
     @Override
     public boolean shouldTriggerOn(GerritTriggeredEvent event) {
         if (!super.shouldTriggerOn(event)) {
@@ -250,6 +273,14 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             }
             String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
             return commitMessagePattern.matcher(commitMessage).find();
+        }
+        if (StringUtils.isNotEmpty(uploaderNameContainsRegEx)) {
+            if (uploaderNamePattern == null) {
+                uploaderNamePattern = Pattern.compile(
+                        this.uploaderNameContainsRegEx, Pattern.DOTALL);
+            }
+            String uploaderName = ((PatchsetCreated)event).getPatchSet().getUploader().getName();
+            return uploaderNamePattern.matcher(uploaderName).find();
         }
         return true;
     }

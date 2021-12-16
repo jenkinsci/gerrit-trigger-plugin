@@ -50,4 +50,9 @@
              help="/plugin/gerrit-trigger/trigger/help-CommitMessageContains.html">
         <f:textbox/>
     </f:entry>
+    <f:entry title="${%Uploader Name Contains Regular Expression}"
+             field="uploaderNameContainsRegEx"
+             help="/plugin/gerrit-trigger/trigger/help-UploaderNameContains.html">
+        <f:textbox/>
+    </f:entry>
 </j:jelly>
