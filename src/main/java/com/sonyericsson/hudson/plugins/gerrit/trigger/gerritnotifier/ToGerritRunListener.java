@@ -52,9 +52,9 @@ import java.util.List;
 
 import jenkins.model.Jenkins;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * The Big RunListener in charge of coordinating build results and reporting back to Gerrit.
@@ -98,7 +98,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @param r         the build.
      * @param customUrl the URL.
      */
-    public void setBuildCustomUrl(@Nonnull Run r, @Nonnull String customUrl) {
+    public void setBuildCustomUrl(@NonNull Run r, @NonNull String customUrl) {
         GerritCause cause = getCause(r);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
@@ -112,7 +112,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @param r                   the build that caused the failure.
      * @param unsuccessfulMessage the unsuccessful message
      */
-    public void setBuildUnsuccessfulMessage(@Nonnull Run r, @Nonnull String unsuccessfulMessage) {
+    public void setBuildUnsuccessfulMessage(@NonNull Run r, @NonNull String unsuccessfulMessage) {
         GerritCause cause = getCause(r);
         if (cause != null) {
             cleanUpGerritCauses(cause, r);
@@ -121,7 +121,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     @Override
-    public synchronized void onCompleted(@Nonnull Run r, @Nonnull TaskListener listener) {
+    public synchronized void onCompleted(@NonNull Run r, @NonNull TaskListener listener) {
         GerritCause cause = getCause(r);
         logger.debug("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
@@ -170,7 +170,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @return the report.
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
      */
-    @Nonnull
+    @NonNull
     public synchronized BuildMemoryReport report() {
         return memory.report();
     }
@@ -454,8 +454,8 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @throws IOException if an error occurs while reading the workspace
      * @throws InterruptedException if an error occurs while reading the workspace
      */
-    @Nonnull
-    protected FilePath[] getMatchingWorkspaceFiles(@Nullable FilePath ws, @Nonnull String filepath)
+    @NonNull
+    protected FilePath[] getMatchingWorkspaceFiles(@Nullable FilePath ws, @NonNull String filepath)
             throws IOException, InterruptedException {
         if (ws == null) {
             return new FilePath[0];
@@ -492,7 +492,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
      * @throws InterruptedException If interrupted while working with the {@link FilePath} or {@link EnvVars Environment}
      */
     private String obtainUnsuccessfulMessage(@Nullable GerritTriggeredEvent event,
-                                             @Nonnull Run build,
+                                             @NonNull Run build,
                                              @Nullable TaskListener listener)
             throws IOException, InterruptedException {
         Job project = build.getParent();

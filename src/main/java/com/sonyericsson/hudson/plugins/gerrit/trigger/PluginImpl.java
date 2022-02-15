@@ -71,8 +71,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Main Plugin entrance.
@@ -189,7 +189,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of GerritServers
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<GerritServer> getServers_() {
         PluginImpl plugin = getInstance();
@@ -219,7 +219,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of server names.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<String> getServerNames_() {
         PluginImpl plugin = getInstance();
@@ -473,7 +473,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return gerritEventManager
      */
-    @Nonnull
+    @NonNull
     public GerritHandler getHandler() {
         if (gerritEventManager == null) {
             throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
@@ -523,7 +523,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @param serverName the name of the Gerrit server.
      * @return the list of jobs configured with this server.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<Job> getConfiguredJobs_(String serverName) {
         PluginImpl plugin = getInstance();

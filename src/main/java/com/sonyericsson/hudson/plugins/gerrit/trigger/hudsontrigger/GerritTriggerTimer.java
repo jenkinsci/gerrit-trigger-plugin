@@ -29,7 +29,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -91,7 +91,7 @@ public final class GerritTriggerTimer {
      * @return the refresh interval in ms.
      * @see #calculateAverageDynamicConfigRefreshInterval()
      */
-    private long calculateDynamicConfigRefreshInterval(@Nonnull GerritTrigger trigger) {
+    private long calculateDynamicConfigRefreshInterval(@NonNull GerritTrigger trigger) {
         if (trigger.isAnyServer()) {
             List<GerritServer> servers = PluginImpl.getServers_();
             if (servers.isEmpty()) {
@@ -136,7 +136,7 @@ public final class GerritTriggerTimer {
      * @param trigger the trigger associated with the task
      * @param timerTask the TimerTask to be scheduled
      */
-    public void schedule(GerritTriggerTimerTask timerTask, @Nonnull GerritTrigger trigger) {
+    public void schedule(GerritTriggerTimerTask timerTask, @NonNull GerritTrigger trigger) {
         long timerPeriod = TimeUnit.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(trigger));
         try {
             cancel(timerTask);

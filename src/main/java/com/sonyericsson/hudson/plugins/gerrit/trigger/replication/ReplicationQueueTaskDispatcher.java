@@ -57,8 +57,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Block builds until replication is completed if configured to wait for replication.
@@ -86,7 +86,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * @return the cache.
      * @see #ReplicationQueueTaskDispatcher()
      */
-    @Nonnull
+    @NonNull
     private static ReplicationCache createDefaultCache() {
         PluginConfig config = PluginImpl.getPluginConfig_();
         int expiration = ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES;
@@ -105,7 +105,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * @param replicationCache the replication cache
      */
     ReplicationQueueTaskDispatcher(@CheckForNull GerritHandler gerritHandler,
-                                   @Nonnull ReplicationCache replicationCache) {
+                                   @NonNull ReplicationCache replicationCache) {
         blockedItems = new ConcurrentHashMap<Long, BlockedItem>();
         this.replicationCache = replicationCache;
         if (gerritHandler != null) {
