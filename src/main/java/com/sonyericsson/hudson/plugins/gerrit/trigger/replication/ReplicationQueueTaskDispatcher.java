@@ -51,6 +51,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -232,6 +233,15 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 }
             }
 
+            // For change-merged events, the replication event to wait for is not the one related to the
+            // ref, but rather 'refs/heads/<target branch>'.
+            String reference = repositoryModifiedEvent.getModifiedRef();
+            if (repositoryModifiedEvent instanceof ChangeMerged) {
+                reference = "refs/heads/" + ((ChangeMerged)repositoryModifiedEvent).getChange().getBranch();
+                logger.debug("item Id {} changeMerged() needs to wait for replication event on {}",
+                        item.getId(), reference);
+            }
+
             if (replicationCache.isExpired(gerritCause.getEvent().getReceivedOn())) {
                 logger.trace(eventDesc + " has expired");
                 return null;
@@ -251,18 +261,21 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 }
 
                 boolean useTimestampWhenProcessingRefReplicatedEvent = false;
-                // we only need to perform a timestamp check if
+                // we need to perform a timestamp check if
                 // we are looking at a RefUpdated event.
                 // The reason for this is due to the fact that the ref
-                // is not unique for RefUpdated events and we therefore
+                // is not unique for RefUpdated events, and we therefore
                 // *need* to compare timestamps to ensure we use the
                 // correct event.
-                if (gerritCause.getEvent() instanceof RefUpdated) {
+                // The same is true for ChangeMerged events, as the expected
+                // ref is 'refs/heads/<branch>'.
+                if ((gerritCause.getEvent() instanceof RefUpdated)
+                        || (gerritCause.getEvent() instanceof ChangeMerged)) {
                     useTimestampWhenProcessingRefReplicatedEvent = true;
                 }
                 logger.debug(eventDesc + " is blocked");
                 return new BlockedItem(repositoryModifiedEvent.getModifiedProject(),
-                        repositoryModifiedEvent.getModifiedRef(),
+                        reference,
                         gerritServer,
                         slaves,
                         gerritCause.getEvent().getReceivedOn(),
@@ -297,6 +310,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * @param refReplicated the event
      */
     public void gerritEvent(RefReplicated refReplicated) {
+        logger.trace("Cache received event {}", refReplicated.toString());
         replicationCache.put(refReplicated);
         boolean queueMaintenanceRequired = false;
         for (BlockedItem blockedItem : blockedItems.values()) {
