@@ -346,8 +346,9 @@ public class ReplicationQueueTaskDispatcherTest {
     /**
      * Helper method for ChangeBasedEvent replication
      * @param cbe Change Based event
+     * @param reference Reference to send the replication event for
      */
-    private void patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(ChangeBasedEvent cbe) {
+    private void patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(ChangeBasedEvent cbe, String reference) {
 
         Item item = createItem(cbe, new String[] {"slaveA"});
 
@@ -363,7 +364,7 @@ public class ReplicationQueueTaskDispatcherTest {
         assertNotNull("the item should be blocked", dispatcher.canRun(item));
 
         //send the proper replication event
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", reference, "someGerritServer",
                 "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         assertNull("Item should not be blocked", dispatcher.canRun(item));
@@ -381,7 +382,10 @@ public class ReplicationQueueTaskDispatcherTest {
 
         ChangeMerged changeMerged = Setup.createChangeMerged("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
-        patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(changeMerged);
+
+        //note for change merged event, the expected replica event is for the head of the branch as the replica
+        //event for the reference would have been already sent when the patch was pushed for review.
+        patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(changeMerged, "refs/heads/branch");
 
     }
 
@@ -394,7 +398,7 @@ public class ReplicationQueueTaskDispatcherTest {
 
         DraftPublished draftPublished = Setup.createDraftPublished("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
-        patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(draftPublished);
+        patchSetIsReplicatedToOneSlaveAfterChangeBasedEvent(draftPublished, "refs/changes/1/1/1");
 
     }
 
@@ -405,18 +409,28 @@ public class ReplicationQueueTaskDispatcherTest {
     @Test
     public void shouldBlockItemUntilIfPatchSetIsReplicatedToOneSlaveBeforeChangeMerged() {
 
-        //send the replication event before change merged event
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someGerritServer",
+        //send the replication event before change merged event.
+        //note that the ref is 'refs/heads/branch' because for change merged events that's the only replica event
+        //that Gerrit will send (as the replica event for the ref would have been sent when the patch was pushed
+        //to Gerrit for review).
+        //For change merged event, a check on the event timestamp is done to make sure not to unblock the build for
+        //a replica event that was fired before the current change merged event.
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/branch", "someGerritServer",
                 "slaveA", RefReplicated.SUCCEEDED_STATUS));
 
         ChangeMerged changeMerged = Setup.createChangeMerged("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
         Item item = createItem(changeMerged, new String[] {"slaveA"});
 
-        assertNull("Item should not be blocked", dispatcher.canRun(item));
-        assertNull("Item should not be tagged with replicationFailedAction",
-                item.getAction(ReplicationFailedAction.class));
+        assertNotNull("Item should be blocked as the replica event happened before the change event",
+                dispatcher.canRun(item));
 
+        //fire the replica event that will unblock the item
+        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/branch", "someGerritServer",
+                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+
+        assertNull("Item should not be blocked anymore as a newer replica event was received",
+                dispatcher.canRun(item));
     }
 
     /**
