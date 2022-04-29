@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
@@ -386,6 +387,18 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * test.
+     * @throws IOException IOException
+     * @throws InterruptedException InterruptedException
+     */
+    @Test
+    public void testGetBuildCompletedCommandNotBuilt() throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandEventWithResults("", new String[] {},
+                new Result[] {Result.NOT_BUILT}, Setup.createPatchsetCreated(),
+                null, null, "NONE", false);
+    }
+
+    /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeAbandoned event instead.
      *
      * @throws IOException IOException
@@ -445,7 +458,7 @@ public class ParameterExpanderTest {
                     "\n\nhttp://localhost/test/ : FAILURE",
                     "\n\nhttp://localhost/test/ : UNSTABLE",
                     "\n\nhttp://localhost/test/ : SUCCESS", },
-                new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE}, "'A disappointed butler says not OK",
+                new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE},
                 Setup.createPatchsetCreated(), -1, 0);
     }
 
@@ -520,8 +533,31 @@ public class ParameterExpanderTest {
             GerritTriggeredEvent event, Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
                     throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults(customUrl, new String[] {expectedBuildsStats},
-                new Result[] {Result.SUCCESS}, "'Your friendly butler says OK.",
-                Setup.createChangeRestored(), null, null);
+                new Result[] {Result.SUCCESS}, Setup.createChangeRestored(), null, null);
+    }
+
+    /**
+     * Sub test for {@link #testGetBuildCompletedCommandSuccessful()} and
+     * {@link #testGetBuildCompletedCommandSuccessfulChangeMerged()}.
+     * Tries a case when a build exists.
+     * Expected notifications level is ALL here.
+     *
+     * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
+     * @param expectedBuildsStats the expected buildStats output.
+     * @param expectedBuildResults the expected build outcomes
+     * @param event the event.
+     * @param expectedVerifiedVote what to expect in the final verified vote even if 1 is calculated
+     * @param expectedCodeReviewVote what to expect in the final code review vote even if 32 is calculated
+     * @throws IOException if so.
+     * @throws InterruptedException if so.
+     */
+    public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
+            Result[] expectedBuildResults, GerritTriggeredEvent event,
+            Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+                    throws IOException, InterruptedException {
+        tryGetBuildCompletedCommandEventWithResults(customUrl, expectedBuildsStats,
+                expectedBuildResults, event, expectedVerifiedVote, expectedCodeReviewVote,
+                "ALL", true);
     }
 
     /**
@@ -531,19 +567,22 @@ public class ParameterExpanderTest {
      * @param customUrl the customUrl to return from {@link GerritTrigger#getCustomUrl()}
      * @param expectedBuildsStats the expected buildStats output.
      * @param expectedBuildResults the expected build outcomes
-     * @param expectedMessage the expected message
      * @param event the event.
      * @param expectedVerifiedVote what to expect in the final verified vote even if 1 is calculated
      * @param expectedCodeReviewVote what to expect in the final code review vote even if 32 is calculated
+     * @param expectedNotificationLevel the expected notification level
+     * @param createBuild whether we have to create build
      * @throws IOException if so.
      * @throws InterruptedException if so.
      */
     public void tryGetBuildCompletedCommandEventWithResults(String customUrl, String[] expectedBuildsStats,
-            Result[] expectedBuildResults, String expectedMessage, GerritTriggeredEvent event,
-            Integer expectedVerifiedVote, Integer expectedCodeReviewVote)
+            Result[] expectedBuildResults, GerritTriggeredEvent event,
+            Integer expectedVerifiedVote, Integer expectedCodeReviewVote, String expectedNotificationLevel,
+            boolean createBuild)
                     throws IOException, InterruptedException {
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
+        IGerritHudsonTriggerConfig defaultConfig = new Config();
 
         TaskListener taskListener = mock(TaskListener.class);
 
@@ -557,9 +596,13 @@ public class ParameterExpanderTest {
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[expectedBuildResults.length];
         for (int i = 0; i < expectedBuildResults.length; i++) {
             EnvVars env = Setup.createEnvVars();
-            AbstractBuild r = Setup.createBuild(project, taskListener, env);
-            env.put("BUILD_URL", jenkins.getRootUrl() + r.getUrl());
-            when(r.getResult()).thenReturn(expectedBuildResults[i]);
+            // There are no builds has been created in case of NOT_BUILT status.
+            AbstractBuild r = null;
+            if (createBuild) {
+                r = Setup.createBuild(project, taskListener, env);
+                env.put("BUILD_URL", jenkins.getRootUrl() + r.getUrl());
+                when(r.getResult()).thenReturn(expectedBuildResults[i]);
+            }
             entries[i] = Setup.createImprintEntry(project, r);
         }
 
@@ -583,21 +626,27 @@ public class ParameterExpanderTest {
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
+        ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertThat("Missing message", result, containsString(" MSG=" + expectedMessage));
-        assertThat("Missing BS", result, containsStrings(expectedBuildsStats));
+        String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
+
+        assertThat("Missing MSG", result, containsString("MSG='" + message + "'"));
         assertThat("Missing CHANGE_ID", result, containsString("CHANGE_ID=Iddaaddaa123456789"));
         assertThat("Missing PATCHSET", result, containsString("PATCHSET=1"));
-        assertThat("Missing NOTIFICATION_LEVEL", result, containsString("NOTIFICATION_LEVEL=ALL"));
+        assertThat("Missing NOTIFICATION_LEVEL", result,
+                containsString("NOTIFICATION_LEVEL=" + expectedNotificationLevel));
         assertThat("Missing REFSPEC", result, containsString("REFSPEC=" + expectedRefSpec));
-        assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
-        assertThat("Missing ENV_CHANGE", result, containsString("ENV_CHANGE=1000"));
-        assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
-        assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
-        assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
+        // In case we do not have any builds we must not check any it's environment variables.
+        if (memoryImprint.getEntries().length > 0 && memoryImprint.getEntries()[0].getBuild() != null) {
+            assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
+            assertThat("Missing ENV_CHANGE", result, containsString("ENV_CHANGE=1000"));
+            assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
+            assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
+            assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
+        }
         assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
         assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
     }
@@ -624,6 +673,7 @@ public class ParameterExpanderTest {
      */
     public void tryBuildStatsFailureCommand(String unsuccessfulMessage, String expectedBuildStats) throws Exception {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
+        IGerritHudsonTriggerConfig defaultConfig = new Config();
 
         TaskListener taskListener = mock(TaskListener.class);
 
@@ -665,11 +715,14 @@ public class ParameterExpanderTest {
         when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
+        ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
         System.out.println("Result: " + result);
 
-        assertTrue("Missing BS", result.indexOf(" BS=" + expectedBuildStats) >= 0);
+        String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
+
+        assertThat("Missing MSG", result, containsString(" MSG='" + message + "'"));
     }
 
     /**
