@@ -265,7 +265,7 @@ public class ParameterExpander {
         String command = gerritCommand;
         if (r != null && taskListener != null) {
             try {
-                System.out.println("EnvVars: " + r.getEnvironment(taskListener));
+                
                 command = r.getEnvironment(taskListener).expand(command);
             } catch (Exception ex) {
                 logger.error("Failed to expand env vars into gerrit cmd. Gerrit won't be notified!!", ex);
