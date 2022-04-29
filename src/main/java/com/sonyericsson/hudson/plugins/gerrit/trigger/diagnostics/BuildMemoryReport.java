@@ -31,7 +31,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.ModelObject;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -178,19 +178,19 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public Set<GerritTriggeredEvent> keySet() {
         return internal.keySet();
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public Collection<List<BuildMemory.MemoryImprint.Entry>> values() {
         return internal.values();
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public Set<Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> entrySet() {
         return internal.entrySet();
     }

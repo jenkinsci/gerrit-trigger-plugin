@@ -46,8 +46,8 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -115,7 +115,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      *
      * @return the permission
      */
-    @Nonnull
+    @NonNull
     public static Permission getRequiredPermission() {
         return Jenkins.ADMINISTER;
     }

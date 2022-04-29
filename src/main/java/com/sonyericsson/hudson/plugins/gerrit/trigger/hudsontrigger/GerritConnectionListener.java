@@ -36,7 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionNumber;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 /**
  * Every instance of this class is a connection listener to a specific Gerrit server.

@@ -72,8 +72,8 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -335,7 +335,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
      * @see GerritTriggerParameters#GERRIT_SUBMITTER
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getNameAndEmailParameterMode() {
         return nameAndEmailParameterMode;
     }
@@ -352,7 +352,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @see GerritTriggerParameters#GERRIT_SUBMITTER
      */
     @DataBoundSetter
-    public void setNameAndEmailParameterMode(@Nonnull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
+    public void setNameAndEmailParameterMode(@NonNull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
         this.nameAndEmailParameterMode = nameAndEmailParameterMode;
     }
 
@@ -362,7 +362,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getCommitMessageParameterMode() {
         return commitMessageParameterMode;
     }
@@ -374,7 +374,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setCommitMessageParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
         this.commitMessageParameterMode = commitMessageParameterMode;
     }
 
@@ -384,7 +384,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getChangeSubjectParameterMode() {
         return changeSubjectParameterMode;
     }
@@ -397,7 +397,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setChangeSubjectParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
         this.changeSubjectParameterMode = changeSubjectParameterMode;
     }
 
@@ -407,7 +407,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getCommentTextParameterMode() {
         return commentTextParameterMode;
     }
@@ -420,7 +420,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setCommentTextParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode commentTextParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode commentTextParameterMode) {
         this.commentTextParameterMode = commentTextParameterMode;
     }
 

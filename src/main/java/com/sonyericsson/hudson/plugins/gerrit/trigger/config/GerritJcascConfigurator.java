@@ -40,7 +40,7 @@ import io.jenkins.plugins.casc.model.Sequence;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -72,7 +72,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public String getName() {
         return PluginImpl.SYMBOL_NAME;
     }

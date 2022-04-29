@@ -29,8 +29,8 @@ import hudson.Util;
 import hudson.model.Run;
 import java.util.Collections;
 import java.util.Set;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.jenkinsci.plugins.workflow.steps.Step;
 import org.jenkinsci.plugins.workflow.steps.StepContext;
 import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
@@ -111,7 +111,7 @@ public class SetGerritReviewStep extends Step {
          * @param step The step.
          * @param context The step context.
          */
-        protected Execution(SetGerritReviewStep step, @Nonnull StepContext context) {
+        protected Execution(SetGerritReviewStep step, @NonNull StepContext context) {
             super(context);
             this.step = step;
         }
