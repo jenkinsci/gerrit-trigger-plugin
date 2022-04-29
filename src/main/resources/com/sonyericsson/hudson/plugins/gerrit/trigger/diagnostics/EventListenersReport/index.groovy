@@ -76,7 +76,7 @@ l.layout(title: _("${report.getDisplayName()} - Gerrit Trigger Diagnostics"), no
 
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
+            l.task(icon: "icon-up icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
             l.task(icon: "icon-folder icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
         }
     }

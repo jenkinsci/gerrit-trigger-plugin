@@ -1,12 +1,11 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:f="/lib/form">
     <l:layout title="${%Remove Server}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.url}/" title="${%Back to Server Configuration}"/>
+                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="icon-up icon-md" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
+                <l:task icon="icon-up icon-md" href="${rootURL}/${it.url}/" title="${%Back to Server Configuration}"/>
             </l:tasks>
         </l:side-panel>
         <l:main-panel>
