@@ -60,9 +60,14 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
     private static final int MAX_WAIT_TIME = 64;
 
     /**
-     * Holds the frequency period of the timer, in minutes.
+     * Default period for updates, in minutes.
      */
-    private static final int TIMER_PERIOD = 5;
+    private static final int DEFAULT_TIMER_PERIOD = 5;
+
+    /**
+     * Holds the period to update the project list, in minutes.
+     */
+    private int timerUpdatePeriod = DEFAULT_TIMER_PERIOD;
 
     private Timer timer;
 
@@ -79,6 +84,23 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
     public GerritProjectListUpdater(String serverName) {
         this.serverName = serverName;
         addThisAsListener();
+    }
+
+    /**
+     * The update period currently being used by the timer.
+     * @return the update period, in minutes.
+     */
+    public int getTimerUpdatePeriod() {
+        return timerUpdatePeriod;
+    }
+
+    /**
+     * Sets a new value for the timer update period, in minutes.
+     * @param timerUpdatePeriod the new update period, in minutes.
+     */
+    public void setTimerUpdatePeriod(int timerUpdatePeriod) {
+        this.timerUpdatePeriod = timerUpdatePeriod;
+        scheduleProjectListUpdate(0);
     }
 
     /**
@@ -189,12 +211,14 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
     public void scheduleProjectListUpdate(int initDelay) {
         logger.info("Start timer to update project list");
         if (timer != null) {
+            timer.cancel();
+            timer = new Timer(serverName);
             timer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
                     tryLoadProjectList();
                 }
-            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(TIMER_PERIOD));
+            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(timerUpdatePeriod));
         } else {
             logger.error("Unable to schedule project list update task because timer is null");
         }
