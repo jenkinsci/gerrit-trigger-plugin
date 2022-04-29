@@ -31,8 +31,11 @@ import hudson.model.BuildListener;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.ParametersAction;
+import hudson.model.Run;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
@@ -135,7 +139,7 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_EVENT_ACCOUNT);
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
     }
 
@@ -163,7 +167,7 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_CHANGE_ABANDONER);
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
     }
 
@@ -191,9 +195,9 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_TOPIC_CHANGER);
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
-        j.assertLogContains("GERRIT_OLD_TOPIC" + "=" + topicChanged.getOldTopic(), build);
+        assertLogContains("GERRIT_OLD_TOPIC" + "=" + topicChanged.getOldTopic(), build);
     }
 
     /**
@@ -220,7 +224,7 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_CHANGE_RESTORER);
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
     }
 
@@ -244,7 +248,7 @@ public class ParameterModeJenkinsTest {
         //TODO According to the doc GerritTriggerParameters.GERRIT_SUBMITTER should be set as well but its not?
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
     }
 
@@ -267,7 +271,7 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_EVENT_ACCOUNT);
         String expected = GerritTriggerParameters.ParameterMode.encodeBase64(ac.getNameAndEmail());
         for (GerritTriggerParameters param : params) {
-            j.assertLogContains(param.name() + "=" + expected, build);
+            assertLogContains(param.name() + "=" + expected, build);
         }
     }
 
@@ -290,9 +294,9 @@ public class ParameterModeJenkinsTest {
                 GerritTriggerParameters.GERRIT_EVENT_ACCOUNT);
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {
-            j.assertLogNotContains(param.name() + "=", build);
+            assertLogNotContains(param.name() + "=", build);
         }
-        j.assertLogNotContains(expected, build);
+        assertLogNotContains(expected, build);
     }
 
     /**
@@ -311,7 +315,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name()
                 + "="
                 + GerritTriggerParameters.ParameterMode.encodeBase64(expected), build);
     }
@@ -332,7 +336,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name()
                 + "="
                 + expected, build);
     }
@@ -353,7 +357,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name(), build);
+        assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_COMMIT_MESSAGE.name(), build);
     }
 
     /**
@@ -373,7 +377,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
                 + "="
                 + GerritTriggerParameters.ParameterMode.encodeBase64(expected), build);
     }
@@ -395,7 +399,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name()
                 + "="
                 + expected, build);
     }
@@ -417,7 +421,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogNotContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name(), build);
+        assertLogNotContains(GerritTriggerParameters.GERRIT_EVENT_COMMENT_TEXT.name(), build);
     }
 
     /**
@@ -436,7 +440,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name(), build);
+        assertLogNotContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name(), build);
     }
 
     /**
@@ -455,7 +459,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
                 + "="
                 + expected, build);
     }
@@ -476,9 +480,33 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(event);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        j.assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
+        assertLogContains(GerritTriggerParameters.GERRIT_CHANGE_SUBJECT.name()
                 + "="
                 + GerritTriggerParameters.ParameterMode.encodeBase64(expected), build);
+    }
+
+    /**
+     * Asserts that the log contains something.
+     *
+     * TODO remove this when we've cleared up the hamcrest classpath mess
+     * @param substring the string to look for
+     * @param run the run who's log you want to check.
+     * @throws IOException if so
+     */
+    public void assertLogContains(String substring, Run run) throws IOException {
+        MatcherAssert.assertThat(JenkinsRule.getLog(run), containsString(substring));
+    }
+
+    /**
+     * Asserts that the log does not contain something.
+     *
+     * TODO remove this when we've cleared up the hamcrest classpath mess
+     * @param substring the string to look for
+     * @param run the run who's log you want to check.
+     * @throws IOException if so
+     */
+    public void assertLogNotContains(String substring, Run run) throws IOException {
+        MatcherAssert.assertThat(JenkinsRule.getLog(run), Matchers.not(containsString(substring)));
     }
 
 

@@ -15,7 +15,6 @@ import hudson.ExtensionList;
 import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.AutoCompletionCandidates;
-import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
@@ -110,8 +109,7 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
         while (tokens.hasMoreTokens()) {
             String projectName = tokens.nextToken().trim();
             if (!projectName.equals("")) {
-                Jenkins jenkins = Jenkins.getInstance();
-                assert jenkins != null;
+                Jenkins jenkins = Jenkins.get();
                 Item item = jenkins.getItem(projectName, project, Item.class);
                 if ((item == null) || !(item instanceof Job)) {
                     AbstractProject nearest = AbstractProject.findNearest(projectName);
@@ -354,7 +352,7 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
      */
     public List<PluginGerritEvent.PluginGerritEventDescriptor> getGerritEventDescriptors() {
         ExtensionList<PluginGerritEvent.PluginGerritEventDescriptor> extensionList =
-                Hudson.getInstance().getExtensionList(PluginGerritEvent.PluginGerritEventDescriptor.class);
+                Jenkins.get().getExtensionList(PluginGerritEvent.PluginGerritEventDescriptor.class);
         return extensionList;
     }
 }

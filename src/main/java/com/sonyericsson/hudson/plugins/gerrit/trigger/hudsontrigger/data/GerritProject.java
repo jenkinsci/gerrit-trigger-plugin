@@ -29,7 +29,6 @@ import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.util.ComboBoxModel;
 
 import java.util.ArrayList;
@@ -38,6 +37,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -49,6 +49,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class GerritProject implements Describable<GerritProject> {
+    /** Magical file name which represents the commit message. */
+    private static final String MAGIC_FILE_NAME_COMMIT_MSG = "/COMMIT_MSG";
+    /** Magical file name which represents the merge list of a merge commit. */
+    private static final String MAGIC_FILE_NAME_MERGE_LIST = "/MERGE_LIST";
+    /** Magical file name which doesn't represent a file. Used specifically for patchset-level comments. */
+    private static final String MAGIC_FILE_NAME_PATCHSET_LEVEL = "/PATCHSET_LEVEL";
 
     private CompareType compareType;
     private String pattern;
@@ -217,6 +223,9 @@ public class GerritProject implements Describable<GerritProject> {
     public boolean isInteresting(String project, String branch, String topic, List<String> files) {
         if (compareType.matches(pattern, project)) {
             List<String> tmpFiles = new ArrayList<String>(files);
+            tmpFiles.remove(MAGIC_FILE_NAME_COMMIT_MSG);
+            tmpFiles.remove(MAGIC_FILE_NAME_MERGE_LIST);
+            tmpFiles.remove(MAGIC_FILE_NAME_PATCHSET_LEVEL);
             for (Branch b : branches) {
                 boolean foundInterestingForbidden = false;
                 if (b.isInteresting(branch)) {
@@ -304,7 +313,7 @@ public class GerritProject implements Describable<GerritProject> {
 
     @Override
     public Descriptor<GerritProject> getDescriptor() {
-        return Hudson.getInstance().getDescriptor(getClass());
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     /**
@@ -341,7 +350,7 @@ public class GerritProject implements Describable<GerritProject> {
         }
         @Override
         public String getDisplayName() {
-            return null;
+            return "";
         }
     }
 }

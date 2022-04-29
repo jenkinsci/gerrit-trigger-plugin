@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 
-import com.google.common.collect.ImmutableSet;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
@@ -41,11 +40,13 @@ import io.jenkins.plugins.casc.model.Sequence;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +72,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public String getName() {
         return PluginImpl.SYMBOL_NAME;
     }
@@ -117,7 +118,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
      * Inject `config` field explicitly as BaseConfigurator cannot detect this ("type is abstract but not Describable").
      * The methods are using interface, but we have to point the `config` property to concrete class.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class ServerConfigurator extends BaseConfigurator<GerritServer> {
 
         @Override
@@ -141,7 +142,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     /**
      * Cannot use BaseConfigurator as {@link WatchTimeExceptionData} is immutable.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class WatchTimeExceptionDataConfigurator implements Configurator<WatchTimeExceptionData> {
 
         private static final String DAYS_OF_WEEK = "daysOfWeek";
@@ -165,7 +166,8 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
         @Override
         public Set<Attribute<WatchTimeExceptionData, ?>> describe() {
-            return ImmutableSet.of(
+            Set<Attribute<WatchTimeExceptionData, ?>> attributes = new HashSet<>();
+            Collections.addAll(attributes,
                     new MultivaluedAttribute<WatchTimeExceptionData, String>(DAYS_OF_WEEK, String.class).getter(
                             target -> Arrays.stream(target.getDaysOfWeek())
                                     .mapToObj(WatchTimeExceptionDataConfigurator.this::ordinalToName)
@@ -175,6 +177,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
                             TIMES_OF_DAY, WatchTimeExceptionData.TimeSpan.class
                     ).getter(WatchTimeExceptionData::getTimesOfDay)
             );
+            return Collections.unmodifiableSet(attributes);
         }
 
         /**
@@ -262,7 +265,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     /**
      * Configure {@link com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan}.
      */
-    @Extension
+    @Extension(optional = true)
     public static final class TimeSpanConfigurator implements Configurator<WatchTimeExceptionData.TimeSpan> {
 
         @Override
@@ -272,7 +275,8 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
 
         @Override
         public Set<Attribute<WatchTimeExceptionData.TimeSpan, ?>> describe() {
-            return ImmutableSet.of(
+            Set<Attribute<WatchTimeExceptionData.TimeSpan, ?>> attributes = new HashSet<>();
+            Collections.addAll(attributes,
                     new Attribute<WatchTimeExceptionData.TimeSpan, String>("from", String.class).getter(
                             ts -> ts.getFrom().getHourAsString() + ":" + ts.getFrom().getMinuteAsString()
                     ),
@@ -280,6 +284,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
                             ts -> ts.getTo().getHourAsString() + ":" + ts.getTo().getMinuteAsString()
                     )
             );
+            return Collections.unmodifiableSet(attributes);
         }
 
         @Override

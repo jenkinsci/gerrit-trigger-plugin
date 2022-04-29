@@ -24,7 +24,6 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-import com.google.common.collect.Iterators;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
@@ -67,13 +66,14 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
+import org.apache.commons.collections.IteratorUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectStreamException;
 import java.net.MalformedURLException;
@@ -335,7 +335,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @see GerritTriggerParameters#GERRIT_EVENT_ACCOUNT
      * @see GerritTriggerParameters#GERRIT_SUBMITTER
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getNameAndEmailParameterMode() {
         return nameAndEmailParameterMode;
     }
@@ -352,7 +352,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @see GerritTriggerParameters#GERRIT_SUBMITTER
      */
     @DataBoundSetter
-    public void setNameAndEmailParameterMode(@Nonnull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
+    public void setNameAndEmailParameterMode(@NonNull GerritTriggerParameters.ParameterMode nameAndEmailParameterMode) {
         this.nameAndEmailParameterMode = nameAndEmailParameterMode;
     }
 
@@ -362,7 +362,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getCommitMessageParameterMode() {
         return commitMessageParameterMode;
     }
@@ -374,7 +374,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setCommitMessageParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode commitMessageParameterMode) {
         this.commitMessageParameterMode = commitMessageParameterMode;
     }
 
@@ -384,7 +384,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getChangeSubjectParameterMode() {
         return changeSubjectParameterMode;
     }
@@ -397,7 +397,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setChangeSubjectParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode changeSubjectParameterMode) {
         this.changeSubjectParameterMode = changeSubjectParameterMode;
     }
 
@@ -407,7 +407,7 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @return the mode
      */
-    @Nonnull
+    @NonNull
     public GerritTriggerParameters.ParameterMode getCommentTextParameterMode() {
         return commentTextParameterMode;
     }
@@ -420,7 +420,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @DataBoundSetter
     public void setCommentTextParameterMode(
-            @Nonnull GerritTriggerParameters.ParameterMode commentTextParameterMode) {
+            @NonNull GerritTriggerParameters.ParameterMode commentTextParameterMode) {
         this.commentTextParameterMode = commentTextParameterMode;
     }
 
@@ -557,7 +557,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @param project the project
      * @return a new listener instance
      */
-    /*package*/ static EventListener createListener(Job project) {
+    /*package*/ static EventListener createListener(Job<?, ?> project) {
         return new EventListener(project);
     }
 
@@ -567,6 +567,9 @@ public class GerritTrigger extends Trigger<Job> {
      * @see #createListener(hudson.model.Job)
      */
     /*package*/ EventListener createListener() {
+        if (job == null) {
+            throw new IllegalStateException("job is not set");
+        }
         return createListener(job);
     }
 
@@ -1071,8 +1074,12 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                 }
             } catch (PatternSyntaxException pse) {
+                String name = "null";
+                if (job != null) {
+                    name = job.getName();
+                }
                 logger.error(MessageFormat.format("Exception caught for project {0} and pattern {1}, message: {2}",
-                       new Object[]{job.getName(), p.getPattern(), pse.getMessage()}));
+                        name, p.getPattern(), pse.getMessage()));
             }
         }
         logger.trace("Event is not interesting; event: {}", event);
@@ -1466,7 +1473,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     private Iterator<GerritProject> getAllGerritProjectsIterator() {
         if (gerritProjects != null && dynamicGerritProjects != null) {
-            return Iterators.concat(gerritProjects.iterator(), dynamicGerritProjects.iterator());
+            return IteratorUtils.chainedIterator(gerritProjects.iterator(), dynamicGerritProjects.iterator());
         }
 
         if (gerritProjects == null && dynamicGerritProjects != null) {
@@ -1477,7 +1484,7 @@ public class GerritTrigger extends Trigger<Job> {
             return gerritProjects.iterator();
         }
 
-        return Iterators.emptyIterator();
+        return IteratorUtils.emptyIterator();
     }
 
     /**
@@ -1960,8 +1967,12 @@ public class GerritTrigger extends Trigger<Job> {
             // Now that the dynamic project list has been loaded, we can "count down"
             // the latch so that the EventListener thread can begin to process events.
             if (projectListIsReady.getCount() > 0) {
-                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.", job.getName(),
-                        projectListIsReady.getCount());
+                String name = "null";
+                if (job != null) {
+                    name = job.getName();
+                }
+                logger.debug("Trigger config URL updated: {}; latch is currently {}; decrementing it.",
+                        name, projectListIsReady.getCount());
             }
             // Always release all locks otherwise workers will be stuck forever
             projectListIsReady.countDown();
@@ -2101,7 +2112,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     @Override
     public TriggerDescriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(GerritTriggerDescriptor.class);
+        return Jenkins.get().getDescriptorByType(GerritTriggerDescriptor.class);
     }
 
 

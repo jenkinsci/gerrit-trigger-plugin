@@ -71,8 +71,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Main Plugin entrance.
@@ -148,14 +148,14 @@ public class PluginImpl extends GlobalConfiguration {
 
     /**
      * Returns the instance of this class.
-     * If {@link jenkins.model.Jenkins#getInstance()} isn't available
+     * If {@link Jenkins#getInstanceOrNull()} ()} isn't available
      * or the plugin class isn't registered null will be returned.
      *
      * @return the instance.
      */
     @CheckForNull
     public static PluginImpl getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             return GlobalConfiguration.all().get(PluginImpl.class);
         } else {
@@ -189,7 +189,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of GerritServers
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<GerritServer> getServers_() {
         PluginImpl plugin = getInstance();
@@ -219,7 +219,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of server names.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<String> getServerNames_() {
         PluginImpl plugin = getInstance();
@@ -351,7 +351,7 @@ public class PluginImpl extends GlobalConfiguration {
      * If Jenkins is currently active.
      */
     private void checkAdmin() {
-        final Jenkins jenkins = Jenkins.getInstance(); //Hoping this method doesn't change meaning again
+        final Jenkins jenkins = Jenkins.getInstanceOrNull(); //Hoping this method doesn't change meaning again
         if (jenkins != null) {
             //If Jenkins is not alive then we are not started, so no unauthorised user might do anything
             jenkins.checkPermission(Jenkins.ADMINISTER);
@@ -473,7 +473,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return gerritEventManager
      */
-    @Nonnull
+    @NonNull
     public GerritHandler getHandler() {
         if (gerritEventManager == null) {
             throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
@@ -505,7 +505,7 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public List<Job> getConfiguredJobs(String serverName) {
         LinkedList<Job> configuredJobs = new LinkedList<Job>();
-        for (Job<?, ?> project : Jenkins.getInstance().getItems(Job.class)) { //get the jobs
+        for (Job<?, ?> project : Jenkins.get().getItems(Job.class)) { //get the jobs
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 
             //if the job has a gerrit trigger, check whether the trigger has selected this server:
@@ -523,7 +523,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @param serverName the name of the Gerrit server.
      * @return the list of jobs configured with this server.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<Job> getConfiguredJobs_(String serverName) {
         PluginImpl plugin = getInstance();
@@ -550,8 +550,16 @@ public class PluginImpl extends GlobalConfiguration {
 
         // Call the following method for force initialization of the Dispatchers because
         // it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
-        ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
-        ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        try {
+            ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Replication Queue.", e);
+        }
+        try {
+            ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Dependency Queue.", e);
+        }
     }
 
     /**

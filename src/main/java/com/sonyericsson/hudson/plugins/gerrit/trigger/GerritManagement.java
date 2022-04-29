@@ -38,13 +38,13 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Failure;
-import hudson.model.Hudson;
 import hudson.model.ManagementLink;
 import hudson.model.Saveable;
 import hudson.security.Permission;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithContextMenu;
+import jenkins.security.stapler.StaplerDispatchable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.CharEncoding;
@@ -57,7 +57,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -109,14 +109,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(DescriptorImpl.class);
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
 
     @Override
     public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
         checkPermission();
-        Jenkins jenkins = Jenkins.getInstance();
-        assert jenkins != null;
+        Jenkins jenkins = Jenkins.get();
         ContextMenu menu = new ContextMenu();
         menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
                                                  "images", "24x24", "new-package.png"), Messages.AddNewServer());
@@ -149,7 +148,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
         @Override
         public String getDisplayName() {
-            return null; // unused
+            return ""; // unused
         }
 
         /**
@@ -158,8 +157,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return the list of descriptors containing GerritServer's descriptor.
          */
         public static DescriptorExtensionList<GerritServer, GerritServer.DescriptorImpl> serverDescriptorList() {
-            Jenkins jenkins = Jenkins.getInstance();
-            assert jenkins != null;
+            Jenkins jenkins = Jenkins.get();
             return jenkins
                     .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
         }
@@ -190,7 +188,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      *
      * @return the list of GerritServer.
      */
-    @SuppressWarnings("unused") //Called from Jelly
+    @StaplerDispatchable @SuppressWarnings("unused") //Called from Jelly
     public List<GerritServer> getServers() {
         checkPermission();
         PluginImpl plugin = PluginImpl.getInstance();
@@ -206,7 +204,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * @param encodedServerName the server name encoded by URLEncoder.encode(name,"UTF-8").
      * @return the GerritServer object.
      */
-    @SuppressWarnings("unused") //Called from Jelly
+    @StaplerDispatchable @SuppressWarnings("unused") //Called from Jelly
     public GerritServer getServer(String encodedServerName) {
         checkPermission();
         String serverName;
@@ -302,10 +300,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
 
     @Override
     public Object getTarget() {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            throw new IllegalStateException("Jenkins is not alive.");
-        }
+        Jenkins jenkins = Jenkins.get();
         jenkins.checkPermission(Jenkins.ADMINISTER);
         return this;
     }
@@ -437,7 +432,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
      * If Jenkins is currently active.
      */
     private void checkPermission() {
-        final Jenkins jenkins = Jenkins.getInstance();
+        final Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             jenkins.checkPermission(getRequiredPermission());
         }

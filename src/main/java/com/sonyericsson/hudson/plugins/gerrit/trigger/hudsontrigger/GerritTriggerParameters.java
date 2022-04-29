@@ -44,14 +44,13 @@ import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
-import org.apache.commons.codec.binary.Base64;
 import org.jvnet.localizer.Localizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.Charset;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -710,8 +709,7 @@ public enum GerritTriggerParameters {
          * @throws UnsupportedEncodingException if so
          */
         public static String encodeBase64(String original) throws UnsupportedEncodingException {
-            byte[] encodedBytes = Base64.encodeBase64(original.getBytes("UTF-8"));
-            return new String(encodedBytes, Charset.forName("UTF-8"));
+            return Base64.getEncoder().encodeToString(original.getBytes("UTF-8"));
         }
 
         private final Localizable displayName;

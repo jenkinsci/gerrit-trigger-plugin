@@ -68,7 +68,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 import jenkins.model.Jenkins;
 
@@ -332,6 +332,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         if (event instanceof GerritTriggeredEvent) {
             logger.debug("Recording timestamp due to an event {} for server: {}", event, serverName);
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
+            Provider provider = triggeredEvent.getProvider();
+
+            if (provider != null) {
+              String eventServer = provider.getName();
+              if (!eventServer.equals(serverName)) {
+                logger.debug("{} Ignoring event since it came from different server {}", serverName, eventServer);
+                return;
+              }
+            }
+
             saveTimestamp(triggeredEvent);
             //add to cache
             if (!playBackComplete) {
@@ -560,7 +570,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     @CheckForNull
     public static XmlFile getConfigXml(String serverName) throws IOException {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

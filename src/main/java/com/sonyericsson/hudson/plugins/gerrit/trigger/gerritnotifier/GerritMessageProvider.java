@@ -27,8 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.rest.CommentedFile;
 import hudson.ExtensionPoint;
 import hudson.Util;
 import hudson.model.AbstractBuild;
-import hudson.model.Hudson;
 import hudson.model.Run;
+import jenkins.model.Jenkins;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -144,7 +144,7 @@ public abstract class GerritMessageProvider implements Serializable, ExtensionPo
      * @return list of classes extending GerritMessageProvider
      */
     public static List<GerritMessageProvider> all() {
-        return Hudson.getInstance().getExtensionList(GerritMessageProvider.class);
+        return Jenkins.get().getExtensionList(GerritMessageProvider.class);
     }
 
     /**

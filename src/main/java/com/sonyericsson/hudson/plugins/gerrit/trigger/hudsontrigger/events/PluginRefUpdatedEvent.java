@@ -27,7 +27,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -53,7 +53,7 @@ public class PluginRefUpdatedEvent extends PluginGerritEvent implements Serializ
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Hudson.getInstance().getDescriptorByType(PluginRefUpdatedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginRefUpdatedEventDescriptor.class);
     }
 
     @Override

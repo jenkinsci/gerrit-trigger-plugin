@@ -49,8 +49,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -79,7 +79,7 @@ public final class EventListener implements GerritEventListener {
      *
      * @param job the job to handle.
      */
-    EventListener(@Nonnull Job job) {
+    EventListener(@NonNull Job job) {
         this(job.getFullName());
     }
 
@@ -88,7 +88,7 @@ public final class EventListener implements GerritEventListener {
      *
      * @param fullName the job to handle full name.
      */
-    EventListener(@Nonnull String fullName) {
+    EventListener(@NonNull String fullName) {
         this.job = fullName;
     }
 
@@ -429,7 +429,7 @@ public final class EventListener implements GerritEventListener {
     @CheckForNull
     @Restricted(NoExternalUse.class)
     public Job findJob() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

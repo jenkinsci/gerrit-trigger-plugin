@@ -158,7 +158,7 @@ public class BuildCompletedRestCommandJobHudsonTest {
      * @return the root action
      */
     private FakeHttpGerrit getGerrit() {
-        return Jenkins.getInstance().getExtensionList(FakeHttpGerrit.class).get(0);
+        return Jenkins.get().getExtensionList(FakeHttpGerrit.class).get(0);
     }
 
     /**

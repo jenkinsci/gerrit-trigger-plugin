@@ -34,7 +34,7 @@ import hudson.model.ModelObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 
-import javax.annotation.CheckForNull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;

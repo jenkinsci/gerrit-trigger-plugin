@@ -37,6 +37,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.recipes.WithTimeout;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
@@ -55,7 +56,15 @@ public class GerritProjectListUpdaterFunctionalTest {
     public final JenkinsRule j = new JenkinsRule();
 
     private static final int SLEEPTIME = 1;
-    private static final int LONGSLEEPTIME = 10;
+    private static final int TIMEOUT = 500;
+
+    /**
+     * Projects update period used in this test, in minutes
+     * The default value is 5 minutes.
+     * This makes the test not take 5 minutes.
+     */
+    private static final int UPDATE_PERIOD = 1;
+    private static final int SECONDS_IN_A_MINUTE = 60;
 
     private static final long MAXSLEEPTIME = 10;
 
@@ -100,6 +109,7 @@ public class GerritProjectListUpdaterFunctionalTest {
      * connection startup.
      * @throws Exception if occurs.
      */
+    @WithTimeout(TIMEOUT)
     @Test
     public void testProjectListUpdateActiveOnStartup() throws Exception {
         GerritServer gerritServer = new GerritServer("ABCDEF");
@@ -133,11 +143,13 @@ public class GerritProjectListUpdaterFunctionalTest {
             }
         }
         watch.stop();
+
         assertEquals(1, gerritServer.getGerritProjects().size());
 
+        //Sets the project update period to 1 minute.
+        gerritServer.getProjectListUpdater().setTimerUpdatePeriod(UPDATE_PERIOD);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.SendTwoProjectsCommand.class);
-
-        TimeUnit.SECONDS.sleep(LONGSLEEPTIME);
+        TimeUnit.SECONDS.sleep((UPDATE_PERIOD * SECONDS_IN_A_MINUTE) + SLEEPTIME);
         assertEquals(2, gerritServer.getGerritProjects().size());
 
     }

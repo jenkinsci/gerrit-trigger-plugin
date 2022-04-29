@@ -13,43 +13,42 @@ image:https://img.shields.io/github/release/jenkinsci/gerrit-trigger-plugin.svg?
 image:https://img.shields.io/jenkins/plugin/i/gerrit-trigger.svg?color=blue[link="https://plugins.jenkins.io/gerrit-trigger"]
 
 This plugin integrates Jenkins to
-http://code.google.com/p/gerrit/[Gerrit code review] for triggering
+https://www.gerritcodereview.com/[Gerrit code review] for triggering
 builds when a "patch set" is created.
 
 == Set Up
 
 === Gerrit access rights
 
+Gerrit has a special access-group "Service Users" for CI systems and
+other bots. We recommend that you add your jenkins user in Gerrit to
+this group.
+
 . Create the profile through in _Gerrit web interface_ for your Jenkins
 user, and set up a _SSH key_ for that user.
-. Gerrit web interface > Admin > Groups > Non-Interactive Users > Add
+. Gerrit web interface > Browse > Groups > Service Users > Add
 your jenkins user.
-. Admin > Projects > ... > Access > Edit
+. Browse > Repositories > ... > Access > Edit
 * Reference: `+refs/*+`
-** *Read*: ALLOW for Non-Interactive Users
+** *Read*: ALLOW for Service Users
 * Reference: `+refs/heads/*+`
-** *Label Code-Review*: -1, +1 for Non-Interactive Users
-** *Label Verified*: -1, +1 for Non-Interactive Users
+** *Label Code-Review*: -1, +1 for Service Users
+** *Label Verified*: -1, +1 for Service Users
 
 Gerrit documentation:
-http://gerrit-documentation.googlecode.com/svn/Documentation/2.4.2/access-control.html#examples_cisystem
+https://gerrit-documentation.storage.googleapis.com/Documentation/3.4.1/access-control.html#service_users
+https://gerrit-documentation.storage.googleapis.com/Documentation/3.4.1/access-control.html#examples_cisystem
 
 [IMPORTANT]
 ====
-On Gerrit 2.7+, you also need to grant "Stream Events"
-capability. Without this, the plugin will not work, will try to connect
-to Gerrit repeatedly, and will eventually cause OutOfMemoryError on
-Gerrit.
+Before Gerrit v3.3 the CI group was named "Non-Interactive Users".
 
-. Gerrit web interface > People > Create New Group : "Event Streaming
-Users". Add your jenkins user.
-. Admin > Projects > All-Projects > Access > Edit
+https://www.gerritcodereview.com/3.3.html#schema-changes
 
-* {blank}
-** *Global Capabilities*
-*** *Stream Events:* ALLOW for Event Streaming Users
+As a member of "Service Users" group jenkins will get "Stream Events"
+capability, without this, the plugin will not work.
 
-https://gerrit-documentation.googlecode.com/svn/Documentation/2.7/access-control.html#capability_streamEvents
+https://gerrit-documentation.storage.googleapis.com/Documentation/3.4.1/access-control.html#capability_streamEvents
 ====
 
 === Administrative Settings
@@ -80,15 +79,16 @@ image:images/gerritconf.PNG[Job trigger configuration]
 Specify what type of event(s) to trigger on:
 
 * *Draft Published:* Sent when a change moves from draft state to new.
-(only available in version 2.5 or higher of Gerrit).
+(Support for draft removed in Gerrit v2.15).
 * *Patchset Created:* Sent when a new patchset arrives on a change.
-Before version 2.6.0, this was the only event you could trigger on.
 * *Change Merged:* Sent when a change is merged on the Gerrit server.
 * *Comment Added:* Sent when a comment is added to a change. Which
 category and value to trigger on can be configured. The available
 categories can be configured in the server settings for the plugin.
 * *Ref Updated:* Sent when a ref is updated on the Gerrit server, i.e.
 someone pushes past code review.
+
+https://www.gerritcodereview.com/2.15.html#support-for-draft-changes-removed
 
 _If you don't specify any event; Patchset Created and Draft Published
 (if available) will be selected by default._
@@ -185,15 +185,15 @@ the list, then have several projects use the same list.
 
 ===== *Gerrit hooks*
 
-Gerrit doesn't use the standard repository hooks.  To do an automatic
-update of jenkins on a patch you'll need to add a hook to the top-level
-gerrit hook directory ($site_path/hooks).
+Gerrit doesn't use the standard repository hooks. To do an automatic
+update of jenkins on a patch you'll need to install the "hooks" plugin
+and add a hook to the top-level gerrit hook directory ($site_path/hooks).
 
 The equivalent of a git 'post-receive' hook for gerrit is a
 'patchset-created' handler.  More info on gerrit hooks can be found
 here:
 
-http://gerrit.googlecode.com/svn/documentation/2.1.2/config-hooks.html
+https://gerrit.googlesource.com/plugins/hooks/
 
 === Usage with the Git Plugin
 
@@ -394,20 +394,13 @@ To do this DENY the 'Email Reviewers' capability for the Gerrit user
 that is used by Jenkins. See
 https://gerrit-review.googlesource.com/Documentation/access-control.html#capability_emailReviewers.
 
-=== Note to Gerrit > 2.6 Users
+=== Verified label
 
-The verdict category key values has changed in 2.6 from CDRV, VRIF to
-Code-Review and Verified. So in order to be able to trigger on comment
-added you need to change the settings on the "Manage Jenkins/Gerrit
-Trigger" page (it's hidden behind the advanced button) and reconfigure
-all your jobs so they can pick up the new values.
+You need to ensure that a Verified label is configured in Gerrit,
+otherwise the Gerrit Trigger will fail to submit votes for jobs, due
+to the invalid label.
 
-Also note that the Verified flag is no longer in Gerrit by default,
-see http://gerrit-documentation.googlecode.com/svn/Documentation/2.6/cmd-review.html so
-you'll need to add it to Gerrit for new installs.  This can
-http://blog.bruin.sg/2013/04/how-to-edit-the-project-config-for-all-projects-in-gerrit/[easily
-be added back to all projects].  Otherwise the Gerrit Trigger will fail
-to submit votes for jobs, due to the invalid label.
+https://gerrit-documentation.storage.googleapis.com/Documentation/3.4.1/config-labels.html#label_Verified
 
 Alternately, you can remove the verified flag from the command used to
 submit votes for changes, and simply have the trigger submit code review
@@ -423,15 +416,8 @@ sections from each command, see screenshot
 
 image:images/verified-voting.png[verified voting,width=200]
 
-As of version 2.17.0 the verified "vote" is not sent at all to Gerrit
-_(removed from the command line/rest call)_ unless there is an actual
-value to be sent. So if you change the configuration to contain only
-values for code review and empty strings for verified you won't get the
-error.
-
 == Change Log
 
 New releases are logged in https://github.com/jenkinsci/gerrit-trigger-plugin/releases[GitHub Releases].
 
 Releases from 2.30.0 and older are archived in link:CHANGELOG.old.adoc[CHANGELOG.old.adoc]
-

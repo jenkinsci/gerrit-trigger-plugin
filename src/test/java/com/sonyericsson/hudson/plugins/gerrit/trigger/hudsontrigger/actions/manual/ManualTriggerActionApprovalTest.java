@@ -43,7 +43,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Jiri Engelthaler &lt;EngyCZ@gmail.com&gt;

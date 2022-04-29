@@ -57,7 +57,6 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.CauseAction;
-import hudson.model.Hudson;
 import hudson.model.Item;
 import hudson.model.ItemGroup;
 import hudson.model.Job;
@@ -152,13 +151,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
         AbstractProject.class,
         ToGerritRunListener.class,
         PluginImpl.class,
-        Hudson.class,
         Jenkins.class,
         DependencyQueueTaskDispatcher.class,
         EventListener.class })
 @PowerMockIgnore("javax.security.*")
 public class GerritTriggerTest {
-    private Hudson hudsonMock;
     private Jenkins jenkinsMock;
     private AbstractProject downstreamProject;
     private AbstractProject upstreamProject;
@@ -1412,7 +1409,8 @@ public class GerritTriggerTest {
         when(plugin.getHandler()).thenReturn(handler);
         mockStatic(Jenkins.class);
         Jenkins jenkins = mock(Jenkins.class);
-        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn("Tester");
         PowerMockito.when(Jenkins.getAuthentication()).thenReturn(authentication);
@@ -1820,7 +1818,6 @@ public class GerritTriggerTest {
             AbstractProject.class,
             ToGerritRunListener.class,
             PluginImpl.class,
-            Hudson.class,
             Jenkins.class,
             DependencyQueueTaskDispatcher.class,
             EventListener.class })
@@ -1898,7 +1895,6 @@ public class GerritTriggerTest {
             AbstractProject.class,
             ToGerritRunListener.class,
             PluginImpl.class,
-            Hudson.class,
             Jenkins.class,
             DependencyQueueTaskDispatcher.class,
             EventListener.class })
@@ -1956,7 +1952,6 @@ public class GerritTriggerTest {
             AbstractProject.class,
             ToGerritRunListener.class,
             PluginImpl.class,
-            Hudson.class,
             Jenkins.class,
             DependencyQueueTaskDispatcher.class,
             DynamicConfigurationCacheProxy.class,
@@ -2081,13 +2076,10 @@ public class GerritTriggerTest {
      * Setup the dependency-related fixtures (for form validation).
      */
     public void dependencySetUp() {
-        //setup hudson / jenkins (both are needed)
-        hudsonMock = mock(Hudson.class);
-        PowerMockito.mockStatic(Hudson.class);
-        when(Hudson.getInstance()).thenReturn(hudsonMock);
+        //setup jenkins
         jenkinsMock = mock(Jenkins.class);
         PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkinsMock);
+        when(Jenkins.get()).thenReturn(jenkinsMock);
         //setup the gerritTrigger mocks which will manage the upstream projects
         upstreamGerritTriggerMock = mock(GerritTrigger.class);
         veryUpstreamGerritTriggerMock = mock(GerritTrigger.class);
@@ -2099,12 +2091,6 @@ public class GerritTriggerTest {
         when(downstreamProject.getFullName()).thenReturn("MockedProject");
         when(upstreamProject.getFullName()).thenReturn("MockedUpstreamProject");
         when(veryUpstreamProject.getFullName()).thenReturn("MockedVeryUpstreamProject");
-        when(hudsonMock.getItem(eq("MockedProject"), any(Item.class), eq(Item.class))).
-            thenReturn(downstreamProject);
-        when(hudsonMock.getItem(eq("MockedUpstreamProject"), any(Item.class), eq(Item.class))).
-            thenReturn(upstreamProject);
-        when(hudsonMock.getItem(eq("MockedVeryUpstreamProject"), any(Item.class), eq(Item.class))).
-            thenReturn(veryUpstreamProject);
         when(jenkinsMock.getItem(eq("MockedProject"), any(Item.class), eq(Item.class))).
             thenReturn(downstreamProject);
         when(jenkinsMock.getItem(eq("MockedUpstreamProject"), any(Item.class), eq(Item.class))).
@@ -2377,7 +2363,7 @@ public class GerritTriggerTest {
     private static Queue mockJenkinsQueue() {
         Jenkins jenkins = PowerMockito.mock(Jenkins.class);
         PowerMockito.mockStatic(Jenkins.class);
-        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
         return mockQueue(jenkins);
     }
 

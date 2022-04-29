@@ -25,8 +25,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.model.Job;
 import hudson.triggers.SafeTimerTask;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import jenkins.model.Jenkins;
 
@@ -45,7 +46,7 @@ public class GerritTriggerTimerTask extends SafeTimerTask {
      *
      * @param gerritTrigger the GerritTrigger that created this timerTask
      */
-    GerritTriggerTimerTask(@Nonnull GerritTrigger gerritTrigger) {
+    GerritTriggerTimerTask(@NonNull GerritTrigger gerritTrigger) {
         job = gerritTrigger.getJob().getFullName();
         GerritTriggerTimer.getInstance().schedule(this, gerritTrigger);
     }
@@ -95,7 +96,7 @@ public class GerritTriggerTimerTask extends SafeTimerTask {
                 return gerritTrigger;
             }
         }
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

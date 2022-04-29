@@ -40,8 +40,8 @@ import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -78,7 +78,7 @@ public class BuildMemory {
             if (o1 == null && o2 != null) {
                 return -1;
             }
-            return Integer.valueOf(o1.hashCode()).compareTo(o2.hashCode());
+            return Integer.compare(o1.hashCode(), o2.hashCode());
         }
     }
 
@@ -302,7 +302,7 @@ public class BuildMemory {
      * @param entryToUpdate the entry to update.
      * @param imprint       the information for the update.
      */
-    private synchronized void updateTriggerContext(@Nonnull Entry entryToUpdate, @Nonnull MemoryImprint imprint) {
+    private synchronized void updateTriggerContext(@NonNull Entry entryToUpdate, @NonNull MemoryImprint imprint) {
         Run build = entryToUpdate.getBuild();
         if (build != null) {
             GerritCause cause = (GerritCause)build.getCause(GerritCause.class);
@@ -337,7 +337,7 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isTriggered(@Nonnull GerritTriggeredEvent event, @Nonnull Job project) {
+    public synchronized boolean isTriggered(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
@@ -359,7 +359,7 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isBuilding(GerritTriggeredEvent event, @Nonnull Job project) {
+    public synchronized boolean isBuilding(GerritTriggeredEvent event, @NonNull Job project) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             return false;
@@ -480,7 +480,7 @@ public class BuildMemory {
      *
      * @return the report
      */
-    @Nonnull
+    @NonNull
     public synchronized BuildMemoryReport report() {
         BuildMemoryReport report = new BuildMemoryReport();
         for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {
@@ -685,7 +685,7 @@ public class BuildMemory {
          * @param project the project.
          * @return the entry or null if nothing is found.
          */
-        private Entry getEntry(@Nonnull Job project) {
+        private Entry getEntry(@NonNull Job project) {
             for (Entry entry : list) {
                 if (entry != null && project.equals(entry.getProject())) {
                     return entry;
@@ -940,7 +940,7 @@ public class BuildMemory {
             @CheckForNull
             @WithBridgeMethods(AbstractProject.class)
             public Job getProject() {
-                Jenkins jenkins = Jenkins.getInstance();
+                Jenkins jenkins = Jenkins.getInstanceOrNull();
                 if (jenkins != null) {
                     return jenkins.getItemByFullName(project, Job.class);
                 } else {

@@ -67,8 +67,12 @@ public final class GerritVersionChecker {
         /**
          * Gerrit CommentAdded always contains approval information, added in Gerrit 2.13.
          */
-        commentAlwaysApproval("CommentAdded always contains approval", "2.13");
+        commentAlwaysApproval("CommentAdded always contains approval", "2.13"),
 
+        /**
+         * Gerrit rerun-check event, added in checks for gerrit-3.3.
+        */
+        rerunCheck("RerunCheck event", "3.3");
 
         private final String displayName;
         private final String version;
