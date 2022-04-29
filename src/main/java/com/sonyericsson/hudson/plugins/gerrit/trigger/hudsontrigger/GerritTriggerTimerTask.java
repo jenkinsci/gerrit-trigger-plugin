@@ -24,7 +24,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.model.Job;
-import java.util.TimerTask;
+import hudson.triggers.SafeTimerTask;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -36,7 +37,7 @@ import jenkins.model.Jenkins;
  *
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
-public class GerritTriggerTimerTask extends TimerTask {
+public class GerritTriggerTimerTask extends SafeTimerTask {
     //TODO possible need to handle renames
     private String job;
 
@@ -53,8 +54,7 @@ public class GerritTriggerTimerTask extends TimerTask {
     /**
      * Called periodically by the GerritTriggerTimer according to its schedule.
      */
-    @Override
-    public void run() {
+    public void doRun() {
         GerritTrigger trigger = getGerritTrigger();
         if (trigger == null) {
             return;
@@ -62,6 +62,7 @@ public class GerritTriggerTimerTask extends TimerTask {
         // Do not skip updates since tasks might wait for the update
         trigger.updateTriggerConfigURL();
     }
+
 
     @Override
     public boolean cancel() {
