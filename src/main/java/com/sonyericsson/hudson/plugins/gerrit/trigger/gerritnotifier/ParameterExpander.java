@@ -157,7 +157,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private Integer getBuildStartedVerifiedValue(Run r) {
+    public Integer getBuildStartedVerifiedValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
@@ -181,7 +181,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private Integer getBuildStartedCodeReviewValue(Run r) {
+    public Integer getBuildStartedCodeReviewValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
