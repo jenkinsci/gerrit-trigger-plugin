@@ -85,7 +85,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
 
-	Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
+        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
 
         if (event.isScorable()) {
             if (config.isRestCodeReview()) {
