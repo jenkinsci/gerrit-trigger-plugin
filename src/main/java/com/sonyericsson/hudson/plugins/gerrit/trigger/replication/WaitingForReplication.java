@@ -26,14 +26,11 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 import hudson.model.queue.CauseOfBlockage;
 
 import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
-
-import javax.annotation.Nullable;
 
 /**
  * Build is blocked because replication is not completed to slave(s).
@@ -53,22 +50,10 @@ public class WaitingForReplication extends CauseOfBlockage {
 
     @Override
     public String getShortDescription() {
-        Collection<String> gerritSlaveNames = Collections2.transform(gerritSlaves, ToGerritSlaveName.INSTANCE);
-        return Messages.WaitingForReplication(Joiner.on(", ").join(gerritSlaveNames));
-    }
-
-    /**
-     * Function that calls {@code getName()} on its {@code GerritSlave}.
-     */
-    private static enum ToGerritSlaveName implements Function<GerritSlave, String> {
-        INSTANCE; //enum singleton pattern
-        @Override
-        public String apply(@Nullable GerritSlave gerritSlave) {
-            if (gerritSlave != null) {
-                return gerritSlave.getName();
-            } else {
-                return null;
-            }
-        }
+        return Messages.WaitingForReplication(
+                gerritSlaves.stream()
+                        .filter(Objects::nonNull)
+                        .map(GerritSlave::getName)
+                        .collect(Collectors.joining(", ")));
     }
 }

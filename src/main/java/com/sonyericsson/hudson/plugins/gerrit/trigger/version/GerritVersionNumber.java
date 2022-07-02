@@ -55,6 +55,16 @@ public class GerritVersionNumber extends VersionNumber {
         return versionNumber;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
     /**
      * Getter for if the version number is a snapshot.
      * @return if it is a snapshot.

@@ -53,6 +53,7 @@ import hudson.security.Permission;
 import hudson.security.PermissionGroup;
 
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.export.Exported;
@@ -62,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,9 +71,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenkins.model.Jenkins;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Main Plugin entrance.
@@ -80,12 +81,18 @@ import javax.annotation.Nonnull;
  */
 @ExportedBean
 @Extension
+@Symbol(PluginImpl.SYMBOL_NAME)
 public class PluginImpl extends GlobalConfiguration {
 
     /**
      * What to call this plug-in to humans.
      */
     public static final String DISPLAY_NAME = "Gerrit Trigger";
+
+    /**
+     * Machine readable plugin name.
+     */
+    public static final String SYMBOL_NAME = "gerrit-trigger";
 
     /**
      * Any special permissions needed by this plugin are grouped into this.
@@ -141,14 +148,14 @@ public class PluginImpl extends GlobalConfiguration {
 
     /**
      * Returns the instance of this class.
-     * If {@link jenkins.model.Jenkins#getInstance()} isn't available
+     * If {@link Jenkins#getInstanceOrNull()} ()} isn't available
      * or the plugin class isn't registered null will be returned.
      *
      * @return the instance.
      */
     @CheckForNull
     public static PluginImpl getInstance() {
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins != null) {
             return GlobalConfiguration.all().get(PluginImpl.class);
         } else {
@@ -182,7 +189,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of GerritServers
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<GerritServer> getServers_() {
         PluginImpl plugin = getInstance();
@@ -212,7 +219,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the list of server names.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<String> getServerNames_() {
         PluginImpl plugin = getInstance();
@@ -294,6 +301,21 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public void setServers(List<GerritServer> servers) {
         checkAdmin();
+
+        // Mimicking GerritManagement#doAddNewServer
+
+        List<String> serverNames = new ArrayList<>();
+        for (GerritServer server : servers) {
+            String name = server.getName();
+            if (serverNames.contains(name)) {
+                throw new IllegalArgumentException("Multiple gerrit servers with name: " + name);
+            }
+            serverNames.add(name);
+        }
+        if (serverNames.contains(GerritServer.ANY_SERVER)) {
+            throw new IllegalArgumentException("Illegal gerrit server name: " + GerritServer.ANY_SERVER);
+        }
+
         if (this.servers != servers) {
             this.servers.clear();
             this.servers.addAll(servers);
@@ -329,7 +351,7 @@ public class PluginImpl extends GlobalConfiguration {
      * If Jenkins is currently active.
      */
     private void checkAdmin() {
-        final Jenkins jenkins = Jenkins.getInstance(); //Hoping this method doesn't change meaning again
+        final Jenkins jenkins = Jenkins.getInstanceOrNull(); //Hoping this method doesn't change meaning again
         if (jenkins != null) {
             //If Jenkins is not alive then we are not started, so no unauthorised user might do anything
             jenkins.checkPermission(Jenkins.ADMINISTER);
@@ -395,8 +417,17 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return the config.
      */
-    public PluginConfig getPluginConfig() {
+    public synchronized PluginConfig getPluginConfig() {
         return pluginConfig;
+    }
+
+    /**
+     * Set plugin config.
+     *
+     * @param pluginConfig New config to set.
+     */
+    public synchronized void setPluginConfig(PluginConfig pluginConfig) {
+        this.pluginConfig = pluginConfig;
     }
 
     /**
@@ -442,7 +473,7 @@ public class PluginImpl extends GlobalConfiguration {
      *
      * @return gerritEventManager
      */
-    @Nonnull
+    @NonNull
     public GerritHandler getHandler() {
         if (gerritEventManager == null) {
             throw new IllegalStateException("Plugin is not started yet, or it is stopped already");
@@ -474,7 +505,7 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public List<Job> getConfiguredJobs(String serverName) {
         LinkedList<Job> configuredJobs = new LinkedList<Job>();
-        for (Job<?, ?> project : Jenkins.getInstance().getItems(Job.class)) { //get the jobs
+        for (Job<?, ?> project : Jenkins.get().getItems(Job.class)) { //get the jobs
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 
             //if the job has a gerrit trigger, check whether the trigger has selected this server:
@@ -492,7 +523,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @param serverName the name of the Gerrit server.
      * @return the list of jobs configured with this server.
      */
-    @Nonnull
+    @NonNull
     //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
     public static List<Job> getConfiguredJobs_(String serverName) {
         PluginImpl plugin = getInstance();
@@ -519,8 +550,16 @@ public class PluginImpl extends GlobalConfiguration {
 
         // Call the following method for force initialization of the Dispatchers because
         // it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
-        ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
-        ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        try {
+            ExtensionList.lookupSingleton(ReplicationQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Replication Queue.", e);
+        }
+        try {
+            ExtensionList.lookupSingleton(DependencyQueueTaskDispatcher.class);
+        } catch (IllegalStateException e) {
+            logger.warn("Failed to initialize Dependency Queue.", e);
+        }
     }
 
     /**

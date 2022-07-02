@@ -114,7 +114,7 @@ public class GerritTriggeredBuildListenerTest {
     @Test
     public void testListenTriggeredBuild() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
-                Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
+                Jenkins.get().getExtensionList(GerritTriggeredBuildListener.class);
         assertTrue("Listener has not been registered", list.size() > 0);
 
         buildListenerLatch = new CountDownLatch(2);
@@ -135,7 +135,7 @@ public class GerritTriggeredBuildListenerTest {
     @Test
     public void testListenTriggeredBuildWithNoBuildScheduleDelay() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
-                Jenkins.getInstance().getExtensionList(GerritTriggeredBuildListener.class);
+                Jenkins.get().getExtensionList(GerritTriggeredBuildListener.class);
         assertTrue("Listener has not been registered", list.size() > 0);
 
         buildListenerLatch = new CountDownLatch(2);

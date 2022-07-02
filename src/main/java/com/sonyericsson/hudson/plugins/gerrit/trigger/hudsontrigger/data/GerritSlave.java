@@ -30,6 +30,7 @@ import hudson.model.Descriptor;
 import java.util.UUID;
 
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Represents a Gerrit slave after which we wait for replication events.
@@ -58,6 +59,7 @@ public class GerritSlave extends AbstractDescribableImpl<GerritSlave> {
      * @param host the host for the gerritSlave, can include port(e.g. someHost:1234).
      * @param timeoutInSeconds maximum time we wait for a replication event.
      */
+    @DataBoundConstructor
     public GerritSlave(String id, String name, String host, int timeoutInSeconds) {
         if (id == null || id.isEmpty()) {
             this.id = UUID.randomUUID().toString();

@@ -26,7 +26,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Queue;
@@ -124,7 +124,7 @@ public class GerritQueueListenerTest {
      * @throws InterruptedException if interrupted
      */
     private Item waitForBlockedItem(FreeStyleProject project, int timeout) throws InterruptedException {
-        Queue jenkinsQueue = Jenkins.getInstance().getQueue();
+        Queue jenkinsQueue = Jenkins.get().getQueue();
         Item queueItem = null;
 
         int elapsedSeconds = 0;

@@ -77,7 +77,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " VERIFIED=<VERIFIED>"
                 + " CODEREVIEW=<CODE_REVIEW>"
                 + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
-                + " REFSPEC=<REFSPEC> MSG='Your friendly butler says OK. BS=<BUILDS_STATS>'"
+                + " REFSPEC=<REFSPEC> MSG='Build Successful <BUILDS_STATS>'"
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
                 + " ENV_BRANCH=$BRANCH"
@@ -95,7 +95,7 @@ public class MockGerritHudsonTriggerConfig implements
                 + " VERIFIED=-1"
                 + " CODEREVIEW=<CODE_REVIEW>"
                 + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
-                + " REFSPEC=<REFSPEC> MSG='A disappointed butler says not OK. BS=<BUILDS_STATS>'"
+                + " REFSPEC=<REFSPEC> MSG='Build Failed <BUILDS_STATS>'"
                 + " BUILDURL=<BUILDURL>"
                 + " STARTED_STATS=<STARTED_STATS>"
                 + " ENV_BRANCH=$BRANCH"
@@ -126,7 +126,14 @@ public class MockGerritHudsonTriggerConfig implements
     @Override
     public String getGerritCmdBuildNotBuilt() {
         // TODO Copy-pasted from getGerritCmdBuildUnstable.
-        return "CHANGE=<CHANGE> PATCHSET=<PATCHSET> VERIFIED=0 MSG=The build is NotBuilt";
+        return "CHANGE=<CHANGE>"
+                + " CHANGE_ID=<CHANGE_ID>"
+                + " PATCHSET=<PATCHSET>"
+                + " VERIFIED=<VERIFIED>"
+                + " CODEREVIEW=<CODE_REVIEW>"
+                + " NOTIFICATION_LEVEL=<NOTIFICATION_LEVEL>"
+                + " REFSPEC=<REFSPEC>"
+                + " MSG='No Builds Executed <BUILDS_STATS>'";
     }
 
     @Override
@@ -459,7 +466,9 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     @Override
-    public boolean isTriggerOnAllComments() { return true; }
+    public boolean isTriggerOnAllComments() {
+        return true;
+    }
 
     @Override
     public boolean isUseRestApi() {

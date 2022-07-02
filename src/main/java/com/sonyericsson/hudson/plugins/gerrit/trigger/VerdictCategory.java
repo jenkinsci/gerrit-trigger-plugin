@@ -27,6 +27,7 @@ import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * A verdict category for setting comments in Gerrit, i.e. code-review, verify
@@ -39,12 +40,13 @@ public class VerdictCategory extends AbstractDescribableImpl<VerdictCategory> {
 
     /**
      * Standard constructor.
-     * @param value the value in Gerrit for the verdict category.
-     * @param description the text describing the verdict category.
+     * @param verdictValue the value in Gerrit for the verdict category.
+     * @param verdictDescription the text describing the verdict category.
      */
-    public VerdictCategory(String value, String description) {
-        verdictValue = value;
-        verdictDescription = description;
+    @DataBoundConstructor
+    public VerdictCategory(String verdictValue, String verdictDescription) {
+        this.verdictValue = verdictValue;
+        this.verdictDescription = verdictDescription;
     }
 
     /**

@@ -98,7 +98,7 @@ public class GerritProjectListTest {
 
         PowerMockito.mockStatic(Jenkins.class);
         Jenkins jenkins = PowerMockito.mock(Jenkins.class);
-        PowerMockito.when(Jenkins.getInstance()).thenReturn(jenkins);
+        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
 
         GerritProject gP1 = createGerritProject("test/project1", CompareType.PLAIN);
         GerritProject gP2 = createGerritProject("test/project2", CompareType.PLAIN);

@@ -24,9 +24,10 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.model.Job;
-import java.util.TimerTask;
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
+import hudson.triggers.SafeTimerTask;
+
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import jenkins.model.Jenkins;
 
@@ -36,7 +37,7 @@ import jenkins.model.Jenkins;
  *
  * @author Fredrik Abrahamson &lt;fredrik.abrahamson@sonymobile.com&gt;
  */
-public class GerritTriggerTimerTask extends TimerTask {
+public class GerritTriggerTimerTask extends SafeTimerTask {
     //TODO possible need to handle renames
     private String job;
 
@@ -45,7 +46,7 @@ public class GerritTriggerTimerTask extends TimerTask {
      *
      * @param gerritTrigger the GerritTrigger that created this timerTask
      */
-    GerritTriggerTimerTask(@Nonnull GerritTrigger gerritTrigger) {
+    GerritTriggerTimerTask(@NonNull GerritTrigger gerritTrigger) {
         job = gerritTrigger.getJob().getFullName();
         GerritTriggerTimer.getInstance().schedule(this, gerritTrigger);
     }
@@ -53,14 +54,21 @@ public class GerritTriggerTimerTask extends TimerTask {
     /**
      * Called periodically by the GerritTriggerTimer according to its schedule.
      */
-    @Override
-    public void run() {
+    public void doRun() {
         GerritTrigger trigger = getGerritTrigger();
         if (trigger == null) {
             return;
         }
         // Do not skip updates since tasks might wait for the update
         trigger.updateTriggerConfigURL();
+    }
+
+
+    @Override
+    public boolean cancel() {
+        boolean retVal = super.cancel();
+        GerritTriggerTimer.getInstance().cancel(this);
+        return retVal;
     }
 
     @Override
@@ -88,7 +96,7 @@ public class GerritTriggerTimerTask extends TimerTask {
                 return gerritTrigger;
             }
         }
-        Jenkins jenkins = Jenkins.getInstance();
+        Jenkins jenkins = Jenkins.getInstanceOrNull();
         if (jenkins == null) {
             return null;
         }

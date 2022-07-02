@@ -68,7 +68,7 @@ public class MemoryImprintTest {
     public void fullSetup() {
         jenkins = mock(Jenkins.class);
         mockStatic(Jenkins.class);
-        when(Jenkins.getInstance()).thenReturn(jenkins);
+        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
         setup();
     }
 

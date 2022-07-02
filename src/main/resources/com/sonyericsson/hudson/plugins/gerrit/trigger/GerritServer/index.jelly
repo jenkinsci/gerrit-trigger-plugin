@@ -1,12 +1,12 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:p="/lib/gerrit-trigger">
+         xmlns:f="/lib/form" xmlns:p="/lib/gerrit-trigger">
     <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="images/24x24/up.gif" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
-                <l:task icon="images/24x24/edit-delete.png" href="remove" title="Remove Server" />
+                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
+                <l:task icon="icon-up icon-md" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
+                <l:task icon="icon-edit-delete icon-md" href="remove" title="Remove Server" />
             </l:tasks>
         </l:side-panel>
         <l:main-panel>
@@ -358,7 +358,7 @@
                                               with="gerritFrontEndUrl,gerritHttpUserName,gerritHttpPassword"/>
                             <f:entry title="${%Enable Code-Review}">
                                 <f:checkbox name="restCodeReview"
-                                            checked="${is.config.restCodeReview}"
+                                            checked="${it.config.restCodeReview}"
                                             default="true" />
                             </f:entry>
                             <f:entry title="${%Enable Verified}">
@@ -487,7 +487,7 @@
                     </f:section>
                 </f:advanced>
                 <f:entry title="${%EnablePluginMessages}">
-                    <f:checkbox name="enablePluginMessages" checked="${it.enablePluginMessages}" default="true"/>
+                    <f:checkbox name="enablePluginMessages" checked="${it.config.enablePluginMessages}" default="true"/>
                 </f:entry>
                 <f:block>
                     <f:submit value="${%Save}"/>

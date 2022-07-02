@@ -52,6 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Expands a parameterized string to its full potential.
@@ -89,7 +91,7 @@ public class ParameterExpander {
      * @param config the global config.
      */
     public ParameterExpander(IGerritHudsonTriggerConfig config) {
-        this(config, Jenkins.getInstance());
+        this(config, Jenkins.get());
     }
 
     /**
@@ -155,7 +157,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private Integer getBuildStartedVerifiedValue(Run r) {
+    public Integer getBuildStartedVerifiedValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
@@ -179,7 +181,7 @@ public class ParameterExpander {
      * @param r the build.
      * @return the value.
      */
-    private Integer getBuildStartedCodeReviewValue(Run r) {
+    public Integer getBuildStartedCodeReviewValue(Run r) {
         GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
         if (trigger == null) {
             logger.warn("Unable to get trigger config for build {} will use global value.");
@@ -704,13 +706,14 @@ public class ParameterExpander {
      * @return the message
      */
     protected String findMessage(String completedCommand) {
-        String messageStart = "--message '";
-        String fromMessage = completedCommand.substring(completedCommand.indexOf(messageStart));
-        int endIndex = fromMessage.indexOf("' --");
-        if (endIndex <= -1) {
-            endIndex = fromMessage.length();
+        String message = "";
+        String messageRegex = "(?s)--message\\s+'(.*?)'";
+        Pattern p = Pattern.compile(messageRegex);
+        Matcher m = p.matcher(completedCommand);
+        while (m.find()) {
+          message = m.group(1);
         }
-        return fromMessage.substring(messageStart.length(), endIndex);
+        return message;
     }
 
     /**

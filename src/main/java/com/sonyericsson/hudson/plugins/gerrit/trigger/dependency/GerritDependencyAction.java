@@ -6,7 +6,7 @@ import hudson.model.EnvironmentContributingAction;
 import hudson.model.InvisibleAction;
 import hudson.model.Run;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * Adds Action that stores the data about dependency jobs.
  */
 public class GerritDependencyAction extends InvisibleAction implements EnvironmentContributingAction {
-    @Nonnull
+    @NonNull
     private final List<String> deps;
 
     /**
@@ -37,7 +37,7 @@ public class GerritDependencyAction extends InvisibleAction implements Environme
      *  @param env Environment variables should be added to this map.
      */
     @SuppressWarnings("unused")
-    public void buildEnvironment(@Nonnull Run<?, ?> run, @Nonnull EnvVars env) {
+    public void buildEnvironment(@NonNull Run<?, ?> run, @NonNull EnvVars env) {
         fillEnv(env);
     }
 

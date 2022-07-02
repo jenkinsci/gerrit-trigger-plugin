@@ -34,7 +34,7 @@ def l = namespace(lib.LayoutTagLib)
 l.layout(title: _("Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "images/24x24/up.gif", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
+            l.task(icon: "icon-up icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
             l.task(icon: "icon-clipboard icon-md", href: "buildMemory", title: Messages.BuildMemoryReport_DisplayName())
             l.task(icon: "icon-clipboard icon-md", href: "eventListeners", title: Messages.EventListenersReport_DisplayName())
             if (diag.isDebugMode()) {

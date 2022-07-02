@@ -227,8 +227,7 @@ public class RunningJobs {
            }
 
            // Interrupt any currently running jobs.
-           Jenkins jenkins = Jenkins.getInstance();
-           assert jenkins != null;
+           Jenkins jenkins = Jenkins.get();
            for (Computer c : jenkins.getComputers()) {
                List<Executor> executors = new ArrayList<Executor>();
                executors.addAll(c.getOneOffExecutors());

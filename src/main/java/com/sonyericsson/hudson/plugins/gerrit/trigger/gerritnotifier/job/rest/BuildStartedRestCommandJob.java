@@ -33,8 +33,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewInput;
+import com.sonymobile.tools.gerrit.gerritevents.dto.rest.ReviewLabel;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * A job for the {@link com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue} that
@@ -42,10 +46,15 @@ import hudson.model.TaskListener;
  */
 public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
 
+
+    private static final String LABEL_CODEREVIEW = "Code-Review";
+    private static final String LABEL_VERIFIED   = "Verified";
+
     private final Run build;
     private final BuildsStartedStats stats;
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
+    private final IGerritHudsonTriggerConfig config;
 
     /**
      * Constructor.
@@ -63,7 +72,8 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
         this.build = build;
         this.stats = stats;
         this.listener = listener;
-        parameterExpander = new ParameterExpander(config);
+        this.parameterExpander = new ParameterExpander(config);
+        this.config = config;
     }
 
     /**
@@ -74,12 +84,34 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
     @Override
     protected ReviewInput createReview() {
         String message = parameterExpander.getBuildStartedMessage(build, listener, event, stats);
+
+        Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
+
+        if (event.isScorable()) {
+            if (config.isRestCodeReview()) {
+                Integer crValue = parameterExpander.getBuildStartedCodeReviewValue(build);
+                if (crValue != null && crValue != Integer.MAX_VALUE) {
+                    scoredLabels.add(new ReviewLabel(
+                            LABEL_CODEREVIEW,
+                            crValue));
+                }
+            }
+            if (config.isRestVerified()) {
+                Integer verValue = parameterExpander.getBuildStartedVerifiedValue(build);
+                if (verValue != null && verValue != Integer.MAX_VALUE) {
+                    scoredLabels.add(new ReviewLabel(
+                            LABEL_VERIFIED,
+                            verValue));
+                }
+            }
+        }
+
         Notify notificationLevel = Notify.ALL;
         GerritTrigger trigger = GerritTrigger.getTrigger(build.getParent());
         if (trigger != null) {
             notificationLevel = parameterExpander.getNotificationLevel(trigger);
         }
-        return new ReviewInput(message).setNotify(notificationLevel).setTag(Constants.TAG_VALUE);
+        return new ReviewInput(message, scoredLabels).setNotify(notificationLevel).setTag(Constants.TAG_VALUE);
     }
 
 }

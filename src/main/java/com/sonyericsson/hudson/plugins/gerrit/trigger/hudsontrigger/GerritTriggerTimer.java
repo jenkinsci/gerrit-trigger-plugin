@@ -29,9 +29,12 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
 
 /**
  * Manages the timer that is used for each GerritTrigger TimerTask that
@@ -50,14 +53,18 @@ public final class GerritTriggerTimer {
     /**
      * The instance used by the singleton mechanism.
      */
-    private static GerritTriggerTimer instance = null;
+    private static volatile GerritTriggerTimer instance = null;
 
+    /**
+     * The timer handler
+     */
+    private Map<String, ScheduledFuture> scheduledTasks;
 
     /**
      * The private constructor (this is a singleton class).
      */
     private GerritTriggerTimer() {
-
+        scheduledTasks = new HashMap<String, ScheduledFuture>();
     }
 
     /**
@@ -84,7 +91,7 @@ public final class GerritTriggerTimer {
      * @return the refresh interval in ms.
      * @see #calculateAverageDynamicConfigRefreshInterval()
      */
-    private long calculateDynamicConfigRefreshInterval(@Nonnull GerritTrigger trigger) {
+    private long calculateDynamicConfigRefreshInterval(@NonNull GerritTrigger trigger) {
         if (trigger.isAnyServer()) {
             List<GerritServer> servers = PluginImpl.getServers_();
             if (servers.isEmpty()) {
@@ -129,16 +136,33 @@ public final class GerritTriggerTimer {
      * @param trigger the trigger associated with the task
      * @param timerTask the TimerTask to be scheduled
      */
-    public void schedule(GerritTriggerTimerTask timerTask, @Nonnull GerritTrigger trigger) {
+    public void schedule(GerritTriggerTimerTask timerTask, @NonNull GerritTrigger trigger) {
         long timerPeriod = TimeUnit.SECONDS.toMillis(calculateDynamicConfigRefreshInterval(trigger));
         try {
+            cancel(timerTask);
             logger.debug("Schedule task " + timerTask + " for every " + timerPeriod + "ms");
-            jenkins.util.Timer.get().scheduleWithFixedDelay(timerTask, DELAY_MILLISECONDS, timerPeriod,
-                                                            TimeUnit.MILLISECONDS);
+            scheduledTasks.put(timerTask.toString(),
+                               jenkins.util.Timer.get().scheduleWithFixedDelay(
+                                                  timerTask, DELAY_MILLISECONDS, timerPeriod,
+                                                            TimeUnit.MILLISECONDS));
         } catch (IllegalArgumentException iae) {
             logger.error("Attempted use of negative delay", iae);
         } catch (IllegalStateException ise) {
             logger.error("Attempted re-use of TimerTask", ise);
+        }
+    }
+
+    /**
+     * Cancel a TimerTask.
+     *
+     * @param timerTask the TimerTask to cancel
+     */
+    public void cancel(GerritTriggerTimerTask timerTask) {
+        if (scheduledTasks.get(timerTask.toString()) != null) {
+           boolean mayNotInterruptIfRunning = true;
+           scheduledTasks.get(timerTask.toString()).cancel(!mayNotInterruptIfRunning);
+           scheduledTasks.remove(timerTask.toString());
+           logger.debug("Canceling and removing timer for " + timerTask);
         }
     }
 }

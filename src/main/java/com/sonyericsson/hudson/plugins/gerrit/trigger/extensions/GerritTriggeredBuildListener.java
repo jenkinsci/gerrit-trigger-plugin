@@ -109,8 +109,7 @@ public abstract class GerritTriggeredBuildListener implements ExtensionPoint {
       * @return the extension list.
       */
      public static ExtensionList<GerritTriggeredBuildListener> all() {
-         Jenkins jenkins = Jenkins.getInstance();
-         assert jenkins != null;
+         Jenkins jenkins = Jenkins.get();
          return jenkins.getExtensionList(GerritTriggeredBuildListener.class);
      }
 }

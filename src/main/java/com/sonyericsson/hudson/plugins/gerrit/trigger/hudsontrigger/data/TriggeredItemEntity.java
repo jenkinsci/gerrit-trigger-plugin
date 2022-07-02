@@ -25,13 +25,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 
-import javax.annotation.Nonnull;
 
 /**
  * Wrapper class for smoother serialization of {@link Run } and {@link Job }.
@@ -132,7 +132,7 @@ public class TriggeredItemEntity {
         @WithBridgeMethods(AbstractProject.class)
         public Job getProject() {
             if (project == null) {
-                project = Jenkins.getInstance().getItemByFullName(projectId, Job.class);
+                project = Jenkins.get().getItemByFullName(projectId, Job.class);
             }
             return project;
         }
@@ -223,7 +223,10 @@ public class TriggeredItemEntity {
          * @return true if it is so.
          */
         @Deprecated
-        public boolean equals(@Nonnull Run aBuild) {
+        public boolean equals(@CheckForNull Run<?, ?> aBuild) {
+            if (aBuild == null) {
+                return false;
+            }
             return isSameBuild(aBuild.getNumber(), aBuild.getParent().getFullName());
         }
 

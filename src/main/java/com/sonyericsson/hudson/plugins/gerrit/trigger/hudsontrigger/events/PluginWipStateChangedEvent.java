@@ -56,7 +56,7 @@ public class PluginWipStateChangedEvent extends PluginGerritEvent implements Ser
      */
     @Override
     public Descriptor<PluginGerritEvent> getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(PluginWorkInProgressStateChangedEventDescriptor.class);
+        return Jenkins.get().getDescriptorByType(PluginWorkInProgressStateChangedEventDescriptor.class);
     }
 
     @Override

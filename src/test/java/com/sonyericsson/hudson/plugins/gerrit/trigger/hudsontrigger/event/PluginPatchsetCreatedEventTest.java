@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -129,6 +130,46 @@ public class PluginPatchsetCreatedEventTest {
 
         // Commit message Regular expression does not match
         pluginPatchsetCreatedEvent.setCommitMessageContainsRegEx("MY_THING");
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+    }
+
+    /**
+     * Test that it should, or should not, fire if the uploader name matches a regular expression.
+     */
+    @Test
+    public void uploaderNameRegExCheck() {
+        PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
+                new PluginPatchsetCreatedEvent();
+        PatchsetCreated patchsetCreated = new PatchsetCreated();
+        PatchSet patchSet = new PatchSet();
+        patchSet.setUploader(new Account("test-uploader-name", "test@test.com"));
+        patchsetCreated.setPatchset(patchSet);
+        Change change = new Change();
+        change.setCommitMessage("new commit");
+        patchsetCreated.setChange(change);
+
+        // Uploader name regular expression set to null
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx(null);
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Uploader name Regular expression is an empty string
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx("");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Uploader name Regular expression matches
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx("test");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Uploader name Regular expression matches
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx(".*uploader.*");
+        assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Uploader name Regular expression does not match
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx(".*MY_THING.*");
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+
+        // Uploader name Regular expression does not match
+        pluginPatchsetCreatedEvent.setUploaderNameContainsRegEx("MY_THING");
         assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
     }
 }
