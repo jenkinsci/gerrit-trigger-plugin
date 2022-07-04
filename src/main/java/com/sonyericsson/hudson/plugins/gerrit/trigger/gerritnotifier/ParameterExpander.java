@@ -32,8 +32,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -132,6 +135,38 @@ public class ParameterExpander {
         parameters.put("STARTED_STATS", startedStats.toString());
 
         return expandParameters(gerritCmd, r, taskListener, parameters);
+    }
+
+    /**
+     * Return build started command based on the change and patchset provided.
+     *
+     * @param r The build.
+     * @param taskListener The task listener.
+     * @param event The event.
+     * @param stats The build stats.
+     * @param change The change.
+     * @param patchSet The patchset.
+     * @return The command send to Gerrit
+     */
+    public String getBuildStartedCommand(Run r, TaskListener taskListener,
+                                         ChangeBasedEvent event, BuildsStartedStats stats,
+                                         Change change, PatchSet patchSet) {
+        // Create dummy patchset created event and fill with original event content
+        // except the change and patchset.
+        ChangeBasedEvent tmpChangePatchsetEvent = new PatchsetCreated();
+        tmpChangePatchsetEvent.setAccount(event.getAccount());
+        tmpChangePatchsetEvent.setProvider(event.getProvider());
+        tmpChangePatchsetEvent.setReceivedOn(event.getReceivedOn());
+        //tmpChangePatchsetEvent.setEventCreatedOn(event.getEventCreatedOn().toString());
+        tmpChangePatchsetEvent.setChange(change);
+        tmpChangePatchsetEvent.setPatchset(patchSet);
+
+        BuildsStartedStats tmpStats = new BuildsStartedStats(
+                tmpChangePatchsetEvent,
+                stats.getTotalBuildsToStart(),
+                stats.getStartedBuilds());
+
+        return getBuildStartedCommand(r, taskListener, tmpChangePatchsetEvent, tmpStats);
     }
 
     /**
@@ -553,6 +588,73 @@ public class ParameterExpander {
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint,
                                                          listener,
                                                          parameters).replaceAll("'", "'\"'\"'"));
+
+        Run build = null;
+        Entry[] entries = memoryImprint.getEntries();
+        if (entries.length > 0 && entries[0].getBuild() != null) {
+            build = entries[0].getBuild();
+        }
+
+        return expandParameters(command, build, listener, parameters);
+    }
+
+    /**
+     * Gets the "expanded" build completed command to send to gerrit.
+     * Based on a Change and Patchset object
+     *
+     * @param memoryImprint Memory imprint about build status
+     * @param listener The taskListener
+     * @param change Gerrit change.
+     * @param patchSet Gerrit patchset.
+     * @return The command send to Gerrit
+     */
+    public String getBuildCompletedCommand(MemoryImprint memoryImprint, TaskListener listener,
+                                           Change change, PatchSet patchSet) {
+        String command;
+        // We only count builds without NOT_BUILT status normally. If *no*
+        // builds were successful, unstable or failed, we find the minimum
+        // verified/code review value for the NOT_BUILT ones too.
+        boolean onlyCountBuilt = true;
+        if (memoryImprint.wereAllBuildsSuccessful()) {
+            command = config.getGerritCmdBuildSuccessful();
+        } else if (memoryImprint.wereAnyBuildsFailed()) {
+            command = config.getGerritCmdBuildFailed();
+        } else if (memoryImprint.wereAnyBuildsUnstable()) {
+            command = config.getGerritCmdBuildUnstable();
+        } else if (memoryImprint.wereAllBuildsNotBuilt()) {
+            onlyCountBuilt = false;
+            command = config.getGerritCmdBuildNotBuilt();
+        } else if (memoryImprint.wereAnyBuildsAborted()) {
+            command = config.getGerritCmdBuildAborted();
+        } else {
+            //Just as bad as failed for now.
+            command = config.getGerritCmdBuildFailed();
+        }
+
+        Integer verified = null;
+        Integer codeReview = null;
+        Notify notifyLevel = Notify.ALL;
+        if (memoryImprint.getEvent().isScorable()) {
+            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
+            codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
+            notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
+        }
+
+        ChangeBasedEvent tmpChangePatchsetEvent = new PatchsetCreated();
+        tmpChangePatchsetEvent.setAccount(memoryImprint.getEvent().getAccount());
+        tmpChangePatchsetEvent.setProvider(memoryImprint.getEvent().getProvider());
+        tmpChangePatchsetEvent.setReceivedOn(memoryImprint.getEvent().getReceivedOn());
+        //tmpChangePatchsetEvent.setEventCreatedOn(memoryImprint.getEvent().getEventCreatedOn().toString());
+        tmpChangePatchsetEvent.setChange(change);
+        tmpChangePatchsetEvent.setPatchset(patchSet);
+
+        Map<String, String> parameters = createStandardParameters(null, tmpChangePatchsetEvent,
+                codeReview, verified, notifyLevel.name());
+        // escapes ' as '"'"' in order to avoid breaking command line param
+        // Details: http://stackoverflow.com/a/26165123/99834
+        parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint,
+                listener,
+                parameters).replaceAll("'", "'\"'\"'"));
 
         Run build = null;
         Entry[] entries = memoryImprint.getEntries();
