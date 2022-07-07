@@ -17,7 +17,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Matchers.*;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -125,7 +126,7 @@ public class DynamicConfigurationCacheProxyTest {
         when(GerritDynamicUrlProcessor.fetch(anyString())).thenReturn(gerritProjects1).thenReturn(gerritProjects2);
         setRefreshInternal(FORCE_REFRESH_INTERVAL);
 
-        List<GerritProject> res1 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("debug");
+        List<GerritProject> res1 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
         List<GerritProject> res2 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
 
         assertNotEquals(res1, res2);
