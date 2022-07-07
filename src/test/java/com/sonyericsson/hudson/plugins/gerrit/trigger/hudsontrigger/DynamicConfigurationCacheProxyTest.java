@@ -55,7 +55,7 @@ public class DynamicConfigurationCacheProxyTest {
     }
 
     /**
-     * Test CacheEntry if entry is expired
+     * Test CacheEntry if entry is expired.
      */
     @Test
     public void testCacheEntryIsExpired() {
@@ -69,7 +69,7 @@ public class DynamicConfigurationCacheProxyTest {
     }
 
     /**
-     * Test CacheEntry if entry is not expired
+     * Test CacheEntry if entry is not expired.
      */
     @Test
     public void testCacheEntryIsNotExpired() {
@@ -83,7 +83,7 @@ public class DynamicConfigurationCacheProxyTest {
     }
 
     /**
-     * Test CacheEntry getProjects
+     * Test CacheEntry getProjects.
      */
     @Test
     public void testCacheEntryGetProjects() {
@@ -94,7 +94,7 @@ public class DynamicConfigurationCacheProxyTest {
     }
 
     /**
-     * Test Cache get item is empty and returns null
+     * Test Cache get item is empty and returns null.
      */
     @Test
     public void testCacheGetEmptyProjectList() {
