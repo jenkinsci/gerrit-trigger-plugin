@@ -1,11 +1,9 @@
-package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerTimer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +15,7 @@ import java.util.Iterator;
  * It's used to speed up execution time during updating
  * trigger jobs and reduce number of connections for the duplicated configs.
  */
-final class DynamicConfigurationCacheProxy {
+public final class DynamicConfigurationCacheProxy {
 
     private static final Logger logger = LoggerFactory.getLogger(
         DynamicConfigurationCacheProxy.class);
@@ -28,7 +26,7 @@ final class DynamicConfigurationCacheProxy {
     /**
      * A cache entry for the simplistic cache implementation
      */
-    class CacheEntry {
+    static class CacheEntry {
         private final long created;
         private final List<GerritProject> projects;
 
@@ -70,7 +68,7 @@ final class DynamicConfigurationCacheProxy {
      * A very simplistic cache implementation.
      * The cleanup method needs to called on a regular basis.
      */
-    class Cache {
+    static class Cache {
         private final Map<String, CacheEntry> cache = new HashMap<>();
 
         /**
@@ -81,7 +79,7 @@ final class DynamicConfigurationCacheProxy {
 
         /**
          * Gets the entry list for the given url from the cache.
-         * Will return a null in case the url is unknown or the entry
+         * Will return a non in case the url is unknown or the entry
          * is too old/expired.
          *
          * @param url
@@ -90,7 +88,7 @@ final class DynamicConfigurationCacheProxy {
          *   the timestamp after which the entry is regarded as too old.
          *
          * @return
-         *   the cached project list or null in case the cache does not
+         *   the cached project list or none in case the cache does not
          *   know the url or the cache entry has expired.
          */
         public List<GerritProject> get(String url, long ttl) {
@@ -98,11 +96,11 @@ final class DynamicConfigurationCacheProxy {
                 CacheEntry entry = cache.get(url);
 
                 if (entry == null) {
-                    return null;
+                  return null;
                 }
 
                 if (entry.isExpired(ttl)) {
-                    return null;
+                  return null;
                 }
 
                 return entry.getProjects();
@@ -114,18 +112,18 @@ final class DynamicConfigurationCacheProxy {
          *
          * @param url
          *   the url from which the project list was fetched.
-         * @param projects
-         *   the list with projects returned by gerrit.
+         * @param entry
+         *   CacheEntry object.
          *
          * @return
          *   the project list which was added to the cache.
          */
-        public List<GerritProject> put(String url, List<GerritProject> projects) {
+        public List<GerritProject> put(String url, CacheEntry entry) {
             synchronized (this.cache) {
-                this.cache.put(url, new CacheEntry(projects));
+                this.cache.put(url, entry);
             }
 
-            return projects;
+            return entry.getProjects();
         }
 
         /**
@@ -143,7 +141,7 @@ final class DynamicConfigurationCacheProxy {
                     Map.Entry<String, CacheEntry> entry = it.next();
 
                     if (!entry.getValue().isExpired(ttl)) {
-                        continue;
+                      continue;
                     }
 
                     logger.trace("Removing expired url {} from cache", entry.getKey());
@@ -185,12 +183,11 @@ final class DynamicConfigurationCacheProxy {
      * Otherwise send query.
      *
      * @param url url to dynamic trigger config.
+     * @param parser the GerritDynamicUrlProcessor object.
      * @return list of gerrit projects.
-     * @throws IOException    if so.
-     * @throws ParseException if so.
+     * @throws DynamicTriggerException if so.
      */
-
-    public List<GerritProject> fetchThroughCache(String url) throws IOException, ParseException {
+    public List<GerritProject> fetch(String url, GerritDynamicUrlProcessor parser) throws DynamicTriggerException {
         long ttl = this.getMaxTTL();
         List<GerritProject> projects = this.cache.get(url, ttl);
 
@@ -200,8 +197,9 @@ final class DynamicConfigurationCacheProxy {
             this.cache.cleanup(ttl);
             return projects;
         }
+
         logger.info("Get dynamic projects directly for URL: {}", url);
-        return this.cache.put(url, GerritDynamicUrlProcessor.fetch(url));
+        return this.cache.put(url, new CacheEntry(parser.fetch(url)));
     }
 
     /**
@@ -216,7 +214,7 @@ final class DynamicConfigurationCacheProxy {
     /**
      * Clears the cache.
      */
-    void clear() {
+    public void clear() {
         this.cache.clear();
     }
 }

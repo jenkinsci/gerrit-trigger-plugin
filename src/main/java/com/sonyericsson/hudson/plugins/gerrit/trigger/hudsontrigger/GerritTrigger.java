@@ -38,6 +38,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger.DynamicConfigurationCacheProxy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger.DynamicTriggerException;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger.GerritDynamicUrlProcessor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedContainsEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
@@ -74,12 +77,8 @@ import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.io.IOException;
 import java.io.ObjectStreamException;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.text.MessageFormat;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -1928,40 +1927,16 @@ public class GerritTrigger extends Trigger<Job> {
             if (!dynamicTriggerConfiguration || job == null || !job.isBuildable()) {
                 dynamicGerritProjects = Collections.emptyList();
             } else {
-                dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache(triggerConfigURL);
+                dynamicGerritProjects = DynamicConfigurationCacheProxy.getInstance()
+                    .fetch(triggerConfigURL, new GerritDynamicUrlProcessor());
             }
-        } catch (ParseException pe) {
+        } catch (DynamicTriggerException ex) {
             String logErrorMessage = MessageFormat.format(
-                    "ParseException for project: {0} and URL: {1} Message: {2}",
-                    job.getName(), triggerConfigURL, pe.getMessage());
-            logger.error(logErrorMessage, pe);
+                    "DynamicTriggerException for project: {0} and URL: {1} Message: {2}",
+                    job.getName(), triggerConfigURL, ex.getMessage());
+            logger.error(logErrorMessage, ex);
             String triggerInformationMessage = MessageFormat.format(
-                    "ParseException when fetching dynamic trigger url: {0}", pe.getMessage());
-            triggerInformationAction.setErrorMessage(triggerInformationMessage);
-        } catch (MalformedURLException mue) {
-            String logErrorMessage = MessageFormat.format(
-                    "MalformedURLException for project: {0} and URL: {1} Message: {2}",
-                    job.getName(), triggerConfigURL, mue.getMessage());
-            logger.error(logErrorMessage, mue);
-            String triggerInformationMessage = MessageFormat.format(
-                    "MalformedURLException when fetching dynamic trigger url: {0}", mue.getMessage());
-            triggerInformationAction.setErrorMessage(triggerInformationMessage);
-        } catch (SocketTimeoutException ste) {
-            String logErrorMessage = MessageFormat.format(
-                    "SocketTimeoutException for project: {0} and URL: {1} Message: {2}",
-                    job.getName(), triggerConfigURL, ste.getMessage());
-            logger.error(logErrorMessage, ste);
-            String triggerInformationMessage = MessageFormat.format(
-                    "SocketTimeoutException when fetching dynamic trigger url: {0}", ste.getMessage());
-            triggerInformationAction.setErrorMessage(triggerInformationMessage);
-
-        } catch (IOException ioe) {
-            String logErrorMessage = MessageFormat.format(
-                    "IOException for project: {0} and URL: {1} Message: {2}",
-                    job.getName(), triggerConfigURL, ioe.getMessage());
-            logger.error(logErrorMessage, ioe);
-            String triggerInformationMessage = MessageFormat.format(
-                    "IOException when fetching dynamic trigger url: {0}", ioe.getMessage());
+                    "DynamicTriggerException when fetching dynamic trigger url: {0}", ex.getMessage());
             triggerInformationAction.setErrorMessage(triggerInformationMessage);
         } finally {
             // Now that the dynamic project list has been loaded, we can "count down"

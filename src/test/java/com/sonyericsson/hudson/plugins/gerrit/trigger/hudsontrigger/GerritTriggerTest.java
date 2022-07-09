@@ -36,6 +36,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger.DynamicConfigurationCacheProxy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.dynamictrigger.GerritDynamicUrlProcessor;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
@@ -1965,7 +1967,8 @@ public class GerritTriggerTest {
         DynamicConfigurationCacheProxy configurationCacheProxy = PowerMockito.mock(DynamicConfigurationCacheProxy.class);
         PowerMockito.mockStatic(DynamicConfigurationCacheProxy.class);
         when(DynamicConfigurationCacheProxy.getInstance()).thenReturn(configurationCacheProxy);
-        when(configurationCacheProxy.fetchThroughCache("url")).thenThrow(new RuntimeException());
+        GerritDynamicUrlProcessor parserMock = mock(GerritDynamicUrlProcessor.class);
+        when(configurationCacheProxy.fetch("url", parserMock)).thenThrow(new RuntimeException());
 
         Queue queue = mockConfig(project);
 

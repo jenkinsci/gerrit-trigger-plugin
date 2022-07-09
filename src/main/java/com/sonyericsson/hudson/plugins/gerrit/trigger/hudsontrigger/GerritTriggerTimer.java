@@ -121,7 +121,7 @@ public final class GerritTriggerTimer {
      *
      * @return the average value.
      */
-    long calculateAverageDynamicConfigRefreshInterval() {
+    public long calculateAverageDynamicConfigRefreshInterval() {
         long total = 0;
         for (GerritServer server : PluginImpl.getServers_()) {
             total += server.getConfig().getDynamicConfigRefreshInterval();
