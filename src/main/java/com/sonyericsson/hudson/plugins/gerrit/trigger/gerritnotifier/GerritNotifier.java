@@ -24,18 +24,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.INotification;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.Notification;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationCommands;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationBuildCompleted;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationBuildStarted;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Topic;
-
-import java.util.Collections;
-import java.util.Map;
-
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.extensions.GerritTriggeredBuildListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
@@ -53,8 +49,8 @@ import org.slf4j.LoggerFactory;
 public class GerritNotifier {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritNotifier.class);
-    private GerritCmdRunner cmdRunner;
-    private ParameterExpander parameterExpander;
+    private final GerritCmdRunner cmdRunner;
+    private final ParameterExpander parameterExpander;
 
     /**
      * Constructor.
@@ -78,99 +74,30 @@ public class GerritNotifier {
     }
 
     /**
-     * Wrapper for sending a command to Gerrit
+     * Send Notification to gerrit.
      *
-     * @param command The command send to Gerrit
+     * @param notification The notifications.
      */
-    private void sendCommandToGerrit(String command) {
-        if (command != null) {
-            if (!command.isEmpty()) {
-                logger.debug("Notifying BuildStarted to gerrit: {}", command);
-                cmdRunner.sendCommand(command);
-            } else {
-                logger.debug("BuildStarted command is empty. Gerrit will not be notified of BuildStarted");
-            }
-        } else {
+    private void send(INotification notification) {
+
+        if (notification == null) {
+            logger.error("NotificationObject is null not sending command!");
+            return;
+        }
+
+        if (!notification.isValid()) {
             logger.error("Something wrong during parameter extraction. "
-                    + "Gerrit will not be notified of BuildStarted");
+                    + "Gerrit will not be notified of BuildStarted!");
+            return;
         }
-    }
 
-    /**
-     * Returns all assigned changes related to a Gerrit topic.
-     *
-     * @param event the event.
-     * @return Returns map of changes, if no changes an empty map is returned.
-     */
-    private Map<Change, PatchSet> queryTopicChanges(ChangeBasedEvent event) {
-        Topic topic = event.getChange().getTopicObject();
-        if (topic != null) {
-            GerritServer server = PluginImpl.getServer_(event);
-            if (server != null) {
-                return topic.getChanges(server.getQueryHandler());
-            } else {
-                logger.error("Could get gerrit server based on event!");
-            }
-        }
-        return Collections.emptyMap();
-    }
+        NotificationCommands notifyCommands = notification.getCommands();
+        cmdRunner.sendCommand(notifyCommands.getCommand());
 
-    /**
-     * Send build started message Gerrit changes assigned to a topic.
-     *
-     * @param build the build.
-     * @param taskListener the task listener
-     * @param event the event.
-     * @param stats the build stats.
-     */
-    private void notifySameTopicBuildStarted(Run build, TaskListener taskListener,
-                                             GerritTriggeredEvent event, BuildsStartedStats stats) {
-        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-        IGerritHudsonTriggerConfig config = PluginImpl.getServerConfig(event);
-        if (config != null) {
-            if (config.isVoteSameTopic()) {
-                Map<Change, PatchSet> changes = queryTopicChanges(changeBasedEvent);
-                for (Map.Entry<Change, PatchSet> entry : changes.entrySet()) {
-                    Change change = entry.getKey();
-                    if (change.equals(changeBasedEvent.getChange())) {
-                        continue;
-                    }
-                    PatchSet patchSet = entry.getValue();
-                    String command = parameterExpander.getBuildStartedCommand(
-                            build, taskListener, changeBasedEvent, stats, change, patchSet);
-                    sendCommandToGerrit(command);
-                }
+        if (notification.isInformTopicChangesEnabled()) {
+            for (String command : notifyCommands.getCommandsTopicChanges()) {
+                cmdRunner.sendCommand(command);
             }
-        } else {
-            logger.error("Could not get server config.");
-        }
-    }
-
-    /**
-     * Sends build completed notification to all topic assigned patches.
-     *
-     * @param memoryImprint build memory imprint.
-     * @param listener the listener.
-     */
-    private void notifySameTopicBuildCompleted(MemoryImprint memoryImprint, TaskListener listener) {
-        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)memoryImprint.getEvent();
-        IGerritHudsonTriggerConfig config = PluginImpl.getServerConfig(changeBasedEvent);
-        if (config != null) {
-            if (config.isVoteSameTopic()) {
-                Map<Change, PatchSet> changes = queryTopicChanges(changeBasedEvent);
-                for (Map.Entry<Change, PatchSet> entry : changes.entrySet()) {
-                    Change change = entry.getKey();
-                    if (change.equals(changeBasedEvent.getChange())) {
-                        continue;
-                    }
-                    PatchSet patchSet = entry.getValue();
-                    String command = parameterExpander.getBuildCompletedCommand(
-                            memoryImprint, listener, change, patchSet);
-                    sendCommandToGerrit(command);
-                }
-            }
-        } else {
-            logger.error("Could not get server config.");
         }
     }
 
@@ -186,12 +113,16 @@ public class GerritNotifier {
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
             if (event instanceof ChangeBasedEvent) {
-                ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-                String command = parameterExpander.getBuildStartedCommand(
-                        build, taskListener, changeBasedEvent, stats);
-                sendCommandToGerrit(command);
-                notifySameTopicBuildStarted(build, taskListener, changeBasedEvent, stats);
-                GerritTriggeredBuildListener.fireOnStarted(event, command);
+                Notification notification = new NotificationBuildStarted(
+                        build, taskListener, event, stats, parameterExpander);
+                if (notification.isValid()) {
+                    send(notification);
+                    String command = notification.getCommands().getCommand();
+                    GerritTriggeredBuildListener.fireOnStarted(event, command);
+                } else {
+                    logger.error("Something wrong during parameter extraction. "
+                            + "Gerrit will not be notified of BuildStarted");
+                }
             }
         } catch (Exception ex) {
             logger.error("Could not complete BuildStarted notification!", ex);
@@ -204,14 +135,19 @@ public class GerritNotifier {
      * @param listener the taskListener.
      */
     public void buildCompleted(MemoryImprint memoryImprint, TaskListener listener) {
-
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
             if (memoryImprint.getEvent() instanceof ChangeBasedEvent) {
-                String command = parameterExpander.getBuildCompletedCommand(memoryImprint, listener);
-                sendCommandToGerrit(command);
-                notifySameTopicBuildCompleted(memoryImprint, listener);
-                GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
+                Notification notification = new NotificationBuildCompleted(
+                        memoryImprint, listener, parameterExpander);
+                if (notification.isValid()) {
+                    send(notification);
+                    String command = notification.getCommands().getCommand();
+                    GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
+                } else {
+                    logger.error("Something wrong during parameter extraction. "
+                            + "Gerrit will not be notified of BuildCompleted");
+                }
             }
         } catch (Exception ex) {
             logger.error("Could not complete BuildCompleted notification!", ex);

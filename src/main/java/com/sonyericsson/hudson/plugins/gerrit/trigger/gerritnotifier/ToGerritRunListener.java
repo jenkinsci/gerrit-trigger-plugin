@@ -190,7 +190,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
                 if (event instanceof GerritEventLifecycle) {
                     ((GerritEventLifecycle)event).fireAllBuildsCompleted();
                 }
-                NotificationFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
+                GerritNotifierFactory.getInstance().queueBuildCompleted(memory.getMemoryImprint(event), listener);
             } finally {
                 memory.forget(event);
             }
@@ -242,7 +242,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
                 }
                 if (!silentStartMode) {
                     BuildsStartedStats stats = memory.getBuildsStartedStats(cause.getEvent());
-                    NotificationFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
+                    GerritNotifierFactory.getInstance().queueBuildStarted(r, listener, cause.getEvent(), stats);
                 }
             }
             logger.info("Gerrit build [{}] Started for cause: [{}].", r, cause);

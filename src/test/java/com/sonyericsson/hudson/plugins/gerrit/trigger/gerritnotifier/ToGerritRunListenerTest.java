@@ -85,7 +85,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({
         Jenkins.class,
         AbstractProject.class,
-        NotificationFactory.class,
+        GerritNotifierFactory.class,
         PluginImpl.class,
         ToGerritRunListener.class,
 
@@ -93,7 +93,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
-    private NotificationFactory mockNotificationFactory;
+    private GerritNotifierFactory mockNotificationFactory;
     private PluginImpl plugin;
     private GerritServer server;
     private Jenkins jenkins;
@@ -109,15 +109,15 @@ public class ToGerritRunListenerTest {
         mockStatic(Jenkins.class);
         when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
 
-        mockStatic(NotificationFactory.class);
+        mockStatic(GerritNotifierFactory.class);
         mockStatic(PluginImpl.class);
-        mockNotificationFactory = mock(NotificationFactory.class);
+        mockNotificationFactory = mock(GerritNotifierFactory.class);
         plugin = mock(PluginImpl.class);
         mockNotifier = mock(GerritNotifier.class);
         server = mock(GerritServer.class);
         doReturn(mockNotifier).when(mockNotificationFactory)
                 .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
-        when(NotificationFactory.class, "getInstance").thenReturn(mockNotificationFactory);
+        when(GerritNotifierFactory.class, "getInstance").thenReturn(mockNotificationFactory);
         when(PluginImpl.class, "getInstance").thenReturn(plugin);
         when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
