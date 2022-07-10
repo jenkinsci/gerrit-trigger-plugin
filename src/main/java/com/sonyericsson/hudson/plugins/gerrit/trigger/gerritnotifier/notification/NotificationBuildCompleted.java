@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Topic;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ public class NotificationBuildCompleted extends Notification {
     private void initCommands() {
         ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
         String command = parameterExpander.getBuildCompletedCommand(
-                memoryImprint, listener);
+                memoryImprint, listener, null);
 
         NotificationCommands notifyCommands = new NotificationCommands(command);
         Topic topic = event.getChange().getTopicObject();
@@ -81,8 +82,12 @@ public class NotificationBuildCompleted extends Notification {
                 }
                 PatchSet patchSet = entry.getValue();
 
+                // Create dummy PatchsetCreated event and fill with original event content
+                // Change and Patchset will be overwritten with information from change assigned in topic
+                // So that ParameterExpander takes this event into account.
+                GerritTriggeredEvent eventTopicChange = createEventTopicChange(event, change, patchSet);
                 String topicChangeCommand = parameterExpander.getBuildCompletedCommand(
-                        memoryImprint, listener, change, patchSet);
+                        memoryImprint, listener, eventTopicChange);
 
                 notifyCommands.addTopicChangeCommand(topicChangeCommand);
             }

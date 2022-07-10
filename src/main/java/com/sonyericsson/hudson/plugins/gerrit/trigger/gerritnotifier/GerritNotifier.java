@@ -94,7 +94,7 @@ public class GerritNotifier {
         NotificationCommands notifyCommands = notification.getCommands();
         cmdRunner.sendCommand(notifyCommands.getCommand());
 
-        if (notification.isInformTopicChangesEnabled()) {
+        if (notification.isInformTopicChangesEnabled() && notifyCommands.hasTopicChanges()) {
             for (String command : notifyCommands.getCommandsTopicChanges()) {
                 cmdRunner.sendCommand(command);
             }
@@ -120,7 +120,8 @@ public class GerritNotifier {
                     String command = notification.getCommands().getCommand();
                     GerritTriggeredBuildListener.fireOnStarted(event, command);
                 } else {
-                    logger.error("Something wrong during parameter extraction. "
+                    logger.error("Notification commands object is not valid. "
+                            + "Something went wrong during parameter extraction. "
                             + "Gerrit will not be notified of BuildStarted");
                 }
             }
@@ -145,8 +146,9 @@ public class GerritNotifier {
                     String command = notification.getCommands().getCommand();
                     GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
                 } else {
-                    logger.error("Something wrong during parameter extraction. "
-                            + "Gerrit will not be notified of BuildCompleted");
+                    logger.error("Notification commands object is not valid. "
+                            + "Something went wrong during parameter extraction. "
+                            + "Gerrit will not be notified of BuildCompleted.");
                 }
             }
         } catch (Exception ex) {

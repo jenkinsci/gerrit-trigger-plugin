@@ -82,8 +82,6 @@ public class NotificationBuildStarted extends Notification {
         String command = parameterExpander.getBuildStartedCommand(
                 build, listener, event, stats);
 
-        // TODO command may be null or not valid check here.
-
         NotificationCommands notifyCommands = new NotificationCommands(command);
         Topic topic = event.getChange().getTopicObject();
 
@@ -96,8 +94,12 @@ public class NotificationBuildStarted extends Notification {
                 }
                 PatchSet patchSet = entry.getValue();
 
+                // Create dummy PatchsetCreated event and fill with original event content
+                // Change and Patchset will be overwritten with information from change assigned in topic
+                // So that ParameterExpander takes this event into account.
+                GerritTriggeredEvent eventTopicChange = createEventTopicChange(event, change, patchSet);
                 String topicChangeCommand = parameterExpander.getBuildStartedCommand(
-                        build, listener, event, stats, change, patchSet);
+                        build, listener, (ChangeBasedEvent)eventTopicChange, stats);
 
                 notifyCommands.addTopicChangeCommand(topicChangeCommand);
             }

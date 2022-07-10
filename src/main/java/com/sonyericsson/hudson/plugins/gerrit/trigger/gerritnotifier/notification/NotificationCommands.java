@@ -80,6 +80,15 @@ public class NotificationCommands {
     }
 
     /**
+     * Returns true if topic change commands are available.
+     *
+     * @return true if commandsTopicChange contains items, otherwise false.
+     */
+    public boolean hasTopicChanges() {
+        return commandsTopicChange.size() > 0;
+    }
+
+    /**
      * Returns true if String command is valid otherwise false.
      *
      * @param gerritCommand the string command to check.

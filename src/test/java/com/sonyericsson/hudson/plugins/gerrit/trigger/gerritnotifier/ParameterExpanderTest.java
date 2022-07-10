@@ -628,7 +628,7 @@ public class ParameterExpanderTest {
         ParameterExpander instance = new ParameterExpander(config, jenkins);
         ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
         System.out.println("Result: " + result);
 
         String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
@@ -717,7 +717,7 @@ public class ParameterExpanderTest {
         ParameterExpander instance = new ParameterExpander(config, jenkins);
         ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
         System.out.println("Result: " + result);
 
         String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
@@ -772,7 +772,7 @@ public class ParameterExpanderTest {
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
         System.out.println("Result: " + result);
 
         assertTrue("Missing Build has Failed", result.indexOf("This Build has Failed") >= 0);

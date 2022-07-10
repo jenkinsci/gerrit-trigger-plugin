@@ -32,6 +32,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Topic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,5 +105,24 @@ public abstract class Notification implements INotification {
         }
 
         return topic.getChanges(server.getQueryHandler());
+    }
+
+    /**
+     * Returns a GerritTrigger event with event information based on change and patchset.
+     *
+     * @param event the event.
+     * @param change the change.
+     * @param patchSet the patchset.
+     * @return Returns GerritTrigger event
+     */
+    protected GerritTriggeredEvent createEventTopicChange(GerritTriggeredEvent event,
+                                                          Change change, PatchSet patchSet) {
+        ChangeBasedEvent eventTopicChange = new PatchsetCreated();
+        eventTopicChange.setAccount(event.getAccount());
+        eventTopicChange.setProvider(event.getProvider());
+        eventTopicChange.setReceivedOn(event.getReceivedOn());
+        eventTopicChange.setChange(change);
+        eventTopicChange.setPatchset(patchSet);
+        return eventTopicChange;
     }
 }
