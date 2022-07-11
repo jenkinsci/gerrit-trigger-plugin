@@ -94,7 +94,7 @@ public class GerritNotifier {
         NotificationCommands notifyCommands = notification.getCommands();
         cmdRunner.sendCommand(notifyCommands.getCommand());
 
-        if (notification.isInformTopicChangesEnabled() && notifyCommands.hasTopicChanges()) {
+        if (notification.isVoteSameTopic() && notifyCommands.hasTopicChanges()) {
             for (String command : notifyCommands.getCommandsTopicChanges()) {
                 cmdRunner.sendCommand(command);
             }

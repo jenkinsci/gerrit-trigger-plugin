@@ -73,7 +73,7 @@ public class NotificationBuildCompleted extends Notification {
         NotificationCommands notifyCommands = new NotificationCommands(command);
         Topic topic = event.getChange().getTopicObject();
 
-        if (topic != null && isInformTopicChangesEnabled()) {
+        if (topic != null && isVoteSameTopic()) {
             Map<Change, PatchSet> changes = queryTopicChanges();
             for (Map.Entry<Change, PatchSet> entry : changes.entrySet()) {
                 Change change = entry.getKey();

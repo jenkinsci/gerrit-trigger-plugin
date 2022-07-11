@@ -41,7 +41,7 @@ public interface INotification {
      *
      * @return true or false depending on isVoteSameTopic in Gerrit config.
      */
-    boolean isInformTopicChangesEnabled();
+    boolean isVoteSameTopic();
 
     /**
      * Returns true or false depending on whether the notification is valid or not.

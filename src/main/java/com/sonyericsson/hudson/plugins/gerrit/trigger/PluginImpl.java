@@ -273,17 +273,16 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public GerritServer getServer(GerritTriggeredEvent event) {
         Provider provider = event.getProvider();
-        if (provider != null) {
-            GerritServer gerritServer = getServer_(provider.getName());
-            if (gerritServer != null) {
-                return gerritServer;
-            } else {
-                logger.warn("Could not find server config for {} - no such server.", provider.getName());
-            }
-        } else {
+        if (provider == null) {
             logger.warn("The event {} has no provider specified. BUG!", event);
+            return null;
         }
-        return null;
+        GerritServer gerritServer = getServer_(provider.getName());
+        if (gerritServer == null) {
+            logger.warn("Could not find server config for {} - no such server.", provider.getName());
+            return null;
+        }
+        return gerritServer;
     }
 
     /**

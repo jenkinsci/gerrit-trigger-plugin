@@ -74,7 +74,7 @@ public abstract class Notification implements INotification {
      * @return true of false based on Gerrit config.
      */
     @Override
-    public boolean isInformTopicChangesEnabled() {
+    public boolean isVoteSameTopic() {
         IGerritHudsonTriggerConfig config = PluginImpl.getServerConfig(gerritEvent);
         if (config == null) {
             logger.error("Could not get server config!");
