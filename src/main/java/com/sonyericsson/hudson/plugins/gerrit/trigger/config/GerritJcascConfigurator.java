@@ -91,7 +91,7 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
     protected void configure(
         Mapping config, PluginImpl instance, boolean dryrun, ConfigurationContext context
     ) throws ConfiguratorException {
-        List<GerritServer> oldServers = instance.getServers();
+        List<GerritServer> oldServers = new ArrayList<>(instance.getServers());
 
         try {
             super.configure(config, instance, dryrun, context);
@@ -99,18 +99,20 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
             throw new ConfiguratorException(this, "Failed configuring gerrit trigger", ex);
         }
 
-        instance.getPluginConfig().updateEventFilter();
+        if (!dryrun) {
+            instance.getPluginConfig().updateEventFilter();
 
-        for (GerritServer oldServer : oldServers) {
-            oldServer.stopConnection();
-            oldServer.stop();
-        }
+            for (GerritServer oldServer : oldServers) {
+                oldServer.stopConnection();
+                oldServer.stop();
+            }
 
-        for (GerritServer server : instance.getServers()) {
-            server.getConfig().setNumberOfSendingWorkerThreads(
+            for (GerritServer server : instance.getServers()) {
+                server.getConfig().setNumberOfSendingWorkerThreads(
                     instance.getPluginConfig().getNumberOfSendingWorkerThreads()
-            );
-            server.start();
+                );
+                server.start();
+            }
         }
     }
 
