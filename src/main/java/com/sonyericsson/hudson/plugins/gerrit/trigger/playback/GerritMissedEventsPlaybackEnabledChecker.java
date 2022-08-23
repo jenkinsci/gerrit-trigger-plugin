@@ -46,7 +46,7 @@ import java.util.logging.Level;
 public class GerritMissedEventsPlaybackEnabledChecker extends AsyncPeriodicWork {
 
     // default check period in seconds
-    private static final long DEFAULTCHECKPERIOD = 2;
+    private static final long DEFAULTCHECKPERIOD = 86400;
     private final Long recurrencePeriod;
     private static final Logger logger =
             LoggerFactory.getLogger(GerritMissedEventsPlaybackEnabledChecker.class);
