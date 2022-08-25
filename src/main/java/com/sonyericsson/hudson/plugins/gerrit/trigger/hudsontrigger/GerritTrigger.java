@@ -932,7 +932,7 @@ public class GerritTrigger extends Trigger<Job> {
 
         if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
             if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic(),
-                    change.getFiles(gerritQueryHandler))) {
+                    () -> change.getFiles(gerritQueryHandler))) {
                 shouldTrigger = true;
             }
         } else {

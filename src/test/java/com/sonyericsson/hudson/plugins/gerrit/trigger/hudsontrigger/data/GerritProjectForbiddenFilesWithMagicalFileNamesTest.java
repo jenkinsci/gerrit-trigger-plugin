@@ -61,6 +61,6 @@ public class GerritProjectForbiddenFilesWithMagicalFileNamesTest {
         GerritProject project = new GerritProject(
                 CompareType.PLAIN, "project1", branches, topics, filePaths, forbiddenFilePaths, true);
 
-        assertEquals(false, project.isInteresting("project1", "master", null, files));
+        assertEquals(false, project.isInteresting("project1", "master", null, () -> files));
     }
 }
