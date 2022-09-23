@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueue
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
@@ -48,7 +49,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
-import org.powermock.reflect.Whitebox;
 
 import java.util.Collection;
 import java.util.List;

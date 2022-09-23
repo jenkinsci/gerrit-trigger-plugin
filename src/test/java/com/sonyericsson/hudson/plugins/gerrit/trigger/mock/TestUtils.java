@@ -380,8 +380,9 @@ public final class TestUtils {
                 throw new NotImplementedException(job.getClass().getName() + "Is not a supported test class, "
                                                           + "implement here.");
             }
-
-            return j.configRoundtrip(job);
+            trigger.start(job, true);
+            return job;
+            //return j.configRoundtrip(job);
         }
     }
 }

@@ -24,6 +24,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
+import static org.mockito.AdditionalMatchers.or;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -31,11 +33,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.MockedStatic;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,6 +44,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actio
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static java import.
@@ -52,8 +52,6 @@ import static org.mockito.Mockito.when;
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PluginImpl.class)
 public class ManualTriggerActionTest {
 
     /**
@@ -219,7 +217,7 @@ public class ManualTriggerActionTest {
     }
 
     /**
-     * Tests {@link ManualTriggerAction#indexResult(java.util.List)}.
+     * Tests {@code ManualTriggerAction.indexResult(List)}.
      * @throws Exception if so.
      */
     @Test
@@ -245,8 +243,7 @@ public class ManualTriggerActionTest {
         result.add(type);
 
         ManualTriggerAction action = new ManualTriggerAction();
-
-        HashMap<String, JSONObject> map = Whitebox.invokeMethod(action, "indexResult", result);
+        HashMap<String, JSONObject> map = action.indexResult(result);
 
         assertSame(change, map.get("I10abc01" + ID_SEPARATOR + "100"));
         assertEquals(patch.toString(),
@@ -273,17 +270,18 @@ public class ManualTriggerActionTest {
     public void testGetGerritUrlJsonNoUrl() {
         JSONObject change = new JSONObject();
         change.put("number", "100");
-        PowerMockito.mockStatic(PluginImpl.class);
-        PluginImpl plugin = mock(PluginImpl.class);
-        GerritServer server = mock(GerritServer.class);
-        when(plugin.getServer(any(String.class))).thenReturn(server);
-        when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
-        when(server.getConfig()).thenReturn(Setup.createConfig());
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        try (MockedStatic<PluginImpl> pluginMockedStatic = mockStatic(PluginImpl.class)) {
+            PluginImpl plugin = mock(PluginImpl.class);
+            GerritServer server = mock(GerritServer.class);
+            when(plugin.getServer(any(String.class))).thenReturn(server);
+            pluginMockedStatic.when(() -> PluginImpl.getServer_(or(isNull(), any(String.class)))).thenReturn(server);
+            when(server.getConfig()).thenReturn(Setup.createConfig());
+            pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
 
-        ManualTriggerAction action = new ManualTriggerAction();
-        String url = action.getGerritUrl(change, null);
+            ManualTriggerAction action = new ManualTriggerAction();
+            String url = action.getGerritUrl(change, null);
 
-        assertEquals("http://gerrit/100", url);
+            assertEquals("http://gerrit/100", url);
+        }
     }
 }

@@ -1,5 +1,3 @@
 buildPlugin(
-    platforms: ['linux'],
-    jenkinsVersions: [null],
-    jdkVersions: [8]
+    platforms: ['linux']
 )

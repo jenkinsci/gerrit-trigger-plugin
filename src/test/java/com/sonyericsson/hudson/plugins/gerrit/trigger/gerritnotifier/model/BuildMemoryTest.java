@@ -37,11 +37,10 @@ import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,12 +50,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: test-data.
 
@@ -64,8 +63,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
  * JUnit 4 tests of {@link BuildMemory}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, AbstractProject.class })
 public class BuildMemoryTest {
 
     private static int nameCount = 0;
@@ -74,6 +71,7 @@ public class BuildMemoryTest {
     private Jenkins jenkins;
     private HashMap<TriggerDescriptor, Trigger<?>> triggers;
     private GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Setup the mocks, specifically {@link #jenkins}.
@@ -83,9 +81,14 @@ public class BuildMemoryTest {
     @Before
     public void setupFull() {
         jenkins = mock(Jenkins.class);
-        mockStatic(Jenkins.class);
-        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         setup();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
     }
 
     /**
@@ -106,7 +109,7 @@ public class BuildMemoryTest {
         doReturn(build).when(project).getBuild(eq(buildId));
         when(jenkins.getItemByFullName(eq(name), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq(name), same(Job.class))).thenReturn(project);
-        triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+        triggers = new HashMap<>();
         when(project.getTriggers()).thenReturn(triggers);
     }
 

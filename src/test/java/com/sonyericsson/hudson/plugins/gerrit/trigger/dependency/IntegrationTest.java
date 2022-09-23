@@ -15,6 +15,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.FreeStyleProject;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -23,10 +24,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,9 +40,15 @@ public class IntegrationTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    // CS IGNORE VisibilityModifier FOR NEXT 9 LINES. REASON: JenkinsRule.
     @Rule
-    public final JenkinsRule jenkinsRule = new JenkinsRule();
+    public JenkinsRule jenkinsRule = new JenkinsRule();
+
+    /**
+     * Outputs build logs to std out.
+     */
+    @Rule
+    public BuildWatcher buildWatcher = new BuildWatcher();
 
     private static final int TIMEOUT = 10;
     private static final int POLLING_INTERVAL = 1000;
@@ -70,8 +78,8 @@ public class IntegrationTest {
 
         PluginImpl.getInstance().getHandler().notifyListeners(gerritEvent);
 
-        waitCompletedBuild(parent, TIMEOUT);
-        waitCompletedBuild(child, TIMEOUT);
+        waitCompletedBuild(parent);
+        waitCompletedBuild(child);
 
         jenkinsRule.assertBuildStatusSuccess(parent.getLastCompletedBuild());
         assertEquals(environmentBuilder.getEnvVars().get("TRIGGER_parent_BUILD_NAME"), "parent");
@@ -80,16 +88,21 @@ public class IntegrationTest {
 
     /**
      * Wait for the first completed build of specified project.
+     *
      * @param project the instance of project
-     * @param timeout timeout in seconds
-     * @throws InterruptedException throw if so
+     *
+     * @throws InterruptedException if so
+     * @throws TimeoutException     if so
      */
-    private void waitCompletedBuild(FreeStyleProject project, int timeout) throws InterruptedException {
+    private void waitCompletedBuild(FreeStyleProject project) throws InterruptedException, TimeoutException {
         long timeStarted = System.currentTimeMillis();
-        long timeoutMs = TimeUnit.SECONDS.toMillis(timeout);
+        long timeoutMs = TimeUnit.SECONDS.toMillis(IntegrationTest.TIMEOUT);
 
         while (project.getLastCompletedBuild() == null && System.currentTimeMillis() - timeStarted < timeoutMs) {
             Thread.sleep(POLLING_INTERVAL);
+        }
+        if (project.getLastCompletedBuild() == null) {
+            throw new TimeoutException("No build completed within " + IntegrationTest.TIMEOUT + "s");
         }
     }
 
@@ -162,6 +175,7 @@ public class IntegrationTest {
         when(change.getProject()).thenReturn("mockProject");
         when(change.getId()).thenReturn("mockChange");
         when(change.getBranch()).thenReturn("mockBranch");
+        when(change.getTopic()).thenReturn("topic");
         when(patchSet.getNumber()).thenReturn("mockPatchSetNumber");
         when(patchSet.getRevision()).thenReturn("mockRevision");
         when(patchSet.getRef()).thenReturn("mockRefSpec");

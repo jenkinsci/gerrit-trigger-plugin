@@ -36,18 +36,16 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 import hudson.XmlFile;
+import hudson.security.ACL;
 import jenkins.model.Jenkins;
 import junit.framework.TestCase;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.IOUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -61,26 +59,28 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.spy;
 
 /**
  *
  * Missed events load and persist tests.
  *
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, PluginImpl.class, GerritMissedEventsPlaybackManager.class, GerritPluginChecker.class })
-@PowerMockIgnore("javax.net.ssl.*")
 public class GerritMissedEventsLoadPersistTest {
 
     private static final int MAXRANDOMNUMBER = 100;
     private static final int SLEEPTIME = 500;
+
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
+    private MockedStatic<GerritMissedEventsPlaybackManager> missedEventsPlaybackManagerMockedStatic;
+    private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
      * Default constructor.
@@ -95,10 +95,12 @@ public class GerritMissedEventsLoadPersistTest {
     @Before
     public void setUp() throws IOException {
         Jenkins jenkinsMock = mock(Jenkins.class);
-        PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.get()).thenReturn(jenkinsMock);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
 
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PluginImpl plugin = mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         config = spy(config);
@@ -106,10 +108,10 @@ public class GerritMissedEventsLoadPersistTest {
         GerritHandler handler = mock(GerritHandler.class);
         when(plugin.getHandler()).thenReturn(handler);
         when(server.getConfig()).thenReturn(config);
-        PowerMockito.mockStatic(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
 
-        PowerMockito.mockStatic(GerritMissedEventsPlaybackManager.class);
+        missedEventsPlaybackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
 
         File tmpFile = null;
         try {
@@ -134,11 +136,26 @@ public class GerritMissedEventsLoadPersistTest {
         out.println(text);
         out.close();
         XmlFile xmlFile = new XmlFile(tmpFile);
-        PowerMockito.when(GerritMissedEventsPlaybackManager.getConfigXml(anyString())).thenReturn(xmlFile);
+        missedEventsPlaybackManagerMockedStatic.when(
+                () -> GerritMissedEventsPlaybackManager.getConfigXml(anyString())
+        ).thenReturn(xmlFile);
 
-        PowerMockito.mockStatic(GerritPluginChecker.class);
-        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
-                , anyString(), anyBoolean())).thenReturn(true);
+        pluginCheckerMockedStatic = mockStatic(GerritPluginChecker.class);
+        pluginCheckerMockedStatic.when(
+                () -> GerritPluginChecker.isPluginEnabled(
+                        any(IGerritHudsonTriggerConfig.class),
+                        anyString(),
+                        anyBoolean()
+                )
+        ).thenReturn(true);
+    }
+
+    @After
+    public void tearDown() {
+        jenkinsMockedStatic.close();
+        pluginMockedStatic.close();
+        missedEventsPlaybackManagerMockedStatic.close();
+        pluginCheckerMockedStatic.close();
     }
 
     /**
