@@ -30,6 +30,8 @@ import org.kohsuke.stapler.QueryParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -260,9 +262,7 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
             URL url = new URL(value); // Check for protocol errors
             url.toURI(); // Perform some extra checking
             return FormValidation.ok();
-        } catch (java.net.MalformedURLException e) {
-            return FormValidation.error(Messages.BadUrlError());
-        } catch (java.net.URISyntaxException e) {
+        } catch (MalformedURLException | URISyntaxException e) {
             return FormValidation.error(Messages.BadUrlError());
         }
     }

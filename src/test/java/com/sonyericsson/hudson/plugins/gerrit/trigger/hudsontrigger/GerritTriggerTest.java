@@ -35,7 +35,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggeredItemEntity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPrivateStateChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginWipStateChangedEvent;
@@ -59,7 +58,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Item;
-import hudson.model.ItemGroup;
 import hudson.model.Job;
 import hudson.model.ParameterDefinition;
 import hudson.model.ParameterValue;
@@ -446,7 +444,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithNoDefaultParameters() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         mockPluginConfig(0);
 
@@ -473,7 +471,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithOwnerAndUploader() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
@@ -509,7 +507,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithOwnerAndOneUploaderNull() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
@@ -545,7 +543,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithOwnerAndOtherUploaderNull() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Nisse", "nisse@acme.org");
@@ -582,7 +580,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithOwnerAndBothUploadersNull() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
 
@@ -618,7 +616,7 @@ public class GerritTriggerTest {
     @Test
     public void testScheduleWithOwnerAndPartOfUploadersNull() {
         Queue queue = mockJenkinsQueue();
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         final Account owner = new Account("Bobby", "bobby@somewhere.com");
         final Account uploader = new Account("Bobby", null);
@@ -670,11 +668,11 @@ public class GerritTriggerTest {
             PatchsetCreated event = Setup.createPatchsetCreated();
             when(listener.isBuilding(project, event)).thenReturn(false);
             Setup.setTrigger(trigger, project);
-            trigger.setGerritProjects(Collections.<GerritProject>emptyList());
+            trigger.setGerritProjects(Collections.emptyList());
             trigger.setEscapeQuotes(false);
             trigger.setSilentMode(false);
 
-            TriggerContext context = new TriggerContext(build, event, Collections.<TriggeredItemEntity>emptyList());
+            TriggerContext context = new TriggerContext(build, event, Collections.emptyList());
 
             trigger.retriggerThisBuild(context);
 
@@ -708,9 +706,9 @@ public class GerritTriggerTest {
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
             Setup.setTrigger(trigger, project);
-            trigger.setGerritProjects(Collections.<GerritProject>emptyList());
+            trigger.setGerritProjects(Collections.emptyList());
 
-            TriggerContext context = new TriggerContext(build, event, Collections.<TriggeredItemEntity>emptyList());
+            TriggerContext context = new TriggerContext(build, event, Collections.emptyList());
 
             trigger.retriggerThisBuild(context);
 
@@ -747,14 +745,14 @@ public class GerritTriggerTest {
 
 
             GerritTrigger thisTrigger = Setup.createDefaultTrigger(thisProject);
-            thisTrigger.setGerritProjects(Collections.<GerritProject>emptyList());
+            thisTrigger.setGerritProjects(Collections.emptyList());
             thisTrigger.setEscapeQuotes(false);
             thisTrigger.setSilentMode(false);
             Setup.setTrigger(thisTrigger, thisProject);
 
 
             GerritTrigger otherTrigger = Setup.createDefaultTrigger(otherProject);
-            otherTrigger.setGerritProjects(Collections.<GerritProject>emptyList());
+            otherTrigger.setGerritProjects(Collections.emptyList());
             otherTrigger.setEscapeQuotes(false);
             otherTrigger.setSilentMode(false);
             Setup.setTrigger(otherTrigger, otherProject);
@@ -832,7 +830,7 @@ public class GerritTriggerTest {
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
             Setup.setTrigger(trigger, project);
-            trigger.setGerritProjects(Collections.<GerritProject>emptyList());
+            trigger.setGerritProjects(Collections.emptyList());
             trigger.setEscapeQuotes(false);
             trigger.setSilentMode(false);
 
@@ -1181,7 +1179,7 @@ public class GerritTriggerTest {
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1240,7 +1238,7 @@ public class GerritTriggerTest {
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
 
         //prepare AbstractProject object
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1299,7 +1297,7 @@ public class GerritTriggerTest {
         String stringReadable = "This is human readable message";
 
         //prepare AbstractProject object
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1348,7 +1346,7 @@ public class GerritTriggerTest {
         String stringEncoded = "VGhpcyBpcyBodW1hbiByZWFkYWJsZSBtZXNzYWdl";
 
         //prepare AbstractProject object
-        AbstractProject project = mockProject(Collections.<ParameterDefinition>emptyList());
+        AbstractProject project = mockProject(Collections.emptyList());
 
         //prepare  PatchsetCreated object
         JSONObject patch = new JSONObject();
@@ -1675,7 +1673,7 @@ public class GerritTriggerTest {
         // Replication is enable but slave list is empty
         when(replicationConfigMock.isEnableReplication()).thenReturn(true);
         when(replicationConfigMock.isEnableSlaveSelectionInJobs()).thenReturn(false);
-        when(replicationConfigMock.getGerritSlaves()).thenReturn(Collections.<GerritSlave>emptyList());
+        when(replicationConfigMock.getGerritSlaves()).thenReturn(Collections.emptyList());
         slaves = gerritTrigger.gerritSlavesToWaitFor(PluginImpl.DEFAULT_SERVER_NAME);
         assertNotNull(slaves);
         assertEquals(0, slaves.size());
@@ -2116,7 +2114,7 @@ public class GerritTriggerTest {
         //next is only for error messages to not fail on NPE.
         abstractProjectMockedStatic = mockStatic(AbstractProject.class);
         abstractProjectMockedStatic
-                .when(() -> AbstractProject.findNearest(any(String.class), (ItemGroup)any()))
+                .when(() -> AbstractProject.findNearest(any(String.class), any()))
                 .thenReturn(downstreamProject);
     }
 

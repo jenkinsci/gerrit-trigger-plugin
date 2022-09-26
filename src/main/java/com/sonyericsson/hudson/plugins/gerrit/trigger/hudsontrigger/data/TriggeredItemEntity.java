@@ -30,6 +30,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
 import hudson.model.Run;
+import java.util.Objects;
 import jenkins.model.Jenkins;
 
 
@@ -192,11 +193,10 @@ public class TriggeredItemEntity {
                 return false;
             }
             final TriggeredItemEntity other = (TriggeredItemEntity)obj;
-            if (this.buildNumber != other.buildNumber && (this.buildNumber == null
-                    || !this.buildNumber.equals(other.buildNumber))) {
+            if (!Objects.equals(this.buildNumber, other.buildNumber)) {
                 return false;
             }
-            if ((this.projectId == null) ? (other.projectId != null) : !this.projectId.equals(other.projectId)) {
+            if (!Objects.equals(this.projectId, other.projectId)) {
                 return false;
             }
             return true;

@@ -173,9 +173,7 @@ public class TriggerContextConverter implements Converter {
         try {
             theClass = Run.XSTREAM2.getMapper().realClass(clazz);
             return theClass;
-        } catch (CannotResolveClassException e) {
-            logger.error("Failed to unmarshall event type for trigger context!", e);
-        } catch (ClassCastException e) {
+        } catch (CannotResolveClassException | ClassCastException e) {
             logger.error("Failed to unmarshall event type for trigger context!", e);
         }
         //Fallback to PatchsetCreated and pray

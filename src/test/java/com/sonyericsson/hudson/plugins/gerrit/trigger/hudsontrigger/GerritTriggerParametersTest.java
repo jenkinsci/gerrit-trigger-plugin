@@ -36,7 +36,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -69,7 +69,7 @@ public class GerritTriggerParametersTest {
         server.setConfig(config);
         PluginImpl plugin = PluginImpl.getInstance();
         assertNotNull(plugin);
-        plugin.setServers(Arrays.asList(server));
+        plugin.setServers(Collections.singletonList(server));
     }
 
     // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.

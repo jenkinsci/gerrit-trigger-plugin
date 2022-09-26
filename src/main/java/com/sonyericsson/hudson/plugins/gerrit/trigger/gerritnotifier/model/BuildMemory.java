@@ -45,7 +45,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -590,13 +589,7 @@ public class BuildMemory {
          * @param project the project to removeProject.
          */
         private synchronized void removeProject(String project) {
-            Iterator<Entry> iterator = list.iterator();
-            while (iterator.hasNext()) {
-                Entry entry = iterator.next();
-                if (entry.isProject(project)) {
-                    iterator.remove();
-                }
-            }
+            list.removeIf(entry -> entry.isProject(project));
         }
 
         /**
@@ -654,7 +647,7 @@ public class BuildMemory {
          * @return a report.
          */
         public synchronized String getStatusReport() {
-            StringBuilder str = new StringBuilder("");
+            StringBuilder str = new StringBuilder();
             for (Entry entry : list) {
                 if (entry == null) {
                     continue;

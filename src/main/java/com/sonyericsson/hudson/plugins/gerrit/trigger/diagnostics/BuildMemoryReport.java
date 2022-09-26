@@ -36,7 +36,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -94,7 +93,7 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
         List<Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> entries =
                 new LinkedList<Entry<GerritTriggeredEvent,
                         List<BuildMemory.MemoryImprint.Entry>>>(entrySet());
-        Collections.sort(entries, new Comparator<Entry<GerritTriggeredEvent,
+        entries.sort(new Comparator<Entry<GerritTriggeredEvent,
                 List<BuildMemory.MemoryImprint.Entry>>>() {
             @Override
             public int compare(Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> a,

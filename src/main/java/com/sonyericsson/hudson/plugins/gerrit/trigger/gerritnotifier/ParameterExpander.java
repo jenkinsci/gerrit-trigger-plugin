@@ -143,7 +143,7 @@ public class ParameterExpander {
      */
     private static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
         if (iterable == null) {
-            return Collections.<T>emptyList();
+            return Collections.emptyList();
         } else {
             return iterable;
         }
@@ -573,7 +573,7 @@ public class ParameterExpander {
      */
     private String createBuildsStats(MemoryImprint memoryImprint, TaskListener listener,
             Map<String, String> parameters) {
-        StringBuilder str = new StringBuilder("");
+        StringBuilder str = new StringBuilder();
         final String rootUrl = jenkins.getRootUrl();
 
         String unsuccessfulMessage = null;

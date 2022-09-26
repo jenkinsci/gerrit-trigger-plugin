@@ -56,6 +56,7 @@ import java.util.Date;
 import java.util.Random;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -174,7 +175,7 @@ public class GerritMissedEventsLoadPersistTest {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
         = new GerritMissedEventsPlaybackManager("defaultServer");
 
-        assertTrue(!missingEventsPlaybackManager.saveTimestamp(gEvt));
+        assertFalse(missingEventsPlaybackManager.saveTimestamp(gEvt));
 
     }
     /**
@@ -272,7 +273,7 @@ public class GerritMissedEventsLoadPersistTest {
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
         try {
-            Thread.currentThread().sleep(SLEEPTIME);
+            Thread.sleep(SLEEPTIME);
         } catch (InterruptedException e) {
             fail(e.getMessage());
         }

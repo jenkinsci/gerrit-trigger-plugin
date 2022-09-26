@@ -45,6 +45,7 @@ import java.net.URL;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -221,7 +222,7 @@ public class GerritServerHudsonTest {
 
         boolean buttonFound = removeServer(gerritServerOneName);
 
-        assertEquals(false, buttonFound);
+        assertFalse(buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
         assertEquals(removeLastServerWarning, textContent);
     }
@@ -238,7 +239,7 @@ public class GerritServerHudsonTest {
 
         boolean buttonFound = removeServer(gerritServerOneName);
 
-        assertEquals(false, buttonFound);
+        assertFalse(buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
         assertEquals(removeLastServerWarning, textContent);
     }
@@ -351,6 +352,6 @@ public class GerritServerHudsonTest {
         GerritServer gerritServerOne = new GerritServer(gerritServerOneName, true);
         PluginImpl.getInstance().addServer(gerritServerOne);
         gerritServerOne.start();
-        assertEquals(true, gerritServerOne.isNoConnectionOnStartup());
+        assertTrue(gerritServerOne.isNoConnectionOnStartup());
     }
 }

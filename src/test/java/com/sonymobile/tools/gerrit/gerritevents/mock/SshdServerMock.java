@@ -49,7 +49,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 
 import net.sf.json.JSONArray;
@@ -57,6 +56,7 @@ import net.sf.json.JSONObject;
 
 import com.jcraft.jsch.KeyPair;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -730,16 +730,12 @@ public class SshdServerMock implements CommandFactory {
                     }
                 }
             }
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                    new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 for (String line : lines) {
                     System.out.println("Sending: " + line);
                     out.println(line);
-                    out.flush();
                 }
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -762,14 +758,10 @@ public class SshdServerMock implements CommandFactory {
         public void start(final Environment environment) throws IOException {
             String line = "gerrit version 2.11.4";
             System.out.println("Starting PL-command: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + line);
                 out.println(line);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
         }
@@ -862,14 +854,10 @@ public class SshdServerMock implements CommandFactory {
             change.put("currentPatchSet", currentPatchSet);
 
             System.out.println("Starting QueryLastPatchSet: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + change);
                 out.println(change);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
         }
@@ -984,14 +972,10 @@ public class SshdServerMock implements CommandFactory {
             change.put("patchSets", patchSets);
 
             System.out.println("Starting QueryAllPatchSets: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + change);
                 out.println(change);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
         }
@@ -1095,9 +1079,8 @@ public class SshdServerMock implements CommandFactory {
             change.put("topic", "topic");
 
             System.out.println("Starting QueryTopic: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + change);
                 out.println(change);
                 change.put(PROJECT, "project2");
@@ -1106,9 +1089,6 @@ public class SshdServerMock implements CommandFactory {
                 change.put("currentPatchSet", patchSet2);
                 System.out.println("Sending: " + change);
                 out.println(change);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
         }
@@ -1132,14 +1112,10 @@ public class SshdServerMock implements CommandFactory {
         public void start(final Environment environment) throws IOException {
             String line = "abcProject";
             System.out.println("Starting PL-command: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + line);
                 out.println(line);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
             this.destroy();
@@ -1165,16 +1141,12 @@ public class SshdServerMock implements CommandFactory {
             String line = "abcProject";
             String line2 = "defProject";
             System.out.println("Starting PL-command: " + getCommand());
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(
-                        new OutputStreamWriter(getOutputStream(), "UTF-8")));
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(
+                        new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 System.out.println("Sending: " + line);
                 out.println(line);
                 System.out.println("Sending: " + line2);
                 out.println(line2);
-                out.flush();
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             this.stop(0);
         }

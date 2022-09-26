@@ -185,7 +185,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
@@ -217,7 +217,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
@@ -321,7 +321,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
@@ -349,7 +349,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();

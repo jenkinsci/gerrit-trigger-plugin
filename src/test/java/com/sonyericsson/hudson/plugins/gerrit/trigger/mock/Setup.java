@@ -59,7 +59,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
@@ -707,7 +706,7 @@ public final class Setup {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.FAILURE);
 

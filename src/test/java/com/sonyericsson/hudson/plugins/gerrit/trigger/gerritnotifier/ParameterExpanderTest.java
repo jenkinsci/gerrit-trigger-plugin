@@ -61,6 +61,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -130,19 +131,19 @@ public class ParameterExpanderTest {
             String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
             System.out.println("result: " + result);
             assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
-                    result.indexOf("START_MESSAGE_VAL") >= 0);
-            assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
-            assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
-            assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
-            assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
-            assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
-            assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
-            assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
-            assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
-            assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
-            assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-            assertTrue("Missing CUSTOM_MESSAGE", result.indexOf("CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
-            assertTrue("Newlines are stripped", result.indexOf("Message\nwith newline") >= 0);
+                    result.contains("START_MESSAGE_VAL"));
+            assertTrue("Missing CHANGE_ID", result.contains("CHANGE_ID=Iddaaddaa123456789"));
+            assertTrue("Missing PATCHSET", result.contains("PATCHSET=1"));
+            assertTrue("Missing VERIFIED", result.contains("VERIFIED=1"));
+            assertTrue("Missing CODEREVIEW", result.contains("CODEREVIEW=32"));
+            assertTrue("Missing NOTIFICATION_LEVEL", result.contains("NOTIFICATION_LEVEL=ALL"));
+            assertTrue("Missing REFSPEC", result.contains("REFSPEC=" + expectedRefSpec));
+            assertTrue("Missing ENV_BRANCH", result.contains("ENV_BRANCH=branch"));
+            assertTrue("Missing ENV_CHANGE", result.contains("ENV_CHANGE=1000"));
+            assertTrue("Missing ENV_REFSPEC", result.contains("ENV_REFSPEC=" + expectedRefSpec));
+            assertTrue("Missing ENV_CHANGEURL", result.contains("ENV_CHANGEURL=http://gerrit/1000"));
+            assertTrue("Missing CUSTOM_MESSAGE", result.contains("CUSTOM_MESSAGE_BUILD_STARTED"));
+            assertTrue("Newlines are stripped", result.contains("Message\nwith newline"));
         }
     }
 
@@ -282,7 +283,7 @@ public class ParameterExpanderTest {
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
-        assertEquals(null, result);
+        assertNull(result);
     }
 
     /**
@@ -784,7 +785,7 @@ public class ParameterExpanderTest {
             String result = instance.getBuildCompletedCommand(memoryImprint, taskListener);
             System.out.println("Result: " + result);
 
-            assertTrue("Missing Build has Failed", result.indexOf("This Build has Failed") >= 0);
+            assertTrue("Missing Build has Failed", result.contains("This Build has Failed"));
         }
     }
 

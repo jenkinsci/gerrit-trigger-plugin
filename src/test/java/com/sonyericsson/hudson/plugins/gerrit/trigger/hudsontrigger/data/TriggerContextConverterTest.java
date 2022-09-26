@@ -91,8 +91,8 @@ public class TriggerContextConverterTest {
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
         when(jenkins.getFullName()).thenReturn("");
-        jenkinsMockedStatic.when(() -> Jenkins.getAuthentication()).thenReturn(ACL.SYSTEM);
-        jenkinsMockedStatic.when(() -> Jenkins.getAuthentication2()).thenReturn(ACL.SYSTEM2);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
     }
 
     @After
@@ -159,9 +159,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -192,9 +190,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -284,9 +280,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -586,7 +580,7 @@ public class TriggerContextConverterTest {
             MatrixRun run = (MatrixRun)obj;
 
             ExtensionList listMock = mock(ExtensionList.class);
-            doReturn(Collections.emptyList().iterator()).when(listMock).iterator();
+            doReturn(Collections.emptyIterator()).when(listMock).iterator();
             extensionListMockedStatic
                     .when(() -> ExtensionList.lookup(same(TransientActionFactory.class)))
                     .thenReturn(listMock);

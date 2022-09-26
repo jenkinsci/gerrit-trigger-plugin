@@ -93,8 +93,8 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
                     new TriggeredItemEntity(Integer.valueOf(4), "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(Integer.valueOf(4), new String("project")),
-                    new TriggeredItemEntity(Integer.valueOf(4), new String("project")),
+                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
+                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
                     new TriggeredItemEntity(null, "project"),
@@ -109,7 +109,7 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
                     new TriggeredItemEntity(200, "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(200, new String("project")),
+                    new TriggeredItemEntity(200, "project"),
                     new TriggeredItemEntity(200, "project"),
                     true), });
         parameters.add(new TestParameter[]{new TestParameter(

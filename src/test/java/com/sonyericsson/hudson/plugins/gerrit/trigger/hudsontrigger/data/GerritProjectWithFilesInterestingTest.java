@@ -59,7 +59,7 @@ public class GerritProjectWithFilesInterestingTest {
     public void testInteresting() {
         assertEquals(scenarioWithFiles.expected, scenarioWithFiles.config.isInteresting(
                 scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic,
-                () -> scenarioWithFiles.getFiles()));
+                scenarioWithFiles::getFiles));
         assertEquals(scenarioWithFiles.fileCheckOccurred, scenarioWithFiles.fileCheckNeeded);
     }
 

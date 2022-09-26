@@ -6,9 +6,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeRestoredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
@@ -80,15 +78,15 @@ public class ParameterModeJenkinsTest {
         server.setConfig(config);
         PluginImpl plugin = PluginImpl.getInstance();
         assertNotNull(plugin);
-        plugin.setServers(Arrays.asList(server));
+        plugin.setServers(Collections.singletonList(server));
 
         job = j.createFreeStyleProject();
         job.getBuildersList().add(new ParametersBuilder());
         trigger = Setup.createDefaultTrigger(job);
         trigger.setGerritProjects(Collections.singletonList(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")),
-                Collections.<Topic>emptyList(), Collections.<FilePath>emptyList(),
-                Collections.<FilePath>emptyList(), false)));
+                Collections.emptyList(), Collections.emptyList(),
+                Collections.emptyList(), false)));
         trigger.setEscapeQuotes(false);
     }
 
@@ -244,7 +242,7 @@ public class ParameterModeJenkinsTest {
         PluginImpl.getHandler_().triggerEvent(change);
         j.waitUntilNoActivity();
         FreeStyleBuild build = job.getLastBuild();
-        List<GerritTriggerParameters> params = Arrays.asList(GerritTriggerParameters.GERRIT_EVENT_ACCOUNT);
+        List<GerritTriggerParameters> params = Collections.singletonList(GerritTriggerParameters.GERRIT_EVENT_ACCOUNT);
         //TODO According to the doc GerritTriggerParameters.GERRIT_SUBMITTER should be set as well but its not?
         String expected = ac.getNameAndEmail();
         for (GerritTriggerParameters param : params) {

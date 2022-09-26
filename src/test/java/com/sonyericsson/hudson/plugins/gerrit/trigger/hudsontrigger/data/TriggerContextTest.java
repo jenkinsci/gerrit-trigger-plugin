@@ -29,7 +29,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Run;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -82,7 +82,7 @@ public class TriggerContextTest {
     @Test
     public void testGetOthers() {
         TriggerContext context = new TriggerContext(mockBuild("projectX", 1), null,
-                Arrays.asList(new TriggeredItemEntity(1, "projectY")));
+                Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
@@ -93,7 +93,7 @@ public class TriggerContextTest {
     @Test
     public void testSetOthers() {
         TriggerContext context = new TriggerContext();
-        context.setOthers(Arrays.asList(new TriggeredItemEntity(1, "projectY")));
+        context.setOthers(Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
