@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.impls;
 
 import hudson.Extension;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -114,7 +115,7 @@ public class RabbitMQMessageListenerImpl extends MessageQueueListener {
             }
             try {
                 Handler handler = api.getHandler();
-                handler.post(new String(body, "UTF-8"), provider);
+                handler.post(new String(body, StandardCharsets.UTF_8), provider);
             } catch (Exception ex) {
                 logger.warn("No handler for Gerrit Trigger. Message would be lost.");
             }

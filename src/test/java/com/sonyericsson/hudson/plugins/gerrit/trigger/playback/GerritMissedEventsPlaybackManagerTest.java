@@ -195,7 +195,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
         try {
-            Thread.currentThread().sleep(SLEEPTIME);
+            Thread.sleep(SLEEPTIME);
         } catch (InterruptedException e) {
             fail(e.getMessage());
         }
@@ -262,7 +262,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 1 event", events.size() == 1);
+        Assert.assertEquals("Should have 1 event", 1, events.size());
 
     }
 
@@ -289,7 +289,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 
@@ -316,7 +316,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 
@@ -343,7 +343,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 

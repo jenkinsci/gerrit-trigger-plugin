@@ -28,7 +28,7 @@ import org.junit.Test;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Testing if Forbidden File Paths usage corrupts the list of files checked.
@@ -63,6 +63,6 @@ public class GerritProjectForbiddenFilesTest {
         config = new GerritProject(
                 CompareType.PLAIN, "project2", branches, topics, filePaths, null, false);
 
-        assertEquals(true, config.isInteresting("project2", "master", null, () -> files));
+        assertTrue(config.isInteresting("project2", "master", null, () -> files));
     }
 }

@@ -41,8 +41,8 @@ public class GerritTriggeredEventComparatorTest {
                 {null, event, -1},
                 {event, null, 1},
                 {event, event, 0},
-                {event, merged, Integer.valueOf(event.hashCode()).compareTo(merged.hashCode())},
-                {merged, event, Integer.valueOf(merged.hashCode()).compareTo(event.hashCode()), },
+                {event, merged, Integer.compare(event.hashCode(), merged.hashCode())},
+                {merged, event, Integer.compare(merged.hashCode(), event.hashCode()), },
         });
     }
 

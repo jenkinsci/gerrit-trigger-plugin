@@ -147,9 +147,8 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         TestUtils.waitForBuilds(project, 1, 20000);
 
-        List<SshdServerMock.CommandMock> commands = serverMock.getCommandHistory();
-        for (int i = 0; i < commands.size(); i++) {
-            String command = commands.get(i).getCommand();
+        for (SshdServerMock.CommandMock commandMock : serverMock.getCommandHistory()) {
+            String command = commandMock.getCommand();
             assertFalse(command.toLowerCase().contains("build started"));
         }
     }

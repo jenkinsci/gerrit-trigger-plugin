@@ -147,8 +147,8 @@ public class DependencyQueueTaskDispatcherTest {
     @Test
     public void shouldNotBlockNonAbstractProjects() {
         List<Action> actions = new ArrayList<Action>();
-        Queue.Item item = new WaitingItem(Calendar.getInstance(), null, actions);
-        CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem((WaitingItem)item));
+        WaitingItem item = new WaitingItem(Calendar.getInstance(), null, actions);
+        CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem(item));
         assertNull("Build should not be blocked", cause);
     }
 
@@ -268,7 +268,7 @@ public class DependencyQueueTaskDispatcherTest {
     public void makeGerritInterestedInEvent(PatchsetCreated patchsetCreated) {
         GerritTrigger upstreamGerritTriggerMock = mock(GerritTrigger.class);
         when(abstractProjectDependencyMock.getTriggers()).thenReturn(
-                Collections.<TriggerDescriptor, Trigger<?>>singletonMap(
+                Collections.singletonMap(
                         new GerritTriggerDescriptor(), upstreamGerritTriggerMock));
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(upstreamGerritTriggerMock);
         when(upstreamGerritTriggerMock.isInteresting(patchsetCreated)).thenReturn(true);

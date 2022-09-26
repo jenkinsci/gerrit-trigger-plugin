@@ -141,7 +141,7 @@ public final class StringUtil {
      * @return the name to display.
      */
     public static String getDefaultDisplayNameForSpecificServer(GerritEventListener listener, String serverName) {
-        StringBuilder name = new StringBuilder("");
+        StringBuilder name = new StringBuilder();
         if (GerritServer.isAnyServer(serverName)) {
             name.append("Any Server: ");
         } else {

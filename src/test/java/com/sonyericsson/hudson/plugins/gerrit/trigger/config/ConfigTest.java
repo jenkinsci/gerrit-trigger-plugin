@@ -41,6 +41,7 @@ import hudson.util.Secret;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -137,7 +138,7 @@ public class ConfigTest {
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("", config.getGerritProxy());
         assertEquals("gerrit", config.getGerritUserName());
-        assertEquals(true, config.isUseRestApi());
+        assertTrue(config.isUseRestApi());
         assertEquals("httpgerrit", config.getGerritHttpUserName());
         assertEquals("httppass", config.getGerritHttpPassword());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());
@@ -242,7 +243,7 @@ public class ConfigTest {
         assertEquals(1337, config.getGerritSshPort());
         assertEquals("", config.getGerritProxy());
         assertEquals("gerrit", config.getGerritUserName());
-        assertEquals(true, config.isUseRestApi());
+        assertTrue(config.isUseRestApi());
         assertEquals("httpgerrit", config.getGerritHttpUserName());
         assertEquals("httppass", config.getGerritHttpPassword());
         assertEquals(6, config.getNumberOfReceivingWorkerThreads());

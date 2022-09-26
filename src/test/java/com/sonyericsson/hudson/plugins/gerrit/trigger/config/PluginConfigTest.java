@@ -32,6 +32,8 @@ import org.junit.Test;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -75,9 +77,9 @@ public class PluginConfigTest {
         assertEquals(Arrays.asList(events.split(" ")), config.getFilterIn());
         for (GerritEventType type : GerritEventType.values()) {
             if (events.contains(type.getTypeValue())) {
-                assertEquals(true, type.isInteresting());
+                assertTrue(type.isInteresting());
             } else {
-                assertEquals(false, type.isInteresting());
+                assertFalse(type.isInteresting());
             }
         }
     }
@@ -102,7 +104,7 @@ public class PluginConfigTest {
         assertEquals(4, config.getNumberOfSendingWorkerThreads());
         assertEquals(Arrays.asList(events.split(" ")), config.getFilterIn());
         for (GerritEventType type : GerritEventType.values()) {
-            assertEquals(false, type.isInteresting());
+            assertFalse(type.isInteresting());
         }
     }
 
@@ -122,9 +124,9 @@ public class PluginConfigTest {
         new PluginConfig(form);
         for (GerritEventType type : GerritEventType.values()) {
             if (defaultEventFilter.contains(type.getTypeValue())) {
-                assertEquals(true, type.isInteresting());
+                assertTrue(type.isInteresting());
             } else {
-                assertEquals(false, type.isInteresting());
+                assertFalse(type.isInteresting());
             }
         }
     }

@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Set;
@@ -709,7 +710,7 @@ public enum GerritTriggerParameters {
          * @throws UnsupportedEncodingException if so
          */
         public static String encodeBase64(String original) throws UnsupportedEncodingException {
-            return Base64.getEncoder().encodeToString(original.getBytes("UTF-8"));
+            return Base64.getEncoder().encodeToString(original.getBytes(StandardCharsets.UTF_8));
         }
 
         private final Localizable displayName;

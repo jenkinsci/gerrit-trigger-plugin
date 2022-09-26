@@ -118,9 +118,7 @@ public final class GerritProjectList {
         GerritProjectList inst = getInstance();
         String key = inst.createKeyString(project);
         if (key != null) {
-            if (inst.projectList.get(key) == null) {
-                inst.projectList.put(key, new ArrayList<GerritTrigger>());
-            }
+            inst.projectList.computeIfAbsent(key, unused -> new ArrayList<GerritTrigger>());
             inst.projectList.get(key).add(trigger);
         }
     }

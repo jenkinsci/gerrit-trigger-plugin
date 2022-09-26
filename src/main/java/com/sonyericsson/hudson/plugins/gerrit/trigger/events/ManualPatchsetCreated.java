@@ -127,22 +127,12 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
 
     @Override
     public synchronized void fireTriggerScanStarting() {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.triggerScanStarting(event);
-            }
-        });
+        fireEvent(GerritEventLifecycleListener::triggerScanStarting);
     }
 
     @Override
     public synchronized void fireTriggerScanDone() {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.triggerScanDone(event);
-            }
-        });
+        fireEvent(GerritEventLifecycleListener::triggerScanDone);
     }
 
     @Override
@@ -177,12 +167,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
 
     @Override
     public synchronized void fireAllBuildsCompleted() {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.allBuildsCompleted(event);
-            }
-        });
+        fireEvent(GerritEventLifecycleListener::allBuildsCompleted);
     }
     /**
      * Fires an event with the help of a visitor.

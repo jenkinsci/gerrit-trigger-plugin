@@ -456,7 +456,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                         charset = Charset.defaultCharset();
                     }
                     InputStream bodyStream = entity.getContent();
-                    String body = IOUtils.toString(bodyStream, charset.name());
+                    String body = IOUtils.toString(bodyStream, charset);
                     logger.debug(body);
                     return body;
                 }
