@@ -31,15 +31,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.Result;
 
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.modules.junit4.PowerMockRunnerDelegate;
+import org.mockito.MockedStatic;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -47,6 +45,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mocks tests.
@@ -57,12 +56,11 @@ import static org.mockito.Mockito.when;
  * and {@link ParameterExpander#getVerifiedValue(hudson.model.Result, GerritTrigger)}
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PowerMockRunnerDelegate(Parameterized.class)
-@PrepareForTest(Jenkins.class)
+@RunWith(Parameterized.class)
 public class ParameterExpanderParameterizedTest {
 
-    private TestParameters parameters;
+    private final TestParameters parameters;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Constructor.
@@ -77,9 +75,14 @@ public class ParameterExpanderParameterizedTest {
      */
     @Before
     public void setup() {
-        PowerMockito.mockStatic(Jenkins.class);
-        Jenkins jenkins = PowerMockito.mock(Jenkins.class);
-        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        Jenkins jenkins = mock(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
+    }
+
+    @After
+    public void tearDown() {
+        jenkinsMockedStatic.close();
     }
 
     /**

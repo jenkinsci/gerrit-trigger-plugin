@@ -27,9 +27,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,12 +55,9 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 
 import jenkins.model.TransientActionFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -78,13 +76,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManual
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import org.mockito.MockedStatic;
 
 /**
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher}.
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Jenkins.class)
 public class ReplicationQueueTaskDispatcherTest {
 
     private ReplicationQueueTaskDispatcher dispatcher;
@@ -95,6 +92,7 @@ public class ReplicationQueueTaskDispatcherTest {
 
     private static final int HOURSBEFORECHANGEMERGEDFORPATCHSET = -8;
     private static final int HOURBEFOREREPLICATIONCACHECREATED = -1;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Create ReplicationQueueTaskDispatcher with a mocked GerritHandler.
@@ -112,8 +110,13 @@ public class ReplicationQueueTaskDispatcherTest {
         Iterator<TransientActionFactory> iterator = emptyList.iterator();
         when(list.iterator()).thenReturn(iterator);
         when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
-        PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.get()).thenReturn(jenkinsMock);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
     }
 
     /**

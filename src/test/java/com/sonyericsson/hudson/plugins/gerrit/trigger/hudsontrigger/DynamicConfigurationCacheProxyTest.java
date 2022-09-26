@@ -1,32 +1,31 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link DynamicConfigurationCacheProxy}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ GerritDynamicUrlProcessor.class, GerritTriggerTimer.class })
 public class DynamicConfigurationCacheProxyTest {
 
-    private static final long FORCE_REFRESH_INTERVAL = -1000L;
+    private static final long REFRESH_INTERVAL_N = -1000L;
+    private static final int REFRESH_INTERNAL_P = 1000;
+    private MockedStatic<GerritDynamicUrlProcessor> dynamicUrlProcessorMockedStatic;
+    private MockedStatic<GerritTriggerTimer> gerritTriggerTimerMockedStatic;
 
     /**
      * Cleans the cache and sets mocks before every test.
@@ -35,7 +34,14 @@ public class DynamicConfigurationCacheProxyTest {
     @Before
     public void setUp() throws Exception {
         DynamicConfigurationCacheProxy.getInstance().clear();
-        PowerMockito.mockStatic(GerritDynamicUrlProcessor.class);
+        dynamicUrlProcessorMockedStatic = mockStatic(GerritDynamicUrlProcessor.class);
+        gerritTriggerTimerMockedStatic = mockStatic(GerritTriggerTimer.class);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        dynamicUrlProcessorMockedStatic.close();
+        gerritTriggerTimerMockedStatic.close();
     }
 
     /**
@@ -43,9 +49,8 @@ public class DynamicConfigurationCacheProxyTest {
      * @param refreshInternal refresh interval for dynamic trigger
      */
     private void setRefreshInternal(long refreshInternal) {
-        PowerMockito.mockStatic(GerritTriggerTimer.class);
         GerritTriggerTimer timer = mock(GerritTriggerTimer.class);
-        when(GerritTriggerTimer.getInstance()).thenReturn(timer);
+        gerritTriggerTimerMockedStatic.when(GerritTriggerTimer::getInstance).thenReturn(timer);
         when(timer.calculateAverageDynamicConfigRefreshInterval()).thenReturn(refreshInternal);
     }
 
@@ -71,8 +76,10 @@ public class DynamicConfigurationCacheProxyTest {
     public void fetchDirectlyWithCache() throws Exception {
         List<GerritProject> gerritProjects1 = Collections.singletonList(mock(GerritProject.class));
         List<GerritProject> gerritProjects2 = Collections.singletonList(mock(GerritProject.class));
-        when(GerritDynamicUrlProcessor.fetch(anyString())).thenReturn(gerritProjects1).thenReturn(gerritProjects2);
-        setRefreshInternal(FORCE_REFRESH_INTERVAL);
+        dynamicUrlProcessorMockedStatic
+                .when(() -> GerritDynamicUrlProcessor.fetch(anyString())).thenReturn(gerritProjects1)
+                .thenReturn(gerritProjects2);
+        setRefreshInternal(REFRESH_INTERVAL_N);
 
         List<GerritProject> res1 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
         List<GerritProject> res2 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
@@ -80,7 +87,7 @@ public class DynamicConfigurationCacheProxyTest {
         assertNotEquals(res1, res2);
         assertEquals(gerritProjects1, res1);
         assertEquals(gerritProjects2, res2);
-        verifyStatic(times(2));
+        dynamicUrlProcessorMockedStatic.verify(() -> GerritDynamicUrlProcessor.fetch(anyString()), times(2));
     }
 
     /**
@@ -89,11 +96,12 @@ public class DynamicConfigurationCacheProxyTest {
      */
     @Test
     public void fetchThroughCache() throws Exception {
-        PowerMockito.mockStatic(GerritDynamicUrlProcessor.class);
         List<GerritProject> gerritProjects1 = Collections.singletonList(mock(GerritProject.class));
         List<GerritProject> gerritProjects2 = Collections.singletonList(mock(GerritProject.class));
-        when(GerritDynamicUrlProcessor.fetch(anyString())).thenReturn(gerritProjects1).thenReturn(gerritProjects2);
-
+        dynamicUrlProcessorMockedStatic
+                .when(() -> GerritDynamicUrlProcessor.fetch(anyString()))
+                .thenReturn(gerritProjects1, gerritProjects2);
+        setRefreshInternal(REFRESH_INTERNAL_P);
         List<GerritProject> res1 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
         List<GerritProject> res2 = DynamicConfigurationCacheProxy.getInstance().fetchThroughCache("someUrl");
 
@@ -101,6 +109,7 @@ public class DynamicConfigurationCacheProxyTest {
         assertEquals(gerritProjects1, res2);
         assertNotEquals(gerritProjects2, res2);
 
-        verifyStatic();
+        dynamicUrlProcessorMockedStatic
+                .verify(() -> GerritDynamicUrlProcessor.fetch(anyString()), times(1));
     }
 }

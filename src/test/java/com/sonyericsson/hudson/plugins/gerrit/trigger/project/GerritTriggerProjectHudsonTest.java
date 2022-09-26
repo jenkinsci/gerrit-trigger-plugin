@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -76,21 +76,15 @@ public class GerritTriggerProjectHudsonTest {
         server.start();
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "myGerritProject");
-        WebClient wc = j.createWebClient();
-        HtmlPage page = wc.goTo("job/myGerritProject/configure");
-        List<HtmlElement> elements = page.getDocumentElement().getElementsByAttribute("td", "class", "setting-name");
-        HtmlElement tr = null;
-        for (HtmlElement element : elements) {
-            if ("Verdict Category".equals(element.getTextContent())) {
-                tr = element.getEnclosingElement("tr");
-                break;
-            }
+
+        try (WebClient wc = j.createWebClient()) {
+            HtmlPage page = wc.getPage(project, "configure");
+            final List<HtmlElement> elements = page.getDocumentElement()
+                    .getElementsByAttribute("select", "name", "_.verdictCategory");
+            assertThat(elements, hasSize(1));
+            List<String> expected = Arrays.asList("Verified", "Code-Review");
+            verifyOptions((HtmlSelect)elements.get(0), expected);
         }
-        assertNotNull(tr);
-        HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
-        HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
-        List<String> expected = Arrays.asList("Verified", "Code-Review");
-        verifyOptions(select, expected);
     }
 
     /**
@@ -110,27 +104,20 @@ public class GerritTriggerProjectHudsonTest {
         GerritServer server2 = new GerritServer("testServer2");
         servers.add(server2);
         server2.start();
-        server2.getConfig().getCategories().add(new VerdictCategory("Code-Review2", "Code Review For Gerrit 2.6+"));
-        server2.getConfig().getCategories().add(new VerdictCategory("Verified2", "Verified For Gerrit 2.6+"));
+        final List<VerdictCategory> categories = server2.getConfig().getCategories();
+        categories.add(new VerdictCategory("Code-Review2", "Code Review For Gerrit 2.6+"));
+        categories.add(new VerdictCategory("Verified2", "Verified For Gerrit 2.6+"));
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "myGerritProject",
                 GerritServer.ANY_SERVER);
-        WebClient wc = j.createWebClient();
-        HtmlPage page = wc.goTo("job/myGerritProject/configure");
-        List<HtmlElement> elements = page.getDocumentElement().getElementsByAttribute("td", "class", "setting-name");
-        HtmlElement tr = null;
-        for (HtmlElement element : elements) {
-            if ("Verdict Category".equals(element.getTextContent())) {
-                tr = element.getEnclosingElement("tr");
-                break;
-            }
+        try (WebClient wc = j.createWebClient()) {
+            HtmlPage page = wc.getPage(project, "configure");
+            final List<HtmlElement> elements = page.getDocumentElement()
+                    .getElementsByAttribute("select", "name", "_.verdictCategory");
+            assertThat(elements, hasSize(1));
+            List<String> expected = Arrays.asList("Verified", "Code-Review", "Code-Review2", "Verified2");
+            verifyOptions((HtmlSelect)elements.get(0), expected);
         }
-        assertNotNull(tr);
-        HtmlElement settingsMainElement = tr.getOneHtmlElementByAttribute("td", "class", "setting-main");
-        HtmlSelect select = (HtmlSelect)settingsMainElement.getChildElements().iterator().next();
-
-        List<String> expected = Arrays.asList("Verified", "Code-Review", "Code-Review2", "Verified2");
-        verifyOptions(select, expected);
     }
 
     /**

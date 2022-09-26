@@ -41,35 +41,27 @@ import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.io.IOException;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
 
 /**
  * Scenario tests.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        Jenkins.class,
-        GerritMessageProvider.class,
-        AbstractProject.class,
-        GerritTriggeredBuildListener.class })
 public class SpecGerritVerifiedSetterTest {
 
     private TaskListener taskListener;
@@ -79,6 +71,9 @@ public class SpecGerritVerifiedSetterTest {
     private AbstractProject project;
     private GerritTrigger trigger;
     private Jenkins jenkins;
+    private MockedStatic<GerritMessageProvider> messageProviderMockedStatic;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<GerritTriggeredBuildListener> triggeredBuildListenerMockedStatic;
 
     /**
      * Prepare all the mocks.
@@ -87,8 +82,8 @@ public class SpecGerritVerifiedSetterTest {
      */
     @Before
     public void setUp() throws Exception {
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        when(GerritMessageProvider.all()).thenReturn(null);
+        messageProviderMockedStatic = mockStatic(GerritMessageProvider.class);
+        messageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(null);
 
         taskListener = mock(TaskListener.class);
 
@@ -112,15 +107,23 @@ public class SpecGerritVerifiedSetterTest {
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
         Setup.setTrigger(trigger, project);
 
-        mockStatic(Jenkins.class);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
-        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         when(jenkins.getItemByFullName(eq("MockProject"), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq("MockProject"), same(Job.class))).thenReturn(project);
         when(jenkins.getRootUrl()).thenReturn("http://localhost/");
 
-        mockStatic(GerritTriggeredBuildListener.class);
-        when(GerritTriggeredBuildListener.all()).thenReturn(mock(ExtensionList.class));
+        triggeredBuildListenerMockedStatic = mockStatic(GerritTriggeredBuildListener.class);
+        triggeredBuildListenerMockedStatic.when(GerritTriggeredBuildListener::all).thenReturn(mock(ExtensionList.class));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        messageProviderMockedStatic.close();
+        jenkinsMockedStatic.close();
+        triggeredBuildListenerMockedStatic.close();
+
     }
 
     /**

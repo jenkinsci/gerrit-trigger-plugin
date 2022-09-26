@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.PrintToLogBuilder;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -52,6 +53,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -82,9 +84,15 @@ public class SpecGerritTriggerHudsonTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    // CS IGNORE VisibilityModifier FOR NEXT 9 LINES. REASON: JenkinsRule.
     @Rule
     public final JenkinsRule j = new JenkinsRule();
+
+    /**
+     * Outputs build logs to std out.
+     */
+    @Rule
+    public final BuildWatcher watcher = new BuildWatcher();
 
     //TODO Fix the SshdServerMock so that asserts can be done on review commands.
 
@@ -749,14 +757,16 @@ public class SpecGerritTriggerHudsonTest {
     public void testTriggerScopedAbortLatestPatchsetOnly() throws Exception {
         Random rand = new Random();
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
-        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+        cancelProject.getBuildersList().add(new PrintToLogBuilder("Cancel project building."));
+        cancelProject.getBuildersList().add(new SleepBuilder(10000));
 
         FreeStyleProject ignoreProject = new TestUtils.JobBuilder(j).name("ignore-project" + rand.nextInt()).build();
+        ignoreProject.getBuildersList().add(new PrintToLogBuilder("Ignore project building."));
         ignoreProject.getBuildersList().add(new SleepBuilder(3000));
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
         trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+        //serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
         firstEvent.getChange().setTopic("abc");
@@ -908,6 +918,7 @@ public class SpecGerritTriggerHudsonTest {
         long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime <= timeoutMs) {
             GerritTrigger trigger = project.getTrigger(GerritTrigger.class);
+            assertNotNull(trigger);
             List<GerritProject> dynamicGerritProjects = trigger.getDynamicGerritProjects();
             if (dynamicGerritProjects != null && !dynamicGerritProjects.isEmpty()) {
                 return;

@@ -23,15 +23,17 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,7 +47,6 @@ import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.CauseAction;
 import hudson.model.Item;
-import hudson.model.ItemGroup;
 import hudson.model.Queue;
 import hudson.model.Queue.WaitingItem;
 import hudson.model.Result;
@@ -66,14 +67,11 @@ import hudson.triggers.TriggerDescriptor;
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.internal.matchers.InstanceOf;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
@@ -90,8 +88,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher}.
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, ToGerritRunListener.class, WaitingItem.class })
 public class DependencyQueueTaskDispatcherTest {
 
     private DependencyQueueTaskDispatcher dispatcher;
@@ -103,6 +99,8 @@ public class DependencyQueueTaskDispatcherTest {
     private AbstractProject<?, ?> abstractProjectDependencyMock;
     private Jenkins jenkinsMock;
     private ToGerritRunListener toGerritRunListenerMock;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<ToGerritRunListener> runListenerMockedStatic;
 
     /**
      * Create DependencyQueueTaskDispatcher with a mocked GerritHandler.
@@ -112,7 +110,7 @@ public class DependencyQueueTaskDispatcherTest {
         gerritHandlerMock = mock(GerritHandler.class);
         dispatcher = new DependencyQueueTaskDispatcher(gerritHandlerMock);
         gerritTriggerMock = mock(GerritTrigger.class);
-        triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+        triggers = new HashMap<>();
         triggers.put(new GerritTriggerDescriptor(), gerritTriggerMock);
         queueMock = mock(Queue.class);
         jenkinsMock = mock(Jenkins.class);
@@ -122,11 +120,17 @@ public class DependencyQueueTaskDispatcherTest {
         Iterator<TransientActionFactory> iterator = emptyList.iterator();
         when(list.iterator()).thenReturn(iterator);
         when(jenkinsMock.getExtensionList(same(TransientActionFactory.class))).thenReturn(list);
-        PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.get()).thenReturn(jenkinsMock);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
         toGerritRunListenerMock = mock(ToGerritRunListener.class);
-        PowerMockito.mockStatic(ToGerritRunListener.class);
-        when(ToGerritRunListener.getInstance()).thenReturn(toGerritRunListenerMock);
+        runListenerMockedStatic = mockStatic(ToGerritRunListener.class);
+        runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(toGerritRunListenerMock);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
+        runListenerMockedStatic.close();
     }
 
     /**
@@ -254,7 +258,7 @@ public class DependencyQueueTaskDispatcherTest {
 
         CauseOfBlockage cause = dispatcher.canRun(item);
         assertNotNull("Build should be blocked", cause);
-        assertThat(cause, new InstanceOf(BecauseWaitingForOtherProjectsToTrigger.class));
+        assertThat(cause, instanceOf(BecauseWaitingForOtherProjectsToTrigger.class));
     }
 
     /**
@@ -310,7 +314,7 @@ public class DependencyQueueTaskDispatcherTest {
         EnvVars envVars = Mockito.mock(EnvVars.class);
         when(envVars.put(anyString(), anyString())).thenReturn("");
 
-        doReturn(runs).when(toGerritRunListenerMock).getRuns(patchsetCreated);
+        doReturn(runs).when(toGerritRunListenerMock).getRuns(same(patchsetCreated));
         dispatcher.canRun(item);
 
         GerritDependencyAction dependencyAction = item.getAction(GerritDependencyAction.class);
@@ -400,14 +404,16 @@ public class DependencyQueueTaskDispatcherTest {
         abstractProjectDependencyMock = mock(AbstractProject.class);
         when(abstractProjectDependencyMock.getTrigger(GerritTrigger.class)).thenReturn(gerritTriggerMock);
         when(gerritTriggerMock.getDependencyJobsNames()).thenReturn(dependency);
-        when(jenkinsMock.getItem(eq(dependency), any(Item.class), Item.class)).thenReturn(abstractProjectDependencyMock);
+        when(jenkinsMock.getItem(eq(dependency), any(Item.class), same(Item.class)))
+                .thenReturn(abstractProjectDependencyMock);
 
-        ItemGroup abstractProjectDependencyMockParent = mock(ItemGroup.class);
-        when(abstractProjectDependencyMockParent.getFullName()).thenReturn("");
-        when(abstractProjectDependencyMock.getParent()).thenReturn(abstractProjectDependencyMockParent);
+        //ItemGroup abstractProjectDependencyMockParent = mock(ItemGroup.class);
+        //doReturn("").when(abstractProjectDependencyMockParent).getFullName();
+        doReturn(jenkinsMock).when(abstractProjectDependencyMock).getParent();
         when(abstractProjectDependencyMock.getName()).thenReturn(dependency);
+        when(abstractProjectDependencyMock.getFullName()).thenReturn(dependency);
 
-        WaitingItem waitingItem = PowerMockito.spy(new WaitingItem(Calendar.getInstance(),
+        WaitingItem waitingItem = spy(new WaitingItem(Calendar.getInstance(),
                 abstractProjectMock, actions));
         when(waitingItem.getInQueueSince()).thenReturn(System.currentTimeMillis()
                 - TimeUnit.SECONDS.toMillis(GerritDefaultValues.DEFAULT_BUILD_SCHEDULE_DELAY));

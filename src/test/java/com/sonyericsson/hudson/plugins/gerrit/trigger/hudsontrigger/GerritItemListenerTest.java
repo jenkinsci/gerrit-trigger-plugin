@@ -37,14 +37,10 @@ import hudson.model.Run;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.mockito.Mockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
@@ -54,18 +50,15 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 
 /**
  * Tests for {@link GerritItemListener}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PluginImpl.class)
-@PowerMockIgnore({"javax.crypto.*" })
 public class GerritItemListenerTest {
 
     /**
@@ -204,7 +197,7 @@ public class GerritItemListenerTest {
     public static GerritTrigger addTriggerToJob(AbstractProject<?, ?> job) throws Exception {
         GerritTrigger trigger = spy(new GerritTrigger(null));
 
-        doReturn(DUMMY_DESCRIPTOR).when(trigger, "getDescriptor");
+        doReturn(DUMMY_DESCRIPTOR).when(trigger).getDescriptor();
         job.addTrigger(trigger);
 
         trigger.start(job, true);

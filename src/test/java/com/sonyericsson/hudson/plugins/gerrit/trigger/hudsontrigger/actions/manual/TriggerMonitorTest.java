@@ -29,10 +29,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,8 +42,6 @@ import static org.mockito.Mockito.when;
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.TriggerMonitor}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(AbstractProject.class)
 public class TriggerMonitorTest {
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
@@ -178,7 +172,7 @@ public class TriggerMonitorTest {
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         doReturn("projectX").when(project).getFullName();
         monitor.projectTriggered(patch, project);
 
@@ -199,10 +193,11 @@ public class TriggerMonitorTest {
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         doReturn("projectX").when(project).getFullName();
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         monitor.projectTriggered(patch, project);
         monitor.buildStarted(patch, build);
 
@@ -224,10 +219,11 @@ public class TriggerMonitorTest {
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         doReturn("projectX").when(project).getFullName();
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         monitor.projectTriggered(patch, project);
         monitor.buildStarted(patch, build);
         monitor.buildCompleted(patch, build);
@@ -248,10 +244,11 @@ public class TriggerMonitorTest {
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
         monitor.triggerScanStarting(patch);
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         doReturn("projectX").when(project).getFullName();
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         monitor.projectTriggered(patch, project);
         monitor.triggerScanDone(patch);
         monitor.buildStarted(patch, build);

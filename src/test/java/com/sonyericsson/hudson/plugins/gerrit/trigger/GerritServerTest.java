@@ -27,33 +27,28 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.MockedStatic;
 
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.eq;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for {@link GerritServer}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(PluginImpl.class)
-@PowerMockIgnore({"javax.crypto.*" })
 public class GerritServerTest {
 
     /**
@@ -66,6 +61,7 @@ public class GerritServerTest {
     private final String gerritServerOneName = "testServer1";
     private GerritServer gerritServerOne;
     private GerritConnectionListener listener;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
 
     /**
      * Setup the mock'ed environment.
@@ -73,14 +69,19 @@ public class GerritServerTest {
     @Before
     public void setup() {
         PluginImpl plugin = mock(PluginImpl.class);
-        mockStatic(PluginImpl.class);
-        when(PluginImpl.getInstance()).thenReturn(plugin);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
         gerritServerOne = new GerritServer(gerritServerOneName);
         listener = new GerritConnectionListener(gerritServerOne.getName());
         listener.setConnected(true);
         Whitebox.setInternalState(gerritServerOne, "gerritConnectionListener", listener);
         gerritServerOne = spy(gerritServerOne);
         when(plugin.getServer(eq(gerritServerOneName))).thenReturn(gerritServerOne);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        pluginMockedStatic.close();
     }
 
     /**

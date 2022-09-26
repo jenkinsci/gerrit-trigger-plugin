@@ -29,35 +29,33 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 
 /**
  * Tests {@link BuildMemory.MemoryImprint}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, AbstractProject.class })
 public class MemoryImprintTest {
 
     private static int nameCount = 0;
     private AbstractProject project;
     private AbstractBuild build;
     private Jenkins jenkins;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Setup the mocks, specifically {@link #jenkins}.
@@ -67,9 +65,14 @@ public class MemoryImprintTest {
     @Before
     public void fullSetup() {
         jenkins = mock(Jenkins.class);
-        mockStatic(Jenkins.class);
-        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         setup();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
     }
 
     /**
