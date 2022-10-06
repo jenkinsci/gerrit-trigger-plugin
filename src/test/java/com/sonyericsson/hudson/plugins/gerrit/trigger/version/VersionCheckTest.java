@@ -27,40 +27,43 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.eq;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the version checking of Gerrit.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ PluginImpl.class })
 public class VersionCheckTest {
 
     private final String testServer = "server";
     private GerritServer server;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
 
     /**
      * Pre setup for all tests.
      */
     @Before
     public void setup() {
-        mockStatic(PluginImpl.class);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
         PluginImpl plugin = mock(PluginImpl.class);
         server = mock(GerritServer.class);
-        when(PluginImpl.getInstance()).thenReturn(plugin);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
         when(plugin.getServer(testServer)).thenReturn(server);
-        when(PluginImpl.getServer_(eq(testServer))).thenReturn(server);
+        pluginMockedStatic.when(() -> PluginImpl.getServer_(eq(testServer))).thenReturn(server);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        pluginMockedStatic.close();
     }
 
     /**

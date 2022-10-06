@@ -586,7 +586,15 @@ public class PluginImpl extends GlobalConfiguration {
             s.start();
         }
         active = true;
+    }
 
+    /**
+     * Forces initialization of the Dispatchers.
+     *
+     * They need to register and listen to GerritEvents. Normally, it is lazy loaded when the first build is started.
+     */
+    @Initializer(after = InitMilestone.SYSTEM_CONFIG_ADAPTED)
+    public static void initializeDispatchers() {
         // Call the following method for force initialization of the Dispatchers because
         // it needs to register and listen to GerritEvent. Normally, it is lazy loaded when the first build is started.
         try {

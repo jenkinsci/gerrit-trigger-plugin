@@ -59,7 +59,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 import hudson.EnvVars;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Cause;
 import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
@@ -74,7 +73,6 @@ import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.junit.Assert;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -83,9 +81,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
@@ -707,7 +706,7 @@ public final class Setup {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.FAILURE);
 
@@ -764,11 +763,11 @@ public final class Setup {
      * @param trigger The trigger.
      * @param project The project.
      */
-    public static void setTrigger(GerritTrigger trigger, AbstractProject project) {
-        when(project.getTrigger(GerritTrigger.class)).thenReturn(trigger);
-        HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<TriggerDescriptor, Trigger<?>>();
+    public static void setTrigger(GerritTrigger trigger, AbstractProject<?, ?> project) {
+        when(project.getTrigger(same(GerritTrigger.class))).thenReturn(trigger);
+        HashMap<TriggerDescriptor, Trigger<?>> triggers = new HashMap<>();
         triggers.put(new GerritTriggerDescriptor(), trigger);
-        PowerMockito.when(project.getTriggers()).thenReturn(triggers);
+        when(project.getTriggers()).thenReturn(triggers);
     }
 
     /**
@@ -845,6 +844,7 @@ public final class Setup {
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getUrl()).thenReturn("test/");
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         when(build.getEnvironment(taskListener)).thenReturn(env);
         return build;
     }

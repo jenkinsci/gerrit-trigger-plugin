@@ -42,7 +42,7 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -182,7 +182,7 @@ public final class GerritDynamicUrlProcessor {
         char operChar = oper.charAt(0);
         CompareType type = CompareType.findByOperator(operChar);
 
-        logger.trace("==> item:({}) oper:({}) text:({})", new Object[]{item, oper, text});
+        logger.trace("==> item:({}) oper:({}) text:({})", item, oper, text);
 
         if (SHORTNAME_PROJECT.equals(item)) { // Project
           // stash previous project to the list
@@ -260,22 +260,10 @@ public final class GerritDynamicUrlProcessor {
         connection.setReadTimeout(SOCKET_READ_TIMEOUT);
         connection.setDoInput(true);
 
-        InputStream instream = null;
-        BufferedReader reader = null;
-        try {
-          instream = connection.getInputStream();
-          reader = new BufferedReader(new InputStreamReader(instream, Charset.forName("UTF-8")));
+        try (InputStream instream = connection.getInputStream();
+            BufferedReader reader =
+                new BufferedReader(new InputStreamReader(instream, StandardCharsets.UTF_8))) {
           return readAndParseTriggerConfig(reader);
-        } finally {
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-            } finally {
-                if (instream != null) {
-                    instream.close();
-                }
-            }
         }
     }
 }

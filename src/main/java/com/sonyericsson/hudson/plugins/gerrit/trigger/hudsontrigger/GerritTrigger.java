@@ -142,7 +142,7 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildAbortedVerifiedValue;
     private Integer gerritBuildAbortedCodeReviewValue;
     private boolean silentMode;
-    private boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;;
+    private boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
@@ -932,7 +932,7 @@ public class GerritTrigger extends Trigger<Job> {
 
         if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
             if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic(),
-                    change.getFiles(gerritQueryHandler))) {
+                    () -> change.getFiles(gerritQueryHandler))) {
                 shouldTrigger = true;
             }
         } else {

@@ -28,21 +28,18 @@ import java.util.Map;
 
 import static org.junit.Assert.fail;
 
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.doThrow;
 
 import com.rabbitmq.client.impl.LongStringHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.GerritTriggerApi;
@@ -57,8 +54,6 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
  *
  * @author rinrinne a.k.a. rin_ne (rinrin.ne@gmail.com)
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(GerritTriggerApi.class)
 public class RabbitMQMessageListenerImplTest {
 
     GerritTriggerApi apiMock = mock(GerritTriggerApi.class);

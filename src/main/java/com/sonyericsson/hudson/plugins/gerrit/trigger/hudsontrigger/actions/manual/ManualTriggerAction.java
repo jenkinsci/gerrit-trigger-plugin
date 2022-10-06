@@ -111,7 +111,7 @@ public class ManualTriggerAction implements RootAction {
 
     @Override
     public String getUrlName() {
-        return "/gerrit_manual_trigger";
+        return "gerrit_manual_trigger";
     }
 
     /**
@@ -464,7 +464,8 @@ public class ManualTriggerAction implements RootAction {
      * @return an indexed map where the rowId is the key.
      * @see #generateTheId(net.sf.json.JSONObject, net.sf.json.JSONObject)
      */
-    private HashMap<String, JSONObject> indexResult(List<JSONObject> result) {
+    @Restricted(NoExternalUse.class)
+    HashMap<String, JSONObject> indexResult(List<JSONObject> result) {
         HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
         for (JSONObject res : result) {
             if (!res.has("type")) {

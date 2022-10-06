@@ -3,6 +3,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.JenkinsAwareGerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
@@ -13,29 +14,25 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.when;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
 /**
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, EventListener.class, AbstractProject.class, PluginImpl.class })
 public class EventListenerTest {
 
     private EventListener listener;
@@ -43,6 +40,9 @@ public class EventListenerTest {
     private GerritTrigger trigger;
     private Jenkins jenkins;
     private JenkinsAwareGerritHandler handler;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
+    private MockedStatic<ToGerritRunListener> gerritRunListenerMockedStatic;
 
     /**
      * Setup all the mocks.
@@ -57,8 +57,8 @@ public class EventListenerTest {
         doNothing().when(listener).schedule(same(trigger), any(GerritCause.class), any(GerritTriggeredEvent.class));
 
         jenkins = mock(Jenkins.class);
-        mockStatic(Jenkins.class);
-        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         when(jenkins.getItemByFullName("MockProject", AbstractProject.class)).thenReturn(project);
         when(jenkins.getItemByFullName("MockProject", Job.class)).thenReturn(project);
         Setup.setTrigger(trigger, project);
@@ -66,10 +66,20 @@ public class EventListenerTest {
         handler = new JenkinsAwareGerritHandler(1);
         handler.addListener(listener);
 
-        PowerMockito.mockStatic(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(null);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(null);
+
+        ToGerritRunListener gerritRunListener = mock(ToGerritRunListener.class);
+        gerritRunListenerMockedStatic = mockStatic(ToGerritRunListener.class);
+        gerritRunListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(gerritRunListener);
     }
 
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
+        pluginMockedStatic.close();
+        gerritRunListenerMockedStatic.close();
+    }
 
     /**
      * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}

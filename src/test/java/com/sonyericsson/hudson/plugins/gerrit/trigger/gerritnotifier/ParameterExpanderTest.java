@@ -52,19 +52,19 @@ import jenkins.model.Jenkins;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 //CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: Mocks tests.
@@ -74,21 +74,25 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, GerritMessageProvider.class })
 public class ParameterExpanderTest {
 
     private Jenkins jenkins;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Mock Jenkins.
      */
     @Before
     public void setup() {
-        PowerMockito.mockStatic(Jenkins.class);
-        jenkins = PowerMockito.mock(Jenkins.class);
-        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkins = mock(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
         when(jenkins.getRootUrl()).thenReturn("http://localhost/");
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
     }
 
     /**
@@ -114,32 +118,33 @@ public class ParameterExpanderTest {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
 
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
-        messageProviderExtensionList.add(new GerritMessageProviderExtension());
-        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
-        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+        try (MockedStatic<GerritMessageProvider> messageProviderMockedStatic = mockStatic(GerritMessageProvider.class)) {
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            messageProviderExtensionList.add(new GerritMessageProviderExtension());
+            messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+            messageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, jenkins);
+            ParameterExpander instance = new ParameterExpander(config, jenkins);
 
-        final String expectedRefSpec = StringUtil.makeRefSpec(event);
+            final String expectedRefSpec = StringUtil.makeRefSpec(event);
 
-        String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
-        System.out.println("result: " + result);
-        assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
-                result.indexOf("START_MESSAGE_VAL") >= 0);
-        assertTrue("Missing CHANGE_ID", result.indexOf("CHANGE_ID=Iddaaddaa123456789") >= 0);
-        assertTrue("Missing PATCHSET", result.indexOf("PATCHSET=1") >= 0);
-        assertTrue("Missing VERIFIED", result.indexOf("VERIFIED=1") >= 0);
-        assertTrue("Missing CODEREVIEW", result.indexOf("CODEREVIEW=32") >= 0);
-        assertTrue("Missing NOTIFICATION_LEVEL", result.indexOf("NOTIFICATION_LEVEL=ALL") >= 0);
-        assertTrue("Missing REFSPEC", result.indexOf("REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_BRANCH", result.indexOf("ENV_BRANCH=branch") >= 0);
-        assertTrue("Missing ENV_CHANGE", result.indexOf("ENV_CHANGE=1000") >= 0);
-        assertTrue("Missing ENV_REFSPEC", result.indexOf("ENV_REFSPEC=" + expectedRefSpec) >= 0);
-        assertTrue("Missing ENV_CHANGEURL", result.indexOf("ENV_CHANGEURL=http://gerrit/1000") >= 0);
-        assertTrue("Missing CUSTOM_MESSAGE", result.indexOf("CUSTOM_MESSAGE_BUILD_STARTED") >= 0);
-        assertTrue("Newlines are stripped", result.indexOf("Message\nwith newline") >= 0);
+            String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
+            System.out.println("result: " + result);
+            assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
+                    result.contains("START_MESSAGE_VAL"));
+            assertTrue("Missing CHANGE_ID", result.contains("CHANGE_ID=Iddaaddaa123456789"));
+            assertTrue("Missing PATCHSET", result.contains("PATCHSET=1"));
+            assertTrue("Missing VERIFIED", result.contains("VERIFIED=1"));
+            assertTrue("Missing CODEREVIEW", result.contains("CODEREVIEW=32"));
+            assertTrue("Missing NOTIFICATION_LEVEL", result.contains("NOTIFICATION_LEVEL=ALL"));
+            assertTrue("Missing REFSPEC", result.contains("REFSPEC=" + expectedRefSpec));
+            assertTrue("Missing ENV_BRANCH", result.contains("ENV_BRANCH=branch"));
+            assertTrue("Missing ENV_CHANGE", result.contains("ENV_CHANGE=1000"));
+            assertTrue("Missing ENV_REFSPEC", result.contains("ENV_REFSPEC=" + expectedRefSpec));
+            assertTrue("Missing ENV_CHANGEURL", result.contains("ENV_CHANGEURL=http://gerrit/1000"));
+            assertTrue("Missing CUSTOM_MESSAGE", result.contains("CUSTOM_MESSAGE_BUILD_STARTED"));
+            assertTrue("Newlines are stripped", result.contains("Message\nwith newline"));
+        }
     }
 
     /**
@@ -278,7 +283,7 @@ public class ParameterExpanderTest {
         when(memoryImprint.getEntries()).thenReturn(entries);
 
         Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
-        assertEquals(null, result);
+        assertNull(result);
     }
 
     /**
@@ -619,36 +624,38 @@ public class ParameterExpanderTest {
         assertThat("Event should be a ChangeBasedEvent", event, instanceOf(ChangeBasedEvent.class));
         final String expectedRefSpec = StringUtil.makeRefSpec((ChangeBasedEvent)event);
 
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
-        messageProviderExtensionList.add(new GerritMessageProviderExtension());
-        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
-        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+        try (MockedStatic<GerritMessageProvider> mockedStatic = mockStatic(GerritMessageProvider.class)) {
 
-        ParameterExpander instance = new ParameterExpander(config, jenkins);
-        ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            messageProviderExtensionList.add(new GerritMessageProviderExtension());
+            messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+            mockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
-        System.out.println("Result: " + result);
+            ParameterExpander instance = new ParameterExpander(config, jenkins);
+            ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
-        String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
+            String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
+            System.out.println("Result: " + result);
 
-        assertThat("Missing MSG", result, containsString("MSG='" + message + "'"));
-        assertThat("Missing CHANGE_ID", result, containsString("CHANGE_ID=Iddaaddaa123456789"));
-        assertThat("Missing PATCHSET", result, containsString("PATCHSET=1"));
-        assertThat("Missing NOTIFICATION_LEVEL", result,
-                containsString("NOTIFICATION_LEVEL=" + expectedNotificationLevel));
-        assertThat("Missing REFSPEC", result, containsString("REFSPEC=" + expectedRefSpec));
-        // In case we do not have any builds we must not check any it's environment variables.
-        if (memoryImprint.getEntries().length > 0 && memoryImprint.getEntries()[0].getBuild() != null) {
-            assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
-            assertThat("Missing ENV_CHANGE", result, containsString("ENV_CHANGE=1000"));
-            assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
-            assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
-            assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
+            String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
+
+            assertThat("Missing MSG", result, containsString("MSG='" + message + "'"));
+            assertThat("Missing CHANGE_ID", result, containsString("CHANGE_ID=Iddaaddaa123456789"));
+            assertThat("Missing PATCHSET", result, containsString("PATCHSET=1"));
+            assertThat("Missing NOTIFICATION_LEVEL", result,
+                    containsString("NOTIFICATION_LEVEL=" + expectedNotificationLevel));
+            assertThat("Missing REFSPEC", result, containsString("REFSPEC=" + expectedRefSpec));
+            // In case we do not have any builds we must not check any it's environment variables.
+            if (memoryImprint.getEntries().length > 0 && memoryImprint.getEntries()[0].getBuild() != null) {
+                assertThat("Missing ENV_BRANCH", result, containsString("ENV_BRANCH=branch"));
+                assertThat("Missing ENV_CHANGE", result, containsString("ENV_CHANGE=1000"));
+                assertThat("Missing ENV_REFSPEC", result, containsString("ENV_REFSPEC=" + expectedRefSpec));
+                assertThat("Missing ENV_CHANGEURL", result, containsString("ENV_CHANGEURL=http://gerrit/1000"));
+                assertThat("Missing CUSTOM_MESSAGES", result, containsString("CUSTOM_MESSAGE_BUILD_COMPLETED"));
+            }
+            assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
+            assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
         }
-        assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
-        assertThat("Missing CODEREVIEW", result, containsString("CODEREVIEW=" + expectedCodeReviewVote));
     }
 
 
@@ -708,21 +715,23 @@ public class ParameterExpanderTest {
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
-        messageProviderExtensionList.add(new GerritMessageProviderExtension());
-        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
-        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+        try (MockedStatic<GerritMessageProvider> gerritMessageProviderMockedStatic
+                     = mockStatic(GerritMessageProvider.class)) {
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            messageProviderExtensionList.add(new GerritMessageProviderExtension());
+            messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+            gerritMessageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, jenkins);
-        ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
+            ParameterExpander instance = new ParameterExpander(config, jenkins);
+            ParameterExpander instanceDefaultConfig = new ParameterExpander(defaultConfig, jenkins);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
-        System.out.println("Result: " + result);
+            String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
+            System.out.println("Result: " + result);
 
-        String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
+            String message = instanceDefaultConfig.getBuildCompletedMessage(memoryImprint, taskListener);
 
-        assertThat("Missing MSG", result, containsString(" MSG='" + message + "'"));
+            assertThat("Missing MSG", result, containsString(" MSG='" + message + "'"));
+        }
     }
 
     /**
@@ -764,18 +773,20 @@ public class ParameterExpanderTest {
 
         when(memoryImprint.getEntries()).thenReturn(entries);
 
-        PowerMockito.mockStatic(GerritMessageProvider.class);
-        List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
-        messageProviderExtensionList.add(new GerritMessageProviderExtension());
-        messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
-        when(GerritMessageProvider.all()).thenReturn(messageProviderExtensionList);
+        try (MockedStatic<GerritMessageProvider> gerritMessageProviderMockedStatic
+                     = mockStatic(GerritMessageProvider.class)) {
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            messageProviderExtensionList.add(new GerritMessageProviderExtension());
+            messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
+            gerritMessageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
 
-        ParameterExpander instance = new ParameterExpander(config, jenkins);
+            ParameterExpander instance = new ParameterExpander(config, jenkins);
 
-        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
-        System.out.println("Result: " + result);
+            String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
+            System.out.println("Result: " + result);
 
-        assertTrue("Missing Build has Failed", result.indexOf("This Build has Failed") >= 0);
+            assertTrue("Missing Build has Failed", result.contains("This Build has Failed"));
+        }
     }
 
     /**

@@ -56,7 +56,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
+import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertEquals;
@@ -284,7 +284,7 @@ public class WorkflowTest {
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws IOException {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
-        job.setDefinition(new CpsFlowDefinition(script));
+        job.setDefinition(new CpsFlowDefinition(script, true));
 
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
         trigger.setGerritProjects(Collections.singletonList(

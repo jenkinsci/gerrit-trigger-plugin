@@ -38,6 +38,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import hudson.model.FreeStyleProject;
@@ -50,7 +51,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
-import org.powermock.reflect.Whitebox;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
@@ -74,6 +74,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -211,7 +212,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      * Adds a new gerritProject configuration to the gived XML document.
      * Assumes that the document is structured like the original project config.xml in the LocalData for this class.
      *
-     * @param gerritProjectPattern the {@link GerritProject#pattern} to set.
+     * @param gerritProjectPattern the {@code GerritProject.pattern} to set.
      * @param document             the config.xml
      * @return the new xml
      * @throws Exception if so
@@ -244,11 +245,13 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     private void assertEventListenerWithSomeOtherProjectSet(String gerritProjectPattern) throws Exception {
         Collection<GerritEventListener> eventListeners = getGerritEventListeners();
         boolean found = false;
+        final Method getTrigger = EventListener.class.getMethod("getTrigger");
+        getTrigger.setAccessible(true);
         for (GerritEventListener listener : eventListeners) {
             if (listener.getClass().getName().equals(
                     "com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener")) {
                 found = true;
-                GerritTrigger trigger = Whitebox.invokeMethod(listener, "getTrigger");
+                GerritTrigger trigger = (GerritTrigger)getTrigger.invoke(listener);
                 assertNotNull("No Trigger for EventListener", trigger);
                 assertSame(Whitebox.getInternalState(trigger, "job"), j.jenkins.getItem("testProj"));
                 List<GerritProject> projectList = trigger.getGerritProjects();

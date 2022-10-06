@@ -122,7 +122,8 @@ public abstract class DuplicatesUtil {
                 false, false, false, null, null, null, null, null, null, null, null,
                 PluginImpl.DEFAULT_SERVER_NAME, null, list, true, filepath, null);
         p.addTrigger(trigger);
-        rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
+        trigger.start(p, true);
+        //rule.submit(rule.createWebClient().getPage(p, "configure").getFormByName("config"));
         return p;
     }
 

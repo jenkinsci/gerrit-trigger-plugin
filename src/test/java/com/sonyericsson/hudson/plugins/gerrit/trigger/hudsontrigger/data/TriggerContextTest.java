@@ -28,12 +28,8 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -50,8 +46,6 @@ import static org.mockito.Mockito.when;
  * Tests the TriggerContext's public methods.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(AbstractProject.class)
 public class TriggerContextTest {
 
     /**
@@ -60,7 +54,7 @@ public class TriggerContextTest {
      * @return a mock.
      */
     private AbstractProject mockProject(String fullName) {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn(fullName);
         return project;
     }
@@ -77,6 +71,7 @@ public class TriggerContextTest {
         AbstractProject project = mockProject(projectFullName);
         AbstractBuild build = mock(AbstractBuild.class);
         when(build.getProject()).thenReturn(project);
+        when(build.getParent()).thenReturn(project);
         when(build.getNumber()).thenReturn(buildNumber);
         return build;
     }
@@ -87,7 +82,7 @@ public class TriggerContextTest {
     @Test
     public void testGetOthers() {
         TriggerContext context = new TriggerContext(mockBuild("projectX", 1), null,
-                Arrays.asList(new TriggeredItemEntity(1, "projectY")));
+                Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }
@@ -98,7 +93,7 @@ public class TriggerContextTest {
     @Test
     public void testSetOthers() {
         TriggerContext context = new TriggerContext();
-        context.setOthers(Arrays.asList(new TriggeredItemEntity(1, "projectY")));
+        context.setOthers(Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
         assertEquals(1, context.getOthers().size());
     }

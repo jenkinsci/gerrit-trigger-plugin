@@ -34,12 +34,11 @@ import jenkins.model.Jenkins;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -51,14 +50,13 @@ import java.util.Arrays;
 /**
  * Tests for {@link GerritProjectListTest}.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Jenkins.class)
 public class GerritProjectListTest {
 
     /**
      * Keeps data of created triggers.
      */
     private static List<GerritTrigger> gerritTriggers;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
      * Creates GerritProject.
@@ -95,10 +93,9 @@ public class GerritProjectListTest {
      */
     @Before
     public void createProjectsAndTriggers() throws Exception {
-
-        PowerMockito.mockStatic(Jenkins.class);
-        Jenkins jenkins = PowerMockito.mock(Jenkins.class);
-        PowerMockito.when(Jenkins.get()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        Jenkins jenkins = mock(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
 
         GerritProject gP1 = createGerritProject("test/project1", CompareType.PLAIN);
         GerritProject gP2 = createGerritProject("test/project2", CompareType.PLAIN);
@@ -131,6 +128,8 @@ public class GerritProjectListTest {
           GerritProjectList.removeTriggerFromProjectList(gerritTrigger);
         }
         gerritTriggers = null;
+        jenkinsMockedStatic.close();
+        jenkinsMockedStatic = null;
     }
 
     /**
@@ -209,7 +208,7 @@ public class GerritProjectListTest {
         projects = GerritProjectList.getGerritProjects();
         assertEquals(0, projects.size());
 
-
+        clearProjectsAndTriggers();
         createProjectsAndTriggers();
         GerritProjectList.removeTriggerFromProjectList(gerritTriggers.get(2));
         projects = GerritProjectList.getGerritProjects();

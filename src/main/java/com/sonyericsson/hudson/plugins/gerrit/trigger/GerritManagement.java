@@ -158,8 +158,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          */
         public static DescriptorExtensionList<GerritServer, GerritServer.DescriptorImpl> serverDescriptorList() {
             Jenkins jenkins = Jenkins.get();
-            return jenkins
-                    .<GerritServer, GerritServer.DescriptorImpl>getDescriptorList(GerritServer.class);
+            return jenkins.getDescriptorList(GerritServer.class);
         }
 
         /**

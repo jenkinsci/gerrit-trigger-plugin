@@ -25,6 +25,7 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -46,13 +47,10 @@ import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.MockedStatic;
 
 import java.io.File;
 import java.util.Collections;
@@ -62,18 +60,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.same;
+import static org.mockito.AdditionalMatchers.or;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.verifyZeroInteractions;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -81,15 +81,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({
-        Jenkins.class,
-        AbstractProject.class,
-        GerritNotifierFactory.class,
-        PluginImpl.class,
-        ToGerritRunListener.class,
-
-})
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
@@ -97,6 +88,9 @@ public class ToGerritRunListenerTest {
     private PluginImpl plugin;
     private GerritServer server;
     private Jenkins jenkins;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<GerritNotifierFactory> mockGerritNotifierFactoryMockedStatic;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
 
     /**
      * Creates a new static mock of GerritNotifier before each test.
@@ -106,21 +100,29 @@ public class ToGerritRunListenerTest {
     @Before
     public void setup() throws Exception {
         jenkins = mock(Jenkins.class);
-        mockStatic(Jenkins.class);
-        when(Jenkins.getInstanceOrNull()).thenReturn(jenkins);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
 
-        mockStatic(GerritNotifierFactory.class);
-        mockStatic(PluginImpl.class);
+        mockGerritNotifierFactoryMockedStatic = mockStatic(GerritNotifierFactory.class);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
         mockNotificationFactory = mock(GerritNotifierFactory.class);
         plugin = mock(PluginImpl.class);
         mockNotifier = mock(GerritNotifier.class);
         server = mock(GerritServer.class);
         doReturn(mockNotifier).when(mockNotificationFactory)
                 .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
-        when(GerritNotifierFactory.class, "getInstance").thenReturn(mockNotificationFactory);
-        when(PluginImpl.class, "getInstance").thenReturn(plugin);
+        mockGerritNotifierFactoryMockedStatic.when(
+            GerritNotifierFactory::getInstance).thenReturn(mockNotificationFactory);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
         when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
+        mockGerritNotifierFactoryMockedStatic.close();
+        pluginMockedStatic.close();
     }
 
     /**
@@ -131,7 +133,7 @@ public class ToGerritRunListenerTest {
      * @return a mock.
      */
     private AbstractProject mockProject(String fullName) throws Exception {
-        AbstractProject project = PowerMockito.mock(AbstractProject.class);
+        AbstractProject project = mock(AbstractProject.class);
         doReturn(fullName).when(project).getFullName();
         when(jenkins.getItemByFullName(eq(fullName), same(AbstractProject.class))).thenReturn(project);
         when(jenkins.getItemByFullName(eq(fullName), same(Job.class))).thenReturn(project);
@@ -184,7 +186,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
@@ -216,7 +218,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
@@ -225,11 +227,11 @@ public class ToGerritRunListenerTest {
         toGerritRunListener.onCompleted(build, mock(TaskListener.class));
 
         verify(event).fireBuildCompleted(same(build));
-        verifyZeroInteractions(mockNotifier);
+        verifyNoMoreInteractions(mockNotifier);
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}.
+     * Tests {@code ToGerritRunListener.obtainUnsuccessfulMessage()}.
      * File path is not configured.
      *
      * @throws Exception if so.
@@ -250,7 +252,7 @@ public class ToGerritRunListenerTest {
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}.
+     * Tests {@code ToGerritRunListener.obtainUnsuccessfulMessage()}.
      * File path is configured, but not files match the glob.
      *
      * @throws Exception if so.
@@ -270,12 +272,12 @@ public class ToGerritRunListenerTest {
         memory.started(event, build);
         toGerritRunListener.onCompleted(build, mock(TaskListener.class));
 
-        verify(toGerritRunListener, times(1)).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
+        verify(toGerritRunListener, times(1)).getMatchingWorkspaceFiles(or(isNull(), any(FilePath.class)), eq(filepath));
         verify(toGerritRunListener, never()).getExpandedContent(any(FilePath.class), any(EnvVars.class));
     }
 
     /**
-     * Tests {@link ToGerritRunListener#obtainUnsuccessfulMessage}. Results in a message being retrieved.
+     * Tests {@code ToGerritRunListener.obtainUnsuccessfulMessage()}. Results in a message being retrieved.
      *
      * @throws Exception if so.
      */
@@ -291,15 +293,19 @@ public class ToGerritRunListenerTest {
 
         ToGerritRunListener toGerritRunListener = Setup.createFailureMessageRunListener(build, event, filepath);
 
-        doReturn(fileList).when(toGerritRunListener).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
-        doReturn(message).when(toGerritRunListener).getExpandedContent(eq(fileList[0]), any(EnvVars.class));
+        doReturn(fileList).when(toGerritRunListener)
+                .getMatchingWorkspaceFiles(or(isNull(), any(FilePath.class)), eq(filepath));
+        doReturn(message).when(toGerritRunListener)
+                .getExpandedContent(eq(fileList[0]), any(EnvVars.class));
 
         BuildMemory memory = Whitebox.getInternalState(toGerritRunListener, BuildMemory.class);
         memory.started(event, build);
         toGerritRunListener.onCompleted(build, mock(TaskListener.class));
 
-        verify(toGerritRunListener, times(1)).getMatchingWorkspaceFiles(any(FilePath.class), eq(filepath));
-        verify(toGerritRunListener, times(1)).getExpandedContent(any(FilePath.class), any(EnvVars.class));
+        verify(toGerritRunListener, times(1))
+                .getMatchingWorkspaceFiles(or(isNull(), any(FilePath.class)), eq(filepath));
+        verify(toGerritRunListener, times(1))
+                .getExpandedContent(any(FilePath.class), any(EnvVars.class));
     }
 
     /**
@@ -316,7 +322,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, false);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
@@ -344,7 +350,7 @@ public class ToGerritRunListenerTest {
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        when(causeAction.getCauses()).thenReturn(Collections.<Cause>singletonList(cause));
+        when(causeAction.getCauses()).thenReturn(Collections.singletonList(cause));
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
@@ -352,7 +358,7 @@ public class ToGerritRunListenerTest {
         toGerritRunListener.onStarted(build, mock(TaskListener.class));
 
         verify(event).fireBuildStarted(same(build));
-        verifyZeroInteractions(mockNotifier);
+        verifyNoMoreInteractions(mockNotifier);
     }
 
     /**

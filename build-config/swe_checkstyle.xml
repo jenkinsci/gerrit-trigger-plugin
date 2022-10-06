@@ -108,6 +108,7 @@
         <module name="JavadocMethod">
                 <property name="logLoadErrors" value="true"/>
                 <property name="suppressLoadErrors" value="true"/>
+                <property name="allowedAnnotations" value="Override, Test, Before, BeforeClass, After, AfterClass"/>
         </module>
         <module name="JavadocStyle">
                 <property name="scope" value="protected"/>

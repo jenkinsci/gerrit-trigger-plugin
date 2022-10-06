@@ -83,13 +83,12 @@ public final class ToGerritRunListener extends RunListener<Run> {
             logger.error("Jenkins instance is not available, are we not fully live yet?");
             return null;
         }
-        ExtensionList<ToGerritRunListener> listeners =
-                jenkins.getExtensionList(ToGerritRunListener.class);
-        if (listeners == null || listeners.isEmpty()) {
-            logger.error("INITIALIZATION ERROR? Could not find the registered instance.");
+        try {
+            return ExtensionList.lookupSingleton(ToGerritRunListener.class);
+        } catch (IllegalStateException e) {
+            logger.error("INITIALIZATION ERROR? Could not find the registered instance.", e);
             return null;
         }
-        return listeners.get(0);
     }
 
     /**

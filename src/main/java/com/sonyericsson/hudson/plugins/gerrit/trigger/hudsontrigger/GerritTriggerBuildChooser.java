@@ -124,7 +124,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
             return Collections.singletonList(revision);
         } catch (GitException e) {
             // branch does not exist, there is nothing to build
-            return Collections.<Revision>emptyList();
+            return Collections.emptyList();
         }
     }
 

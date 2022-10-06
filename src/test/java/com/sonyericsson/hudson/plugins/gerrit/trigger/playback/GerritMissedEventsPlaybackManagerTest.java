@@ -37,17 +37,15 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 
 import hudson.XmlFile;
+import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockedStatic;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,20 +61,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
 
 /**
  *
  * missed events tests for events-log plugin interaction.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({ Jenkins.class, PluginImpl.class, GerritMissedEventsPlaybackManager.class, GerritPluginChecker.class })
-@PowerMockIgnore("javax.net.ssl.*")
 public class GerritMissedEventsPlaybackManagerTest {
 
     /**
@@ -92,6 +87,10 @@ public class GerritMissedEventsPlaybackManagerTest {
     private XmlFile xmlFile;
     private static final int SLEEPTIME = 500;
     private static final int HTTPOK = 200;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
+    private MockedStatic<PluginImpl> pluginMockedStatic;
+    private MockedStatic<GerritMissedEventsPlaybackManager> playbackManagerMockedStatic;
+    private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
      * Default constructor.
@@ -106,10 +105,12 @@ public class GerritMissedEventsPlaybackManagerTest {
     @Before
     public void setUp() throws IOException {
         Jenkins jenkinsMock = mock(Jenkins.class);
-        PowerMockito.mockStatic(Jenkins.class);
-        when(Jenkins.get()).thenReturn(jenkinsMock);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
 
-        PluginImpl plugin = PowerMockito.mock(PluginImpl.class);
+        PluginImpl plugin = mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
 
         MockPluginCheckerConfig config = new MockPluginCheckerConfig();
@@ -122,11 +123,11 @@ public class GerritMissedEventsPlaybackManagerTest {
         GerritHandler handler = mock(GerritHandler.class);
         when(plugin.getHandler()).thenReturn(handler);
         when(server.getConfig()).thenReturn(config);
-        PowerMockito.mockStatic(PluginImpl.class);
-        PowerMockito.when(PluginImpl.getInstance()).thenReturn(plugin);
-        PowerMockito.when(PluginImpl.getServer_(any(String.class))).thenReturn(server);
+        pluginMockedStatic = mockStatic(PluginImpl.class);
+        pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
+        pluginMockedStatic.when(() -> PluginImpl.getServer_(any(String.class))).thenReturn(server);
 
-        PowerMockito.mockStatic(GerritMissedEventsPlaybackManager.class);
+        playbackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
 
         File tmpFile = null;
         try {
@@ -152,11 +153,21 @@ public class GerritMissedEventsPlaybackManagerTest {
         out.close();
 
         xmlFile = new XmlFile(tmpFile);
-        PowerMockito.when(GerritMissedEventsPlaybackManager.getConfigXml("defaultServer")).thenReturn(xmlFile);
+        playbackManagerMockedStatic
+                .when(() -> GerritMissedEventsPlaybackManager.getConfigXml("defaultServer"))
+                .thenReturn(xmlFile);
 
-        PowerMockito.mockStatic(GerritPluginChecker.class);
-        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+        pluginCheckerMockedStatic = mockStatic(GerritPluginChecker.class);
+        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(true);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        jenkinsMockedStatic.close();
+        pluginMockedStatic.close();
+        playbackManagerMockedStatic.close();
+        pluginCheckerMockedStatic.close();
     }
 
     /**
@@ -184,7 +195,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
         try {
-            Thread.currentThread().sleep(SLEEPTIME);
+            Thread.sleep(SLEEPTIME);
         } catch (InterruptedException e) {
             fail(e.getMessage());
         }
@@ -251,7 +262,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 1 event", events.size() == 1);
+        Assert.assertEquals("Should have 1 event", 1, events.size());
 
     }
 
@@ -278,7 +289,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 
@@ -305,7 +316,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 
@@ -332,7 +343,7 @@ public class GerritMissedEventsPlaybackManagerTest {
             fail(e.getMessage());
         }
 
-        Assert.assertTrue("Should have 0 event", events.size() == 0);
+        Assert.assertEquals("Should have 0 event", 0, events.size());
 
     }
 
@@ -342,7 +353,7 @@ public class GerritMissedEventsPlaybackManagerTest {
     @Test
     public void testInitialSupportedState() {
        // Option 1a: not supported
-       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+       pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(false);
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
@@ -350,7 +361,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
 
        // Option 1b: not supported
-       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+       pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(null);
 
         missingEventsPlaybackManager
@@ -358,7 +369,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
 
        // Option 2: supported
-       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+       pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(true);
 
         missingEventsPlaybackManager
@@ -372,20 +383,20 @@ public class GerritMissedEventsPlaybackManagerTest {
      */
     @Test
     public void testStateOnlyChangesWhenValid() {
-       PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+       pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(false);
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
         Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
 
-        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(true);
 
         missingEventsPlaybackManager.checkIfEventsLogPluginSupported();
         Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
 
-        PowerMockito.when(GerritPluginChecker.isPluginEnabled((IGerritHudsonTriggerConfig)anyObject()
+        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(null);
 
         missingEventsPlaybackManager.checkIfEventsLogPluginSupported();

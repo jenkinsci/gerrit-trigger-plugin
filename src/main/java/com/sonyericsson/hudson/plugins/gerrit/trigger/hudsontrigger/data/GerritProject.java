@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Supplier;
 
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -217,42 +218,12 @@ public class GerritProject implements Describable<GerritProject> {
      * @param project the Gerrit project
      * @param branch the branch.
      * @param topic the topic.
-     * @param files the files.
+     * @param files a closure which returns the list of files in the change.
      * @return true is the rules match.
      */
-    public boolean isInteresting(String project, String branch, String topic, List<String> files) {
-        if (compareType.matches(pattern, project)) {
-            List<String> tmpFiles = new ArrayList<String>(files);
-            tmpFiles.remove(MAGIC_FILE_NAME_COMMIT_MSG);
-            tmpFiles.remove(MAGIC_FILE_NAME_MERGE_LIST);
-            tmpFiles.remove(MAGIC_FILE_NAME_PATCHSET_LEVEL);
-            for (Branch b : branches) {
-                boolean foundInterestingForbidden = false;
-                if (b.isInteresting(branch)) {
-                    if (forbiddenFilePaths != null) {
-                        Iterator<String> i = tmpFiles.iterator();
-                        while (i.hasNext()) {
-                            String file = i.next();
-                            for (FilePath ffp : forbiddenFilePaths) {
-                                if (ffp.isInteresting(file)) {
-                                    if (!disableStrictForbiddenFileVerification) {
-                                        return false;
-                                    } else {
-                                        foundInterestingForbidden = true;
-                                        i.remove();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (foundInterestingForbidden && tmpFiles.isEmpty()) {
-                        // All changed files are forbidden, so this is not interesting
-                        return false;
-                    }
-                    return isInterestingTopic(topic) && isInterestingFile(tmpFiles);
-                }
-            }
+    public boolean isInteresting(String project, String branch, String topic, Supplier<List<String>> files) {
+        if (isInteresting(project, branch, topic)) {
+            return isInterestingFile(files.get());
         }
         return false;
     }
@@ -300,9 +271,37 @@ public class GerritProject implements Describable<GerritProject> {
      * @return true if the rules match or no rules.
      */
     private boolean isInterestingFile(List<String> files) {
+        List<String> tmpFiles = new ArrayList<String>(files);
+        tmpFiles.remove(MAGIC_FILE_NAME_COMMIT_MSG);
+        tmpFiles.remove(MAGIC_FILE_NAME_MERGE_LIST);
+        tmpFiles.remove(MAGIC_FILE_NAME_PATCHSET_LEVEL);
+
+        boolean foundInterestingForbidden = false;
+        if (forbiddenFilePaths != null) {
+            Iterator<String> i = tmpFiles.iterator();
+            while (i.hasNext()) {
+                String file = i.next();
+                for (FilePath ffp : forbiddenFilePaths) {
+                    if (ffp.isInteresting(file)) {
+                        if (!disableStrictForbiddenFileVerification) {
+                            return false;
+                        } else {
+                            foundInterestingForbidden = true;
+                            i.remove();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (foundInterestingForbidden && tmpFiles.isEmpty()) {
+            // All changed files are forbidden, so this is not interesting
+            return false;
+        }
+
         if (filePaths != null && filePaths.size() > 0) {
             for (FilePath f : filePaths) {
-                if (f.isInteresting(files)) {
+                if (f.isInteresting(tmpFiles)) {
                     return true;
                 }
             }

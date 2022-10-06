@@ -65,7 +65,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Tests to see if jobs from Gerrit-Trigger v. 2.5.2 can be loaded.
@@ -211,7 +210,7 @@ public class BackCompat252HudsonTest {
         MatrixProject proj = (MatrixProject)item;
         RunList<MatrixBuild> builds = proj.getBuilds();
         assertNotNull(builds);
-        assertTrue("The build list should not be empty", !builds.isEmpty());
+        assertFalse("The build list should not be empty", builds.isEmpty());
         MatrixBuild matrixBuild = proj.getFirstBuild();
         assertNotNull(matrixBuild.getAction(RetriggerAction.class));
         GerritManualCause cause = matrixBuild.getCause(GerritManualCause.class);

@@ -28,7 +28,7 @@ import org.junit.Test;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * Testing if magical file names are ignored with Forbidden File Paths and do not make change interesting.
@@ -61,6 +61,6 @@ public class GerritProjectForbiddenFilesWithMagicalFileNamesTest {
         GerritProject project = new GerritProject(
                 CompareType.PLAIN, "project1", branches, topics, filePaths, forbiddenFilePaths, true);
 
-        assertEquals(false, project.isInteresting("project1", "master", null, files));
+        assertFalse(project.isInteresting("project1", "master", null, () -> files));
     }
 }

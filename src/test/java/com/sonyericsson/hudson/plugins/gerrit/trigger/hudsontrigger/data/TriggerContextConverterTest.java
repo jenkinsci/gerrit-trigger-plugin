@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
@@ -39,17 +40,15 @@ import hudson.diagnosis.OldDataMonitor;
 import hudson.matrix.MatrixRun;
 import hudson.model.Cause;
 import hudson.model.Saveable;
+import hudson.security.ACL;
 import hudson.util.XStream2;
 
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -63,14 +62,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyCollection;
-import static org.mockito.Matchers.same;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -78,10 +76,9 @@ import static org.powermock.api.mockito.PowerMockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({Jenkins.class, OldDataMonitor.class, ExtensionList.class })
 public class TriggerContextConverterTest {
     private Jenkins jenkins;
+    private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     //CS IGNORE MagicNumber FOR NEXT 600 LINES. REASON: test data.
 
@@ -90,10 +87,17 @@ public class TriggerContextConverterTest {
      */
     @Before
     public void setup() {
-        PowerMockito.mockStatic(Jenkins.class);
+        jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
-        when(Jenkins.get()).thenReturn(jenkins);
+        jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
         when(jenkins.getFullName()).thenReturn("");
+        jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
+        jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
+    }
+
+    @After
+    public void tearDown() {
+        jenkinsMockedStatic.close();
     }
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc.
@@ -136,7 +140,7 @@ public class TriggerContextConverterTest {
 
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
-     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@link TriggerContext#thisBuild} set to null.
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@code TriggerContext.thisBuild} set to null.
      *
      * @throws Exception if so.
      */
@@ -155,9 +159,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -168,7 +170,7 @@ public class TriggerContextConverterTest {
 
     /**
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
-     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@link TriggerContext#event} set to null.
+     * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@code TriggerContext.event} set to null.
      *
      * @throws Exception if so.
      */
@@ -188,9 +190,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -280,9 +280,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xml = xStream.toXML(t);
         } catch (Exception e) {
-            AssertionError error = new AssertionError("This should work, but did not. " + e.getMessage());
-            error.initCause(e);
-            throw error;
+            throw new AssertionError("This should work, but did not. " + e.getMessage(), e);
         }
 
         TestMarshalClass readT = (TestMarshalClass)xStream.fromXML(xml);
@@ -569,37 +567,43 @@ public class TriggerContextConverterTest {
      */
     @Test
     public void testUnmarshalOldMatrixBuild() throws Exception {
-        PowerMockito.mockStatic(OldDataMonitor.class);
-        doNothing().when(OldDataMonitor.class, "report", any(Saveable.class), anyCollection());
-        XStream xStream = new XStream2();
-        xStream.registerConverter(new TriggerContextConverter());
-        xStream.alias("matrix-run", MatrixRun.class);
-        Object obj = xStream.fromXML(getClass().getResourceAsStream("matrix_build.xml"));
-        assertTrue(obj instanceof MatrixRun);
-        MatrixRun run = (MatrixRun)obj;
-        mockStatic(ExtensionList.class);
-        ExtensionList listMock = mock(ExtensionList.class);
-        doReturn(Collections.emptyList().iterator()).when(listMock).iterator();
-        doReturn(listMock).when(ExtensionList.class, "lookup", same(TransientActionFactory.class));
-        Cause.UpstreamCause upCause = run.getCause(Cause.UpstreamCause.class);
-        List upstreamCauses = Whitebox.getInternalState(upCause, "upstreamCauses");
-        GerritCause cause = (GerritCause)upstreamCauses.get(0);
-        assertNotNull(cause.getEvent());
-        assertThat("Event is not a ChangeBasedEvent", cause.getEvent(), instanceOf(ChangeBasedEvent.class));
-        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)cause.getEvent();
-        assertEquals("platform/project", changeBasedEvent.getChange().getProject());
-        assertNotNull(cause.getContext());
-        assertNotNull(cause.getContext().getThisBuild());
+        try (MockedStatic<OldDataMonitor> oldDataMonitorMockedStatic = mockStatic(OldDataMonitor.class);
+             MockedStatic<ExtensionList> extensionListMockedStatic = mockStatic(ExtensionList.class)) {
+            oldDataMonitorMockedStatic
+                    .when(() -> OldDataMonitor.report(any(Saveable.class), anyCollection())).then(invocation -> null);
 
-        assertEquals("Gerrit_master-theme_matrix", cause.getContext().getThisBuild().getProjectId());
-        assertEquals(102, cause.getContext().getThisBuild().getBuildNumber().intValue());
+            XStream xStream = new XStream2();
+            xStream.registerConverter(new TriggerContextConverter());
+            xStream.alias("matrix-run", MatrixRun.class);
+            Object obj = xStream.fromXML(getClass().getResourceAsStream("matrix_build.xml"));
+            assertTrue(obj instanceof MatrixRun);
+            MatrixRun run = (MatrixRun)obj;
 
-        assertNotNull(cause.getContext().getOthers());
-        assertEquals(1, cause.getContext().getOthers().size());
+            ExtensionList listMock = mock(ExtensionList.class);
+            doReturn(Collections.emptyIterator()).when(listMock).iterator();
+            extensionListMockedStatic
+                    .when(() -> ExtensionList.lookup(same(TransientActionFactory.class)))
+                    .thenReturn(listMock);
+            Cause.UpstreamCause upCause = run.getCause(Cause.UpstreamCause.class);
+            List upstreamCauses = Whitebox.getInternalState(upCause, "upstreamCauses");
+            GerritCause cause = (GerritCause)upstreamCauses.get(0);
+            assertNotNull(cause.getEvent());
+            assertThat("Event is not a ChangeBasedEvent", cause.getEvent(), instanceOf(ChangeBasedEvent.class));
+            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)cause.getEvent();
+            assertEquals("platform/project", changeBasedEvent.getChange().getProject());
+            assertNotNull(cause.getContext());
+            assertNotNull(cause.getContext().getThisBuild());
 
-        TriggeredItemEntity entity = cause.getContext().getOthers().get(0);
-        assertEquals("master-theme", entity.getProjectId());
-        assertNull(entity.getBuildNumber());
+            assertEquals("Gerrit_master-theme_matrix", cause.getContext().getThisBuild().getProjectId());
+            assertEquals(102, cause.getContext().getThisBuild().getBuildNumber().intValue());
+
+            assertNotNull(cause.getContext().getOthers());
+            assertEquals(1, cause.getContext().getOthers().size());
+
+            TriggeredItemEntity entity = cause.getContext().getOthers().get(0);
+            assertEquals("master-theme", entity.getProjectId());
+            assertNull(entity.getBuildNumber());
+        }
     }
 
     /**
