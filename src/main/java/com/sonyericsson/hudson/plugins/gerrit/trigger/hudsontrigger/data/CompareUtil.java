@@ -86,7 +86,7 @@ public interface CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
-            return pattern.equalsIgnoreCase(str);
+            return pattern.equals(str);
         }
 
         @Override

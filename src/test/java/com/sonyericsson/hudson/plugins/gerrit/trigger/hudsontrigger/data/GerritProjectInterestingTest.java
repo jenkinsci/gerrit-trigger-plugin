@@ -107,6 +107,8 @@ public class GerritProjectInterestingTest {
         config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, null, false);
         parameters.add(new InterestingScenario[]{new InterestingScenario(config,
                 "project", "feature/mymaster", null, true), });
+        parameters.add(new InterestingScenario[]{new InterestingScenario(config,
+                "project", "Olstorp", null, false), });
 
         branches = new LinkedList<Branch>();
         branch = new Branch(CompareType.ANT, "**/master");
