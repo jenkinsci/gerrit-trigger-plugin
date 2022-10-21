@@ -107,7 +107,7 @@ field. +
 You can specify the name pattern in three different ways, as provided by
 the "Type" drop-down menu.
 
-* *Plain:* The exact name in Gerrit, case sensitive equality.
+* *Plain:* The exact name in Gerrit, case insensitive equality.
 
 * *Path:* http://ant.apache.org/manual/dirtasks.html#patterns[ANT style
 pattern]. Ex: "***/base/**"
