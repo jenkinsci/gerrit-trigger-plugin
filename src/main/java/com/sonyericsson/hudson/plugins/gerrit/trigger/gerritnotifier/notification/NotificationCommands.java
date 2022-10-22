@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2022 Christoph Kreisl. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -125,15 +124,11 @@ public class NotificationCommands {
     }
 
     /**
-     * Returns whether the commands are valid or not.
+     * Returns true or false depending on the commands whether they are valid or not.
      *
      * @return true if valid, otherwise false.
      */
     public boolean isValid() {
-        boolean isMainCommandValid = isValidCommand(command);
-        if (commandsTopicChange.size() > 0) {
-            return isMainCommandValid && isTopicChangeListCommandsValid();
-        }
-        return isMainCommandValid;
+        return isMainCommandValid() && isTopicChangeListCommandsValid();
     }
 }

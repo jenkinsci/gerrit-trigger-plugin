@@ -1,8 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
+ *  Copyright 2022 Christoph Kreisl. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -100,7 +99,7 @@ public abstract class Notification implements INotification {
 
         GerritServer server = PluginImpl.getServer_(event);
         if (server == null) {
-            logger.error("Could get gerrit server based on event!");
+            logger.error("Could not get gerrit server based on event!");
             return Collections.emptyMap();
         }
 

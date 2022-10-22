@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notificati
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ParameterExpander;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -70,30 +71,37 @@ public class NotificationBuildCompleted extends Notification {
         String command = parameterExpander.getBuildCompletedCommand(
                 memoryImprint, listener, null);
 
-        NotificationCommands notifyCommands = new NotificationCommands(command);
+        this.commands = new NotificationCommands(command);
         Topic topic = event.getChange().getTopicObject();
 
-        if (topic != null && isVoteSameTopic()) {
-            Map<Change, PatchSet> changes = queryTopicChanges();
-            for (Map.Entry<Change, PatchSet> entry : changes.entrySet()) {
-                Change change = entry.getKey();
-                if (change.equals(event.getChange())) {
-                    continue;
-                }
-                PatchSet patchSet = entry.getValue();
-
-                // Create dummy PatchsetCreated event and fill with original event content
-                // Change and Patchset will be overwritten with information from change assigned in topic
-                // So that ParameterExpander takes this event into account.
-                GerritTriggeredEvent eventTopicChange = createEventTopicChange(event, change, patchSet);
-                String topicChangeCommand = parameterExpander.getBuildCompletedCommand(
-                        memoryImprint, listener, eventTopicChange);
-
-                notifyCommands.addTopicChangeCommand(topicChangeCommand);
-            }
+        if (topic == null) {
+            return;
         }
 
-        this.commands = notifyCommands;
+        if (!isVoteSameTopic()) {
+            return;
+        }
+
+        Map<Change, PatchSet> changes = queryTopicChanges();
+        for (Map.Entry<Change, PatchSet> entry : changes.entrySet()) {
+            Change change = entry.getKey();
+            if (change.equals(event.getChange())) {
+                continue;
+            }
+            if (change.getStatus() == GerritChangeStatus.ABANDONED) {
+                continue;
+            }
+            PatchSet patchSet = entry.getValue();
+
+            // Create dummy PatchsetCreated event and fill with original event content
+            // Change and Patchset will be overwritten with information from change assigned in topic
+            // So that ParameterExpander takes this event into account.
+            GerritTriggeredEvent eventTopicChange = createEventTopicChange(event, change, patchSet);
+            String topicChangeCommand = parameterExpander.getBuildCompletedCommand(
+                    memoryImprint, listener, eventTopicChange);
+
+            this.commands.addTopicChangeCommand(topicChangeCommand);
+        }
     }
 
     @Override
