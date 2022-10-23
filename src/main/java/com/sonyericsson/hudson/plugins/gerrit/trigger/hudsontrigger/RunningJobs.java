@@ -104,7 +104,7 @@ public class RunningJobs {
            return;
        }
 
-       this.cancelOutDatedEvents(event, serverBuildCurrentPatchesOnly, null);
+       this.cancelOutDatedEvents(event, serverBuildCurrentPatchesOnly, getJob().getFullName());
    }
 
    /**
@@ -120,21 +120,24 @@ public class RunningJobs {
            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
            while (it.hasNext()) {
                GerritTriggeredEvent runningEvent = it.next();
-
-               if (runningEvent instanceof ChangeBasedEvent) {
-                   ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
-                   if (!shouldIgnoreEvent(event, policy, runningChangeBasedEvent))
-                   {
-                       outdatedEvents.add(runningChangeBasedEvent);
-                       it.remove();
-                   }
+               if (!(runningEvent instanceof ChangeBasedEvent)) {
+                   continue;
                }
+
+               ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
+               if (shouldIgnoreEvent(event, policy, runningChangeBasedEvent)) {
+                   continue;
+               }
+
+               outdatedEvents.add(runningChangeBasedEvent);
+               it.remove();
            }
            // add our new job
            if (!outdatedEvents.contains(event)) {
                runningJobs.add(event);
            }
        }
+
        // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
        for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
            logger.debug("Cancelling build for " + outdatedEvent);
@@ -202,9 +205,9 @@ public class RunningJobs {
     * https://issues.jenkins-ci.org/browse/JENKINS-13829
     *
     * @param event The event that originally triggered the build.
-    * @param matchOnJobName  job name to match on.
+    * @param jobName  job name to match on.
     */
-   private void cancelMatchingJobs(GerritTriggeredEvent event, String matchOnJobName) {
+   private void cancelMatchingJobs(GerritTriggeredEvent event, String jobName) {
        try {
            if (!(this.job instanceof Queue.Task)) {
                logger.error("Error canceling job. The job is not of type Task. Job name: " + getJob().getName());
@@ -215,9 +218,7 @@ public class RunningJobs {
            List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (hudson.model.Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if (matchOnJobName == null || matchOnJobName.equals(item.task.getName())) {
-                       Queue.getInstance().cancel(item);
-                   }
+                   Queue.getInstance().cancel(item);
                }
            }
 
@@ -229,7 +230,7 @@ public class RunningJobs {
            // Interrupt any currently running jobs.
            Jenkins jenkins = Jenkins.get();
            for (Computer c : jenkins.getComputers()) {
-               List<Executor> executors = new ArrayList<Executor>();
+               List<Executor> executors = new ArrayList<>();
                executors.addAll(c.getOneOffExecutors());
                executors.addAll(c.getExecutors());
                for (Executor e : executors) {
@@ -238,11 +239,8 @@ public class RunningJobs {
                    if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
                        Run<?, ?> run = (Run<?, ?>)currentExecutable;
                        if (checkCausedByGerrit(event, run.getCauses())) {
-                           if (matchOnJobName == null || matchOnJobName.equals(run.getParent().getFullName())) {
-                               e.interrupt(
-                                       Result.ABORTED,
-                                       new NewPatchSetInterruption()
-                               );
+                           if (jobName.equals(run.getParent().getFullName())) {
+                               e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
                            }
                        }
                    }
