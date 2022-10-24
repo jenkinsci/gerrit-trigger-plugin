@@ -8,6 +8,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.Gerri
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import hudson.model.FreeStyleProject;
 import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Executor;
@@ -214,11 +215,15 @@ public class RunningJobs {
                return;
            }
 
-           // Remove any jobs in the build queue.
-           List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
-           for (hudson.model.Queue.Item item : itemsInQueue) {
+           // Remove old items from Queue
+           // Only considers FreestyleProjects / WorkflowRuns are handled below
+           Queue queue = Queue.getInstance();
+           List<Queue.Item> itemsInQueue = queue.getItems((Queue.Task)getJob());
+           for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   Queue.getInstance().cancel(item);
+                   if(jobName.equals(item.task.getName())) {
+                       queue.cancel(item);
+                   }
                }
            }
 
@@ -235,15 +240,24 @@ public class RunningJobs {
                executors.addAll(c.getExecutors());
                for (Executor e : executors) {
                    Queue.Executable currentExecutable = e.getCurrentExecutable();
-
-                   if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
-                       Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                       if (checkCausedByGerrit(event, run.getCauses())) {
-                           if (jobName.equals(run.getParent().getFullName())) {
-                               e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
-                           }
-                       }
+                   if (!(currentExecutable instanceof Run<?, ?>)) {
+                       continue;
                    }
+
+                   Run<?, ?> run = (Run<?, ?>)currentExecutable;
+                   if (!checkCausedByGerrit(event, run.getCauses())) {
+                       continue;
+                   }
+
+                   String runningJobName = run.getParent().getFullName();
+                   if (!jobName.equals(runningJobName)) {
+                       continue;
+                   }
+
+                   if (!(this.job instanceof FreeStyleProject)) {
+                        queue.cancel(queue.getItem(run.getQueueId()));
+                   }
+                   e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
                }
            }
        } catch (Exception e) {
