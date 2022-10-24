@@ -221,7 +221,7 @@ public class RunningJobs {
            List<Queue.Item> itemsInQueue = queue.getItems((Queue.Task)getJob());
            for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if(jobName.equals(item.task.getName())) {
+                   if (jobName.equals(item.task.getName())) {
                        queue.cancel(item);
                    }
                }
