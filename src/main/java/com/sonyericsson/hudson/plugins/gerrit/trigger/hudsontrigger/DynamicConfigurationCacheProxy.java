@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.List;
@@ -41,12 +42,14 @@ final class DynamicConfigurationCacheProxy {
         if (cache.containsKey(url) && !isExpired(url)) {
             logger.debug("Get dynamic projects from cache for URL: " + url);
             // Maintain cache while not fetching from URL
-            for (String keyUrl : ttl.keySet()) {
-               if (isExpired(keyUrl)) {
-                   ttl.remove(keyUrl);
-                   cache.remove(keyUrl);
-                   logger.trace("Removing {} from cache", keyUrl);
-               }
+            Iterator<String> iterator = ttl.keySet().iterator();
+            while (iterator.hasNext()) {
+                String keyUrl = iterator.next();
+                if (isExpired(keyUrl)) {
+                    iterator.remove();
+                    cache.remove(keyUrl);
+                    logger.trace("Removing {} from cache", keyUrl);
+                }
             }
 
             return cache.get(url);
