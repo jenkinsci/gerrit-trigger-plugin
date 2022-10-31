@@ -876,6 +876,18 @@ public class Config implements IGerritHudsonTriggerConfig {
         this.voteSameTopic = voteSameTopic;
     }
 
+    /**
+     * Returns the description message for the jelly entry.
+     *
+     * @return descriptionMsg for jelly.
+     */
+    public String getVoteSameTopicDescription() {
+        return "<b>Warning:</b>"
+                + " The current implementation takes into account that 'Build Current Patches Only'"
+                + " with 'Abort new patch sets' and 'Abort patch sets with same topic' are <b>enabled</b>"
+                + " (see help for more).";
+    }
+
     @Override
     public String getGerritCmdBuildSuccessful() {
         return gerritVerifiedCmdBuildSuccessful;
