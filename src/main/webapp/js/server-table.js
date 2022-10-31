@@ -27,43 +27,65 @@
 function serverTable() {
     'use strict';
     // private funcs
+    var urlSysImgSvg = function(fImage) {
+        return imagesURL + '/svgs/' + fImage;
+    };
+
     var urlSysImg = function(iSize, fImage) {
         var rectImage = iSize + 'x' + iSize;
         return imagesURL + '/' + rectImage + '/' + fImage;
     };
 
-    var urlImg = function(iSize, fImage) {
+    var urlImgPlugin = function(iSize, fImage) {
         var rectImage = iSize + 'x' + iSize;
         return pluginURL + '/images/' + rectImage + '/' + fImage;
     };
 
-    var btnImgBase = function(bSystem, sName, fImage, oAttr) {
+    var getAttributes = function(oAttr) {
         var sAttr = '';
-        var sImgURL = '';
-        var key;
-        if (oAttr !== null) {
-            for (key in oAttr) {
-                if (oAttr.hasOwnProperty(key)) {
-                    sAttr = sAttr + ' ' + key + '="' + oAttr[key] + '"';
-                }
-            }
-        }
-        if (bSystem) {
-            sImgURL = urlSysImg(24, fImage);
-        } else {
-            sImgURL = urlImg(24, fImage);
+        var key = '';
+        if (oAttr === null) {
+            return sAttr;
         }
 
+        for (key in oAttr) {
+            if (oAttr.hasOwnProperty(key)) {
+                sAttr = sAttr + ' ' + key + '="' + oAttr[key] + '"';
+            }
+        }
+
+        return sAttr;
+    };
+
+    var getImageURL = function(bSystem, fImage) {
+        var url = '';
+        if (bSystem === 'sysImgBasic') {
+            url = urlSysImg(24, fImage);
+        } else if (bSystem === 'sysImgSvg') {
+            url = urlSysImgSvg(fImage);
+        } else {
+            url = urlImgPlugin(24, fImage);
+        }
+        return url;
+    };
+
+    var btnImgBase = function(bSystem, sName, fImage, oAttr) {
+        var sAttr = getAttributes(oAttr);
+        var sImgURL = getImageURL(bSystem, fImage);
         return '<button type="button" class="' + YAHOO.widget.DataTable.CLASS_BUTTON +
-               '" name="' + sName + '"' + sAttr + '><img src="' + sImgURL + '" /></button>';
+               '" name="' + sName + '"' + sAttr + '><img src="' + sImgURL + '" width="24" height="24"  /></button>';
+    };
+
+    var btnSysImgSvg = function(sName, fImage, oAttr) {
+        return btnImgBase('sysImgSvg', sName, fImage, oAttr);
     };
 
     var btnSysImg = function(sName, fImage, oAttr) {
-        return btnImgBase(true, sName, fImage, oAttr);
+        return btnImgBase('sysImgBasic', sName, fImage, oAttr);
     };
 
     var btnImg = function(sName, fImage, oAttr) {
-        return btnImgBase(false, sName, fImage, oAttr);
+        return btnImgBase('imgPlugin', sName, fImage, oAttr);
     };
 
     // Buttons
@@ -81,27 +103,19 @@ function serverTable() {
     };
 
     var btnEdit = function(bError, bWarning) {
-        var imgFile = "gear.png";
-        var sysImage = true;
-        var btn;
+        var btn = '';
         if (bError) {
-            imgFile = "gear-error.png";
-            sysImage = false;
+            btn = btnImg("edit", "gear-error.png", null);
         } else if (bWarning) {
-            imgFile = "gear-warning.png";
-            sysImage = false;
-        }
-
-        if (sysImage) {
-            btn = btnSysImg("edit", imgFile, null);
+            btn = btnImg("edit", "gear-warning.png", null);
         } else {
-            btn = btnImg("edit", imgFile, null);
+            btn = btnSysImgSvg("edit", "gear.svg", null);
         }
         return btn;
     };
 
     var btnRemove = function() {
-        return btnSysImg("remove", "edit-delete.png", null);
+        return btnSysImgSvg("remove", "edit-delete.svg", null);
     };
 
     // formatFrontEndLink
