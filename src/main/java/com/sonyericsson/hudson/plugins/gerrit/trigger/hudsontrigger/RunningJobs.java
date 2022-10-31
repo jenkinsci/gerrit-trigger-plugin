@@ -4,11 +4,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger.JOB_ABORT;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import hudson.model.FreeStyleProject;
 import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Executor;
@@ -215,30 +213,20 @@ public class RunningJobs {
                return;
            }
 
-           // Remove old items from Queue
-           // Only considers FreestyleProjects / WorkflowRuns are handled below
-           Queue queue = Queue.getInstance();
-           List<Queue.Item> itemsInQueue = queue.getItems((Queue.Task)getJob());
+           // Remove any jobs in the build queue.
+           List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
                    if (jobName.equals(item.task.getName())) {
-                       queue.cancel(item);
+                       Queue.getInstance().cancel(item);
                    }
                }
-           }
-
-           String workaround = System.getProperty(JOB_ABORT);
-           if ((workaround != null) && workaround.equals("false")) {
-               return;
            }
 
            // Interrupt any currently running jobs.
            Jenkins jenkins = Jenkins.get();
            for (Computer c : jenkins.getComputers()) {
-               List<Executor> executors = new ArrayList<>();
-               executors.addAll(c.getOneOffExecutors());
-               executors.addAll(c.getExecutors());
-               for (Executor e : executors) {
+               for (Executor e : c.getAllExecutors()) {
                    Queue.Executable currentExecutable = e.getCurrentExecutable();
                    if (!(currentExecutable instanceof Run<?, ?>)) {
                        continue;
@@ -254,9 +242,6 @@ public class RunningJobs {
                        continue;
                    }
 
-                   if (!(this.job instanceof FreeStyleProject)) {
-                        queue.cancel(queue.getItem(run.getQueueId()));
-                   }
                    e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
                }
            }
