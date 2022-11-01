@@ -43,11 +43,11 @@ function serverTable() {
 
     var getAttributes = function(oAttr) {
         var sAttr = '';
-        var key = '';
         if (oAttr === null) {
             return sAttr;
         }
 
+        var key = '';
         for (key in oAttr) {
             if (oAttr.hasOwnProperty(key)) {
                 sAttr = sAttr + ' ' + key + '="' + oAttr[key] + '"';
@@ -57,11 +57,11 @@ function serverTable() {
         return sAttr;
     };
 
-    var getImageURL = function(bSystem, fImage) {
+    var getImageURL = function(sSystem, fImage) {
         var url = '';
-        if (bSystem === 'sysImgBasic') {
+        if (sSystem === 'sysImgBasic') {
             url = urlSysImg(24, fImage);
-        } else if (bSystem === 'sysImgSvg') {
+        } else if (sSystem === 'sysImgSvg') {
             url = urlSysImgSvg(fImage);
         } else {
             url = urlImgPlugin(24, fImage);
@@ -69,9 +69,9 @@ function serverTable() {
         return url;
     };
 
-    var btnImgBase = function(bSystem, sName, fImage, oAttr) {
+    var btnImgBase = function(sSystem, sName, fImage, oAttr) {
         var sAttr = getAttributes(oAttr);
-        var sImgURL = getImageURL(bSystem, fImage);
+        var sImgURL = getImageURL(sSystem, fImage);
         return '<button type="button" class="' + YAHOO.widget.DataTable.CLASS_BUTTON +
                '" name="' + sName + '"' + sAttr + '><img src="' + sImgURL + '" width="24" height="24"  /></button>';
     };
@@ -85,25 +85,24 @@ function serverTable() {
     };
 
     var btnImg = function(sName, fImage, oAttr) {
-        return btnImgBase('imgPlugin', sName, fImage, oAttr);
+        return btnImgBase('pluginImg', sName, fImage, oAttr);
     };
 
     // Buttons
     var btnServer = function(sStatus) {
-        var imgFile = 'grey.png';
-        var attr = {'disabled': 'disabled'};
+        var btn = null;
         if (sStatus === "up") {
-            imgFile = 'blue.png';
-            attr = null;
+            btn = btnSysImg("server", 'blue.png', null);
         } else if (sStatus === "down") {
-            imgFile = 'red.png';
-            attr = null;
+            btn = btnSysImg("server", 'red.png', null);
+        } else {
+            btn = btnSysImg("server", "grey.png", {'disabled': 'disabled'});
         }
-        return btnSysImg("server", imgFile, attr);
+        return btn;
     };
 
     var btnEdit = function(bError, bWarning) {
-        var btn = '';
+        var btn = null;
         if (bError) {
             btn = btnImg("edit", "gear-error.png", null);
         } else if (bWarning) {
