@@ -95,6 +95,8 @@ public class GerritJcascConfigurator extends BaseConfigurator<PluginImpl> {
                 oldServer.stopConnection();
                 oldServer.stop();
             }
+
+            instance.getServers().clear();
         }
 
         try {
