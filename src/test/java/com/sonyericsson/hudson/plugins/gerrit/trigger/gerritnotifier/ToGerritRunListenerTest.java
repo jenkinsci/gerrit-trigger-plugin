@@ -84,12 +84,12 @@ import static org.mockito.Mockito.when;
 public class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
-    private NotificationFactory mockNotificationFactory;
+    private GerritNotifierFactory mockNotificationFactory;
     private PluginImpl plugin;
     private GerritServer server;
     private Jenkins jenkins;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
-    private MockedStatic<NotificationFactory> notificationFactoryMockedStatic;
+    private MockedStatic<GerritNotifierFactory> mockGerritNotifierFactoryMockedStatic;
     private MockedStatic<PluginImpl> pluginMockedStatic;
 
     /**
@@ -103,15 +103,16 @@ public class ToGerritRunListenerTest {
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
 
-        notificationFactoryMockedStatic = mockStatic(NotificationFactory.class);
+        mockGerritNotifierFactoryMockedStatic = mockStatic(GerritNotifierFactory.class);
         pluginMockedStatic = mockStatic(PluginImpl.class);
-        mockNotificationFactory = mock(NotificationFactory.class);
+        mockNotificationFactory = mock(GerritNotifierFactory.class);
         plugin = mock(PluginImpl.class);
         mockNotifier = mock(GerritNotifier.class);
         server = mock(GerritServer.class);
         doReturn(mockNotifier).when(mockNotificationFactory)
                 .createGerritNotifier(any(GerritCmdRunner.class), any(String.class));
-        notificationFactoryMockedStatic.when(NotificationFactory::getInstance).thenReturn(mockNotificationFactory);
+        mockGerritNotifierFactoryMockedStatic.when(
+            GerritNotifierFactory::getInstance).thenReturn(mockNotificationFactory);
         pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
         when(plugin.getServer(PluginImpl.DEFAULT_SERVER_NAME)).thenReturn(server);
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
@@ -120,7 +121,7 @@ public class ToGerritRunListenerTest {
     @After
     public void tearDown() throws Exception {
         jenkinsMockedStatic.close();
-        notificationFactoryMockedStatic.close();
+        mockGerritNotifierFactoryMockedStatic.close();
         pluginMockedStatic.close();
     }
 

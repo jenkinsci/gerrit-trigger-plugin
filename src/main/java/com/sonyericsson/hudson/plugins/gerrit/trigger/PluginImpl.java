@@ -266,6 +266,45 @@ public class PluginImpl extends GlobalConfiguration {
     }
 
     /**
+     * Returns the Gerrit Server based on the GerritTriggerEvent.
+     *
+     * @param event The GerritTriggerEvent.
+     * @return GerritServer or null if no server could be found.
+     */
+    public GerritServer getServer(GerritTriggeredEvent event) {
+        Provider provider = event.getProvider();
+        if (provider == null) {
+            logger.warn("The event {} has no provider specified. BUG!", event);
+            return null;
+        }
+        GerritServer gerritServer = getServer_(provider.getName());
+        if (gerritServer == null) {
+            logger.warn("Could not find server config for {} - no such server.", provider.getName());
+            return null;
+        }
+        return gerritServer;
+    }
+
+    /**
+     * Returns a GerritServer object based on a GerritTriggerEvent.
+     *
+     * Static short for {@link #getServer(GerritTriggeredEvent)}.
+     *
+     * @param event The GerritTriggerEvent.
+     * @return GerritServer or null if no server could be found.
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static GerritServer getServer_(GerritTriggeredEvent event) {
+        PluginImpl plugin = getInstance();
+        if (plugin == null) {
+            logger.debug("Error, plugin instance could not be found!");
+            return null;
+        }
+        return plugin.getServer(event);
+    }
+
+    /**
      * Gets the first server in the server list. Or null if there are no servers.
      *
      * @return the server.
