@@ -332,7 +332,7 @@ public class ManualTriggerAction implements RootAction {
             session.setAttribute("queryString", queryString);
 
             try {
-                List<JSONObject> json = handler.queryJava(queryString, allPatchSets, true, false);
+                List<JSONObject> json = handler.queryJava(queryString, allPatchSets, true, false, true, true);
                 if (!allPatchSets) {
                     for (JSONObject j : json) {
                         if (j.containsKey("id")) {
