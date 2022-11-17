@@ -103,15 +103,6 @@ public class GerritTrigger extends Trigger<Job> {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTrigger.class);
 
-    /**
-     * Default 'true'.
-     *
-     * As a workaround for https://issues.jenkins-ci.org/browse/JENKINS-17116 it is
-     * possible to only remove pending jobs from the queue, but not to
-     * abort running jobs by setting this to 'false'.
-     */
-    public static final String JOB_ABORT = GerritTrigger.class.getName() + "_job_abort";
-
     //! A workaround for https://issues.jenkins.io/browse/JENKINS-63000
     //! projectListIsReady waiting limit to not block event listener
     //! so the queue won't grow in case of dynamic config fetch failure

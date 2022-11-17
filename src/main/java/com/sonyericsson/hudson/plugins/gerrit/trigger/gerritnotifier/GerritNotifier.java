@@ -24,6 +24,11 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.INotification;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.Notification;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationCommands;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationBuildCompleted;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.notification.NotificationBuildStarted;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -44,8 +49,8 @@ import org.slf4j.LoggerFactory;
 public class GerritNotifier {
 
     private static final Logger logger = LoggerFactory.getLogger(GerritNotifier.class);
-    private GerritCmdRunner cmdRunner;
-    private ParameterExpander parameterExpander;
+    private final GerritCmdRunner cmdRunner;
+    private final ParameterExpander parameterExpander;
 
     /**
      * Constructor.
@@ -69,6 +74,34 @@ public class GerritNotifier {
     }
 
     /**
+     * Send Notification to gerrit.
+     *
+     * @param notification The notifications.
+     */
+    private void send(INotification notification) {
+
+        if (notification == null) {
+            logger.error("NotificationObject is null not sending command!");
+            return;
+        }
+
+        if (!notification.isValid()) {
+            logger.error("Something wrong during parameter extraction. "
+                    + "Gerrit will not be notified of BuildStarted!");
+            return;
+        }
+
+        NotificationCommands notifyCommands = notification.getCommands();
+        cmdRunner.sendCommand(notifyCommands.getCommand());
+
+        if (notification.isVoteSameTopic()) {
+            for (String command : notifyCommands.getCommandsTopicChanges()) {
+                cmdRunner.sendCommand(command);
+            }
+        }
+    }
+
+    /**
      * Generates the build-started command based on configured templates and build-values and sends it to Gerrit.
      * @param build the build.
      * @param taskListener the taskListener.
@@ -80,18 +113,15 @@ public class GerritNotifier {
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
             if (event instanceof ChangeBasedEvent) {
-                String command =
-                        parameterExpander.getBuildStartedCommand(build, taskListener, (ChangeBasedEvent)event, stats);
-                if (command != null) {
-                    if (!command.isEmpty()) {
-                        logger.debug("Notifying BuildStarted to gerrit: {}", command);
-                        cmdRunner.sendCommand(command);
-                        GerritTriggeredBuildListener.fireOnStarted(event, command);
-                    } else {
-                        logger.debug("BuildStarted command is empty. Gerrit will not be notified of BuildStarted");
-                    }
+                Notification notification = new NotificationBuildStarted(
+                        build, taskListener, event, stats, parameterExpander);
+                if (notification.isValid()) {
+                    send(notification);
+                    String command = notification.getCommands().getCommand();
+                    GerritTriggeredBuildListener.fireOnStarted(event, command);
                 } else {
-                    logger.error("Something wrong during parameter extraction. "
+                    logger.error("Notification commands object is not valid. "
+                            + "Something went wrong during parameter extraction. "
                             + "Gerrit will not be notified of BuildStarted");
                 }
             }
@@ -106,23 +136,19 @@ public class GerritNotifier {
      * @param listener the taskListener.
      */
     public void buildCompleted(MemoryImprint memoryImprint, TaskListener listener) {
-
         try {
             /* Without a change, it doesn't make sense to notify gerrit */
             if (memoryImprint.getEvent() instanceof ChangeBasedEvent) {
-                String command = parameterExpander.getBuildCompletedCommand(memoryImprint, listener);
-
-                if (command != null) {
-                    if (!command.isEmpty()) {
-                        logger.debug("Notifying BuildCompleted to gerrit: {}", command);
-                        cmdRunner.sendCommand(command);
-                        GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
-                    } else {
-                        logger.debug("BuildCompleted command is empty. Gerrit will not be notified of BuildCompleted");
-                    }
+                Notification notification = new NotificationBuildCompleted(
+                        memoryImprint, listener, parameterExpander);
+                if (notification.isValid()) {
+                    send(notification);
+                    String command = notification.getCommands().getCommand();
+                    GerritTriggeredBuildListener.fireOnCompleted(memoryImprint, command);
                 } else {
-                    logger.error("Something wrong during parameter extraction. "
-                            + "Gerrit will not be notified of BuildCompleted");
+                    logger.error("Notification commands object is not valid. "
+                            + "Something went wrong during parameter extraction. "
+                            + "Gerrit will not be notified of BuildCompleted.");
                 }
             }
         } catch (Exception ex) {

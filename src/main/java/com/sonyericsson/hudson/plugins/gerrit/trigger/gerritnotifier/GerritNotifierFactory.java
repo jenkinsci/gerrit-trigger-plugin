@@ -50,18 +50,18 @@ import org.slf4j.LoggerFactory;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class NotificationFactory {
-    private static final Logger logger = LoggerFactory.getLogger(NotificationFactory.class);
-    private static NotificationFactory instance;
+public class GerritNotifierFactory {
+    private static final Logger logger = LoggerFactory.getLogger(GerritNotifierFactory.class);
+    private static GerritNotifierFactory instance;
 
     /**
      * Gets the singleton instance of the NotificationFactory.
      *
      * @return the NotificationFactory.
      */
-    public static NotificationFactory getInstance() {
+    public static GerritNotifierFactory getInstance() {
         if (instance == null) {
-            instance = new NotificationFactory();
+            instance = new GerritNotifierFactory();
         }
         return instance;
     }

@@ -1,0 +1,24 @@
+<p>
+    If this option is enabled, build notifications and votes will be sent to all patch sets within a Gerrit topic.
+    <br><br>
+    <b>Drawback with current implementation</b>
+    <br><br>
+    In order to not overwrite the results the following options should be enabled
+    <ul>
+        <li>Build Current Patches Only</li>
+        <li>Abort new patch sets</li>
+        <li>Abort patch sets with same topic</li>
+    </ul>
+    Otherwise commands are send multiple times to the same patch set in Gerrit.
+    <br><br>
+    Example:
+    <br><br>
+    Patch set 1 on Repository A (triggers) -> verify-a<br>
+    Patch set 2 on Repository B (triggers) -> verify-b<br>
+    <br>
+    Both patch sets are combined as a Gerrit topic. If the mentioned options are disabled the feedback will result in:<br>
+    verify-a (reports result to) -> Patch set 1 & Patch set 2 (due to isVoteSameTopic: true)<br>
+    verify-b (reports result to) -> Patch set 2 & Patch set 1 (due to isVoteSameTopic: true)<br>
+    <br>
+    The fastest job wins. In this case it could happen that one reports a -1 Verified in the first place and the second one +1 Verified overriding the previous result.
+</p>

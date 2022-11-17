@@ -31,7 +31,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.workers.cmd.AbstractSendCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifier;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotifierFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 
 import hudson.model.TaskListener;
@@ -73,7 +73,7 @@ public class BuildStartedCommandJob extends AbstractSendCommandJob {
     @Override
     public void run() {
         try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
-            GerritNotifier notifier = NotificationFactory.getInstance()
+            GerritNotifier notifier = GerritNotifierFactory.getInstance()
                 .createGerritNotifier((IGerritHudsonTriggerConfig)getConfig(), this);
             notifier.buildStarted(build, taskListener, event, stats);
         }

@@ -513,9 +513,19 @@ public class ParameterExpander {
      *
      * @param memoryImprint the memory with all the information
      * @param listener      the taskListener
+     * @param gerritEvent   the event.
      * @return the command.
      */
-    public String getBuildCompletedCommand(MemoryImprint memoryImprint, TaskListener listener) {
+    public String getBuildCompletedCommand(MemoryImprint memoryImprint, TaskListener listener,
+                                           GerritTriggeredEvent gerritEvent) {
+
+        GerritTriggeredEvent event;
+        if (gerritEvent == null) {
+            event = memoryImprint.getEvent();
+        } else {
+            event = gerritEvent;
+        }
+
         String command;
         // We only count builds without NOT_BUILT status normally. If *no*
         // builds were successful, unstable or failed, we find the minimum
@@ -546,13 +556,13 @@ public class ParameterExpander {
             notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
 
-        Map<String, String> parameters = createStandardParameters(null, memoryImprint.getEvent(),
+        Map<String, String> parameters = createStandardParameters(null, event,
                 codeReview, verified, notifyLevel.name());
+
         // escapes ' as '"'"' in order to avoid breaking command line param
         // Details: http://stackoverflow.com/a/26165123/99834
         parameters.put("BUILDS_STATS", createBuildsStats(memoryImprint,
-                                                         listener,
-                                                         parameters).replaceAll("'", "'\"'\"'"));
+                listener, parameters).replaceAll("'", "'\"'\"'"));
 
         Run build = null;
         Entry[] entries = memoryImprint.getEntries();
@@ -679,7 +689,7 @@ public class ParameterExpander {
      * @return the message for the build completed command.
      */
     public String getBuildCompletedMessage(MemoryImprint memoryImprint, TaskListener listener) {
-        String completedCommand = getBuildCompletedCommand(memoryImprint, listener);
+        String completedCommand = getBuildCompletedCommand(memoryImprint, listener, null);
         return findMessage(completedCommand);
     }
 

@@ -101,6 +101,14 @@
                                                                 default="false"/>
                                                 </f:entry>
                                             </f:optionalBlock>
+                    <f:entry title="${%Vote patch sets with same topic}"
+                            help="/plugin/gerrit-trigger/help-GerritVotePatchSetsWithSameTopic.html"
+                            description="${it.config.voteSameTopicDescription}">
+                        <f:checkbox name="voteSameTopic"
+                                    field="voteSameTopic"
+                                    checked="${it.config.voteSameTopic}"
+                                    default="false"/>
+                    </f:entry>
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"

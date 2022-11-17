@@ -4,7 +4,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger.JOB_ABORT;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -104,7 +103,7 @@ public class RunningJobs {
            return;
        }
 
-       this.cancelOutDatedEvents(event, serverBuildCurrentPatchesOnly, null);
+       this.cancelOutDatedEvents(event, serverBuildCurrentPatchesOnly, getJob().getFullName());
    }
 
    /**
@@ -120,21 +119,24 @@ public class RunningJobs {
            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
            while (it.hasNext()) {
                GerritTriggeredEvent runningEvent = it.next();
-
-               if (runningEvent instanceof ChangeBasedEvent) {
-                   ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
-                   if (!shouldIgnoreEvent(event, policy, runningChangeBasedEvent))
-                   {
-                       outdatedEvents.add(runningChangeBasedEvent);
-                       it.remove();
-                   }
+               if (!(runningEvent instanceof ChangeBasedEvent)) {
+                   continue;
                }
+
+               ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
+               if (shouldIgnoreEvent(event, policy, runningChangeBasedEvent)) {
+                   continue;
+               }
+
+               outdatedEvents.add(runningChangeBasedEvent);
+               it.remove();
            }
            // add our new job
            if (!outdatedEvents.contains(event)) {
                runningJobs.add(event);
            }
        }
+
        // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
        for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
            logger.debug("Cancelling build for " + outdatedEvent);
@@ -202,9 +204,9 @@ public class RunningJobs {
     * https://issues.jenkins-ci.org/browse/JENKINS-13829
     *
     * @param event The event that originally triggered the build.
-    * @param matchOnJobName  job name to match on.
+    * @param jobName  job name to match on.
     */
-   private void cancelMatchingJobs(GerritTriggeredEvent event, String matchOnJobName) {
+   private void cancelMatchingJobs(GerritTriggeredEvent event, String jobName) {
        try {
            if (!(this.job instanceof Queue.Task)) {
                logger.error("Error canceling job. The job is not of type Task. Job name: " + getJob().getName());
@@ -212,40 +214,35 @@ public class RunningJobs {
            }
 
            // Remove any jobs in the build queue.
-           List<hudson.model.Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
-           for (hudson.model.Queue.Item item : itemsInQueue) {
+           List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
+           for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if (matchOnJobName == null || matchOnJobName.equals(item.task.getName())) {
+                   if (jobName.equals(item.task.getName())) {
                        Queue.getInstance().cancel(item);
                    }
                }
            }
 
-           String workaround = System.getProperty(JOB_ABORT);
-           if ((workaround != null) && workaround.equals("false")) {
-               return;
-           }
-
            // Interrupt any currently running jobs.
            Jenkins jenkins = Jenkins.get();
            for (Computer c : jenkins.getComputers()) {
-               List<Executor> executors = new ArrayList<Executor>();
-               executors.addAll(c.getOneOffExecutors());
-               executors.addAll(c.getExecutors());
-               for (Executor e : executors) {
+               for (Executor e : c.getAllExecutors()) {
                    Queue.Executable currentExecutable = e.getCurrentExecutable();
-
-                   if (currentExecutable != null && currentExecutable instanceof Run<?, ?>) {
-                       Run<?, ?> run = (Run<?, ?>)currentExecutable;
-                       if (checkCausedByGerrit(event, run.getCauses())) {
-                           if (matchOnJobName == null || matchOnJobName.equals(run.getParent().getFullName())) {
-                               e.interrupt(
-                                       Result.ABORTED,
-                                       new NewPatchSetInterruption()
-                               );
-                           }
-                       }
+                   if (!(currentExecutable instanceof Run<?, ?>)) {
+                       continue;
                    }
+
+                   Run<?, ?> run = (Run<?, ?>)currentExecutable;
+                   if (!checkCausedByGerrit(event, run.getCauses())) {
+                       continue;
+                   }
+
+                   String runningJobName = run.getParent().getFullName();
+                   if (!jobName.equals(runningJobName)) {
+                       continue;
+                   }
+
+                   e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
                }
            }
        } catch (Exception e) {
