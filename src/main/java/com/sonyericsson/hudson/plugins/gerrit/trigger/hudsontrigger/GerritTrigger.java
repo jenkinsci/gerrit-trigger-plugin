@@ -27,12 +27,12 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.GerritTriggerInformationAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TopicAssociation;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
@@ -142,7 +142,7 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildAbortedVerifiedValue;
     private Integer gerritBuildAbortedCodeReviewValue;
     private boolean silentMode;
-    private boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;
+    private TopicAssociation topicAssociation;
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
@@ -1001,16 +1001,47 @@ public class GerritTrigger extends Trigger<Job> {
             return true;
         }
 
-        if (!isEnableTopicAssociation()) {
+        if (isTopicAssociationInteresting(event, project)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the event is interesting for the Topic Association option.
+     *
+     * @param event The incoming ChangeBasedEvent.
+     * @param project The configured Gerrit project.
+     * @return true if the topic associated to the build is interesting otherwise false.
+     */
+    private boolean isTopicAssociationInteresting(ChangeBasedEvent event, GerritProject project) {
+        if (!isTopicAssociation()) {
             return false;
         }
 
+        Change change = event.getChange();
         Topic topic = change.getTopicObject();
         if (topic == null) {
             return false;
         }
 
-        if (isTopicInteresting(topic, project)) {
+        if (!isTopicInteresting(topic, project)) {
+            return false;
+        }
+
+        Map<Change, PatchSet> changes = topic.getChanges(getGerritQueryHandler(event));
+        for (Change c : changes.keySet()) {
+            // Skip event which has triggered the change
+            if (c.equals(change)) {
+                continue;
+            }
+
+            // Skip changes assigned to Gerrit topic depending on change status
+            if (!topicAssociation.isInterestingChangeStatus(c)) {
+                continue;
+            }
+
             return true;
         }
 
@@ -1847,22 +1878,54 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Check if topic association is enabled.
-     * @return true if so.
+     * DataBoundSetter for TopicAssociation.
+     * Used for jelly file.
+     *
+     * @param topicAssociation the TopicAssociation object.
      */
-    public boolean isEnableTopicAssociation() {
-        return enableTopicAssociation;
+    @DataBoundSetter
+    public void setTopicAssociation(final TopicAssociation topicAssociation) {
+        this.topicAssociation = topicAssociation;
     }
 
     /**
-     * Set topic association enabled.
-     * When topic association is on the job can be triggered by project not in its configuration
-     * as long as there are projects of interest in the same topic.
-     * @param enableTopicAssociation true if it should be enabled.
+     * Check if topic association is enabled.
+     * Used for jelly file.
+     *
+     * @return true if so.
      */
-    @DataBoundSetter
-    public void setEnableTopicAssociation(boolean enableTopicAssociation) {
-        this.enableTopicAssociation = enableTopicAssociation;
+    public boolean isTopicAssociation() {
+        return topicAssociation != null && topicAssociation.isEnabled();
+    }
+
+    /**
+     * Returns true if a change in state NEW should be ignored otherwise false.
+     * Used for jelly file.
+     *
+     * @return true if it should be ignored otherwise false
+     */
+    public boolean isIgnoreNewChangeStatus() {
+        return topicAssociation != null && topicAssociation.isIgnoreNewChangeStatus();
+    }
+
+    /**
+     * Returns true if a change in state NEW should be ignored otherwise false.
+     * Used for jelly file.
+     *
+     * @return true if it should be ignored otherwise false
+     */
+    public boolean isIgnoreMergedChangeStatus() {
+        return topicAssociation != null && topicAssociation.isIgnoreMergedChangeStatus();
+    }
+
+    /**
+     * Returns true if a change in state NEW should be ignored otherwise false.
+     * Used for jelly file.
+     *
+     * @return true if it should be ignored otherwise false
+     */
+    public boolean isIgnoreAbandonedChangeStatus() {
+        return topicAssociation != null && topicAssociation.isIgnoreAbandonedChangeStatus();
     }
 
     /**
