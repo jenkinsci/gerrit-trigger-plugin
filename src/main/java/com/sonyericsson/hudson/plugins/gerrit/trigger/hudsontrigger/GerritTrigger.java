@@ -51,6 +51,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
@@ -660,11 +661,20 @@ public class GerritTrigger extends Trigger<Job> {
         if (triggerOnEvents == null || triggerOnEvents.isEmpty()) {
             return false;
         }
+
         for (PluginGerritEvent e : triggerOnEvents) {
-            if (e.shouldTriggerOn(event)) {
-                return true;
+            if (!e.shouldTriggerOn(event)) {
+                continue;
             }
+
+            if (event instanceof WipStateChanged) {
+                // Switching from an active patchset to Wip should not trigger a build
+                return !((WipStateChanged)event).getChange().isWip();
+            }
+
+            return true;
         }
+
         return false;
     }
 

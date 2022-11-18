@@ -117,6 +117,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -1853,24 +1854,30 @@ public class GerritTriggerTest {
             doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
             when(gP.getFilePaths()).thenReturn(null);
 
-
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
             Setup.setTrigger(trigger, project);
             trigger.setGerritProjects(Collections.nCopies(1, gP));
             trigger.setEscapeQuotes(false);
             trigger.setSilentMode(false);
             PluginWipStateChangedEvent pluginEvent = new PluginWipStateChangedEvent();
-            List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+            List<PluginGerritEvent> triggerOnEvents = new LinkedList<>();
             triggerOnEvents.add(pluginEvent);
             trigger.setTriggerOnEvents(triggerOnEvents);
             Whitebox.setInternalState(trigger, "job", project);
 
-            WipStateChanged event = Setup.createWipStateChanged(PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+            WipStateChanged event = Setup.createWipStateChanged(
+                    PluginImpl.DEFAULT_SERVER_NAME, "job", "master");
+            // We change from WiP to Active when WiP flag is set to false in change.
+            event.getChange().setWip(false);
 
             trigger.createListener().gerritEvent(event);
 
             verify(listener).onTriggered(same(project), same(event));
             verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
+
+            // We change from active to WiP which should trigger a build.
+            event.getChange().setWip(true);
+            assertFalse(trigger.isInteresting(event));
         }
     }
 
