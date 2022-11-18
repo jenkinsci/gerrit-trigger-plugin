@@ -1875,7 +1875,7 @@ public class GerritTriggerTest {
             verify(listener).onTriggered(same(project), same(event));
             verify(queue).schedule2(same(project), anyInt(), hasCauseActionContainingCause(null));
 
-            // We change from active to WiP which should trigger a build.
+            // We change from active to WiP which should not trigger a build.
             event.getChange().setWip(true);
             assertFalse(trigger.isInteresting(event));
         }
