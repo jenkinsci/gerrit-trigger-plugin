@@ -941,24 +941,39 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Should we trigger on this topic?
+     * Should we consider this topic w.r.t Topic Association options?
      *
      * @param topic the topic
      * @param project the configured gerrit project
+     * @param event the event
      * @return true if we should.
      */
-    private boolean isTopicInteresting(Topic topic, GerritProject project) {
-        for (GerritServer server : PluginImpl.getServers_()) {
-            logger.trace("query topic {} from {} ({}:{})", topic, server.getName(), server.getHostName(),
-                    server.getSshPort());
-            Map<Change, PatchSet> changes = topic.getChanges(server.getQueryHandler());
-            logger.trace("found {} changes with topic {} from {}", changes.size(), topic, server.getName());
-            for (Change change : changes.keySet()) {
-                if (isChangeInteresting(change, project, server.getQueryHandler())) {
-                    return true;
-                }
-            }
+    private boolean isTopicInteresting(Topic topic, GerritProject project, ChangeBasedEvent event) {
+
+        GerritServer server = PluginImpl.getServer_(event);
+
+        if (server == null) {
+            return false;
         }
+
+        Map<Change, PatchSet> changes = topic.getChanges(server.getQueryHandler());
+        for (Change change : changes.keySet()) {
+
+            if (change.equals(event.getChange())) {
+                continue;
+            }
+
+            if (!isChangeInteresting(change, project, server.getQueryHandler())) {
+                continue;
+            }
+
+            if (!topicAssociation.isInterestingChangeStatus(change)) {
+                continue;
+            }
+
+            return true;
+        }
+
         return false;
     }
 
@@ -1017,26 +1032,7 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
-        if (!isTopicInteresting(topic, project)) {
-            return false;
-        }
-
-        Map<Change, PatchSet> changes = topic.getChanges(getGerritQueryHandler(event));
-        for (Change c : changes.keySet()) {
-            // Skip event which has triggered the change
-            if (c.equals(change)) {
-                continue;
-            }
-
-            // Skip changes assigned to Gerrit topic depending on change status
-            if (!topicAssociation.isInterestingChangeStatus(c)) {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
+        return isTopicInteresting(topic, project, event);
     }
 
     /**
@@ -1877,6 +1873,18 @@ public class GerritTrigger extends Trigger<Job> {
     @DataBoundSetter
     public void setTopicAssociation(final TopicAssociation topicAssociation) {
         this.topicAssociation = topicAssociation;
+    }
+
+    /**
+     * Enable or disable Topic Association option.
+     *
+     * @param enable true or false.
+     */
+    public void setEnableTopicAssociation(boolean enable) {
+        if (this.topicAssociation == null) {
+            this.topicAssociation = new TopicAssociation();
+        }
+        this.topicAssociation.setEnabled(enable);
     }
 
     /**
