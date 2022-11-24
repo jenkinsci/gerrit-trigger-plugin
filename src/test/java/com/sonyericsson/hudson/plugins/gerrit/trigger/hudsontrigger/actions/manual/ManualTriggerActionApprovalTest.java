@@ -80,9 +80,10 @@ public class ManualTriggerActionApprovalTest {
         sshd = SshdServerMock.startServer(server);
         server.returnCommandFor("gerrit ls-projects", SshdServerMock.EofCommandMock.class);
         server.returnCommandFor("gerrit version", SshdServerMock.EofCommandMock.class);
-        server.returnCommandFor("gerrit query --format=JSON --current-patch-set \"status:open\"",
+        server.returnCommandFor("gerrit query --format=JSON --current-patch-set --commit-message \"status:open\"",
                 SshdServerMock.SendQueryLastPatchSet.class);
-        server.returnCommandFor("gerrit query --format=JSON --patch-sets --current-patch-set \"status:open\"",
+        server.returnCommandFor("gerrit query --format=JSON --patch-sets --current-patch-set "
+                                + "--commit-message \"status:open\"",
                 SshdServerMock.SendQueryAllPatchSets.class);
 
         GerritServer gerritServer = new GerritServer(gerritServerName);
