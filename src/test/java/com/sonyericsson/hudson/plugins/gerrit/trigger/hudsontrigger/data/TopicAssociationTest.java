@@ -55,7 +55,6 @@ public class TopicAssociationTest {
     @Test
     public void testIsInterestingChange() {
         TopicAssociation topicAssociation = new TopicAssociation();
-        topicAssociation.setEnabled(true);
 
         Change c = createChange(GerritChangeStatus.NEW);
         assertTrue(topicAssociation.isInterestingChangeStatus(c));

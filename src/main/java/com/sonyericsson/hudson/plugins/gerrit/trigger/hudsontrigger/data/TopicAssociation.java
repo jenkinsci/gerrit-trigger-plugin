@@ -43,7 +43,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class TopicAssociation extends AbstractDescribableImpl<TopicAssociation> {
 
-   private boolean enabled;
    private boolean ignoreNewChangeStatus;
    private boolean ignoreMergedChangeStatus;
    private boolean ignoreAbandonedChangeStatus;
@@ -59,7 +58,6 @@ public class TopicAssociation extends AbstractDescribableImpl<TopicAssociation> 
     public TopicAssociation(final boolean ignoreNewChangeStatus,
                             final boolean ignoreMergedChangeStatus,
                             final boolean ignoreAbandonedChangeStatus) {
-        this.enabled = true;
         this.ignoreNewChangeStatus = ignoreNewChangeStatus;
         this.ignoreMergedChangeStatus = ignoreMergedChangeStatus;
         this.ignoreAbandonedChangeStatus = ignoreAbandonedChangeStatus;
@@ -69,28 +67,9 @@ public class TopicAssociation extends AbstractDescribableImpl<TopicAssociation> 
      * Default constructor.
      */
     public TopicAssociation() {
-        this.enabled = false;
         this.ignoreNewChangeStatus = false;
         this.ignoreMergedChangeStatus = false;
         this.ignoreAbandonedChangeStatus = false;
-    }
-
-    /**
-     * Returns true if the topic association option is enabled.
-     *
-     * @return true if enabled otherwise false.
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * Enable or disable topic association.
-     *
-     * @param enabled true or false.
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     /**

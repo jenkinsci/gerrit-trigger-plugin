@@ -237,30 +237,9 @@
                        checked="${it.silentMode}"/>
         </f:entry>
 
-        <f:optionalBlock name="topicAssociation"
-                         field="topicAssociation"
-                         title="${%Topic Association}"
-                         help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociation.html"
-                         checked="${it.topicAssociation.enabled}">
-            <f:entry title="${%Ignore changes in state NEW}"
-                     help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociationIgnoreNew.html">
-                <f:checkbox field="ignoreNewChangeStatus"
-                            checked="${it.topicAssociation.ignoreNewChangeStatus}"
-                            default="false"/>
-            </f:entry>
-            <f:entry title="${%Ignore changes in state MERGED}"
-                     help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociationIgnoreMerged.html">
-                <f:checkbox field="ignoreMergedChangeStatus"
-                            checked="${it.topicAssociation.ignoreMergedChangeStatus}"
-                            default="false"/>
-            </f:entry>
-            <f:entry title="${%Ignore changes in state ABANDONED}"
-                     help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociationIgnoreAbandoned.html">
-                <f:checkbox field="ignoreAbandonedChangeStatus"
-                            checked="${it.topicAssociation.ignoreAbandonedChangeStatus}"
-                            default="false"/>
-            </f:entry>
-        </f:optionalBlock>
+        <f:optionalProperty field="topicAssociation"
+                            title="${%Topic Association}"
+                            help="/plugin/gerrit-trigger/trigger/help-TopicAssociation.html" />
 
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">

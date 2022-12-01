@@ -67,7 +67,7 @@ public class TopicAssociationTriggerTest {
         FreeStyleProject job = j.createFreeStyleProject();
         job.getBuildersList().add(new ParametersBuilder());
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
-        trigger.setEnableTopicAssociation(true);
+        trigger.setTopicAssociation(new TopicAssociation());
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         trigger.setGerritProjects(Collections.singletonList(new GerritProject(CompareType.ANT, pattern,
                 Collections.singletonList(new Branch(CompareType.ANT, "**")),
@@ -156,7 +156,6 @@ public class TopicAssociationTriggerTest {
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
         TopicAssociation ta = new TopicAssociation();
-        ta.setEnabled(true);
         ta.setIgnoreNewChangeStatus(true);
 
         jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
@@ -179,8 +178,8 @@ public class TopicAssociationTriggerTest {
         assertEquals(4, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
-        jobs.get(0).getTrigger(GerritTrigger.class).setEnableTopicAssociation(false);
-        jobs.get(1).getTrigger(GerritTrigger.class).setEnableTopicAssociation(false);
+        jobs.get(0).getTrigger(GerritTrigger.class).setTopicAssociation(null);
+        jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(null);
 
         triggerAndWait(projects[0], GerritChangeStatus.NEW);
         assertEquals(5, jobs.get(0).getLastBuild().getNumber());

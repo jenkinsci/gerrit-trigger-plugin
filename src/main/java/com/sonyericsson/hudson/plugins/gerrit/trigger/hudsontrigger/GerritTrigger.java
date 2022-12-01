@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
@@ -72,6 +73,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
@@ -133,6 +135,8 @@ public class GerritTrigger extends Trigger<Job> {
     private Integer gerritBuildAbortedVerifiedValue;
     private Integer gerritBuildAbortedCodeReviewValue;
     private boolean silentMode;
+    @Deprecated
+    private transient boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;
     private TopicAssociation topicAssociation;
     private String notificationLevel;
     private boolean silentStartMode;
@@ -950,13 +954,23 @@ public class GerritTrigger extends Trigger<Job> {
      */
     private boolean isTopicInteresting(Topic topic, GerritProject project, ChangeBasedEvent event) {
 
+        if (topicAssociation == null) {
+            return false;
+        }
+
         GerritServer server = PluginImpl.getServer_(event);
 
         if (server == null) {
             return false;
         }
 
+        logger.trace("query topic {} from {} ({}:{})", topic, server.getName(), server.getHostName(),
+                server.getSshPort());
+
         Map<Change, PatchSet> changes = topic.getChanges(server.getQueryHandler());
+
+        logger.trace("found {} changes with topic {} from {}", changes.size(), topic, server.getName());
+
         for (Change change : changes.keySet()) {
 
             if (change.equals(event.getChange())) {
@@ -970,6 +984,8 @@ public class GerritTrigger extends Trigger<Job> {
             if (!topicAssociation.isInterestingChangeStatus(change)) {
                 continue;
             }
+
+            logger.trace("topic: {} and change status: {} is interesting", topic, change.getStatus());
 
             return true;
         }
@@ -1022,7 +1038,8 @@ public class GerritTrigger extends Trigger<Job> {
      * @return true if the topic associated to the build is interesting otherwise false.
      */
     private boolean isTopicAssociationInteresting(ChangeBasedEvent event, GerritProject project) {
-        if (!isTopicAssociation()) {
+
+        if (topicAssociation == null) {
             return false;
         }
 
@@ -1865,6 +1882,26 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Enable or disable Topic Association option.
+     *
+     * @param enable true or false.
+     */
+    @Deprecated
+    public void setEnableTopicAssociation(boolean enable) {
+        this.enableTopicAssociation = enable;
+    }
+
+    /**
+    * Check if topic association is enabled.
+    *
+    * @return true if so.
+    */
+    @Deprecated
+    public boolean isEnableTopicAssociation() {
+        return enableTopicAssociation;
+    }
+
+    /**
      * DataBoundSetter for TopicAssociation.
      * Used for jelly file.
      *
@@ -1876,55 +1913,14 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
-     * Enable or disable Topic Association option.
-     *
-     * @param enable true or false.
-     */
-    public void setEnableTopicAssociation(boolean enable) {
-        if (this.topicAssociation == null) {
-            this.topicAssociation = new TopicAssociation();
-        }
-        this.topicAssociation.setEnabled(enable);
-    }
-
-    /**
-     * Check if topic association is enabled.
+     * Returns the assigned TopicAssociation object.
      * Used for jelly file.
      *
-     * @return true if so.
+     * @return TopicAssociation object
      */
-    public boolean isTopicAssociation() {
-        return topicAssociation != null && topicAssociation.isEnabled();
-    }
-
-    /**
-     * Returns true if a change in state NEW should be ignored otherwise false.
-     * Used for jelly file.
-     *
-     * @return true if it should be ignored otherwise false
-     */
-    public boolean isIgnoreNewChangeStatus() {
-        return topicAssociation != null && topicAssociation.isIgnoreNewChangeStatus();
-    }
-
-    /**
-     * Returns true if a change in state NEW should be ignored otherwise false.
-     * Used for jelly file.
-     *
-     * @return true if it should be ignored otherwise false
-     */
-    public boolean isIgnoreMergedChangeStatus() {
-        return topicAssociation != null && topicAssociation.isIgnoreMergedChangeStatus();
-    }
-
-    /**
-     * Returns true if a change in state NEW should be ignored otherwise false.
-     * Used for jelly file.
-     *
-     * @return true if it should be ignored otherwise false
-     */
-    public boolean isIgnoreAbandonedChangeStatus() {
-        return topicAssociation != null && topicAssociation.isIgnoreAbandonedChangeStatus();
+    @CheckForNull
+    public TopicAssociation getTopicAssociation() {
+        return topicAssociation;
     }
 
     /**
@@ -2166,6 +2162,13 @@ public class GerritTrigger extends Trigger<Job> {
         if (projectListIsReady == null) {
             projectListIsReady = new CountDownLatch(0);
         }
+
+        if (enableTopicAssociation) {
+            topicAssociation = new TopicAssociation();
+        } else {
+            topicAssociation = null;
+        }
+
         return super.readResolve();
     }
     /*
