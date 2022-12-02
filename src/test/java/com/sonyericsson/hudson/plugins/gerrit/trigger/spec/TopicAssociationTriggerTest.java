@@ -7,8 +7,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TopicAssociation;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
@@ -61,11 +63,11 @@ public class TopicAssociationTriggerTest {
      * @throws IOException if so.
      */
     private FreeStyleProject createJob(String pattern) throws IOException {
+
         FreeStyleProject job = j.createFreeStyleProject();
         job.getBuildersList().add(new ParametersBuilder());
-
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
-        trigger.setEnableTopicAssociation(true);
+        trigger.setTopicAssociation(new TopicAssociation());
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         trigger.setGerritProjects(Collections.singletonList(new GerritProject(CompareType.ANT, pattern,
                 Collections.singletonList(new Branch(CompareType.ANT, "**")),
@@ -119,18 +121,20 @@ public class TopicAssociationTriggerTest {
     }
 
     /**
-     * Trigger a
+     * Trigger and wait.
      * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.createCommentAdded} event and wait until no activity.
      * @param project The gerrit project name.
+     * @param status The status of the change.
      * @throws Exception if so
      */
-    private void triggerAndWait(String project) throws Exception {
+    private void triggerAndWait(String project, GerritChangeStatus status) throws Exception {
         System.out.println("trigger " + project);
         String expected = "Triggering comment";
         CommentAdded event = Setup.createCommentAdded();
         event.setComment(expected);
         event.getChange().setProject(project);
         event.getChange().setTopic("topic");
+        event.getChange().setStatus(status);
         gerritServer.triggerEvent(event);
         j.waitUntilNoActivity();
     }
@@ -144,21 +148,45 @@ public class TopicAssociationTriggerTest {
      */
     @Test
     public void testTopicAssociationTrigger() throws Exception {
-        //CS IGNORE MagicNumber FOR NEXT 14 LINES. REASON: Testdata.
+        //CS IGNORE MagicNumber FOR NEXT 41 LINES. REASON: Testdata.
         server.waitForCommand("gerrit stream-events", 2000);
-        triggerAndWait(projects[0]);
+
+        triggerAndWait(projects[0], GerritChangeStatus.NEW);
         assertEquals(1, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
-        jobs.get(0).getTrigger(GerritTrigger.class).setEnableTopicAssociation(false);
-        jobs.get(1).getTrigger(GerritTrigger.class).setEnableTopicAssociation(false);
+        TopicAssociation ta = new TopicAssociation();
+        ta.setIgnoreNewChangeStatus(true);
 
-        triggerAndWait(projects[0]);
+        jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
+
+        triggerAndWait(projects[0], GerritChangeStatus.NEW);
         assertEquals(2, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
-        triggerAndWait(projects[1]);
-        assertEquals(2, jobs.get(0).getLastBuild().getNumber());
+        ta.setIgnoreMergedChangeStatus(true);
+        jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
+
+        triggerAndWait(projects[0], GerritChangeStatus.MERGED);
+        assertEquals(3, jobs.get(0).getLastBuild().getNumber());
+        assertEquals(1, jobs.get(1).getLastBuild().getNumber());
+
+        ta.setIgnoreAbandonedChangeStatus(true);
+        jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
+
+        triggerAndWait(projects[0], GerritChangeStatus.ABANDONED);
+        assertEquals(4, jobs.get(0).getLastBuild().getNumber());
+        assertEquals(1, jobs.get(1).getLastBuild().getNumber());
+
+        jobs.get(0).getTrigger(GerritTrigger.class).setTopicAssociation(null);
+        jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(null);
+
+        triggerAndWait(projects[0], GerritChangeStatus.NEW);
+        assertEquals(5, jobs.get(0).getLastBuild().getNumber());
+        assertEquals(1, jobs.get(1).getLastBuild().getNumber());
+
+        triggerAndWait(projects[1], GerritChangeStatus.NEW);
+        assertEquals(5, jobs.get(0).getLastBuild().getNumber());
         assertEquals(2, jobs.get(1).getLastBuild().getNumber());
     }
 

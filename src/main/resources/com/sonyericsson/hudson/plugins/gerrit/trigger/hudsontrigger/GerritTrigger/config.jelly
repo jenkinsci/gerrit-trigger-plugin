@@ -236,12 +236,11 @@
            <f:checkbox name="silentMode"
                        checked="${it.silentMode}"/>
         </f:entry>
-        <f:entry title="${%Enable Topic Association}"
-                 field="enableTopicAssociation"
-                 help="/plugin/gerrit-trigger/trigger/help-EnableTopicAssociation.html">
-           <f:checkbox name="enableTopicAssociation"
-                       checked="${it.enableTopicAssociation}"/>
-        </f:entry>
+
+        <f:optionalProperty field="topicAssociation"
+                            title="${%Topic Association}"
+                            help="/plugin/gerrit-trigger/trigger/help-TopicAssociation.html" />
+
         <f:entry title="${%Trigger on}"
                 help="/plugin/gerrit-trigger/trigger/help-GerritEventType.html">
             <f:hetero-list descriptors="${descriptor.getGerritEventDescriptors()}" items="${instance.triggerOnEvents}" name="triggerOnEvents" hasHeader="true"/>

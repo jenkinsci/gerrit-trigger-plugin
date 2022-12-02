@@ -1,0 +1,21 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+        <f:entry title="${%Ignore changes in state NEW}"
+                 help="/plugin/gerrit-trigger/trigger/help-TopicAssociationIgnoreNew.html">
+            <f:checkbox field="ignoreNewChangeStatus"
+                        checked="${it.ignoreNewChangeStatus}"
+                        default="false"/>
+        </f:entry>
+        <f:entry title="${%Ignore changes in state MERGED}"
+                 help="/plugin/gerrit-trigger/trigger/help-TopicAssociationIgnoreMerged.html">
+            <f:checkbox field="ignoreMergedChangeStatus"
+                        checked="${it.ignoreMergedChangeStatus}"
+                        default="false"/>
+        </f:entry>
+        <f:entry title="${%Ignore changes in state ABANDONED}"
+                 help="/plugin/gerrit-trigger/trigger/help-TopicAssociationIgnoreAbandoned.html">
+            <f:checkbox field="ignoreAbandonedChangeStatus"
+                        checked="${it.ignoreAbandonedChangeStatus}"
+                        default="false"/>
+        </f:entry>
+</j:jelly>

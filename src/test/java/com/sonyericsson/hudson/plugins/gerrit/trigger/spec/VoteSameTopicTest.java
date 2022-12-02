@@ -6,9 +6,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TopicAssociation;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
@@ -65,7 +66,7 @@ public class VoteSameTopicTest {
         job.getBuildersList().add(new ParametersBuilder());
 
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
-        trigger.setEnableTopicAssociation(true);
+        trigger.setTopicAssociation(new TopicAssociation());
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         trigger.setGerritProjects(Collections.singletonList(new GerritProject(CompareType.ANT, pattern,
                 Collections.singletonList(new Branch(CompareType.ANT, "**")),
