@@ -1888,7 +1888,11 @@ public class GerritTrigger extends Trigger<Job> {
      */
     @Deprecated
     public void setEnableTopicAssociation(boolean enable) {
-        this.enableTopicAssociation = enable;
+        if (enable) {
+            topicAssociation = new TopicAssociation();
+        } else {
+            topicAssociation = null;
+        }
     }
 
     /**
@@ -1898,7 +1902,7 @@ public class GerritTrigger extends Trigger<Job> {
     */
     @Deprecated
     public boolean isEnableTopicAssociation() {
-        return enableTopicAssociation;
+        return topicAssociation != null;
     }
 
     /**
