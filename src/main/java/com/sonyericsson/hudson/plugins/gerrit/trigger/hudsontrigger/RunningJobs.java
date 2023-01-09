@@ -5,6 +5,10 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServe
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Cause;
@@ -73,10 +77,14 @@ public class RunningJobs {
     */
    public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
    {
-       if (policy == null || !policy.isEnabled() && (event instanceof ManualPatchsetCreated
-               && !policy.isAbortManualPatchsets())) {
+       if (policy == null || !policy.isEnabled()) {
+           return;
+       }
+
+       if ((event instanceof ManualPatchsetCreated && !policy.isAbortManualPatchsets())) {
           return;
        }
+
        this.cancelOutDatedEvents(event, policy, jobName);
    }
 
@@ -131,9 +139,19 @@ public class RunningJobs {
                outdatedEvents.add(runningChangeBasedEvent);
                it.remove();
            }
+
            // add our new job
            if (!outdatedEvents.contains(event)) {
-               runningJobs.add(event);
+               if (event instanceof ChangeAbandoned) {
+                   for (PluginGerritEvent e : trigger.getTriggerOnEvents()) {
+                       if (e instanceof PluginChangeAbandonedEvent) {
+                           runningJobs.add(event);
+                           break;
+                       }
+                   }
+               } else {
+                   runningJobs.add(event);
+               }
            }
        }
 
@@ -163,17 +181,15 @@ public class RunningJobs {
        // Find all entries in runningJobs with the same Change #.
        // Optionally, ignore all manual patchsets and don't cancel builds due to
        // a retrigger of an older build.
-       boolean abortBecauseOfTopic = trigger.abortBecauseOfTopic(event,
-               policy,
-               runningChangeBasedEvent);
+       boolean abortBecauseOfTopic = trigger.abortBecauseOfTopic(event, policy, runningChangeBasedEvent);
 
-       if (!abortBecauseOfTopic && !runningChangeBasedEvent.getChange().equals(event.getChange())) {
+       Change change = runningChangeBasedEvent.getChange();
+       if (!abortBecauseOfTopic && !change.equals(event.getChange())) {
            return true;
        }
 
-       boolean shouldCancelManual = (runningChangeBasedEvent instanceof ManualPatchsetCreated
-               && policy.isAbortManualPatchsets()
-               || !(runningChangeBasedEvent instanceof ManualPatchsetCreated));
+       boolean shouldCancelManual = (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
+               || policy.isAbortManualPatchsets());
 
        if (!abortBecauseOfTopic && !shouldCancelManual) {
            return true;
@@ -183,7 +199,10 @@ public class RunningJobs {
                || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                < Integer.parseInt(event.getPatchSet().getNumber());
 
-       if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber) {
+       boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
+               && (event instanceof ChangeAbandoned);
+
+       if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
            return true;
        }
 

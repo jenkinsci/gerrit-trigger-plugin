@@ -764,7 +764,7 @@ public class SpecGerritTriggerHudsonTest {
         ignoreProject.getBuildersList().add(new SleepBuilder(3000));
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
         //serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
@@ -800,13 +800,13 @@ public class SpecGerritTriggerHudsonTest {
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new SleepBuilder(6000));
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         FreeStyleProject cancelProject2 = new TestUtils.JobBuilder(j).name("cancel-2-project" + rand.nextInt()).build();
         cancelProject2.getBuildersList().add(new SleepBuilder(6000));
 
         GerritTrigger trigger2 = cancelProject2.getTrigger(GerritTrigger.class);
-        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -846,7 +846,7 @@ public class SpecGerritTriggerHudsonTest {
         policy.setEnabled(true);
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 

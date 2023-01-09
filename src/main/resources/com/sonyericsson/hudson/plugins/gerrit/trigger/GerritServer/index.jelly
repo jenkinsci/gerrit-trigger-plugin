@@ -79,28 +79,35 @@
                                     default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
                     </f:entry>
                     <f:optionalBlock name="buildCurrentPatchesOnly"
-                                                             title="${%Build Current Patches Only}"
-                                                             help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html"
-                                                             checked="${it.config.buildCurrentPatchesOnly.enabled}">
-                                                <f:entry title="${%Abort new patch sets}"
-                                                         help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
-                                                    <f:checkbox name="abortNewPatchsets"
-                                                                checked="${it.config.buildCurrentPatchesOnly.abortNewPatchsets}"
-                                                                default="false"/>
-                                                </f:entry>
-                                                <f:entry title="${%Abort manual patch sets}"
-                                                         help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
-                                                    <f:checkbox name="abortManualPatchsets"
-                                                                checked="${it.config.buildCurrentPatchesOnly.abortManualPatchsets}"
-                                                                default="false"/>
-                                                </f:entry>
-                                                <f:entry title="${%Abort patch sets with same topic}"
-                                                         help="/plugin/gerrit-trigger/help-GerritAbortPatchSetsWithSameTopic.html">
-                                                    <f:checkbox name="abortSameTopic"
-                                                                checked="${it.config.buildCurrentPatchesOnly.abortSameTopic}"
-                                                                default="false"/>
-                                                </f:entry>
-                                            </f:optionalBlock>
+                                     title="${%Build Current Patches Only}"
+                                     help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html"
+                                     checked="${it.config.buildCurrentPatchesOnly.enabled}">
+                        <f:entry title="${%Abort new patch sets}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortNewPatchSets.html">
+                            <f:checkbox name="abortNewPatchsets"
+                                        checked="${it.config.buildCurrentPatchesOnly.abortNewPatchsets}"
+                                        default="false"/>
+                        </f:entry>
+                        <f:entry title="${%Abort manual patch sets}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortManualPatchSets.html">
+                            <f:checkbox name="abortManualPatchsets"
+                                        checked="${it.config.buildCurrentPatchesOnly.abortManualPatchsets}"
+                                        default="false"/>
+                        </f:entry>
+                        <f:entry title="${%Abort patch sets with same topic}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortPatchSetsWithSameTopic.html">
+                            <f:checkbox name="abortSameTopic"
+                                        checked="${it.config.buildCurrentPatchesOnly.abortSameTopic}"
+                                        default="false"/>
+                        </f:entry>
+                        <f:entry title="${%Abort abandoned patch sets}"
+                                 help="/plugin/gerrit-trigger/help-GerritAbortAbandonedPatchsets.html">
+                            <f:checkbox name="abortAbandonedPatchsets"
+                                        field="abortAbandonedPatchsets"
+                                        checked="${it.config.buildCurrentPatchesOnly.abortAbandonedPatchsets}"
+                                        default="false"/>
+                        </f:entry>
+                    </f:optionalBlock>
                     <f:entry title="${%Vote patch sets with same topic}"
                             help="/plugin/gerrit-trigger/help-GerritVotePatchSetsWithSameTopic.html"
                             description="${it.config.voteSameTopicDescription}">

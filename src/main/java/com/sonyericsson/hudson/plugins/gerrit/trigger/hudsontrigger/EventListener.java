@@ -29,10 +29,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEve
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import hudson.model.CauseAction;
@@ -223,6 +226,49 @@ public final class EventListener implements GerritEventListener {
      * @param project the project to build.
      */
     protected void schedule(GerritTrigger t, GerritCause cause, GerritTriggeredEvent event, final Job project) {
+
+        boolean continueScheduleBuild = true;
+        if (event instanceof ChangeBasedEvent) {
+            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+            if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled()) {
+                t.getRunningJobs(project).cancelTriggeredJob(changeBasedEvent,
+                        t.getJob().getFullName(), t.getBuildCancellationPolicy());
+
+                if (event instanceof ChangeAbandoned) {
+                    if (t.getBuildCancellationPolicy().isAbortAbandonedPatchsets()) {
+                        continueScheduleBuild = false;
+                        for (PluginGerritEvent e : t.getTriggerOnEvents()) {
+                            if (e instanceof PluginChangeAbandonedEvent) {
+                                continueScheduleBuild = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+            if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
+                t.getRunningJobs(project).scheduled(changeBasedEvent);
+
+                if (event instanceof ChangeAbandoned) {
+                    if (serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
+                        continueScheduleBuild = false;
+                        for (PluginGerritEvent e : t.getTriggerOnEvents()) {
+                            if (e instanceof PluginChangeAbandonedEvent) {
+                                continueScheduleBuild = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!continueScheduleBuild) {
+            return;
+        }
+
         BadgeAction badgeAction = new BadgeAction(event);
         //during low traffic we still don't want to spam Gerrit, 3 is a nice number, isn't it?
         int projectbuildDelay = t.getBuildScheduleDelay();
@@ -245,18 +291,8 @@ public final class EventListener implements GerritEventListener {
                     + project.getClass().getName());
         }
 
-        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled())
-            {
-                t.getRunningJobs(project).cancelTriggeredJob(changeBasedEvent,
-                        t.getJob().getFullName(), t.getBuildCancellationPolicy());
-            }
-            if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
-                t.getRunningJobs(project).scheduled(changeBasedEvent);
-            }
             if (null != changeBasedEvent.getPatchSet()) {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
                         project.getName(), (futureBuild != null),

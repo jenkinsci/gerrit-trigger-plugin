@@ -54,6 +54,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
@@ -666,6 +667,21 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
+        if (event instanceof ChangeAbandoned) {
+            if (buildCancellationPolicy != null && buildCancellationPolicy.isEnabled()) {
+                if (buildCancellationPolicy.isAbortAbandonedPatchsets()) {
+                    return true;
+                }
+            }
+
+            IGerritHudsonTriggerConfig config = getServerConfig(event);
+            if (config != null && config.getBuildCurrentPatchesOnly().isEnabled()) {
+                if (config.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
+                    return true;
+                }
+            }
+        }
+
         for (PluginGerritEvent e : triggerOnEvents) {
             if (!e.shouldTriggerOn(event)) {
                 continue;
@@ -1090,11 +1106,11 @@ public class GerritTrigger extends Trigger<Job> {
             }
         }
 
-        if (!shouldTriggerOnEventType(event)) {
+        if (!isServerInteresting(event)) {
             return false;
         }
 
-        if (!isServerInteresting(event)) {
+        if (!shouldTriggerOnEventType(event)) {
             return false;
         }
 
