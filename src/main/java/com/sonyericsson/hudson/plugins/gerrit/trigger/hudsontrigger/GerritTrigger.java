@@ -861,7 +861,7 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                     final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
                     createListener().schedule(this, cause, context.getEvent(), context.getThisBuild().getProject());
-                    runningJobs.add((ChangeBasedEvent)context.getEvent());
+                    getRunningJobs(this.job).add((ChangeBasedEvent)context.getEvent());
                 }
             }
         }
@@ -914,7 +914,7 @@ public class GerritTrigger extends Trigger<Job> {
             }
             GerritUserCause cause = new GerritUserCause(event, silentMode);
             schedule(cause, event, project);
-            runningJobs.add((ChangeBasedEvent)event);
+            getRunningJobs(this.job).add((ChangeBasedEvent)event);
         }
     }
 
