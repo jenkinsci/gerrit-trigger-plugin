@@ -154,7 +154,7 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
     /**
      * Standard seter for abortAbandonedPatchsets.
      *
-     * @param abortAbandonedPatchsets
+     * @param abortAbandonedPatchsets true if abandoned patchsets should abort build.
      */
     public void setAbortAbandonedPatchsets(boolean abortAbandonedPatchsets) {
         this.abortAbandonedPatchsets = abortAbandonedPatchsets;

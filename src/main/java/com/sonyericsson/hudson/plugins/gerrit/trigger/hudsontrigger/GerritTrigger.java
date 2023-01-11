@@ -44,6 +44,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -860,6 +861,7 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                     final GerritUserCause cause = new GerritUserCause(context.getEvent(), silentMode);
                     createListener().schedule(this, cause, context.getEvent(), context.getThisBuild().getProject());
+                    runningJobs.add((ChangeBasedEvent)context.getEvent());
                 }
             }
         }
@@ -912,6 +914,7 @@ public class GerritTrigger extends Trigger<Job> {
             }
             GerritUserCause cause = new GerritUserCause(event, silentMode);
             schedule(cause, event, project);
+            runningJobs.add((ChangeBasedEvent)event);
         }
     }
 
@@ -1076,6 +1079,42 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         return isTopicInteresting(topic, project, event);
+    }
+
+    /**
+     * Checks based on the current event if the job should just be aborted,
+     * or even a new job should be triggered.
+     *
+     * @param event The ChangeBasedEvent.
+     * @return true if the job should only be aborted without triggering a new one, otherwise false.
+     */
+    public boolean isOnlyAbortRunningBuild(ChangeBasedEvent event) {
+        if (!(event instanceof ChangeAbandoned)) {
+            return false;
+        }
+
+        for (PluginGerritEvent e : triggerOnEvents) {
+            if (e instanceof PluginChangeAbandonedEvent) {
+                return false;
+            }
+        }
+
+        boolean isJobConfigAbortAbandonedPatchsetsEnabled = false;
+        if (buildCancellationPolicy != null && buildCancellationPolicy.isEnabled()) {
+            if (buildCancellationPolicy.isAbortAbandonedPatchsets()) {
+                isJobConfigAbortAbandonedPatchsetsEnabled = true;
+            }
+        }
+
+        boolean isServerConfigAbortAbandonedPatchsetsEnabled = false;
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+        if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
+            if (serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
+                isServerConfigAbortAbandonedPatchsetsEnabled = true;
+            }
+        }
+
+        return isJobConfigAbortAbandonedPatchsetsEnabled || isServerConfigAbortAbandonedPatchsetsEnabled;
     }
 
     /**

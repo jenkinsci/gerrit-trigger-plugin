@@ -5,8 +5,6 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServe
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -25,6 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +103,6 @@ public class RunningJobs {
        }
 
        BuildCancellationPolicy serverBuildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
-
        if (!serverBuildCurrentPatchesOnly.isEnabled()
                || (event instanceof ManualPatchsetCreated
                && !serverBuildCurrentPatchesOnly.isAbortManualPatchsets())) {
@@ -123,6 +122,8 @@ public class RunningJobs {
    private void cancelOutDatedEvents(ChangeBasedEvent event, BuildCancellationPolicy policy, String jobName)
    {
        List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
+       CauseOfInterruption cause = new NewPatchSetInterruption();
+
        synchronized (runningJobs) {
            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
            while (it.hasNext()) {
@@ -142,13 +143,8 @@ public class RunningJobs {
 
            // add our new job
            if (!outdatedEvents.contains(event)) {
-               if (event instanceof ChangeAbandoned) {
-                   for (PluginGerritEvent e : trigger.getTriggerOnEvents()) {
-                       if (e instanceof PluginChangeAbandonedEvent) {
-                           runningJobs.add(event);
-                           break;
-                       }
-                   }
+               if (trigger.isOnlyAbortRunningBuild(event)) {
+                   cause = new AbandonedPatchsetInterruption();
                } else {
                    runningJobs.add(event);
                }
@@ -159,7 +155,7 @@ public class RunningJobs {
        for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
            logger.debug("Cancelling build for " + outdatedEvent);
            try {
-               cancelMatchingJobs(outdatedEvent, jobName);
+               cancelMatchingJobs(outdatedEvent, jobName, cause);
            } catch (Exception e) {
                // Ignore any problems with canceling the job.
                logger.error("Error canceling job", e);
@@ -224,8 +220,9 @@ public class RunningJobs {
     *
     * @param event The event that originally triggered the build.
     * @param jobName  job name to match on.
+    * @param cause The cause of the build interruption.
     */
-   private void cancelMatchingJobs(GerritTriggeredEvent event, String jobName) {
+   private void cancelMatchingJobs(GerritTriggeredEvent event, String jobName, CauseOfInterruption cause) {
        try {
            if (!(this.job instanceof Queue.Task)) {
                logger.error("Error canceling job. The job is not of type Task. Job name: " + getJob().getName());
@@ -261,7 +258,7 @@ public class RunningJobs {
                        continue;
                    }
 
-                   e.interrupt(Result.ABORTED, new NewPatchSetInterruption());
+                   e.interrupt(Result.ABORTED, cause);
                }
            }
        } catch (Exception e) {
@@ -289,6 +286,15 @@ public class RunningJobs {
            }
        }
        return false;
+   }
+
+    /**
+     * Adds the event to the running jobs.
+     *
+     * @param event The ChangeBasedEvent.
+     */
+   public void add(ChangeBasedEvent event) {
+       runningJobs.add(event);
    }
 
    /**
