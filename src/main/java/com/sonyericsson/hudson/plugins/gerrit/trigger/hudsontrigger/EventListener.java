@@ -127,7 +127,7 @@ public final class EventListener implements GerritEventListener {
             if (t.isInteresting(triggeredEvent)) {
                 logger.trace("The event is interesting.");
                 abortBuild(t, triggeredEvent);
-                if (isOnlyAbortRunningBuild(t, triggeredEvent)) {
+                if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
                     logger.trace("Just aborting build based on event not scheduling new one.");
                     return;
                 }
@@ -165,7 +165,7 @@ public final class EventListener implements GerritEventListener {
         if (t.isInteresting(event)) {
             logger.trace("The event is interesting.");
             abortBuild(t, event);
-            if (isOnlyAbortRunningBuild(t, event)) {
+            if (t.isOnlyAbortRunningBuild(event)) {
                 logger.trace("Just aborting build based on event not scheduling new one.");
                 return;
             }
@@ -209,31 +209,13 @@ public final class EventListener implements GerritEventListener {
         if (t.isInteresting(event) && t.commentAddedMatch(event)) {
             logger.trace("The event is interesting.");
             abortBuild(t, event);
-            if (isOnlyAbortRunningBuild(t, event)) {
+            if (t.isOnlyAbortRunningBuild(event)) {
                 logger.trace("Just aborting build based on event not scheduling new one.");
                 return;
             }
             notifyOnTriggered(t, event);
             schedule(t, new GerritCause(event, t.isSilentMode()), event);
         }
-    }
-
-    /**
-     * Check if based on the BuildCancellationPolicy the current running build should be aborted,
-     * without triggering a new build.
-     *
-     * @param t GerritTrigger class.
-     * @param event The GerritTriggeredEvent.
-     * @return true if the event should just abort a build and not schedule a new one, otherwise false.
-     */
-    boolean isOnlyAbortRunningBuild(GerritTrigger t, GerritTriggeredEvent event) {
-
-        if (!(event instanceof ChangeBasedEvent)) {
-            return false;
-        }
-
-        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-        return t.isOnlyAbortRunningBuild(changeBasedEvent);
     }
 
     /**

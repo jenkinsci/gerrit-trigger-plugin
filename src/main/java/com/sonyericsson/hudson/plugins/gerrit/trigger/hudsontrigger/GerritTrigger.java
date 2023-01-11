@@ -1088,7 +1088,12 @@ public class GerritTrigger extends Trigger<Job> {
      * @param event The ChangeBasedEvent.
      * @return true if the job should only be aborted without triggering a new one, otherwise false.
      */
-    public boolean isOnlyAbortRunningBuild(ChangeBasedEvent event) {
+    public boolean isOnlyAbortRunningBuild(GerritTriggeredEvent event) {
+
+        if (!(event instanceof ChangeBasedEvent)) {
+            return false;
+        }
+
         if (!(event instanceof ChangeAbandoned)) {
             return false;
         }
@@ -1099,22 +1104,20 @@ public class GerritTrigger extends Trigger<Job> {
             }
         }
 
-        boolean isJobConfigAbortAbandonedPatchsetsEnabled = false;
         if (buildCancellationPolicy != null && buildCancellationPolicy.isEnabled()) {
             if (buildCancellationPolicy.isAbortAbandonedPatchsets()) {
-                isJobConfigAbortAbandonedPatchsetsEnabled = true;
+                return true;
             }
         }
 
-        boolean isServerConfigAbortAbandonedPatchsetsEnabled = false;
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
         if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
             if (serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
-                isServerConfigAbortAbandonedPatchsetsEnabled = true;
+                return true;
             }
         }
 
-        return isJobConfigAbortAbandonedPatchsetsEnabled || isServerConfigAbortAbandonedPatchsetsEnabled;
+        return false;
     }
 
     /**
