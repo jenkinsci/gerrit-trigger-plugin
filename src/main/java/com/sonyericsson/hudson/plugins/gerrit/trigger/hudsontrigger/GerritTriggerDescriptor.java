@@ -171,9 +171,15 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
     /**
      * Fill the server dropdown with the list of servers configured globally.
      *
+     * @param project the current project.
      * @return list of servers.
      */
-    public ListBoxModel doFillServerNameItems() {
+    public ListBoxModel doFillServerNameItems(@AncestorInPath Item project) {
+        if (project == null) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        } else {
+            project.checkPermission(Item.CONFIGURE);
+        }
         ListBoxModel items = new ListBoxModel();
         items.add(Messages.AnyServer(), ANY_SERVER);
         List<String> serverNames = PluginImpl.getServerNames_();

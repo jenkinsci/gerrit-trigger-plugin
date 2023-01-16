@@ -168,6 +168,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
          * @return the list of server names, depending on the current value in the textbox.
          */
         public AutoCompletionCandidates doAutoCompleteCopyNewItemFrom(@QueryParameter final String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             final AutoCompletionCandidates r = new AutoCompletionCandidates();
 
             PluginImpl plugin = PluginImpl.getInstance();

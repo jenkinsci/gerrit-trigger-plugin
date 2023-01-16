@@ -35,8 +35,11 @@ import hudson.model.Action;
 import java.io.IOException;
 
 import hudson.model.Job;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.verb.POST;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
@@ -95,7 +98,8 @@ public class RetriggerAllAction implements Action {
      * It does a null check on the context before calling.
      * @return true if there are any other builds in the context.
      */
-    private boolean hasOthers() {
+    @Restricted(NoExternalUse.class)
+    public boolean hasOthers() {
         if (context != null) {
             return context.hasOthers();
         } else {
@@ -125,7 +129,8 @@ public class RetriggerAllAction implements Action {
      * checks if the current user has permission to build/retrigger this and the other projects.
      * @return true if so.
      */
-    private boolean hasPermission() {
+    @Restricted(NoExternalUse.class)
+    public boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         }
@@ -147,6 +152,7 @@ public class RetriggerAllAction implements Action {
      * @param response StaplerResponse the response handler.
      * @throws IOException in case of Stapler issues
      */
+    @POST
     public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
 
         if (context == null || context.getThisBuild() == null) {

@@ -1,0 +1,9 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <j:if test="${action.hasPermission() &amp;&amp; action.hasOthers()}">
+        <l:task icon="${action.iconFileName}" title="${action.displayName}"
+                href="${rootURL}/${it.url}${action.urlName}/index"
+                post="true"
+        />
+    </j:if>
+</j:jelly>

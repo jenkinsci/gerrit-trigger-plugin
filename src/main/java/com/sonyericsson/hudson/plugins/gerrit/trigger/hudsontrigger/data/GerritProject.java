@@ -29,6 +29,7 @@ import hudson.Extension;
 import hudson.RelativePath;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.model.Item;
 import hudson.util.ComboBoxModel;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import jenkins.model.Jenkins;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -326,11 +328,17 @@ public class GerritProject implements Describable<GerritProject> {
          * Used to fill the project pattern combobox with AJAX.
          * The filled values will depend on the server that the user has chosen from the dropdown.
          *
+         * @param project the current project.
          * @param serverName the name of the server that the user has chosen.
          * @return ComboBoxModels containing a list of all Gerrit Projects found on that server.
          */
-        public ComboBoxModel doFillPatternItems(@QueryParameter("serverName")
+        public ComboBoxModel doFillPatternItems(@AncestorInPath Item project, @QueryParameter("serverName")
                 @RelativePath("..") final String serverName) {
+            if (project == null) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                project.checkPermission(Item.CONFIGURE);
+            }
             Collection<String> projects = new HashSet<String>();
 
             if (serverName != null && !serverName.isEmpty()) {
