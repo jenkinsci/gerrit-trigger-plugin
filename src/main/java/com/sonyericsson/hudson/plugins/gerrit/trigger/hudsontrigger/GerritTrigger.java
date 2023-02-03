@@ -2176,11 +2176,8 @@ public class GerritTrigger extends Trigger<Job> {
         if (projectListIsReady == null) {
             projectListIsReady = new CountDownLatch(0);
         }
-
-        if (enableTopicAssociation) {
+        if (topicAssociation == null) {
             topicAssociation = new TopicAssociation();
-        } else {
-            topicAssociation = null;
         }
 
         return super.readResolve();
