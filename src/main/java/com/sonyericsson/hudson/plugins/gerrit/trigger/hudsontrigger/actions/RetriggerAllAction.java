@@ -68,29 +68,17 @@ public class RetriggerAllAction implements Action {
 
     @Override
     public String getIconFileName() {
-        if (!hasPermission() || isBuilding() || !hasOthers()) {
-            return null;
-        } else {
-            return getPluginImageUrl("icon_retrigger24.png");
-        }
+        return getPluginImageUrl("icon_retrigger24.png");
     }
 
     @Override
     public String getDisplayName() {
-        if (!hasPermission() || isBuilding() || !hasOthers()) {
-            return null;
-        } else {
-            return Messages.RetriggerAll();
-        }
+        return Messages.RetriggerAll();
     }
 
     @Override
     public String getUrlName() {
-        if (!hasPermission() || isBuilding() || !hasOthers()) {
-            return null;
-        } else {
-            return "gerrit-trigger-retrigger-all";
-        }
+        return "gerrit-trigger-retrigger-all";
     }
 
     /**
@@ -98,7 +86,6 @@ public class RetriggerAllAction implements Action {
      * It does a null check on the context before calling.
      * @return true if there are any other builds in the context.
      */
-    @Restricted(NoExternalUse.class)
     public boolean hasOthers() {
         if (context != null) {
             return context.hasOthers();
@@ -129,7 +116,6 @@ public class RetriggerAllAction implements Action {
      * checks if the current user has permission to build/retrigger this and the other projects.
      * @return true if so.
      */
-    @Restricted(NoExternalUse.class)
     public boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
@@ -147,6 +133,15 @@ public class RetriggerAllAction implements Action {
     }
 
     /**
+     * Displays the retrigger all option if permission is granted and the build is not already running.
+     * @return true if so.
+     */
+    @Restricted(NoExternalUse.class)
+    public boolean isVisible() {
+        return hasPermission() && hasOthers() && !isBuilding();
+    }
+
+    /**
      * Handles the request to re-trigger and redirects back to the page that called.
      * @param request StaplerRequest the request.
      * @param response StaplerResponse the response handler.
@@ -156,21 +151,6 @@ public class RetriggerAllAction implements Action {
     public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
 
         if (context == null || context.getThisBuild() == null) {
-            return;
-        }
-
-        if (!hasPermission()) {
-            //TODO Access denied message to user?
-            return;
-        }
-
-        if (isBuilding()) {
-            //TODO show error to user?
-            return;
-        }
-
-        if (!context.hasOthers()) {
-            //There is no reason to run this action on a lonely project.
             return;
         }
 

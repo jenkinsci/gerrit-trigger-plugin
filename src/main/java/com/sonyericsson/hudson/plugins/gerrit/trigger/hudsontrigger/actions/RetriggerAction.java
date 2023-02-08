@@ -66,29 +66,17 @@ public class RetriggerAction implements Action {
 
     @Override
     public String getIconFileName() {
-        if (!hasPermission() || isBuilding()) {
-            return null;
-        } else {
-            return getPluginImageUrl("icon_retrigger24.png");
-        }
+        return getPluginImageUrl("icon_retrigger24.png");
     }
 
     @Override
     public String getDisplayName() {
-        if (!hasPermission() || isBuilding()) {
-            return null;
-        } else {
-            return Messages.Retrigger();
-        }
+        return Messages.Retrigger();
     }
 
     @Override
     public String getUrlName() {
-        if (!hasPermission() || isBuilding()) {
-            return null;
-        } else {
-            return "gerrit-trigger-retrigger-this";
-        }
+        return "gerrit-trigger-retrigger-this";
     }
 
     /**
@@ -112,13 +100,21 @@ public class RetriggerAction implements Action {
      * checks if the current user has permission to build/retrigger the project.
      * @return true if so.
      */
-    @Restricted(NoExternalUse.class)
     public boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         } else {
             return context.getThisBuild().getProject().hasPermission(PluginImpl.RETRIGGER);
         }
+    }
+
+    /**
+     * Displays the retrigger option if permission is granted and the build is not already running.
+     * @return true if so.
+     */
+    @Restricted(NoExternalUse.class)
+    public boolean isVisible() {
+        return hasPermission() && !isBuilding();
     }
 
     /**
@@ -131,16 +127,6 @@ public class RetriggerAction implements Action {
     public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
 
         if (context == null || context.getThisBuild() == null) {
-            return;
-        }
-
-        if (!hasPermission()) {
-            //TODO Access denied message to user?
-            return;
-        }
-
-        if (isBuilding()) {
-            //TODO show error to user?
             return;
         }
 
