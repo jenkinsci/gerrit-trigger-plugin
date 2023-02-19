@@ -153,7 +153,7 @@ public final class GerritPluginChecker {
         } catch (Exception e) {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
-            return null;
+            return false;
         } finally {
             if (execute != null) {
                 try {

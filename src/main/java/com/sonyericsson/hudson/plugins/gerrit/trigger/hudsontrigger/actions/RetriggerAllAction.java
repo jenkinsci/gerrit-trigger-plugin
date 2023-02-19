@@ -150,17 +150,6 @@ public class RetriggerAllAction implements Action {
     @POST
     public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
 
-        if (context == null || context.getThisBuild() == null) {
-            return;
-        }
-
-        TriggeredItemEntity entity = context.getThisBuild();
-        GerritTrigger trigger = GerritTrigger.getTrigger(entity.getProject());
-        if (trigger == null) {
-            //TODO show config error to user?
-            return;
-        }
-
         if (!hasPermission()) {
             //TODO Access denied message to user?
             return;
@@ -171,8 +160,19 @@ public class RetriggerAllAction implements Action {
             return;
         }
 
+        if (context == null || context.getThisBuild() == null) {
+            return;
+        }
+
         if (!context.hasOthers()) {
             //There is no reason to run this action on a lonely project.
+            return;
+        }
+
+        TriggeredItemEntity entity = context.getThisBuild();
+        GerritTrigger trigger = GerritTrigger.getTrigger(entity.getProject());
+        if (trigger == null) {
+            //TODO show config error to user?
             return;
         }
 
