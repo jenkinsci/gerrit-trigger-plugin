@@ -161,6 +161,21 @@ public class RetriggerAllAction implements Action {
             return;
         }
 
+        if (!hasPermission()) {
+            //TODO Access denied message to user?
+            return;
+        }
+
+        if (isBuilding()) {
+            //TODO show error to user?
+            return;
+        }
+
+        if (!context.hasOthers()) {
+            //There is no reason to run this action on a lonely project.
+            return;
+        }
+
         trigger.retriggerAllBuilds(context);
         response.sendRedirect2(entity.getProject().getAbsoluteUrl());
     }
