@@ -86,7 +86,7 @@ public class RetriggerAllAction implements Action {
      * It does a null check on the context before calling.
      * @return true if there are any other builds in the context.
      */
-    public boolean hasOthers() {
+    private boolean hasOthers() {
         if (context != null) {
             return context.hasOthers();
         } else {
