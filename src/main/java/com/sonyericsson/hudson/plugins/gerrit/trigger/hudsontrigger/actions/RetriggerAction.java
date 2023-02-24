@@ -100,7 +100,7 @@ public class RetriggerAction implements Action {
      * checks if the current user has permission to build/retrigger the project.
      * @return true if so.
      */
-    public boolean hasPermission() {
+    private boolean hasPermission() {
         if (context == null || context.getThisBuild() == null || context.getThisBuild().getProject() == null) {
             return false;
         } else {
