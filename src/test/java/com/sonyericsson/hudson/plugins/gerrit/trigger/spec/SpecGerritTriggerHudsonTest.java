@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
 import com.sonyericsson.jenkins.plugins.bfa.test.utils.PrintToLogBuilder;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -68,11 +69,12 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-//CS IGNORE MagicNumber FOR NEXT 800 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 920 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -764,7 +766,7 @@ public class SpecGerritTriggerHudsonTest {
         ignoreProject.getBuildersList().add(new SleepBuilder(3000));
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
         //serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
         PatchsetCreated firstEvent = Setup.createPatchsetCreated();
@@ -800,13 +802,13 @@ public class SpecGerritTriggerHudsonTest {
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new SleepBuilder(6000));
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         FreeStyleProject cancelProject2 = new TestUtils.JobBuilder(j).name("cancel-2-project" + rand.nextInt()).build();
         cancelProject2.getBuildersList().add(new SleepBuilder(6000));
 
         GerritTrigger trigger2 = cancelProject2.getTrigger(GerritTrigger.class);
-        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger2.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -846,7 +848,7 @@ public class SpecGerritTriggerHudsonTest {
         policy.setEnabled(true);
 
         GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
-        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false));
+        trigger.setBuildCancellationPolicy(new BuildCancellationPolicy(true, false, false, false));
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
 
@@ -947,5 +949,50 @@ public class SpecGerritTriggerHudsonTest {
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
         TestUtils.waitForBuilds(project, 2, WAIT);
+    }
+
+    /**
+     * Test abort running job if patchset is abandoned during runtime.
+     *
+     * @throws java.lang.Exception if it happens
+     */
+    @Test
+    @LocalData
+    public void testAbortAbandonedPatchset() throws Exception {
+        Random rand = new Random();
+        FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
+        cancelProject.getBuildersList().add(new SleepBuilder(3000));
+
+        BuildCancellationPolicy policy = new BuildCancellationPolicy(true, false, false, false);
+        GerritTrigger trigger = cancelProject.getTrigger(GerritTrigger.class);
+        trigger.setBuildCancellationPolicy(policy);
+
+        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
+
+        PatchsetCreated firstEvent = Setup.createPatchsetCreated();
+        firstEvent.getPatchSet().setNumber("1");
+        firstEvent.getChange().setTopic("abc");
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 20000);
+
+        ChangeAbandoned secondEvent = Setup.createChangeAbandoned();
+        secondEvent.setChange(firstEvent.getChange());
+        secondEvent.getPatchSet().setNumber("2");
+        gerritServer.triggerEvent(secondEvent);
+        j.waitUntilNoActivity();
+
+        assertEquals(Result.SUCCESS, cancelProject.getLastBuild().getResult());
+        assertFalse(trigger.isInteresting(secondEvent));
+
+        policy.setAbortAbandonedPatchsets(true);
+        trigger.setBuildCancellationPolicy(policy);
+
+        gerritServer.triggerEvent(firstEvent);
+        TestUtils.waitForNonManualBuildToStart(cancelProject, firstEvent, 20000);
+        gerritServer.triggerEvent(secondEvent);
+        j.waitUntilNoActivity();
+
+        assertTrue(trigger.isInteresting(secondEvent));
+        assertEquals(Result.ABORTED, cancelProject.getLastBuild().getResult());
     }
 }

@@ -21,4 +21,11 @@
                     checked="${it.abortSameTopic}"
                     default="false"/>
     </f:entry>
+    <f:entry title="${%Abort abandoned patch sets}"
+             help="/plugin/gerrit-trigger/help-GerritAbortAbandonedPatchsets.html">
+        <f:checkbox name="abortAbandonedPatchsets"
+                    field="abortAbandonedPatchsets"
+                    checked="${it.abortAbandonedPatchsets}"
+                    default="false"/>
+    </f:entry>
 </j:jelly>

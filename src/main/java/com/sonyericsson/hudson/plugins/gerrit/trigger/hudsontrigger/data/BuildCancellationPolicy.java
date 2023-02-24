@@ -42,6 +42,7 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
     private boolean abortNewPatchsets = false;
     private boolean abortManualPatchsets = false;
     private boolean abortSameTopic = false;
+    private boolean abortAbandonedPatchsets = false;
 
     /**
      * Default databound constructor.
@@ -49,15 +50,18 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
      * @param abortNewPatchsets abort new patch sets
      * @param abortManualPatchsets abort manual patch sets
      * @param abortSameTopic abort same topic
+     * @param abortAbandonedPatchsets abort abandoned patchsets
      */
     @DataBoundConstructor
     public BuildCancellationPolicy(final boolean abortNewPatchsets,
                                    final boolean abortManualPatchsets,
-                                   final boolean abortSameTopic) {
+                                   final boolean abortSameTopic,
+                                   final boolean abortAbandonedPatchsets) {
         this.enabled = true;
         this.abortNewPatchsets = abortNewPatchsets;
         this.abortManualPatchsets = abortManualPatchsets;
         this.abortSameTopic = abortSameTopic;
+        this.abortAbandonedPatchsets = abortAbandonedPatchsets;
     }
 
     /**
@@ -139,6 +143,24 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
     }
 
     /**
+     * True if running builds should be aborted by abandoned patchsets, otherwise false.
+     *
+     * @return abortAbandonedPatchsets
+     */
+    public boolean isAbortAbandonedPatchsets() {
+        return abortAbandonedPatchsets;
+    }
+
+    /**
+     * Standard seter for abortAbandonedPatchsets.
+     *
+     * @param abortAbandonedPatchsets true if abandoned patchsets should abort build.
+     */
+    public void setAbortAbandonedPatchsets(boolean abortAbandonedPatchsets) {
+        this.abortAbandonedPatchsets = abortAbandonedPatchsets;
+    }
+
+    /**
      * Creates a new BuildCancellationPolicy object from JSON.
      *
      * @param obj the JSONObject.
@@ -148,11 +170,13 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
         boolean newPatchsets = obj.getBoolean("abortNewPatchsets");
         boolean manualPatchsets = obj.getBoolean("abortManualPatchsets");
         boolean abortSameTopic = obj.optBoolean("abortSameTopic");
+        boolean abortAbandonedPatchsets = obj.optBoolean("abortAbandonedPatchsets");
         BuildCancellationPolicy policy = new BuildCancellationPolicy();
         policy.setEnabled(true);
         policy.setAbortNewPatchsets(newPatchsets);
         policy.setAbortManualPatchsets(manualPatchsets);
         policy.setAbortSameTopic(abortSameTopic);
+        policy.setAbortAbandonedPatchsets(abortAbandonedPatchsets);
         return policy;
     }
 

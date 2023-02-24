@@ -126,6 +126,11 @@ public final class EventListener implements GerritEventListener {
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
             if (t.isInteresting(triggeredEvent)) {
                 logger.trace("The event is interesting.");
+                abortBuild(t, triggeredEvent);
+                if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
+                    logger.trace("Just aborting build based on event not scheduling new one.");
+                    return;
+                }
                 notifyOnTriggered(t, triggeredEvent);
                 schedule(t, new GerritCause(triggeredEvent, t.isSilentMode()), triggeredEvent);
             }
@@ -159,6 +164,11 @@ public final class EventListener implements GerritEventListener {
         }
         if (t.isInteresting(event)) {
             logger.trace("The event is interesting.");
+            abortBuild(t, event);
+            if (t.isOnlyAbortRunningBuild(event)) {
+                logger.trace("Just aborting build based on event not scheduling new one.");
+                return;
+            }
             notifyOnTriggered(t, event);
             schedule(t, new GerritManualCause(event, t.isSilentMode()), event);
         }
@@ -198,8 +208,36 @@ public final class EventListener implements GerritEventListener {
         }
         if (t.isInteresting(event) && t.commentAddedMatch(event)) {
             logger.trace("The event is interesting.");
+            abortBuild(t, event);
+            if (t.isOnlyAbortRunningBuild(event)) {
+                logger.trace("Just aborting build based on event not scheduling new one.");
+                return;
+            }
             notifyOnTriggered(t, event);
             schedule(t, new GerritCause(event, t.isSilentMode()), event);
+        }
+    }
+
+    /**
+     * Abort running builds based on the BuildCancellationPolicy and event.
+     *
+     * @param t GerritTrigger class.
+     * @param event GerritTriggeredEvent.
+     */
+    private void abortBuild(GerritTrigger t, GerritTriggeredEvent event) {
+        if (!(event instanceof ChangeBasedEvent)) {
+            return;
+        }
+
+        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+        if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled()) {
+            t.getRunningJobs(t.getJob()).cancelTriggeredJob(changeBasedEvent,
+                    t.getJob().getFullName(), t.getBuildCancellationPolicy());
+        }
+
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+        if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
+            t.getRunningJobs(t.getJob()).scheduled(changeBasedEvent);
         }
     }
 
@@ -245,18 +283,8 @@ public final class EventListener implements GerritEventListener {
                     + project.getClass().getName());
         }
 
-        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-
         if (event instanceof ChangeBasedEvent) {
             ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
-            if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled())
-            {
-                t.getRunningJobs(project).cancelTriggeredJob(changeBasedEvent,
-                        t.getJob().getFullName(), t.getBuildCancellationPolicy());
-            }
-            if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
-                t.getRunningJobs(project).scheduled(changeBasedEvent);
-            }
             if (null != changeBasedEvent.getPatchSet()) {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
                         project.getName(), (futureBuild != null),

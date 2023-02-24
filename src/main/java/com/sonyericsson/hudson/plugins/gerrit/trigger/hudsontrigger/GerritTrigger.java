@@ -44,6 +44,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginGerritEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeAbandonedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
@@ -54,6 +55,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.WipStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
@@ -666,6 +668,21 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
+        if (event instanceof ChangeAbandoned) {
+            if (buildCancellationPolicy != null && buildCancellationPolicy.isEnabled()) {
+                if (buildCancellationPolicy.isAbortAbandonedPatchsets()) {
+                    return true;
+                }
+            }
+
+            IGerritHudsonTriggerConfig config = getServerConfig(event);
+            if (config != null && config.getBuildCurrentPatchesOnly().isEnabled()) {
+                if (config.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
+                    return true;
+                }
+            }
+        }
+
         for (PluginGerritEvent e : triggerOnEvents) {
             if (!e.shouldTriggerOn(event)) {
                 continue;
@@ -1063,6 +1080,45 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Checks based on the current event if the job should just be aborted,
+     * or even a new job should be triggered.
+     *
+     * @param event The ChangeBasedEvent.
+     * @return true if the job should only be aborted without triggering a new one, otherwise false.
+     */
+    public boolean isOnlyAbortRunningBuild(GerritTriggeredEvent event) {
+
+        if (!(event instanceof ChangeBasedEvent)) {
+            return false;
+        }
+
+        if (!(event instanceof ChangeAbandoned)) {
+            return false;
+        }
+
+        for (PluginGerritEvent e : triggerOnEvents) {
+            if (e instanceof PluginChangeAbandonedEvent) {
+                return false;
+            }
+        }
+
+        if (buildCancellationPolicy != null && buildCancellationPolicy.isEnabled()) {
+            if (buildCancellationPolicy.isAbortAbandonedPatchsets()) {
+                return true;
+            }
+        }
+
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+        if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
+            if (serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Should we trigger on this event?
      *
      * @param event the event
@@ -1090,11 +1146,11 @@ public class GerritTrigger extends Trigger<Job> {
             }
         }
 
-        if (!shouldTriggerOnEventType(event)) {
+        if (!isServerInteresting(event)) {
             return false;
         }
 
-        if (!isServerInteresting(event)) {
+        if (!shouldTriggerOnEventType(event)) {
             return false;
         }
 
