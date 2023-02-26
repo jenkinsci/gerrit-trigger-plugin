@@ -1898,7 +1898,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param enable true or false.
      */
     @Deprecated
-    @DataBoundSetter
     public void setEnableTopicAssociation(boolean enable) {
         if (enable) {
             topicAssociation = new TopicAssociation();

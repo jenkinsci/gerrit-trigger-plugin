@@ -24,18 +24,31 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import hudson.model.FreeStyleProject;
+import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsSessionRule;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests the TopicAssociation method.
  * @author Christoph Kreisl
  */
 public class TopicAssociationTest {
+
+
+    /**
+     *  Jenkins Session Rule for testing.
+     */
+    //CS IGNORE VisibilityModifier FOR NEXT 1 LINES. REASON: JenkinsSessionRule must be public.
+    @Rule public JenkinsSessionRule session = new JenkinsSessionRule();
 
     /**
      * Create a custom change for testing.
@@ -75,4 +88,32 @@ public class TopicAssociationTest {
         assertFalse(topicAssociation.isInterestingChangeStatus(c));
     }
 
+    /**
+     * Test TopicAssociation field set after Jenkins restart.
+     *
+     * @throws Throwable on failure
+     */
+    @Test
+    public void testTopicAssociationSetAfterRestart() throws Throwable {
+        session.then(j -> {
+            FreeStyleProject foo = j.createFreeStyleProject("foo");
+            GerritTrigger trigger = Setup.createDefaultTrigger(foo);
+            TopicAssociation ta = new TopicAssociation();
+            ta.setIgnoreMergedChangeStatus(true);
+            ta.setIgnoreAbandonedChangeStatus(true);
+            trigger.setTopicAssociation(ta);
+            foo.save();
+        });
+
+        session.then(j -> {
+            FreeStyleProject foo = j.jenkins.getItemByFullName("foo", FreeStyleProject.class);
+            assertNotNull(foo);
+            GerritTrigger trigger = foo.getTrigger(GerritTrigger.class);
+            TopicAssociation ta = trigger.getTopicAssociation();
+            assertNotNull(ta);
+            assertFalse(ta.isIgnoreNewChangeStatus());
+            assertTrue(ta.isIgnoreMergedChangeStatus());
+            assertTrue(ta.isIgnoreAbandonedChangeStatus());
+        });
+    }
 }
