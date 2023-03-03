@@ -1949,6 +1949,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     /**
      * Enable or disable Topic Association option.
+     * Replaced by {@link #setTopicAssociation(TopicAssociation)} ()
      *
      * @param enable true or false.
      */
@@ -2232,11 +2233,8 @@ public class GerritTrigger extends Trigger<Job> {
         if (projectListIsReady == null) {
             projectListIsReady = new CountDownLatch(0);
         }
-
-        if (enableTopicAssociation) {
+        if (topicAssociation == null && enableTopicAssociation) {
             topicAssociation = new TopicAssociation();
-        } else {
-            topicAssociation = null;
         }
 
         return super.readResolve();
