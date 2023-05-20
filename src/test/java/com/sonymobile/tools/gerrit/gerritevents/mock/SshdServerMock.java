@@ -33,13 +33,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import org.apache.commons.lang.StringUtils;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.UserAuthNoneFactory;
+import org.apache.sshd.server.channel.ChannelSession;
+import org.apache.sshd.server.command.Command;
+import org.apache.sshd.server.command.CommandFactory;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.server.Command;
-import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.Environment;
 import org.apache.sshd.server.ExitCallback;
-import org.apache.sshd.server.auth.UserAuth;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -57,7 +56,7 @@ import net.sf.json.JSONObject;
 import com.jcraft.jsch.KeyPair;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -121,7 +120,7 @@ public class SshdServerMock implements CommandFactory {
     private List<CommandLookup> commandLookups;
 
     @Override
-    public Command createCommand(String s) {
+    public Command createCommand(ChannelSession channel, String s) {
         CommandMock command = findAndCreateCommand(s);
         return setCurrentCommand(command);
     }
@@ -132,7 +131,7 @@ public class SshdServerMock implements CommandFactory {
      * @param s the command line to match.
      * @return a command.
      *
-     * @see #createCommand(String)
+     * @see #createCommand(ChannelSession, String)
      * @see CommandLookup
      */
     private CommandMock findAndCreateCommand(String s) {
@@ -348,12 +347,11 @@ public class SshdServerMock implements CommandFactory {
         sshd.setPort(0);
         // Lifted entirely from
         // ssh-agent-plugin/src/test/java/com/cloudbees/jenkins/plugins/sshagent/SSHAgentBase.java
-        SimpleGeneratorHostKeyProvider hostKeyProvider = new SimpleGeneratorHostKeyProvider(new File(hostKey.getPath()));
+        SimpleGeneratorHostKeyProvider hostKeyProvider =
+                new SimpleGeneratorHostKeyProvider(Paths.get(hostKey.getPath()));
         hostKeyProvider.setAlgorithm("RSA");
         sshd.setKeyPairProvider(hostKeyProvider);
-        List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
-        userAuthFactories.add(new UserAuthNoneFactory());
-        sshd.setUserAuthFactories(userAuthFactories);
+        sshd.setUserAuthFactories(List.of(new UserAuthNoneFactory()));
         sshd.setCommandFactory(server);
         sshd.start();
         return sshd;
@@ -527,7 +525,7 @@ public class SshdServerMock implements CommandFactory {
     /**
      * A mocked ssh command.
      *
-     * @see SshdServerMock#createCommand(String)
+     * @see SshdServerMock#createCommand(ChannelSession, String)
      */
     public static class CommandMock implements Command {
 
@@ -581,7 +579,7 @@ public class SshdServerMock implements CommandFactory {
          * @throws IOException if so.
          */
         @Override
-        public void start(Environment environment) throws IOException {
+        public void start(ChannelSession channel, Environment environment) throws IOException {
             System.out.println("Starting command: " + command);
             //Default implementation just waits for a disconnect
             while (!isDestroyed()) {
@@ -605,7 +603,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void destroy() {
+        public void destroy(ChannelSession channel) {
             synchronized (this) {
                 destroyed = true;
                 notifyAll();
@@ -675,7 +673,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(Environment environment) throws IOException {
+        public void start(ChannelSession channel, Environment environment) throws IOException {
             System.out.println("Starting EOF-command: " + getCommand());
             this.stop(0);
         }
@@ -719,7 +717,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             System.out.println("Starting PL-command: " + getCommand());
             while (!isNow()) {
                 synchronized (this) {
@@ -755,7 +753,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "gerrit version 2.11.4";
             System.out.println("Starting PL-command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -782,7 +780,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
 
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
@@ -878,7 +876,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
             final int lastUpdated = 1449170950;
@@ -996,7 +994,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
             final int lastUpdated = 1449170950;
@@ -1109,7 +1107,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "abcProject";
             System.out.println("Starting PL-command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -1118,7 +1116,7 @@ public class SshdServerMock implements CommandFactory {
                 out.println(line);
             }
             this.stop(0);
-            this.destroy();
+            this.destroy(channel);
         }
     }
 
@@ -1137,7 +1135,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "abcProject";
             String line2 = "defProject";
             System.out.println("Starting PL-command: " + getCommand());
