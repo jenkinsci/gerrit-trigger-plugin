@@ -24,11 +24,11 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.Page;
-import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.util.UrlUtils;
-import com.gargoylesoftware.htmlunit.xml.XmlPage;
+import org.htmlunit.HttpMethod;
+import org.htmlunit.Page;
+import org.htmlunit.WebRequest;
+import org.htmlunit.util.UrlUtils;
+import org.htmlunit.xml.XmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
