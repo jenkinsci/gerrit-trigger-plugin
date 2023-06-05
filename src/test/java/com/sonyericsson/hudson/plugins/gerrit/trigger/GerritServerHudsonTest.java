@@ -18,7 +18,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import org.htmlunit.html.HtmlElement;
 import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -26,10 +26,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
+import org.htmlunit.FailingHttpStatusCodeException;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlRadioButtonInput;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -299,12 +299,12 @@ public class GerritServerHudsonTest {
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
 
-        form.getInputByName(inputFormName).setValueAttribute(serverName);
+        form.getInputByName(inputFormName).setValue(serverName);
 
         List<HtmlRadioButtonInput> radioButtons = form.getRadioButtonsByName(radioButtonName);
         HtmlRadioButtonInput radioButtonDefaultConfig = null;
         for (HtmlRadioButtonInput button : radioButtons) {
-            if (radioButtonDefaultConfigValue.equals(button.getValueAttribute())) {
+            if (radioButtonDefaultConfigValue.equals(button.getValue())) {
                 radioButtonDefaultConfig = button;
                 radioButtonDefaultConfig.setChecked(true);
             }
@@ -326,19 +326,19 @@ public class GerritServerHudsonTest {
         HtmlPage page = j.createWebClient().getPage(url);
         HtmlForm form = page.getFormByName(newServerFormName);
 
-        form.getInputByName(inputFormName).setValueAttribute(newServerName);
+        form.getInputByName(inputFormName).setValue(newServerName);
 
         List<HtmlRadioButtonInput> radioButtons = form.getRadioButtonsByName(radioButtonName);
         HtmlRadioButtonInput radioButtonCopy = null;
         for (HtmlRadioButtonInput button : radioButtons) {
-            if (radioButtonCopyValue.equals(button.getValueAttribute())) {
+            if (radioButtonCopyValue.equals(button.getValue())) {
                 radioButtonCopy = button;
                 radioButtonCopy.setChecked(true);
             }
         }
         assertTrue("Failed to choose 'Copy from Existing Server Configurations'", radioButtonCopy.isChecked());
 
-        form.getInputByName(fromInputFormName).setValueAttribute(fromServerName);
+        form.getInputByName(fromInputFormName).setValue(fromServerName);
 
         j.submit(form);
     }

@@ -24,8 +24,8 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritProjectListUpdater;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener;
@@ -128,7 +128,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob3");
 
         HtmlForm form = j.createWebClient().getPage(p, "confirm-rename").getFormByName("config");
-        form.getInputByName("newName").setValueAttribute("testJob33");
+        form.getInputByName("newName").setValue("testJob33");
         HtmlPage confirmPage = j.submit(form);
         assertEquals("testJob33", p.getName());
         assertAllListenersAreRegistered(
