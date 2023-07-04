@@ -178,12 +178,12 @@ public class ParameterExpanderTest {
 
         // When not all results are NOT_BUILT, we should ignore NOT_BUILT.
         int expResult = -1;
-        int result = instance.getMinimumVerifiedValue(memoryImprint, true);
+        int result = instance.getMinimumVerifiedValue(memoryImprint, true, Integer.MAX_VALUE);
         assertEquals(expResult, result);
 
         // Otherwise, we should use NOT_BUILT.
         expResult = -4;
-        result = instance.getMinimumVerifiedValue(memoryImprint, false);
+        result = instance.getMinimumVerifiedValue(memoryImprint, false, Integer.MAX_VALUE);
         assertEquals(expResult, result);
     }
 
