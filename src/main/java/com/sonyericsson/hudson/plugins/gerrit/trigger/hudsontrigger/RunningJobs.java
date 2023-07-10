@@ -233,8 +233,12 @@ public class RunningJobs {
            List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if (jobName.equals(item.task.getName())) {
+                   // Use transformed fullDisplayNameFor to avoid
+                   // ambigous comparing between same name projects but located at different folders
+                   // FolderName » jobName to FolderName/jobName
+                   if (jobName.equals(item.task.getFullDisplayName().replace(" » ", "/"))) {
                        Queue.getInstance().cancel(item);
+
                    }
                }
            }
