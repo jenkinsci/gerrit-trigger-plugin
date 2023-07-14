@@ -180,7 +180,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                 return;
             }
             timer = new Timer(serverName);
-            scheduleProjectListUpdate(getConfig().getProjectListFetchDelay());
+            scheduleProjectListUpdate(getConfig().getProjectListFetchDelay(),getConfig().getProjectListRefreshInterval());
         } else {
             logger.error("Can't create two timers for the same Gerrit instance: " + serverName);
         }
@@ -208,7 +208,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      *
      * @param initDelay the initial delay, in seconds.
      */
-    public void scheduleProjectListUpdate(int initDelay) {
+    public void scheduleProjectListUpdate(int initDelay, int timerUpdatePeriod) {
         logger.info("Start timer to update project list");
         if (timer != null) {
             timer.cancel();
