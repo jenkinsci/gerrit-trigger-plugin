@@ -100,7 +100,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      */
     public void setTimerUpdatePeriod(int timerUpdatePeriod) {
         this.timerUpdatePeriod = timerUpdatePeriod;
-        scheduleProjectListUpdate(0);
+        scheduleProjectListUpdate(0, timerUpdatePeriod);
     }
 
     /**
