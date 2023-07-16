@@ -377,6 +377,35 @@ public class ParameterExpanderTest {
     }
 
     /**
+     * Tests {@link ParameterExpander#getMinimumVerifiedValue(MemoryImprint, boolean, Integer)} with two
+     * jobs. One successful build, the other failed missing build (null).
+     *
+     */
+    @Test
+    public void testGetVerifiedValueOneSuccessJobAndMissingFailedJob() {
+        IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
+
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
+
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(Integer.valueOf(2));
+        entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
+
+        trigger = mock(GerritTrigger.class);
+        entries[1] = Setup.createAndSetupMemoryImprintEntryWithEmptyBuild(trigger);
+
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
+        // The only verified value available is of successful build,
+        // but score should be saturated to Failed verified value from config.
+        Integer result = instance.getMinimumVerifiedValue(memoryImprint, false,
+                config.getGerritBuildFailedVerifiedValue());
+        assertEquals(Integer.valueOf(config.getGerritBuildFailedVerifiedValue()), result);
+    }
+
+    /**
      * test.
      * @throws IOException IOException
      * @throws InterruptedException InterruptedException
@@ -465,6 +494,48 @@ public class ParameterExpanderTest {
                     "\n\nhttp://localhost/test/ : SUCCESS", },
                 new Result[] {Result.SUCCESS, Result.FAILURE, Result.UNSTABLE},
                 Setup.createPatchsetCreated(), -1, 0);
+    }
+
+    /**
+     * Test that verified value will be saturated in case of Failed, but missing built.
+     */
+    @Test
+    public void testGetBuildCompletedMissingFailedBuild() throws IOException, InterruptedException {
+        int buildResults = 2;
+        IGerritHudsonTriggerConfig config = Setup.createConfig();
+        Integer expectedVerifiedVote = config.getGerritBuildFailedVerifiedValue();
+        Result[] availableResults = new Result[] {Result.SUCCESS, Result.FAILURE};
+
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        TaskListener taskListener = mock(TaskListener.class);
+        GerritTrigger trigger = mock(GerritTrigger.class);
+        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
+        when(trigger.getCustomUrl()).thenReturn("");
+        AbstractProject project = mock(AbstractProject.class);
+        Setup.setTrigger(trigger, project);
+        MemoryImprint.Entry[] entries = new MemoryImprint.Entry[buildResults];
+        EnvVars env = Setup.createEnvVars();
+
+        // Remaining successful build.
+        AbstractBuild build = Setup.createBuild(project, taskListener, env);
+        env.put("BUILD_URL", jenkins.getRootUrl() + build.getUrl());
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        when(build.getResult()).thenReturn(Result.SUCCESS);
+        entries[0] = Setup.createImprintEntry(project, build);
+
+        // Missing failed build.
+        entries[1] = Setup.createImprintEntry(project, null);
+
+        MemoryImprint memoryImprint = mock(MemoryImprint.class);
+        when(memoryImprint.getEvent()).thenReturn(event);
+        when(memoryImprint.getEntries()).thenReturn(entries);
+        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(allAreOfType(Result.SUCCESS, availableResults));
+        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(anyIsOfType(Result.FAILURE, availableResults));
+        ParameterExpander instance = new ParameterExpander(config, jenkins);
+        String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
+
+        assertThat("Missing VERIFIED", result, containsString("VERIFIED=" + expectedVerifiedVote));
     }
 
     /**
