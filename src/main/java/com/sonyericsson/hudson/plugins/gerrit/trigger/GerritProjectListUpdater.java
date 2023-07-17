@@ -100,7 +100,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      */
     public void setTimerUpdatePeriod(int timerUpdatePeriod) {
         this.timerUpdatePeriod = timerUpdatePeriod;
-        scheduleProjectListUpdate(0);
+        scheduleProjectListUpdate(0, timerUpdatePeriod);
     }
 
     /**
@@ -180,7 +180,8 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                 return;
             }
             timer = new Timer(serverName);
-            scheduleProjectListUpdate(getConfig().getProjectListFetchDelay());
+            scheduleProjectListUpdate(getConfig().getProjectListFetchDelay(),
+                                      getConfig().getProjectListRefreshInterval());
         } else {
             logger.error("Can't create two timers for the same Gerrit instance: " + serverName);
         }
@@ -207,8 +208,9 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      * This method creates a timer that schedule the update of the gerrit project list.
      *
      * @param initDelay the initial delay, in seconds.
+     * @param updatePeriod the update period, in seconds.
      */
-    public void scheduleProjectListUpdate(int initDelay) {
+    public void scheduleProjectListUpdate(int initDelay, int updatePeriod) {
         logger.info("Start timer to update project list");
         if (timer != null) {
             timer.cancel();
@@ -218,7 +220,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                 public void run() {
                     tryLoadProjectList();
                 }
-            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(timerUpdatePeriod));
+            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(updatePeriod));
         } else {
             logger.error("Unable to schedule project list update task because timer is null");
         }
