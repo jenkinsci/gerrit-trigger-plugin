@@ -210,7 +210,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      * @param initDelay the initial delay, in seconds.
      * @param timerUpdatePeriod the update period, in seconds.
      */
-    public void scheduleProjectListUpdate(int initDelay, int timerUpdatePeriod) {
+    public void scheduleProjectListUpdate(int initDelay, int updatePeriod) {
         logger.info("Start timer to update project list");
         if (timer != null) {
             timer.cancel();
@@ -220,7 +220,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                 public void run() {
                     tryLoadProjectList();
                 }
-            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(timerUpdatePeriod));
+            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(updatePeriod));
         } else {
             logger.error("Unable to schedule project list update task because timer is null");
         }
