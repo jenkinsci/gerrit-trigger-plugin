@@ -208,7 +208,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      * This method creates a timer that schedule the update of the gerrit project list.
      *
      * @param initDelay the initial delay, in seconds.
-     * @param timerUpdatePeriod the update period, in seconds.
+     * @param updatePeriod the update period, in seconds.
      */
     public void scheduleProjectListUpdate(int initDelay, int updatePeriod) {
         logger.info("Start timer to update project list");
