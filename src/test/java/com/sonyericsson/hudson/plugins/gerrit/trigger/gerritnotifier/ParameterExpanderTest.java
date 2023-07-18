@@ -497,21 +497,18 @@ public class ParameterExpanderTest {
     }
 
     /**
-     * Test that verified value will be saturated in case of Failed, but missing built.
+     * Test that verified value will be saturated in case of missing built.
+     * (Conservative approach is to assume Failed build if the build is now missing.)
      */
     @Test
     public void testGetBuildCompletedMissingFailedBuild() throws IOException, InterruptedException {
         int buildResults = 2;
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         Integer expectedVerifiedVote = config.getGerritBuildFailedVerifiedValue();
-        Result[] availableResults = new Result[] {Result.SUCCESS, Result.FAILURE};
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         TaskListener taskListener = mock(TaskListener.class);
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(32);
-        when(trigger.getCustomUrl()).thenReturn("");
         AbstractProject project = mock(AbstractProject.class);
         Setup.setTrigger(trigger, project);
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[buildResults];
@@ -519,19 +516,15 @@ public class ParameterExpanderTest {
 
         // Remaining successful build.
         AbstractBuild build = Setup.createBuild(project, taskListener, env);
-        env.put("BUILD_URL", jenkins.getRootUrl() + build.getUrl());
-        when(build.getResult()).thenReturn(Result.SUCCESS);
         when(build.getResult()).thenReturn(Result.SUCCESS);
         entries[0] = Setup.createImprintEntry(project, build);
-
-        // Missing failed build.
+        // Missing build. Possibly Failed, but impossible to know if it is no longer available.
         entries[1] = Setup.createImprintEntry(project, null);
 
         MemoryImprint memoryImprint = mock(MemoryImprint.class);
         when(memoryImprint.getEvent()).thenReturn(event);
         when(memoryImprint.getEntries()).thenReturn(entries);
-        when(memoryImprint.wereAllBuildsSuccessful()).thenReturn(allAreOfType(Result.SUCCESS, availableResults));
-        when(memoryImprint.wereAnyBuildsFailed()).thenReturn(anyIsOfType(Result.FAILURE, availableResults));
+
         ParameterExpander instance = new ParameterExpander(config, jenkins);
         String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
 

@@ -388,7 +388,8 @@ public class ParameterExpander {
      * @return the lowest verified value.
      */
     @CheckForNull
-    public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt, Integer maxAllowedVerifiedValue) {
+    public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt,
+                                           Integer maxAllowedVerifiedValue) {
         Integer verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             if (entry == null) {
@@ -533,19 +534,13 @@ public class ParameterExpander {
         // builds were successful, unstable or failed, we find the minimum
         // verified/code review value for the NOT_BUILT ones too.
         boolean onlyCountBuilt = true;
-        // If some builds failed, but their verified score is no longer
-        // available, then Successful builds would bump up the score.
-        // Set upper boundary on verified values based on builds status.
-        // JENKINS-66535
         Integer maxAllowedVerifiedValue = Integer.MAX_VALUE;
         if (memoryImprint.wereAllBuildsSuccessful()) {
             command = config.getGerritCmdBuildSuccessful();
         } else if (memoryImprint.wereAnyBuildsFailed()) {
             command = config.getGerritCmdBuildFailed();
-            maxAllowedVerifiedValue = config.getGerritBuildFailedVerifiedValue();
         } else if (memoryImprint.wereAnyBuildsUnstable()) {
             command = config.getGerritCmdBuildUnstable();
-            maxAllowedVerifiedValue = config.getGerritBuildUnstableVerifiedValue();
         } else if (memoryImprint.wereAllBuildsNotBuilt()) {
             onlyCountBuilt = false;
             command = config.getGerritCmdBuildNotBuilt();
@@ -554,6 +549,9 @@ public class ParameterExpander {
         } else {
             //Just as bad as failed for now.
             command = config.getGerritCmdBuildFailed();
+            // Some builds could have failed, but are already deleted and not
+            // available for score calculation.
+            // Set pessimistic upper boundary on verified value.
             maxAllowedVerifiedValue = config.getGerritBuildFailedVerifiedValue();
         }
 
