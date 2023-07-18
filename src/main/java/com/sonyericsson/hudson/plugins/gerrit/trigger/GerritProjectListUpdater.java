@@ -100,7 +100,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      */
     public void setTimerUpdatePeriod(int timerUpdatePeriod) {
         this.timerUpdatePeriod = timerUpdatePeriod;
-        scheduleProjectListUpdate(0, timerUpdatePeriod);
+        scheduleProjectListUpdate(0, (int)TimeUnit.MINUTES.toSeconds(timerUpdatePeriod));
     }
 
     /**
@@ -220,7 +220,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                 public void run() {
                     tryLoadProjectList();
                 }
-            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.MINUTES.toMillis(updatePeriod));
+            }, TimeUnit.SECONDS.toMillis(initDelay), TimeUnit.SECONDS.toMillis(updatePeriod));
         } else {
             logger.error("Unable to schedule project list update task because timer is null");
         }
