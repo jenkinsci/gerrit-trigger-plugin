@@ -23,12 +23,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.Page;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.ElementNotFoundException;
+import org.htmlunit.FailingHttpStatusCodeException;
+import org.htmlunit.Page;
+import org.htmlunit.html.HtmlAnchor;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import hudson.Functions;
@@ -182,7 +182,7 @@ public class ManualTriggerActionPermissionTest {
         try {
             HtmlPage page = wc.goTo(action.getUrlName());
             HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValueAttribute("2000");
+            form.getInputByName("queryString").setValue("2000");
             Page result = j.submit(form);
             j.assertGoodStatus(result);
         } catch (FailingHttpStatusCodeException e) {
@@ -211,7 +211,7 @@ public class ManualTriggerActionPermissionTest {
         try {
             HtmlPage page = wc.goTo(action.getUrlName());
             HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValueAttribute("2000");
+            form.getInputByName("queryString").setValue("2000");
             j.submit(form);
         } catch (FailingHttpStatusCodeException e) {
             assertEquals(403, e.getStatusCode());

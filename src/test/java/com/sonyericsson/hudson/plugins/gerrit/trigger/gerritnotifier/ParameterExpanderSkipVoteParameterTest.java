@@ -103,14 +103,14 @@ public class ParameterExpanderSkipVoteParameterTest {
     }
 
     /**
-     * Tests that {@link ParameterExpander#getMinimumVerifiedValue(BuildMemory.MemoryImprint, boolean)}
+     * Tests that {@link ParameterExpander#getMinimumVerifiedValue(BuildMemory.MemoryImprint, boolean, Integer)}
      * returns {@link TestParameter#expectedVerified}.
      */
     @Test
     public void testVerified() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         ParameterExpander instance = new ParameterExpander(config);
-        Integer result = instance.getMinimumVerifiedValue(parameter.memoryImprint, true);
+        Integer result = instance.getMinimumVerifiedValue(parameter.memoryImprint, true, Integer.MAX_VALUE);
         if (parameter.expectedVerified == null) {
             assertNull(result);
         } else {

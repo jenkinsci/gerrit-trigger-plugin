@@ -90,7 +90,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
                     }
                 }
                 if (config.isRestVerified()) {
-                    Integer verValue = parameterExpander.getMinimumVerifiedValue(memoryImprint, true);
+                    Integer verValue = parameterExpander.getMinimumVerifiedValue(memoryImprint, true, Integer.MAX_VALUE);
                     if (verValue != null && verValue != Integer.MAX_VALUE) {
                         scoredLabels.add(new ReviewLabel(
                                 LABEL_VERIFIED,

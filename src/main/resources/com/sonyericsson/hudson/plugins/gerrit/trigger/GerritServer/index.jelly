@@ -463,8 +463,8 @@
                                             <p:blockWrapperTd>
                                                 <f:textbox name="from"
                                                            value="${h.appendIfNotNull(t.from.hourAsString,'','00')}:${h.appendIfNotNull(t.from.minuteAsString,'','00')}"
-                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
-                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(findMatchingFormInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(findMatchingFormInput(this, 'to').value)"/>
                                             </p:blockWrapperTd>
                                         </p:blockWrapperTr>
                                         <p:blockWrapperTr>
@@ -474,8 +474,8 @@
                                             <p:blockWrapperTd>
                                                 <f:textbox name="to"
                                                            value="${h.appendIfNotNull(t.to.hourAsString,'','00')}:${h.appendIfNotNull(t.to.minuteAsString,'','01')}"
-                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(Form.findMatchingInput(this,'from').value)
-                                                           +'&amp;toValue='+escape(Form.findMatchingInput(this, 'to').value)"/>
+                                                           checkUrl="'${rootURL}/${serverURL}/validTimeCheck?fromValue='+escape(findMatchingFormInput(this,'from').value)
+                                                           +'&amp;toValue='+escape(findMatchingFormInput(this, 'to').value)"/>
                                             </p:blockWrapperTd>
                                         </p:blockWrapperTr>
                                         <!--used to display the form validation error -->
