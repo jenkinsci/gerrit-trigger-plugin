@@ -67,7 +67,7 @@
                                     </j:when>
                                     <j:otherwise>
                                         <td width="14">
-                                            <img src="${imagesURL}/16x16/grey_anime.gif"/>
+                                            <img src="${rootURL}/images/build-status/build-status-sprite.svg#never-built" class="icon-grey-anime icon-sm"/>
                                         </td>
                                         <td>
                                             <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
