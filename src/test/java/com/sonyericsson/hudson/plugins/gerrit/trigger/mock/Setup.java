@@ -759,6 +759,18 @@ public final class Setup {
     }
 
     /**
+     * Create an MemoryImprint.Entry with a given trigger and a null build (missing).
+     *
+     * @param trigger the trigger
+     * @return an entry with the parameters.
+     */
+    public static MemoryImprint.Entry createAndSetupMemoryImprintEntryWithEmptyBuild(GerritTrigger trigger) {
+        AbstractProject project = mock(AbstractProject.class);
+        setTrigger(trigger, project);
+        return createImprintEntry(project, null);
+    }
+
+    /**
      * Set/mock the supplied trigger onto the supplied {@link AbstractProject} instance.
      * @param trigger The trigger.
      * @param project The project.

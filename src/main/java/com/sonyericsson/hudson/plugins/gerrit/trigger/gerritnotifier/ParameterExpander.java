@@ -381,12 +381,15 @@ public class ParameterExpander {
     /**
      * Returns the minimum verified value for the build results in the memory.
      * If no builds have contributed to verified value, this method returns null
-     * @param memoryImprint the memory.
-     * @param onlyBuilt only count builds that completed (no NOT_BUILT builds)
+     *
+     * @param memoryImprint    the memory.
+     * @param onlyBuilt        only count builds that completed (no NOT_BUILT builds)
+     * @param maxAllowedVerifiedValue Upper boundary on verified value.
      * @return the lowest verified value.
      */
     @CheckForNull
-    public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
+    public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt,
+                                           Integer maxAllowedVerifiedValue) {
         Integer verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             if (entry == null) {
@@ -415,7 +418,7 @@ public class ParameterExpander {
             return null;
         }
 
-        return verified;
+        return Math.min(verified, maxAllowedVerifiedValue);
     }
 
     /**
@@ -531,6 +534,7 @@ public class ParameterExpander {
         // builds were successful, unstable or failed, we find the minimum
         // verified/code review value for the NOT_BUILT ones too.
         boolean onlyCountBuilt = true;
+        Integer maxAllowedVerifiedValue = Integer.MAX_VALUE;
         if (memoryImprint.wereAllBuildsSuccessful()) {
             command = config.getGerritCmdBuildSuccessful();
         } else if (memoryImprint.wereAnyBuildsFailed()) {
@@ -545,13 +549,17 @@ public class ParameterExpander {
         } else {
             //Just as bad as failed for now.
             command = config.getGerritCmdBuildFailed();
+            // Some builds could have failed, but are already deleted and not
+            // available for score calculation.
+            // Set pessimistic upper boundary on verified value.
+            maxAllowedVerifiedValue = config.getGerritBuildFailedVerifiedValue();
         }
 
         Integer verified = null;
         Integer codeReview = null;
         Notify notifyLevel = Notify.ALL;
         if (memoryImprint.getEvent().isScorable()) {
-            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt);
+            verified = getMinimumVerifiedValue(memoryImprint, onlyCountBuilt, maxAllowedVerifiedValue);
             codeReview = getMinimumCodeReviewValue(memoryImprint, onlyCountBuilt);
             notifyLevel = getHighestNotificationLevel(memoryImprint, onlyCountBuilt);
         }
