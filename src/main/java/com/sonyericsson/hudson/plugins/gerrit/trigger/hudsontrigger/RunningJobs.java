@@ -191,9 +191,18 @@ public class RunningJobs {
            return true;
        }
 
-       boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets()
-               || Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+       // events of "type": "topic-changed" are not required to set a PatchSet
+       boolean hasPatchSets = runningChangeBasedEvent.getPatchSet() != null
+               && event.getPatchSet() != null;
+
+       boolean hasPatchNumbers = hasPatchSets && runningChangeBasedEvent.getPatchSet().getNumber() != null
+               && event.getPatchSet().getNumber() != null;
+
+       boolean isOldPatch = hasPatchSets && hasPatchNumbers
+               && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                < Integer.parseInt(event.getPatchSet().getNumber());
+
+       boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
 
        boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
                && (event instanceof ChangeAbandoned);
@@ -304,7 +313,7 @@ public class RunningJobs {
     * @return true if event was still running.
     */
    public boolean remove(ChangeBasedEvent event) {
-       logger.debug("Removing future job " + event.getPatchSet().getNumber());
+       logger.debug("Removing future job associated with " + event.getChange().getId());
        return runningJobs.remove(event);
    }
 }
