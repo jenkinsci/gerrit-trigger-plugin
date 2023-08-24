@@ -54,6 +54,7 @@ public class PluginPatchsetCreatedEventTest {
 
     /**
      * Tests that it should not fire on trivial rebase when they are excluded.
+     * Also tests that we don't fire for no change while ignoring trivial rebases.
      * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
      */
     @Test
@@ -68,10 +69,13 @@ public class PluginPatchsetCreatedEventTest {
         assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
         patchsetCreated.getPatchSet().setKind(GerritChangeKind.TRIVIAL_REBASE);
         assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+        patchsetCreated.getPatchSet().setKind(GerritChangeKind.NO_CHANGE);
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
     }
 
     /**
      * Tests that it should not fire on no code changes when they are excluded.
+     * Also tests that we don't fire for no change while ignoring no code change.
      * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
      */
     @Test
@@ -85,6 +89,8 @@ public class PluginPatchsetCreatedEventTest {
         //should fire only on regular patchset (no drafts)
         assertTrue(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
         patchsetCreated.getPatchSet().setKind(GerritChangeKind.NO_CODE_CHANGE);
+        assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
+        patchsetCreated.getPatchSet().setKind(GerritChangeKind.NO_CHANGE);
         assertFalse(pluginPatchsetCreatedEvent.shouldTriggerOn(patchsetCreated));
     }
 
