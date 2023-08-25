@@ -253,11 +253,13 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             return true;
         }
         if (excludeTrivialRebase
-                && GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+                && (GerritChangeKind.TRIVIAL_REBASE == ((PatchsetCreated)event).getPatchSet().getKind()
+                || GerritChangeKind.NO_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind())) {
             return false;
         }
         if (excludeNoCodeChange
-                && GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()) {
+                && (GerritChangeKind.NO_CODE_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind()
+                || GerritChangeKind.NO_CHANGE == ((PatchsetCreated)event).getPatchSet().getKind())) {
             return false;
         }
         if (excludePrivateState && ((PatchsetCreated)event).getChange().isPrivate()) {
