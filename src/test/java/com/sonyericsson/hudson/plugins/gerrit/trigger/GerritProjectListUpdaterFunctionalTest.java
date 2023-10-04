@@ -106,7 +106,7 @@ public class GerritProjectListUpdaterFunctionalTest {
 
     /**
      * Test that Project List updates are active for Gerrit Version 2.11 upon
-     * connection startup.
+     * connection startup depending on auto completion configuration parameter.
      * @throws Exception if occurs.
      */
     @WithTimeout(TIMEOUT)
@@ -117,6 +117,7 @@ public class GerritProjectListUpdaterFunctionalTest {
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
         config.setProjectListFetchDelay(1);
         config.setProjectListRefreshInterval(1);
+        config.setEnableProjectAutoCompletion(true);
         config = SshdServerMock.getConfigFor(sshd, config);
         gerritServer.setConfig(config);
         PluginImpl.getInstance().addServer(gerritServer);
@@ -152,5 +153,34 @@ public class GerritProjectListUpdaterFunctionalTest {
         TimeUnit.SECONDS.sleep((UPDATE_PERIOD * SECONDS_IN_A_MINUTE) + SLEEPTIME);
         assertEquals(2, gerritServer.getGerritProjects().size());
 
+        //Test project list when auto completion is disabled
+        config.setEnableProjectAutoCompletion(false);
+        gerritServer.setConfig(config);
+
+        gerritServer.stop();
+        gerritServer.start();
+        gerritServer.startConnection();
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+        while (!gerritServer.isConnected()) {
+            TimeUnit.SECONDS.sleep(SLEEPTIME);
+            if (TimeUnit.MILLISECONDS.toSeconds(watch.getTime()) > MAXSLEEPTIME) {
+                break;
+            }
+        }
+        watch.stop();
+
+        watch.reset();
+        watch.start();
+        while (gerritServer.getGerritProjects().size() == 0) {
+            TimeUnit.SECONDS.sleep(SLEEPTIME);
+            if (TimeUnit.MILLISECONDS.toSeconds(watch.getTime()) > MAXSLEEPTIME) {
+                break;
+            }
+        }
+        watch.stop();
+
+        assertEquals(0, gerritServer.getGerritProjects().size());
     }
 }
