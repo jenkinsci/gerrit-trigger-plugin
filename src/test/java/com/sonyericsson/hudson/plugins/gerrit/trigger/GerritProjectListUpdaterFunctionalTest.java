@@ -161,7 +161,7 @@ public class GerritProjectListUpdaterFunctionalTest {
         gerritServer.start();
         gerritServer.startConnection();
 
-        StopWatch watch = new StopWatch();
+        watch.reset();
         watch.start();
         while (!gerritServer.isConnected()) {
             TimeUnit.SECONDS.sleep(SLEEPTIME);
