@@ -119,7 +119,7 @@ public class Config implements IGerritHudsonTriggerConfig {
     /**
      * Default value indicating if the Gerrit server should be used to fetch project names.
      */
-    public static final boolean DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION = true;
+    public static final boolean DEFAULT_ENABLE_PROJECT_AUTO_COMPLETION = false;
     /**
      * Default value for the dynamic config refresh interval.
      */
