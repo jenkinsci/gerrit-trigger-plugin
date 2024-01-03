@@ -39,9 +39,10 @@ import hudson.ExtensionList;
 import hudson.model.Action;
 import hudson.model.AbstractProject;
 import hudson.model.CauseAction;
+import hudson.model.MockBuildableItem;
+import hudson.model.MockWaitingItem;
 import hudson.model.Queue;
 import hudson.model.Queue.Item;
-import hudson.model.Queue.WaitingItem;
 import hudson.model.queue.CauseOfBlockage;
 
 import java.util.ArrayList;
@@ -214,7 +215,7 @@ public class ReplicationQueueTaskDispatcherTest {
                 "refs/changes/1/1/1");
         Item item = createItem(patchsetCreated, new String[] {"slaveA", "slaveB", "slaveC"});
 
-        CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem((WaitingItem)item));
+        CauseOfBlockage cause = dispatcher.canRun(new MockBuildableItem(item));
         assertNull("Build should not be blocked", cause);
     }
 
@@ -779,6 +780,6 @@ public class ReplicationQueueTaskDispatcherTest {
             }
             when(gerritTriggerMock.gerritSlavesToWaitFor(any(String.class))).thenReturn(gerritSlaves);
         }
-        return new WaitingItem(Calendar.getInstance(), abstractProjectMock, actions);
+        return new MockWaitingItem(abstractProjectMock, actions);
     }
 }
