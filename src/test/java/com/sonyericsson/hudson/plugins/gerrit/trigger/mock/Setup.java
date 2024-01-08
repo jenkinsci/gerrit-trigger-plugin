@@ -49,6 +49,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.HashtagsChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PrivateStateChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
@@ -67,6 +68,7 @@ import hudson.security.SecurityRealm;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
 import jenkins.model.Jenkins;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -75,6 +77,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -88,6 +91,7 @@ import static org.mockito.Mockito.when;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.BRANCH;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.CHANGE;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.EMAIL;
+import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.HASHTAGS;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.ID;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
@@ -215,6 +219,8 @@ public final class Setup {
         change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -262,6 +268,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -288,6 +296,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -316,6 +326,8 @@ public final class Setup {
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
         change.setTopic("new-topic");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -368,6 +380,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -399,6 +413,8 @@ public final class Setup {
         change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -433,6 +449,8 @@ public final class Setup {
         change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -460,6 +478,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -489,6 +509,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
         PatchSet patch = new PatchSet();
@@ -501,6 +523,47 @@ public final class Setup {
         approval.setValue("1");
         approvals.add(approval);
         event.setApprovals(approvals);
+        event.setEventCreatedOn("1418133772");
+        return event;
+    }
+
+    /**
+     * Gives you a HashtagsChanged mock.
+     * @return HashtagsChanged mock.
+     */
+    public static HashtagsChanged createHashtagsChanged() {
+        HashtagsChanged event = new HashtagsChanged();
+        Change change = new Change();
+        change.setBranch("branch");
+        change.setId("Iddaaddaa123456789");
+        change.setNumber("1000");
+        Account account = new Account();
+        account.setEmail("email@domain.com");
+        account.setName("Name");
+        change.setOwner(account);
+        change.setProject("project");
+        change.setSubject("subject");
+        change.setUrl("http://gerrit/1000");
+        List<String> hashTags = List.of("hashtag1", "hashtag2");
+        change.setHashtags(hashTags);
+        event.setChange(change);
+        event.setProvider(new Provider(PluginImpl.DEFAULT_SERVER_NAME, "gerrit", "29418", "ssh", "http://gerrit/", "1"));
+        PatchSet patch = new PatchSet();
+        patch.setNumber("1");
+        patch.setRevision("9999");
+        event.setPatchset(patch);
+
+        JSONObject jsonObject = new JSONObject();
+        List<String> addedHashtags = new ArrayList<>();
+        addedHashtags.add("aHashtag1");
+        addedHashtags.add("aHashtag2");
+        List<String> removedHashtags = new ArrayList<>();
+        removedHashtags.add("rHashtag1");
+        removedHashtags.add("rHashtag2");
+        jsonObject.put("hashtags", hashTags);
+        jsonObject.put("added", JSONArray.fromObject(addedHashtags));
+        jsonObject.put("removed", JSONArray.fromObject(removedHashtags));
+        event.fromJson(jsonObject);
         event.setEventCreatedOn("1418133772");
         return event;
     }
@@ -524,6 +587,9 @@ public final class Setup {
         change.put(SUBJECT, "subject");
         change.put(URL, "http://gerrit/1000");
         change.put(OWNER, account);
+        JSONArray hashtags = new JSONArray();
+        hashtags.add("hashtag");
+        change.put(HASHTAGS, hashtags);
 
         event.put(CHANGE, change);
 
@@ -556,6 +622,8 @@ public final class Setup {
         change.setProject("project");
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -925,6 +993,8 @@ public final class Setup {
         change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");
@@ -959,6 +1029,8 @@ public final class Setup {
         change.setProject(project);
         change.setSubject("subject");
         change.setUrl("http://gerrit/1000");
+        List<String> hashtags = List.of("hashtag");
+        change.setHashtags(hashtags);
         event.setChange(change);
         PatchSet patch = new PatchSet();
         patch.setNumber("1");

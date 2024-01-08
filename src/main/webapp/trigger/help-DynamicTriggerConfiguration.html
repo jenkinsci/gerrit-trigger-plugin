@@ -15,6 +15,7 @@
 <pre style="border: 1px dashed black; padding: 2px"><code>p=some/project
 b^**/master/*
 t~.*
+h~.*
 f~\.txt$
 p=some/other/project
 b^**</code></pre>
@@ -23,10 +24,11 @@ b^**</code></pre>
     p for project<br/>
     b for branch<br/>
     t for topic<br />
+    h for hashtags<br />
     f for file<br/>
     o for forbidden file<br/>
     = for plain syntax<br/>
     ^ for ANT style syntax<br/>
     ~ for regexp syntax<br/>
-    Branch, topic, file and forbidden file lines are assumed to be part of the closest preceding project line.
+    Branch, topic, hashtags, file and forbidden file lines are assumed to be part of the closest preceding project line.
 </p>

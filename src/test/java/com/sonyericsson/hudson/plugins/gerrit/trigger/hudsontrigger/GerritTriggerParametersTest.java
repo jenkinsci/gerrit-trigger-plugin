@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTrigg
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.HashtagsChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.model.AbstractProject;
 import hudson.model.ParameterValue;
@@ -44,6 +45,7 @@ import org.jvnet.hudson.test.WithoutJenkins;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -176,6 +178,37 @@ public class GerritTriggerParametersTest {
         assertEquals("-1", ci.optString(GerritEventKeys.OLD_VALUE));
         assertNull(updatedApprovals.optJSONObject("VRF"));
 
+    }
+
+    // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.
+    /**
+     * Tests {@link GerritTriggerParameters#setOrCreateParameters(com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, hudson.model.Job, List)}.
+     * The {@link GerritTriggerParameters#GERRIT_CHANGE_URL} should contain the base url from the first server.
+     *
+     * @throws Exception if so
+     */
+    @Test
+    public void testHashtagsInParameter() throws Exception {
+        HashtagsChanged hashtagsChanged = Setup.createHashtagsChanged();
+        AbstractProject project = j.createFreeStyleProject();
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        trigger.setServerName(GerritServer.ANY_SERVER);
+        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        GerritTriggerParameters.setOrCreateParameters(hashtagsChanged, project, parameters);
+        StringParameterValue hashtags = findParameter(GerritTriggerParameters.GERRIT_HASHTAGS, parameters);
+        StringParameterValue addedHashtags = findParameter(GerritTriggerParameters.GERRIT_ADDED_HASHTAGS, parameters);
+        StringParameterValue removedHashtags = findParameter(GerritTriggerParameters.GERRIT_REMOVED_HASHTAGS,
+                parameters);
+
+        assertNotNull(hashtags);
+        assertNotNull(addedHashtags);
+        assertNotNull(removedHashtags);
+        assertEquals(hashtagsChanged.getHashtags().stream()
+                .collect(Collectors.joining(",")), hashtags.getValue());
+        assertEquals(hashtagsChanged.getAddedHashtags().stream()
+                .collect(Collectors.joining(",")), addedHashtags.getValue());
+        assertEquals(hashtagsChanged.getRemovedHashtags().stream()
+                .collect(Collectors.joining(",")), removedHashtags.getValue());
     }
 
     /**

@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.FilePath;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Hashtag;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic;
 
 import org.kohsuke.accmod.Restricted;
@@ -63,6 +64,7 @@ public final class GerritDynamicUrlProcessor {
     private static final String SHORTNAME_PROJECT = "p";
     private static final String SHORTNAME_BRANCH = "b";
     private static final String SHORTNAME_TOPIC = "t";
+    private static final String SHORTNAME_HASHTAG = "h";
     private static final String SHORTNAME_FILE = "f";
     private static final String SHORTNAME_FORBIDDEN_FILE = "o";
     private static final int SOCKET_READ_TIMEOUT = 10000;
@@ -89,6 +91,7 @@ public final class GerritDynamicUrlProcessor {
               + SHORTNAME_PROJECT
               + "|" + SHORTNAME_BRANCH
               + "|" + SHORTNAME_TOPIC
+              + "|" + SHORTNAME_HASHTAG
               + "|" + SHORTNAME_FILE
               + "|" + SHORTNAME_FORBIDDEN_FILE
               + ")";
@@ -141,6 +144,7 @@ public final class GerritDynamicUrlProcessor {
       List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
       List<Branch> branches = null;
       List<Topic> topics = null;
+      List<Hashtag> hashtags = null;
       List<FilePath> filePaths = null;
       List<FilePath> forbiddenFilePaths = null;
       GerritProject dynamicGerritProject = null;
@@ -192,9 +196,11 @@ public final class GerritDynamicUrlProcessor {
 
           branches = new ArrayList<Branch>();
           topics = new ArrayList<Topic>();
+          hashtags = new ArrayList<>();
           filePaths = new ArrayList<FilePath>();
           forbiddenFilePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, topics, filePaths, forbiddenFilePaths, false);
+          dynamicGerritProject = new GerritProject(type, text, branches, topics,
+                  filePaths, forbiddenFilePaths, false);
         } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
           if (branches == null) {
             throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
@@ -223,6 +229,13 @@ public final class GerritDynamicUrlProcessor {
           FilePath filePath = new FilePath(type, text);
           forbiddenFilePaths.add(filePath);
           dynamicGerritProject.setForbiddenFilePaths(forbiddenFilePaths);
+        } else if (SHORTNAME_HASHTAG.equals(item)) {
+            if (hashtags == null) {
+                throw new ParseException("Line " + lineNr + ": attempt to use 'hashtag' before 'Project'", lineNr);
+            }
+            Hashtag hashtag = new Hashtag(type, text);
+            hashtags.add(hashtag);
+            dynamicGerritProject.setHashtags(hashtags);
         }
       }
 

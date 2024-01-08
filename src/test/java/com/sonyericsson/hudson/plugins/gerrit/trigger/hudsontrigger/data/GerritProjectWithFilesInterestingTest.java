@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -53,12 +55,12 @@ public class GerritProjectWithFilesInterestingTest {
     }
 
     /**
-     * Tests {@link GerritProject#isInteresting(String, String, String, java.util.function.Supplier)}.
+     * Tests {@link GerritProject#isInteresting(Change, java.util.function.Supplier)}.
      */
     @Test
     public void testInteresting() {
         assertEquals(scenarioWithFiles.expected, scenarioWithFiles.config.isInteresting(
-                scenarioWithFiles.project, scenarioWithFiles.branch, scenarioWithFiles.topic,
+                scenarioWithFiles.change,
                 scenarioWithFiles::getFiles));
         assertEquals(scenarioWithFiles.fileCheckOccurred, scenarioWithFiles.fileCheckNeeded);
     }
@@ -131,7 +133,8 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(new FilePath(CompareType.PLAIN, "test.txt"));
         List<FilePath> forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.PLAIN, "test2.txt"));
-        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths, forbiddenFilePaths, false);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics,
+                filePaths, forbiddenFilePaths, false);
         files = new LinkedList<String>();
         files.add("test.txt");
         files.add("test2.txt");
@@ -147,7 +150,8 @@ public class GerritProjectWithFilesInterestingTest {
         filePaths.add(new FilePath(CompareType.PLAIN, "test.txt"));
         forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.PLAIN, "test2.txt"));
-        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, filePaths, forbiddenFilePaths, true);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics,
+                filePaths, forbiddenFilePaths, true);
         files = new LinkedList<String>();
         files.add("test.txt");
         files.add("test2.txt");
@@ -160,7 +164,8 @@ public class GerritProjectWithFilesInterestingTest {
         topics = new LinkedList<Topic>();
         forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.PLAIN, "test2.txt"));
-        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, forbiddenFilePaths, false);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics,
+                null, forbiddenFilePaths, false);
         files = new LinkedList<String>();
         files.add("test.txt");
         files.add("test2.txt");
@@ -174,7 +179,8 @@ public class GerritProjectWithFilesInterestingTest {
         topics = new LinkedList<Topic>();
         forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.PLAIN, "test2.txt"));
-        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, forbiddenFilePaths, true);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics,
+                null, forbiddenFilePaths, true);
         files = new LinkedList<String>();
         files.add("test.txt");
         files.add("test2.txt");
@@ -188,7 +194,8 @@ public class GerritProjectWithFilesInterestingTest {
         topics = new LinkedList<Topic>();
         forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.PLAIN, "test2.txt"));
-        config = new GerritProject(CompareType.PLAIN, "project", branches, topics, null, forbiddenFilePaths, true);
+        config = new GerritProject(CompareType.PLAIN, "project", branches, topics,
+                null, forbiddenFilePaths, true);
         files = new LinkedList<String>();
         files.add("test2.txt");
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
@@ -203,7 +210,8 @@ public class GerritProjectWithFilesInterestingTest {
         files = new LinkedList<String>();
         files.add("tests/test.txt");
         files.add("tests/test2.txt");
-        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics, filePaths, forbiddenFilePaths,
+        config = new GerritProject(CompareType.REG_EXP, "project.*5", branches, topics,
+                filePaths, forbiddenFilePaths,
                 false);
         parameters.add(new InterestingScenarioWithFiles[]{new InterestingScenarioWithFiles(
                 config, "projectNumber5", "feature/mymaster", null, files, true, false), });
@@ -215,7 +223,8 @@ public class GerritProjectWithFilesInterestingTest {
         forbiddenFilePaths = new LinkedList<FilePath>();
         forbiddenFilePaths.add(new FilePath(CompareType.ANT, "**/*skip*"));
         config = new GerritProject(
-                CompareType.ANT, "vendor/**/project", branches, topics, filePaths, forbiddenFilePaths, false);
+                CompareType.ANT, "vendor/**/project", branches, topics,
+                filePaths, forbiddenFilePaths, false);
         files = new LinkedList<String>();
         files.add("resources/test.xml");
         files.add("files/skip.txt");
@@ -256,9 +265,7 @@ public class GerritProjectWithFilesInterestingTest {
     public static class InterestingScenarioWithFiles {
 
         GerritProject config;
-        String project;
-        String branch;
-        String topic;
+        Change change;
         boolean expected;
         List<String> files;
         boolean fileCheckNeeded;
@@ -282,9 +289,10 @@ public class GerritProjectWithFilesInterestingTest {
                 boolean fileCheckNeeded,
                 boolean expected) {
             this.config = config;
-            this.project = project;
-            this.branch = branch;
-            this.topic = topic;
+            this.change = new Change();
+            change.setProject(project);
+            change.setBranch(branch);
+            change.setTopic(topic);
             this.files = files;
             this.fileCheckNeeded = fileCheckNeeded;
             this.fileCheckOccurred = false;

@@ -285,6 +285,18 @@
                         </div>
                     </f:repeatable>
                 </f:entry>
+                <f:entry title="${%Hashtags}">
+                    <f:repeatable var="h" field="hashtags" add="${%Add Hashtag}" minimum="0" header="">
+                        <f:repeatableDeleteButton/>
+                        <div class="gt-typed-field">
+                            <div class="gt-typed-field__title">
+                                ${%Hashtag}
+                            </div>
+                            <g:compareType types="${types}" loop="${loop}"/>
+                            <f:textbox field="pattern" value="${h.pattern}" default=""/>
+                        </div>
+                    </f:repeatable>
+                </f:entry>
                 <j:if test="${fileTriggerEnabled}">
                     <f:entry title="${%Files}">
                         <f:repeatable var="f" field="filePaths" add="${%Add File path}" minimum="0" header="">

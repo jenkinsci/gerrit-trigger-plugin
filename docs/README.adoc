@@ -144,6 +144,8 @@ contents should follow this syntax:
 ----
 p=some/project
 b^**/master/*
+t~.*
+h~.*
 f~.*\.txt
 p=some/other/project
 b^**
@@ -153,6 +155,8 @@ Explanation:
 
 p for project +
 b for branch +
+t for topic +
+h for hashtags +
 f for file +
 = for plain syntax +
 ^ for ANT style syntax +
