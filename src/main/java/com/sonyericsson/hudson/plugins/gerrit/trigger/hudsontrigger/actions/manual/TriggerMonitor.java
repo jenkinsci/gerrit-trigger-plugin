@@ -205,17 +205,17 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
         @SuppressWarnings("unused") //called from jelly
         public String getBallColor() {
             if (!triggerScanStarted) {
-                return BallColor.GREY.getImage();
+                return BallColor.GREY.getIconClassName();
             } else if (!triggerScanDone) {
-                return BallColor.GREY_ANIME.getImage();
+                return BallColor.GREY_ANIME.getIconClassName();
             } else if (isUnTriggered()) {
-                return BallColor.DISABLED.getImage();
+                return BallColor.DISABLED.getIconClassName();
             } else {
                 Result result = getLeastFavorableResult();
                 if (result != null) {
-                    return result.color.getImage();
+                    return result.color.getIconClassName();
                 } else {
-                    return BallColor.GREY_ANIME.getImage();
+                    return BallColor.GREY_ANIME.getIconClassName();
                 }
             }
         }

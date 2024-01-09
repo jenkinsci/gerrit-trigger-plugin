@@ -44,7 +44,7 @@
                     <j:choose>
                         <j:when test="${other.hasBuild()}">
                             <td width="18">
-                                <img src="${imagesURL}/16x16/${other.build.iconColor.image}"/>
+                                <l:icon class="${build.build.iconColor.iconClassName}"/>
                             </td>
                             <td>
                                 <a href="${rootURL}/${other.project.url}">${other.project.displayName}</a>

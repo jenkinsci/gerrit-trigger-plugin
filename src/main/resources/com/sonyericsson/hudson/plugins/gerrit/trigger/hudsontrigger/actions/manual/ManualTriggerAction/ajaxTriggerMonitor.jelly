@@ -30,7 +30,7 @@
             <j:forEach items="${monitor.eventsIterator}" var="state">
                 <tr>
                     <td width="14">
-                        <img src="${imagesURL}/16x16/${state.ballColor}"/>
+                        <l:icon class="${state.ballColor}" />
                     </td>
                     <td colspan="2" style="font-weight: bold;">
                         <a href="${it.getGerritUrl(state.event)}" target="_new">
@@ -56,7 +56,7 @@
                                 <j:choose>
                                     <j:when test="${build.hasBuild()}">
                                         <td width="18">
-                                            <img src="${imagesURL}/16x16/${build.build.iconColor.image}"/>
+                                            <l:icon class="${build.build.iconColor.iconClassName}"/>
                                         </td>
                                         <td>
                                             <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
@@ -67,7 +67,7 @@
                                     </j:when>
                                     <j:otherwise>
                                         <td width="14">
-                                            <img src="${rootURL}/images/build-status/build-status-sprite.svg#never-built" class="icon-grey-anime icon-sm"/>
+                                            <l:icon class="icon-grey-anime icon-sm"/>
                                         </td>
                                         <td>
                                             <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
