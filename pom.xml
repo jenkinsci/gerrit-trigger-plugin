@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.66</version>
+        <version>4.76</version>
         <relativePath />
     </parent>
 
@@ -54,7 +54,7 @@
     </developers>
 
     <properties>
-        <jenkins.version>2.410</jenkins.version>
+        <jenkins.version>2.414.3</jenkins.version>
         <revision>2.39.4</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -62,6 +62,7 @@
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
         <!--<concurrency>0.5C</concurrency>-->
+        <build-failure-analyzer-plugin.version>2.5.0</build-failure-analyzer-plugin.version>
         <checkstyle.version>2.16</checkstyle.version>
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
         <forkCount>0.5C</forkCount>
@@ -74,16 +75,26 @@
             <artifactId>gerrit-events</artifactId>
             <version>2.21.0</version>
             <exclusions>
+                <!-- Provided by gson-api plugin -->
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+                <!-- Provided by jsch plugin -->
+                <exclusion>
+                    <groupId>com.jcraft</groupId>
+                    <artifactId>jsch</artifactId>
+                </exclusion>
                 <!-- Provided by core -->
                 <exclusion>
                     <groupId>commons-io</groupId>
                     <artifactId>commons-io</artifactId>
                 </exclusion>
                 <exclusion>
-                    <!-- json-lib-2.4-jenkins-2 is provided by core/stapler -->
                     <groupId>net.sf.json-lib</groupId>
                     <artifactId>json-lib</artifactId>
                 </exclusion>
+                <!-- Provided by apache-httpcomponents-client-4-api plugin -->
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
@@ -95,6 +106,10 @@
                 </exclusion>
             </exclusions>
             <!-- New source is here: https://github.com/sonyxperiadev/gerrit-events -->
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>gson-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -114,6 +129,10 @@
             <groupId>com.sonyericsson.hudson.plugins.rebuild</groupId>
             <artifactId>rebuild</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jsch</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -237,37 +256,27 @@
         <dependency>
             <groupId>com.sonyericsson.jenkins.plugins.bfa</groupId>
             <artifactId>build-failure-analyzer</artifactId>
-            <version>2.4.0</version>
+            <version>${build-failure-analyzer-plugin.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.sonyericsson.jenkins.plugins.bfa</groupId>
             <artifactId>build-failure-analyzer</artifactId>
-            <version>2.4.0</version>
+            <version>${build-failure-analyzer-plugin.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
     <dependencyManagement>
-      <dependencies>
-          <dependency>
-              <groupId>io.jenkins.tools.bom</groupId>
-              <artifactId>bom-2.401.x</artifactId>
-              <version>2244.vd60654536b_96</version>
-              <type>pom</type>
-              <scope>import</scope>
-          </dependency>
-          <dependency>
-              <groupId>com.google.code.gson</groupId>
-              <artifactId>gson</artifactId>
-              <version>2.8.9</version>
-          </dependency>
-          <dependency>
-              <groupId>org.apache.commons</groupId>
-              <artifactId>commons-lang3</artifactId>
-              <version>3.12.0</version>
-          </dependency>
-      </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.414.x</artifactId>
+                <version>2675.v1515e14da_7a_6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
     <repositories>
         <repository>
