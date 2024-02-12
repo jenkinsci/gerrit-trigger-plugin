@@ -63,17 +63,18 @@ public class ConfigTest {
      */
     @Test
     public void testSetValues() {
-        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit review <CHANGE>,<PATCHSET> "
+        String formString = "{\"gerritVerifiedCmdBuildFailed\":"
+                + "\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review <CHANGE>,<PATCHSET>"
+                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET>"
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
@@ -100,24 +101,24 @@ public class ConfigTest {
                 + "\"notificationLevel\":\"OWNER\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildFailed());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildStarted());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET>"
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET>"
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildSuccessful());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildUnstable());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                      config.getGerritCmdBuildNotBuilt());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
-                        + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
-                config.getGerritCmdBuildAborted());
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
+                + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
+                     config.getGerritCmdBuildAborted());
         assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),
                      config.getGerritAuthKeyFile().getPath());
         assertEquals("passis", config.getGerritAuthKeyFilePassword());
@@ -167,17 +168,18 @@ public class ConfigTest {
      */
     @Test
     public void testCopyConfig() {
-        String formString = "{\"gerritVerifiedCmdBuildFailed\":\"gerrit review <CHANGE>,<PATCHSET> "
+        String formString = "{\"gerritVerifiedCmdBuildFailed\":"
+                + "\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildStarted\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review <CHANGE>,<PATCHSET>"
+                + "\"gerritVerifiedCmdBuildSuccessful\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET>"
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildUnstable\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildNotBuilt\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
-                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review <CHANGE>,<PATCHSET> "
+                + "\"gerritVerifiedCmdBuildAborted\":\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
                 + "\"gerritAuthKeyFile\":\"/home/local/gerrit/.ssh/id_rsa\","
                 + "\"gerritAuthKeyFilePassword\":\"passis\","
@@ -205,22 +207,22 @@ public class ConfigTest {
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config initialConfig = new Config(form);
         Config config = new Config(initialConfig);
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildFailed());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Started yay!! <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildStarted());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET>"
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET>"
                 + " --message 'Successful wonderful <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildSuccessful());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Unstable and you are to <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildUnstable());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'You are not built for it <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildNotBuilt());
-        assertEquals("gerrit review <CHANGE>,<PATCHSET> "
+        assertEquals("gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                         + "--message 'Aborted oupsy <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>",
                 config.getGerritCmdBuildAborted());
         assertEquals(new File("/home/local/gerrit/.ssh/id_rsa").getPath(),

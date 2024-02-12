@@ -165,10 +165,10 @@ public class VoteSameTopicTest {
         //CS IGNORE MagicNumber FOR NEXT 4 LINES. REASON: Testdata.
         server.waitForCommand("gerrit stream-events", 2000);
         triggerAndWait(projects[0]);
-        checkCommand("gerrit review 100,1 --message 'Build Started[\\s\\S.]*");
-        checkCommand("gerrit review 101,1 --message 'Build Started[\\s\\S.]*");
-        checkCommand("gerrit review 100,1 --message 'Build Successful[\\s\\S.]*");
-        checkCommand("gerrit review 101,1 --message 'Build Successful[\\s\\S.]*");
+        checkCommand("gerrit review --project " + projects[0] + " 100,1 --message 'Build Started[\\s\\S.]*");
+        checkCommand("gerrit review --project " + projects[1] + " 101,1 --message 'Build Started[\\s\\S.]*");
+        checkCommand("gerrit review --project " + projects[0] + " 100,1 --message 'Build Successful[\\s\\S.]*");
+        checkCommand("gerrit review --project " + projects[1] + " 101,1 --message 'Build Successful[\\s\\S.]*");
     }
 
     /**
