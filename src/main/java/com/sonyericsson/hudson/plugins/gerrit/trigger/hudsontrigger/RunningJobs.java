@@ -13,6 +13,7 @@ import hudson.model.Cause;
 import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Item;
+import hudson.model.Job;
 import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -242,7 +243,8 @@ public class RunningJobs {
            List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if (jobName.equals(item.task.getName())) {
+                   Job tJob = (Job)item.task;
+                   if (jobName.equals(tJob.getFullName())) {
                        Queue.getInstance().cancel(item);
                    }
                }
