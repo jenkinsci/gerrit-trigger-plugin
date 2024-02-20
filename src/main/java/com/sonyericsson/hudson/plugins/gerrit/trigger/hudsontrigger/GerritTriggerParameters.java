@@ -55,6 +55,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * The parameters to add to a build.
@@ -246,7 +247,11 @@ public enum GerritTriggerParameters {
     /**
      * Comment posted to Gerrit in a comment-added event.
      */
-    GERRIT_EVENT_COMMENT_TEXT;
+    GERRIT_EVENT_COMMENT_TEXT,
+    /**
+     * Updated approvals.
+     */
+    GERRIT_EVENT_UPDATED_APPROVALS;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -490,6 +495,8 @@ public enum GerritTriggerParameters {
                     commentTextMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
                             parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
                 }
+                GERRIT_EVENT_UPDATED_APPROVALS.setOrCreateStringParameterValue(parameters,
+                    getUpdateApprovals((CommentAdded)event), false);
             }
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
@@ -524,6 +531,18 @@ public enum GerritTriggerParameters {
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
+    }
+
+    /**
+     * Get the update approvals as json string from a CommentAddedEvent.
+     *
+     * @param event the event
+     * @return json string of updated approvals
+     */
+    private static String getUpdateApprovals(CommentAdded event) {
+      return String.format("{%s}", ((CommentAdded)event).getApprovals().stream()
+          .filter(a -> a.isUpdated()).map(o -> String.format("\"%s\":{\"value\":\"%s\",\"old_value\":\"%s\"}",
+              o.getType(), o.getValue(), o.getOldValue())).collect(Collectors.joining(",")));
     }
 
     /**
