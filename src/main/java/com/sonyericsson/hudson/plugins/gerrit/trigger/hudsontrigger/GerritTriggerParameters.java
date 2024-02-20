@@ -30,7 +30,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -44,6 +46,7 @@ import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
+import net.sf.json.JSONObject;
 import org.jvnet.localizer.Localizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +58,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 /**
  * The parameters to add to a build.
@@ -496,7 +498,7 @@ public enum GerritTriggerParameters {
                             parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
                 }
                 GERRIT_EVENT_UPDATED_APPROVALS.setOrCreateStringParameterValue(parameters,
-                    getUpdateApprovals((CommentAdded)event), false);
+                    getUpdatedApprovals((CommentAdded)event), false);
             }
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
@@ -534,15 +536,20 @@ public enum GerritTriggerParameters {
     }
 
     /**
-     * Get the update approvals as json string from a CommentAddedEvent.
+     * Get the updated approvals as json string from a CommentAddedEvent.
      *
      * @param event the event
      * @return json string of updated approvals
      */
-    private static String getUpdateApprovals(CommentAdded event) {
-      return String.format("{%s}", ((CommentAdded)event).getApprovals().stream()
-          .filter(a -> a.isUpdated()).map(o -> String.format("\"%s\":{\"value\":\"%s\",\"old_value\":\"%s\"}",
-              o.getType(), o.getValue(), o.getOldValue())).collect(Collectors.joining(",")));
+    static String getUpdatedApprovals(CommentAdded event) {
+        JSONObject updatedApprovals = event.getApprovals().stream()
+                .filter(Approval::isUpdated).collect(JSONObject::new, (JSONObject json, Approval apr) -> {
+                    JSONObject j = new JSONObject();
+                    j.put(GerritEventKeys.VALUE, apr.getValue());
+                    j.put(GerritEventKeys.OLD_VALUE, apr.getOldValue());
+                    json.put(apr.getType(), j);
+                }, (jsonObject, jsonObject2) -> { });
+        return updatedApprovals.toString();
     }
 
     /**
