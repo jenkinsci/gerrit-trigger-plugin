@@ -30,7 +30,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.parameters.Base64EncodedStringParameterValue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -44,6 +46,7 @@ import hudson.model.Job;
 import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import hudson.model.TextParameterValue;
+import net.sf.json.JSONObject;
 import org.jvnet.localizer.Localizable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,7 +249,11 @@ public enum GerritTriggerParameters {
     /**
      * Comment posted to Gerrit in a comment-added event.
      */
-    GERRIT_EVENT_COMMENT_TEXT;
+    GERRIT_EVENT_COMMENT_TEXT,
+    /**
+     * Updated approvals.
+     */
+    GERRIT_EVENT_UPDATED_APPROVALS;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -490,6 +497,8 @@ public enum GerritTriggerParameters {
                     commentTextMode.setOrCreateParameterValue(GERRIT_EVENT_COMMENT_TEXT,
                             parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
                 }
+                GERRIT_EVENT_UPDATED_APPROVALS.setOrCreateStringParameterValue(parameters,
+                    getUpdatedApprovals((CommentAdded)event), false);
             }
         } else if (gerritEvent instanceof RefUpdated) {
             RefUpdated event = (RefUpdated)gerritEvent;
@@ -524,6 +533,23 @@ public enum GerritTriggerParameters {
             GERRIT_VERSION.setOrCreateStringParameterValue(
                     parameters, provider.getVersion(), escapeQuotes);
         }
+    }
+
+    /**
+     * Get the updated approvals as json string from a CommentAddedEvent.
+     *
+     * @param event the event
+     * @return json string of updated approvals
+     */
+    static String getUpdatedApprovals(CommentAdded event) {
+        JSONObject updatedApprovals = event.getApprovals().stream()
+                .filter(Approval::isUpdated).collect(JSONObject::new, (JSONObject json, Approval apr) -> {
+                    JSONObject j = new JSONObject();
+                    j.put(GerritEventKeys.VALUE, apr.getValue());
+                    j.put(GerritEventKeys.OLD_VALUE, apr.getOldValue());
+                    json.put(apr.getType(), j);
+                }, (jsonObject, jsonObject2) -> { });
+        return updatedApprovals.toString();
     }
 
     /**
