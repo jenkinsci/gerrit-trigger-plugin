@@ -30,13 +30,17 @@
             <j:forEach items="${monitor.eventsIterator}" var="state">
                 <tr>
                     <td width="14">
-                        <l:icon class="${state.ballColor}" />
+                        <div class="gt-search__monitor-cell">
+                            <l:icon class="${state.ballColor} icon-sm" />
+                        </div>
                     </td>
                     <td colspan="2" style="font-weight: bold;">
-                        <a href="${it.getGerritUrl(state.event)}" target="_new">
+                        <div class="gt-search__monitor-cell">
                             <img src="${rootURL}/plugin/gerrit-trigger/images/icon16.png" border="0"/>
-                            ${state.event.change.number},${state.event.patchSet.number}
-                        </a>
+                            <a href="${it.getGerritUrl(state.event)}" target="_new">
+                                ${state.event.change.number},${state.event.patchSet.number}
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 <j:choose>
@@ -56,21 +60,27 @@
                                 <j:choose>
                                     <j:when test="${build.hasBuild()}">
                                         <td width="18">
-                                            <l:icon class="${build.build.iconColor.iconClassName}"/>
+                                            <div class="gt-search__monitor-cell">
+                                                <l:icon class="${build.build.iconColor.iconClassName} icon-sm"/>
+                                            </div>
                                         </td>
                                         <td>
-                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
-                                            <st:nbsp/>
-                                            <st:nbsp/>
-                                            <a href="${rootURL}/${build.build.url}">${build.build.displayName}</a>
+                                            <div class="gt-search__monitor-cell">
+                                              <a href="${rootURL}/${build.project.url}">${build.project.fullDisplayName}</a>
+                                              <st:nbsp/>
+                                              <st:nbsp/>
+                                              <a href="${rootURL}/${build.build.url}">${build.build.DisplayName}</a>
+                                            </div>
                                         </td>
                                     </j:when>
                                     <j:otherwise>
                                         <td width="14">
-                                            <l:icon class="icon-grey-anime icon-sm"/>
+                                            <div class="gt-search__monitor-cell">
+                                                <l:icon class="icon-grey-anime icon-sm"/>
+                                            </div>
                                         </td>
                                         <td>
-                                            <a href="${rootURL}/${build.project.url}">${build.project.displayName}</a>
+                                            <a href="${rootURL}/${build.project.url}">${build.project.fullDisplayName}</a>
                                         </td>
                                     </j:otherwise>
                                 </j:choose>
@@ -79,13 +89,10 @@
                     </j:otherwise>
                 </j:choose>
             </j:forEach>
-            <j:if test="${ajax==null and !h.isAutoRefresh(request)}">
-                <script defer="defer">
-                    window.setTimeout(function() {
-                    refreshPart('triggerMonitor',"./ajaxTriggerMonitor");
-                    }, 500);
-                </script>
-            </j:if>
         </l:pane>
+        <j:if test="${ajax==null}">
+            <div class="widget-refresh-reference" data-id="triggerMonitor" data-url="./ajaxTriggerMonitor"/>
+            <st:adjunct includes="lib.hudson.widget-refresh"/>
+        </j:if>
     </l:ajax>
 </j:jelly>

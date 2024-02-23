@@ -64,27 +64,6 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
     }
 
     /**
-     * Checks that the provided parameter is an empty string or an integer.
-     *
-     * @param value the value.
-     * @return {@link FormValidation#validatePositiveInteger(String)}
-     */
-    public FormValidation doEmptyOrIntegerCheck(
-            @QueryParameter("value")
-            final String value) {
-        if (value == null || value.length() <= 0) {
-            return FormValidation.ok();
-        } else {
-            try {
-                Integer.parseInt(value);
-                return FormValidation.ok();
-            } catch (NumberFormatException e) {
-                return FormValidation.error(Messages.NotANumber());
-            }
-        }
-    }
-
-    /**
      * Provides auto-completion candidates for dependency jobs names.
      *
      * @param value the value.

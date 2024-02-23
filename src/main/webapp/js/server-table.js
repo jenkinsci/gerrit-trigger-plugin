@@ -22,190 +22,123 @@
  *  THE SOFTWARE.
  */
 
-/*global crumb*/
+function refreshServerTable() {
+    const table = document.getElementById("gerrit-server-table");
 
-function serverTable() {
-    'use strict';
-    // private funcs
-    var urlSysImgSvg = function(fImage) {
-        return imagesURL + '/svgs/' + fImage;
-    };
+    function generateSVGIcon(name) {
+        const icons = document.getElementById("gerrit-svg-icons");
+        return icons.content.querySelector(`#${name}`).cloneNode(true);
+    }
 
-    var urlSysImg = function(iSize, fImage) {
-        var rectImage = iSize + 'x' + iSize;
-        return imagesURL + '/' + rectImage + '/' + fImage;
-    };
+    function createLink(url, icon, tagName="a", callback=null, disabled=false) {
+        const td = document.createElement("td");
+        td.classList.add("gt-table--center");
 
-    var urlImgPlugin = function(iSize, fImage) {
-        var rectImage = iSize + 'x' + iSize;
-        return pluginURL + '/images/' + rectImage + '/' + fImage;
-    };
-
-    var getAttributes = function(oAttr) {
-        var sAttr = '';
-        if (oAttr === null) {
-            return sAttr;
-        }
-
-        var key = '';
-        for (key in oAttr) {
-            if (oAttr.hasOwnProperty(key)) {
-                sAttr = sAttr + ' ' + key + '="' + oAttr[key] + '"';
+        const element = document.createElement(tagName);
+        element.classList.add("jenkins-button");
+        element.appendChild(icon);
+        if (callback) {
+            element.onclick = function(event) {
+                callback(event, element);
             }
-        }
-
-        return sAttr;
-    };
-
-    var getImageURL = function(sSystem, fImage) {
-        var url = '';
-        if (sSystem === 'sysImgBasic') {
-            url = urlSysImg(24, fImage);
-        } else if (sSystem === 'sysImgSvg') {
-            url = urlSysImgSvg(fImage);
+            element.disabled = disabled;
         } else {
-            url = urlImgPlugin(24, fImage);
+            element.href = url;
         }
-        return url;
-    };
+        td.appendChild(element);
+        return td;
+    }
 
-    var btnImgBase = function(sSystem, sName, fImage, oAttr) {
-        var sAttr = getAttributes(oAttr);
-        var sImgURL = getImageURL(sSystem, fImage);
-        return '<button type="button" class="' + YAHOO.widget.DataTable.CLASS_BUTTON +
-               '" name="' + sName + '"' + sAttr + '><img src="' + sImgURL + '" width="24" height="24"  /></button>';
-    };
+    function toggleServer(event, element) {
+        event.preventDefault();
+        const row = element.closest("tr");
+        let serverUrl = row.dataset.serverUrl;
+        const status = row.dataset.status;
+        let statusIcon;
 
-    var btnSysImgSvg = function(sName, fImage, oAttr) {
-        return btnImgBase('sysImgSvg', sName, fImage, oAttr);
-    };
+        if (status === "up") {
+            statusIcon = generateSVGIcon("gerrit-status-disconnecting");
+            serverUrl +="/sleep";
+        } else if(status == "down") {
+            statusIcon = generateSVGIcon("gerrit-status-connecting");
+            serverUrl +="/wakeup";
+        }
+        element.replaceChild(statusIcon, element.firstChild);
+        fetch(serverUrl, {
+            method: "post",
+            headers: crumb.wrap({}),
+        }).then(function(rsp) {
+            if (rsp.ok) {
+                setTimeout(refreshServerTable, 2000)
+            }
+        });
+    }
 
-    var btnSysImg = function(sName, fImage, oAttr) {
-        return btnImgBase('sysImgBasic', sName, fImage, oAttr);
-    };
-
-    var btnImg = function(sName, fImage, oAttr) {
-        return btnImgBase('pluginImg', sName, fImage, oAttr);
-    };
-
-    // Buttons
-    var btnServer = function(sStatus) {
-        var btn = null;
-        if (sStatus === "up") {
-            btn = btnSysImg("server", 'blue.png', null);
-        } else if (sStatus === "down") {
-            btn = btnSysImg("server", 'red.png', null);
+    function createTableRow(server, tbody) {
+        const row = document.createElement("tr");
+        row.setAttribute("data-server-url", server.serverUrl);
+        row.setAttribute("data-status", server.status);
+        const nameTd = document.createElement("td");
+        if (server.frontEndUrl !== '') {
+            const a = document.createElement("a");
+            a.href = server.frontEndUrl;
+            a.target = "_blank";
+            a.classList.add("gt-external-link");
+            a.appendChild(document.createTextNode(server.name));
+            a.appendChild(generateSVGIcon("gerrit-symbol-link"));
+            nameTd.appendChild(a);
         } else {
-            btn = btnSysImg("server", "grey.png", {'disabled': 'disabled'});
+            nameTd.innerHTML = server.name;
         }
-        return btn;
-    };
+        row.appendChild(nameTd);
+        const versionTd = document.createElement("td");
+        versionTd.innerText = server.version;
+        row.appendChild(versionTd);
 
-    var btnEdit = function(bError, bWarning) {
-        var btn = null;
-        if (bError) {
-            btn = btnImg("edit", "gear-error.png", null);
-        } else if (bWarning) {
-            btn = btnImg("edit", "gear-warning.png", null);
+        let statusIcon;
+        let disabled = false;
+        let callback = "toggleServer";
+        if (server.status === "up") {
+            statusIcon= generateSVGIcon("gerrit-status-connected");
+        } else if (server.status === "down") {
+            statusIcon= generateSVGIcon("gerrit-status-disconnected")
         } else {
-            btn = btnSysImgSvg("edit", "gear.svg", null);
+            statusIcon= generateSVGIcon("gerrit-status-unknown")
+            disabled = true;
+            callback = null;
         }
-        return btn;
-    };
+        row.appendChild(createLink("", statusIcon, "button", toggleServer, disabled));
 
-    var btnRemove = function() {
-        return btnSysImgSvg("remove", "edit-delete.svg", null);
-    };
-
-    // formatFrontEndLink
-    var formatterFrontEndLink = function(elLiner, oRecord, oColumn, oData) {
-        var serverName = oRecord.getData("name");
-        var frontEndUrl = oRecord.getData("frontEndUrl");
-        if (frontEndUrl !== '') {
-            elLiner.innerHTML = '<a href="' + frontEndUrl + '">' + serverName + '</a>';
-        } else {
-            elLiner.innerHTML = serverName;
+        const icon = generateSVGIcon("gerrit-symbol-settings");
+        if (server.hasErrors) {
+            icon.classList.add("jenkins-!-error-color");
+        } else if (server.hasWarnings) {
+            icon.classList.add("jenkins-!-warning-color");
         }
-    };
-    YAHOO.widget.DataTable.Formatter.formatFrontEndLink = formatterFrontEndLink;
+        row.appendChild(createLink(`${server.serverUrl}/`, icon));
 
-    // controlServer
-    var formatterControlServer = function(elLiner, oRecord, oColumn, oData, oDataTable) {
-        var status = oRecord.getData("status");
-        elLiner.innerHTML = btnServer(status);
-    };
-    YAHOO.widget.DataTable.Formatter.controlServer = formatterControlServer;
+        row.appendChild(createLink(`${server.serverUrl}/remove`, generateSVGIcon("gerrit-symbol-remove")));
+        tbody.appendChild(row);
+    }
 
-    // editServer
-    var formatterEditServer = function(elLiner, oRecord, oColumn, oData, oDataTable) {
-        var hasErrors = oRecord.getData("hasErrors");
-        var hasWarnings = oRecord.getData("hasWarnings");
-        elLiner.innerHTML = btnEdit(hasErrors, hasWarnings);
-    };
-    YAHOO.widget.DataTable.Formatter.editServer = formatterEditServer;
-
-    // removeServer
-    var formatterRemoveServer = function(elLiner, oRecord, oColumn, oData, oDataTable) {
-        elLiner.innerHTML = btnRemove();
-    };
-    YAHOO.widget.DataTable.Formatter.removeServer = formatterRemoveServer;
-
-    // DataSource
-    var serverNames = new YAHOO.util.DataSource("serverStatuses");
-    serverNames.responseType = YAHOO.util.DataSource.TYPE_JSON;
-    serverNames.responseSchema = { resultsList: "servers",
-            fields: ["name", "frontEndUrl", "serverUrl", "version", "status", "hasErrors", "hasWarnings"] };
-
-    // DataTable
-    var dataTable = new YAHOO.widget.DataTable("server-list", columnDefs, serverNames);
-
-    var connectionCallBack = {
-        success: function(o) {
-            serverNames.sendRequest('', {
-                success: dataTable.onDataReturnInitializeTable,
-                scope: dataTable
+    fetch("serverStatuses").then(function(rsp) {
+        if (rsp.ok) {
+            rsp.json().then(function(json) {
+                if (json.hasOwnProperty("servers") && json.servers.length > 0) {
+                    table.classList.remove("jenkins-hidden");
+                }
+                const tbody = table.createTBody();
+                json.servers.forEach(function(server) {
+                    createTableRow(server, tbody)
+                });
+                table.tBodies[0].remove();
+                tbody.classList.remove("jenkins-hidden");
             });
-        },
-        scope: serverNames
-    };
-
-    // ClickButtonEvent
-    dataTable.subscribe("buttonClickEvent", function(oArgs) {
-        var elButton = oArgs.target;
-        var oRecord = this.getRecord(elButton);
-        var crumbStr = "";
-        if (crumb.fieldName !== null) {
-            crumbStr = crumb.fieldName + "=" + crumb.value;
-        }
-
-        if (elButton.name === "server") {
-            // for BtnServer
-            if (oRecord.getData("status") === "up") {
-                YAHOO.log("Stop connection.");
-                elButton.firstElementChild.src = urlSysImg(24, "blue_anime.gif");
-                YAHOO.util.Connect.asyncRequest('POST', oRecord.getData("serverUrl") + "/sleep", connectionCallBack, crumbStr);
-            } else if (oRecord.getData("status") === "down") {
-                YAHOO.log("Start connection.");
-                elButton.firstElementChild.src = urlSysImg(24, "red_anime.gif");
-                YAHOO.util.Connect.asyncRequest('POST', oRecord.getData("serverUrl") + "/wakeup", connectionCallBack, crumbStr);
-            }
-        } else if (elButton.name === "edit") {
-            // for btnEdit
-            window.location.href = oRecord.getData("serverUrl");
-        } else if (elButton.name === "remove") {
-            // for BtnRemove
-            window.location.href = oRecord.getData("serverUrl") + '/remove';
         }
     });
-
-    // Interval updater
-    var callBack = {
-        success: dataTable.onDataReturnInitializeTable,
-        failure: function() {
-            YAHOO.log("Datasource initialization failure", "error");
-        },
-        scope: dataTable
-    };
-
-    serverNames.setInterval(30000, null, callBack);
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+    refreshServerTable();
+    setInterval(refreshServerTable, 30000);
+});

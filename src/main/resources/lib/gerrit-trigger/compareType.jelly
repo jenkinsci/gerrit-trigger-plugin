@@ -1,0 +1,17 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+  <st:documentation> <![CDATA[
+    ]]>
+    <st:attribute name="types">
+    </st:attribute>
+    <st:attribute name="loop">
+    </st:attribute>
+  </st:documentation>
+  <div class="jenkins-select gt-compare-type">
+    <select class="jenkins-select__input" name="_.compareType" tooltip="${%Compare Type}">
+      <j:forEach items="${attrs.types}" var="me">
+        <f:option value="${me.name()}" selected="${attrs.loop.getCompareType().name()==me.name()}">${me.getDisplayName()}</f:option>
+      </j:forEach>
+    </select>
+  </div>
+
+</j:jelly>

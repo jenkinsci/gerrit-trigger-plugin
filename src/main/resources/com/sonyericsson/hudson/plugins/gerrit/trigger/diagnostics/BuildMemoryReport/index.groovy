@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.Diagnostics
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent
@@ -41,75 +42,79 @@ DateFormat dateFormat = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFor
 l.layout(title: _("Build Coordination - Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "icon-up icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
-            l.task(icon: "icon-folder icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/diagnostics", title: _("Back to Diagnostics"))
+            l.task(icon: "symbol-clipboard-outline plugin-ionicons-api", href: ".", title: Messages.BuildMemoryReport_DisplayName())
+            l.task(icon: "symbol-clipboard-outline plugin-ionicons-api", href: "../eventListeners", title: Messages.EventListenersReport_DisplayName())
         }
     }
     l.'main-panel' {
         h1(report.getDisplayName())
-        p(style: "font-size: smaller; font-style: italic;", _("blurb"))
-        table(class: "sortable pane bigtable") {
-            tr {
-                th(id: 'hJob', align: "left", _('Job'))
-                th(id: 'hRun', align: "left", _('Run #'))
-                th(id: 'hCompleted', align: "left", _('Completed'))
-                th(id: 'hCancelled', align: "left", _('Cancelled'))
-                th(id: 'hResult', align: "left", _('Result'))
-                th(id: 'hTriggeredTs', align: "left", _('Triggered@'))
-                th(id: 'hStartedTs', align: "left", _('Started@'))
-                th(id: 'hCompletedTs', align: "left", _('Completed@'))
-            }
-            report.getSortedEntrySet().each {event ->
-                def eventHeaderId = "event${event.key.hashCode()}"
+        p(style: "font-style: italic;", _("blurb"))
+        table(class: "jenkins-table jenkins-table--small") {
+            thead {
                 tr {
-                    def display = report.getDisplayNameFor(event.key)
-                    th(id: eventHeaderId, colspan: "7", scope: "colgroup", align: "left", display)
+                    th(id: 'hJob', _('Job'))
+                    th(id: 'hRun', _('Run #'))
+                    th(id: 'hCompleted', _('Completed'))
+                    th(id: 'hCancelled', _('Cancelled'))
+                    th(id: 'hResult', _('Result'))
+                    th(id: 'hTriggeredTs', _('Triggered@'))
+                    th(id: 'hStartedTs', _('Started@'))
+                    th(id: 'hCompletedTs', _('Completed@'))
                 }
-                event.value.each {entry ->
+            }
+            tbody {
+                report.getSortedEntrySet().each { event ->
+                    def eventHeaderId = "event${event.key.hashCode()}"
                     tr {
-                        Job job = entry.project
-                        Run run = entry.build
-                        td(headers: "hJob ${eventHeaderId}") {
-                            if (job != null) {
-                                a(href: "${rootURL}/${job.url}", job.fullDisplayName)
-                            } else {
-                                raw("&nbsp;")
+                        def display = report.getDisplayNameFor(event.key)
+                        th(id: eventHeaderId, colspan: "8",  align: "left", display)
+                    }
+                    event.value.each { entry ->
+                        tr {
+                            Job job = entry.project
+                            Run run = entry.build
+                            td(headers: "hJob ${eventHeaderId}") {
+                                if (job != null) {
+                                    a(href: "${rootURL}/${job.url}", class: "model-link", job.fullDisplayName)
+                                } else {
+                                    raw("&nbsp;")
+                                }
                             }
-                        }
-                        td(headers: "hRun ${eventHeaderId}") {
-                            if (run != null) {
-                                a(href: "${rootURL}/${run.url}", run.displayName)
-                            } else {
-                                raw("&nbsp;")
+                            td(headers: "hRun ${eventHeaderId}") {
+                                if (run != null) {
+                                    a(href: "${rootURL}/${run.url}", class: "model-link", run.displayName)
+                                } else {
+                                    raw("&nbsp;")
+                                }
                             }
-                        }
-                        td(headers: "hCompleted ${eventHeaderId}") {
-                            if (entry.buildCompleted) {
-                                strong(_('Y'))
-                            } else {
-                                raw('&nbsp;')
+                            td(headers: "hCompleted ${eventHeaderId}") {
+                                if (entry.buildCompleted) {
+                                    strong(_('Y'))
+                                } else {
+                                    raw('&nbsp;')
+                                }
                             }
-                        }
-                        td(headers: "hCancelled ${eventHeaderId}") {
-                            if (entry.cancelled) {
-                                strong(_('Y'))
-                            } else {
-                                raw('&nbsp;')
+                            td(headers: "hCancelled ${eventHeaderId}") {
+                                if (entry.cancelled) {
+                                    strong(_('Y'))
+                                } else {
+                                    raw('&nbsp;')
+                                }
                             }
-                        }
-                        td(headers: "hResult ${eventHeaderId}") {
-                            if (run != null && run.result != null) {
-                                strong(run.result.toString())
-                            } else {
-                                raw('&nbsp;')
+                            td(headers: "hResult ${eventHeaderId}") {
+                                if (run != null && run.result != null) {
+                                    strong(run.result.toString())
+                                } else {
+                                    raw('&nbsp;')
+                                }
                             }
+                            td(headers: "hTriggeredTs ${eventHeaderId}",
+                                    dateFormat.format(new Date(entry.triggeredTimestamp)))
+                            td(headers: "hStartedTs ${eventHeaderId}", entry.startedTimestamp != null ?
+                                    dateFormat.format(new Date(entry.startedTimestamp)) : raw('&nbsp;'))
+                            td(headers: "hCompletedTs ${eventHeaderId}", entry.completedTimestamp != null ?
+                                    dateFormat.format(new Date(entry.completedTimestamp)) : raw('&nbsp;'))
                         }
-                        td(headers: "hTriggeredTs ${eventHeaderId}",
-                                dateFormat.format(new Date(entry.triggeredTimestamp)))
-                        td(headers: "hStartedTs ${eventHeaderId}", entry.startedTimestamp != null ?
-                                dateFormat.format(new Date(entry.startedTimestamp)) : raw('&nbsp;'))
-                        td(headers: "hCompletedTs ${eventHeaderId}", entry.completedTimestamp != null ?
-                                dateFormat.format(new Date(entry.completedTimestamp)) : raw('&nbsp;'))
                     }
                 }
             }

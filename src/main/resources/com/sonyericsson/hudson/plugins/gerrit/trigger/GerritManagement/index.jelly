@@ -3,88 +3,80 @@
          xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
     <l:layout title="${%Gerrit Trigger Plugin Configuration}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
-            <style>.yui-skin-sam .yui-dt td.align-middle {vertical-align:middle;}</style>
-            <l:yui module="dom"/>
-            <l:yui module="event"/>
-            <l:yui module="element"/>
-            <l:yui module="logger"/>
-            <l:yui module="connection" />
-            <l:yui module="datasource"/>
-            <l:yui module="container" />
-            <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/yui/datatable/datatable-${h.yuiSuffix}.js"/>
+            <link rel="stylesheet" href="${rootURL}/plugin/${it.urlName}/css/gerrit.css" type="text/css"/>
+            <template id="gerrit-svg-icons">
+                <div id="gerrit-status-connected">
+                    <l:icon class="icon-blue icon-sm"/>
+                </div>
+                <div id="gerrit-status-disconnecting">
+                    <l:icon class="icon-blue-anime icon-sm"/>
+                </div>
+                <div id="gerrit-status-disconnected">
+                    <l:icon class="icon-red icon-sm"/>
+                </div>
+                <div id="gerrit-status-connecting">
+                    <l:icon class="icon-red-anime icon-sm"/>
+                </div>
+                <div id="gerrit-status-unknown">
+                    <l:icon class="icon-grey icon-sm"/>
+                </div>
+                <l:icon id="gerrit-symbol-settings" src="symbol-settings-outline plugin-ionicons-api" class="icon-sm"/>
+                <l:icon id="gerrit-symbol-remove" src="symbol-trash-outline plugin-ionicons-api" class="icon- jenkins-!-destructive-color"/>
+                <l:icon id="gerrit-symbol-link" src="symbol-external-link plugin-gerrit-trigger" class="icon-xs"/>
+            </template>
             <script type="text/javascript" src="${rootURL}/plugin/${it.urlName}/js/server-table.js"/>
             <script src="${rootURL}/plugin/${it.urlName}/js/events-filter.js"/>
-            <script type="text/javascript">
-                var textMessages = {
-                    confirm: "${%Remove?}",
-                    yes: "${%Yes}",
-                    no: "${%No}",
-                };
-                var columnDefs = [
-                    {key:"name", label: "${%Server Name}", formatter: "formatFrontEndLink", className: "align-middle"},
-                    {key:"version", label: "${%Version}", formatter: "text", className: "align-middle"},
-                    {key:"status", label: "${%Status}", formatter: "controlServer", className: "align-middle"},
-                    {key:"", label: "${%Edit}", formatter: "editServer", className: "align-middle"},
-                    {key:"", label: "${%Remove}", formatter: "removeServer", className: "align-middle"}
-                ];
-                var imagesURL = "${imagesURL}";
-                var pluginURL = "${rootURL}/plugin/${it.urlName}";
-                YAHOO.util.Event.addListener(window, "load", function() {
-                    serverTable();
-                });
-            </script>
         </l:header>
-        <l:side-panel>
-            <l:tasks>
-                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="icon-new-package icon-md" href="newServer" title="${%Add New Server}" />
-                <l:task icon="icon-folder icon-md" href="diagnostics" title="${%Diagnostics}" />
-            </l:tasks>
-        </l:side-panel>
         <l:main-panel>
             <j:set var="instance" value="${it}"/>
             <j:set var="descriptor" value="${it.descriptor}"/>
             <j:set var="aMonitor" value="${it.getAdministrativeMonitor()}"/>
-            <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
-                <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
-            </j:if>
-            <f:form method="post" action="configSubmit" name="config">
-                <f:section title="${%Global Configuration}">
-                    <f:entry title="${%No. of Receiving Worker Threads}"
-                             help="/plugin/gerrit-trigger/help-ReceivingEventWorkerThreads.html">
-                        <f:textbox name="numberOfReceivingWorkerThreads"
-                                   value="${it.pluginConfig.numberOfReceivingWorkerThreads}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS}"/>
-                    </f:entry>
-                    <f:entry title="${%No. of Sending Worker Threads}"
-                             help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
-                        <f:textbox name="numberOfSendingWorkerThreads"
-                                   value="${it.pluginConfig.numberOfSendingWorkerThreads}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
-                    </f:entry>
-                    <f:entry title="${%Replication Cache Expiration}"
-                             help="/plugin/gerrit-trigger/help-ReplicationCacheExpiration.html">
-                        <f:textbox name="replicationCacheExpirationInMinutes"
-                                   value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
-                                   default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
-                    </f:entry>
-                </f:section>
+            <f:form method="post" action="configSubmit" name="config" class="jenkins-form">
+                <l:app-bar title="${%Global Configuration}">
+                    <a class="jenkins-button jenkins-button--primary" href="newServer" tooltip="${%Add a new gerrit server}">
+                        <l:icon src="symbol-add-outline plugin-ionicons-api" class="icon-md"/>${%New Server}
+                    </a>
+                    <a class="jenkins-button" href="diagnostics">
+                        ${%Diagnostics}
+                    </a>
+                </l:app-bar>
+                <j:if test="${aMonitor.isActivated() and aMonitor.isEnabled()}">
+                    <st:include page="message.jelly" it="${aMonitor}" optional="true"/>
+                </j:if>
+                <f:entry title="${%No. of Receiving Worker Threads}"
+                         help="/plugin/gerrit-trigger/help-ReceivingEventWorkerThreads.html">
+                    <f:textbox name="numberOfReceivingWorkerThreads"
+                               value="${it.pluginConfig.numberOfReceivingWorkerThreads}"
+                               default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_RECEIVING_WORKER_THREADS}"/>
+                </f:entry>
+                <f:entry title="${%No. of Sending Worker Threads}"
+                         help="/plugin/gerrit-trigger/help-SendingWorkerThreads.html">
+                    <f:textbox name="numberOfSendingWorkerThreads"
+                               value="${it.pluginConfig.numberOfSendingWorkerThreads}"
+                               default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_NR_OF_SENDING_WORKER_THREADS}"/>
+                </f:entry>
+                <f:entry title="${%Replication Cache Expiration}"
+                         help="/plugin/gerrit-trigger/help-ReplicationCacheExpiration.html">
+                    <f:textbox name="replicationCacheExpirationInMinutes"
+                               value="${it.pluginConfig.replicationCacheExpirationInMinutes}"
+                               default="${com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache.DEFAULT_EXPIRATION_IN_MINUTES}"/>
+                </f:entry>
                 <f:advanced>
                     <f:section title="${%Filter Received Event Types}">
                         <f:entry title="${%Event List}" help="/plugin/gerrit-trigger/help-EventsFilter.html">
-                            <div style="display:flex">
-                                <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered Out</b></span>
-                                    <select id="filterOutSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                            <div class="gt-event-filter">
+                                <div class="gt-event-list">
+                                    <span>${%Filtered Out}</span>
+                                    <select id="filterOutSelect" class="jenkins-select__input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
                                     </select>
                                 </div>
-                                <div style="margin: auto; display:flex; flex-direction: column;">
-                                    <button id="transfer" type="button" title="Transfer" style="font-size: large; padding: 5px 10px 5px 10px;">&#8646;</button>
-                                    <button id="reset" type="button" title="Reset" style="font-size: large; padding: 5px 10px 5px 10px;">&#8630;</button>
+                                <div class="gt-event-filter-buttons">
+                                    <button id="transfer" type="button" tooltip="Transfer" class="jenkins-button gt-event-filter-button"><l:icon src="symbol-swap-horizontal-outline plugin-ionicons-api"/></button>
+                                    <button id="reset" type="button" tooltip="Reset" class="jenkins-button gt-event-filter-button"><l:icon src="symbol-refresh-outline plugin-ionicons-api"/></button>
                                 </div>
-                                <div style="display: inline; width: 45%;">
-                                    <span><b>Filtered In</b></span>
-                                    <select id="filterInSelect" class="setting-input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
+                                <div class="gt-event-list">
+                                    <span>${%Filtered In}</span>
+                                    <select id="filterInSelect" class="jenkins-select__input" multiple="multiple" size="${it.pluginConfig.eventTypesSize}">
                                     </select>
                                 </div>
                             </div>
@@ -102,11 +94,19 @@
                     </div>
                 </f:block>
             </f:form>
-            <div class="gerrit-trigger-section">
-                <div class="section-header">${%Gerrit Servers}</div>
-                <p />
-                <div id="server-list"/>
-            </div>
+            <div class="jenkins-section__title jenkins-!-margin-top-4 jenkins-!-margin-bottom-1">${%Gerrit Servers}</div>
+            <table id="gerrit-server-table" class="jenkins-table jenkins-table--medium jenkins-hidden">
+                <thead>
+                    <tr>
+                        <th>${%Server Name}</th>
+                        <th>${%Version}</th>
+                        <th class="gt-table--center">${%Status}</th>
+                        <th class="gt-table--center">${%Edit}</th>
+                        <th class="gt-table--center">${%Remove}</th>
+                    </tr>
+                </thead>
+                <tbody/>
+            </table>
         </l:main-panel>
     </l:layout>
 </j:jelly>

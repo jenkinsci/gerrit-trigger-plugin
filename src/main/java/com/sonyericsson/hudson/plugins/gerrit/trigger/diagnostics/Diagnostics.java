@@ -80,15 +80,18 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
         String url = makeRelativeUrl(context, "buildMemory");
         menu.add(new MenuItem()
                          .withUrl(url)
-                         .withStockIcon("clipboard.png")
+                         .withIconClass("symbol-clipboard-outline plugin-ionicons-api")
                          .withDisplayName(Messages.BuildMemoryReport_DisplayName()));
         url = makeRelativeUrl(context, "eventListeners");
         menu.add(new MenuItem()
                          .withUrl(url)
-                         .withStockIcon("clipboard.png")
+                         .withIconClass("symbol-clipboard-outline plugin-ionicons-api")
                          .withDisplayName(Messages.EventListenersReport_DisplayName()));
         if (isDebugMode()) {
-            menu.add("triggerDebugEvent", "warning.png", "Trigger Debug", false, true);
+            MenuItem item = new MenuItem().withUrl("triggerDebugEvent").withIconClass("symbol-warning plugin-ionicons-api")
+                .withDisplayName("Trigger Debug");
+            item.requiresConfirmation = true;
+            menu.add(item);
         }
         return menu;
     }

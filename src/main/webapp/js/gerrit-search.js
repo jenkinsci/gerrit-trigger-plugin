@@ -22,67 +22,69 @@
  *  THE SOFTWARE.
  */
 
-function setSelectedIds(ids) {
-    'use strict';
-    var input = document.getElementById('selectedIds');
-    if (input !== null) {
-        input.value = ids;
-    }
-}
+Behaviour.specify(".gt-search__activate", "gerrit-search", 0, function(element) {
+    const row = element.closest("tr");
+    const theId = row.id;
 
-function buildSelectedIds() {
-    'use strict';
-    var checkboxes = document.getElementsByName("selectedRow");
-    var ids = "";
-    var i, check;
-    for (i = 0; i < checkboxes.length; i++) {
-        check = checkboxes[i];
-        if (check.checked) {
-            ids += check.value + "[]";
+    element.onclick = function(event) {
+        const radio = document.getElementById('check' + theId);
+        if (radio !== null) {
+            radio.click();
+        } else {
+            alert("No checkbox with id: " + theId);
+        }
+    };
+});
+
+Behaviour.specify(".gt-search__checkbox", "gerrit-search", 0, function(radio) {
+    const row = radio.closest("tr");
+
+    function setSelectedIds(ids) {
+        const input = document.getElementById('selectedIds');
+        if (input !== null) {
+            input.value = ids;
         }
     }
-    return ids;
-}
 
-function activateRow(theId) {
-    'use strict';
-    var radio = document.getElementById('check' + theId);
-    if (radio !== null) {
-        radio.click();
-    } else {
-        alert("No checkbox with id: " + theId);
-    }
-}
-
-function rowSelected(theId) {
-    'use strict';
-    var radio = document.getElementById('check' + theId);
-    if (radio !== null) {
-        var row = document.getElementById('row' + theId);
-        if (row !== null) {
-            if (radio.checked === true) {
-                row.style.fontWeight = "bold";
-            } else {
-                row.style.fontWeight = "normal";
+    function buildSelectedIds() {
+        const checkboxes = document.getElementsByName("selectedRow");
+        let ids = "";
+        let i, check;
+        for (i = 0; i < checkboxes.length; i++) {
+            check = checkboxes[i];
+            if (check.checked) {
+                ids += check.value + "[]";
             }
         }
-    } else {
-        alert("No checkbox with id: " + theId);
+        return ids;
     }
-    setSelectedIds(buildSelectedIds());
-}
 
-function toggleDetails(theId, collapsedImg, expandedImg) {
-    'use strict';
-    var img = document.getElementById('toggleImg' + theId);
-    var details = document.getElementById('rowDetails' + theId);
-    if (img !== null && details !== null) {
-        if (details.style.display !== '') {
-            details.style.display = '';
-            img.src = expandedImg;
+    radio.onclick = function(e) {
+        if (radio.checked === true) {
+            row.classList.add("gt-search__row--selected");
         } else {
-            details.style.display = 'none';
-            img.src = collapsedImg;
+            row.classList.remove("gt-search__row--selected");
         }
-    }
-}
+        setSelectedIds(buildSelectedIds());
+    };
+});
+
+Behaviour.specify(".gt-search__details", "gerrit-search", 0, function(link) {
+    const row = link.closest("tr");
+    const theId = row.id;
+
+    link.onclick = function (e) {
+        e.preventDefault();
+        const details = document.getElementById('rowDetails' + theId);
+        if (details !== null) {
+            if (details.classList.contains("jenkins-hidden")) {
+                details.classList.remove("jenkins-hidden");
+                link.dataset.expanded = "true";
+            } else {
+                details.classList.add("jenkins-hidden");
+                link.dataset.expanded = "false";
+            }
+        }
+    };
+});
+

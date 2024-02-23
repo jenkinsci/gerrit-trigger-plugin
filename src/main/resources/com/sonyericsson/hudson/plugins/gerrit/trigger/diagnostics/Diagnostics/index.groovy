@@ -34,11 +34,10 @@ def l = namespace(lib.LayoutTagLib)
 l.layout(title: _("Gerrit Trigger Diagnostics"), norefresh: false, permission: Diagnostics.requiredPermission) {
     l.'side-panel' {
         l.tasks {
-            l.task(icon: "icon-up icon-md", href: "${rootURL}/${GerritManagement.URL_NAME}/", title: _("Back to Gerrit Management"))
-            l.task(icon: "icon-clipboard icon-md", href: "buildMemory", title: Messages.BuildMemoryReport_DisplayName())
-            l.task(icon: "icon-clipboard icon-md", href: "eventListeners", title: Messages.EventListenersReport_DisplayName())
+            l.task(icon: "symbol-clipboard-outline plugin-ionicons-api", href: "buildMemory", title: Messages.BuildMemoryReport_DisplayName())
+            l.task(icon: "symbol-clipboard-outline plugin-ionicons-api", href: "eventListeners", title: Messages.EventListenersReport_DisplayName())
             if (diag.isDebugMode()) {
-                l.task(icon: "icon-warning icon-md", href: "triggerDebugEvent", title: "Trigger Event", post: false, requiresConfirmation: true)
+                l.task(icon: "symbol-warning plugin-ionicons-api", href: "triggerDebugEvent", title: "Trigger Event", post: false, requiresConfirmation: true)
             }
         }
     }
