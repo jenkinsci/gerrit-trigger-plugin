@@ -68,7 +68,7 @@
                 <f:entry title="${%Skip Vote}"
                          help="/plugin/gerrit-trigger/trigger/help-GerritSkipVote.html">
                     <j:set var="skipIt" value="${instance.skipVote}"/>
-                    <div class="gt-config__skip-vote">
+                    <div name="skipVote" class="gt-config__skip-vote">
                         <f:checkbox title="${%Successful}" field="onSuccessful"
                                     checked="${skipIt.onSuccessful?'true':null}"/>
                         <f:checkbox title="${%Failed}" field="onFailed" checked="${skipIt.onFailed?'true':null}"/>

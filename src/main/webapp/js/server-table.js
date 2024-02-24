@@ -30,7 +30,9 @@ function refreshServerTable() {
         return icons.content.querySelector(`#${name}`).cloneNode(true);
     }
 
-    function createLink(url, icon, tagName="a", callback=null, disabled=false) {
+    function createLink(url, icon, tagName, callback, disabled) {
+        tagName = tagName == null ? 'a' : tagName;
+        disabled = disable == null ? false : disabled;
         const td = document.createElement("td");
         td.classList.add("gt-table--center");
 
@@ -92,7 +94,7 @@ function refreshServerTable() {
         }
         row.appendChild(nameTd);
         const versionTd = document.createElement("td");
-        versionTd.innerText = server.version;
+        versionTd.innerText = server.version == null ? '' : server.version;
         row.appendChild(versionTd);
 
         let statusIcon;
