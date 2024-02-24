@@ -172,14 +172,15 @@
                                                             </td>
                                                             <td class="gt-search__activate gt-table_cell--tight">
                                                                 <j:set var="v" value="${it.getVerified(res, patch.getInt('number'))}"/>
+                                                                <j:invoke on="${v.low}" method="toString" var="vlow"/>
                                                                 <j:choose>
                                                                     <j:when test="${v.low &lt; 0}">
                                                                         <l:icon src="symbol-close-outline plugin-ionicons-api"
-                                                                                class="icon-sm jenkins-!-error-color" alt="'${v.low}'"/>
+                                                                                class="icon-sm jenkins-!-error-color" alt="${vlow}"/>
                                                                     </j:when>
                                                                     <j:when test="${v.low &gt; 0}">
                                                                         <l:icon src="symbol-checkmark-outline plugin-ionicons-api"
-                                                                                class="icon-sm jenkins-!-success-color" alt="'${v.low}'"/>
+                                                                                class="icon-sm jenkins-!-success-color" alt="${vlow}"/>
                                                                     </j:when>
                                                                     <j:otherwise>
                                                                         <st:nbsp/>
@@ -188,14 +189,16 @@
                                                             </td>
                                                             <td class="gt-search__activate gt-table_cell--tight">
                                                                 <j:set var="v" value="${it.getCodeReview(res, patch.getInt('number'))}"/>
+                                                                <j:invoke on="${v.low}" method="toString" var="vlow"/>
+                                                                <j:invoke on="${v.high}" method="toString" var="vhigh"/>
                                                                 <j:choose>
                                                                     <j:when test="${v.low &lt; -1}">
                                                                         <l:icon src="symbol-close-outline plugin-ionicons-api"
-                                                                                class="icon-sm jenkins-!-error-color" alt="'${v.low}'"/>
+                                                                                class="icon-sm jenkins-!-error-color" alt="${vlow}"/>
                                                                     </j:when>
                                                                     <j:when test="${v.high &gt; 1}">
                                                                         <l:icon src="symbol-checkmark-outline plugin-ionicons-api"
-                                                                                class="icon-sm jenkins-!-success-color" alt="'${v.low}'"/>
+                                                                                class="icon-sm jenkins-!-success-color" alt="${vhigh}"/>
                                                                     </j:when>
                                                                     <j:when test="${v.low &lt; 0}">
                                                                         <span class="gt-search__status--error">

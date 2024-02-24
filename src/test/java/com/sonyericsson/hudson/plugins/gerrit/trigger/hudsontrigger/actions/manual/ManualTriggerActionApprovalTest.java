@@ -123,12 +123,12 @@ public class ManualTriggerActionApprovalTest {
         HtmlTableCell verifiedCell = table.getCellAt(FIRST_RESULT_ROW, VERIFIED_COLUMN);
         DomNode child = verifiedCell.getFirstChild();
         assertThat(child, instanceOf(HtmlSpan.class));
-        assertEquals("'-1'", child.getTextContent());
+        assertEquals("-1", child.getTextContent());
 
         HtmlTableCell codeReviewCell = table.getCellAt(FIRST_RESULT_ROW, CODE_REVIEW_COLUMN);
         child = codeReviewCell.getFirstChild();
         assertThat(child, instanceOf(HtmlSpan.class));
-        assertEquals("'2'", child.getTextContent());
+        assertEquals("2", child.getTextContent());
     }
 
     /**
@@ -149,11 +149,11 @@ public class ManualTriggerActionApprovalTest {
         HtmlTableCell verifiedCell = table.getCellAt(SECOND_RESULT_ROW, VERIFIED_COLUMN);
         DomNode child = verifiedCell.getFirstChild();
         assertThat(child, instanceOf(HtmlSpan.class));
-        assertEquals("'-1'", child.getTextContent());
+        assertEquals("-1", child.getTextContent());
 
         HtmlTableCell codeReviewCell = table.getCellAt(SECOND_RESULT_ROW, CODE_REVIEW_COLUMN);
         child = codeReviewCell.getFirstChild();
         assertThat(child, instanceOf(HtmlSpan.class));
-        assertEquals("'2'", child.getTextContent());
+        assertEquals("2", child.getTextContent());
     }
 }
