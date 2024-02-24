@@ -304,7 +304,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <reuseForks>false</reuseForks>
-                    <forkCount>${concurrency}</forkCount>
                 </configuration>
             </plugin>
             <plugin>

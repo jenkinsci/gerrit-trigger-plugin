@@ -189,3 +189,13 @@
     padding-left: 2px;
     padding-right: 2px;
 }
+
+.gt-other-builds__header {
+  font-weight: bold;
+}
+
+.gt-other-builds__line {
+  display:flex;
+  gap: 5px;
+  align-items: center;
+}

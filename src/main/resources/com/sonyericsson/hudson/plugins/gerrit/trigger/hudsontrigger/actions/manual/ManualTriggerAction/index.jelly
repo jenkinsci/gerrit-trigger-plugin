@@ -3,7 +3,7 @@
     <l:layout title="${%Gerrit Manual trigger}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
             <script src="${rootURL}${it.getJsUrl('gerrit-search.js')}" type="text/javascript"/>
-          <link rel="stylesheet" href="${rootURL}/plugin/gerrit-trigger/css/gerrit.css" type="text/css"/>
+            <link rel="stylesheet" href="${rootURL}/plugin/gerrit-trigger/css/gerrit.css" type="text/css"/>
         </l:header>
         <l:side-panel>
             <j:if test="${!empty(request.session.getAttribute('trigger_monitor'))}">

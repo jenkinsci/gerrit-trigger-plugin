@@ -1,5 +1,6 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
+    <link rel="stylesheet" href="${rootURL}/plugin/gerrit-trigger/css/gerrit.css" type="text/css"/>
     <j:choose>
         <j:when test="${it.manuallyTriggered}">
             <j:choose>
@@ -33,36 +34,25 @@
         </j:otherwise>
     </j:choose>
     <j:if test="${it.context.hasOthers()}">
-        <table cellpadding="2" cellspacing="0" border="0" style="margin-left: 15px;">
-            <tr>
-                <th colspan="2">
-                    ${%OtherTriggeredBuilds}
-                </th>
-            </tr>
+        <div class="jenkins-!-margin-bottom-1">
+            <div class="gt-other-builds__header jenkins-!-margin-bottom-1">
+                ${%OtherTriggeredBuilds}
+            </div>
             <j:forEach items="${it.context.getSortedOthers()}" var="other">
-                <tr>
+                <div class="gt-other-builds__line">
                     <j:choose>
-                        <j:when test="${other.hasBuild()}">
-                            <td width="18">
-                                <l:icon class="${build.build.iconColor.iconClassName}"/>
-                            </td>
-                            <td>
-                                <a href="${rootURL}/${other.project.url}">${other.project.displayName}</a>
-                                <st:nbsp/><st:nbsp/>
-                                <a href="${rootURL}/${other.build.url}">${other.build.displayName}</a>
-                            </td>
+                        <j:when test="${other.hasBuild() and other.build != null}">
+                            <l:icon class="${other.build.iconColor.iconClassName} icon-sm"/>
+                            <a href="${rootURL}/${other.project.url}">${other.project.displayName}</a>
+                            <a href="${rootURL}/${other.build.url}" class="model-link">${other.build.displayName}</a>
                         </j:when>
                         <j:otherwise>
-                            <td width="18">
-                                <img src="${rootURL}/images/build-status/build-status-sprite.svg#never-built" class="icon-grey-anime icon-sm"/>
-                            </td>
-                            <td>
-                                <a href="${rootURL}/${other.project.url}">${other.project.displayName}</a>
-                            </td>
+                            <l:icon class="icon-grey icon-sm"/>
+                            <a href="${rootURL}/${other.project.url}" class="model-link">${other.project.displayName}</a>
                         </j:otherwise>
                     </j:choose>
-                </tr>
+                </div>
             </j:forEach>
-        </table>
+        </div>
     </j:if>
 </j:jelly>
