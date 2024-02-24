@@ -26,7 +26,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.man
 
 import org.htmlunit.html.DomNode;
 import org.htmlunit.html.HtmlForm;
-import org.htmlunit.html.HtmlImage;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlSpan;
 import org.htmlunit.html.HtmlTable;

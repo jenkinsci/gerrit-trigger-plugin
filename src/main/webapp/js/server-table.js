@@ -32,7 +32,7 @@ function refreshServerTable() {
 
     function createLink(url, icon, tagName, callback, disabled) {
         tagName = tagName == null ? 'a' : tagName;
-        disabled = disable == null ? false : disabled;
+        disabled = disabled == null ? false : disabled;
         const td = document.createElement("td");
         td.classList.add("gt-table--center");
 
@@ -86,7 +86,7 @@ function refreshServerTable() {
             a.href = server.frontEndUrl;
             a.target = "_blank";
             a.classList.add("gt-external-link");
-            a.appendChild(document.createTextNode(server.name));
+            a.innerHTML = server.name;
             a.appendChild(generateSVGIcon("gerrit-symbol-link"));
             nameTd.appendChild(a);
         } else {

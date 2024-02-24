@@ -88,8 +88,10 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
                          .withIconClass("symbol-clipboard-outline plugin-ionicons-api")
                          .withDisplayName(Messages.EventListenersReport_DisplayName()));
         if (isDebugMode()) {
-            MenuItem item = new MenuItem().withUrl("triggerDebugEvent").withIconClass("symbol-warning plugin-ionicons-api")
-                .withDisplayName("Trigger Debug");
+            MenuItem item = new MenuItem()
+                                    .withUrl("triggerDebugEvent")
+                                    .withIconClass("symbol-warning plugin-ionicons-api")
+                                    .withDisplayName("Trigger Debug");
             item.requiresConfirmation = true;
             menu.add(item);
         }
