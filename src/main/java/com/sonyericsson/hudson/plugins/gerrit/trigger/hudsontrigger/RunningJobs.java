@@ -28,6 +28,7 @@ import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.regex.Pattern;
 
 /**
 * Class for maintaining and synchronizing the runningJobs info.
@@ -242,8 +243,16 @@ public class RunningJobs {
            List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
            for (Queue.Item item : itemsInQueue) {
                if (checkCausedByGerrit(event, item.getCauses())) {
-                   if (jobName.equals(item.task.getName())) {
+                   // Use regexpt .*jobName to avoid
+                   // incorrect comparison in case of complicated full name
+                   // .*\/jobName$|^jobName$
+
+                   String regex = ".*\\/" + jobName + "$|^" + jobName + "$";
+                   Pattern pattern = Pattern.compile(regex);
+
+                   if (pattern.matcher(item.task.getName()).matches()) {
                        Queue.getInstance().cancel(item);
+
                    }
                }
            }
