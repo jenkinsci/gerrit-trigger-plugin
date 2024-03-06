@@ -42,7 +42,8 @@ public class GerritRebuildValidator extends RebuildValidator {
 
     @Override
     public boolean isApplicable(Run build) {
-        return (build.getCause(GerritCause.class) != null);
+        // Build#getActions is deprecated but the only way to prevent a stack overflow here
+        return build.getActions().stream().anyMatch(it -> it instanceof GerritCause);
     }
 
 }
