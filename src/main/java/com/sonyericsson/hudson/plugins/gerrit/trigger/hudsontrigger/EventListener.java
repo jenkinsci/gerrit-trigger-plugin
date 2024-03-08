@@ -124,15 +124,17 @@ public final class EventListener implements GerritEventListener {
         }
         if (event instanceof GerritTriggeredEvent) {
             GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
-            if (t.isInteresting(triggeredEvent)) {
-                logger.trace("The event is interesting.");
-                abortBuild(t, triggeredEvent);
-                if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
-                    logger.trace("Just aborting build based on event not scheduling new one.");
-                    return;
+            synchronized (this) {
+                if (t.isInteresting(triggeredEvent)) {
+                    logger.trace("The event is interesting.");
+                    abortBuild(t, triggeredEvent);
+                    if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
+                        logger.trace("Just aborting build based on event not scheduling new one.");
+                        return;
+                    }
+                    notifyOnTriggered(t, triggeredEvent);
+                    schedule(t, new GerritCause(triggeredEvent, t.isSilentMode()), triggeredEvent);
                 }
-                notifyOnTriggered(t, triggeredEvent);
-                schedule(t, new GerritCause(triggeredEvent, t.isSilentMode()), triggeredEvent);
             }
         }
     }
@@ -162,15 +164,17 @@ public final class EventListener implements GerritEventListener {
             // to just return now without processing the event.
             return;
         }
-        if (t.isInteresting(event)) {
-            logger.trace("The event is interesting.");
-            abortBuild(t, event);
-            if (t.isOnlyAbortRunningBuild(event)) {
-                logger.trace("Just aborting build based on event not scheduling new one.");
-                return;
+        synchronized (this) {
+            if (t.isInteresting(event)) {
+                logger.trace("The event is interesting.");
+                abortBuild(t, event);
+                if (t.isOnlyAbortRunningBuild(event)) {
+                    logger.trace("Just aborting build based on event not scheduling new one.");
+                    return;
+                }
+                notifyOnTriggered(t, event);
+                schedule(t, new GerritManualCause(event, t.isSilentMode()), event);
             }
-            notifyOnTriggered(t, event);
-            schedule(t, new GerritManualCause(event, t.isSilentMode()), event);
         }
     }
 
@@ -206,15 +210,17 @@ public final class EventListener implements GerritEventListener {
             // to just return now without processing the event.
             return;
         }
-        if (t.isInteresting(event) && t.commentAddedMatch(event)) {
-            logger.trace("The event is interesting.");
-            abortBuild(t, event);
-            if (t.isOnlyAbortRunningBuild(event)) {
-                logger.trace("Just aborting build based on event not scheduling new one.");
-                return;
+        synchronized (this) {
+            if (t.isInteresting(event) && t.commentAddedMatch(event)) {
+                logger.trace("The event is interesting.");
+                abortBuild(t, event);
+                if (t.isOnlyAbortRunningBuild(event)) {
+                    logger.trace("Just aborting build based on event not scheduling new one.");
+                    return;
+                }
+                notifyOnTriggered(t, event);
+                schedule(t, new GerritCause(event, t.isSilentMode()), event);
             }
-            notifyOnTriggered(t, event);
-            schedule(t, new GerritCause(event, t.isSilentMode()), event);
         }
     }
 
