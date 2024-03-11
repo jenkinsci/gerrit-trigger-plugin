@@ -54,7 +54,7 @@
     </developers>
 
     <properties>
-        <jenkins.version>2.414.3</jenkins.version>
+        <jenkins.version>2.426.3</jenkins.version>
         <revision>2.39.5</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -114,6 +114,10 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>apache-httpcomponents-client-4-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>ionicons-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
@@ -271,8 +275,8 @@
         <dependencies>
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
-                <artifactId>bom-2.414.x</artifactId>
-                <version>2675.v1515e14da_7a_6</version>
+                <artifactId>bom-2.426.x</artifactId>
+                <version>2815.vf5d6f093b_23e</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -300,7 +304,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <reuseForks>false</reuseForks>
-                    <forkCount>${concurrency}</forkCount>
                 </configuration>
             </plugin>
             <plugin>
@@ -334,7 +337,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
+            <!--plugin>
                 <groupId>com.googlecode.jslint4java</groupId>
                 <artifactId>jslint4java-maven-plugin</artifactId>
                 <version>2.0.5</version>
@@ -356,12 +359,12 @@
                                 <unparam>true</unparam>
                                 <plusplus>true</plusplus>
                                 <devel>true</devel>
-                                <predef>pluginURL,imagesURL,columnDefs,YAHOO</predef>
+                                <predef>Behaviour,fetch</predef>
                             </options>
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin -->
         </plugins>
     </build>
 

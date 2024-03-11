@@ -3,8 +3,6 @@
     <l:layout title="${%Remove Server}" norefresh="true" permission="${it.requiredPermission}">
         <l:side-panel>
             <l:tasks>
-                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
-                <l:task icon="icon-up icon-md" href="${rootURL}/${it.parentUrl}/" title="${%Back to Server List}"/>
                 <l:task icon="icon-up icon-md" href="${rootURL}/${it.url}/" title="${%Back to Server Configuration}"/>
             </l:tasks>
         </l:side-panel>

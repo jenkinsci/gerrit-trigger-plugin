@@ -3,16 +3,9 @@
     <l:layout title="${%Gerrit Manual trigger}" norefresh="true" permission="${it.requiredPermission}">
         <l:header>
             <script src="${rootURL}${it.getJsUrl('gerrit-search.js')}" type="text/javascript"/>
-            <style type="text/css">
-                tr.disablehover:hover {
-                background-color: white;
-                }
-            </style>
+            <link rel="stylesheet" href="${rootURL}/plugin/gerrit-trigger/css/gerrit.css" type="text/css"/>
         </l:header>
         <l:side-panel>
-            <l:tasks>
-                <l:task icon="icon-up icon-md" href="${rootURL}/" title="${%Back to Dashboard}"/>
-            </l:tasks>
             <j:if test="${!empty(request.session.getAttribute('trigger_monitor'))}">
                 <st:include page="ajaxTriggerMonitor.jelly"/>
             </j:if>
@@ -42,11 +35,13 @@
                             </f:description>
                             <f:entry title="Select Gerrit Server">
                                 <j:set var="servers" value="${it.enabledServers}" />
-                                <select name="selectedServer">
-                                    <j:forEach var="serverName" items="${servers}">
-                                        <f:option selected="${serverName == request.session.getAttribute('selectedServer')}">${serverName}</f:option>
-                                    </j:forEach>
-                                </select>
+                                <div class="jenkins-select">
+                                    <select name="selectedServer" class="jenkins-select__input">
+                                        <j:forEach var="serverName" items="${servers}">
+                                            <f:option selected="${serverName == request.session.getAttribute('selectedServer')}">${serverName}</f:option>
+                                        </j:forEach>
+                                    </select>
+                                </div>
                             </f:entry>
                             <f:entry title="${%Query String}"
                                      help="help-Search">
@@ -55,7 +50,7 @@
                                            default="status:open"/>
                             </f:entry>
                             <f:entry title="${%Include All Patchsets}"
-                                     help="help-allPatchSets">
+                                     help="/plugin/gerrit-trigger/help-allPatchSets.html">
                                 <f:checkbox name="allPatchSets"
                                             checked="${request.session.getAttribute('allPatchSets')}"
                                             default="false"/>
@@ -80,7 +75,7 @@
                                 </p>
                             </f:block>
                         </j:if>
-                        <f:form method="" action="" name="">
+                        <f:form method="" action="" name="" class="jenkins-!-margin-top-5">
                             <f:section title="${%Search Result}">
                                 <f:description>
                                     ${%SearchResultDescription}
@@ -88,181 +83,181 @@
                                 <f:block>
 
                                     <j:set var="result" value="${request.session.getAttribute('result')}"/>
-                                    <table width="100%" border="1" cellpadding="2" cellspacing="0"
-                                           class="pane bigtable"
-                                           style="margin-top: 0" name="searchResultTable">
-                                        <tr>
-                                            <td class="pane-header" colspan="2">
-                                                <st:nbsp/>
-                                            </td>
-                                            <td class="pane-header">${%Change Nr.}</td>
-                                            <td class="pane-header">${%Patch Set}</td>
-                                            <td class="pane-header">${%Subject}</td>
-                                            <td class="pane-header">${%Owner}</td>
-                                            <td class="pane-header">${%Revision}</td>
-                                            <td class="pane-header">${%Project}</td>
-                                            <td class="pane-header">${%Branch}</td>
-                                            <td class="pane-header">${%Updated}</td>
-                                            <td class="pane-header">${%V}</td>
-                                            <td class="pane-header">${%R}</td>
-                                        </tr>
-                                        <j:set var="collapsedImg"
-                                               value="${rootURL}/plugin/gerrit-trigger/images/collapsed.gif"/>
-                                        <j:set var="expandedImg"
-                                               value="${rootURL}/plugin/gerrit-trigger/images/expanded.gif"/>
-                                        <j:forEach var="res" items="${result}">
-                                            <j:if test="${!res.has('type')}">
-                                                <j:forEach var="patch" items="${res.getJSONArray('patchSets')}">
-                                                    <j:set var="theId" value="${it.generateTheId(res, patch)}"/>
-                                                    <j:set var="radioChecked" value="false"/>
-                                                    <j:set var="trStyle" value=""/>
+                                    <table class="jenkins-table jenkins-table--small gt-search__table" name="searchResultTable">
+                                        <thead>
+                                          <tr>
+                                              <th colspan="2">
+                                                  <st:nbsp/>
+                                              </th>
+                                              <th>${%Change Nr.}</th>
+                                              <th>${%Patch Set}</th>
+                                              <th>${%Subject}</th>
+                                              <th>${%Owner}</th>
+                                              <th>${%Revision}</th>
+                                              <th>${%Project}</th>
+                                              <th>${%Branch}</th>
+                                              <th>${%Updated}</th>
+                                              <th class="gt-table_cell--tight">${%V}</th>
+                                              <th class="gt-table_cell--tight">${%R}</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                            <j:forEach var="res" items="${result}">
+                                                <j:if test="${!res.has('type')}">
+                                                    <j:forEach var="patch" items="${res.getJSONArray('patchSets')}">
+                                                        <j:set var="theId" value="${it.generateTheId(res, patch)}"/>
+                                                        <j:set var="radioChecked" value="false"/>
 
-                                                    <tr id="row${theId}" style="${trStyle}">
-                                                        <td width="12"
-                                                            onClick="toggleDetails('${theId}', '${collapsedImg}', '${expandedImg}')">
-                                                            <img src="${collapsedImg}"
-                                                                 id="toggleImg${theId}"
-                                                                 border="0"/>
-                                                        </td>
-                                                        <td width="12">
-                                                            <input type="checkbox"
-                                                                   name="selectedRow"
-                                                                   value="${theId}"
-                                                                   id="check${theId}"
-                                                                   onClick="rowSelected('${theId}')"/>
-                                                        </td>
-                                                        <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
-                                                        <j:set var="changeUrlParam" value="${it.getChangeUrlParamForPatchSet(res, patch, selectedServer)}"/>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            <j:choose>
-                                                                <j:when test="${changeUrlParam != null}">
-                                                                    <a href="${changeUrlParam.value}" target="_blank" onclick="event.stopPropagation();">
+                                                        <tr id="${theId}">
+                                                            <td class="gt-table_cell--tight">
+                                                              <a href="#" class="gt-search__details" data-expanded="false" tooltip="${%Details}">
+                                                                <l:icon src="symbol-chevron-down-outline plugin-ionicons-api" class="icon-sm"/>
+                                                              </a>
+                                                            </td>
+                                                            <td class="gt-table_cell--tight">
+                                                                <f:checkbox name="selectedRow"
+                                                                            value="${theId}"
+                                                                            id="check${theId}"
+                                                                            class="gt-search__checkbox"
+                                                                />
+                                                            </td>
+                                                            <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                            <j:set var="changeUrlParam" value="${it.getChangeUrlParamForPatchSet(res, patch, selectedServer)}"/>
+                                                            <td>
+                                                                <j:choose>
+                                                                    <j:when test="${changeUrlParam != null}">
+                                                                        <a href="${changeUrlParam.value}" target="_blank">
+                                                                            ${res.getString('number')}
+                                                                        </a>
+                                                                    </j:when>
+                                                                    <j:otherwise>
                                                                         ${res.getString('number')}
-                                                                    </a>
-                                                                </j:when>
-                                                                <j:otherwise>
-                                                                    ${res.getString('number')}
-                                                                </j:otherwise>
-                                                            </j:choose>
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            ${patch.getString('number')}
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            <span title="${res.has('commitMessage') ? res.get('commitMessage') : null}">
-                                                                ${it.toReadableHtml(res.getString('subject'))}
-                                                            </span>
-                                                            <j:if test="${res.has('status')}">
-                                                                <j:if test="${res.getString('status').equals('ABANDONED')}">
-                                                                    (${res.getString('status')})
+                                                                    </j:otherwise>
+                                                                </j:choose>
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                ${patch.getString('number')}
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                <span title="${res.has('commitMessage') ? res.get('commitMessage') : null}">
+                                                                    ${it.toReadableHtml(res.getString('subject'))}
+                                                                </span>
+                                                                <j:if test="${res.has('status')}">
+                                                                    <j:if test="${res.getString('status').equals('ABANDONED')}">
+                                                                        (${res.getString('status')})
+                                                                    </j:if>
                                                                 </j:if>
-                                                            </j:if>
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            ${res.getJSONObject('owner').getString('name')}
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            ${patch.getString('revision').substring(0,8)}
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            ${res.getString('project')}
-                                                        </td>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            ${res.getString('branch')}
-                                                        </td>
-                                                        <j:new className="java.util.Date" var="lastUpdated">
-                                                            <j:arg type="java.lang.Long"
-                                                                   value="${res.getLong('lastUpdated')*1000}"/>
-                                                        </j:new>
-                                                        <td onClick="activateRow('${theId}')">
-                                                            <i:formatDate value="${lastUpdated}"
-                                                                          type="both"
-                                                                          dateStyle="short"
-                                                                          timeStyle="short"/>
-                                                        </td>
-                                                        <td align="center" valign="middle"
-                                                            onClick="activateRow('${theId}')">
-                                                            <j:set var="v" value="${it.getVerified(res, patch.getInt('number'))}"/>
-                                                            <j:choose>
-                                                                <j:when test="${v.low &lt; 0}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"
-                                                                         alt="${v.low}"/>
-                                                                </j:when>
-                                                                <j:when test="${v.low &gt; 0}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/v.gif"
-                                                                         alt="${v.low}"/>
-                                                                </j:when>
-                                                                <j:otherwise>
-                                                                    <st:nbsp/>
-                                                                </j:otherwise>
-                                                            </j:choose>
-                                                        </td>
-                                                        <td align="center" valign="middle"
-                                                            onClick="activateRow('${theId}')">
-                                                            <j:set var="v" value="${it.getCodeReview(res, patch.getInt('number'))}"/>
-                                                            <j:choose>
-                                                                <j:when test="${v.low &lt; -1}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/x.gif"
-                                                                         alt="${v.low}"/>
-                                                                </j:when>
-                                                                <j:when test="${v.high &gt; 1}">
-                                                                    <img src="${rootURL}/plugin/gerrit-trigger/images/v.gif"
-                                                                         alt="${v.high}"/>
-                                                                </j:when>
-                                                                <j:when test="${v.low &lt; 0}">
-                                                                    <span style="font-weight: bold; color: red;">
-                                                                        ${v.low}
-                                                                    </span>
-                                                                </j:when>
-                                                                <j:when test="${v.high &gt; 0}">
-                                                                    <span style="font-weight: bold; color: green;">
-                                                                        +${v.high}
-                                                                    </span>
-                                                                </j:when>
-                                                                <j:when test="${v.high == 0 || v.low == 0}">
-                                                                    <st:nbsp/>
-                                                                </j:when>
-                                                                <j:otherwise>
-                                                                    <st:nbsp/>
-                                                                </j:otherwise>
-                                                            </j:choose>
-                                                        </td>
-                                                    </tr>
-                                                    <tr id="rowDetails${theId}" class="disablehover gDetails"
-                                                        style="display: none;">
-                                                        <td colspan="12">
-                                                            <table width="100%" border="1" cellpadding="2"
-                                                                   cellspacing="0"
-                                                                   class="pane">
-                                                                <tr>
-                                                                    <td class="pane-header" colspan="2">
-                                                                        ${%Patch Set Details}
-                                                                    </td>
-                                                                </tr>
-                                                                <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
-                                                                <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch, selectedServer)}">
-                                                                    <tr>
-                                                                        <td width="15%">
-                                                                            ${parameter.getName()}
-                                                                            <j:if test="${it.hasUrl(parameter)}">
-                                                                                <span style="font-size: smaller; font-style: italic;">
-                                                                                    <a href="${parameter.value}" target="_blank">(link)</a>
-                                                                                </span>
-                                                                            </j:if>
-                                                                        </td>
-                                                                        <td width="85%">
-                                                                            <input type="text" name="${parameter.getName()}"
-                                                                               style="width: 100%" readonly="true"
-                                                                               value="${parameter.value}"/>
-                                                                        </td>
-                                                                    </tr>
-                                                                </j:forEach>
-                                                            </table>
-                                                        </td>
-                                                    </tr>
-                                                </j:forEach>
-                                            </j:if>
-                                        </j:forEach>
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                ${res.getJSONObject('owner').getString('name')}
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                ${patch.getString('revision').substring(0,8)}
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                ${res.getString('project')}
+                                                            </td>
+                                                            <td class="gt-search__activate">
+                                                                ${res.getString('branch')}
+                                                            </td>
+                                                            <j:new className="java.util.Date" var="lastUpdated">
+                                                                <j:arg type="java.lang.Long"
+                                                                       value="${res.getLong('lastUpdated')*1000}"/>
+                                                            </j:new>
+                                                            <td class="gt-search__activate">
+                                                                <i:formatDate value="${lastUpdated}"
+                                                                              type="both"
+                                                                              dateStyle="short"
+                                                                              timeStyle="short"/>
+                                                            </td>
+                                                            <td class="gt-search__activate gt-table_cell--tight">
+                                                                <j:set var="v" value="${it.getVerified(res, patch.getInt('number'))}"/>
+                                                                <j:invoke on="${v.low}" method="toString" var="vlow"/>
+                                                                <j:choose>
+                                                                    <j:when test="${v.low &lt; 0}">
+                                                                        <l:icon src="symbol-close-outline plugin-ionicons-api"
+                                                                                class="icon-sm jenkins-!-error-color" alt="${vlow}"/>
+                                                                    </j:when>
+                                                                    <j:when test="${v.low &gt; 0}">
+                                                                        <l:icon src="symbol-checkmark-outline plugin-ionicons-api"
+                                                                                class="icon-sm jenkins-!-success-color" alt="${vlow}"/>
+                                                                    </j:when>
+                                                                    <j:otherwise>
+                                                                        <st:nbsp/>
+                                                                    </j:otherwise>
+                                                                </j:choose>
+                                                            </td>
+                                                            <td class="gt-search__activate gt-table_cell--tight">
+                                                                <j:set var="v" value="${it.getCodeReview(res, patch.getInt('number'))}"/>
+                                                                <j:invoke on="${v.low}" method="toString" var="vlow"/>
+                                                                <j:invoke on="${v.high}" method="toString" var="vhigh"/>
+                                                                <j:choose>
+                                                                    <j:when test="${v.low &lt; -1}">
+                                                                        <l:icon src="symbol-close-outline plugin-ionicons-api"
+                                                                                class="icon-sm jenkins-!-error-color" alt="${vlow}"/>
+                                                                    </j:when>
+                                                                    <j:when test="${v.high &gt; 1}">
+                                                                        <l:icon src="symbol-checkmark-outline plugin-ionicons-api"
+                                                                                class="icon-sm jenkins-!-success-color" alt="${vhigh}"/>
+                                                                    </j:when>
+                                                                    <j:when test="${v.low &lt; 0}">
+                                                                        <span class="gt-search__status--error">
+                                                                            ${v.low}
+                                                                        </span>
+                                                                    </j:when>
+                                                                    <j:when test="${v.high &gt; 0}">
+                                                                        <span class="gt-search__status--ok">
+                                                                            +${v.high}
+                                                                        </span>
+                                                                    </j:when>
+                                                                    <j:when test="${v.high == 0 || v.low == 0}">
+                                                                        <st:nbsp/>
+                                                                    </j:when>
+                                                                    <j:otherwise>
+                                                                        <st:nbsp/>
+                                                                    </j:otherwise>
+                                                                </j:choose>
+                                                            </td>
+                                                        </tr>
+                                                        <tr id="rowDetails${theId}" class="disablehover gDetails jenkins-hidden">
+                                                            <td colspan="12">
+                                                                <table class="jenkins-table jenkins-table--small gt-search__details-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th colspan="2">
+                                                                                ${%Patch Set Details}
+                                                                            </th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                                    <tbody>
+                                                                        <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch, selectedServer)}">
+                                                                            <tr>
+                                                                                <td width="15%">
+                                                                                    ${parameter.getName()}
+                                                                                    <j:if test="${it.hasUrl(parameter)}">
+                                                                                        <span class="gt-search__details-link">
+                                                                                            (<a href="${parameter.value}" target="_blank">link</a>)
+                                                                                        </span>
+                                                                                    </j:if>
+                                                                                </td>
+                                                                                <td width="85%" class="gt-search__details-data">
+                                                                                      <div>
+                                                                                        ${parameter.value}
+                                                                                      </div>
+                                                                                    <input type="hidden" name="${parameter.getName()}"
+                                                                                       value="${parameter.value}"/>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </j:forEach>
+                                                                    </tbody>
+                                                                </table>
+                                                            </td>
+                                                        </tr>
+                                                    </j:forEach>
+                                                </j:if>
+                                            </j:forEach>
+                                        </tbody>
                                     </table>
                                     <!--<pre>${result}</pre>-->
                                     <!--

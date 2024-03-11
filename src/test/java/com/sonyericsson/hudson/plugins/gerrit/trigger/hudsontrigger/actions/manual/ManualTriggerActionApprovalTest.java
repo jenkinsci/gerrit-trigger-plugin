@@ -26,8 +26,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.man
 
 import org.htmlunit.html.DomNode;
 import org.htmlunit.html.HtmlForm;
-import org.htmlunit.html.HtmlImage;
 import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlSpan;
 import org.htmlunit.html.HtmlTable;
 import org.htmlunit.html.HtmlTableCell;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -121,13 +121,13 @@ public class ManualTriggerActionApprovalTest {
         HtmlTable table = page.getElementByName("searchResultTable");
         HtmlTableCell verifiedCell = table.getCellAt(FIRST_RESULT_ROW, VERIFIED_COLUMN);
         DomNode child = verifiedCell.getFirstChild();
-        assertThat(child, instanceOf(HtmlImage.class));
-        assertEquals("-1", ((HtmlImage)child).getAltAttribute());
+        assertThat(child, instanceOf(HtmlSpan.class));
+        assertEquals("-1", child.getTextContent());
 
         HtmlTableCell codeReviewCell = table.getCellAt(FIRST_RESULT_ROW, CODE_REVIEW_COLUMN);
         child = codeReviewCell.getFirstChild();
-        assertThat(child, instanceOf(HtmlImage.class));
-        assertEquals("2", ((HtmlImage)child).getAltAttribute());
+        assertThat(child, instanceOf(HtmlSpan.class));
+        assertEquals("2", child.getTextContent());
     }
 
     /**
@@ -147,12 +147,12 @@ public class ManualTriggerActionApprovalTest {
         HtmlTable table = page.getElementByName("searchResultTable");
         HtmlTableCell verifiedCell = table.getCellAt(SECOND_RESULT_ROW, VERIFIED_COLUMN);
         DomNode child = verifiedCell.getFirstChild();
-        assertThat(child, instanceOf(HtmlImage.class));
-        assertEquals("-1", ((HtmlImage)child).getAltAttribute());
+        assertThat(child, instanceOf(HtmlSpan.class));
+        assertEquals("-1", child.getTextContent());
 
         HtmlTableCell codeReviewCell = table.getCellAt(SECOND_RESULT_ROW, CODE_REVIEW_COLUMN);
         child = codeReviewCell.getFirstChild();
-        assertThat(child, instanceOf(HtmlImage.class));
-        assertEquals("2", ((HtmlImage)child).getAltAttribute());
+        assertThat(child, instanceOf(HtmlSpan.class));
+        assertEquals("2", child.getTextContent());
     }
 }

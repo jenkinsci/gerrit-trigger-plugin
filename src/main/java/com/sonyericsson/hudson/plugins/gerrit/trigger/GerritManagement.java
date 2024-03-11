@@ -32,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritAdmini
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import hudson.DescriptorExtensionList;
 import hudson.Extension;
-import hudson.Functions;
 import hudson.model.AdministrativeMonitor;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
@@ -117,15 +116,18 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         checkPermission();
         Jenkins jenkins = Jenkins.get();
         ContextMenu menu = new ContextMenu();
-        menu.add("newServer", Functions.joinPath(jenkins.getRootUrl(), Functions.getResourcePath(),
-                                                 "images", "24x24", "new-package.png"), Messages.AddNewServer());
+        MenuItem item = new MenuItem()
+                .withUrl("newServer")
+                .withDisplayName(Messages.AddNewServer())
+                .withIconClass("symbol-add-outline plugin-ionicons-api");
+        menu.add(item);
         for (GerritServer server : getServers()) {
             menu.add(server);
         }
-        MenuItem item = new MenuItem()
+        item = new MenuItem()
                 .withUrl("diagnostics")
                 .withDisplayName(DIAGNOSTICS)
-                .withStockIcon("folder.png");
+                .withIconClass("symbol-folder-outline plugin-ionicons-api");
         item.subMenu = DIAGNOSTICS.getContextMenu("diagnostics");
         menu.add(item);
         return menu;
