@@ -118,10 +118,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.doReturn;
@@ -793,7 +791,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
+            doReturn(true).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
 
@@ -875,7 +873,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(false).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
+            doReturn(false).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -920,7 +918,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
+            doReturn(true).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -1071,8 +1069,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            when(gP.isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class))))
-                    .thenReturn(true);
+            when(gP.isInteresting(any(Change.class))).thenReturn(true);
             //doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), any(String.class));
             when(gP.getFilePaths()).thenReturn(null);
 
@@ -1105,7 +1102,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
+            doReturn(true).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -1814,7 +1811,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
+            doReturn(true).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
 
@@ -1851,7 +1848,7 @@ public class GerritTriggerTest {
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
             GerritProject gP = mock(GerritProject.class);
-            doReturn(true).when(gP).isInteresting(any(String.class), any(String.class), or(isNull(), any(String.class)));
+            doReturn(true).when(gP).isInteresting(any(Change.class));
             when(gP.getFilePaths()).thenReturn(null);
 
             GerritTrigger trigger = Setup.createDefaultTrigger(project);

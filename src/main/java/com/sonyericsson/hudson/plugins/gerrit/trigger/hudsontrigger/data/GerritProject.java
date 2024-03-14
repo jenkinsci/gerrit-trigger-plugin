@@ -42,10 +42,12 @@ import java.util.function.Supplier;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 
 /**
  * Base settings for one matcher rule of a Gerrit project.
@@ -64,6 +66,7 @@ public class GerritProject implements Describable<GerritProject> {
     private List<Branch> branches;
     private List<FilePath> filePaths;
     private List<Topic> topics;
+    private List<Hashtag> hashtags;
     private List<FilePath> forbiddenFilePaths;
     private boolean disableStrictForbiddenFileVerification;
 
@@ -200,6 +203,23 @@ public class GerritProject implements Describable<GerritProject> {
     }
 
     /**
+     *
+     * @return the hashtags-rules
+     */
+    public List<Hashtag> getHashtags() {
+        return hashtags;
+    }
+
+    /**
+     * The list of the hashtags-rules.
+     * @param hashtags the hashtags-rules
+     */
+    @DataBoundSetter
+    public void setHashtags(List<Hashtag> hashtags) {
+        this.hashtags = hashtags;
+    }
+
+    /**
      * The list of the forbidden file-path rules.
      * @return the forbidden file-path rules.
      */
@@ -223,6 +243,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @param files a closure which returns the list of files in the change.
      * @return true is the rules match.
      */
+    @Deprecated
     public boolean isInteresting(String project, String branch, String topic, Supplier<List<String>> files) {
         if (isInteresting(project, branch, topic)) {
             return isInterestingFile(files.get());
@@ -237,11 +258,38 @@ public class GerritProject implements Describable<GerritProject> {
      * @param topic the topic.
      * @return true is the rules match.
      */
+    @Deprecated
     public boolean isInteresting(String project, String branch, String topic) {
-        if (compareType.matches(pattern, project)) {
+        Change change = new Change();
+        change.setProject(project);
+        change.setBranch(branch);
+        change.setTopic(topic);
+        return isInteresting(change);
+    }
+
+    /**
+     * Compares the project, branch and files to see if the rules specified is a match.
+     * @param change gerrit change info.
+     * @param files a closure which returns the list of files in the change.
+     * @return true is the rules match.
+     */
+    public boolean isInteresting(Change change, Supplier<List<String>> files) {
+        if (isInteresting(change)) {
+            return isInterestingFile(files.get());
+        }
+        return false;
+    }
+
+    /**
+     * Compares the project and branch to see if the rules specified is a match.
+     * @param change gerrit change info.
+     * @return true is the rules match.
+     */
+    public boolean isInteresting(Change change) {
+        if (compareType.matches(pattern, change.getProject())) {
             for (Branch b : branches) {
-                if (b.isInteresting(branch)) {
-                    return isInterestingTopic(topic);
+                if (b.isInteresting(change.getBranch())) {
+                    return isInterestingTopic(change.getTopic()) && isInterestingHashtags(change.getHashtags());
                 }
             }
         }
@@ -262,6 +310,19 @@ public class GerritProject implements Describable<GerritProject> {
                 }
             }
             return false;
+        }
+        return true;
+    }
+
+    /**
+     * Compare tags to see if the rules specified is a match.
+     *
+     * @param tags the tags in change.
+     * @return true if the rules match or no rules.
+     */
+    private boolean isInterestingHashtags(List<String> tags) {
+        if (this.hashtags != null && this.hashtags.size() > 0) {
+            return this.hashtags.stream().anyMatch(h-> h.isInteresting(tags));
         }
         return true;
     }

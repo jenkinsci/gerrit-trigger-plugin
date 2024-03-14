@@ -953,12 +953,12 @@ public class GerritTrigger extends Trigger<Job> {
                 || (project.getForbiddenFilePaths() != null && project.getForbiddenFilePaths().size() > 0));
 
         if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
-            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic(),
+            if (project.isInteresting(change,
                     () -> change.getFiles(gerritQueryHandler))) {
                 shouldTrigger = true;
             }
         } else {
-            if (project.isInteresting(change.getProject(), change.getBranch(), change.getTopic())) {
+            if (project.isInteresting(change)) {
                 shouldTrigger = true;
             }
         }
@@ -1167,9 +1167,10 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
-                    if (p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                                        refUpdated.getRefUpdate().getRefName(),
-                                        null)) {
+                    Change change = new Change();
+                    change.setProject(refUpdated.getRefUpdate().getProject());
+                    change.setBranch(refUpdated.getRefUpdate().getRefName());
+                    if (p.isInteresting(change)) {
                         logger.trace("According to {} the event is interesting; event: {}", p, event);
                         return true;
                     }

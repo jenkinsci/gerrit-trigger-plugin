@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -58,11 +60,14 @@ public class GerritProjectForbiddenFilesTest {
         files.add("hide.txt");
         GerritProject config = new GerritProject(
                 CompareType.PLAIN, "project1", branches, topics, filePaths, forbiddenFilePaths, true);
-        config.isInteresting("project1", "master", null, () -> files);
+        Change change = new Change();
+        change.setProject("project1");
+        change.setBranch("master");
+        config.isInteresting(change, () -> files);
         filePaths.add(new FilePath(CompareType.PLAIN, "test.txt"));
         config = new GerritProject(
                 CompareType.PLAIN, "project2", branches, topics, filePaths, null, false);
-
-        assertTrue(config.isInteresting("project2", "master", null, () -> files));
+        change.setProject("project2");
+        assertTrue(config.isInteresting(change, () -> files));
     }
 }
