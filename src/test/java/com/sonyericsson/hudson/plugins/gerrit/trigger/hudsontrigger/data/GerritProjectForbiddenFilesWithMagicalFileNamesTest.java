@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -60,7 +62,9 @@ public class GerritProjectForbiddenFilesWithMagicalFileNamesTest {
         files.add("README.md");
         GerritProject project = new GerritProject(
                 CompareType.PLAIN, "project1", branches, topics, filePaths, forbiddenFilePaths, true);
-
-        assertFalse(project.isInteresting("project1", "master", null, () -> files));
+        Change change = new Change();
+        change.setProject("project1");
+        change.setBranch("master");
+        assertFalse(project.isInteresting(change, () -> files));
     }
 }

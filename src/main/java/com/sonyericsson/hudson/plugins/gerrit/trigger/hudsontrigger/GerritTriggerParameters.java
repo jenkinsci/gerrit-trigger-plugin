@@ -40,6 +40,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.HashtagsChanged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import hudson.model.Job;
@@ -58,6 +59,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * The parameters to add to a build.
@@ -253,7 +255,19 @@ public enum GerritTriggerParameters {
     /**
      * Updated approvals.
      */
-    GERRIT_EVENT_UPDATED_APPROVALS;
+    GERRIT_EVENT_UPDATED_APPROVALS,
+    /**
+     * Hashtags posted to Gerrit in a change based event.
+     */
+    GERRIT_HASHTAGS,
+    /**
+     * Hashtags removed to Gerrit in a hashtags-changed event.
+     */
+    GERRIT_REMOVED_HASHTAGS,
+    /**
+     * Hashtags added to Gerrit in a hashtags-changed event.
+     */
+    GERRIT_ADDED_HASHTAGS;
 
     private static final Logger logger = LoggerFactory.getLogger(GerritTriggerParameters.class);
 
@@ -408,6 +422,65 @@ public enum GerritTriggerParameters {
                 parameters, String.valueOf(((java.lang.Object)gerritEvent).hashCode()), escapeQuotes);
         if (gerritEvent instanceof ChangeBasedEvent) {
             ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
+            setOrCreateParametersForChangeBasedEvent(event, parameters, escapeQuotes, nameAndEmailParameterMode,
+                    changeSubjectMode, project, commitMessageMode, commentTextMode);
+        } else if (gerritEvent instanceof RefUpdated) {
+            RefUpdated event = (RefUpdated)gerritEvent;
+            GERRIT_REFNAME.setOrCreateStringParameterValue(
+                    parameters, event.getRefUpdate().getRefName(), escapeQuotes);
+            GERRIT_PROJECT.setOrCreateStringParameterValue(
+                    parameters, event.getRefUpdate().getProject(), escapeQuotes);
+            GERRIT_OLDREV.setOrCreateStringParameterValue(
+                    parameters, event.getRefUpdate().getOldRev(), escapeQuotes);
+            GERRIT_NEWREV.setOrCreateStringParameterValue(
+                    parameters, event.getRefUpdate().getNewRev(), escapeQuotes);
+        }
+        Account account = gerritEvent.getAccount();
+        if (account != null) {
+            nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_EVENT_ACCOUNT, parameters,
+                    getNameAndEmail(account), ParameterMode.PlainMode.STRING, escapeQuotes);
+            GERRIT_EVENT_ACCOUNT_NAME.setOrCreateStringParameterValue(
+                    parameters, getName(account), escapeQuotes);
+            GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
+                    parameters, getEmail(account), escapeQuotes);
+        }
+        Provider provider = gerritEvent.getProvider();
+        if (provider != null) {
+            GERRIT_NAME.setOrCreateStringParameterValue(
+                    parameters, provider.getName(), escapeQuotes);
+            GERRIT_HOST.setOrCreateStringParameterValue(
+                    parameters, provider.getHost(), escapeQuotes);
+            GERRIT_PORT.setOrCreateStringParameterValue(
+                    parameters, provider.getPort(), escapeQuotes);
+            GERRIT_SCHEME.setOrCreateStringParameterValue(
+                    parameters, provider.getScheme(), escapeQuotes);
+            GERRIT_VERSION.setOrCreateStringParameterValue(
+                    parameters, provider.getVersion(), escapeQuotes);
+        }
+    }
+
+    /**
+     * To avoid setOrCreateParameters too long,
+     * move change based event related function to separate method.
+     * Set or Create parameters for change based event.
+     *
+     * @param event ChangeBasedEvent
+     * @param parameters jenkins job parameters
+     * @param escapeQuotes do escape quotes or not
+     * @param nameAndEmailParameterMode mode for name and email
+     * @param changeSubjectMode mode for change subject
+     * @param project jenkins job
+     * @param commitMessageMode mode for commit message
+     * @param commentTextMode mode for comment text
+     */
+    private static void setOrCreateParametersForChangeBasedEvent(ChangeBasedEvent event,
+                                                                 List<ParameterValue> parameters,
+                                                                 boolean escapeQuotes,
+                                                                 ParameterMode nameAndEmailParameterMode,
+                                                                 ParameterMode changeSubjectMode,
+                                                                 Job project,
+                                                                 ParameterMode commitMessageMode,
+                                                                 ParameterMode commentTextMode) {
             GERRIT_CHANGE_WIP_STATE.setOrCreateStringParameterValue(
                     parameters, String.valueOf(event.getChange().isWip()), escapeQuotes);
             GERRIT_CHANGE_PRIVATE_STATE.setOrCreateStringParameterValue(
@@ -420,6 +493,8 @@ public enum GerritTriggerParameters {
                     parameters, event.getChange().getNumber(), escapeQuotes);
             GERRIT_CHANGE_ID.setOrCreateStringParameterValue(
                     parameters, event.getChange().getId(), escapeQuotes);
+            GERRIT_HASHTAGS.setOrCreateStringParameterValue(
+                    parameters, String.join(",", event.getChange().getHashtags()), escapeQuotes);
             String pNumber = null;
             if (null != event.getPatchSet()) {
                 pNumber = event.getPatchSet().getNumber();
@@ -498,40 +573,15 @@ public enum GerritTriggerParameters {
                             parameters, comment, ParameterMode.PlainMode.TEXT, escapeQuotes);
                 }
                 GERRIT_EVENT_UPDATED_APPROVALS.setOrCreateStringParameterValue(parameters,
-                    getUpdatedApprovals((CommentAdded)event), false);
+                        getUpdatedApprovals((CommentAdded)event), false);
             }
-        } else if (gerritEvent instanceof RefUpdated) {
-            RefUpdated event = (RefUpdated)gerritEvent;
-            GERRIT_REFNAME.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getRefName(), escapeQuotes);
-            GERRIT_PROJECT.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getProject(), escapeQuotes);
-            GERRIT_OLDREV.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getOldRev(), escapeQuotes);
-            GERRIT_NEWREV.setOrCreateStringParameterValue(
-                    parameters, event.getRefUpdate().getNewRev(), escapeQuotes);
-        }
-        Account account = gerritEvent.getAccount();
-        if (account != null) {
-            nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_EVENT_ACCOUNT, parameters,
-                    getNameAndEmail(account), ParameterMode.PlainMode.STRING, escapeQuotes);
-            GERRIT_EVENT_ACCOUNT_NAME.setOrCreateStringParameterValue(
-                    parameters, getName(account), escapeQuotes);
-            GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
-                    parameters, getEmail(account), escapeQuotes);
-        }
-        Provider provider = gerritEvent.getProvider();
-        if (provider != null) {
-            GERRIT_NAME.setOrCreateStringParameterValue(
-                    parameters, provider.getName(), escapeQuotes);
-            GERRIT_HOST.setOrCreateStringParameterValue(
-                    parameters, provider.getHost(), escapeQuotes);
-            GERRIT_PORT.setOrCreateStringParameterValue(
-                    parameters, provider.getPort(), escapeQuotes);
-            GERRIT_SCHEME.setOrCreateStringParameterValue(
-                    parameters, provider.getScheme(), escapeQuotes);
-            GERRIT_VERSION.setOrCreateStringParameterValue(
-                    parameters, provider.getVersion(), escapeQuotes);
+        if (event instanceof HashtagsChanged) {
+            String addedHashtags = ((HashtagsChanged)event).getAddedHashtags().stream()
+                    .collect(Collectors.joining(","));
+            String removedHashtags = ((HashtagsChanged)event).getRemovedHashtags().stream()
+                    .collect(Collectors.joining(","));
+            GERRIT_ADDED_HASHTAGS.setOrCreateStringParameterValue(parameters, addedHashtags, escapeQuotes);
+            GERRIT_REMOVED_HASHTAGS.setOrCreateStringParameterValue(parameters, removedHashtags, escapeQuotes);
         }
     }
 
