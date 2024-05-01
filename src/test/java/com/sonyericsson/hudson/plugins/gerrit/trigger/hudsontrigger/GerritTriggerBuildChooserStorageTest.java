@@ -6,13 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlOption;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlRadioButtonInput;
-import com.gargoylesoftware.htmlunit.html.HtmlSelect;
+import org.htmlunit.html.HtmlButton;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlOption;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlRadioButtonInput;
+import org.htmlunit.html.HtmlSelect;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +46,7 @@ public class GerritTriggerBuildChooserStorageTest {
      * XPath selector to identify the Git choosing strategy menu item after the add button is clicked.
      */
     private static final String GIT_CHOOSING_STRATEGY_MENUITEM_XPATH =
-        "//a[text()='Strategy for choosing what to build']";
+        "//button[normalize-space(text())='Strategy for choosing what to build']";
 
     /**
      * XPath selector to identify the select option list for the choosing strategy in the page.
@@ -104,11 +103,16 @@ public class GerritTriggerBuildChooserStorageTest {
             HtmlRadioButtonInput scmGit = (HtmlRadioButtonInput)page.getFirstByXPath(GIT_RADIO_BUTTON_XPATH);
             scmGit.setChecked(true);
             page = scmGit.click();
+            assertNotNull(page);
             HtmlButton addAdditionalBehaviorButton =
                 (HtmlButton)page.getFirstByXPath(GIT_ADD_ADDITIONAL_BEHAVIORS_BUTTON_XPATH);
+            assertNotNull(addAdditionalBehaviorButton);
             page = addAdditionalBehaviorButton.click();
-            HtmlAnchor gitChoosingStrategyLink = (HtmlAnchor)page.getFirstByXPath(GIT_CHOOSING_STRATEGY_MENUITEM_XPATH);
+            assertNotNull(page);
+            HtmlButton gitChoosingStrategyLink = (HtmlButton)page.getFirstByXPath(GIT_CHOOSING_STRATEGY_MENUITEM_XPATH);
+            assertNotNull(gitChoosingStrategyLink);
             page = gitChoosingStrategyLink.click();
+            assertNotNull(page);
             // Retry with wait in between while the page updates and fail if we do not find the select
             // element within a fixed number of retries...
             // CS IGNORE LineLength FOR NEXT 1 LINES. REASON: Long URL.
