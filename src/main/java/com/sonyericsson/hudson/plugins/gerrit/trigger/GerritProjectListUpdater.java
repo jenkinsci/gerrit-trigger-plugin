@@ -62,7 +62,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
     /**
      * Default period for updates, in minutes.
      */
-    private static final int DEFAULT_TIMER_PERIOD = 5;
+    private static final int DEFAULT_TIMER_PERIOD = 4;
 
     /**
      * Holds the period to update the project list, in minutes.
