@@ -10,7 +10,7 @@
             <l:app-bar title="${%Configure}"/>
             <div id="tasks">
                 <j:if test="${!it.isLastServer()}">
-                    <l:task icon="icon-edit-delete icon-md" href="removeConfirm" title="Remove Server"/>
+                    <l:task icon="icon-edit-delete icon-md" href="remove" title="Remove Server"/>
                 </j:if>
             </div>
         </l:side-panel>
