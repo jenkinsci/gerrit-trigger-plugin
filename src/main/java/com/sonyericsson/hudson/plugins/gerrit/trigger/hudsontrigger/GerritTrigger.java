@@ -1136,14 +1136,9 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         ToGerritRunListener listener = ToGerritRunListener.getInstance();
-        if (listener != null) {
-            if (listener.isProjectTriggeredAndIncomplete(job, event)) {
-                logger.trace("Already triggered and incomplete.");
-                return false;
-            } else if (listener.isTriggered(job, event)) {
-                logger.trace("Already triggered.");
-                return false;
-            }
+        if (listener != null && listener.isTriggered(job, event)) {
+            logger.trace("{} is already triggered for the event {}.", job, event);
+            return false;
         }
 
         if (!isServerInteresting(event)) {
