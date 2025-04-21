@@ -24,15 +24,12 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
-import com.infradna.tool.bridge_method_injector.WithBridgeMethods;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -931,7 +928,6 @@ public class BuildMemory {
              * @return the project.
              */
             @CheckForNull
-            @WithBridgeMethods(AbstractProject.class)
             public Job getProject() {
                 Jenkins jenkins = Jenkins.getInstanceOrNull();
                 if (jenkins != null) {
@@ -947,7 +943,6 @@ public class BuildMemory {
              * @return the build.
              */
             @CheckForNull
-            @WithBridgeMethods(AbstractBuild.class)
             public Run getBuild() {
                 if (build != null && project != null) {
                     Job p = getProject();
