@@ -359,6 +359,62 @@ node {
 Note though that with this approach the changelog will not show
 correctly.
 
+== Declarative Pipeline Jobs
+
+You can configure the pipeline checkout in the job configuration to use the
+"Gerrit Trigger with merge commit support" choosing strategy. This strategy
+behaves similar to the original "Gerrit Trigger" strategy with the exception
+that for change-merged events where Gerrit automatically creates a merge commit,
+it will select the revision for the merge commit rather than the revision for
+the patchset that was submitted. This ensures that the Jenkinsfile is checked
+out correctly in the event the Gerrit resolved a merge for that file. See
+https://issues.jenkins.io/browse/JENKINS-65481 for all the details.
+
+Configure your job as normal for patchset-created and change-merged event triggers then use
+the following settings in the Pipeline section of your job configuration
+(you can use a similar setup for freestyle jobs):
+
+Definition: Pipeline script from SCM
+ - SCM: Git
+   - Repositories
+     - Set your repository URL and credentials
+     - Name: origin
+     - Click the "Advanced" button
+     - Refspec: $GERRIT_REFSPEC +refs/heads/$GERRIT_BRANCH:refs/remotes/origin/$GERRIT_BRANCH
+   - Branches to build
+     - Branch specifier: refs/heads/$GERRIT_BRANCH
+   - Additional Behaviours
+     - Strategy for choosing what to build: Gerrit Trigger with merge commit support
+
+then in your Jenkinsfile pipeline code rely on the automatic checkout or disable the automatic checkout and use
+"scm checkout" as shown below:
+
+[source,syntaxhighlighter-pre]
+----
+pipeline {
+  options {
+      skipDefaultCheckout true
+      // ...
+  }
+  stages {
+    stage('checkout') {
+      checkout scm
+    }
+    //...
+  }
+}
+----
+
+This method of skipping the default checkout is useful if you want to checkout into a subdirectory of your
+workspace by wrapping the checkout in a dir directive, for example:
+
+[source,syntaxhighlighter-pre]
+----
+dir("${env.WORKSPACE}/scm") {
+  checkout scm
+}
+----
+
 == Tips & Tricks
 
 This section contains some useful tips and tricks that users has come up
