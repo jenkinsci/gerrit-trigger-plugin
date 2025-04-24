@@ -30,7 +30,7 @@ import hudson.model.Descriptor;
 import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 /**
  * Rules regarding cancellation of builds for when patchsets of the same change comes in.
@@ -187,7 +187,7 @@ public class BuildCancellationPolicy extends AbstractDescribableImpl<BuildCancel
     @Symbol("buildCancellationPolicy")
     public static class DescriptorImpl extends Descriptor<BuildCancellationPolicy> {
         @Override
-        public BuildCancellationPolicy newInstance(final StaplerRequest req, final JSONObject formData)
+        public BuildCancellationPolicy newInstance(final StaplerRequest2 req, final JSONObject formData)
                 throws FormException {
             if (formData.has("buildCancellationPolicy")) {
                 return super.newInstance(req, formData.getJSONObject("buildCancellationPolicy"));

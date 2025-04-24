@@ -45,6 +45,8 @@ import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -61,7 +63,7 @@ import java.util.concurrent.TimeUnit;
 public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithContextMenu {
 
     @Override
-    public ContextMenu doChildrenContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+    public ContextMenu doChildrenContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         return getContextMenu(null);
     }
 
@@ -71,8 +73,8 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      *
      * @param context the url prefix to put on all urls.
      * @return the selectable reports.
-     * @see #doChildrenContextMenu(StaplerRequest, StaplerResponse)
-     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement#doContextMenu(StaplerRequest, StaplerResponse)
+     * @see #doChildrenContextMenu(StaplerRequest2, StaplerResponse2)
+     * @see com.sonyericsson.hudson.plugins.gerrit.trigger.GerritManagement#doContextMenu(StaplerRequest2, StaplerResponse2)
      */
     @Restricted(NoExternalUse.class)
     public ContextMenu getContextMenu(String context) {
@@ -159,7 +161,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
     }
 
     @Override
-    public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+    public ContextMenu doContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         return getContextMenu(null);
     }
 
@@ -172,7 +174,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      * @throws IOException if so
      * @see #isDebugMode()
      */
-    public void doTriggerDebugEvent(StaplerRequest request, StaplerResponse response) throws IOException {
+    public void doTriggerDebugEvent(StaplerRequest2 request, StaplerResponse2 response) throws IOException {
         if (!isDebugMode()) {
             throw new IllegalStateException("Can only be done in a dev environment!");
         }
@@ -222,7 +224,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
     }
 
     /**
-     * Helping {@link #doTriggerDebugEvent(StaplerRequest, StaplerResponse)}.
+     * Helping {@link #doTriggerDebugEvent(StaplerRequest2, StaplerResponse2)}.
      */
     private static final Random RND = new Random();
 

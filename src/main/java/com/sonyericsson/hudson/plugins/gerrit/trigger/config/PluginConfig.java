@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +105,7 @@ public class PluginConfig implements GerritWorkersConfig {
      * @param formData the data
      * @param req      a path.
      */
-    public PluginConfig(JSONObject formData, StaplerRequest req) {
+    public PluginConfig(JSONObject formData, StaplerRequest2 req) {
         this(formData);
     }
 

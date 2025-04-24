@@ -67,7 +67,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import jenkins.model.Jenkins;
 import jenkins.security.stapler.StaplerAccessibleType;
@@ -86,8 +86,8 @@ import org.jvnet.localizer.ResourceBundleHolder;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
@@ -929,14 +929,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Saves the form to the configuration and disk.
-     * @param req StaplerRequest
-     * @param rsp StaplerResponse
+     * @param req StaplerRequest2
+     * @param rsp StaplerResponse2
      * @throws ServletException if something unfortunate happens.
      * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
     @RequirePOST
-    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    public void doConfigSubmit(StaplerRequest2 req, StaplerResponse2 rsp) throws ServletException,
             IOException,
             InterruptedException {
         checkPermission();
@@ -1275,14 +1275,14 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Saves the form to the configuration and disk.
-     * @param req StaplerRequest
-     * @param rsp StaplerResponse
+     * @param req StaplerRequest2
+     * @param rsp StaplerResponse2
      * @throws ServletException if something unfortunate happens.
      * @throws IOException if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
     @RequirePOST
-    public void doRemoveConfirm(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    public void doRemoveConfirm(StaplerRequest2 req, StaplerResponse2 rsp) throws ServletException,
             IOException,
             InterruptedException {
 

@@ -169,7 +169,7 @@ public class ManualTriggerActionPermissionTest {
 
     /**
      * Tests that a privileged user can perform a search via
-     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
+     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest2, org.kohsuke.stapler.StaplerResponse2)}.
      *
      * @throws Exception if so.
      */
@@ -198,7 +198,7 @@ public class ManualTriggerActionPermissionTest {
 
     /**
      * Tests that an anonymous user can not perform a search via
-     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest, org.kohsuke.stapler.StaplerResponse)}.
+     * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest2, org.kohsuke.stapler.StaplerResponse2)}.
      *
      * @throws Exception if so.
      */

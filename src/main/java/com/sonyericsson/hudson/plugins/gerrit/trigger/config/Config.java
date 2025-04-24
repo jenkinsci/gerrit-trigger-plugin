@@ -42,7 +42,7 @@ import net.sf.json.JSONObject;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import java.io.File;
 import java.util.Calendar;
@@ -564,7 +564,7 @@ public class Config implements IGerritHudsonTriggerConfig {
      * @param formData the data
      * @param req      a path.
      */
-    public Config(JSONObject formData, StaplerRequest req) {
+    public Config(JSONObject formData, StaplerRequest2 req) {
         this(formData);
     }
 
