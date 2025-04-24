@@ -101,31 +101,29 @@ public final class GerritDynamicUrlProcessor {
         if (!firstoperator) {
           operators.append("|");
         }
-        operators.append(regexEscapted(type.getOperator()));
+        operators.append(regexEscaped(type.getOperator()));
         firstoperator = false;
       }
       operators.append(")");
 
       return Pattern.compile(projectBranchFile
               + "\\s*"
-              + operators.toString()
+              + operators
               + "\\s*(.+)$");
     }
 
     /**
-     * Escapted char for use in regex pattern.
+     * Escaped char for use in regex pattern.
      *
-     * @param symbol to escapted char
+     * @param symbol to escaped char
      *
-     * @return escapted symbol
+     * @return escaped symbol
      */
-    private static String regexEscapted(char symbol) {
-      switch (symbol) {
-      case '^':
-        return "\\^";
-      default:
-        return String.valueOf(symbol);
-      }
+    private static String regexEscaped(char symbol) {
+        return switch (symbol) {
+            case '^' -> "\\^";
+            default -> String.valueOf(symbol);
+        };
     }
 
     /**
@@ -141,7 +139,7 @@ public final class GerritDynamicUrlProcessor {
             throws IOException, ParseException {
       Pattern linePattern = buildLinePattern();
 
-      List<GerritProject> dynamicGerritProjects = new ArrayList<GerritProject>();
+      List<GerritProject> dynamicGerritProjects = new ArrayList<>();
       List<Branch> branches = null;
       List<Topic> topics = null;
       List<Hashtag> hashtags = null;
@@ -188,55 +186,62 @@ public final class GerritDynamicUrlProcessor {
 
         logger.trace("==> item:({}) oper:({}) text:({})", item, oper, text);
 
-        if (SHORTNAME_PROJECT.equals(item)) { // Project
-          // stash previous project to the list
-          if (dynamicGerritProject != null) {
-            dynamicGerritProjects.add(dynamicGerritProject);
-          }
+          switch (item) {
+              case SHORTNAME_PROJECT -> {
+                  // stash previous project to the list
+                  if (dynamicGerritProject != null) {
+                      dynamicGerritProjects.add(dynamicGerritProject);
+                  }
 
-          branches = new ArrayList<Branch>();
-          topics = new ArrayList<Topic>();
-          hashtags = new ArrayList<>();
-          filePaths = new ArrayList<FilePath>();
-          forbiddenFilePaths = new ArrayList<FilePath>();
-          dynamicGerritProject = new GerritProject(type, text, branches, topics,
-                  filePaths, forbiddenFilePaths, false);
-        } else if (SHORTNAME_BRANCH.equals(item)) { // Branch
-          if (branches == null) {
-            throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
+                  branches = new ArrayList<>();
+                  topics = new ArrayList<>();
+                  hashtags = new ArrayList<>();
+                  filePaths = new ArrayList<>();
+                  forbiddenFilePaths = new ArrayList<>();
+                  dynamicGerritProject = new GerritProject(type, text, branches, topics,
+                          filePaths, forbiddenFilePaths, false);
+              }
+              case SHORTNAME_BRANCH -> {
+                  if (branches == null) {
+                      throw new ParseException("Line " + lineNr + ": attempt to use 'Branch' before 'Project'", lineNr);
+                  }
+                  Branch branch = new Branch(type, text);
+                  branches.add(branch);
+                  dynamicGerritProject.setBranches(branches);
+              }
+              case SHORTNAME_TOPIC -> {
+                  if (topics == null) {
+                      throw new ParseException("Line " + lineNr + ": attempt to use 'Topic' before 'Project'", lineNr);
+                  }
+                  Topic topic = new Topic(type, text);
+                  topics.add(topic);
+                  dynamicGerritProject.setTopics(topics);
+              }
+              case SHORTNAME_FILE -> { // FilePath
+                  if (filePaths == null) {
+                      throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
+                  }
+                  FilePath filePath = new FilePath(type, text);
+                  filePaths.add(filePath);
+                  dynamicGerritProject.setFilePaths(filePaths);
+              }
+              case SHORTNAME_FORBIDDEN_FILE -> { // ForbiddenFilePath
+                  if (forbiddenFilePaths == null) {
+                      throw new ParseException("Line " + lineNr + ": attempt to use 'ForbiddenFilePath' before 'Project'", lineNr);
+                  }
+                  FilePath filePath = new FilePath(type, text);
+                  forbiddenFilePaths.add(filePath);
+                  dynamicGerritProject.setForbiddenFilePaths(forbiddenFilePaths);
+              }
+              case SHORTNAME_HASHTAG -> {
+                  if (hashtags == null) {
+                      throw new ParseException("Line " + lineNr + ": attempt to use 'hashtag' before 'Project'", lineNr);
+                  }
+                  Hashtag hashtag = new Hashtag(type, text);
+                  hashtags.add(hashtag);
+                  dynamicGerritProject.setHashtags(hashtags);
+              }
           }
-          Branch branch = new Branch(type, text);
-          branches.add(branch);
-          dynamicGerritProject.setBranches(branches);
-        } else if (SHORTNAME_TOPIC.equals(item)) { // Topic
-            if (topics == null) {
-                throw new ParseException("Line " + lineNr + ": attempt to use 'Topic' before 'Project'", lineNr);
-            }
-            Topic topic = new Topic(type, text);
-            topics.add(topic);
-            dynamicGerritProject.setTopics(topics);
-        } else if (SHORTNAME_FILE.equals(item)) { // FilePath
-          if (filePaths == null) {
-            throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
-          }
-          FilePath filePath = new FilePath(type, text);
-          filePaths.add(filePath);
-          dynamicGerritProject.setFilePaths(filePaths);
-        } else if (SHORTNAME_FORBIDDEN_FILE.equals(item)) { // ForbiddenFilePath
-          if (forbiddenFilePaths == null) {
-            throw new ParseException("Line " + lineNr + ": attempt to use 'ForbiddenFilePath' before 'Project'", lineNr);
-          }
-          FilePath filePath = new FilePath(type, text);
-          forbiddenFilePaths.add(filePath);
-          dynamicGerritProject.setForbiddenFilePaths(forbiddenFilePaths);
-        } else if (SHORTNAME_HASHTAG.equals(item)) {
-            if (hashtags == null) {
-                throw new ParseException("Line " + lineNr + ": attempt to use 'hashtag' before 'Project'", lineNr);
-            }
-            Hashtag hashtag = new Hashtag(type, text);
-            hashtags.add(hashtag);
-            dynamicGerritProject.setHashtags(hashtags);
-        }
       }
 
       // Finally stash the last project to the list

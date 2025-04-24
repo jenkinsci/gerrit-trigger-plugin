@@ -75,7 +75,7 @@ public class JenkinsAwareGerritHandler extends GerritHandler {
             }
         }
 
-        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
             // The read deal
             super.notifyListeners(event);
         }

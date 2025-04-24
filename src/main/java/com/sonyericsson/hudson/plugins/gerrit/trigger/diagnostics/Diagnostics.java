@@ -39,14 +39,12 @@ import hudson.security.Permission;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ModelObjectWithContextMenu;
-import org.acegisecurity.Authentication;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
+import org.springframework.security.core.Authentication;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -190,7 +188,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
         }
         //Todo maybe some configuration from the request?
         ManualPatchsetCreated event = new ManualPatchsetCreated();
-        Authentication authentication = Jenkins.getAuthentication();
+        Authentication authentication = Jenkins.getAuthentication2();
         event.setUserName(authentication.getName());
         event.setAccount(new Account(authentication.getName(), authentication.getName() + "@example.com"));
         Change change = new Change();

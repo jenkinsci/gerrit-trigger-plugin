@@ -46,7 +46,6 @@ import jenkins.model.ModelObjectWithContextMenu;
 import jenkins.security.stapler.StaplerDispatchable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.CharEncoding;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest2;
@@ -61,6 +60,7 @@ import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -211,7 +211,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         checkPermission();
         String serverName;
         try {
-            serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
+            serverName = URLDecoder.decode(encodedServerName, StandardCharsets.UTF_8);
         } catch (Exception ex) {
             serverName = URLDecoder.decode(encodedServerName);
         }
@@ -296,7 +296,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
         plugin.save();
 
-        rsp.sendRedirect("./server/" + URLEncoder.encode(serverName, CharEncoding.UTF_8));
+        rsp.sendRedirect("./server/" + URLEncoder.encode(serverName, StandardCharsets.UTF_8));
         return server;
     }
 

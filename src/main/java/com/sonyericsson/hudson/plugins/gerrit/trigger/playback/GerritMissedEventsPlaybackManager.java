@@ -56,11 +56,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledExecutorService;
@@ -102,7 +102,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * List that contains received Gerrit Events.
      */
     protected List<GerritTriggeredEvent> receivedEventCache
-        = Collections.synchronizedList(new ArrayList<GerritTriggeredEvent>());
+        = Collections.synchronizedList(new ArrayList<>());
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
@@ -187,7 +187,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             Boolean newValue = GerritPluginChecker.isPluginEnabled(server.getConfig(), EVENTS_LOG_PLUGIN_NAME, true);
             if (newValue == null) {
                 logger.warn("Could not determine plugin support for " + EVENTS_LOG_PLUGIN_NAME
-                    + "; leaving status as " + String.valueOf(isSupported));
+                    + "; leaving status as " + isSupported);
             } else {
                 isSupported = newValue;
             }
@@ -265,14 +265,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 logger.debug("({}) Processing missed event {}", serverName, evt);
                 boolean receivedEvtFound = false;
                 synchronized (receivedEventCache) {
-                  Iterator<GerritTriggeredEvent> i = receivedEventCache.iterator(); // Must be in synchronized block
-                  while (i.hasNext()) {
-                      GerritTriggeredEvent rEvt = i.next();
-                      if (rEvt.equals(evt)) {
-                        receivedEvtFound = true;
-                        break;
-                      }
-                  }
+                    // Must be in synchronized block
+                    for (GerritTriggeredEvent rEvt : receivedEventCache) {
+                        if (rEvt.equals(evt)) {
+                            receivedEvtFound = true;
+                            break;
+                        }
+                    }
                 }
                 if (receivedEvtFound) {
                     logger.debug("({}) Event already triggered...skipping trigger.", serverName);
@@ -329,9 +328,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             startPersistenceCheck();
         }
 
-        if (event instanceof GerritTriggeredEvent) {
+        if (event instanceof GerritTriggeredEvent triggeredEvent) {
             logger.debug("Recording timestamp due to an event {} for server: {}", event, serverName);
-            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
             Provider provider = triggeredEvent.getProvider();
 
             if (provider != null) {
@@ -347,14 +345,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             if (!playBackComplete) {
                 boolean receivedEvtFound = false;
                 synchronized (this) {
-                  Iterator<GerritTriggeredEvent> i = receivedEventCache.iterator(); // Must be in synchronized block
-                  while (i.hasNext()) {
-                      GerritTriggeredEvent rEvt = i.next();
-                      if (rEvt.equals(triggeredEvent)) {
-                        receivedEvtFound = true;
-                        break;
-                      }
-                  }
+                    // Must be in synchronized block
+                    for (GerritTriggeredEvent rEvt : receivedEventCache) {
+                        if (rEvt.equals(triggeredEvent)) {
+                            receivedEvtFound = true;
+                            break;
+                        }
+                    }
                 }
                 if (!receivedEvtFound) {
                     receivedEventCache.add(triggeredEvent);
@@ -363,7 +360,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                     logger.debug("Event {} ALREADY in received cache for server: {}", event, serverName);
                 }
             } else {
-                receivedEventCache = Collections.synchronizedList(new ArrayList<GerritTriggeredEvent>());
+                receivedEventCache = Collections.synchronizedList(new ArrayList<>());
                 logger.debug("Playback complete...will NOT add event {} to received cache for server: {}"
                         , event, serverName);
             }
@@ -381,7 +378,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server == null) {
             logger.error("Server for {} could not be found.", serverName);
-            return Collections.synchronizedList(new ArrayList<GerritTriggeredEvent>());
+            return Collections.synchronizedList(new ArrayList<>());
         }
         IGerritHudsonTriggerConfig config = server.getConfig();
 
@@ -396,7 +393,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * @return collection of events.
      */
     private List<GerritTriggeredEvent> createEventsFromString(String eventsString) {
-        List<GerritTriggeredEvent> events = Collections.synchronizedList(new ArrayList<GerritTriggeredEvent>());
+        List<GerritTriggeredEvent> events = Collections.synchronizedList(new ArrayList<>());
         Scanner scanner = new Scanner(eventsString);
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
@@ -480,7 +477,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             throws UnsupportedEncodingException {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        String url = EVENTS_LOG_PLUGIN_URL + "?t1=" + URLEncoder.encode(df.format(date1), "UTF-8");
+        String url = EVENTS_LOG_PLUGIN_URL + "?t1=" + URLEncoder.encode(df.format(date1), StandardCharsets.UTF_8);
 
         String gerritFrontEndUrl = config.getGerritFrontEndUrl();
         String restUrl = gerritFrontEndUrl;

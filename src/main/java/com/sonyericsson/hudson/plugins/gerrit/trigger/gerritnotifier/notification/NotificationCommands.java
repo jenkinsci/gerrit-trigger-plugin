@@ -84,7 +84,7 @@ public class NotificationCommands {
      * @return true if commandsTopicChange contains items, otherwise false.
      */
     public boolean hasTopicChanges() {
-        return commandsTopicChange.size() > 0;
+        return !commandsTopicChange.isEmpty();
     }
 
     /**
