@@ -47,13 +47,13 @@ import net.sf.json.JSONObject;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.verb.POST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -310,8 +310,8 @@ public class ManualTriggerAction implements RootAction {
     @POST
     public void doGerritSearch(@QueryParameter("queryString") final String queryString,
         @QueryParameter("selectedServer") final String selectedServer,
-        @QueryParameter("allPatchSets") final boolean allPatchSets, StaplerRequest request,
-                               StaplerResponse response) throws IOException {
+        @QueryParameter("allPatchSets") final boolean allPatchSets, StaplerRequest2 request,
+                               StaplerResponse2 response) throws IOException {
         HttpSession session = request.getSession();
         // Create session if nothing.
         if (session == null) {
@@ -370,8 +370,8 @@ public class ManualTriggerAction implements RootAction {
     @SuppressWarnings("unused")
     //Called from jelly
     @POST
-    public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest request,
-                        StaplerResponse response) throws IOException {
+    public void doBuild(@QueryParameter("selectedIds") String selectedIds, StaplerRequest2 request,
+                        StaplerResponse2 response) throws IOException {
         HttpSession session = request.getSession();
         if (session == null) {
             logger.debug("Session alreay closed.");
