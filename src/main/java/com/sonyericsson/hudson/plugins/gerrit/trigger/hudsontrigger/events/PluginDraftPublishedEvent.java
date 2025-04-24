@@ -36,6 +36,7 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -43,6 +44,7 @@ import java.io.Serializable;
  * @author David Pursehouse &lt;david.pursehouse@sonymobile.com&gt;
  */
 public class PluginDraftPublishedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = -8543595301119872587L;
 
 

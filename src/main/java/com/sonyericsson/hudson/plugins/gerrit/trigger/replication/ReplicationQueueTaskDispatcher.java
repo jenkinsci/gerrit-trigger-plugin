@@ -33,7 +33,6 @@ import hudson.model.queue.QueueTaskDispatcher;
 import hudson.model.queue.CauseOfBlockage;
 
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,7 +106,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      */
     ReplicationQueueTaskDispatcher(@CheckForNull GerritHandler gerritHandler,
                                    @NonNull ReplicationCache replicationCache) {
-        blockedItems = new ConcurrentHashMap<Long, BlockedItem>();
+        blockedItems = new ConcurrentHashMap<>();
         this.replicationCache = replicationCache;
         if (gerritHandler != null) {
             gerritHandler.addListener(this);
@@ -125,7 +124,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
         if (item.isBuildable()) {
             return null;
         }
-        Long itemId = Long.valueOf(item.getId());
+        Long itemId = item.getId();
         if (blockedItems.containsKey(itemId)) {
             BlockedItem blockedItem = blockedItems.get(itemId);
             if (blockedItem.canRunWithTimeoutCheck()) {
@@ -165,10 +164,9 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
      * @param blockedItem The blocked item to update
      */
     private void updateFromReplicationCache(BlockedItem blockedItem) {
-        Iterator<GerritSlave> it = blockedItem.slavesWaitingFor.values().iterator();
-        while (it.hasNext()) {
+        for (GerritSlave gerritSlave : blockedItem.slavesWaitingFor.values()) {
             RefReplicated refReplicated = replicationCache.getIfPresent(blockedItem.gerritServer,
-                    blockedItem.gerritProject, blockedItem.ref, it.next().getHost());
+                    blockedItem.gerritProject, blockedItem.ref, gerritSlave.getHost());
             if (refReplicated != null) {
                 blockedItem.processRefReplicatedEvent(refReplicated);
                 logger.trace("processed a replication event from the cache, remaining number of events waiting for: {}"
@@ -204,7 +202,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             logger.trace("Gerrit Cause null for item: {} !", item.getId());
             return null;
         }
-        if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent
+        if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent repositoryModifiedEvent
                 && item.task instanceof Job<?, ?>) {
 
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger((Job<?, ?>)item.task);
@@ -222,7 +220,6 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 return null;
             }
 
-            RepositoryModifiedEvent repositoryModifiedEvent = (RepositoryModifiedEvent)gerritCause.getEvent();
             String eventDesc = getEventDescription(gerritCause.getEvent());
             logger.debug(eventDesc);
             Date createdOnDate = null;
@@ -260,7 +257,8 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                     return null;
                 }
 
-                boolean useTimestampWhenProcessingRefReplicatedEvent = false;
+                boolean useTimestampWhenProcessingRefReplicatedEvent = (gerritCause.getEvent() instanceof RefUpdated)
+                        || (gerritCause.getEvent() instanceof ChangeMerged);
                 // we need to perform a timestamp check if
                 // we are looking at a RefUpdated event.
                 // The reason for this is due to the fact that the ref
@@ -269,10 +267,6 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                 // correct event.
                 // The same is true for ChangeMerged events, as the expected
                 // ref is 'refs/heads/<branch>'.
-                if ((gerritCause.getEvent() instanceof RefUpdated)
-                        || (gerritCause.getEvent() instanceof ChangeMerged)) {
-                    useTimestampWhenProcessingRefReplicatedEvent = true;
-                }
                 logger.debug(eventDesc + " is blocked");
                 return new BlockedItem(repositoryModifiedEvent.getModifiedProject(),
                         reference,
@@ -359,7 +353,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             this.gerritProject = gerritProject;
             this.ref = ref;
             this.gerritServer = gerritServer;
-            this.slavesWaitingFor = new ConcurrentHashMap<String, GerritSlave>(gerritSlaves.size());
+            this.slavesWaitingFor = new ConcurrentHashMap<>(gerritSlaves.size());
             for (GerritSlave gerritSlave : gerritSlaves) {
                 slavesWaitingFor.put(gerritSlave.getHost(), gerritSlave);
             }
@@ -428,7 +422,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
                     slavesWaitingFor.remove(refReplicated.getTargetNode());
                 }
 
-                if (slavesWaitingFor.size() == 0) {
+                if (slavesWaitingFor.isEmpty()) {
                     logger.debug("No more slaves to wait for ({})", getEventDescription());
                     canRun = true;
                 }

@@ -23,7 +23,7 @@ public class GerritDependencyAction extends InvisibleAction implements Environme
      * @param runs List of runs it depend on
      */
     public GerritDependencyAction(List<Run> runs) {
-        deps = new ArrayList<String>(runs.size());
+        deps = new ArrayList<>(runs.size());
         for (Run run : runs) {
             deps.add(run.getParent().getFullName() + "#" + run.getNumber() + "#" + run.getResult());
         }

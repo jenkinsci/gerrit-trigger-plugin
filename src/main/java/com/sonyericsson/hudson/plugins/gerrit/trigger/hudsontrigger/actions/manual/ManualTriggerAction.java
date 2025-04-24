@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
 
@@ -196,7 +197,7 @@ public class ManualTriggerAction implements RootAction {
      *
      */
     public ArrayList<String> getEnabledServers() {
-        ArrayList<String> enabledServers = new ArrayList<String>();
+        ArrayList<String> enabledServers = new ArrayList<>();
         for (GerritServer s : PluginImpl.getServers_()) {
             if (s.getConfig().isEnableManualTrigger()) {
                 enabledServers.add(s.getName());
@@ -288,11 +289,7 @@ public class ManualTriggerAction implements RootAction {
         if (subject != null && subject.length() > MAX_SUBJECT_STR_LENGTH) {
             subject = subject.substring(0, MAX_SUBJECT_STR_LENGTH);
         }
-        if (subject != null) {
-            return subject;
-        } else {
-            return "";
-        }
+        return Objects.requireNonNullElse(subject, "");
     }
 
     /**
@@ -390,10 +387,10 @@ public class ManualTriggerAction implements RootAction {
 
         session.removeAttribute(SESSION_BUILD_ERROR);
         String[] selectedRows = null;
-        if (selectedIds != null && selectedIds.length() > 0) {
+        if (selectedIds != null && !selectedIds.isEmpty()) {
             selectedRows = selectedIds.split("\\[\\]");
         }
-        if (selectedRows == null || selectedRows.length <= 0) {
+        if (selectedRows == null || selectedRows.length == 0) {
             logger.debug("No builds selected.");
             session.setAttribute(SESSION_BUILD_ERROR, Messages.ErrorSelectSomethingToBuild());
             response.sendRedirect2(".");
@@ -467,15 +464,14 @@ public class ManualTriggerAction implements RootAction {
      */
     @Restricted(NoExternalUse.class)
     HashMap<String, JSONObject> indexResult(List<JSONObject> result) {
-        HashMap<String, JSONObject> map = new HashMap<String, JSONObject>();
+        HashMap<String, JSONObject> map = new HashMap<>();
         for (JSONObject res : result) {
             if (!res.has("type")) {
                 String changeId = generateTheId(res, null);
                 map.put(changeId, res);
                 JSONArray arr = res.getJSONArray("patchSets");
                 for (Object obj : arr) {
-                    if (obj instanceof JSONObject) {
-                        JSONObject patch = (JSONObject)obj;
+                    if (obj instanceof JSONObject patch) {
                         String theId = generateTheId(res, patch);
                         map.put(theId, patch);
                     }
@@ -536,7 +532,7 @@ public class ManualTriggerAction implements RootAction {
             JSONObject jsonChange,
             JSONObject jsonPatchSet,
             String serverName) {
-        List<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        List<ParameterValue> parameters = new LinkedList<>();
         Change change = new Change(jsonChange);
         PatchSet patchSet = new PatchSet(jsonPatchSet);
         PatchsetCreated event = new PatchsetCreated();
@@ -593,9 +589,9 @@ public class ManualTriggerAction implements RootAction {
      */
     public String getGerritUrl(JSONObject change, String serverName) {
         String url = change.optString("url", null);
-        if (url != null && url.length() > 0) {
+        if (url != null && !url.isEmpty()) {
             return url;
-        } else if (change.optString("number", "").length() > 0) {
+        } else if (!change.optString("number", "").isEmpty()) {
             if (getServerConfig(serverName) != null) {
                 return getServerConfig(serverName).getGerritFrontEndUrlFor(
                     change.getString("number"), "1");
@@ -629,7 +625,7 @@ public class ManualTriggerAction implements RootAction {
                 JSONObject change = indexed.get(changeId);
                 if (change != null) {
                     logger.debug("Found the change: {}", change);
-                    return new ManualPatchsetCreated(change, patch, Jenkins.getAuthentication().getName());
+                    return new ManualPatchsetCreated(change, patch, Jenkins.getAuthentication2().getName());
                 } else {
                     logger.trace("No change found with id {}", changeId);
                     return null;
@@ -708,7 +704,7 @@ public class ManualTriggerAction implements RootAction {
     /**
      * Represents a "vote"-type or Approval of a change in the JSON structure.
      */
-    public static enum Approval {
+    public enum Approval {
         /**
          * A Code Review Approval type <i>Code-Review</i>.
          */
@@ -717,7 +713,7 @@ public class ManualTriggerAction implements RootAction {
          * A Verified Approval type <i>Verified</i>.
          */
         VERIFIED("Verified");
-        private String type;
+        private final String type;
 
         /**
          * Standard constructor.

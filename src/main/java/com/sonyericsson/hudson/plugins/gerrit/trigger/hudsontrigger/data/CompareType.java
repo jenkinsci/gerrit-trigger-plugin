@@ -53,7 +53,7 @@ public enum CompareType {
      * @return a list of available displaynames.
      */
     public static List<String> getDisplayNames() {
-        List<String> list = new LinkedList<String>();
+        List<String> list = new LinkedList<>();
         for (CompareType t : values()) {
             list.add(t.getDisplayName());
         }
@@ -88,13 +88,13 @@ public enum CompareType {
         return PLAIN;
     }
 
-    private CompareUtil util;
+    private final CompareUtil util;
 
     /**
      * Private Constructor.
      * @param util the CompareUtil to use for comparison.
      */
-    private CompareType(CompareUtil util) {
+    CompareType(CompareUtil util) {
         this.util = util;
     }
 

@@ -60,7 +60,7 @@ public class RabbitMQMessageListenerImpl extends MessageQueueListener {
     private static final String GERRIT_VERSION   = "gerrit-version";
 
     private GerritTriggerApi api = null;
-    private Set<String> queueNames = new CopyOnWriteArraySet<String>();
+    private Set<String> queueNames = new CopyOnWriteArraySet<>();
 
     @Override
     public String getName() {

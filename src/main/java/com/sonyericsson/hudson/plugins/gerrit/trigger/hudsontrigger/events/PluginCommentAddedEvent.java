@@ -42,6 +42,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ import java.util.Map;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginCommentAddedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = -1190562081236235819L;
     private String verdictCategory;
     private String commentAddedTriggerApprovalValue;
@@ -127,7 +129,7 @@ public class PluginCommentAddedEvent extends PluginGerritEvent implements Serial
 
             Collection<VerdictCategory> list = null;
             if (ANY_SERVER.equals(serverName)) { //list all configured VCs in all servers
-                Map<String, VerdictCategory> map = new HashMap<String, VerdictCategory>();
+                Map<String, VerdictCategory> map = new HashMap<>();
                 for (GerritServer server : PluginImpl.getServers_()) {
                     for (VerdictCategory vc : server.getConfig().getCategories()) {
                         if (!map.containsKey(vc.getVerdictValue())) {

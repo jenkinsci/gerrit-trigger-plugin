@@ -191,10 +191,7 @@ public class TriggeredItemEntity {
             if (!Objects.equals(this.buildNumber, other.buildNumber)) {
                 return false;
             }
-            if (!Objects.equals(this.projectId, other.projectId)) {
-                return false;
-            }
-            return true;
+            return Objects.equals(this.projectId, other.projectId);
         }
 
         /**

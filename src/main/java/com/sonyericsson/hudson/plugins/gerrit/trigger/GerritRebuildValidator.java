@@ -30,6 +30,8 @@ import com.sonyericsson.rebuild.RebuildValidator;
 import hudson.Extension;
 import hudson.model.Run;
 
+import java.io.Serial;
+
 /**
  * Disables the rebuild button for Gerrit triggered builds.
  * This plugin provides its own "rebuild" functionality.
@@ -38,6 +40,7 @@ import hudson.model.Run;
  */
 @Extension(optional = true)
 public class GerritRebuildValidator extends RebuildValidator {
+    @Serial
     private static final long serialVersionUID = 2704238052581467905L;
 
     @Override

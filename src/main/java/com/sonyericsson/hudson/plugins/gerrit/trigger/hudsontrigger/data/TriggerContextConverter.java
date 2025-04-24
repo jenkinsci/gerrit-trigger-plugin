@@ -114,7 +114,7 @@ public class TriggerContextConverter implements Converter {
             reader.moveDown();
             if ("buildNumber".equalsIgnoreCase(reader.getNodeName())) {
                 String buildNumberStr = reader.getValue();
-                if (buildNumberStr != null && buildNumberStr.length() > 0) {
+                if (buildNumberStr != null && !buildNumberStr.isEmpty()) {
                     try {
                         buildNumber = Integer.parseInt(buildNumberStr);
                     } catch (NumberFormatException e) {
@@ -143,7 +143,7 @@ public class TriggerContextConverter implements Converter {
                 TriggeredItemEntity entity = unmarshalItemEntity(reader, context);
                 tc.setThisBuild(entity);
             } else if ("others".equalsIgnoreCase(reader.getNodeName())) {
-                List<TriggeredItemEntity> list = new LinkedList<TriggeredItemEntity>();
+                List<TriggeredItemEntity> list = new LinkedList<>();
                 while (reader.hasMoreChildren()) {
                     reader.moveDown();
                     TriggeredItemEntity entity = unmarshalItemEntity(reader, context);

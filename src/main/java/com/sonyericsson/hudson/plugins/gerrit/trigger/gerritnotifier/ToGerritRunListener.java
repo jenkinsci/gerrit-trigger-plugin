@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import jenkins.model.Jenkins;
 
@@ -213,10 +214,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
         //misnomer: the project is considered "building", even if the build hasn't been created
         //for that project yet. As long as the project exists, and does not have a completed
         //build, it is "building".
-        if (memory.isBuilding(event, p)) {
-            return true;
-        }
-        return false;
+        return memory.isBuilding(event, p);
     }
 
     @Override
@@ -508,11 +506,7 @@ public final class ToGerritRunListener extends RunListener<Run> {
             if (filepath != null && !filepath.isEmpty()) {
                 EnvVars envVars;
 
-                if (listener == null) {
-                    envVars = build.getEnvironment();
-                } else {
-                    envVars = build.getEnvironment(listener);
-                }
+                envVars = build.getEnvironment(Objects.requireNonNullElse(listener, TaskListener.NULL));
 
                 // The filename may contain environment variables
                 filepath = envVars.expand(filepath);

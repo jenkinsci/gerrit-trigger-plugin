@@ -87,7 +87,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      */
     DependencyQueueTaskDispatcher(GerritHandler gerritHandler) {
         this.currentlyTriggeringEvents = Collections.newSetFromMap(
-                new ConcurrentHashMap<GerritTriggeredEvent, Boolean>());
+                new ConcurrentHashMap<>());
         if (gerritHandler == null) {
             logger.error("Gerrit Handler was not available to construct DependencyQueueTaskDispatcher");
         } else {
@@ -119,7 +119,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
     @Override
     public CauseOfBlockage canRun(Queue.Item item) {
         //Job check
-        if (!(item.task instanceof Job)) {
+        if (!(item.task instanceof Job p)) {
             logger.debug("Not an Job instance: {}", item.task);
             return null;
         }
@@ -144,7 +144,6 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
             logger.debug("{} is already buildable for {}", item, event);
             return null;
         }
-        Job p = (Job)item.task;
         GerritTrigger trigger = GerritTrigger.getTrigger(p);
         //The project being checked has no Gerrit Trigger
         if (trigger == null) {
@@ -203,7 +202,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                     return null;
                 }
 
-                List<Run> actualDependencies = new ArrayList<Run>(dependencies.size());
+                List<Run> actualDependencies = new ArrayList<>(dependencies.size());
                 for (Run run : parentRuns) {
                     if (dependencies.contains(run.getParent())) {
                         actualDependencies.add(run);
@@ -273,7 +272,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
      * @return the list of projects
      */
     public static List<Job> getProjectsFromString(String projects, Item context) {
-        List<Job> dependencyJobs = new ArrayList<Job>();
+        List<Job> dependencyJobs = new ArrayList<>();
         if (StringUtils.isEmpty(projects)) {
             return null;
         } else {
@@ -283,7 +282,7 @@ public final class DependencyQueueTaskDispatcher extends QueueTaskDispatcher
                 String projectName = tokens.nextToken().trim();
                 if (!projectName.isEmpty()) {
                     Item item = jenkins.getItem(projectName, context, Item.class);
-                    if ((item != null) && (item instanceof Job)) {
+                    if ((item instanceof Job)) {
                         dependencyJobs.add((Job)item);
                         logger.debug("project dependency job added : {}", item);
                     }

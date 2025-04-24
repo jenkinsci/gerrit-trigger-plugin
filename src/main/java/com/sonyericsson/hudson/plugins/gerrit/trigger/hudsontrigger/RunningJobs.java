@@ -129,11 +129,10 @@ public class RunningJobs {
            Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
            while (it.hasNext()) {
                GerritTriggeredEvent runningEvent = it.next();
-               if (!(runningEvent instanceof ChangeBasedEvent)) {
+               if (!(runningEvent instanceof ChangeBasedEvent runningChangeBasedEvent)) {
                    continue;
                }
 
-               ChangeBasedEvent runningChangeBasedEvent = ((ChangeBasedEvent)runningEvent);
                if (shouldIgnoreEvent(event, policy, runningChangeBasedEvent)) {
                    continue;
                }
@@ -208,11 +207,7 @@ public class RunningJobs {
        boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
                && (event instanceof ChangeAbandoned);
 
-       if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
-           return true;
-       }
-
-       return false;
+       return !abortBecauseOfTopic && !shouldCancelPatchsetNumber && !isAbortAbandonedPatchset;
    }
 
    /**
@@ -255,11 +250,10 @@ public class RunningJobs {
            for (Computer c : jenkins.getComputers()) {
                for (Executor e : c.getAllExecutors()) {
                    Queue.Executable currentExecutable = e.getCurrentExecutable();
-                   if (!(currentExecutable instanceof Run<?, ?>)) {
+                   if (!(currentExecutable instanceof Run<?, ?> run)) {
                        continue;
                    }
 
-                   Run<?, ?> run = (Run<?, ?>)currentExecutable;
                    if (!checkCausedByGerrit(event, run.getCauses())) {
                        continue;
                    }
@@ -288,10 +282,9 @@ public class RunningJobs {
     */
    private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
        for (Cause c : causes) {
-           if (!(c instanceof GerritCause)) {
+           if (!(c instanceof GerritCause gc)) {
                continue;
            }
-           GerritCause gc = (GerritCause)c;
            if (gc.getEvent() == event) {
                return true;
            }

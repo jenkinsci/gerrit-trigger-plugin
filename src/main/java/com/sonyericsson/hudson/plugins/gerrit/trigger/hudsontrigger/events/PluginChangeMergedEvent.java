@@ -31,6 +31,7 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -38,6 +39,7 @@ import java.io.Serializable;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginChangeMergedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = 2277980034044218950L;
 
     /**
