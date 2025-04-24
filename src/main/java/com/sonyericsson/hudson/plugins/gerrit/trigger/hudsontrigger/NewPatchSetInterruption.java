@@ -27,11 +27,14 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 
 import jenkins.model.CauseOfInterruption;
 
+import java.io.Serial;
+
 /**
  * A cause class for new patchset interruption.
  * @author rinrinne (rinrin.ne@gmail.com)
  */
 public final class NewPatchSetInterruption extends CauseOfInterruption {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

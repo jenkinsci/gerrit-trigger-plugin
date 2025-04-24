@@ -26,8 +26,7 @@ public class GerritQueueListener extends QueueListener {
     public void onLeft(LeftItem item) {
         if (item.isCancelled() && item.task instanceof Job) {
             for (Cause cause : item.getCauses()) {
-                if (cause instanceof GerritCause && !((GerritCause)cause).isSilentMode()) {
-                    GerritCause gerritCause = (GerritCause)cause;
+                if (cause instanceof GerritCause gerritCause && !gerritCause.isSilentMode()) {
                     GerritTriggeredEvent event = gerritCause.getEvent();
                     ToGerritRunListener runListener = ToGerritRunListener.getInstance();
                     runListener.setQueueCancelled((Job)item.task, event);

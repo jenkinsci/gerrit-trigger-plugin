@@ -56,7 +56,7 @@ public interface CompareUtil {
      * Compares based on Ant-style paths.
      * like <code>my/&#042;&#042;/something&#042;.git</code>
      */
-    static class AntCompareUtil implements CompareUtil {
+    class AntCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
@@ -82,7 +82,7 @@ public interface CompareUtil {
     /**
      * Compares with pattern.equals(str).
      */
-    static class PlainCompareUtil implements CompareUtil {
+    class PlainCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {
@@ -105,7 +105,7 @@ public interface CompareUtil {
      * string.matches(pattern)
      * @see java.util.regex.Pattern
      */
-    static class RegExpCompareUtil implements CompareUtil {
+    class RegExpCompareUtil implements CompareUtil {
 
         @Override
         public boolean matches(String pattern, String str) {

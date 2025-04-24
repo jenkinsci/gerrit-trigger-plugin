@@ -52,6 +52,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
+
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -113,7 +115,7 @@ public class ParameterExpander {
                 Notify.ALL.name());
         StringBuilder startedStats = new StringBuilder();
         if (stats.getTotalBuildsToStart() > 1) {
-            startedStats.append(stats.toString());
+            startedStats.append(stats);
         }
         String buildStartMessage = trigger.getBuildStartMessage();
         if (buildStartMessage != null && !buildStartMessage.isEmpty()) {
@@ -142,11 +144,7 @@ public class ParameterExpander {
      * @return empty if null or the iterable
      */
     private static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
-        if (iterable == null) {
-            return Collections.emptyList();
-        } else {
-            return iterable;
-        }
+        return Objects.requireNonNullElse(iterable, Collections.emptyList());
     }
 
     /**
@@ -225,9 +223,8 @@ public class ParameterExpander {
     private Map<String, String> createStandardParameters(Run r, GerritTriggeredEvent gerritEvent,
             Integer codeReview, Integer verified, String notifyLevel) {
         //<GERRIT_NAME> <BRANCH> <CHANGE> <PATCHSET> <PATCHSET_REVISION> <REFSPEC> <BUILDURL> VERIFIED CODE_REVIEW
-        Map<String, String> map = new HashMap<String, String>(DEFAULT_PARAMETERS_COUNT);
-        if (gerritEvent instanceof ChangeBasedEvent) {
-            ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
+        Map<String, String> map = new HashMap<>(DEFAULT_PARAMETERS_COUNT);
+        if (gerritEvent instanceof ChangeBasedEvent event) {
             map.put("GERRIT_NAME", event.getChange().getProject());
             map.put("CHANGE_ID", event.getChange().getId());
             map.put("BRANCH", event.getChange().getBranch());
@@ -390,7 +387,7 @@ public class ParameterExpander {
     @CheckForNull
     public Integer getMinimumVerifiedValue(MemoryImprint memoryImprint, boolean onlyBuilt,
                                            Integer maxAllowedVerifiedValue) {
-        Integer verified = Integer.MAX_VALUE;
+        int verified = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             if (entry == null) {
                 continue;
@@ -430,7 +427,7 @@ public class ParameterExpander {
      */
     @CheckForNull
     public Integer getMinimumCodeReviewValue(MemoryImprint memoryImprint, boolean onlyBuilt) {
-        Integer codeReview = Integer.MAX_VALUE;
+        int codeReview = Integer.MAX_VALUE;
         for (Entry entry : memoryImprint.getEntries()) {
             Run build = entry.getBuild();
             if (build == null) {
@@ -501,7 +498,7 @@ public class ParameterExpander {
      */
     public Notify getNotificationLevel(GerritTrigger trigger) {
         String level = trigger.getNotificationLevel();
-        if (level != null && level.length() > 0) {
+        if (level != null && !level.isEmpty()) {
             return Notify.valueOf(level);
         }
         Notify serverLevel = config.getNotificationLevel();
@@ -653,7 +650,7 @@ public class ParameterExpander {
                     // If the user has specified a message, use it
                     // otherwise use a generic indicator
                     if (customMessage == null || customMessage.isEmpty()) {
-                        str.append(res.toString());
+                        str.append(res);
                         if (shouldSkip(trigger.getSkipVote(), res)) {
                             str.append(" (skipped)");
                         }

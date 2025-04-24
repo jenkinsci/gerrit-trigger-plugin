@@ -89,10 +89,10 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
         // Check that all jobs are legit, actual projects.
         while (tokens.hasMoreTokens()) {
             String projectName = tokens.nextToken().trim();
-            if (!projectName.equals("")) {
+            if (!projectName.isEmpty()) {
                 Jenkins jenkins = Jenkins.get();
                 Item item = jenkins.getItem(projectName, project, Item.class);
-                if ((item == null) || !(item instanceof Job)) {
+                if (!(item instanceof Job)) {
                     AbstractProject nearest = AbstractProject.findNearest(projectName);
                     String path = "<null>";
                     if (nearest != null) {
@@ -107,7 +107,7 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
         }
         //Check there are no cycles in the dependencies, by exploring all dependencies recursively
         //Only way of creating a cycle is if this project is in the dependencies somewhere.
-        Set<Job> explored = new HashSet<Job>();
+        Set<Job> explored = new HashSet<>();
         List<Job> directDependencies = DependencyQueueTaskDispatcher.getProjectsFromString(value,
                 project);
         if (directDependencies == null) {
@@ -118,9 +118,9 @@ public final class GerritTriggerDescriptor extends TriggerDescriptor {
             if (directDependency.getFullName().equals(project.getFullName())) {
                 return FormValidation.error(Messages.CannotAddSelfAsDependency());
             }
-            java.util.Queue<Job> toExplore = new LinkedList<Job>();
+            java.util.Queue<Job> toExplore = new LinkedList<>();
             toExplore.add(directDependency);
-            while (toExplore.size() > 0) {
+            while (!toExplore.isEmpty()) {
                 Job currentlyExploring = toExplore.remove();
                 explored.add(currentlyExploring);
                 GerritTrigger currentTrigger = GerritTrigger.getTrigger(currentlyExploring);

@@ -44,7 +44,6 @@ import hudson.plugins.git.util.BuildChooserDescriptor;
 import hudson.plugins.git.util.BuildData;
 import hudson.remoting.VirtualChannel;
 
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.jenkinsci.plugins.gitclient.GitClient;
@@ -54,6 +53,7 @@ import org.eclipse.jgit.lib.ObjectId;
 
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -65,6 +65,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
  * @author Andrew Bayer
  */
 public class GerritTriggerBuildChooser extends BuildChooser {
+    @Serial
     private static final long serialVersionUID = 2003462680723330645L;
 
     /**
@@ -170,24 +171,20 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     @SuppressWarnings("serial")
     private ObjectId getFirstParent(final ObjectId id, GitClient git)
             throws GitException, IOException, InterruptedException {
-        return git.withRepository(new RepositoryCallback<ObjectId>() {
-            @Override
-            public ObjectId invoke(Repository repository, VirtualChannel virtualChannel)
-                    throws IOException, InterruptedException {
-                ObjectId result = null;
-                try (RevWalk walk = new RevWalk(repository)) {
-                    RevCommit commit = walk.parseCommit(id);
-                    if (commit.getParentCount() > 0) {
-                        result = commit.getParent(0);
-                    } else {
-                        // If this is the first commit in the git, there is no parent.
-                        result = id;
-                    }
-                } catch (Exception e) {
-                    throw new GitException("Failed to find parent id. ", e);
+        return git.withRepository((RepositoryCallback<ObjectId>) (repository, virtualChannel) -> {
+            ObjectId result = null;
+            try (RevWalk walk = new RevWalk(repository)) {
+                RevCommit commit = walk.parseCommit(id);
+                if (commit.getParentCount() > 0) {
+                    result = commit.getParent(0);
+                } else {
+                    // If this is the first commit in the git, there is no parent.
+                    result = id;
                 }
-                return result;
+            } catch (Exception e) {
+                throw new GitException("Failed to find parent id. ", e);
             }
+            return result;
         });
     }
 
@@ -212,7 +209,8 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      */
     private static class GetGerritEventRevision
             implements BuildChooserContext.ContextCallable<Run<?, ?>, String> {
-        static final long serialVersionUID = 0L;
+        @Serial
+        private static final long serialVersionUID = 0L;
         @Override
         public String invoke(Run<?, ?> build, VirtualChannel channel) {
             GerritCause cause = build.getCause(GerritCause.class);
@@ -234,7 +232,8 @@ public class GerritTriggerBuildChooser extends BuildChooser {
      */
     private static class GetGerritEventRefspec
             implements BuildChooserContext.ContextCallable<Run<?, ?>, String> {
-        static final long serialVersionUID = 0L;
+        @Serial
+        private static final long serialVersionUID = 0L;
         @Override
         public String invoke(Run<?, ?> build, VirtualChannel channel) {
             GerritCause cause = build.getCause(GerritCause.class);

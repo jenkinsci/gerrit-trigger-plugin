@@ -32,6 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import hudson.model.Item;
 import hudson.model.RootAction;
 import hudson.model.Run;
 import net.sf.json.JSONObject;
@@ -45,8 +46,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -235,7 +236,7 @@ public class WorkflowTest {
     }
 
     /**
-     * Tests a {@link JenkinsRule#configRoundtrip(hudson.model.Job)} on the workflow job.
+     * Tests a {@link JenkinsRule#configRoundtrip(Item)}} on the workflow job.
      *
      * @throws Exception if so.
      */
@@ -266,7 +267,7 @@ public class WorkflowTest {
      * @return the job
      * @throws IOException if so
      */
-    private WorkflowJob createWorkflowJob(PatchsetCreated event) throws IOException {
+    private WorkflowJob createWorkflowJob(PatchsetCreated event) throws Exception {
         return createWorkflowJob(event, ""
                 + "node {\n"
                 + "   stage ('Build') {\n"
@@ -282,7 +283,7 @@ public class WorkflowTest {
      * @return the job
      * @throws IOException if so
      */
-    private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws IOException {
+    private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
         job.setDefinition(new CpsFlowDefinition(script, true));
 
@@ -397,7 +398,7 @@ public class WorkflowTest {
          * @param response the response
          * @throws IOException if so.
          */
-        public void doDynamic(StaplerRequest request, StaplerResponse response) throws IOException {
+        public void doDynamic(StaplerRequest2 request, StaplerResponse2 response) throws IOException {
             try {
                 this.lastContent = IOUtils.toString(request.getReader());
             } finally {

@@ -59,7 +59,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 /**
  * The parameters to add to a build.
@@ -306,7 +305,7 @@ public enum GerritTriggerParameters {
      * @see #name()
      */
     public static Set<String> getNamesSet() {
-        Set<String> names = new TreeSet<String>();
+        Set<String> names = new TreeSet<>();
         for (GerritTriggerParameters p : GerritTriggerParameters.values()) {
             names.add(p.name());
         }
@@ -447,13 +446,11 @@ public enum GerritTriggerParameters {
         GERRIT_EVENT_TYPE.setOrCreateStringParameterValue(
                 parameters, gerritEvent.getEventType().getTypeValue(), escapeQuotes);
         GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
-                parameters, String.valueOf(((java.lang.Object)gerritEvent).hashCode()), escapeQuotes);
-        if (gerritEvent instanceof ChangeBasedEvent) {
-            ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
+                parameters, String.valueOf(gerritEvent.hashCode()), escapeQuotes);
+        if (gerritEvent instanceof ChangeBasedEvent event) {
             setOrCreateParametersForChangeBasedEvent(event, parameters, escapeQuotes, nameAndEmailParameterMode,
                     changeSubjectMode, project, commitMessageMode, commentTextMode);
-        } else if (gerritEvent instanceof RefUpdated) {
-            RefUpdated event = (RefUpdated)gerritEvent;
+        } else if (gerritEvent instanceof RefUpdated event) {
             GERRIT_REFNAME.setOrCreateStringParameterValue(
                     parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_PROJECT.setOrCreateStringParameterValue(
@@ -616,10 +613,8 @@ public enum GerritTriggerParameters {
                         getUpdatedApprovals((CommentAdded)event), false);
             }
         if (event instanceof HashtagsChanged) {
-            String addedHashtags = ((HashtagsChanged)event).getAddedHashtags().stream()
-                    .collect(Collectors.joining(","));
-            String removedHashtags = ((HashtagsChanged)event).getRemovedHashtags().stream()
-                    .collect(Collectors.joining(","));
+            String addedHashtags = String.join(",", ((HashtagsChanged) event).getAddedHashtags());
+            String removedHashtags = String.join(",", ((HashtagsChanged) event).getRemovedHashtags());
             GERRIT_ADDED_HASHTAGS.setOrCreateStringParameterValue(parameters, addedHashtags, escapeQuotes);
             GERRIT_REMOVED_HASHTAGS.setOrCreateStringParameterValue(parameters, removedHashtags, escapeQuotes);
         }

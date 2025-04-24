@@ -27,6 +27,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRun
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Run;
+
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Set;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -130,6 +132,7 @@ public class SetGerritReviewStep extends Step {
             return null;
         }
 
+        @Serial
         private static final long serialVersionUID = 1L;
     }
 

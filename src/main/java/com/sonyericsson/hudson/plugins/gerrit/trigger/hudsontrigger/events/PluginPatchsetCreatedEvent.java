@@ -37,6 +37,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = 970946986242309088L;
 
     private boolean excludeDrafts = false;

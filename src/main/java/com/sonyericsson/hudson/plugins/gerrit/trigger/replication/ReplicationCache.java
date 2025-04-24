@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -113,11 +114,7 @@ public class ReplicationCache {
             this.expiration = DEFAULT_EXPIRATION_IN_MINUTES;
         }
 
-        if (unit != null) {
-            this.unit = unit;
-        } else {
-            this.unit = TimeUnit.MINUTES;
-        }
+        this.unit = Objects.requireNonNullElse(unit, TimeUnit.MINUTES);
     }
 
     /**
@@ -257,13 +254,8 @@ public class ReplicationCache {
                 return false;
             }
             if (targetNode == null) {
-                if (other.targetNode != null) {
-                    return false;
-                }
-            } else if (!targetNode.equals(other.targetNode)) {
-                return false;
-            }
-            return true;
+                return other.targetNode == null;
+            } else return targetNode.equals(other.targetNode);
         }
 
         /**
