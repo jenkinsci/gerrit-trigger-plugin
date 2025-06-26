@@ -48,6 +48,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
+import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Approval;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
@@ -947,7 +948,13 @@ public class GerritTrigger extends Trigger<Job> {
      * @return true if we should.
      */
     private boolean isChangeInteresting(Change change, GerritProject project, GerritQueryHandler gerritQueryHandler) {
+
         boolean shouldTrigger = false;
+
+        if (change.getStatus() != GerritChangeStatus.NEW ) {
+            return shouldTrigger; // return false immediately if it's a non-NEW status change
+        }
+
         boolean containsFilePathsOrForbiddenFilePaths = ((project.getFilePaths() != null
                 && project.getFilePaths().size() > 0)
                 || (project.getForbiddenFilePaths() != null && project.getForbiddenFilePaths().size() > 0));
