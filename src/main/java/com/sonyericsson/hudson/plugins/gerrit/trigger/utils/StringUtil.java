@@ -78,7 +78,7 @@ public final class StringUtil {
      */
     public static String makeRefSpec(ChangeBasedEvent event) {
         if (event.getPatchSet() != null && event.getPatchSet().getRef() != null) {
-            if (event.getPatchSet().getRef().length() > 0) {
+            if (!event.getPatchSet().getRef().isEmpty()) {
                 return event.getPatchSet().getRef();
             }
         }

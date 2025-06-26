@@ -147,11 +147,7 @@ public class TopicAssociation extends AbstractDescribableImpl<TopicAssociation> 
             return false;
         }
 
-        if (isAbandonedChange && ignoreAbandonedChangeStatus) {
-            return false;
-        }
-
-        return true;
+        return !isAbandonedChange || !ignoreAbandonedChangeStatus;
     }
 
     /**

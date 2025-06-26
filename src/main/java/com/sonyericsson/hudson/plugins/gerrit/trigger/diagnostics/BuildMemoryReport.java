@@ -36,7 +36,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,28 +58,25 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
      *
      * A variant of ISO 8601 with the 'T' replaced by a space for simpler ocular parsing.
      */
-    public static final ThreadLocal<DateFormat> TS_FORMAT = new ThreadLocal<DateFormat>() {
+    public static final ThreadLocal<DateFormat> TS_FORMAT = new ThreadLocal<>() {
         @Override
         public DateFormat get() {
             return new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ");
         }
-      };
+    };
 
     /**
      * Default Constructor.
      */
     public BuildMemoryReport() {
-        internal = new TreeMap<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>(
-                new Comparator<GerritTriggeredEvent>() {
-            @Override
-            public int compare(GerritTriggeredEvent a, GerritTriggeredEvent b) {
-                int to = a.getEventCreatedOn().compareTo(b.getEventCreatedOn()) * -1;
-                if (to == 0) {
-                    return Integer.compare(a.hashCode(), b.hashCode()) * -1;
-                }
-                return to;
-            }
-        });
+        internal = new TreeMap<>(
+                (a, b) -> {
+                    int to = a.getEventCreatedOn().compareTo(b.getEventCreatedOn()) * -1;
+                    if (to == 0) {
+                        return Integer.compare(a.hashCode(), b.hashCode()) * -1;
+                    }
+                    return to;
+                });
     }
 
     /**
@@ -91,16 +87,8 @@ public class BuildMemoryReport implements Map<GerritTriggeredEvent, List<BuildMe
      */
     public List<Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> getSortedEntrySet() {
         List<Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>>> entries =
-                new LinkedList<Entry<GerritTriggeredEvent,
-                        List<BuildMemory.MemoryImprint.Entry>>>(entrySet());
-        entries.sort(new Comparator<Entry<GerritTriggeredEvent,
-                List<BuildMemory.MemoryImprint.Entry>>>() {
-            @Override
-            public int compare(Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> a,
-                               Map.Entry<GerritTriggeredEvent, List<BuildMemory.MemoryImprint.Entry>> b) {
-                return a.getKey().getEventCreatedOn().compareTo(b.getKey().getEventCreatedOn()) * -1;
-            }
-        });
+                new LinkedList<>(entrySet());
+        entries.sort((a, b) -> a.getKey().getEventCreatedOn().compareTo(b.getKey().getEventCreatedOn()) * -1);
         return entries;
     }
 

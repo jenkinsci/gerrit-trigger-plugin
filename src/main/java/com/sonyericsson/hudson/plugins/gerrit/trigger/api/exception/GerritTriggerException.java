@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception;
 
+import java.io.Serial;
+
 /**
  * A exception class for Gerrit Trigger API.
  *
@@ -30,6 +32,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception;
  */
 public class GerritTriggerException extends Exception {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private int code;

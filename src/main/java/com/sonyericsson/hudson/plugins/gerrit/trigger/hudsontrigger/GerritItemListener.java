@@ -65,8 +65,7 @@ public class GerritItemListener extends ItemListener {
      */
     @Override
     public void onDeleted(Item item) {
-        if (item instanceof Job<?, ?>) {
-            Job<?, ?> project = (Job<?, ?>)item;
+        if (item instanceof Job<?, ?> project) {
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger != null) {
                 gerritTrigger.stop();
@@ -91,8 +90,7 @@ public class GerritItemListener extends ItemListener {
      */
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
-        if (item instanceof Job<?, ?>) {
-            Job<?, ?> project = (Job<?, ?>)item;
+        if (item instanceof Job<?, ?> project) {
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger != null) {
                 gerritTrigger.onJobRenamed(oldFullName, newFullName);

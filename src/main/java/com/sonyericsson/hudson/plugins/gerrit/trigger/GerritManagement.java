@@ -46,21 +46,21 @@ import jenkins.model.ModelObjectWithContextMenu;
 import jenkins.security.stapler.StaplerDispatchable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.CharEncoding;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerProxy;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.bind.JavaScriptMethod;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -112,7 +112,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     @Override
-    public ContextMenu doContextMenu(StaplerRequest request, StaplerResponse response) throws Exception {
+    public ContextMenu doContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         checkPermission();
         Jenkins jenkins = Jenkins.get();
         ContextMenu menu = new ContextMenu();
@@ -211,7 +211,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         checkPermission();
         String serverName;
         try {
-            serverName = URLDecoder.decode(encodedServerName, CharEncoding.UTF_8);
+            serverName = URLDecoder.decode(encodedServerName, StandardCharsets.UTF_8);
         } catch (Exception ex) {
             serverName = URLDecoder.decode(encodedServerName);
         }
@@ -259,13 +259,13 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     /**
      * Add a new server.
      *
-     * @param req the StaplerRequest
-     * @param rsp the StaplerResponse
+     * @param req the StaplerRequest2
+     * @param rsp the StaplerResponse2
      * @return the new GerritServer
      * @throws IOException when error sending redirect back to the list of servers
      */
     @RequirePOST
-    public GerritServer doAddNewServer(StaplerRequest req, StaplerResponse rsp) throws IOException {
+    public GerritServer doAddNewServer(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         checkPermission();
         String serverName = req.getParameter("name");
         PluginImpl plugin = PluginImpl.getInstance();
@@ -296,7 +296,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
         }
         plugin.save();
 
-        rsp.sendRedirect("./server/" + URLEncoder.encode(serverName, CharEncoding.UTF_8));
+        rsp.sendRedirect("./server/" + URLEncoder.encode(serverName, StandardCharsets.UTF_8));
         return server;
     }
 
@@ -403,14 +403,14 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     /**
      * Saves the form to the configuration and disk.
      *
-     * @param req StaplerRequest
-     * @param rsp StaplerResponse
+     * @param req StaplerRequest2
+     * @param rsp StaplerResponse2
      * @throws ServletException     if something unfortunate happens.
      * @throws IOException          if something unfortunate happens.
      * @throws InterruptedException if something unfortunate happens.
      */
     @RequirePOST
-    public void doConfigSubmit(StaplerRequest req, StaplerResponse rsp) throws ServletException,
+    public void doConfigSubmit(StaplerRequest2 req, StaplerResponse2 rsp) throws ServletException,
             IOException,
             InterruptedException {
         checkPermission();

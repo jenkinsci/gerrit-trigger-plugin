@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.jenkinsci.Symbol;
@@ -40,6 +41,7 @@ import jenkins.model.Jenkins;
  * WIP state changed.
  */
 public class PluginWipStateChangedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = 5530163420962242330L;
 
     /**

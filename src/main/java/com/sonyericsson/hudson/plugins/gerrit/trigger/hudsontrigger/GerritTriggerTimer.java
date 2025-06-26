@@ -64,7 +64,7 @@ public final class GerritTriggerTimer {
      * The private constructor (this is a singleton class).
      */
     private GerritTriggerTimer() {
-        scheduledTasks = new HashMap<String, ScheduledFuture>();
+        scheduledTasks = new HashMap<>();
     }
 
     /**

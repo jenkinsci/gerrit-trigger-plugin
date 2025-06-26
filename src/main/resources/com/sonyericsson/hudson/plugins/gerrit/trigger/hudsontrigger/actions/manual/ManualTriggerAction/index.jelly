@@ -6,7 +6,7 @@
             <link rel="stylesheet" href="${rootURL}/plugin/gerrit-trigger/css/gerrit.css" type="text/css"/>
         </l:header>
         <l:side-panel>
-            <j:if test="${!empty(request.session.getAttribute('trigger_monitor'))}">
+            <j:if test="${!empty(request2.session.getAttribute('trigger_monitor'))}">
                 <st:include page="ajaxTriggerMonitor.jelly"/>
             </j:if>
         </l:side-panel>
@@ -21,7 +21,7 @@
                     <h1>${%Trigger a Gerrit event manually}</h1>
                     <f:form method="post" action="gerritSearch" name="theSearch">
                         <f:section title="${%Search}">
-                            <j:set var="frontEndUrl" value="${it.getFrontEndUrl(request.session.getAttribute('selectedServer'))}"/>
+                            <j:set var="frontEndUrl" value="${it.getFrontEndUrl(request2.session.getAttribute('selectedServer'))}"/>
                             <j:choose>
                                 <j:when test="${empty(frontEndUrl)}">
                                     <j:set var="helpUrl" value="https://gerrit-documentation.storage.googleapis.com/Documentation/2.15/user-search.html"/>
@@ -38,7 +38,7 @@
                                 <div class="jenkins-select">
                                     <select name="selectedServer" class="jenkins-select__input">
                                         <j:forEach var="serverName" items="${servers}">
-                                            <f:option selected="${serverName == request.session.getAttribute('selectedServer')}">${serverName}</f:option>
+                                            <f:option selected="${serverName == request2.session.getAttribute('selectedServer')}">${serverName}</f:option>
                                         </j:forEach>
                                     </select>
                                 </div>
@@ -46,13 +46,13 @@
                             <f:entry title="${%Query String}"
                                      help="help-Search">
                                 <f:textbox name="queryString"
-                                           value="${request.session.getAttribute('queryString')}"
+                                           value="${request2.session.getAttribute('queryString')}"
                                            default="status:open"/>
                             </f:entry>
                             <f:entry title="${%Include All Patchsets}"
                                      help="/plugin/gerrit-trigger/help-allPatchSets.html">
                                 <f:checkbox name="allPatchSets"
-                                            checked="${request.session.getAttribute('allPatchSets')}"
+                                            checked="${request2.session.getAttribute('allPatchSets')}"
                                             default="false"/>
                             </f:entry>
                             <f:block>
@@ -60,18 +60,18 @@
                             </f:block>
                         </f:section>
                     </f:form>
-                    <j:if test="${!empty(request.session.getAttribute('error_search'))}">
+                    <j:if test="${!empty(request2.session.getAttribute('error_search'))}">
                         <div id="gerrit_searchError" style="width: 100%;">
                             <p class="error">
-                                ${request.session.getAttribute('error_search').message}
+                                ${request2.session.getAttribute('error_search').message}
                             </p>
                         </div>
                     </j:if>
-                    <j:if test="${!empty(request.session.getAttribute('result'))}">
-                        <j:if test="${!empty(request.session.getAttribute('error_build'))}">
+                    <j:if test="${!empty(request2.session.getAttribute('result'))}">
+                        <j:if test="${!empty(request2.session.getAttribute('error_build'))}">
                             <f:block>
                                 <p class="error">
-                                    ${request.session.getAttribute('error_build')}
+                                    ${request2.session.getAttribute('error_build')}
                                 </p>
                             </f:block>
                         </j:if>
@@ -82,7 +82,7 @@
                                 </f:description>
                                 <f:block>
 
-                                    <j:set var="result" value="${request.session.getAttribute('result')}"/>
+                                    <j:set var="result" value="${request2.session.getAttribute('result')}"/>
                                     <table class="jenkins-table jenkins-table--small gt-search__table" name="searchResultTable">
                                         <thead>
                                           <tr>
@@ -121,7 +121,7 @@
                                                                             class="gt-search__checkbox"
                                                                 />
                                                             </td>
-                                                            <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                            <j:set var="selectedServer" value="${request2.session.getAttribute('selectedServer')}"/>
                                                             <j:set var="changeUrlParam" value="${it.getChangeUrlParamForPatchSet(res, patch, selectedServer)}"/>
                                                             <td>
                                                                 <j:choose>
@@ -229,7 +229,7 @@
                                                                             </th>
                                                                         </tr>
                                                                     </thead>
-                                                                    <j:set var="selectedServer" value="${request.session.getAttribute('selectedServer')}"/>
+                                                                    <j:set var="selectedServer" value="${request2.session.getAttribute('selectedServer')}"/>
                                                                     <tbody>
                                                                         <j:forEach var="parameter" items="${it.getParametersForPatchSet(res, patch, selectedServer)}">
                                                                             <tr>
@@ -261,9 +261,9 @@
                                     </table>
                                     <!--<pre>${result}</pre>-->
                                     <!--
-                                    selectedId: ${request.session.getAttribute('selectedId')}<br/>
-                                    selectedChange: ${request.session.getAttribute('selectedChange')}<br/>
-                                    selectedPatchSet: ${request.session.getAttribute('selectedPatchSet')}<br/>
+                                    selectedId: ${request2.session.getAttribute('selectedId')}<br/>
+                                    selectedChange: ${request2.session.getAttribute('selectedChange')}<br/>
+                                    selectedPatchSet: ${request2.session.getAttribute('selectedPatchSet')}<br/>
                                     -->
                                 </f:block>
                             </f:section>

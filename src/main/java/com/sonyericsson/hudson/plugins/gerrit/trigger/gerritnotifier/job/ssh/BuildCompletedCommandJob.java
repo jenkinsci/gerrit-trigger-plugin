@@ -62,7 +62,7 @@ public class BuildCompletedCommandJob extends AbstractSendCommandJob {
 
     @Override
     public void run() {
-        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
             GerritNotifier notifier = GerritNotifierFactory.getInstance()
                 .createGerritNotifier((IGerritHudsonTriggerConfig)getConfig(), this);
             notifier.buildCompleted(memoryImprint, listener);

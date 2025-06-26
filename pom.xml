@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.76</version>
+        <version>5.12</version>
         <relativePath />
     </parent>
 
@@ -33,7 +33,7 @@
             <name>Robert Sandell</name>
             <email>robert.sandell@cloudbees.com</email>
             <organization>CloudBees Inc.</organization>
-            <url>http://www.linkedin.com/in/robertsandell</url>
+            <url>https://www.linkedin.com/in/robertsandell</url>
             <roles>
                 <role>architect</role>
                 <role>developer</role>
@@ -55,12 +55,11 @@
 
     <properties>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.426</jenkins.baseline>
+        <jenkins.baseline>2.479</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <revision>2.42.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <!--<java.level>8</java.level>-->
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
         <!--<concurrency>0.5C</concurrency>-->
@@ -274,7 +273,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>2815.vf5d6f093b_23e</version>
+                <version>4628.v2b_234a_1a_20d0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

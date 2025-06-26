@@ -155,7 +155,7 @@ public class GerritConnectionListener implements ConnectionListener {
         if (connected) {
             GerritVersionNumber version =
                     GerritVersionChecker.createVersionNumber(getVersionString());
-            List<GerritVersionChecker.Feature> list = new LinkedList<GerritVersionChecker.Feature>();
+            List<GerritVersionChecker.Feature> list = new LinkedList<>();
             for (GerritVersionChecker.Feature f : GerritVersionChecker.Feature.values()) {
                 if (!GerritVersionChecker.isCorrectVersion(version, f)) {
                     list.add(f);
@@ -202,13 +202,8 @@ public class GerritConnectionListener implements ConnectionListener {
         }
         GerritConnectionListener other = (GerritConnectionListener)obj;
         if (serverName == null) {
-            if (other.serverName != null) {
-                return false;
-            }
-        } else if (!serverName.equals(other.serverName)) {
-            return false;
-        }
-        return true;
+            return other.serverName == null;
+        } else return serverName.equals(other.serverName);
     }
 
 }

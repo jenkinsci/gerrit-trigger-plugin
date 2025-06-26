@@ -29,9 +29,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,7 @@ public class PluginConfig implements GerritWorkersConfig {
      * @param formData the data
      * @param req      a path.
      */
-    public PluginConfig(JSONObject formData, StaplerRequest req) {
+    public PluginConfig(JSONObject formData, StaplerRequest2 req) {
         this(formData);
     }
 
@@ -276,11 +277,7 @@ public class PluginConfig implements GerritWorkersConfig {
      */
     public void updateEventFilter() {
         List<String> filter;
-        if (filterIn != null) {
-            filter = filterIn;
-        } else {
-            filter = getDefaultEventFilter();
-        }
+        filter = Objects.requireNonNullElseGet(filterIn, PluginConfig::getDefaultEventFilter);
         logger.info("Listening to event types: {}", filter);
         for (GerritEventType type : GerritEventType.values()) {
             type.setInteresting(filter.contains(type.getTypeValue()));

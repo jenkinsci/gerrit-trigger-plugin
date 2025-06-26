@@ -30,6 +30,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -41,6 +42,7 @@ import java.util.List;
  * @author Gustaf Lundh &lt;gustaf.lundh@sonymobile.com&gt;
  */
 public abstract class GerritMessageProvider implements Serializable, ExtensionPoint {
+    @Serial
     private static final long serialVersionUID = -2019176207418719449L;
 
     /**
