@@ -60,7 +60,6 @@
         <revision>2.42.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <!--<java.level>8</java.level>-->
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
         <!--<concurrency>0.5C</concurrency>-->
@@ -222,13 +221,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8-standalone</artifactId>
-            <!--
-            wiremock-jre8 introduces many dependencies that interferes with jth and core functionality
-            during testing, the standalone jar shades all those so it doesn't break other tests.
-            -->
-            <version>2.35.1</version>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
+            <version>3.12.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
