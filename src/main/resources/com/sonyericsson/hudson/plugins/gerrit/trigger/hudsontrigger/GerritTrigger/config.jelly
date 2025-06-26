@@ -77,7 +77,7 @@
                         <f:checkbox title="${%Not Built}" field="onNotBuilt"
                                     checked="${skipIt.onNotBuilt?'true':null}"/>
                         <f:checkbox title="${%Aborted}" field="onAborted"
-                                    checked="${skipIt.onNotBuilt?'true':null}"/>
+                                    checked="${skipIt.onAborted?'true':null}"/>
                     </div>
                 </f:entry>
                 <div class="gt-config__subsection">${%Verify}</div>
