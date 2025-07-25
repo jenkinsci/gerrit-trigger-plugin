@@ -112,6 +112,7 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     }
 
     @Override
+    @RequirePOST
     public ContextMenu doContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         checkPermission();
         Jenkins jenkins = Jenkins.get();

@@ -42,6 +42,7 @@ import jenkins.model.ModelObjectWithContextMenu;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
 import org.springframework.security.core.Authentication;
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithContextMenu {
 
     @Override
+    @RequirePOST
     public ContextMenu doChildrenContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         return getContextMenu(null);
     }
@@ -159,6 +161,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
     }
 
     @Override
+    @RequirePOST
     public ContextMenu doContextMenu(StaplerRequest2 request, StaplerResponse2 response) throws Exception {
         return getContextMenu(null);
     }
