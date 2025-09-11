@@ -32,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import hudson.Extension;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -270,7 +269,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
         if (excludeWipState && ((PatchsetCreated)event).getChange().isWip()) {
             return false;
         }
-        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
+        if (commitMessageContainsRegEx != null && !commitMessageContainsRegEx.isEmpty()) {
             if (commitMessagePattern == null) {
                 commitMessagePattern = Pattern.compile(
                         this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
@@ -278,7 +277,7 @@ public class PluginPatchsetCreatedEvent extends PluginGerritEvent implements Ser
             String commitMessage = ((PatchsetCreated)event).getChange().getCommitMessage();
             return commitMessagePattern.matcher(commitMessage).find();
         }
-        if (StringUtils.isNotEmpty(uploaderNameContainsRegEx)) {
+        if (uploaderNameContainsRegEx != null && !uploaderNameContainsRegEx.isEmpty()) {
             if (uploaderNamePattern == null) {
                 uploaderNamePattern = Pattern.compile(
                         this.uploaderNameContainsRegEx, Pattern.DOTALL);

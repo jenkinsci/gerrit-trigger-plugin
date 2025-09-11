@@ -45,7 +45,6 @@ import jenkins.model.Jenkins;
 import jenkins.model.ParameterizedJobMixIn;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -529,7 +528,7 @@ public final class EventListener implements GerritEventListener {
                         this.keepUndefinedParameters = true;
                     }
                     String safeParameters = System.getProperty(KLASS.getName() + ".safeParameters");
-                    if (!StringUtils.isBlank(safeParameters)) {
+                    if (safeParameters != null && !safeParameters.isBlank()) {
                         safeParameters = safeParameters.toUpperCase(Locale.ENGLISH);
                         boolean declared = true;
                         for (GerritTriggerParameters parameter : GerritTriggerParameters.values()) {

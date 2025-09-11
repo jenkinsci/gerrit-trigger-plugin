@@ -133,6 +133,22 @@ public class BadgeAction implements BuildBadgeAction {
     }
 
     /**
+     * Gets the tooltip text for the BadgeAction.
+     * @return the tooltip text.
+     */
+    public String getTooltip() {
+        if (tEvent instanceof ChangeBasedEvent) {
+            String commitMessage = ((ChangeBasedEvent)tEvent).getChange().getCommitMessage();
+            if (commitMessage == null || commitMessage.isEmpty()) {
+                return "";
+            }
+            return commitMessage.split("\n")[0];
+        } else {
+            return "";
+        }
+    }
+
+    /**
      * For backwards compatibility {@link #event} is kept to be able to deserialize old builds, here event gets resolved
      * to the more abstract version.
      * @return the resolved instance.

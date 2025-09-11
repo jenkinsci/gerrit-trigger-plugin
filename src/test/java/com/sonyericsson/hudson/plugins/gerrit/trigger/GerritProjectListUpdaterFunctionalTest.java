@@ -30,7 +30,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.time.StopWatch;
 import org.apache.sshd.server.SshServer;
 import org.junit.After;
 import org.junit.Before;
@@ -124,25 +123,21 @@ public class GerritProjectListUpdaterFunctionalTest {
         gerritServer.start();
         gerritServer.startConnection();
 
-        StopWatch watch = new StopWatch();
-        watch.start();
+        long startTime = System.currentTimeMillis();
         while (!gerritServer.isConnected()) {
             TimeUnit.SECONDS.sleep(SLEEPTIME);
-            if (TimeUnit.MILLISECONDS.toSeconds(watch.getTime()) > MAXSLEEPTIME) {
+            if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) > MAXSLEEPTIME) {
                 break;
             }
         }
-        watch.stop();
 
-        watch.reset();
-        watch.start();
+        startTime = System.currentTimeMillis();
         while (gerritServer.getGerritProjects().size() == 0) {
             TimeUnit.SECONDS.sleep(SLEEPTIME);
-            if (TimeUnit.MILLISECONDS.toSeconds(watch.getTime()) > MAXSLEEPTIME) {
+            if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) > MAXSLEEPTIME) {
                 break;
             }
         }
-        watch.stop();
 
         assertEquals(1, gerritServer.getGerritProjects().size());
 

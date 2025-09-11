@@ -39,7 +39,7 @@ import hudson.security.Permission;
 import jenkins.model.Jenkins;
 import jenkins.model.ModelObjectWithChildren;
 import jenkins.model.ModelObjectWithContextMenu;
-import org.apache.commons.lang3.StringUtils;
+import org.acegisecurity.Authentication;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
@@ -108,7 +108,7 @@ public class Diagnostics implements ModelObjectWithChildren, ModelObjectWithCont
      */
     private String makeRelativeUrl(String context, String name) {
         StringBuilder url = new StringBuilder(name);
-        if (!StringUtils.isBlank(context)) {
+        if (context != null && !context.isBlank()) {
             if (!context.endsWith("/")) {
                 url.insert(0, '/');
             }

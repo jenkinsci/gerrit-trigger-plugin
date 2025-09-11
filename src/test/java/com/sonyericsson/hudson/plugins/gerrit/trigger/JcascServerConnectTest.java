@@ -35,7 +35,6 @@ import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import io.jenkins.plugins.casc.ConfigurationAsCode;
 import io.jenkins.plugins.casc.yaml.YamlSource;
 import java.util.Arrays;
-import org.apache.commons.lang.StringUtils;
 import org.apache.sshd.server.SshServer;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -296,7 +295,7 @@ public class JcascServerConnectTest {
      */
     private JSONObject generateConfigForServer(SshServer sshd) {
         String host = sshd.getHost();
-        if (StringUtils.isBlank(host)) {
+        if (host == null || host.isBlank()) {
             host = "localhost";
         }
 

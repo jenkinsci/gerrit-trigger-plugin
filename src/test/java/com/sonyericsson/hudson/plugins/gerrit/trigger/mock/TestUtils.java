@@ -49,11 +49,8 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TopLevelItem;
-import org.apache.commons.lang.NotImplementedException;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jvnet.hudson.test.JenkinsRule;
-
-import static org.apache.commons.lang.StringUtils.isBlank;
 
 /**
  * A utility class for test.
@@ -353,7 +350,7 @@ public final class TestUtils {
          * @see JenkinsRule#configRoundtrip(Job)
          */
         public <T extends Job & TopLevelItem> T build(Class<? extends T> jobType) throws Exception {
-            if (isBlank(jobName)) {
+            if (jobName == null || jobName.isBlank()) {
                 jobName = DEFAULT_JOB_NAME;
             }
             T job = j.createProject(jobType, jobName);
@@ -361,7 +358,7 @@ public final class TestUtils {
             if (projects.isEmpty()) {
                 project(CompareType.ANT, "**");
             }
-            if (isBlank(serverName)) {
+            if (serverName == null || serverName.isBlank()) {
                 trigger.setServerName(PluginImpl.DEFAULT_SERVER_NAME);
             } else {
                 trigger.setServerName(serverName);
@@ -377,7 +374,7 @@ public final class TestUtils {
             } else if (job instanceof WorkflowJob) {
                 ((WorkflowJob)job).addTrigger(trigger);
             } else {
-                throw new NotImplementedException(job.getClass().getName() + "Is not a supported test class, "
+                throw new UnsupportedOperationException(job.getClass().getName() + "Is not a supported test class, "
                                                           + "implement here.");
             }
             trigger.start(job, true);
