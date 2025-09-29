@@ -70,6 +70,7 @@ import hudson.model.TextParameterValue;
 import hudson.model.queue.ScheduleResult;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
+import jenkins.model.queue.QueueIdStrategy;
 import jenkins.util.Timer;
 import net.sf.json.JSONObject;
 
@@ -160,6 +161,7 @@ public class GerritTriggerTest {
     private MockedStatic<DependencyQueueTaskDispatcher> queueTaskDispatcherMockedStatic;
     private MockedStatic<GerritTrigger> gerritTriggerMockedStatic;
     private MockedStatic<AbstractProject> abstractProjectMockedStatic;
+    private static MockedStatic<QueueIdStrategy> queueIdStrategyMockedStatic;
 
     @After
     public void tearDown() throws Exception {
@@ -168,7 +170,8 @@ public class GerritTriggerTest {
                 gerritTriggerMockedStatic,
                 abstractProjectMockedStatic,
                 pluginMockedStatic,
-                jenkinsMockedStatic);
+                jenkinsMockedStatic,
+                queueIdStrategyMockedStatic);
 
         queueTaskDispatcherMockedStatic = null;
         gerritTriggerMockedStatic = null;
@@ -177,6 +180,7 @@ public class GerritTriggerTest {
         jenkinsMockedStatic = null;
         jenkinsMock = null;
         pluginMock = null;
+        queueIdStrategyMockedStatic = null;
 
     }
 
@@ -2429,6 +2433,10 @@ public class GerritTriggerTest {
     private static Queue mockQueue(Jenkins jenkins) {
         Queue queue = mock(Queue.class);
         when(jenkins.getQueue()).thenReturn(queue);
+
+        queueIdStrategyMockedStatic = mockStatic(QueueIdStrategy.class);
+        queueIdStrategyMockedStatic.when(QueueIdStrategy::get).thenReturn(new QueueIdStrategy.DefaultStrategy());
+
         when(queue.schedule2(any(Queue.Task.class), anyInt(), anyList())).thenAnswer(new Answer<ScheduleResult>() {
             @Override
             public ScheduleResult answer(InvocationOnMock invocation) throws Throwable {

@@ -99,7 +99,7 @@ public class GerritProjectListUpdaterFunctionalTest {
      */
     @After
     public void tearDown() throws Exception {
-        sshd.stop(true);
+        // sshd.stop(true);
         sshd = null;
     }
 
