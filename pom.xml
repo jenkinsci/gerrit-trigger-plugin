@@ -73,7 +73,7 @@
         <dependency>
             <groupId>com.sonymobile.tools.gerrit</groupId>
             <artifactId>gerrit-events</artifactId>
-            <version>2.21.0</version>
+            <version>2.22.0</version>
             <exclusions>
                 <!-- Provided by gson-api plugin -->
                 <exclusion>
