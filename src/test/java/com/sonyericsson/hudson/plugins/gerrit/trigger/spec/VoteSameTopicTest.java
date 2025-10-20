@@ -118,13 +118,13 @@ public class VoteSameTopicTest {
      */
     @After
     public void tearDown() throws Exception {
-        // sshd.stop(true);
+        server.stopServer(sshd);
         sshd = null;
     }
 
     /**
      * Trigger a
-     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.createCommentAdded} event and wait until no activity.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event and wait until no activity.
      * @param project The gerrit project name.
      * @throws Exception if so
      */
