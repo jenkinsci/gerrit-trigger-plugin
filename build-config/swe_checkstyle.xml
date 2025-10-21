@@ -110,7 +110,7 @@
         <module name="UpperEll"/>
         <module name="JavadocMethod"/>
         <module name="MissingJavadocMethod">
-            <property name="allowedAnnotations" value="Override, Test, Before, BeforeClass, After, AfterClass"/>
+            <property name="allowedAnnotations" value="Override, Test, Before, BeforeClass, After, AfterClass, Rule"/>
         </module>
         <module name="JavadocStyle">
             <property name="scope" value="protected"/>
