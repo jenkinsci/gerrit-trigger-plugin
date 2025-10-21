@@ -322,7 +322,7 @@ public class GerritProject implements Describable<GerritProject> {
      */
     private boolean isInterestingHashtags(List<String> tags) {
         if (this.hashtags != null && !this.hashtags.isEmpty()) {
-            return this.hashtags.stream().anyMatch(h-> h.isInteresting(tags));
+            return this.hashtags.stream().anyMatch(h -> h.isInteresting(tags));
         }
         return true;
     }

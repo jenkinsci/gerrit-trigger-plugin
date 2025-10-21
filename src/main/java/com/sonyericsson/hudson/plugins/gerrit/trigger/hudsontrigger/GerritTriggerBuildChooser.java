@@ -171,7 +171,7 @@ public class GerritTriggerBuildChooser extends BuildChooser {
     @SuppressWarnings("serial")
     private ObjectId getFirstParent(final ObjectId id, GitClient git)
             throws GitException, IOException, InterruptedException {
-        return git.withRepository((RepositoryCallback<ObjectId>) (repository, virtualChannel) -> {
+        return git.withRepository((RepositoryCallback<ObjectId>)(repository, virtualChannel) -> {
             ObjectId result = null;
             try (RevWalk walk = new RevWalk(repository)) {
                 RevCommit commit = walk.parseCommit(id);

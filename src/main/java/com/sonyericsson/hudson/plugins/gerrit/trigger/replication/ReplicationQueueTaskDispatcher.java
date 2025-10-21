@@ -202,7 +202,8 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
             logger.trace("Gerrit Cause null for item: {} !", item.getId());
             return null;
         }
-        if (gerritCause.getEvent() != null && gerritCause.getEvent() instanceof RepositoryModifiedEvent repositoryModifiedEvent
+        if (gerritCause.getEvent() != null
+                && gerritCause.getEvent() instanceof RepositoryModifiedEvent repositoryModifiedEvent
                 && item.task instanceof Job<?, ?>) {
 
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger((Job<?, ?>)item.task);
@@ -347,7 +348,7 @@ public class ReplicationQueueTaskDispatcher extends QueueTaskDispatcher implemen
          * @param useTimestampWhenProcessingRefReplicatedEvent Enable use of timestamp for deciding to
          * process refreplicated event.
          */
-        public BlockedItem(String gerritProject, String ref, String gerritServer, List<GerritSlave> gerritSlaves,
+        BlockedItem(String gerritProject, String ref, String gerritServer, List<GerritSlave> gerritSlaves,
                 long eventTimeStamp, String eventDescription,
                 boolean useTimestampWhenProcessingRefReplicatedEvent) {
             this.gerritProject = gerritProject;

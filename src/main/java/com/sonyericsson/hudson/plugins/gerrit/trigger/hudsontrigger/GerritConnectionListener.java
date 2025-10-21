@@ -203,7 +203,9 @@ public class GerritConnectionListener implements ConnectionListener {
         GerritConnectionListener other = (GerritConnectionListener)obj;
         if (serverName == null) {
             return other.serverName == null;
-        } else return serverName.equals(other.serverName);
+        } else {
+            return serverName.equals(other.serverName);
+        }
     }
 
 }

@@ -219,7 +219,8 @@ public final class GerritDynamicUrlProcessor {
               }
               case SHORTNAME_FILE -> { // FilePath
                   if (filePaths == null) {
-                      throw new ParseException("Line " + lineNr + ": attempt to use 'FilePath' before 'Project'", lineNr);
+                      throw new ParseException("Line " + lineNr
+                              + ": attempt to use 'FilePath' before 'Project'", lineNr);
                   }
                   FilePath filePath = new FilePath(type, text);
                   filePaths.add(filePath);
@@ -227,7 +228,8 @@ public final class GerritDynamicUrlProcessor {
               }
               case SHORTNAME_FORBIDDEN_FILE -> { // ForbiddenFilePath
                   if (forbiddenFilePaths == null) {
-                      throw new ParseException("Line " + lineNr + ": attempt to use 'ForbiddenFilePath' before 'Project'", lineNr);
+                      throw new ParseException("Line " + lineNr
+                              + ": attempt to use 'ForbiddenFilePath' before 'Project'", lineNr);
                   }
                   FilePath filePath = new FilePath(type, text);
                   forbiddenFilePaths.add(filePath);
@@ -240,6 +242,9 @@ public final class GerritDynamicUrlProcessor {
                   Hashtag hashtag = new Hashtag(type, text);
                   hashtags.add(hashtag);
                   dynamicGerritProject.setHashtags(hashtags);
+              }
+              default -> {
+                  throw new ParseException("Line " + lineNr + ": Unknown value: " + item, lineNr);
               }
           }
       }

@@ -200,7 +200,7 @@ public class ReplicationCache {
          * @param ref the ref
          * @param targetNode the target node
          */
-        public RefReplicatedId(String gerritServer, String project, String ref, String targetNode) {
+        RefReplicatedId(String gerritServer, String project, String ref, String targetNode) {
             this.gerritServer = gerritServer;
             this.project = project;
             this.ref = ref;
@@ -255,7 +255,9 @@ public class ReplicationCache {
             }
             if (targetNode == null) {
                 return other.targetNode == null;
-            } else return targetNode.equals(other.targetNode);
+            } else {
+                return targetNode.equals(other.targetNode);
+            }
         }
 
         /**

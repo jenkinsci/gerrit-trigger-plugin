@@ -613,8 +613,8 @@ public enum GerritTriggerParameters {
                         getUpdatedApprovals((CommentAdded)event), false);
             }
         if (event instanceof HashtagsChanged) {
-            String addedHashtags = String.join(",", ((HashtagsChanged) event).getAddedHashtags());
-            String removedHashtags = String.join(",", ((HashtagsChanged) event).getRemovedHashtags());
+            String addedHashtags = String.join(",", ((HashtagsChanged)event).getAddedHashtags());
+            String removedHashtags = String.join(",", ((HashtagsChanged)event).getRemovedHashtags());
             GERRIT_ADDED_HASHTAGS.setOrCreateStringParameterValue(parameters, addedHashtags, escapeQuotes);
             GERRIT_REMOVED_HASHTAGS.setOrCreateStringParameterValue(parameters, removedHashtags, escapeQuotes);
         }

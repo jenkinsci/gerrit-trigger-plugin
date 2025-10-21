@@ -76,8 +76,7 @@ public class RunningJobs {
     * @param jobName job name to match for specific cancellation
     * @param policy policy to decide cancelling build or not
     */
-   public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
-   {
+   public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy) {
        if (policy == null || !policy.isEnabled()) {
            return;
        }
@@ -120,8 +119,7 @@ public class RunningJobs {
     * @param policy policy to determine cancellation of build for
     * @param jobName job name parameter to consider; if null, assumes all builds
     */
-   private void cancelOutDatedEvents(ChangeBasedEvent event, BuildCancellationPolicy policy, String jobName)
-   {
+   private void cancelOutDatedEvents(ChangeBasedEvent event, BuildCancellationPolicy policy, String jobName) {
        List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
        CauseOfInterruption cause = new NewPatchSetInterruption();
 
@@ -172,8 +170,7 @@ public class RunningJobs {
     * @return true if event should be ignored for cancellation
     */
    private boolean shouldIgnoreEvent(ChangeBasedEvent event,
-           BuildCancellationPolicy policy, ChangeBasedEvent runningChangeBasedEvent)
-   {
+           BuildCancellationPolicy policy, ChangeBasedEvent runningChangeBasedEvent) {
        // Find all entries in runningJobs with the same Change #.
        // Optionally, ignore all manual patchsets and don't cancel builds due to
        // a retrigger of an older build.

@@ -32,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
-import hudson.model.Item;
 import hudson.model.RootAction;
 import hudson.model.Run;
 import net.sf.json.JSONObject;
@@ -236,7 +235,7 @@ public class WorkflowTest {
     }
 
     /**
-     * Tests a {@link JenkinsRule#configRoundtrip(Item)}} on the workflow job.
+     * Tests a {@link JenkinsRule#configRoundtrip(hudson.model.Item)}} on the workflow job.
      *
      * @throws Exception if so.
      */
@@ -265,7 +264,7 @@ public class WorkflowTest {
      *
      * @param event the event to trigger on.
      * @return the job
-     * @throws IOException if so
+     * @throws Exception if so
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event) throws Exception {
         return createWorkflowJob(event, ""
@@ -281,7 +280,7 @@ public class WorkflowTest {
      * @param event  the event to trigger on.
      * @param script the workflow DSL script.
      * @return the job
-     * @throws IOException if so
+     * @throws Exception if so
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws Exception {
         WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");

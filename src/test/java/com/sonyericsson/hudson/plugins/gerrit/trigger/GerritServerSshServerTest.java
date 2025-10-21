@@ -19,6 +19,11 @@ import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRI
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 
+/**
+ * {@link GerritServerHudsonTest}s that requires a {@link SshdServerMock}.
+ *
+ * Extracted for isolation in debugging.
+ */
 public class GerritServerSshServerTest {
 
     // CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.

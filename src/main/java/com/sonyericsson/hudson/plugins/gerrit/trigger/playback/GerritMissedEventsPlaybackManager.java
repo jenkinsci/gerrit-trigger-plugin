@@ -598,7 +598,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         /**
          * Constructor.
          */
-        public GerritMissedEventsPlaybackPersistRunnable() {
+        GerritMissedEventsPlaybackPersistRunnable() {
         }
 
         /**

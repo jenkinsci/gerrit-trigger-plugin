@@ -779,7 +779,9 @@ public class GerritServer implements Describable<GerritServer>, Action {
                                 gerritProxy,
                                 new Authentication(file, gerritUserName, password));
                         ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
-                        Future<Integer> future = service.submit(() -> sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read());
+                        Future<Integer> future = service.submit(
+                                () -> sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read()
+                        );
                         int readChar;
                         try {
                             readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);

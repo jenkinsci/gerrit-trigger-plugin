@@ -64,7 +64,7 @@
         <findbugs.failOnError>false</findbugs.failOnError>
         <!--<concurrency>0.5C</concurrency>-->
         <build-failure-analyzer-plugin.version>2.5.0</build-failure-analyzer-plugin.version>
-        <checkstyle.version>2.16</checkstyle.version>
+        <checkstyle.version>3.6.0</checkstyle.version>
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
         <forkCount>0.5C</forkCount>
         <spotbugs.threshold>High</spotbugs.threshold>
