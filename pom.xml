@@ -10,7 +10,7 @@
 
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
     <artifactId>gerrit-trigger</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>${revision}.${changelist}</version>
     <packaging>hpi</packaging>
     <name>Gerrit Trigger</name>
     <description>Integrates with Gerrit code review.</description>
@@ -57,12 +57,11 @@
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.479</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
-        <revision>2.42.1</revision>
-        <changelist>-SNAPSHOT</changelist>
+        <revision>3</revision>
+        <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <!--<concurrency>0.5C</concurrency>-->
         <build-failure-analyzer-plugin.version>2.5.0</build-failure-analyzer-plugin.version>
         <checkstyle.version>3.6.0</checkstyle.version>
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
