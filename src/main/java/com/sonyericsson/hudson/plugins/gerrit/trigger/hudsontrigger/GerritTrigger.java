@@ -141,6 +141,7 @@ public class GerritTrigger extends Trigger<Job> {
     @Deprecated
     private transient boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;
     private TopicAssociation topicAssociation;
+    private boolean topicAbort;
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
@@ -1949,6 +1950,25 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Enable or disable Topic abort option.
+     *
+     * @param enable true or false.
+     */
+    @DataBoundSetter
+    public void setTopicAbortDisable(boolean enable) {
+        topicAbort = enable;
+    }
+
+    /**
+    * Check if topic association is enabled.
+    *
+    * @return true if so.
+    */
+    public boolean isTopicAbortDisable() {
+        return topicAbort;
+    }
+
+    /**
      * Enable or disable Topic Association option.
      * Replaced by {@link #setTopicAssociation(TopicAssociation)} ()
      *
@@ -2267,6 +2287,7 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         return policy.isAbortSameTopic()
+                && !isTopicAbortDisable()
                 && topicName != null
                 && !topicName.isEmpty()
                 && topicName.equals(runningChange.getChange().getTopic());
