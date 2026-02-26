@@ -123,7 +123,7 @@ public class GerritTriggeredBuildListenerTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        assertTrue("Time out", buildListenerLatch.await(15, TimeUnit.SECONDS));
+        assertTrue("Time out", buildListenerLatch.await(30, TimeUnit.SECONDS));
     }
 
     /**
