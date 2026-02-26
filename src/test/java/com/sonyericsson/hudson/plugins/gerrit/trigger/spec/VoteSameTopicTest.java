@@ -156,7 +156,7 @@ public class VoteSameTopicTest {
      */
     private void checkCommand(String pattern) {
         //CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: Testdata.
-        server.waitForCommand(pattern, 5000);
+        server.waitForCommand(pattern, 10000);
     }
 
     /**

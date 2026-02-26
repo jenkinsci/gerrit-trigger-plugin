@@ -28,6 +28,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,6 +127,7 @@ public final class GerritPluginChecker {
      * @param quiet Whether we want to log a message.
      * @return true if enabled, false if not, and null if we couldn't tell.
      */
+    @SuppressFBWarnings("NP_BOOLEAN_RETURN_NULL")
     public static Boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
         String restUrl = buildURL(config);
         if (restUrl == null) {
