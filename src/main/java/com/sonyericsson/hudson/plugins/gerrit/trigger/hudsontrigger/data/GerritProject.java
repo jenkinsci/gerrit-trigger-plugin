@@ -303,7 +303,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @return true if the rules match or no rules.
      */
     private boolean isInterestingTopic(String topic) {
-        if (topics != null && topics.size() > 0) {
+        if (topics != null && !topics.isEmpty()) {
             for (Topic t : topics) {
                 if (t.isInteresting(topic)) {
                     return true;
@@ -321,7 +321,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @return true if the rules match or no rules.
      */
     private boolean isInterestingHashtags(List<String> tags) {
-        if (this.hashtags != null && this.hashtags.size() > 0) {
+        if (this.hashtags != null && !this.hashtags.isEmpty()) {
             return this.hashtags.stream().anyMatch(h-> h.isInteresting(tags));
         }
         return true;
@@ -334,7 +334,7 @@ public class GerritProject implements Describable<GerritProject> {
      * @return true if the rules match or no rules.
      */
     private boolean isInterestingFile(List<String> files) {
-        List<String> tmpFiles = new ArrayList<String>(files);
+        List<String> tmpFiles = new ArrayList<>(files);
         tmpFiles.remove(MAGIC_FILE_NAME_COMMIT_MSG);
         tmpFiles.remove(MAGIC_FILE_NAME_MERGE_LIST);
         tmpFiles.remove(MAGIC_FILE_NAME_PATCHSET_LEVEL);
@@ -362,7 +362,7 @@ public class GerritProject implements Describable<GerritProject> {
             return false;
         }
 
-        if (filePaths != null && filePaths.size() > 0) {
+        if (filePaths != null && !filePaths.isEmpty()) {
             for (FilePath f : filePaths) {
                 if (f.isInteresting(tmpFiles)) {
                     return true;
@@ -400,7 +400,7 @@ public class GerritProject implements Describable<GerritProject> {
             } else {
                 project.checkPermission(Item.CONFIGURE);
             }
-            Collection<String> projects = new HashSet<String>();
+            Collection<String> projects = new HashSet<>();
 
             if (serverName != null && !serverName.isEmpty()) {
                 if (ANY_SERVER.equals(serverName)) {

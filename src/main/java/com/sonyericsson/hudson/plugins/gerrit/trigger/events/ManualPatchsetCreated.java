@@ -109,7 +109,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
     @Override
     public synchronized void addListener(GerritEventLifecycleListener listener) {
         if (listeners == null) {
-            listeners = new LinkedList<GerritEventLifecycleListener>();
+            listeners = new LinkedList<>();
         }
         if (!listeners.contains(listener)) {
             listeners.add(listener);
@@ -137,32 +137,17 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
 
     @Override
     public synchronized void fireProjectTriggered(final Job project) {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.projectTriggered(event, project);
-            }
-        });
+        fireEvent((listener, event) -> listener.projectTriggered(event, project));
     }
 
     @Override
     public synchronized void fireBuildStarted(final Run build) {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.buildStarted(event, build);
-            }
-        });
+        fireEvent((listener, event) -> listener.buildStarted(event, build));
     }
 
     @Override
     public synchronized void fireBuildCompleted(final Run build) {
-        fireEvent(new ListenerVisitor() {
-            @Override
-            public void visit(GerritEventLifecycleListener listener, GerritEvent event) {
-                listener.buildCompleted(event, build);
-            }
-        });
+        fireEvent((listener, event) -> listener.buildCompleted(event, build));
     }
 
     @Override
@@ -190,7 +175,7 @@ public class ManualPatchsetCreated extends PatchsetCreated implements GerritEven
      */
     protected synchronized List<GerritEventLifecycleListener> getListeners() {
         if (listeners != null) {
-            return new LinkedList<GerritEventLifecycleListener>(listeners);
+            return new LinkedList<>(listeners);
         } else {
             return null;
         }

@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -35,6 +36,7 @@ import java.io.Serializable;
  * @author Robert Sandell &lt;robert.sandell@sonymobile.com&gt;
  */
 public class SkipVote implements Serializable {
+    @Serial
     private static final long serialVersionUID = -372913758160165355L;
     private boolean onSuccessful;
     private boolean onFailed;

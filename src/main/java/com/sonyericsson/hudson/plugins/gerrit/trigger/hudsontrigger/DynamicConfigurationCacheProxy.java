@@ -19,9 +19,9 @@ import java.util.Map;
  */
 final class DynamicConfigurationCacheProxy {
     private static final DynamicConfigurationCacheProxy CACHE_PROXY = new DynamicConfigurationCacheProxy();
-    private final Map<String, List<GerritProject>> cache = new HashMap<String, List<GerritProject>>();
+    private final Map<String, List<GerritProject>> cache = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(DynamicConfigurationCacheProxy.class);
-    private final Map<String, Long> ttl = new HashMap<String, Long>();
+    private final Map<String, Long> ttl = new HashMap<>();
 
     /**
      * Private constructor.

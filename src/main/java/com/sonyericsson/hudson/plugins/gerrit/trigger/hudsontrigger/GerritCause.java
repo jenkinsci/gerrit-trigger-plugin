@@ -224,11 +224,7 @@ public class GerritCause extends SCMTriggerCause {
         if (silentMode != that.silentMode) {
             return false;
         }
-        if (!tEvent.equals(that.tEvent)) {
-            return false;
-        }
-
-        return true;
+        return tEvent.equals(that.tEvent);
     }
 
     @Override

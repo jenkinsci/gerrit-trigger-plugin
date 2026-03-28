@@ -41,7 +41,7 @@ public final class GerritVersionChecker {
     /**
      * The feature version we want to compare the current Gerrit version with.
      */
-    public static enum Feature {
+    public enum Feature {
         // Skipping WIPStateChanged & PrivateStateChanged version check due to not necessary for now.
         /**
          * Triggering on files, added in Gerrit 2.3.

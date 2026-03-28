@@ -27,6 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
+
+import java.io.Serial;
 import java.io.Serializable;
 import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
@@ -36,6 +38,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * An event configuration that causes the build to be triggered when a change is abandoned.
  */
 public class PluginChangeAbandonedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = -8490721342780735276L;
 
     /**

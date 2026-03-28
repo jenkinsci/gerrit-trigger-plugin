@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception;
 
+import java.io.Serial;
+
 /**
  * A exception class regarding plugin status.
  *
@@ -30,6 +32,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception;
  */
 public class PluginNotFoundException extends GerritTriggerException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final String MSG_NOTFOUND = "Gerrit trigger plugin is not found or still not loaded.";
 
