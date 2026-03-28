@@ -44,7 +44,7 @@ import java.util.List;
  */
 public class TriggerMonitor implements GerritEventLifecycleListener {
 
-    private List<EventState> events = new LinkedList<EventState>();
+    private List<EventState> events = new LinkedList<>();
 
     /**
      * Adds the event and a holder for its state to the list of triggered events.
@@ -66,10 +66,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
      * @see #getEvents()
      */
     public synchronized boolean contains(GerritEventLifecycle gerritEventLifecycle) {
-        if (findState(gerritEventLifecycle.getEvent()) != null) {
-           return true;
-        }
-        return false;
+        return findState(gerritEventLifecycle.getEvent()) != null;
     }
 
     /**
@@ -172,7 +169,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
          */
         EventState(GerritEventLifecycle gerritEventLifecycle) {
             this.gerritEventLifecycle = gerritEventLifecycle;
-            builds = new LinkedList<TriggeredItemEntity>();
+            builds = new LinkedList<>();
         }
 
         /**
@@ -249,7 +246,7 @@ public class TriggerMonitor implements GerritEventLifecycleListener {
             if (!triggerScanStarted) {
                 return false;
             } else {
-                return triggerScanDone && builds.size() <= 0;
+                return triggerScanDone && builds.isEmpty();
             }
         }
 

@@ -8,14 +8,15 @@
 -->
 <!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
 <module name="Checker">
+    <module name="SuppressionSingleFilter">
+        <property name="files" value="^*.properties$" />
+    </module>
     <property name="severity" value="error"/>
     <module name="FileLength">
         <!-- TODO: Need refactoring -->
         <property name="max" value="2500"/>
     </module>
-    <module name="FileTabCharacter">
-        <property name="fileExtensions" value="java,groovy,jelly,xml,html,js,css"/>
-    </module>
+    <module name="FileTabCharacter"/>
     <module name="RegexpSingleline">
         <property name="format" value="\s+$"/>
         <property name="minimum" value="0"/>
@@ -24,8 +25,12 @@
         <property name="severity" value="error"/>
     </module>
 
+    <module name="LineLength">
+        <property name="max" value="121"/>
+        <property name="ignorePattern" value="^ *\* *.+$"/> <!-- ignore javadoc comments -->
+    </module>
+
     <module name="TreeWalker">
-        <module name="FileContentsHolder"/>
         <module name="ConstantName">
             <property name="format" value="^logger|([A-Z][A-Z0-9]*(_[A-Z0-9]+)*)$"/>
         </module>
@@ -42,9 +47,7 @@
         <module name="IllegalImport"/>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>
-        <module name="LineLength">
-                    <property name="max" value="121"/>
-        </module>
+
         <module name="MethodLength"/>
         <module name="EmptyForIteratorPad"/>
         <module name="MethodParamPad"/>
@@ -65,7 +68,7 @@
                 <property name="tokens" value="COMMA,SEMI"/>
         </module>
         <module name="WhitespaceAround">
-                    <property name="severity" value="warning"/>
+                <property name="severity" value="warning"/>
         </module>
         <module name="ModifierOrder"/>
         <module name="RedundantModifier"/>
@@ -74,12 +77,12 @@
         <module name="LeftCurly"/>
         <module name="NeedBraces"/>
         <module name="RightCurly"/>
-        <module name="AvoidInlineConditionals"/>
+        <!-- <module name="AvoidInlineConditionals"/> I actually like them now-->
         <module name="EmptyStatement"/>
         <module name="EqualsHashCode"/>
         <module name="HiddenField">
-            <property name="ignoreSetter" value="true"/>
-            <property name="ignoreConstructorParameter" value="true"/>
+                 <property name="ignoreSetter" value="true"/>
+                 <property name="ignoreConstructorParameter" value="true"/>
         </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
@@ -105,37 +108,32 @@
                 <property name="severity" value="ignore"/>
         </module>
         <module name="UpperEll"/>
-        <module name="JavadocMethod">
-                <property name="logLoadErrors" value="true"/>
-                <property name="suppressLoadErrors" value="true"/>
-                <property name="allowedAnnotations" value="Override, Test, Before, BeforeClass, After, AfterClass"/>
+        <module name="JavadocMethod"/>
+        <module name="MissingJavadocMethod">
+            <property name="allowedAnnotations" value="Override, Test, Before, BeforeClass, After, AfterClass, Rule"/>
         </module>
         <module name="JavadocStyle">
-                <property name="scope" value="protected"/>
+            <property name="scope" value="protected"/>
         </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable">
-                <property name="scope" value="protected"/>
+            <property name="scope" value="protected"/>
         </module>
-        <module name="FileContentsHolder"/>
         <module name="MultipleVariableDeclarations" >
-                <property name="severity" value="warning"/>
+                    <property name="severity" value="warning"/>
         </module>
         <module name="ArrayTrailingComma">
                 <property name="severity" value="warning"/>
         </module>
+
+        <!-- Ignore generated code -->
+        <module name="SuppressionCommentFilter"/>
+        <module name="SuppressWithNearbyCommentFilter">
+            <property name="commentFormat" value="CS IGNORE (\w+) FOR NEXT (\d+) LINES\. REASON\: \w+"/>
+            <property name="checkFormat" value="$1"/>
+            <property name="influenceFormat" value="$2"/>
+        </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
-    <!--<module name="Translation">
-        <property name="severity" value="info"/>
-    </module> Translations are lagging behind anyways-->
-    <!-- Ignore generated code -->
-    <module name="SuppressionCommentFilter">
-        <property name="offCommentFormat" value="This file was auto-generated from WSDL"/>
-    </module>
-    <module name="SuppressWithNearbyCommentFilter">
-        <property name="commentFormat" value="CS IGNORE (\w+) FOR NEXT (\d+) LINES\. REASON\: \w+"/>
-        <property name="checkFormat" value="$1"/>
-        <property name="influenceFormat" value="$2"/>
-    </module>
+    <module name="Translation"/>
 </module>

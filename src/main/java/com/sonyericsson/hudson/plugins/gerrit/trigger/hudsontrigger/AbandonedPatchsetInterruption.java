@@ -26,11 +26,14 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import jenkins.model.CauseOfInterruption;
 
+import java.io.Serial;
+
 /**
  * A cause class for new build interruption.
  * @author ckreisl
  */
 public final class AbandonedPatchsetInterruption extends CauseOfInterruption {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

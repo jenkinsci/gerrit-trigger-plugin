@@ -27,6 +27,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import hudson.model.StringParameterValue;
 
+import java.io.Serial;
+
 /**
  * A parameter value for Base64 encoded string.
  *
@@ -34,6 +36,7 @@ import hudson.model.StringParameterValue;
  */
 public class Base64EncodedStringParameterValue extends StringParameterValue {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final int ABBREVIATE_LENGTH = 10;
     private static final int ABBREVIATE_START = 7;

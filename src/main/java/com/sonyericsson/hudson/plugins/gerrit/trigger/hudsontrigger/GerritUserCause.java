@@ -54,7 +54,7 @@ public class GerritUserCause extends GerritCause {
      */
     public GerritUserCause(GerritTriggeredEvent event, boolean silentMode, TriggerContext context) {
         super(event, silentMode, context);
-        this.authenticationName = Jenkins.getAuthentication().getName();
+        this.authenticationName = Jenkins.getAuthentication2().getName();
     }
 
     /**
@@ -90,7 +90,7 @@ public class GerritUserCause extends GerritCause {
      */
     public GerritUserCause(GerritTriggeredEvent event, boolean silentMode) {
         super(event, silentMode);
-        this.authenticationName = Jenkins.getAuthentication().getName();
+        this.authenticationName = Jenkins.getAuthentication2().getName();
     }
 
     //CS IGNORE MagicNumber FOR NEXT 9 LINES. REASON: As it should be.

@@ -27,6 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
+
+import java.io.Serial;
 import java.io.Serializable;
 import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
@@ -37,6 +39,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * restored.
  */
 public class PluginChangeRestoredEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = -9137390315878224618L;
 
     /**

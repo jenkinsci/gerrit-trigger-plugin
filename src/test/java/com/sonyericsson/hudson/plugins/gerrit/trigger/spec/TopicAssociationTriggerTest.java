@@ -116,13 +116,13 @@ public class TopicAssociationTriggerTest {
      */
     @After
     public void tearDown() throws Exception {
-        sshd.stop(true);
+        server.stopServer(sshd);
         sshd = null;
     }
 
     /**
      * Trigger and wait.
-     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.createCommentAdded} event and wait until no activity.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event and wait until no activity.
      * @param project The gerrit project name.
      * @param status The status of the change.
      * @throws Exception if so

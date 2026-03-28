@@ -69,19 +69,19 @@ public interface GerritEventLifecycle {
      * Fires the event {@link GerritEventLifecycleListener#projectTriggered(GerritEvent, Job)}.
      * @param project the project that is triggered.
      */
-    void fireProjectTriggered(final Job<?, ?> project);
+    void fireProjectTriggered(Job<?, ?> project);
 
     /**
      * Fires the event {@link GerritEventLifecycleListener#buildStarted(GerritEvent, Run)}.
      * @param build the build that has started.
      */
-    void fireBuildStarted(final Run<?, ?> build);
+    void fireBuildStarted(Run<?, ?> build);
 
     /**
      * Fires the event {@link GerritEventLifecycleListener#buildCompleted(GerritEvent, Run)}.
      * @param build the build that is completed.
      */
-    void fireBuildCompleted(final Run<?, ?> build);
+    void fireBuildCompleted(Run<?, ?> build);
 
     /**
      * Fires the event {@link GerritEventLifecycleListener#allBuildsCompleted(GerritEvent)}.
