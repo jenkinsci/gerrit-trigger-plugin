@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl>
+  <config class="com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config">
+    <gerritHostName>127.0.0.1</gerritHostName>
+    <gerritSshPort>29418</gerritSshPort>
+    <gerritUserName>jenkins</gerritUserName>
+    <gerritAuthKeyFile>/tmp/jenkins-testkey</gerritAuthKeyFile>
+    <gerritAuthKeyFilePassword> </gerritAuthKeyFilePassword>
+    <numberOfWorkerThreads>3</numberOfWorkerThreads>
+    <gerritVerifiedCmdBuildSuccessful>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Successful' --verified &lt;VERIFIED&gt;</gerritVerifiedCmdBuildSuccessful>
+    <gerritVerifiedCmdBuildUnstable>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Unstable' --verified &lt;VERIFIED&gt;</gerritVerifiedCmdBuildUnstable>
+    <gerritVerifiedCmdBuildFailed>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Failed' --verified &lt;VERIFIED&gt;</gerritVerifiedCmdBuildFailed>
+    <gerritVerifiedCmdBuildStarted>gerrit review &lt;CHANGE&gt;,&lt;PATCHSET&gt; --message 'Build Started' --verified &lt;VERIFIED&gt;</gerritVerifiedCmdBuildStarted>
+    <gerritFrontEndUrl>http://localhost/</gerritFrontEndUrl>
+    <gerritBuildStartedVerifiedValue>0</gerritBuildStartedVerifiedValue>
+    <gerritBuildStartedCodeReviewValue>0</gerritBuildStartedCodeReviewValue>
+    <gerritBuildSuccessfulVerifiedValue>1</gerritBuildSuccessfulVerifiedValue>
+    <gerritBuildSuccessfulCodeReviewValue>0</gerritBuildSuccessfulCodeReviewValue>
+    <gerritBuildFailedVerifiedValue>-1</gerritBuildFailedVerifiedValue>
+    <gerritBuildFailedCodeReviewValue>0</gerritBuildFailedCodeReviewValue>
+    <gerritBuildUnstableVerifiedValue>-1</gerritBuildUnstableVerifiedValue>
+    <gerritBuildUnstableCodeReviewValue>0</gerritBuildUnstableCodeReviewValue>
+    <enableManualTrigger>true</enableManualTrigger>
+    <numberOfSendingWorkerThreads>1</numberOfSendingWorkerThreads>
+    <buildScheduleDelay>1</buildScheduleDelay>
+  </config>
+</com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl>
