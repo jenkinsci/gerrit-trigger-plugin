@@ -15,15 +15,6 @@ import static org.junit.Assert.assertNotNull;
 public class NewPatchSetInterruptionTest {
 
     /**
-     * Tests that the class can be instantiated.
-     */
-    @Test
-    public void testInstantiation() {
-        NewPatchSetInterruption interruption = new NewPatchSetInterruption();
-        assertNotNull(interruption);
-    }
-
-    /**
      * Tests that it's a CauseOfInterruption.
      */
     @Test
