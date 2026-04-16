@@ -38,7 +38,7 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Ignacio Roncero &lt;ironcero@cloudbees.com&gt;
  */
-public class BuildCancellationHudsonTest {
+public class BuildCancellationIntegrationTest {
 
     /**
      * An instance of Jenkins Rule.
@@ -117,7 +117,7 @@ public class BuildCancellationHudsonTest {
      * Tests that a new patchset cancels a running build of an old patchset.
      * This is the most common cancellation scenario.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
