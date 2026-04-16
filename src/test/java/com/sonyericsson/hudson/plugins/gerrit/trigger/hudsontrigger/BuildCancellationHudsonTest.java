@@ -33,12 +33,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Integration tests for {@link RunningJobs} that verify actual job cancellation
+ * Integration tests for build cancellation feature that verify actual job cancellation
  * in Jenkins queue and running executors.
  *
  * @author Ignacio Roncero &lt;ironcero@cloudbees.com&gt;
  */
-public class RunningJobsHudsonTest {
+public class BuildCancellationHudsonTest {
 
     /**
      * An instance of Jenkins Rule.
