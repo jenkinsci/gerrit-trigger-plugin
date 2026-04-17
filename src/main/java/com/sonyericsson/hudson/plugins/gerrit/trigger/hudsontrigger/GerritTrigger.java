@@ -1129,14 +1129,18 @@ public class GerritTrigger extends Trigger<Job> {
             return false;
         }
 
-        ToGerritRunListener listener = ToGerritRunListener.getInstance();
-        if (listener != null) {
-            if (listener.isProjectTriggeredAndIncomplete(job, event)) {
-                logger.trace("Already triggered and incomplete.");
-                return false;
-            } else if (listener.isTriggered(job, event)) {
-                logger.trace("Already triggered.");
-                return false;
+        // In silent mode, BuildMemory is used only for cancellation tracking, not lifecycle
+        // So we should NOT block duplicate events based on BuildMemory state in silent mode
+        if (!isSilentMode()) {
+            ToGerritRunListener listener = ToGerritRunListener.getInstance();
+            if (listener != null) {
+                if (listener.isProjectTriggeredAndIncomplete(job, event)) {
+                    logger.trace("Already triggered and incomplete.");
+                    return false;
+                } else if (listener.isTriggered(job, event)) {
+                    logger.trace("Already triggered.");
+                    return false;
+                }
             }
         }
 

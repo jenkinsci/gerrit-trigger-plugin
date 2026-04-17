@@ -505,19 +505,33 @@ public class BuildMemory {
                 if (hasActiveBuildsForJob) {
                     outdatedEvents.add(runningChangeBasedEvent);
                     logger.debug("Added event to outdated list");
-                    it.remove();
+                    // NOTE: Do NOT remove the event from BuildMemory here!
+                    // Unlike the old RunningJobs code (which was separate from lifecycle tracking),
+                    // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
+                    // Mark the Entry as cancelled immediately so it won't be considered "active"
+                    // in future cancellation checks (prevents state accumulation issues).
+                    for (Entry imprintEntry : imprint.getEntries()) {
+                        if (imprintEntry.isProject(jobName)
+                                && !imprintEntry.isBuildCompleted()
+                                && !imprintEntry.isCancelled()) {
+                            imprintEntry.setCancelled(true);
+                            imprintEntry.setBuildCompleted(true);
+                        }
+                    }
                 }
             }
 
             logger.info("Found {} outdated events to cancel", outdatedEvents.size());
 
-            // Add the new event to BuildMemory (like old RunningJobs did) UNLESS it's an abort-only event
-            // This matches the old behavior: runningJobs.add(event) after cancelling
+            // Add the new event to BuildMemory for future cancellation checks
+            // In silent mode, events won't be added via onTriggered(), so we must add them here
+            // In non-silent mode, onTriggered() also adds them, but MemoryImprint.set() is idempotent
             if (!outdatedEvents.contains(newEvent)) {
                 if (trigger.isOnlyAbortRunningBuild(newEvent)) {
                     cause = new AbandonedPatchsetInterruption();
                 } else {
-                    // Add the new event so it can be cancelled by future events
+                    // Add event so it can be found and cancelled by future events
+                    // This is critical for silent mode where onTriggered() isn't called
                     triggered(newEvent, job);
                 }
             }
@@ -678,8 +692,7 @@ public class BuildMemory {
     public void cancelTriggeredJob(ChangeBasedEvent event,
                                    BuildCancellationPolicy policy,
                                    GerritTrigger trigger,
-                                   Job job)
-    {
+                                   Job job) {
         if (policy == null || !policy.isEnabled()) {
             return;
         }
@@ -694,16 +707,22 @@ public class BuildMemory {
     /**
      * Checks scheduled job and cancels current jobs if needed.
      * I.e. cancelling the old build if configured to do so and removing and storing any references.
-     * Only used by Server wide policy
+     * Only used by Server wide policy.
+     *
+     * Note: Events are added to BuildMemory for cancellation tracking. In silent mode,
+     * onTriggered() won't be called, so this is the only place they're tracked.
+     * In non-silent mode, onTriggered() also adds them, but MemoryImprint.set() is idempotent.
      *
      * @param event the event triggering a new build.
-     * @job the job for which to cancel builds.
+     * @param trigger the Gerrit trigger
+     * @param job the job for which to cancel builds.
      */
     public void scheduled(ChangeBasedEvent event,
                           GerritTrigger trigger,
                           Job job) {
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
         if (serverConfig == null) {
+            // No server config - add event for cancellation tracking
             triggered(event, job);
             return;
         }
@@ -712,10 +731,13 @@ public class BuildMemory {
         if (!serverBuildCurrentPatchesOnly.isEnabled()
                 || (event instanceof ManualPatchsetCreated
                 && !serverBuildCurrentPatchesOnly.isAbortManualPatchsets())) {
+            // Policy disabled - add event for cancellation tracking
             triggered(event, job);
             return;
         }
 
+        // Policy enabled - check for outdated events and cancel them
+        // cancelOutdatedEvents will add the new event to BuildMemory
         cancelOutdatedEvents(event, serverBuildCurrentPatchesOnly, trigger, job);
     }
 
