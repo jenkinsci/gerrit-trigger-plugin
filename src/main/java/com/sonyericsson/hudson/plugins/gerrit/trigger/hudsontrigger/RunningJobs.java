@@ -44,11 +44,14 @@ public class RunningJobs {
    private static final Logger logger = LoggerFactory.getLogger(RunningJobs.class);
 
    /**
+    * @deprecated since the memory was unifed into BuildMemory
+    *
     * Constructor: embeds the trigger and it's underlying job into the tracked list.
     *
     * @param trigger - gerrit trigger that has multiple running jobs
     * @param job - underlying job of running build and triggers
     */
+   @Deprecated
    public RunningJobs(GerritTrigger trigger, Item job) {
        this.trigger = trigger;
        this.job = job;
@@ -65,8 +68,11 @@ public class RunningJobs {
    }
 
     /**
+     * @deprecated since the memory was unifed into BuildMemory
+     * 
      * @param job the job to set
      */
+    @Deprecated
     public void setJob(Item job) {
         this.job = job;
     }
@@ -324,11 +330,14 @@ public class RunningJobs {
    }
 
    /**
+    * @deprecated since the memory was unifed into BuildMemory
+    *
     * Removes any reference to the current build for this change.
     *
     * @param event the event which started the build we want to remove.
     * @return true if event was still running.
     */
+   @Deprecated
    public boolean remove(ChangeBasedEvent event) {
        logger.debug("Removing future job associated with " + event.getChange().getId());
        return runningJobs.remove(event);

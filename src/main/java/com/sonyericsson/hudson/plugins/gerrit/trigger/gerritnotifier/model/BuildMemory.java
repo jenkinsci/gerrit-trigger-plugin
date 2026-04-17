@@ -478,7 +478,7 @@ public class BuildMemory {
                     continue;
                 }
 
-                ChangeBasedEvent runningChangeBasedEvent = (ChangeBasedEvent) runningEvent;
+                ChangeBasedEvent runningChangeBasedEvent = (ChangeBasedEvent)runningEvent;
                 logger.debug("Checking running event: {}", runningChangeBasedEvent);
 
                 if (shouldIgnoreEvent(newEvent, policy, runningChangeBasedEvent, trigger)) {
