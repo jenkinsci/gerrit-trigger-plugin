@@ -180,7 +180,7 @@ public class BuildCancellationIntegrationTest {
     /**
      * Tests that abortNewPatchsets policy cancels even newer patchsets with older ones.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
@@ -230,7 +230,7 @@ public class BuildCancellationIntegrationTest {
     /**
      * Tests that builds in queue are canceled before they start.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
@@ -300,7 +300,7 @@ public class BuildCancellationIntegrationTest {
     /**
      * Tests that abandoned patchsets cancel running builds.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
@@ -350,7 +350,7 @@ public class BuildCancellationIntegrationTest {
     /**
      * Tests that different changes don't interfere with each other.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
@@ -403,7 +403,7 @@ public class BuildCancellationIntegrationTest {
     /**
      * Tests that policy disabled does not cancel builds.
      *
-     * @throws Exception if test fails
+     * @throws Exception if the test faced issues running jobs or working with the System.
      */
     @Test
     @LocalData
