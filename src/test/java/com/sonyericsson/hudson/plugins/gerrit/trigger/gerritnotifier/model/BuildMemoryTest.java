@@ -25,6 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerDescriptor;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
@@ -45,6 +46,7 @@ import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -973,5 +975,120 @@ class BuildMemoryTest {
 
         MemoryImprint memoryImprint = instance.getMemoryImprint(event);
         assertTrue(memoryImprint.wereAllBuildsSuccessful());
+    }
+
+    /**
+     * Tests that getActiveEventsForChange returns empty list when no events exist.
+     */
+    @Test
+    public void testGetActiveEventsForChangeNoEvents() {
+        BuildMemory instance = new BuildMemory();
+        PatchsetCreated event = Setup.createPatchsetCreated();
+
+        List<GerritTriggeredEvent> activeEvents = instance.getActiveEventsForChange(event.getChange());
+
+        assertNotNull(activeEvents);
+        assertEquals(0, activeEvents.size());
+    }
+
+    /**
+     * Tests that getActiveEventsForChange returns empty list when change doesn't match.
+     */
+    @Test
+    public void testGetActiveEventsForChangeDifferentChange() {
+        BuildMemory instance = new BuildMemory();
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setId("I123");
+        event.getChange().setNumber("1000");
+
+        instance.triggered(event, project);
+
+        // Create a different change
+        PatchsetCreated differentEvent = Setup.createPatchsetCreated();
+        differentEvent.getChange().setId("I456");
+        differentEvent.getChange().setNumber("2000");
+
+        List<GerritTriggeredEvent> activeEvents = instance.getActiveEventsForChange(differentEvent.getChange());
+
+        assertNotNull(activeEvents);
+        assertEquals(0, activeEvents.size());
+    }
+
+    /**
+     * Tests that getActiveEventsForChange returns events that are still building.
+     */
+    @Test
+    public void testGetActiveEventsForChangeBuildingEvents() {
+        BuildMemory instance = new BuildMemory();
+        PatchsetCreated event1 = Setup.createPatchsetCreated();
+        event1.getChange().setId("I123");
+        event1.getChange().setNumber("1000");
+        event1.getPatchSet().setNumber("1");
+
+        PatchsetCreated event2 = Setup.createPatchsetCreated();
+        event2.getChange().setId("I123");
+        event2.getChange().setNumber("1000");
+        event2.getPatchSet().setNumber("2");
+
+        instance.triggered(event1, project);
+        instance.triggered(event2, project);
+        instance.started(event1, build);
+        instance.started(event2, build);
+
+        List<GerritTriggeredEvent> activeEvents = instance.getActiveEventsForChange(event1.getChange());
+
+        assertNotNull(activeEvents);
+        assertEquals(2, activeEvents.size());
+        assertTrue(activeEvents.contains(event1));
+        assertTrue(activeEvents.contains(event2));
+    }
+
+    /**
+     * Tests that getActiveEventsForChange does not return completed events.
+     */
+    @Test
+    public void testGetActiveEventsForChangeExcludesCompletedEvents() {
+        BuildMemory instance = new BuildMemory();
+        PatchsetCreated event1 = Setup.createPatchsetCreated();
+        event1.getChange().setId("I123");
+        event1.getChange().setNumber("1000");
+        event1.getPatchSet().setNumber("1");
+
+        PatchsetCreated event2 = Setup.createPatchsetCreated();
+        event2.getChange().setId("I123");
+        event2.getChange().setNumber("1000");
+        event2.getPatchSet().setNumber("2");
+
+        instance.triggered(event1, project);
+        instance.triggered(event2, project);
+        instance.started(event1, build);
+        instance.started(event2, build);
+        instance.completed(event1, build);
+
+        List<GerritTriggeredEvent> activeEvents = instance.getActiveEventsForChange(event1.getChange());
+
+        assertNotNull(activeEvents);
+        assertEquals(1, activeEvents.size());
+        assertTrue(activeEvents.contains(event2));
+        assertFalse(activeEvents.contains(event1));
+    }
+
+    /**
+     * Tests that getActiveEventsForChange excludes cancelled events.
+     */
+    @Test
+    public void testGetActiveEventsForChangeExcludesCancelledEvents() {
+        BuildMemory instance = new BuildMemory();
+        PatchsetCreated event = Setup.createPatchsetCreated();
+        event.getChange().setId("I123");
+        event.getChange().setNumber("1000");
+
+        instance.triggered(event, project);
+        instance.cancelled(event, project);
+
+        List<GerritTriggeredEvent> activeEvents = instance.getActiveEventsForChange(event.getChange());
+
+        assertNotNull(activeEvents);
+        assertEquals(0, activeEvents.size());
     }
 }
