@@ -69,7 +69,7 @@ public class RunningJobs {
 
     /**
      * @deprecated since the memory was unifed into BuildMemory
-     * 
+     *
      * @param job the job to set
      */
     @Deprecated
