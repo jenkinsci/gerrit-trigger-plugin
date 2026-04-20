@@ -269,11 +269,7 @@ public class BuildCancellationIntegrationTest {
         gerritServer.triggerEvent(patchset1);
 
         // Wait a bit for it to enter queue
-        Thread.sleep(SLEEP_HALF_SEC);
-
-        // Verify there's a build in queue
-        Queue.Item[] items = jenkins.jenkins.getQueue().getItems();
-        assertTrue("Should have queued build", items.length > 0);
+        await().until(() -> jenkins.jenkins.getQueue().getItems(), hasSize(greaterThan(0)))
 
         // Trigger patchset 2 (should cancel queued build)
         PatchsetCreated patchset2 = Setup.createPatchsetCreated();
