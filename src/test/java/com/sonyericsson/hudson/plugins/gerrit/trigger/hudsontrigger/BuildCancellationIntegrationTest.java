@@ -1,6 +1,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
@@ -15,7 +16,6 @@ import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import java.util.Collections;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.Queue;
 import hudson.model.Result;
 import org.apache.sshd.server.SshServer;
 import org.junit.After;
@@ -28,6 +28,7 @@ import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -114,13 +115,27 @@ public class BuildCancellationIntegrationTest {
     }
 
     /**
+     * Verifies that a build was interrupted with the expected cause by checking the build log.
+     *
+     * @param build the build to check
+     * @param expectedMessage the expected interruption message
+     * @throws Exception if unable to read build log
+     */
+    private void assertInterruptionCause(FreeStyleBuild build, String expectedMessage) throws Exception {
+        String log = jenkins.getLog(build);
+        assertNotNull("Build log should not be null", log);
+        assertTrue("Build log should contain interruption message: " + expectedMessage,
+                   log.contains(expectedMessage));
+    }
+
+    /**
      * Tests that a new patchset cancels a running build of an old patchset.
      * This is the most common cancellation scenario.
      *
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testNewPatchsetCancelsRunningBuild() throws Exception {
         // Create a job with a long-running build and cancellation policy
         FreeStyleProject project = jenkins.createFreeStyleProject();
@@ -167,8 +182,8 @@ public class BuildCancellationIntegrationTest {
         // Verify build1 was aborted
         assertEquals(Result.ABORTED, build1.getResult());
 
-        // Verify it was aborted (the interruption cause is set internally)
-        // Note: Interruption causes are stored in InterruptedBuildAction, not in Cause list
+        // Verify it was aborted with the correct interruption cause
+        assertInterruptionCause(build1, Messages.AbortedByNewPatchSet());
 
         // Verify build2 completed successfully
         TestUtils.waitForBuilds(project, 2, BUILD_TIMEOUT);
@@ -183,7 +198,7 @@ public class BuildCancellationIntegrationTest {
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testAbortNewPatchsetsPolicyCancelsAnyPatchset() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC));
@@ -233,7 +248,7 @@ public class BuildCancellationIntegrationTest {
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testCancelsQueuedBuilds() throws Exception {
         // Create a job that will queue builds (only 1 executor available)
         jenkins.jenkins.setNumExecutors(1);
@@ -269,7 +284,7 @@ public class BuildCancellationIntegrationTest {
         gerritServer.triggerEvent(patchset1);
 
         // Wait a bit for it to enter queue
-        await().until(() -> jenkins.jenkins.getQueue().getItems(), hasSize(greaterThan(0)))
+        await().until(() -> jenkins.jenkins.getQueue().getItems().length > 0);
 
         // Trigger patchset 2 (should cancel queued build)
         PatchsetCreated patchset2 = Setup.createPatchsetCreated();
@@ -299,7 +314,7 @@ public class BuildCancellationIntegrationTest {
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testAbandonedPatchsetCancelsRunningBuild() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC));
@@ -341,6 +356,9 @@ public class BuildCancellationIntegrationTest {
 
         // Verify build was aborted
         assertEquals(Result.ABORTED, build1.getResult());
+
+        // Verify it was aborted with the correct interruption cause
+        assertInterruptionCause(build1, Messages.AbortedByAbandonedPatchset());
     }
 
     /**
@@ -349,7 +367,7 @@ public class BuildCancellationIntegrationTest {
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testDifferentChangesDoNotCancel() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_5_SEC));
@@ -402,7 +420,7 @@ public class BuildCancellationIntegrationTest {
      * @throws Exception if unexpected errors appear.
      */
     @Test
-    @LocalData
+    @LocalData("common")
     public void testPolicyDisabledDoesNotCancel() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_5_SEC));
