@@ -402,50 +402,6 @@ public class BuildMemory {
     }
 
     /**
-     * Get active events for a change (for cancellation logic).
-     * Returns events that haven't completed yet.
-     *
-     * @param change the Gerrit change
-     * @return list of active (building) events for that change
-     */
-    public synchronized List<GerritTriggeredEvent> getActiveEventsForChange(@NonNull Change change) {
-        List<GerritTriggeredEvent> activeEvents = new ArrayList<>();
-
-        for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {
-            GerritTriggeredEvent event = entry.getKey();
-
-            // Only consider ChangeBasedEvents
-            if (!(event instanceof ChangeBasedEvent)) {
-                continue;
-            }
-
-            ChangeBasedEvent changeEvent = (ChangeBasedEvent)event;
-
-            // Check if the change matches
-            if (!change.equals(changeEvent.getChange())) {
-                continue;
-            }
-
-            // Check if any builds are still active (not completed)
-            MemoryImprint imprint = entry.getValue();
-            boolean hasActiveBuilds = false;
-
-            for (Entry imprintEntry : imprint.getEntries()) {
-                if (!imprintEntry.isBuildCompleted() && !imprintEntry.isCancelled()) {
-                    hasActiveBuilds = true;
-                    break;
-                }
-            }
-
-            if (hasActiveBuilds) {
-                activeEvents.add(event);
-            }
-        }
-
-        return activeEvents;
-    }
-
-    /**
      * Cancel outdated builds based on policy.
      * Replaces RunningJobs.cancelOutDatedEvents() functionality.
      *
