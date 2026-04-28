@@ -1,32 +1,15 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
-
-import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
-import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
-import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
-import hudson.model.Cause;
-import hudson.model.Computer;
-import hudson.model.Executor;
 import hudson.model.Item;
 import hudson.model.Job;
-import hudson.model.Queue;
-import hudson.model.Result;
-import hudson.model.Run;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
-import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
