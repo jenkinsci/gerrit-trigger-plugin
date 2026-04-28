@@ -4,6 +4,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
@@ -90,15 +91,15 @@ public class RunningJobs {
    @Deprecated
    public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
    {
-       if (policy == null || !policy.isEnabled()) {
-           return;
+       Jenkins jenkins = Jenkins.getInstanceOrNull();
+       if (jenkins == null) {
+           throw new RuntimeException("Jenkins should not be null");
        }
-
-       if ((event instanceof ManualPatchsetCreated && !policy.isAbortManualPatchsets())) {
-          return;
-       }
-
-       this.cancelOutDatedEvents(event, policy, jobName);
+       ToGerritRunListener.getInstance().getMemory().cancelTriggeredJob(
+               event,
+               policy,
+               this.trigger,
+               jenkins.getItemByFullName(jobName, Job.class));
    }
 
    /**
@@ -112,209 +113,7 @@ public class RunningJobs {
     */
    @Deprecated
    public void scheduled(ChangeBasedEvent event) {
-       IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-       if (serverConfig == null) {
-           runningJobs.add(event);
-           return;
-       }
-
-       BuildCancellationPolicy serverBuildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
-       if (!serverBuildCurrentPatchesOnly.isEnabled()
-               || (event instanceof ManualPatchsetCreated
-               && !serverBuildCurrentPatchesOnly.isAbortManualPatchsets())) {
-           runningJobs.add(event);
-           return;
-       }
-
-       this.cancelOutDatedEvents(event, serverBuildCurrentPatchesOnly, getJob().getFullName());
-   }
-
-   /**
-    * @deprecated since the memory was unifed into BuildMemory
-    *
-    * @param event event to check for
-    * @param policy policy to determine cancellation of build for
-    * @param jobName job name parameter to consider; if null, assumes all builds
-    */
-   @Deprecated
-   private void cancelOutDatedEvents(ChangeBasedEvent event, BuildCancellationPolicy policy, String jobName)
-   {
-       List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
-       CauseOfInterruption cause = new NewPatchSetInterruption();
-
-       synchronized (runningJobs) {
-           Iterator<GerritTriggeredEvent> it = runningJobs.iterator();
-           while (it.hasNext()) {
-               GerritTriggeredEvent runningEvent = it.next();
-               if (!(runningEvent instanceof ChangeBasedEvent runningChangeBasedEvent)) {
-                   continue;
-               }
-
-               if (shouldIgnoreEvent(event, policy, runningChangeBasedEvent)) {
-                   continue;
-               }
-
-               outdatedEvents.add(runningChangeBasedEvent);
-               it.remove();
-           }
-
-           // add our new job
-           if (!outdatedEvents.contains(event)) {
-               if (trigger.isOnlyAbortRunningBuild(event)) {
-                   cause = new AbandonedPatchsetInterruption();
-               } else {
-                   runningJobs.add(event);
-               }
-           }
-       }
-
-       // This step can't be done under the lock, because cancelling the jobs needs a lock on higher level.
-       for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
-           logger.debug("Cancelling build for " + outdatedEvent);
-           try {
-               cancelMatchingJobs(outdatedEvent, jobName, cause);
-           } catch (Exception e) {
-               // Ignore any problems with canceling the job.
-               logger.error("Error canceling job", e);
-           }
-       }
-   }
-
-   /**
-    * @deprecated since the memory was unifed into BuildMemory
-    *
-    * Determines if event should be ignored due to policy
-    *
-    * @param event event being evaluated
-    * @param policy policy to determine cancellation
-    * @param runningChangeBasedEvent existing event to compare against
-    * @return true if event should be ignored for cancellation
-    */
-   @Deprecated
-   private boolean shouldIgnoreEvent(ChangeBasedEvent event,
-           BuildCancellationPolicy policy, ChangeBasedEvent runningChangeBasedEvent) {
-       // Find all entries in runningJobs with the same Change #.
-       // Optionally, ignore all manual patchsets and don't cancel builds due to
-       // a retrigger of an older build.
-       boolean abortBecauseOfTopic = trigger.abortBecauseOfTopic(event, policy, runningChangeBasedEvent);
-
-       Change change = runningChangeBasedEvent.getChange();
-       if (!abortBecauseOfTopic && !change.equals(event.getChange())) {
-           return true;
-       }
-
-       boolean shouldCancelManual = (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
-               || policy.isAbortManualPatchsets());
-
-       if (!abortBecauseOfTopic && !shouldCancelManual) {
-           return true;
-       }
-
-       // events of "type": "topic-changed" are not required to set a PatchSet
-       boolean hasPatchSets = runningChangeBasedEvent.getPatchSet() != null
-               && event.getPatchSet() != null;
-
-       boolean hasPatchNumbers = hasPatchSets && runningChangeBasedEvent.getPatchSet().getNumber() != null
-               && event.getPatchSet().getNumber() != null;
-
-       boolean isOldPatch = hasPatchSets && hasPatchNumbers
-               && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
-               < Integer.parseInt(event.getPatchSet().getNumber());
-
-       boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
-
-       boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
-               && (event instanceof ChangeAbandoned);
-
-       return !abortBecauseOfTopic && !shouldCancelPatchsetNumber && !isAbortAbandonedPatchset;
-   }
-
-   /**
-    * @deprecated since the memory was unifed into BuildMemory
-    *
-    * Tries to cancel any job, which was triggered by the given change event.
-    * <p>
-    * Since the event is always noted in the build cause, it is easy to
-    * identify which specific builds shall be cancelled, without having
-    * to dig down into the parameters, which might've been mutated by the
-    * build while it was running. (This was the previous implementation)
-    * <p>
-    * We look in both the build queue and currently executing jobs.
-    * This extra work is required due to race conditions when calling
-    * Future.cancel() - see
-    * https://issues.jenkins-ci.org/browse/JENKINS-13829
-    *
-    * @param event The event that originally triggered the build.
-    * @param jobName  job name to match on.
-    * @param cause The cause of the build interruption.
-    */
-   @Deprecated
-   private void cancelMatchingJobs(GerritTriggeredEvent event, String jobName, CauseOfInterruption cause) {
-       try {
-           if (!(this.job instanceof Queue.Task)) {
-               logger.error("Error canceling job. The job is not of type Task. Job name: " + getJob().getName());
-               return;
-           }
-
-           // Remove any jobs in the build queue.
-           List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)getJob());
-           for (Queue.Item item : itemsInQueue) {
-               if (checkCausedByGerrit(event, item.getCauses())) {
-                   Job tJob = (Job)item.task;
-                   if (jobName.equals(tJob.getFullName())) {
-                       Queue.getInstance().cancel(item);
-                   }
-               }
-           }
-
-           // Interrupt any currently running jobs.
-           Jenkins jenkins = Jenkins.get();
-           for (Computer c : jenkins.getComputers()) {
-               for (Executor e : c.getAllExecutors()) {
-                   Queue.Executable currentExecutable = e.getCurrentExecutable();
-                   if (!(currentExecutable instanceof Run<?, ?> run)) {
-                       continue;
-                   }
-
-                   if (!checkCausedByGerrit(event, run.getCauses())) {
-                       continue;
-                   }
-
-                   String runningJobName = run.getParent().getFullName();
-                   if (!jobName.equals(runningJobName)) {
-                       continue;
-                   }
-
-                   e.interrupt(Result.ABORTED, cause);
-               }
-           }
-       } catch (Exception e) {
-           // Ignore any problems with canceling the job.
-           logger.error("Error canceling job", e);
-       }
-   }
-
-   /**
-    * @deprecated since the memory was unifed into BuildMemory
-    *
-    * Checks if any of the given causes references the given event.
-    *
-    * @param event The event to check for. Checks for <i>identity</i>, not
-    * <i>equality</i>!
-    * @param causes the list of causes. Only {@link GerritCause}s are considered.
-    * @return true if the list of causes contains a {@link GerritCause}.
-    */
-   @Deprecated
-   private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
-       for (Cause c : causes) {
-           if (!(c instanceof GerritCause gc)) {
-               continue;
-           }
-           if (gc.getEvent() == event) {
-               return true;
-           }
-       }
-       return false;
+       ToGerritRunListener.getInstance().getMemory().scheduled(event, this.trigger, (Job)this.job);
    }
 
     /**
@@ -326,7 +125,7 @@ public class RunningJobs {
      */
    @Deprecated
    public void add(ChangeBasedEvent event) {
-       runningJobs.add(event);
+       throw new RuntimeException("add method on RunningJobs should not be used. RunningJobs usage is deprecated");
    }
 
    /**
@@ -339,7 +138,6 @@ public class RunningJobs {
     */
    @Deprecated
    public boolean remove(ChangeBasedEvent event) {
-       logger.debug("Removing future job associated with " + event.getChange().getId());
-       return runningJobs.remove(event);
+       throw new RuntimeException("remove method on RunningJobs should not be used. RunningJobs usage is deprecated");
    }
 }
