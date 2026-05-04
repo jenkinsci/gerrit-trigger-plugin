@@ -521,38 +521,39 @@ public class BuildMemory {
 
         boolean abortBecauseOfTopic = trigger.abortBecauseOfTopic(event, policy, runningChangeBasedEvent);
 
-        Change change = runningChangeBasedEvent.getChange();
-        if (!abortBecauseOfTopic && !change.equals(event.getChange())) {
-            return true;
+        if (!abortBecauseOfTopic) {
+
+            Change change = runningChangeBasedEvent.getChange();
+            if (!change.equals(event.getChange())) {
+                return true;
+            }
+
+            boolean shouldCancelManual = (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
+                    || policy.isAbortManualPatchsets());
+            if (!shouldCancelManual) {
+                return true;
+            }
+
+            // events of "type": "topic-changed" are not required to set a PatchSet
+            boolean hasPatchSets = runningChangeBasedEvent.getPatchSet() != null
+                    && event.getPatchSet() != null;
+
+            boolean hasPatchNumbers = hasPatchSets && runningChangeBasedEvent.getPatchSet().getNumber() != null
+                    && event.getPatchSet().getNumber() != null;
+
+            boolean isOldPatch = hasPatchSets && hasPatchNumbers
+                    && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+                    < Integer.parseInt(event.getPatchSet().getNumber());
+
+            boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
+
+            boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
+                    && (event instanceof ChangeAbandoned);
+
+            if (!shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
+                return true;
+            }
         }
-
-        boolean shouldCancelManual = (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
-                || policy.isAbortManualPatchsets());
-
-        if (!abortBecauseOfTopic && !shouldCancelManual) {
-            return true;
-        }
-
-        // events of "type": "topic-changed" are not required to set a PatchSet
-        boolean hasPatchSets = runningChangeBasedEvent.getPatchSet() != null
-                && event.getPatchSet() != null;
-
-        boolean hasPatchNumbers = hasPatchSets && runningChangeBasedEvent.getPatchSet().getNumber() != null
-                && event.getPatchSet().getNumber() != null;
-
-        boolean isOldPatch = hasPatchSets && hasPatchNumbers
-                && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
-                < Integer.parseInt(event.getPatchSet().getNumber());
-
-        boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
-
-        boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
-                && (event instanceof ChangeAbandoned);
-
-        if (!abortBecauseOfTopic && !shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
-            return true;
-        }
-
         return false;
     }
 
@@ -625,12 +626,11 @@ public class BuildMemory {
      */
     private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
         for (Cause c : causes) {
-            if (!(c instanceof GerritCause)) {
-                continue;
-            }
-            GerritCause gc = (GerritCause)c;
-            if (gc.getEvent() == event) {
-                return true;
+            if (c instanceof GerritCause) {
+                GerritCause gc = (GerritCause)c;
+                if (gc.getEvent() == event) {
+                    return true;
+                }
             }
         }
         return false;
