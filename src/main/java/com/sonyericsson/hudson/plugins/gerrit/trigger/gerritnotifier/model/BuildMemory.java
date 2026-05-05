@@ -34,6 +34,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.BuildMemoryStorageFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -57,16 +59,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
 /**
  * Keeps track of what builds have been triggered and if all builds are done for specific events.
+ * <p>
+ * This class now delegates all storage operations to a {@link BuildMemoryStorage} implementation,
+ * discovered via the Extension Points pattern. This allows switching between local (TreeMap) and
+ * distributed (Hazelcast) storage without changing this class.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
@@ -78,7 +82,7 @@ public class BuildMemory {
      *
      * @author James E. Blair &lt;jeblair@hp.com&gt;
      */
-    static class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
+    public static class GerritTriggeredEventComparator implements Comparator<GerritTriggeredEvent> {
         @Override
         public int compare(GerritTriggeredEvent o1, GerritTriggeredEvent o2) {
             if (o1 == null && o2 == null) {
@@ -94,10 +98,21 @@ public class BuildMemory {
         }
     }
 
-    private TreeMap<GerritTriggeredEvent, MemoryImprint> memory =
-            new TreeMap<GerritTriggeredEvent, MemoryImprint>(
-                    new GerritTriggeredEventComparator());
+    /**
+     * The storage backend for build memory.
+     * Discovered and created via BuildMemoryStorageFactory on first use.
+     */
+    private final BuildMemoryStorage storage;
+
     private static final Logger logger = LoggerFactory.getLogger(BuildMemory.class);
+
+    /**
+     * Default constructor.
+     * Initializes storage via factory discovery.
+     */
+    public BuildMemory() {
+        this.storage = BuildMemoryStorageFactory.getInstance();
+    }
 
     /**
      * Gets the memory of a specific event.
@@ -105,8 +120,8 @@ public class BuildMemory {
      * @param event the event.
      * @return the memory.
      */
-    public synchronized MemoryImprint getMemoryImprint(GerritTriggeredEvent event) {
-        return memory.get(event);
+    public MemoryImprint getMemoryImprint(GerritTriggeredEvent event) {
+        return storage.getMemoryImprint(event);
     }
 
     /**
@@ -115,13 +130,8 @@ public class BuildMemory {
      * @param event the event.
      * @return true if it is so.
      */
-    public synchronized boolean isAllBuildsCompleted(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        if (pb != null) {
-            return pb.isAllBuildsCompleted();
-        } else {
-            return false;
-        }
+    public boolean isAllBuildsCompleted(GerritTriggeredEvent event) {
+        return storage.isAllBuildsCompleted(event);
     }
 
     /**
@@ -130,13 +140,8 @@ public class BuildMemory {
      * @param event the event.
      * @return the statistics.
      */
-    public synchronized BuildsStartedStats getBuildsStartedStats(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        if (pb != null) {
-            return pb.getBuildsStartedStats();
-        } else {
-            return null;
-        }
+    public BuildsStartedStats getBuildsStartedStats(GerritTriggeredEvent event) {
+        return storage.getBuildsStartedStats(event);
     }
 
     /**
@@ -147,13 +152,8 @@ public class BuildMemory {
      *
      * @see MemoryImprint#getStatusReport()
      */
-    public synchronized String getStatusReport(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        if (pb != null) {
-            return pb.getStatusReport();
-        } else {
-            return null;
-        }
+    public String getStatusReport(GerritTriggeredEvent event) {
+        return storage.getStatusReport(event);
     }
 
     /**
@@ -162,13 +162,8 @@ public class BuildMemory {
      * @param event the event.
      * @return true if it is so.
      */
-    public synchronized boolean isAllBuildsStarted(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        if (pb != null) {
-            return pb.isAllBuildsSet();
-        } else {
-            return false;
-        }
+    public boolean isAllBuildsStarted(GerritTriggeredEvent event) {
+        return storage.isAllBuildsStarted(event);
     }
 
     /**
@@ -177,14 +172,8 @@ public class BuildMemory {
      * @param event the event
      * @param build the build.
      */
-    public synchronized void completed(GerritTriggeredEvent event, Run build) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //Shoudn't happen but just in case, keep the memory.
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
-        pb.set(build.getParent(), build, true);
+    public void completed(GerritTriggeredEvent event, Run build) {
+        storage.completed(event, build);
     }
 
     /**
@@ -193,15 +182,8 @@ public class BuildMemory {
      * @param event the event.
      * @param build the build.
      */
-    public synchronized void started(GerritTriggeredEvent event, Run build) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //A build should not start for a job that hasn't been registered. Keep the memory anyway.
-            pb = new MemoryImprint(event);
-            logger.warn("Build started without being registered first.");
-            memory.put(event, pb);
-        }
-        pb.set(build.getParent(), build);
+    public void started(GerritTriggeredEvent event, Run build) {
+        storage.started(event, build);
     }
 
     /**
@@ -210,13 +192,8 @@ public class BuildMemory {
      * @param event   the event that triggered it.
      * @param project the project that was triggered.
      */
-    public synchronized void triggered(GerritTriggeredEvent event, Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
-        pb.set(project);
+    public void triggered(GerritTriggeredEvent event, Job project) {
+        storage.triggered(event, project);
     }
 
     /**
@@ -228,22 +205,11 @@ public class BuildMemory {
      * @param project     the project that has been retriggered.
      * @param otherBuilds the list of other builds that was in the "old" memory.
      */
-    public synchronized void retriggered(
+    public void retriggered(
             GerritTriggeredEvent event,
             Job project,
             List<Run> otherBuilds) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-            if (otherBuilds != null) {
-                //It is a new memory so it wasn't building, let's populate with old build info
-                for (Run build : otherBuilds) {
-                    pb.set(build.getParent(), build, !build.isBuilding());
-                }
-            }
-        }
-        pb.reset(project);
+        storage.retriggered(event, project, otherBuilds);
     }
 
     /**
@@ -252,17 +218,8 @@ public class BuildMemory {
      * @param event       the event to be retriggered.
      * @param project     the project that has been retriggered.
      */
-    public synchronized void cancelled(GerritTriggeredEvent event, Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //Shoudn't happen but just in case, keep the memory.
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
-        pb.set(project);
-        Entry entry = pb.getEntry(project);
-        entry.setCancelled(true);
-        entry.setBuildCompleted(true);
+    public void cancelled(GerritTriggeredEvent event, Job project) {
+        storage.cancelled(event, project);
     }
 
 
@@ -271,8 +228,8 @@ public class BuildMemory {
      *
      * @param event the event.
      */
-    public synchronized void forget(GerritTriggeredEvent event) {
-        memory.remove(event);
+    public void forget(GerritTriggeredEvent event) {
+        storage.forget(event);
     }
 
     /**
@@ -349,19 +306,8 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isTriggered(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            return false;
-        } else {
-            String fullName = project.getFullName();
-            for (Entry entry : pb.getEntries()) {
-                if (entry.isProject(fullName)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    public boolean isTriggered(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
+        return storage.isTriggered(event, project);
     }
 
     /**
@@ -371,23 +317,8 @@ public class BuildMemory {
      * @param project the project.
      * @return true if so.
      */
-    public synchronized boolean isBuilding(GerritTriggeredEvent event, @NonNull Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            return false;
-        } else {
-            String fullName = project.getFullName();
-            for (Entry entry : pb.getEntries()) {
-                if (entry.isProject(fullName)) {
-                    if (entry.getBuild() != null) {
-                        return !entry.isBuildCompleted();
-                    } else {
-                        return !entry.isCancelled();
-                    }
-                }
-            }
-            return false;
-        }
+    public boolean isBuilding(GerritTriggeredEvent event, @NonNull Job project) {
+        return storage.isBuilding(event, project);
     }
 
     /**
@@ -396,9 +327,8 @@ public class BuildMemory {
      * @param event the event to look for.
      * @return true if so.
      */
-    public synchronized boolean isBuilding(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        return pb != null;
+    public boolean isBuilding(GerritTriggeredEvent event) {
+        return storage.isBuilding(event);
     }
 
     /**
@@ -417,7 +347,9 @@ public class BuildMemory {
             @NonNull Job job) {
 
         logger.info("cancelOutdatedBuilds called for event {} with policy {}", newEvent, policy);
-        logger.info("BuildMemory has {} events in memory", memory.size());
+
+        Map<GerritTriggeredEvent, MemoryImprint> allEvents = storage.getAllEvents();
+        logger.info("BuildMemory has {} events in memory", allEvents.size());
 
         String jobName = job.getFullName();
         List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
@@ -425,7 +357,7 @@ public class BuildMemory {
 
         synchronized (this) {
             // Find all outdated events
-            Iterator<Map.Entry<GerritTriggeredEvent, MemoryImprint>> it = memory.entrySet().iterator();
+            Iterator<Map.Entry<GerritTriggeredEvent, MemoryImprint>> it = allEvents.entrySet().iterator();
             while (it.hasNext()) {
                 Map.Entry<GerritTriggeredEvent, MemoryImprint> entry = it.next();
                 GerritTriggeredEvent runningEvent = entry.getKey();
@@ -466,12 +398,17 @@ public class BuildMemory {
                     // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
                     // Mark the Entry as cancelled immediately so it won't be considered "active"
                     // in future cancellation checks (prevents state accumulation issues).
-                    for (Entry imprintEntry : imprint.getEntries()) {
-                        if (imprintEntry.isProject(jobName)
-                                && !imprintEntry.isBuildCompleted()
-                                && !imprintEntry.isCancelled()) {
-                            imprintEntry.setCancelled(true);
-                            imprintEntry.setBuildCompleted(true);
+                    // IMPORTANT: We need to get the imprint from storage again to modify the real one,
+                    // not the copy from getAllEvents()
+                    MemoryImprint storageImprint = storage.getMemoryImprint(runningEvent);
+                    if (storageImprint != null) {
+                        for (Entry imprintEntry : storageImprint.getEntries()) {
+                            if (imprintEntry.isProject(jobName)
+                                    && !imprintEntry.isBuildCompleted()
+                                    && !imprintEntry.isCancelled()) {
+                                imprintEntry.setCancelled(true);
+                                imprintEntry.setBuildCompleted(true);
+                            }
                         }
                     }
                 }
@@ -703,19 +640,8 @@ public class BuildMemory {
      * @param event the event.
      * @return the list of builds, or null if there is no memory.
      */
-    public synchronized List<Run> getBuilds(GerritTriggeredEvent event) {
-        MemoryImprint pb = memory.get(event);
-        if (pb != null) {
-            List<Run> list = new LinkedList<Run>();
-            for (Entry entry : pb.getEntries()) {
-                if (entry.getBuild() != null) {
-                    list.add(entry.getBuild());
-                }
-            }
-            return list;
-        } else {
-            return null;
-        }
+    public List<Run> getBuilds(GerritTriggeredEvent event) {
+        return storage.getBuilds(event);
     }
 
     /**
@@ -726,16 +652,7 @@ public class BuildMemory {
      * @param customUrl the URL.
      */
     public void setEntryCustomUrl(GerritTriggeredEvent event, Run r, String customUrl) {
-        MemoryImprint pb = getMemoryImprint(event);
-
-        if (pb != null) {
-            Entry entry = pb.getEntry(r.getParent());
-
-            if (entry != null) {
-                logger.trace("Recording custom URL for {}: {}", event, customUrl);
-                entry.setCustomUrl(customUrl);
-            }
-        }
+        storage.setEntryCustomUrl(event, r, customUrl);
     }
 
     /**
@@ -746,16 +663,7 @@ public class BuildMemory {
      * @param unsuccessfulMessage the unsuccessful message
      */
     public void setEntryUnsuccessfulMessage(GerritTriggeredEvent event, Run r, String unsuccessfulMessage) {
-        MemoryImprint pb = getMemoryImprint(event);
-
-        if (pb != null) {
-            Entry entry = pb.getEntry(r.getParent());
-
-            if (entry != null) {
-                logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
-                entry.setUnsuccessfulMessage(unsuccessfulMessage);
-            }
-        }
+        storage.setEntryUnsuccessfulMessage(event, r, unsuccessfulMessage);
     }
 
     /**
@@ -776,11 +684,8 @@ public class BuildMemory {
      *
      * @param project to be removed.
      */
-    public synchronized void removeProject(Job project) {
-        String projectFullName = project.getFullName();
-        for (MemoryImprint memoryImprint : memory.values()) {
-            memoryImprint.removeProject(projectFullName);
-        }
+    public void removeProject(Job project) {
+        storage.removeProject(project);
     }
 
     /**
@@ -789,16 +694,8 @@ public class BuildMemory {
      * @return the report
      */
     @NonNull
-    public synchronized BuildMemoryReport report() {
-        BuildMemoryReport report = new BuildMemoryReport();
-        for (Map.Entry<GerritTriggeredEvent, MemoryImprint> entry : memory.entrySet()) {
-            List<Entry> triggered = new LinkedList<Entry>();
-            for (Entry tr : entry.getValue().list) {
-                triggered.add(tr.clone());
-            }
-            report.put(entry.getKey(), triggered);
-        }
-        return report;
+    public BuildMemoryReport report() {
+        return storage.report();
     }
 
     /**
@@ -848,12 +745,24 @@ public class BuildMemory {
         }
 
         /**
+         * Gets the internal list of entries.
+         * <p>
+         * This method is used by storage implementations for operations
+         * like report() that need direct access to the list.
+         *
+         * @return the internal list (not a copy)
+         */
+        public List<Entry> getEntriesList() {
+            return list;
+        }
+
+        /**
          * Sets the build to a project or adds the project to the list.
          *
          * @param project the project.
          * @param build   the build.
          */
-        protected synchronized void set(Job project, Run build) {
+        public synchronized void set(Job project, Run build) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -868,7 +777,7 @@ public class BuildMemory {
          *
          * @param project the project.
          */
-        protected synchronized void set(Job project) {
+        public synchronized void set(Job project) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project);
@@ -882,7 +791,7 @@ public class BuildMemory {
          *
          * @param project the project to reset.
          */
-        protected synchronized void reset(Job project) {
+        public synchronized void reset(Job project) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project);
@@ -897,7 +806,7 @@ public class BuildMemory {
          * Removes the specified project from memory.
          * @param project the project to removeProject.
          */
-        private synchronized void removeProject(String project) {
+        public synchronized void removeProject(String project) {
             list.removeIf(entry -> entry.isProject(project));
         }
 
@@ -908,7 +817,7 @@ public class BuildMemory {
          * @param build          the build
          * @param buildCompleted if the build is finished.
          */
-        private synchronized void set(Job project, Run build, boolean buildCompleted) {
+        public synchronized void set(Job project, Run build, boolean buildCompleted) {
             Entry entry = getEntry(project);
             if (entry == null) {
                 entry = new Entry(project, build);
@@ -987,7 +896,7 @@ public class BuildMemory {
          * @param project the project.
          * @return the entry or null if nothing is found.
          */
-        private Entry getEntry(@NonNull Job project) {
+        public Entry getEntry(@NonNull Job project) {
             for (Entry entry : list) {
                 if (entry != null && project.equals(entry.getProject())) {
                     return entry;
@@ -1285,7 +1194,7 @@ public class BuildMemory {
              *
              * @param customUrl the URL.
              */
-            private void setCustomUrl(String customUrl) {
+            public void setCustomUrl(String customUrl) {
                 this.customUrl = customUrl;
             }
 
@@ -1303,7 +1212,7 @@ public class BuildMemory {
              *
              * @param unsuccessfulMessage the message.
              */
-            private void setUnsuccessfulMessage(String unsuccessfulMessage) {
+            public void setUnsuccessfulMessage(String unsuccessfulMessage) {
                 this.unsuccessfulMessage = unsuccessfulMessage;
             }
 
@@ -1330,7 +1239,7 @@ public class BuildMemory {
              *
              * @param buildCompleted true if the build is completed.
              */
-            private void setBuildCompleted(boolean buildCompleted) {
+            public void setBuildCompleted(boolean buildCompleted) {
                 this.buildCompleted = buildCompleted;
                 if (buildCompleted) {
                     this.completedTimestamp = System.currentTimeMillis();
@@ -1350,7 +1259,7 @@ public class BuildMemory {
              *
              * @param cancelled true if the build was cancelled while in the queue.
              */
-            private void setCancelled(boolean cancelled) {
+            public void setCancelled(boolean cancelled) {
                 this.cancelled = cancelled;
             }
 
