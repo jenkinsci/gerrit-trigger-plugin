@@ -772,9 +772,12 @@ public class GerritTrigger extends Trigger<Job> {
      *
      * @param job - job that calling event trigger is attached to
      * @return new clean RunningJobs collection.
+     * @deprecated since RunningJobs was unifed into BuildMemory
+     
      */
     @Deprecated
     /*package*/ synchronized RunningJobs getRunningJobs(Job job) {
+        logger.warn("call to deprecated getRunningJobs");
         return new RunningJobs(this, job);
     }
 
@@ -790,7 +793,7 @@ public class GerritTrigger extends Trigger<Job> {
         // BuildMemory handles completion via onCompleted() → BuildMemory.completed()
         // Events are marked as completed/cancelled during the cancellation process
         // The old RunningJobs.remove() is no longer needed
-        logger.debug("notifyBuildEnded method on GerritTrigger should not be used. Method was deprecated");
+        logger.warn("notifyBuildEnded method on GerritTrigger should not be used. Method was deprecated");
     }
 
     /**

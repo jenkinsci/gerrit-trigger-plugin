@@ -74,6 +74,7 @@ public class RunningJobs {
    @Deprecated
    public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
    {
+       logger.warn("call to deprecated method cancelTriggeredJob.");
        Jenkins jenkins = Jenkins.getInstanceOrNull();
        if (jenkins == null) {
            throw new RuntimeException("Jenkins should not be null");
@@ -96,6 +97,7 @@ public class RunningJobs {
     */
    @Deprecated
    public void scheduled(ChangeBasedEvent event) {
+       logger.warn("call to deprecated method scheduled.");
        ToGerritRunListener.getInstance().getMemory().scheduled(event, this.trigger, (Job)this.job);
    }
 
