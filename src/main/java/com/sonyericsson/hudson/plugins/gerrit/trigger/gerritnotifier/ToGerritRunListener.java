@@ -92,6 +92,16 @@ public final class ToGerritRunListener extends RunListener<Run> {
     }
 
     /**
+     * Returns the BuildMemory instance used for tracking builds.
+     *
+     * @return the BuildMemory instance.
+     */
+    @NonNull
+    public BuildMemory getMemory() {
+        return memory;
+    }
+
+    /**
      * Records a custom URL for the given build.
      *
      * @param r         the build.

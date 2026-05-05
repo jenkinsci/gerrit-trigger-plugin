@@ -24,15 +24,28 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import hudson.model.Cause;
+import hudson.model.Computer;
+import hudson.model.Executor;
 import hudson.model.Job;
+import hudson.model.Queue;
 import hudson.model.Result;
 import hudson.model.Run;
+import jenkins.model.CauseOfInterruption;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +54,15 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl.getServerConfig;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldSkip;
 
 /**
@@ -383,6 +399,306 @@ public class BuildMemory {
     public synchronized boolean isBuilding(GerritTriggeredEvent event) {
         MemoryImprint pb = memory.get(event);
         return pb != null;
+    }
+
+    /**
+     * Cancel outdated builds based on policy.
+     * Replaces RunningJobs.cancelOutDatedEvents() functionality.
+     *
+     * @param newEvent the new event that may trigger cancellation
+     * @param policy the cancellation policy to apply
+     * @param trigger the Gerrit trigger (needed for topic-based cancellation)
+     * @param job the job for which to cancel builds
+     */
+    public void cancelOutdatedEvents(
+            @NonNull ChangeBasedEvent newEvent,
+            @NonNull BuildCancellationPolicy policy,
+            @NonNull GerritTrigger trigger,
+            @NonNull Job job) {
+
+        logger.info("cancelOutdatedBuilds called for event {} with policy {}", newEvent, policy);
+        logger.info("BuildMemory has {} events in memory", memory.size());
+
+        String jobName = job.getFullName();
+        List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
+        CauseOfInterruption cause = new NewPatchSetInterruption();
+
+        synchronized (this) {
+            // Find all outdated events
+            Iterator<Map.Entry<GerritTriggeredEvent, MemoryImprint>> it = memory.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<GerritTriggeredEvent, MemoryImprint> entry = it.next();
+                GerritTriggeredEvent runningEvent = entry.getKey();
+
+                if (!(runningEvent instanceof ChangeBasedEvent)) {
+                    continue;
+                }
+
+                ChangeBasedEvent runningChangeBasedEvent = (ChangeBasedEvent)runningEvent;
+                logger.debug("Checking running event: {}", runningChangeBasedEvent);
+
+                if (shouldIgnoreEvent(newEvent, policy, runningChangeBasedEvent, trigger)) {
+                    logger.debug("Ignoring event based on policy");
+                    continue;
+                }
+
+                // Check if this event has active builds for this job
+                MemoryImprint imprint = entry.getValue();
+                boolean hasActiveBuildsForJob = false;
+
+                for (Entry imprintEntry : imprint.getEntries()) {
+                    logger.debug("Checking entry: project={}, completed={}, cancelled={}",
+                            imprintEntry.getProject(), imprintEntry.isBuildCompleted(), imprintEntry.isCancelled());
+                    if (imprintEntry.isProject(jobName)
+                            && !imprintEntry.isBuildCompleted()
+                            && !imprintEntry.isCancelled()) {
+                        hasActiveBuildsForJob = true;
+                        logger.debug("Found active build for job {}", jobName);
+                        break;
+                    }
+                }
+
+                if (hasActiveBuildsForJob) {
+                    outdatedEvents.add(runningChangeBasedEvent);
+                    logger.debug("Added event to outdated list");
+                    // TODO:
+                    // We should consider adding the following in case we need to mark the builds in the
+                    // event as cancelled due to the BuildMemory is not only used by the cancellation policy.
+                    //
+                    // NOTE: Do NOT remove the event from BuildMemory here!
+                    // Unlike the old RunningJobs code (which was separate from lifecycle tracking),
+                    // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
+                    // Mark the Entry as cancelled immediately so it won't be considered "active"
+                    // in future cancellation checks (prevents state accumulation issues).
+                    // for (Entry imprintEntry : imprint.getEntries()) {
+                    //    if (imprintEntry.isProject(jobName)
+                    //            && !imprintEntry.isBuildCompleted()
+                    //            && !imprintEntry.isCancelled()) {
+                    //        imprintEntry.setCancelled(true);
+                    //        imprintEntry.setBuildCompleted(true);
+                    //    }
+                    //}
+                }
+            }
+
+            logger.info("Found {} outdated events to cancel", outdatedEvents.size());
+
+            // Add the new event to BuildMemory for future cancellation checks
+            // In silent mode, events won't be added via onTriggered(), so we must add them here
+            // In non-silent mode, onTriggered() also adds them, but MemoryImprint.set() is idempotent
+            if (!outdatedEvents.contains(newEvent)) {
+                if (trigger.isOnlyAbortRunningBuild(newEvent)) {
+                    cause = new AbandonedPatchsetInterruption();
+                } else {
+                    // Add event so it can be found and cancelled by future events
+                    // This is critical for silent mode where onTriggered() isn't called
+                    triggered(newEvent, job);
+                }
+            }
+        }
+        // Cancel the outdated jobs (outside the iterator loop to avoid concurrent modification)
+        for (ChangeBasedEvent outdatedEvent : outdatedEvents) {
+            logger.info("Cancelling build for event: {}", outdatedEvent);
+            try {
+                cancelMatchingJobs(outdatedEvent, jobName, job, cause);
+            } catch (Exception e) {
+                logger.error("Error canceling job", e);
+            }
+        }
+    }
+
+    /**
+     * Determines if event should be ignored due to policy.
+     * Ported from RunningJobs.shouldIgnoreEvent().
+     *
+     * @param event event being evaluated
+     * @param policy policy to determine cancellation
+     * @param runningChangeBasedEvent existing event to compare against
+     * @param trigger the Gerrit trigger (for topic-based logic)
+     * @return true if event should be ignored for cancellation
+     */
+    private boolean shouldIgnoreEvent(
+            ChangeBasedEvent event,
+            BuildCancellationPolicy policy,
+            ChangeBasedEvent runningChangeBasedEvent,
+            GerritTrigger trigger) {
+
+        boolean abortBecauseOfTopic = trigger.abortBecauseOfTopic(event, policy, runningChangeBasedEvent);
+
+        if (!abortBecauseOfTopic) {
+
+            Change change = runningChangeBasedEvent.getChange();
+            if (!change.equals(event.getChange())) {
+                return true;
+            }
+
+            boolean shouldCancelManual = (!(runningChangeBasedEvent instanceof ManualPatchsetCreated)
+                    || policy.isAbortManualPatchsets());
+            if (!shouldCancelManual) {
+                return true;
+            }
+
+            // events of "type": "topic-changed" are not required to set a PatchSet
+            boolean hasPatchSets = runningChangeBasedEvent.getPatchSet() != null
+                    && event.getPatchSet() != null;
+
+            boolean hasPatchNumbers = hasPatchSets && runningChangeBasedEvent.getPatchSet().getNumber() != null
+                    && event.getPatchSet().getNumber() != null;
+
+            boolean isOldPatch = hasPatchSets && hasPatchNumbers
+                    && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
+                    < Integer.parseInt(event.getPatchSet().getNumber());
+
+            boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
+
+            boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
+                    && (event instanceof ChangeAbandoned);
+
+            if (!shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Cancels any jobs that were triggered by the given event.
+     * Ported from RunningJobs.cancelMatchingJobs().
+     *
+     * @param event the event that originally triggered the build
+     * @param jobName the job name to match on
+     * @param job the job instance (for queue access)
+     * @param cause the cause of the build interruption
+     */
+    private void cancelMatchingJobs(
+            GerritTriggeredEvent event,
+            String jobName,
+            Job job,
+            CauseOfInterruption cause) {
+
+        try {
+            if (!(job instanceof Queue.Task)) {
+                logger.error("Error canceling job. The job is not of type Task. Job name: {}", job.getName());
+                return;
+            }
+
+            // Remove any jobs in the build queue
+            List<Queue.Item> itemsInQueue = Queue.getInstance().getItems((Queue.Task)job);
+            for (Queue.Item item : itemsInQueue) {
+                if (checkCausedByGerrit(event, item.getCauses())) {
+                    Job tJob = (Job)item.task;
+                    if (jobName.equals(tJob.getFullName())) {
+                        Queue.getInstance().cancel(item);
+                    }
+                }
+            }
+
+            // Interrupt any currently running jobs
+            Jenkins jenkins = Jenkins.get();
+            for (Computer c : jenkins.getComputers()) {
+                for (Executor e : c.getAllExecutors()) {
+                    Queue.Executable currentExecutable = e.getCurrentExecutable();
+                    if (!(currentExecutable instanceof Run<?, ?>)) {
+                        continue;
+                    }
+
+                    Run<?, ?> run = (Run<?, ?>)currentExecutable;
+                    if (!checkCausedByGerrit(event, run.getCauses())) {
+                        continue;
+                    }
+
+                    String runningJobName = run.getParent().getFullName();
+                    if (!jobName.equals(runningJobName)) {
+                        continue;
+                    }
+
+                    e.interrupt(Result.ABORTED, cause);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error canceling job", e);
+        }
+    }
+
+    /**
+     * Checks if any of the given causes references the given event.
+     * Ported from RunningJobs.checkCausedByGerrit().
+     *
+     * @param event the event to check for (checks for identity, not equality)
+     * @param causes the list of causes
+     * @return true if the list contains a GerritCause with this event
+     */
+    private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
+        for (Cause c : causes) {
+            if (c instanceof GerritCause) {
+                GerritCause gc = (GerritCause)c;
+                if (gc.getEvent() == event) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Called when trigger has cancellation policy associated with it.
+     *
+     *
+     * @param event event that is trigger builds
+     * @param job job to match for specific cancellation
+     * @param trigger the Gerrit trigger (needed for topic-based cancellation)
+     * @param policy policy to decide cancelling build or not
+     */
+    public void cancelTriggeredJob(ChangeBasedEvent event,
+                                   BuildCancellationPolicy policy,
+                                   GerritTrigger trigger,
+                                   Job job) {
+        if (policy == null || !policy.isEnabled()) {
+            return;
+        }
+
+        if ((event instanceof ManualPatchsetCreated && !policy.isAbortManualPatchsets())) {
+            return;
+        }
+
+        cancelOutdatedEvents(event, policy, trigger, job);
+    }
+
+    /**
+     * Checks scheduled job and cancels current jobs if needed.
+     * I.e. cancelling the old build if configured to do so and removing and storing any references.
+     * Only used by Server wide policy.
+     *
+     * Note: Events are added to BuildMemory for cancellation tracking. In silent mode,
+     * onTriggered() won't be called, so this is the only place they're tracked.
+     * In non-silent mode, onTriggered() also adds them, but MemoryImprint.set() is idempotent.
+     *
+     * @param event the event triggering a new build.
+     * @param trigger the Gerrit trigger
+     * @param job the job for which to cancel builds.
+     */
+    public void scheduled(ChangeBasedEvent event,
+                          GerritTrigger trigger,
+                          Job job) {
+        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+        if (serverConfig == null) {
+            // No server config - add event for cancellation tracking
+            triggered(event, job);
+            return;
+        }
+
+        BuildCancellationPolicy serverBuildCurrentPatchesOnly = serverConfig.getBuildCurrentPatchesOnly();
+        if (!serverBuildCurrentPatchesOnly.isEnabled()
+                || (event instanceof ManualPatchsetCreated
+                && !serverBuildCurrentPatchesOnly.isAbortManualPatchsets())) {
+            // Policy disabled - add event for cancellation tracking
+            triggered(event, job);
+            return;
+        }
+
+        // Policy enabled - check for outdated events and cancel them
+        // cancelOutdatedEvents will add the new event to BuildMemory
+        cancelOutdatedEvents(event, serverBuildCurrentPatchesOnly, trigger, job);
     }
 
     /**
