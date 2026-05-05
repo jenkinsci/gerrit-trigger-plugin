@@ -108,7 +108,8 @@ public class RunningJobs {
      */
    @Deprecated
    public void add(ChangeBasedEvent event) {
-       throw new RuntimeException("add method on RunningJobs should not be used. RunningJobs usage is deprecated");
+       runningJobs.add(event);
+       logger.warn("add method on RunningJobs should not be used. RunningJobs usage is deprecated");
    }
 
    /**
@@ -121,6 +122,7 @@ public class RunningJobs {
     */
    @Deprecated
    public boolean remove(ChangeBasedEvent event) {
-       throw new RuntimeException("remove method on RunningJobs should not be used. RunningJobs usage is deprecated");
+       logger.warn("remove method on RunningJobs should not be used. RunningJobs usage is deprecated");
+       return runningJobs.remove(event);
    }
 }

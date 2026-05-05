@@ -461,19 +461,23 @@ public class BuildMemory {
                 if (hasActiveBuildsForJob) {
                     outdatedEvents.add(runningChangeBasedEvent);
                     logger.debug("Added event to outdated list");
+                    // TODO:
+                    // We should consider adding the following in case we need to mark the builds in the
+                    // event as cancelled due to the BuildMemory is not only used by the cancellation policy.
+                    //
                     // NOTE: Do NOT remove the event from BuildMemory here!
                     // Unlike the old RunningJobs code (which was separate from lifecycle tracking),
                     // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
                     // Mark the Entry as cancelled immediately so it won't be considered "active"
                     // in future cancellation checks (prevents state accumulation issues).
-                    for (Entry imprintEntry : imprint.getEntries()) {
-                        if (imprintEntry.isProject(jobName)
-                                && !imprintEntry.isBuildCompleted()
-                                && !imprintEntry.isCancelled()) {
-                            imprintEntry.setCancelled(true);
-                            imprintEntry.setBuildCompleted(true);
-                        }
-                    }
+                    // for (Entry imprintEntry : imprint.getEntries()) {
+                    //    if (imprintEntry.isProject(jobName)
+                    //            && !imprintEntry.isBuildCompleted()
+                    //            && !imprintEntry.isCancelled()) {
+                    //        imprintEntry.setCancelled(true);
+                    //        imprintEntry.setBuildCompleted(true);
+                    //    }
+                    //}
                 }
             }
 

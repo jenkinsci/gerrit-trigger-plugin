@@ -768,16 +768,29 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Gives you a new RunningJobs. It makes sure that the reference is not null.
+     *
+     * @param job - job that calling event trigger is attached to
+     * @return new clean RunningJobs collection.
+     */
+    @Deprecated
+    /*package*/ synchronized RunningJobs getRunningJobs(Job job) {
+        return new RunningJobs(this, job);
+    }
+
+    /**
      * Used to inform the server that the builds for a job have ended. This allows us to clean up our list of what jobs
      * we're running.
      *
      * @param event the event.
      */
+    @Deprecated
     public void notifyBuildEnded(GerritTriggeredEvent event) {
         // NO-OP: Build lifecycle tracking has been migrated to BuildMemory
         // BuildMemory handles completion via onCompleted() → BuildMemory.completed()
         // Events are marked as completed/cancelled during the cancellation process
         // The old RunningJobs.remove() is no longer needed
+        logger.debug("notifyBuildEnded method on GerritTrigger should not be used. Method was deprecated");
     }
 
     /**
