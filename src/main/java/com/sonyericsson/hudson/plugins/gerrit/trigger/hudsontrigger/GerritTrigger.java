@@ -773,7 +773,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param job - job that calling event trigger is attached to
      * @return new clean RunningJobs collection.
      * @deprecated since RunningJobs was unifed into BuildMemory
-     
      */
     @Deprecated
     /*package*/ synchronized RunningJobs getRunningJobs(Job job) {

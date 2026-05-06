@@ -393,10 +393,7 @@ public class BuildMemory {
                 if (hasActiveBuildsForJob) {
                     outdatedEvents.add(runningChangeBasedEvent);
                     logger.debug("Added event to outdated list");
-                    // TODO:
-                    // We should consider adding the following in case we need to mark the builds in the
-                    // event as cancelled due to the BuildMemory is not only used by the cancellation policy.
-                    //
+
                     // NOTE: Do NOT remove the event from BuildMemory here!
                     // Unlike the old RunningJobs code (which was separate from lifecycle tracking),
                     // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
@@ -405,17 +402,17 @@ public class BuildMemory {
                     //
                     // IMPORTANT: We need to get the imprint from storage again to modify the real one,
                     // not the copy from getAllEvents()
-                    // MemoryImprint storageImprint = storage.getMemoryImprint(runningEvent);
-                    // if (storageImprint != null) {
-                    //     for (Entry imprintEntry : storageImprint.getEntries()) {
-                    //         if (imprintEntry.isProject(jobName)
-                    //                 && !imprintEntry.isBuildCompleted()
-                    //                 && !imprintEntry.isCancelled()) {
-                    //             imprintEntry.setCancelled(true);
-                    //             imprintEntry.setBuildCompleted(true);
-                    //         }
-                    //     }
-                    // }
+                    MemoryImprint storageImprint = storage.getMemoryImprint(runningEvent);
+                    if (storageImprint != null) {
+                        for (Entry imprintEntry : storageImprint.getEntries()) {
+                            if (imprintEntry.isProject(jobName)
+                                    && !imprintEntry.isBuildCompleted()
+                                    && !imprintEntry.isCancelled()) {
+                                imprintEntry.setCancelled(true);
+                                imprintEntry.setBuildCompleted(true);
+                            }
+                        }
+                    }
                 }
             }
 
