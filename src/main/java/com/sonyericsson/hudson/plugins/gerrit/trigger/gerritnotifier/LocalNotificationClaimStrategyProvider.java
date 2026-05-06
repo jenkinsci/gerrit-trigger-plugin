@@ -38,7 +38,7 @@ import hudson.Extension;
  * are fallbacks, higher values take precedence.</p>
  *
  * @see LocalNotificationClaimStrategy
- * @see NotificationClaimStrategyFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationClaimStrategyFactory
  */
 @Extension(ordinal = 0)
 public class LocalNotificationClaimStrategyProvider extends NotificationClaimStrategyProvider {

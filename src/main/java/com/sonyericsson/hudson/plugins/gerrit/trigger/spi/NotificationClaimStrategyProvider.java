@@ -81,7 +81,7 @@ import hudson.ExtensionPoint;
  * </ol>
  *
  * @see NotificationClaimStrategy
- * @see NotificationClaimStrategyFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationClaimStrategyFactory
  */
 public abstract class NotificationClaimStrategyProvider implements ExtensionPoint {
 
