@@ -35,7 +35,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * In standalone Jenkins deployments, there's only one instance, so it always has the
  * right to send notifications.</p>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see LocalNotificationClaimStrategyProvider
  */
 public class LocalNotificationClaimStrategy implements NotificationClaimStrategy {

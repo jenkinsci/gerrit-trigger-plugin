@@ -59,7 +59,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * re-discovery on next access. This is critical for test isolation when using JenkinsRule,
  * which creates fresh Jenkins instances per test.</p>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see NotificationClaimStrategy
  * @see NotificationClaimStrategyProvider
  */

@@ -37,7 +37,6 @@ import hudson.Extension;
  * The ordinal value determines the order in which providers are considered - lower values
  * are fallbacks, higher values take precedence.</p>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see LocalNotificationClaimStrategy
  * @see NotificationClaimStrategyFactory
  */

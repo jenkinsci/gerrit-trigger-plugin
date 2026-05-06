@@ -80,7 +80,6 @@ import hudson.ExtensionPoint;
  *   <li>Creates strategy instance via createStrategy()</li>
  * </ol>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see NotificationClaimStrategy
  * @see NotificationClaimStrategyFactory
  */

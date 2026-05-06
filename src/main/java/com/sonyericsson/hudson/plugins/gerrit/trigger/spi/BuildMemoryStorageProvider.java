@@ -63,7 +63,6 @@ import hudson.ExtensionPoint;
  * }
  * </pre>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see BuildMemoryStorage
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory
  */

@@ -41,7 +41,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>Implementations are discovered via the Extension Points pattern using
  * {@link NotificationClaimStrategyProvider}.</p>
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  * @see NotificationClaimStrategyProvider
  */
 public interface NotificationClaimStrategy {
