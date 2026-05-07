@@ -70,7 +70,7 @@ import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.Logic.shouldS
  * <p>
  * This class now delegates all storage operations to a {@link BuildMemoryStorage} implementation,
  * discovered via the Extension Points pattern. This allows switching between local (TreeMap) and
- * distributed (Hazelcast) storage without changing this class.
+ * distributed (e.g. Hazelcast) storage without changing this class.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
