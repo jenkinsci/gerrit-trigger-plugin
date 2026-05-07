@@ -31,7 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.SkipVote;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.BuildMemoryStorageFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
@@ -92,7 +92,7 @@ public class BuildMemoryTest {
     public void tearDown() throws Exception {
         jenkinsMockedStatic.close();
         // Reset the factory to ensure clean state for next test
-        BuildMemoryStorageFactory.reset();
+        GerritTriggerModeFactory.reset();
     }
 
     /**

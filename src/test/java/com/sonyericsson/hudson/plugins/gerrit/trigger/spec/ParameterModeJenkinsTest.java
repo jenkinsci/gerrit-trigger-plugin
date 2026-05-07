@@ -37,7 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.BuildMemoryStorageFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -117,11 +117,11 @@ public class ParameterModeJenkinsTest {
 
     /**
      * Tears down test environment after each test.
-     * Resets the BuildMemoryStorageFactory to ensure clean state for next test.
+     * Resets the GerritTriggerModeFactory to ensure clean state for next test.
      */
     @After
     public void tearDown() {
-        BuildMemoryStorageFactory.reset();
+        GerritTriggerModeFactory.reset();
     }
 
     /**

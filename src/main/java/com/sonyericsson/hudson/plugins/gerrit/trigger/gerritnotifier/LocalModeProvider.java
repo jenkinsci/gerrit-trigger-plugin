@@ -24,29 +24,35 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategyProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
 import hudson.Extension;
 
 /**
- * Provider for local (standalone) notification claim strategy.
+ * Provider for local (standalone) deployment mode.
+ *
+ * <p>This mode provides TreeMap-based storage and always-true notification claiming,
+ * suitable for single-instance Jenkins deployments where no coordination is needed.</p>
  *
  * <p>This provider has the lowest priority (0) and is always available, serving as
- * the fallback when no higher-priority providers (like cluster mode) are available.</p>
+ * the fallback when no higher-priority modes (like cluster) are available.</p>
  *
  * <p>The {@code @Extension(ordinal = 0)} annotation registers this provider with Jenkins.
  * The ordinal value determines the order in which providers are considered - lower values
  * are fallbacks, higher values take precedence.</p>
  *
+ * @see LocalBuildMemoryStorage
  * @see LocalNotificationClaimStrategy
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.NotificationClaimStrategyFactory
+ * @see GerritTriggerModeFactory
  */
 @Extension(ordinal = 0)
-public class LocalNotificationClaimStrategyProvider extends NotificationClaimStrategyProvider {
+public class LocalModeProvider extends GerritTriggerModeProvider {
 
     /**
      * Returns the priority of this provider.
-     * Lowest priority (0) since this is the fallback implementation.
+     * Lowest priority (0) since this is the fallback mode.
      *
      * @return 0 (lowest priority)
      */
@@ -56,7 +62,7 @@ public class LocalNotificationClaimStrategyProvider extends NotificationClaimStr
     }
 
     /**
-     * Checks if local notification claiming is available.
+     * Checks if local mode is available.
      * Always returns true since local mode has no dependencies.
      *
      * @return true (always available)
@@ -67,12 +73,34 @@ public class LocalNotificationClaimStrategyProvider extends NotificationClaimStr
     }
 
     /**
+     * Returns the name of this deployment mode.
+     *
+     * @return "Local"
+     */
+    @Override
+    public String getModeName() {
+        return "Local";
+    }
+
+    /**
+     * Creates a new local build memory storage instance.
+     * Uses TreeMap-based in-memory storage.
+     *
+     * @return a new LocalBuildMemoryStorage
+     */
+    @Override
+    public BuildMemoryStorage createStorage() {
+        return new LocalBuildMemoryStorage();
+    }
+
+    /**
      * Creates a new local notification claim strategy instance.
+     * Always returns true - no coordination needed in standalone mode.
      *
      * @return a new LocalNotificationClaimStrategy
      */
     @Override
-    public NotificationClaimStrategy createStrategy() {
+    public NotificationClaimStrategy createClaimStrategy() {
         return new LocalNotificationClaimStrategy();
     }
 }

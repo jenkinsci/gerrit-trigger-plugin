@@ -32,7 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritNotif
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.BuildMemoryStorageFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
 import com.sonymobile.tools.gerrit.gerritevents.GerritCmdRunner;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.EnvVars;
@@ -126,7 +126,7 @@ public class SpecGerritVerifiedSetterTest {
         jenkinsMockedStatic.close();
         triggeredBuildListenerMockedStatic.close();
         // Reset the factory to ensure clean state for next test
-        BuildMemoryStorageFactory.reset();
+        GerritTriggerModeFactory.reset();
     }
 
     /**
