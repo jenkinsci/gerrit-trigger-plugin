@@ -40,9 +40,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * </ul>
  *
  * <p>Implementations are discovered via the Extension Points pattern using
- * {@link NotificationClaimStrategyProvider}.</p>
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider}.</p>
  *
- * @see NotificationClaimStrategyProvider
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider
  */
 public interface NotificationClaimStrategy {
 
