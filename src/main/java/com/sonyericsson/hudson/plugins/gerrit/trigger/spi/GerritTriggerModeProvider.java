@@ -44,27 +44,21 @@ import hudson.ExtensionPoint;
  *
  * <h2>Usage Pattern:</h2>
  *
+ * <h2>Provider Ordering:</h2>
+ * <p>Providers are automatically ordered by Jenkins based on {@code @Extension(ordinal)} value.
+ * The factory selects the first available provider from this ordered list.</p>
+ * <ul>
+ *   <li>Higher ordinal = Higher priority (checked first)</li>
+ *   <li>{@code @Extension(ordinal = -1000)} - Local/fallback mode</li>
+ *   <li>{@code @Extension(ordinal = 100)} - Cluster mode</li>
+ * </ul>
+ *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalModeProvider
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory
  */
 public abstract class GerritTriggerModeProvider implements ExtensionPoint {
-
-    /**
-     * Returns the priority of this provider.
-     * Higher values take precedence over lower values when multiple providers are available.
-     *
-     * <p><b>Recommended values:</b></p>
-     * <ul>
-     *   <li>0 = Local/fallback mode (always available)</li>
-     *   <li>100 = Cluster mode (conditionally available)</li>
-     *   <li>Custom implementations can use any value to order themselves</li>
-     * </ul>
-     *
-     * @return the priority value (higher = higher priority)
-     */
-    public abstract int getPriority();
 
     /**
      * Checks if this mode provider can create implementations in the current environment.

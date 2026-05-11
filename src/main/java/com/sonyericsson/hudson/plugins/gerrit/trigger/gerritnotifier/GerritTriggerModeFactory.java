@@ -145,8 +145,8 @@ public final class GerritTriggerModeFactory {
     /**
      * Discovers and selects the best available deployment mode.
      *
-     * <p>Iterates through all registered providers and selects the one with
-     * the highest priority that is currently available.</p>
+     * <p>ExtensionList returns providers ordered by {@code @Extension(ordinal)} (highest first).
+     * Selects the first provider that is currently available.</p>
      *
      * <p>If ExtensionList is not available (e.g., in unit tests without Jenkins),
      * falls back to creating local mode implementations directly.</p>
@@ -168,38 +168,33 @@ public final class GerritTriggerModeFactory {
 
             logger.debug("Found {} provider(s)", providers.size());
 
-            GerritTriggerModeProvider bestProvider = null;
-            int bestPriority = Integer.MIN_VALUE;
+            GerritTriggerModeProvider selectedProvider = null;
 
+            // ExtensionList is already ordered by ordinal (highest first)
+            // Pick the first available provider
             for (GerritTriggerModeProvider provider : providers) {
-                logger.debug("Checking provider: {} (priority={}, available={})",
+                logger.debug("Checking provider: {} (available={})",
                     provider.getModeName(),
-                    provider.getPriority(),
                     provider.isAvailable());
 
                 if (provider.isAvailable()) {
-                    if (provider.getPriority() > bestPriority) {
-                        bestProvider = provider;
-                        bestPriority = provider.getPriority();
-                        logger.debug("New best provider: {} with priority {}",
-                            provider.getModeName(), bestPriority);
-                    }
+                    selectedProvider = provider;
+                    logger.info("Selected deployment mode: {}", provider.getModeName());
+                    break;
                 }
             }
 
-            if (bestProvider == null) {
+            if (selectedProvider == null) {
                 throw new IllegalStateException(
                     "No available GerritTriggerModeProvider found. "
                     + "At least LocalModeProvider should be available.");
             }
 
-            selectedMode = bestProvider;
-            logger.info("Selected deployment mode: {} (priority={})",
-                bestProvider.getModeName(), bestProvider.getPriority());
+            selectedMode = selectedProvider;
 
             // Create both implementations from the selected mode
-            storage = bestProvider.createStorage();
-            claimStrategy = bestProvider.createClaimStrategy();
+            storage = selectedProvider.createStorage();
+            claimStrategy = selectedProvider.createClaimStrategy();
 
             logger.info("Created BuildMemoryStorage: {}", storage.getClass().getSimpleName());
             logger.info("Created NotificationClaimStrategy: {}", claimStrategy.getClass().getSimpleName());

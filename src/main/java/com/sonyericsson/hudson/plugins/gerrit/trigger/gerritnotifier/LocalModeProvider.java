@@ -35,30 +35,25 @@ import hudson.Extension;
  * <p>This mode provides TreeMap-based storage and always-true notification claiming,
  * suitable for single-instance Jenkins deployments where no coordination is needed.</p>
  *
- * <p>This provider has the lowest priority (0) and is always available, serving as
+ * <p>This provider has the lowest priority and is always available, serving as
  * the fallback when no higher-priority modes (like cluster) are available.</p>
  *
- * <p>The {@code @Extension(ordinal = 0)} annotation registers this provider with Jenkins.
- * The ordinal value determines the order in which providers are considered - lower values
- * are fallbacks, higher values take precedence.</p>
+ * <p>The {@code @Extension(ordinal = FALLBACK_PRIORITY)} annotation registers this provider
+ * with Jenkins with a very low ordinal, ensuring it is only selected when no other modes
+ * are available. Higher ordinal values take precedence.</p>
  *
  * @see LocalBuildMemoryStorage
  * @see LocalNotificationClaimStrategy
  * @see GerritTriggerModeFactory
  */
-@Extension(ordinal = 0)
+@Extension(ordinal = LocalModeProvider.FALLBACK_PRIORITY)
 public class LocalModeProvider extends GerritTriggerModeProvider {
 
     /**
-     * Returns the priority of this provider.
-     * Lowest priority (0) since this is the fallback mode.
-     *
-     * @return 0 (lowest priority)
+     * Extension ordinal priority for local mode provider.
+     * Very low value ensures this is only selected when no other (higher priority) modes are available.
      */
-    @Override
-    public int getPriority() {
-        return 0;
-    }
+    static final int FALLBACK_PRIORITY = -1000;
 
     /**
      * Checks if local mode is available.
