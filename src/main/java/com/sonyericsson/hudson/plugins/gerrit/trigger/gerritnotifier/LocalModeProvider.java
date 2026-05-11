@@ -1,7 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
  *  Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy

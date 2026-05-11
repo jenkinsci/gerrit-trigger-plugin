@@ -1,8 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *  Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,9 +39,9 @@ import java.util.Map;
  * Storage interface for BuildMemory operations.
  * <p>
  * This interface defines all storage operations needed by BuildMemory to track builds
- * triggered by Gerrit events. Implementations provide different storage backends:
+ * triggered by Gerrit events. Implementations provide different storage backends, for example:
  * <ul>
- *   <li>Local: TreeMap-based storage (standalone Jenkins)</li>
+ *   <li>{@link com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage}: TreeMap-based storage (standalone Jenkins)</li>
  * </ul>
  * <p>
  * Implementations are discovered via Jenkins Extension Points pattern using

@@ -1,8 +1,6 @@
 /*
  *  The MIT License
  *
- *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
- *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *  Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -80,34 +78,19 @@ public class LocalBuildMemoryStorage implements BuildMemoryStorage {
 
     @Override
     public synchronized void triggered(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
+        MemoryImprint pb = getOrCreateMemoryImprint(event);
         pb.set(project);
     }
 
     @Override
     public synchronized void started(@NonNull GerritTriggeredEvent event, @NonNull Run build) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //A build should not start for a job that hasn't been registered. Keep the memory anyway.
-            pb = new MemoryImprint(event);
-            logger.warn("Build started without being registered first.");
-            memory.put(event, pb);
-        }
+        MemoryImprint pb = getOrCreateMemoryImprint(event, "Build started without being registered first.");
         pb.set(build.getParent(), build);
     }
 
     @Override
     public synchronized void completed(@NonNull GerritTriggeredEvent event, @NonNull Run build) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //Shouldn't happen but just in case, keep the memory.
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
+        MemoryImprint pb = getOrCreateMemoryImprint(event);
         pb.set(build.getParent(), build, true);
     }
 
@@ -130,16 +113,28 @@ public class LocalBuildMemoryStorage implements BuildMemoryStorage {
 
     @Override
     public synchronized void cancelled(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
-        MemoryImprint pb = memory.get(event);
-        if (pb == null) {
-            //Shouldn't happen but just in case, keep the memory.
-            pb = new MemoryImprint(event);
-            memory.put(event, pb);
-        }
+        MemoryImprint pb = getOrCreateMemoryImprint(event);
         pb.set(project);
         Entry entry = pb.getEntry(project);
         entry.setCancelled(true);
         entry.setBuildCompleted(true);
+    }
+
+    protected MemoryImprint getOrCreateMemoryImprint(@NonNull GerritTriggeredEvent event){
+        return getOrCreateMemoryImprint(event, null);
+    }
+
+    protected MemoryImprint getOrCreateMemoryImprint(@NonNull GerritTriggeredEvent event, String warningMessage){
+        MemoryImprint pb = memory.get(event);
+        if (pb == null) {
+            //Shouldn't happen but just in case, keep the memory.
+            pb = new MemoryImprint(event);
+            if (warningMessage != null) {
+                logger.warn(warningMessage);
+            }
+            memory.put(event, pb);
+        }
+        return pb;
     }
 
     @Override
