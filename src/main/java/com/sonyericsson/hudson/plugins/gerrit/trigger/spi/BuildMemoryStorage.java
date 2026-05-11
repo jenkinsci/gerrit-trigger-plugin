@@ -41,7 +41,8 @@ import java.util.Map;
  * This interface defines all storage operations needed by BuildMemory to track builds
  * triggered by Gerrit events. Implementations provide different storage backends, for example:
  * <ul>
- *   <li>{@link com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage}: TreeMap-based storage (standalone Jenkins)</li>
+ *   <li>{@link com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage}:
+ *       TreeMap-based storage (standalone Jenkins)</li>
  * </ul>
  * <p>
  * Implementations are discovered via Jenkins Extension Points pattern using

@@ -43,75 +43,8 @@ import hudson.ExtensionPoint;
  * </ul>
  *
  * <h2>Usage Pattern:</h2>
- * <pre>{@code
- * @Extension(ordinal = 0)  // Lower ordinal = lower priority (fallback)
- * public class LocalModeProvider extends GerritTriggerModeProvider {
  *
- *     @Override
- *     public int getPriority() {
- *         return 0;  // Fallback priority
- *     }
- *
- *     @Override
- *     public boolean isAvailable() {
- *         return true;  // Always available
- *     }
- *
- *     @Override
- *     public String getModeName() {
- *         return "Local";
- *     }
- *
- *     @Override
- *     public BuildMemoryStorage createStorage() {
- *         return new LocalBuildMemoryStorage();
- *     }
- *
- *     @Override
- *     public NotificationClaimStrategy createClaimStrategy() {
- *         return new LocalNotificationClaimStrategy();
- *     }
- * }
- *
- * @Extension(ordinal = 100)  // Higher ordinal = higher priority
- * public class ClusterModeProvider extends GerritTriggerModeProvider {
- *
- *     @Override
- *     public int getPriority() {
- *         return 100;  // Wins over local when available
- *     }
- *
- *     @Override
- *     public boolean isAvailable() {
- *         return ClusterModeProvider.isClusterModeEnabled()
- *             && HazelcastInstanceProvider.getInstance() != null;
- *     }
- *
- *     @Override
- *     public String getModeName() {
- *         return "Cluster";
- *     }
- *
- *     @Override
- *     public BuildMemoryStorage createStorage() {
- *         return new HazelcastBuildMemoryStorage();
- *     }
- *
- *     @Override
- *     public NotificationClaimStrategy createClaimStrategy() {
- *         return new ClusterNotificationClaimStrategy();
- *     }
- * }
- * }</pre>
- *
- * <h2>Selection Algorithm:</h2>
- * <ol>
- *   <li>Jenkins discovers all providers via ExtensionList.lookup()</li>
- *   <li>Filters to only available providers (isAvailable() == true)</li>
- *   <li>Selects the provider with highest priority</li>
- *   <li>Creates all component instances from selected provider</li>
- * </ol>
- *
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalModeProvider
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory

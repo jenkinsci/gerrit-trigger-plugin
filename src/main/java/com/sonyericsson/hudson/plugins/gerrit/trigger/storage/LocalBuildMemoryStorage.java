@@ -120,11 +120,25 @@ public class LocalBuildMemoryStorage implements BuildMemoryStorage {
         entry.setBuildCompleted(true);
     }
 
-    protected MemoryImprint getOrCreateMemoryImprint(@NonNull GerritTriggeredEvent event){
+    /**
+     * Gets or creates a MemoryImprint for the given event.
+     *
+     * @param event the event
+     * @return the MemoryImprint
+     */
+    protected MemoryImprint getOrCreateMemoryImprint(@NonNull GerritTriggeredEvent event) {
         return getOrCreateMemoryImprint(event, null);
     }
 
-    protected MemoryImprint getOrCreateMemoryImprint(@NonNull GerritTriggeredEvent event, String warningMessage){
+    /**
+     * Gets or creates a MemoryImprint for the given event, logging a warning if created.
+     *
+     * @param event the event
+     * @param warningMessage optional warning message to log if MemoryImprint is created
+     * @return the MemoryImprint
+     */
+    protected MemoryImprint getOrCreateMemoryImprint(
+            @NonNull GerritTriggeredEvent event, String warningMessage) {
         MemoryImprint pb = memory.get(event);
         if (pb == null) {
             //Shouldn't happen but just in case, keep the memory.
