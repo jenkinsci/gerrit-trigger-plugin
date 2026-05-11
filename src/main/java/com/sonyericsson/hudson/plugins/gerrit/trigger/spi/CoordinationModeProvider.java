@@ -26,15 +26,24 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 import hudson.ExtensionPoint;
 
 /**
- * Extension point for providing deployment mode implementations.
+ * Extension point for providing coordination mode implementations.
  *
- * <p>Each deployment mode (local, cluster, etc.) provides all necessary implementations
+ * <p>Each coordination mode (local, cluster, etc.) provides all necessary implementations
  * together as a cohesive unit. This ensures that related components always use
  * implementations from the same mode, avoiding inconsistent configurations.</p>
  *
+ * <h2>Coordination vs Triggering:</h2>
+ * <p>"Coordination mode" refers to how Jenkins instances coordinate with each other when
+ * processing Gerrit events, NOT how triggering behaves. The mode determines:</p>
+ * <ul>
+ *   <li>Where build memory is stored (local TreeMap vs distributed cache)</li>
+ *   <li>How notification claiming works (always-claim vs distributed claiming)</li>
+ *   <li>Whether instances need to coordinate at all (standalone vs cluster)</li>
+ * </ul>
+ *
  * <h2>Design Rationale:</h2>
  * <p>Rather than having separate extension points for each component (storage, notification
- * claiming, etc.), we group them by deployment mode. This is because:</p>
+ * claiming, etc.), we group them by coordination mode. This is because:</p>
  * <ul>
  *   <li>Components are always deployed together in the same mode</li>
  *   <li>Mode detection logic is shared across components</li>
@@ -42,23 +51,21 @@ import hudson.ExtensionPoint;
  *   <li>Simpler to add new modes (implement one provider, not N providers)</li>
  * </ul>
  *
- * <h2>Usage Pattern:</h2>
- *
  * <h2>Provider Ordering:</h2>
  * <p>Providers are automatically ordered by Jenkins based on {@code @Extension(ordinal)} value.
  * The factory selects the first available provider from this ordered list.</p>
  * <ul>
  *   <li>Higher ordinal = Higher priority (checked first)</li>
  *   <li>{@code @Extension(ordinal = -1000)} - Local/fallback mode</li>
- *   <li>{@code @Extension(ordinal = 100)} - Cluster mode</li>
+ *   <li>{@code @Extension(ordinal = 100)} - Cluster mode (future)</li>
  * </ul>
  *
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalModeProvider
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
  */
-public abstract class GerritTriggerModeProvider implements ExtensionPoint {
+public abstract class CoordinationModeProvider implements ExtensionPoint {
 
     /**
      * Checks if this mode provider can create implementations in the current environment.
@@ -76,7 +83,7 @@ public abstract class GerritTriggerModeProvider implements ExtensionPoint {
     public abstract boolean isAvailable();
 
     /**
-     * Returns the name of this deployment mode for logging and debugging.
+     * Returns the name of this coordination mode for logging and debugging.
      *
      * <p>Examples: "Local", "Cluster", "Redis", etc.</p>
      *

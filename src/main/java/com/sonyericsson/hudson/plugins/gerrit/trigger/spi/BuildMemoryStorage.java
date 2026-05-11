@@ -46,9 +46,9 @@ import java.util.Map;
  * </ul>
  * <p>
  * Implementations are discovered via Jenkins Extension Points pattern using
- * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider}.
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.
  *
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory
  */
 public interface BuildMemoryStorage {

@@ -36,7 +36,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetI
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -101,7 +101,7 @@ public class BuildMemory {
 
     /**
      * The storage backend for build memory.
-     * Discovered and created via GerritTriggerModeFactory on first use.
+     * Discovered and created via CoordinationModeFactory on first use.
      */
     private final BuildMemoryStorage storage;
 
@@ -112,7 +112,7 @@ public class BuildMemory {
      * Initializes storage via factory discovery.
      */
     public BuildMemory() {
-        this.storage = GerritTriggerModeFactory.getStorage();
+        this.storage = CoordinationModeFactory.get().getStorage();
     }
 
     /**

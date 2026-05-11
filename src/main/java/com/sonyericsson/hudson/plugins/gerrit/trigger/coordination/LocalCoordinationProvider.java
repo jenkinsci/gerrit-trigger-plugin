@@ -21,16 +21,17 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalNotificationClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.GerritTriggerModeProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
 import hudson.Extension;
 
 /**
- * Provider for local (standalone) deployment mode.
+ * Provider for local (standalone) coordination mode.
  *
  * <p>This mode provides TreeMap-based storage and always-true notification claiming,
  * suitable for single-instance Jenkins deployments where no coordination is needed.</p>
@@ -44,19 +45,21 @@ import hudson.Extension;
  *
  * @see LocalBuildMemoryStorage
  * @see LocalNotificationClaimStrategy
- * @see GerritTriggerModeFactory
+ * @see CoordinationModeFactory
  */
-@Extension(ordinal = LocalModeProvider.FALLBACK_PRIORITY)
-public class LocalModeProvider extends GerritTriggerModeProvider {
+// CHECKSTYLE:OFF MagicNumber - Ordinal must be literal in annotation, -1000 ensures fallback priority
+@Extension(ordinal = LocalCoordinationProvider.FALLBACK_PRIORITY)
+// CHECKSTYLE:ON MagicNumber
+public class LocalCoordinationProvider extends CoordinationModeProvider {
 
     /**
-     * Extension ordinal priority for local mode provider.
+     * Extension ordinal priority for local coordination provider.
      * Very low value ensures this is only selected when no other (higher priority) modes are available.
      */
     static final int FALLBACK_PRIORITY = -1000;
 
     /**
-     * Checks if local mode is available.
+     * Checks if local coordination mode is available.
      * Always returns true since local mode has no dependencies.
      *
      * @return true (always available)
@@ -67,7 +70,7 @@ public class LocalModeProvider extends GerritTriggerModeProvider {
     }
 
     /**
-     * Returns the name of this deployment mode.
+     * Returns the name of this coordination mode.
      *
      * @return "Local"
      */

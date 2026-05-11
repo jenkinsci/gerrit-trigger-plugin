@@ -37,7 +37,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginTopicChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.MockGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored;
@@ -58,7 +57,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -113,15 +111,6 @@ public class ParameterModeJenkinsTest {
                 Collections.emptyList(), Collections.emptyList(),
                 Collections.emptyList(), false)));
         trigger.setEscapeQuotes(false);
-    }
-
-    /**
-     * Tears down test environment after each test.
-     * Resets the GerritTriggerModeFactory to ensure clean state for next test.
-     */
-    @After
-    public void tearDown() {
-        GerritTriggerModeFactory.reset();
     }
 
     /**

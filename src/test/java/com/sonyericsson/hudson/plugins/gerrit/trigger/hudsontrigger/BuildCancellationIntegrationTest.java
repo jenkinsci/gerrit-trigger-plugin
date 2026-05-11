@@ -32,7 +32,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Compare
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.GerritTriggerModeFactory;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
@@ -95,8 +94,6 @@ public class BuildCancellationIntegrationTest {
      */
     @Before
     public void setUp() throws Exception {
-        // Reset factory to ensure clean state for each test
-        GerritTriggerModeFactory.reset();
         SshdServerMock.generateKeyPair();
         serverMock = new SshdServerMock();
         sshd = SshdServerMock.startServer(serverMock);
@@ -121,8 +118,6 @@ public class BuildCancellationIntegrationTest {
             sshd.stop(true);
             sshd = null;
         }
-        // Reset factory after test
-        GerritTriggerModeFactory.reset();
     }
 
     /**
