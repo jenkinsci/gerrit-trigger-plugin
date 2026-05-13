@@ -117,6 +117,7 @@ public class LocalBuildMemoryStorage implements BuildMemoryStorage {
         pb.set(project);
         Entry entry = pb.getEntry(project);
         entry.setCancelled(true);
+        entry.setCancelling(false);
         entry.setBuildCompleted(true);
     }
 
@@ -234,7 +235,7 @@ public class LocalBuildMemoryStorage implements BuildMemoryStorage {
                     if (entry.getBuild() != null) {
                         return !entry.isBuildCompleted();
                     } else {
-                        return !entry.isCancelled();
+                        return !entry.isCancelling() && !entry.isCancelled();
                     }
                 }
             }

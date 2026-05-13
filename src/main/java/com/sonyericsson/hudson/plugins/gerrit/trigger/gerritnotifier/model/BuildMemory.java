@@ -349,14 +349,13 @@ public class BuildMemory {
 
         logger.info("cancelOutdatedBuilds called for event {} with policy {}", newEvent, policy);
 
-        Map<GerritTriggeredEvent, MemoryImprint> allEvents = storage.getAllEvents();
-        logger.info("BuildMemory has {} events in memory", allEvents.size());
-
         String jobName = job.getFullName();
         List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
         CauseOfInterruption cause = new NewPatchSetInterruption();
 
-        synchronized (this) {
+        synchronized (storage) {
+            Map<GerritTriggeredEvent, MemoryImprint> allEvents = storage.getAllEvents();
+            logger.info("BuildMemory has {} events in memory", allEvents.size());
             // Find all outdated events
             Iterator<Map.Entry<GerritTriggeredEvent, MemoryImprint>> it = allEvents.entrySet().iterator();
             while (it.hasNext()) {
@@ -380,10 +379,12 @@ public class BuildMemory {
                 boolean hasActiveBuildsForJob = false;
 
                 for (Entry imprintEntry : imprint.getEntries()) {
-                    logger.debug("Checking entry: project={}, completed={}, cancelled={}",
-                            imprintEntry.getProject(), imprintEntry.isBuildCompleted(), imprintEntry.isCancelled());
+                    logger.debug("Checking entry: project={}, completed={}, cancelling={}, cancelled={}",
+                            imprintEntry.getProject(), imprintEntry.isBuildCompleted(),
+                            imprintEntry.isCancelling(), imprintEntry.isCancelled());
                     if (imprintEntry.isProject(jobName)
                             && !imprintEntry.isBuildCompleted()
+                            && !imprintEntry.isCancelling()
                             && !imprintEntry.isCancelled()) {
                         hasActiveBuildsForJob = true;
                         logger.debug("Found active build for job {}", jobName);
@@ -398,8 +399,9 @@ public class BuildMemory {
                     // NOTE: Do NOT remove the event from BuildMemory here!
                     // Unlike the old RunningJobs code (which was separate from lifecycle tracking),
                     // BuildMemory needs to keep tracking cancelled events for lifecycle/feedback.
-                    // Mark the Entry as cancelled immediately so it won't be considered "active"
+                    // Mark the Entry as "cancelling" immediately so it won't be considered "active"
                     // in future cancellation checks (prevents state accumulation issues).
+                    // The actual "cancelled" flag will be set later by GerritQueueListener when Jenkins confirms.
                     //
                     // IMPORTANT: We need to get the imprint from storage again to modify the real one,
                     // not the copy from getAllEvents()
@@ -408,8 +410,9 @@ public class BuildMemory {
                         for (Entry imprintEntry : storageImprint.getEntries()) {
                             if (imprintEntry.isProject(jobName)
                                     && !imprintEntry.isBuildCompleted()
+                                    && !imprintEntry.isCancelling()
                                     && !imprintEntry.isCancelled()) {
-                                imprintEntry.setCancelled(true);
+                                imprintEntry.setCancelling(true);
                                 imprintEntry.setBuildCompleted(true);
                             }
                         }
@@ -1044,7 +1047,7 @@ public class BuildMemory {
                 if (entry == null) {
                     continue;
                 }
-                if (entry.isCancelled()) {
+                if (entry.isCancelling() || entry.isCancelled()) {
                     continue;
                 }
                 Run build = entry.getBuild();
@@ -1090,6 +1093,7 @@ public class BuildMemory {
             private String project;
             private String build;
             private boolean buildCompleted;
+            private boolean cancelling;
             private boolean cancelled;
             private String customUrl;
             private String unsuccessfulMessage;
@@ -1119,6 +1123,7 @@ public class BuildMemory {
             private Entry(Job project) {
                 this.project = project.getFullName();
                 buildCompleted = false;
+                cancelling = false;
                 cancelled = false;
                 this.triggeredTimestamp = System.currentTimeMillis();
             }
@@ -1138,6 +1143,7 @@ public class BuildMemory {
                 this.completedTimestamp = copy.completedTimestamp;
                 this.startedTimestamp = copy.startedTimestamp;
                 this.customUrl = copy.customUrl;
+                this.cancelling = copy.cancelling;
                 this.cancelled = copy.cancelled;
             }
 
@@ -1250,17 +1256,47 @@ public class BuildMemory {
             }
 
             /**
-             * If the build was cancelled.
+             * If the build is being cancelled (intent set, but not yet confirmed by Jenkins).
+             * This flag is set immediately when cancellation policy decides the build should be cancelled,
+             * before Jenkins actually processes the cancellation request.
+             *
+             * @return true if cancellation has been initiated but not yet confirmed
+             * @see #isCancelled()
+             */
+            public boolean isCancelling() {
+                return cancelling;
+            }
+
+            /**
+             * Sets the cancelling flag to indicate cancellation intent.
+             * This should be set when the cancellation policy decides the build should be cancelled,
+             * before the actual Jenkins cancellation happens.
+             *
+             * @param cancelling true if cancellation is being initiated
+             * @see #setCancelled(boolean)
+             */
+            public void setCancelling(boolean cancelling) {
+                this.cancelling = cancelling;
+            }
+
+            /**
+             * If the build was cancelled (confirmed by Jenkins).
+             * This flag is set after Jenkins has confirmed the build/queue item was actually cancelled.
+             *
              * @return true if the build was cancelled while in the Queue
+             * @see #isCancelling()
              */
             public boolean isCancelled() {
                 return cancelled;
             }
 
             /**
-             * If the build was cancelled before if left the queue.
+             * Sets the cancelled flag after Jenkins confirms the build was cancelled.
+             * This should be called by listeners (e.g., GerritQueueListener) after Jenkins
+             * confirms the cancellation happened.
              *
              * @param cancelled true if the build was cancelled while in the queue.
+             * @see #setCancelling(boolean)
              */
             public void setCancelled(boolean cancelled) {
                 this.cancelled = cancelled;
