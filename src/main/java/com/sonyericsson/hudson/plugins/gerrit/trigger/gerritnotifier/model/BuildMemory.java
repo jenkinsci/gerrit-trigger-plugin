@@ -413,7 +413,6 @@ public class BuildMemory {
                                     && !imprintEntry.isCancelling()
                                     && !imprintEntry.isCancelled()) {
                                 imprintEntry.setCancelling(true);
-                                imprintEntry.setBuildCompleted(true);
                             }
                         }
                     }
