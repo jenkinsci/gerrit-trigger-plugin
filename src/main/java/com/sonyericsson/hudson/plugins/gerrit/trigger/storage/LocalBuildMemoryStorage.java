@@ -52,7 +52,7 @@ import java.util.TreeMap;
  * All operations are synchronized to ensure thread safety.
  *
  */
-public class LocalBuildMemoryStorage implements BuildMemoryStorage {
+public class LocalBuildMemoryStorage extends BuildMemoryStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalBuildMemoryStorage.class);
 
