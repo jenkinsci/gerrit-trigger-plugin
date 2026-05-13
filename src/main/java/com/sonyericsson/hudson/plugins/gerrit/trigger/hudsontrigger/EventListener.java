@@ -2,7 +2,6 @@
  *  The MIT License
  *
  *  Copyright (c) 2014, CloudBees, Inc. All rights reserved.
- *  Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
