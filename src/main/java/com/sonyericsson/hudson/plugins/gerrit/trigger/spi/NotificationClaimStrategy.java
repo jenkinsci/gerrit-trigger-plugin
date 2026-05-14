@@ -27,11 +27,11 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
- * Strategy interface for notification claiming in different deployment modes.
- * Implementations handle the coordination of which Jenkins instance should send
+ * Abstract base class for notification claiming strategies in different deployment modes.
+ * Subclasses handle the coordination of which Jenkins instance should send
  * notifications to Gerrit in HA/HS deployments.
  *
- * <p>This interface enables switching between local (standalone) and cluster modes:</p>
+ * <p>This abstract class enables switching between local (standalone) and cluster modes:</p>
  * <ul>
  *   <li><b>Local mode:</b> Always claims notification rights - no coordination needed</li>
  *   <li><b>Cluster mode:</b> Uses distributed coordination (e.g., Hazelcast) to ensure
@@ -40,10 +40,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * <p>Implementations are discovered via the Extension Points pattern using
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.</p>
+ * <p>
+ * <strong>Design Note:</strong> This is an abstract class (not an interface) to allow
+ * adding concrete helper methods in the future without breaking existing implementations.
+ * This follows Jenkins plugin development best practices.
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
  */
-public interface NotificationClaimStrategy {
+public abstract class NotificationClaimStrategy {
 
     /**
      * Attempts to claim the right to send notification for an event.
@@ -53,7 +57,7 @@ public interface NotificationClaimStrategy {
      * @param event the Gerrit event
      * @return true if this instance should send the notification, false otherwise
      */
-    boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event);
+    public abstract boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event);
 
     /**
      * Releases the notification claim for an event.
@@ -61,5 +65,5 @@ public interface NotificationClaimStrategy {
      *
      * @param event the Gerrit event
      */
-    void releaseNotificationRight(@NonNull GerritTriggeredEvent event);
+    public abstract void releaseNotificationRight(@NonNull GerritTriggeredEvent event);
 }

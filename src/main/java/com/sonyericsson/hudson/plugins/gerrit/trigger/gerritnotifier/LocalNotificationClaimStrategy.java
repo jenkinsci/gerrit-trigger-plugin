@@ -37,7 +37,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
  */
-public class LocalNotificationClaimStrategy implements NotificationClaimStrategy {
+public class LocalNotificationClaimStrategy extends NotificationClaimStrategy {
 
     @Override
     public boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event) {
