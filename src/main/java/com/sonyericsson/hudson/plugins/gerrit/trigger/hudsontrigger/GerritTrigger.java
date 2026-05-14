@@ -2,7 +2,7 @@
  *  The MIT License
  *
  *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
- *  Copyright (c) 2014, CloudBees, Inc. All rights reserved.
+ *  Copyright (c) 2026, CloudBees, Inc. All rights reserved.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -773,7 +773,6 @@ public class GerritTrigger extends Trigger<Job> {
      * @param job - job that calling event trigger is attached to
      * @return new clean RunningJobs collection.
      * @deprecated since RunningJobs was unifed into BuildMemory
-     
      */
     @Deprecated
     /*package*/ synchronized RunningJobs getRunningJobs(Job job) {

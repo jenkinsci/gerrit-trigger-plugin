@@ -123,7 +123,6 @@ public class SpecGerritVerifiedSetterTest {
         messageProviderMockedStatic.close();
         jenkinsMockedStatic.close();
         triggeredBuildListenerMockedStatic.close();
-
     }
 
     /**
