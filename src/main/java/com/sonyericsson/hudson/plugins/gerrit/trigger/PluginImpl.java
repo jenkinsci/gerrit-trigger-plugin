@@ -580,12 +580,53 @@ public class PluginImpl extends GlobalConfiguration {
         logger.info("Starting Gerrit-Trigger Plugin");
         logger.trace("Loading configs");
         load();
+
+        // Initialize Hazelcast early (before any code that might use CoordinationModeFactory)
+        // This must happen before BuildMemory, EventClaimStrategy, or NotificationClaimStrategy are used
+        // because HazelcastCoordinationProvider.isAvailable() checks if Hazelcast is initialized
+        initializeHazelcast();
+
         GerritSendCommandQueue.initialize(pluginConfig);
         gerritEventManager = new JenkinsAwareGerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
         for (GerritServer s : servers) {
             s.start();
         }
         active = true;
+    }
+
+    /**
+     * Initialize Hazelcast if coordination mode is configured as 'hazelcast'.
+     * <p>
+     * This is called early in plugin startup, before any code that might use
+     * CoordinationModeFactory. This ensures HazelcastCoordinationProvider.isAvailable()
+     * can see that Hazelcast is initialized and ready.
+     * <p>
+     * Fails gracefully - if initialization fails, plugin continues in local mode.
+     */
+    private void initializeHazelcast() {
+        String coordinationMode = System.getProperty("gerrit.trigger.coordination.mode", "local");
+
+        if (!"hazelcast".equalsIgnoreCase(coordinationMode)) {
+            logger.debug("Coordination mode is '{}', Hazelcast will not be initialized", coordinationMode);
+            return;
+        }
+
+        logger.info("Coordination mode is 'hazelcast', initializing Hazelcast...");
+        try {
+            boolean initialized = com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
+                    .HazelcastManager.initialize();
+            if (initialized) {
+                logger.info("Hazelcast initialized successfully");
+                String status = com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
+                        .HazelcastManager.getStatus();
+                logger.info("Hazelcast status: {}", status);
+            } else {
+                logger.warn("Hazelcast initialization returned false (mode may be disabled)");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to initialize Hazelcast. Plugin will continue in local mode.", e);
+            // Continue plugin startup even if Hazelcast fails - will fall back to local mode
+        }
     }
 
     /**
@@ -671,6 +712,11 @@ public class PluginImpl extends GlobalConfiguration {
      */
     public void stop() {
         active = false;
+
+        // Shutdown Hazelcast before stopping servers
+        // This ensures any coordination operations are cleaned up before servers disconnect
+        shutdownHazelcast();
+
         for (GerritServer s : servers) {
             s.stop();
         }
@@ -681,6 +727,27 @@ public class PluginImpl extends GlobalConfiguration {
         }
         GerritSendCommandQueue.shutdown();
         servers.clear();
+    }
+
+    /**
+     * Shutdown Hazelcast if it was initialized.
+     * <p>
+     * Called during plugin shutdown to clean up Hazelcast resources.
+     * Fails gracefully - errors are logged but don't prevent plugin shutdown.
+     */
+    private void shutdownHazelcast() {
+        try {
+            if (com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
+                    .HazelcastManager.isInitialized()) {
+                logger.info("Shutting down Hazelcast...");
+                com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
+                        .HazelcastManager.shutdown();
+                logger.info("Hazelcast shutdown complete");
+            }
+        } catch (Exception e) {
+            logger.error("Error shutting down Hazelcast (non-critical, continuing shutdown)", e);
+            // Continue with plugin shutdown even if Hazelcast shutdown fails
+        }
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
+ *  Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import java.util.Map;
  * Executes on the partition owner to prevent race conditions when multiple
  * replicas update the same event simultaneously.
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class BuildCompletedProcessor implements EntryProcessor<BuildMemoryKey, MemoryImprintData, Boolean> {
     private static final long serialVersionUID = 1L;

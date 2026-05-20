@@ -1,6 +1,8 @@
 /*
  * The MIT License
  *
+ *  Copyright 2026 CloudBees, Inc.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -32,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * Configuration builder for Hazelcast cluster.
  * Creates appropriate configuration based on deployment environment (Kubernetes, TCP/IP, etc.).
  *
- * @author CloudBees, Inc.
  */
 public final class HazelcastConfig {
 
@@ -144,12 +145,12 @@ public final class HazelcastConfig {
 
         // Register Compact Serializers for event claiming and build memory
         // This enables cross-JVM serialization compatibility with sidecar deployment
-        // Note: EventClaimSerializer will be added in Phase 6 when EventClaim is ported
         config.getSerializationConfig()
                 .getCompactSerializationConfig()
+                .addSerializer(new EventClaimSerializer())
                 .addSerializer(new EntryDataSerializer())
                 .addSerializer(new MemoryImprintDataSerializer());
-        logger.debug("Registered Compact Serializers for EntryData and MemoryImprintData");
+        logger.debug("Registered Compact Serializers for EventClaim, EntryData, and MemoryImprintData");
 
         logger.info("Hazelcast configuration created for cluster: {}", clusterName);
 

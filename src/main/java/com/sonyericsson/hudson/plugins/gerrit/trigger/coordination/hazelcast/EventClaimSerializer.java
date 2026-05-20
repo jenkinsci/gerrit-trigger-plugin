@@ -1,8 +1,6 @@
 /*
  * The MIT License
  *
- *
- *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -28,53 +26,43 @@ import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Hazelcast Compact Serializer for {@link MemoryImprintData}.
+ * Hazelcast Compact Serializer for {@link EventClaim}.
  * <p>
  * Compact Serialization is schema-based and doesn't require class definitions
  * on the Hazelcast server (sidecar container). This enables cross-JVM serialization
  * without classloading issues.
+ * <p>
+ * The serializer writes a schema with field names and types, which the sidecar
+ * Hazelcast can process without needing the EventClaim class.
  *
+ * @author CloudBees, Inc.
  */
-public class MemoryImprintDataSerializer implements CompactSerializer<MemoryImprintData> {
+public class EventClaimSerializer implements CompactSerializer<EventClaim> {
 
     /**
      * Type name for schema registration.
      * Must be unique across all compact serialized types.
      */
-    private static final String TYPE_NAME = "MemoryImprintData";
+    private static final String TYPE_NAME = "EventClaim";
 
     @Override
     @NonNull
-    public MemoryImprintData read(@NonNull CompactReader reader) {
-        String eventJson = reader.readString("eventJson");
+    public EventClaim read(@NonNull CompactReader reader) {
+        String eventId = reader.readString("eventId");
+        String claimedBy = reader.readString("claimedBy");
+        long claimedAt = reader.readInt64("claimedAt");
+        String eventType = reader.readString("eventType");
 
-        // Read entries array using Compact Serialization array support
-        EntryData[] entriesArray = reader.readArrayOfCompact("entries", EntryData.class);
-        List<EntryData> entries = new ArrayList<>();
-        if (entriesArray != null) {
-            for (EntryData entry : entriesArray) {
-                entries.add(entry);
-            }
-        }
-
-        return new MemoryImprintData(eventJson, entries);
+        return new EventClaim(eventId, claimedBy, claimedAt, eventType);
     }
 
     @Override
-    public void write(@NonNull CompactWriter writer, @NonNull MemoryImprintData data) {
-        writer.writeString("eventJson", data.getEventJson());
-
-        // Write entries array using Compact Serialization array support
-        List<EntryData> entries = data.getEntries();
-        EntryData[] entriesArray = null;
-        if (entries != null && !entries.isEmpty()) {
-            entriesArray = entries.toArray(new EntryData[0]);
-        }
-        writer.writeArrayOfCompact("entries", entriesArray);
+    public void write(@NonNull CompactWriter writer, @NonNull EventClaim claim) {
+        writer.writeString("eventId", claim.getEventId());
+        writer.writeString("claimedBy", claim.getClaimedBy());
+        writer.writeInt64("claimedAt", claim.getClaimedAt());
+        writer.writeString("eventType", claim.getEventType());
     }
 
     @Override
@@ -85,7 +73,7 @@ public class MemoryImprintDataSerializer implements CompactSerializer<MemoryImpr
 
     @Override
     @NonNull
-    public Class<MemoryImprintData> getCompactClass() {
-        return MemoryImprintData.class;
+    public Class<EventClaim> getCompactClass() {
+        return EventClaim.class;
     }
 }

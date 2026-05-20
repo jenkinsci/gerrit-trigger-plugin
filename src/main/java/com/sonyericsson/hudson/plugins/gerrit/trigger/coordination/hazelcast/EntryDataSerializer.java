@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- *
+ *  Copyright 2026 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>
  * Serializes individual BuildMemory entries with fixed schema.
  *
- * @author CloudBees, Inc.
  */
 public class EntryDataSerializer implements CompactSerializer<EntryData> {
 

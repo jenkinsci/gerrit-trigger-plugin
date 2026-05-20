@@ -1,6 +1,8 @@
 /*
  *  The MIT License
  *
+ *  Copyright 2026 CloudBees, Inc.
+ *
  *  Copyright 2010 Sony Ericsson Mobile Communications. All rights reserved.
  *  Copyright 2012 Sony Mobile Communications AB. All rights reserved.
  *
@@ -59,7 +61,6 @@ import java.util.Map;
  * </ul>
  *
  * @see HazelcastCoordinationProvider
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 

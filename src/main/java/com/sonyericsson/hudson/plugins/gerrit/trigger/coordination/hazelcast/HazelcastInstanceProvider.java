@@ -1,6 +1,8 @@
 /*
  * The MIT License
  *
+ * Copyright 2026 CloudBees, Inc.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -33,7 +35,6 @@ import org.slf4j.LoggerFactory;
  * Provides thread-safe access to the Hazelcast embedded member instance.
  * The instance is set by {@link HazelcastManager} during initialization.
  *
- * @author CloudBees, Inc.
  */
 public final class HazelcastInstanceProvider {
 
