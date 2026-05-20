@@ -49,6 +49,7 @@ public class EntryDataSerializer implements CompactSerializer<EntryData> {
         entry.setProjectFullName(reader.readString("projectFullName"));
         entry.setBuildId(reader.readString("buildId"));
         entry.setBuildCompleted(reader.readBoolean("buildCompleted"));
+        entry.setCancelling(reader.readBoolean("cancelling"));
         entry.setCancelled(reader.readBoolean("cancelled"));
         entry.setCustomUrl(reader.readString("customUrl"));
         entry.setUnsuccessfulMessage(reader.readString("unsuccessfulMessage"));
@@ -63,6 +64,7 @@ public class EntryDataSerializer implements CompactSerializer<EntryData> {
         writer.writeString("projectFullName", entry.getProjectFullName());
         writer.writeString("buildId", entry.getBuildId());
         writer.writeBoolean("buildCompleted", entry.isBuildCompleted());
+        writer.writeBoolean("cancelling", entry.isCancelling());
         writer.writeBoolean("cancelled", entry.isCancelled());
         writer.writeString("customUrl", entry.getCustomUrl());
         writer.writeString("unsuccessfulMessage", entry.getUnsuccessfulMessage());

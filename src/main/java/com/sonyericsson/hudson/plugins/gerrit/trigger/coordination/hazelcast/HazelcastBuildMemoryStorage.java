@@ -168,6 +168,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                     // Restore additional entry data
                     MemoryImprint.Entry entry = imprint.getEntry(project);
                     if (entry != null) {
+                        entry.setCancelling(entryData.isCancelling());
                         entry.setCancelled(entryData.isCancelled());
                         entry.setCustomUrl(entryData.getCustomUrl());
                         entry.setUnsuccessfulMessage(entryData.getUnsuccessfulMessage());
@@ -341,6 +342,23 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             logger.debug("Build cancelled without being registered first (distributed mode).");
         }
         logger.trace("Cancelled event stored in distributed memory: {}", key);
+    }
+
+    @Override
+    public synchronized void setCancelling(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
+        IMap<BuildMemoryKey, MemoryImprintData> map = getDistributedMemory();
+        if (map == null) {
+            logger.warn("Cannot mark cancelling - Hazelcast unavailable");
+            return;
+        }
+
+        BuildMemoryKey key = new BuildMemoryKey(event);
+        String projectFullName = project.getFullName();
+
+        // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
+        map.executeOnKey(key, new SetCancellingProcessor(projectFullName));
+
+        logger.trace("Cancelling flag set in distributed memory for event: {}", key);
     }
 
     @Override

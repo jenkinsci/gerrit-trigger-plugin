@@ -61,6 +61,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
             for (EntryData entryData : data.getEntries()) {
                 if (projectFullName.equals(entryData.getProjectFullName())) {
                     entryData.setCancelled(true);
+                    entryData.setCancelling(false);  // Clear cancelling flag
                     entryData.setBuildCompleted(true);  // Cancelled builds are also completed
                     found = true;
                     break;
@@ -73,6 +74,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
             EntryData newEntry = new EntryData();
             newEntry.setProjectFullName(projectFullName);
             newEntry.setCancelled(true);
+            newEntry.setCancelling(false);
             newEntry.setBuildCompleted(true);  // Cancelled builds are also completed
             data.addEntry(newEntry);
         }
