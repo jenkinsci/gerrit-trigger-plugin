@@ -63,6 +63,7 @@ import hudson.ExtensionPoint;
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
+ * @see EventClaimStrategy
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
  */
 public abstract class CoordinationModeProvider implements ExtensionPoint {
@@ -118,4 +119,23 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * @return a new NotificationClaimStrategy instance (non-null)
      */
     public abstract NotificationClaimStrategy createClaimStrategy();
+
+    /**
+     * Creates a new EventClaimStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
+     * instances receive the same Gerrit event in HA/HS deployments. In local mode, this
+     * is a NO-OP (always claims). In distributed mode (e.g., Hazelcast), this uses
+     * distributed coordination to ensure only one instance processes each event.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new EventClaimStrategy instance (non-null)
+     */
+    public abstract EventClaimStrategy createEventClaimStrategy();
 }

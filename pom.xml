@@ -69,6 +69,7 @@
         <forkCount>0.5C</forkCount>
         <spotbugs.threshold>High</spotbugs.threshold>
         <ban-junit4-imports.skip>true</ban-junit4-imports.skip>
+        <hazelcast.version>5.3.8</hazelcast.version>
     </properties>
 
     <dependencies>
@@ -108,6 +109,11 @@
                 </exclusion>
             </exclusions>
             <!-- New source is here: https://github.com/sonyxperiadev/gerrit-events -->
+        </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>${hazelcast.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
