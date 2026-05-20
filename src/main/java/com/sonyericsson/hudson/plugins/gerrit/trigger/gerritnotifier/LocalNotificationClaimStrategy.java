@@ -26,10 +26,14 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.function.Consumer;
 
 /**
  * Local (non-cluster) implementation of notification claiming.
- * Always returns true since there's no need for coordination in standalone mode.
+ * Always executes the notification action since there's no need for coordination in standalone mode.
  *
  * <p>This is the default/fallback implementation used when cluster mode is not enabled.
  * In standalone Jenkins deployments, there's only one instance, so it always has the
@@ -39,14 +43,72 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class LocalNotificationClaimStrategy extends NotificationClaimStrategy {
 
-    @Override
-    public boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event) {
-        // In local mode, always send notifications - no coordination needed
-        return true;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(LocalNotificationClaimStrategy.class);
 
     @Override
-    public void releaseNotificationRight(@NonNull GerritTriggeredEvent event) {
-        // No-op in local mode - nothing to release
+    @NonNull
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
+        // In local mode, always allow notification - no coordination needed
+        try {
+            claimed.run();
+            return new SuccessfulClaim();
+        } catch (Exception e) {
+            logger.error("Error executing notification action", e);
+            return new FailedClaim(e);
+        }
+    }
+
+    /**
+     * Successful claim result - the action was executed.
+     */
+    private static class SuccessfulClaim implements ClaimResult {
+        @Override
+        @NonNull
+        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
+            // Claim was successful, don't run notClaimed handler
+            return this;
+        }
+
+        @Override
+        @NonNull
+        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
+            // No error occurred
+            return this;
+        }
+    }
+
+    /**
+     * Failed claim result - an error occurred during processing.
+     */
+    private static class FailedClaim implements ClaimResult {
+        private final Exception exception;
+
+        /**
+         * Constructor.
+         *
+         * @param exception the exception that occurred
+         */
+        FailedClaim(Exception exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        @NonNull
+        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
+            // Don't run notClaimed - this was an error, not a "not claimed" situation
+            return this;
+        }
+
+        @Override
+        @NonNull
+        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
+            // Run the error handler
+            try {
+                onError.accept(exception);
+            } catch (Exception e) {
+                logger.error("Error in error handler", e);
+            }
+            return this;
+        }
     }
 }

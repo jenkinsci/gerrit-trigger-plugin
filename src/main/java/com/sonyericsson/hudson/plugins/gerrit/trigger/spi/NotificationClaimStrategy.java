@@ -25,45 +25,112 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.function.Consumer;
 
 /**
  * Abstract base class for notification claiming strategies in different deployment modes.
- * Subclasses handle the coordination of which Jenkins instance should send
- * notifications to Gerrit in HA/HS deployments.
+ * Prevents duplicate notification sending when multiple Jenkins instances need to send
+ * feedback to Gerrit in HA/HS deployments.
  *
- * <p>This abstract class enables switching between local (standalone) and cluster modes:</p>
+ * <p>This abstract class enables switching between local (standalone) and coordination modes:</p>
  * <ul>
  *   <li><b>Local mode:</b> Always claims notification rights - no coordination needed</li>
- *   <li><b>Cluster mode:</b> Uses distributed coordination (e.g., Hazelcast) to ensure
- *       only one replica sends feedback to Gerrit per event</li>
+ *   <li><b>Hazelcast mode:</b> Uses distributed coordination to ensure only one replica sends feedback</li>
+ *   <li><b>Future modes:</b> Redis, JDBC, etc.</li>
+ * </ul>
+ *
+ * <h2>Fluent API Pattern:</h2>
+ * <p>Uses fluent API pattern similar to Jenkins Queue and ACL for automatic resource management:</p>
+ * <pre>
+ * claimStrategy.withClaim(event, () -&gt; {
+ *     sendNotificationToGerrit(event, buildResult);
+ * })
+ * .notClaimed(() -&gt; {
+ *     logger.debug("Another replica sent notification, skipping");
+ * })
+ * .onError((ex) -&gt; {
+ *     logger.error("Failed to send notification", ex);
+ * });
+ * </pre>
+ *
+ * <h2>Benefits:</h2>
+ * <ul>
+ *   <li>Automatic claim lifecycle management (no manual release needed)</li>
+ *   <li>No risk of forgetting to release claim in finally blocks</li>
+ *   <li>Cleaner integration code</li>
+ *   <li>Built-in error handling</li>
+ *   <li>Follows Jenkins patterns (Queue, ACL)</li>
  * </ul>
  *
  * <p>Implementations are discovered via the Extension Points pattern using
- * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.</p>
- * <p>
- * <strong>Design Note:</strong> This is an abstract class (not an interface) to allow
- * adding concrete helper methods in the future without breaking existing implementations.
- * This follows Jenkins plugin development best practices.
+ * {@link CoordinationModeProvider}.</p>
  *
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
+ * <p><strong>Design Note:</strong> This is an abstract class (not an interface) to allow
+ * adding concrete helper methods in the future without breaking existing implementations.</p>
+ *
+ * @see CoordinationModeProvider
  */
 public abstract class NotificationClaimStrategy {
 
     /**
-     * Attempts to claim the right to send notification for an event.
-     * In local mode, always returns true. In cluster mode, uses distributed
-     * coordination to ensure only one replica sends the notification.
+     * Attempts to claim the right to send notification and execute the given action if successful.
+     * Automatically handles claim lifecycle (acquire + release).
      *
-     * @param event the Gerrit event
-     * @return true if this instance should send the notification, false otherwise
+     * <p>The claim is automatically released after the action executes (success or failure),
+     * so implementations do not need manual cleanup code.</p>
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>
+     * claimStrategy.withClaim(event, () -&gt; {
+     *     // This code runs only if claim was acquired
+     *     // Claim is automatically released after this block
+     *     sendNotificationToGerrit(event, buildResult);
+     * })
+     * .notClaimed(() -&gt; {
+     *     // Optional: runs if claim was not acquired
+     *     logger.debug("Another instance is sending notification");
+     * })
+     * .onError((ex) -&gt; {
+     *     // Optional: runs if an exception occurs during processing
+     *     logger.error("Failed to send notification", ex);
+     * });
+     * </pre>
+     *
+     * @param event the Gerrit event to claim notification rights for
+     * @param claimed action to execute if claim succeeds (runs with claim held, auto-released)
+     * @return ClaimResult for chaining notClaimed/onError handlers
      */
-    public abstract boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event);
+    @NonNull
+    public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed);
 
     /**
-     * Releases the notification claim for an event.
-     * Called after notification is sent or on error to clean up resources.
+     * Result of a notification claim attempt, allows chaining handlers for not-claimed and error cases.
      *
-     * @param event the Gerrit event
+     * <p>This interface supports a fluent API pattern for handling different outcomes
+     * of the claim attempt.</p>
      */
-    public abstract void releaseNotificationRight(@NonNull GerritTriggeredEvent event);
+    public interface ClaimResult {
+        /**
+         * Handler called if the claim was not acquired (another instance already sending notification).
+         *
+         * <p>This is optional - if not specified, nothing happens when the claim fails.</p>
+         *
+         * @param notClaimed action to execute if claim failed
+         * @return this for chaining
+         */
+        @NonNull
+        ClaimResult notClaimed(@NonNull Runnable notClaimed);
+
+        /**
+         * Handler called if an exception occurs during notification sending.
+         *
+         * <p>This is optional - if not specified, exceptions are silently ignored
+         * (though they may be logged by the implementation).</p>
+         *
+         * @param onError action to execute on error (receives the exception)
+         * @return this for chaining
+         */
+        @NonNull
+        ClaimResult onError(@NonNull Consumer<Exception> onError);
+    }
 }

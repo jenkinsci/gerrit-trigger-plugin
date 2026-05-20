@@ -69,6 +69,30 @@ import hudson.ExtensionPoint;
 public abstract class CoordinationModeProvider implements ExtensionPoint {
 
     /**
+     * System property to specify coordination mode.
+     */
+    private static final String COORDINATION_MODE_PROPERTY = "gerrit.trigger.coordination.mode";
+
+    /**
+     * Gets the configured coordination mode.
+     * <p>
+     * <strong>Helper method for providers:</strong> Centralizes the logic for determining
+     * which coordination mode is configured. This allows future evolution from system
+     * properties to UI configuration without changing provider implementations.
+     * <p>
+     * <strong>Today:</strong> Reads from system property
+     * {@code gerrit.trigger.coordination.mode} (default: "local")
+     * <p>
+     * <strong>Future:</strong> Can check UI configuration when providers add config pages
+     * (e.g., Redis/JDBC providers with connection settings in Jenkins UI)
+     *
+     * @return the configured mode name (e.g., "local", "hazelcast", "redis", "jdbc")
+     */
+    public static String getConfiguredMode() {
+        return System.getProperty(COORDINATION_MODE_PROPERTY, "local");
+    }
+
+    /**
      * Checks if this mode provider can create implementations in the current environment.
      *
      * <p>Examples:</p>

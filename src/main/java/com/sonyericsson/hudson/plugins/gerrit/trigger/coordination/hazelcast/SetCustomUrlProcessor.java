@@ -1,7 +1,7 @@
 /*
  *  The MIT License
  *
- *  Copyright (c) 2010, 2014 Sony Mobile Communications Inc. All rights reserved.
+ * Copyright 2026 CloudBees, Inc.
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ import java.util.Map;
  * Hazelcast EntryProcessor for atomically setting a custom URL for a build.
  * Executes on the partition owner to prevent race conditions.
  *
- * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class SetCustomUrlProcessor implements EntryProcessor<BuildMemoryKey, MemoryImprintData, Boolean> {
     private static final long serialVersionUID = 1L;

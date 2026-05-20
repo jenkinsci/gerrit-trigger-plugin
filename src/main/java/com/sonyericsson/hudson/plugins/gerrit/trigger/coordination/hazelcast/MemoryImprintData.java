@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- *
+ * Copyright 2026 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@ import java.util.List;
  * Contains simplified Entry data without complex object references.
  * Uses Compact Serialization for cross-JVM compatibility in sidecar deployments.
  *
- * @author CloudBees, Inc.
  */
 public class MemoryImprintData {
 

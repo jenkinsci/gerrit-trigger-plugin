@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- *
+ *  Copyright 2026 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
  * Stores job and build information without Jenkins object references.
  * Uses Compact Serialization for cross-JVM compatibility.
  *
- * @author CloudBees, Inc.
  */
 public class EntryData {
 

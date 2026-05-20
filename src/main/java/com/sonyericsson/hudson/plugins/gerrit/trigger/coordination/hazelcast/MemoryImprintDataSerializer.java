@@ -38,7 +38,6 @@ import java.util.List;
  * on the Hazelcast server (sidecar container). This enables cross-JVM serialization
  * without classloading issues.
  *
- * @author CloudBees, Inc.
  */
 public class MemoryImprintDataSerializer implements CompactSerializer<MemoryImprintData> {
 
