@@ -403,19 +403,8 @@ public class BuildMemory {
                     // in future cancellation checks (prevents state accumulation issues).
                     // The actual "cancelled" flag will be set later by GerritQueueListener when Jenkins confirms.
                     //
-                    // IMPORTANT: We need to get the imprint from storage again to modify the real one,
-                    // not the copy from getAllEvents()
-                    MemoryImprint storageImprint = storage.getMemoryImprint(runningEvent);
-                    if (storageImprint != null) {
-                        for (Entry imprintEntry : storageImprint.getEntries()) {
-                            if (imprintEntry.isProject(jobName)
-                                    && !imprintEntry.isBuildCompleted()
-                                    && !imprintEntry.isCancelling()
-                                    && !imprintEntry.isCancelled()) {
-                                imprintEntry.setCancelling(true);
-                            }
-                        }
-                    }
+                    // Use storage.setCancelling() to persist the flag atomically
+                    storage.setCancelling(runningEvent, job);
                 }
             }
 

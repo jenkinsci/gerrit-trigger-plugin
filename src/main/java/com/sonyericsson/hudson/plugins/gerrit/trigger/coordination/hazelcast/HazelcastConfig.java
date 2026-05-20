@@ -183,7 +183,10 @@ public final class HazelcastConfig {
         String discoveryMode = System.getProperty(DISCOVERY_MODE_PROPERTY, "auto");
         logger.info("Hazelcast discovery mode: {}", discoveryMode);
 
-        if ("kubernetes".equalsIgnoreCase(discoveryMode) || isKubernetesEnvironment()) {
+        if ("multicast".equalsIgnoreCase(discoveryMode)) {
+            // Multicast mode - primarily for testing
+            configureMulticastDiscovery(joinConfig);
+        } else if ("kubernetes".equalsIgnoreCase(discoveryMode) || isKubernetesEnvironment()) {
             configureKubernetesDiscovery(joinConfig, port);
         } else if ("tcp".equalsIgnoreCase(discoveryMode) || hasTcpMembersConfigured()) {
             configureTcpDiscovery(joinConfig);
@@ -197,8 +200,10 @@ public final class HazelcastConfig {
             }
         }
 
-        // Always disable multicast (not suitable for production)
-        joinConfig.getMulticastConfig().setEnabled(false);
+        // Disable multicast unless explicitly enabled
+        if (!"multicast".equalsIgnoreCase(discoveryMode)) {
+            joinConfig.getMulticastConfig().setEnabled(false);
+        }
     }
 
     /**
@@ -250,6 +255,31 @@ public final class HazelcastConfig {
                 .addMember(tcpMembers);
 
         // Disable other discovery methods
+        joinConfig.getKubernetesConfig().setEnabled(false);
+        joinConfig.getAwsConfig().setEnabled(false);
+        joinConfig.getAzureConfig().setEnabled(false);
+    }
+
+    /**
+     * Configures multicast discovery.
+     * <p>
+     * <strong>Warning:</strong> Multicast is NOT suitable for production use.
+     * This mode is primarily for testing purposes where a simple discovery
+     * mechanism is needed without Kubernetes or TCP configuration.
+     * <p>
+     * Multicast allows Hazelcast instances on the same network segment to
+     * automatically discover each other.
+     *
+     * @param joinConfig the join configuration
+     */
+    private static void configureMulticastDiscovery(JoinConfig joinConfig) {
+        logger.warn("Configuring multicast discovery - NOT SUITABLE FOR PRODUCTION, TESTING ONLY");
+
+        joinConfig.getMulticastConfig()
+                .setEnabled(true);
+
+        // Disable other discovery methods
+        joinConfig.getTcpIpConfig().setEnabled(false);
         joinConfig.getKubernetesConfig().setEnabled(false);
         joinConfig.getAwsConfig().setEnabled(false);
         joinConfig.getAzureConfig().setEnabled(false);

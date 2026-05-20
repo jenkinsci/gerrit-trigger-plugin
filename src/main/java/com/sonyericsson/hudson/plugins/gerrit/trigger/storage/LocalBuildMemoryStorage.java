@@ -121,6 +121,17 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
         entry.setBuildCompleted(true);
     }
 
+    @Override
+    public synchronized void setCancelling(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
+        MemoryImprint pb = getMemoryImprint(event);
+        if (pb != null) {
+            Entry entry = pb.getEntry(project);
+            if (entry != null) {
+                entry.setCancelling(true);
+            }
+        }
+    }
+
     /**
      * Gets or creates a MemoryImprint for the given event.
      *

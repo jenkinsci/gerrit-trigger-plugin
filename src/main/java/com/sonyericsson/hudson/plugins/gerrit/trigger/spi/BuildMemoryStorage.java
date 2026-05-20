@@ -125,6 +125,23 @@ public abstract class BuildMemoryStorage {
     public abstract void cancelled(@NonNull GerritTriggeredEvent event, @NonNull Job project);
 
     /**
+     * Marks a build as "cancelling" (cancellation intent) for an event.
+     * <p>
+     * This is called when the cancellation policy decides a build should be cancelled,
+     * but before Jenkins actually processes the cancellation. The "cancelling" flag
+     * prevents the same build from being considered for cancellation again in future
+     * policy checks (avoids state accumulation).
+     * <p>
+     * The actual "cancelled" flag is set later by {@link #cancelled} when Jenkins
+     * confirms the build/queue item was actually cancelled.
+     *
+     * @param event the event
+     * @param project the project being marked for cancellation
+     * @see #cancelled(GerritTriggeredEvent, Job)
+     */
+    public abstract void setCancelling(@NonNull GerritTriggeredEvent event, @NonNull Job project);
+
+    /**
      * Removes the memory for an event.
      * <p>
      * Called after feedback has been sent to Gerrit to clean up the memory.

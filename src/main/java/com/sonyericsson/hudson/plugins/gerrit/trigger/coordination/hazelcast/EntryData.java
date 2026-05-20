@@ -37,6 +37,7 @@ public class EntryData {
     private String projectFullName;
     private String buildId;
     private boolean buildCompleted;
+    private boolean cancelling;
     private boolean cancelled;
     private String customUrl;
     private String unsuccessfulMessage;
@@ -124,6 +125,24 @@ public class EntryData {
         if (buildCompleted && completedTimestamp == null) {
             this.completedTimestamp = System.currentTimeMillis();
         }
+    }
+
+    /**
+     * Checks if build is being cancelled (cancellation intent).
+     *
+     * @return true if cancellation initiated
+     */
+    public boolean isCancelling() {
+        return cancelling;
+    }
+
+    /**
+     * Sets cancelling status (cancellation intent).
+     *
+     * @param cancelling cancelling status
+     */
+    public void setCancelling(boolean cancelling) {
+        this.cancelling = cancelling;
     }
 
     /**
