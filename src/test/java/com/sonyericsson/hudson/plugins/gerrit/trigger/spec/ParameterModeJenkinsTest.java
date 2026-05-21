@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerParameters;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
@@ -57,6 +58,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -111,6 +113,16 @@ public class ParameterModeJenkinsTest {
                 Collections.emptyList(), Collections.emptyList(),
                 Collections.emptyList(), false)));
         trigger.setEscapeQuotes(false);
+    }
+
+    /**
+     * Clean up Hazelcast state after each test to prevent state pollution.
+     * This is critical for CommentAdded tests which use BuildMemory.isBuilding()
+     * to check for duplicate builds.
+     */
+    @After
+    public void tearDown() {
+        HazelcastTestHelper.clearAllMaps();
     }
 
     /**

@@ -286,4 +286,28 @@ public abstract class BuildMemoryStorage {
      */
     @NonNull
     public abstract Map<GerritTriggeredEvent, MemoryImprint> getAllEvents();
+
+    /**
+     * Checks if two events are logically equivalent.
+     * <p>
+     * This method allows each storage implementation to define its own event equality
+     * semantics. This is critical for proper operation in different coordination modes:
+     * <ul>
+     *   <li><strong>Local mode:</strong> Uses identity comparison (==) since events are
+     *       never serialized/deserialized</li>
+     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
+     *       since events are serialized/deserialized across replicas</li>
+     * </ul>
+     * <p>
+     * <strong>Design rationale:</strong> Event equality semantics belong in the storage
+     * layer, not in business logic (BuildMemory). This respects the abstraction boundary
+     * and allows future coordination modes to define their own comparison strategy without
+     * modifying BuildMemory.
+     *
+     * @param event1 the first event
+     * @param event2 the second event
+     * @return true if the events are logically equivalent according to this storage
+     */
+    public abstract boolean eventsMatch(@NonNull GerritTriggeredEvent event1,
+                                        @NonNull GerritTriggeredEvent event2);
 }

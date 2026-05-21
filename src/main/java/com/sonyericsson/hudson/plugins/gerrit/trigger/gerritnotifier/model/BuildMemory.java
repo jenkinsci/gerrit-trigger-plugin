@@ -550,16 +550,25 @@ public class BuildMemory {
     /**
      * Checks if any of the given causes references the given event.
      * Ported from RunningJobs.checkCausedByGerrit().
+     * <p>
+     * <strong>Important:</strong> Event comparison is delegated to the storage implementation
+     * via {@link BuildMemoryStorage#eventsMatch(GerritTriggeredEvent, GerritTriggeredEvent)}.
+     * This respects the abstraction boundary:
+     * <ul>
+     *   <li><strong>Local mode:</strong> Uses identity comparison (==)</li>
+     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
+     *       since events may be deserialized</li>
+     * </ul>
      *
-     * @param event the event to check for (checks for identity, not equality)
+     * @param event the event to check for
      * @param causes the list of causes
-     * @return true if the list contains a GerritCause with this event
+     * @return true if the list contains a GerritCause with an equivalent event
      */
     private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
         for (Cause c : causes) {
             if (c instanceof GerritCause) {
                 GerritCause gc = (GerritCause)c;
-                if (gc.getEvent() == event) {
+                if (storage.eventsMatch(event, gc.getEvent())) {
                     return true;
                 }
             }

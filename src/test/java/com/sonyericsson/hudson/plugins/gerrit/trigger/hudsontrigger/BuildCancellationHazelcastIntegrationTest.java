@@ -26,7 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestRule;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -52,17 +54,29 @@ import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Integration tests for build cancellation feature that verify actual job cancellation
- * in Jenkins queue and running executors.
+ * Integration tests for build cancellation in Hazelcast distributed mode.
+ * <p>
+ * These tests verify that build cancellation works correctly when using
+ * Hazelcast-backed BuildMemoryStorage instead of local TreeMap storage.
+ * <p>
+ * This is critical for CloudBees HA/HS deployments where multiple Jenkins
+ * instances share state via Hazelcast.
  *
  */
-public class BuildCancellationIntegrationTest {
+public class BuildCancellationHazelcastIntegrationTest {
+
+    /**
+     * Hazelcast test infrastructure - MUST be declared before JenkinsRule.
+     * This ensures Hazelcast is initialized before Jenkins starts.
+     */
+    //CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JUnit Rule.
+    @Rule
+    public final HazelcastTestRule hazelcast = new HazelcastTestRule();
 
     /**
      * An instance of Jenkins Rule.
@@ -84,7 +98,6 @@ public class BuildCancellationIntegrationTest {
     private static final int BUILD_TIMEOUT = 30000;
     private static final int SERVER_WAIT = 2000;
     private static final int SLEEP_10_SEC = 10000;
-    private static final int SLEEP_5_SEC = 5000;
     private static final int SLEEP_HALF_SEC = 500;
 
     /**
@@ -105,10 +118,13 @@ public class BuildCancellationIntegrationTest {
         if (gerritServer != null) {
             SshdServerMock.configureFor(sshd, gerritServer, true);
         }
+
+        // Verify Hazelcast mode is active
+        verifyHazelcastMode();
     }
 
     /**
-     * Tears down the SSH server and clears Hazelcast state if active.
+     * Tears down the SSH server.
      *
      * @throws Exception if teardown fails
      */
@@ -121,6 +137,33 @@ public class BuildCancellationIntegrationTest {
             sshd.stop(true);
             sshd = null;
         }
+    }
+
+    /**
+     * Verifies that Hazelcast coordination mode is actually active.
+     * This prevents false positives from tests running in local mode.
+     */
+    private void verifyHazelcastMode() {
+        CoordinationModeFactory factory = CoordinationModeFactory.get();
+
+        // Trigger mode discovery by accessing storage
+        String storageClass = factory.getStorage().getClass().getSimpleName();
+
+        // Now get the selected mode (will not be null after storage access)
+        String modeName;
+        if (factory.getSelectedMode() != null) {
+            modeName = factory.getSelectedMode().getModeName();
+        } else {
+            modeName = "UNKNOWN";
+        }
+
+        System.out.println("=== COORDINATION MODE VERIFICATION ===");
+        System.out.println("Mode: " + modeName);
+        System.out.println("Storage: " + storageClass);
+        System.out.println("======================================");
+
+        assertEquals("Expected Hazelcast storage", "HazelcastBuildMemoryStorage", storageClass);
+        assertEquals("Expected Hazelcast mode", "Hazelcast (Distributed)", modeName);
     }
 
     /**
@@ -155,14 +198,14 @@ public class BuildCancellationIntegrationTest {
     }
 
     /**
-     * Tests that a new patchset cancels a running build of an old patchset.
-     * This is the most common cancellation scenario.
+     * Tests that a new patchset cancels a running build of an old patchset in Hazelcast mode.
+     * This verifies the atomic TriggeredProcessor fix works correctly in distributed mode.
      *
      * @throws Exception if unexpected errors appear.
      */
     @Test
     @LocalData("common")
-    public void testNewPatchsetCancelsRunningBuild() throws Exception {
+    public void testNewPatchsetCancelsRunningBuildHazelcast() throws Exception {
         // Create a job with a long-running build and cancellation policy
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC)); // 10 second build
@@ -206,7 +249,7 @@ public class BuildCancellationIntegrationTest {
         jenkins.waitUntilNoActivity();
 
         // Verify build1 was aborted
-        assertEquals(Result.ABORTED, build1.getResult());
+        assertEquals("Build should be ABORTED (Hazelcast mode)", Result.ABORTED, build1.getResult());
 
         // Verify it was aborted with the correct interruption cause
         assertInterruptionCause(build1, Messages.AbortedByNewPatchSet());
@@ -219,129 +262,13 @@ public class BuildCancellationIntegrationTest {
     }
 
     /**
-     * Tests that abortNewPatchsets policy cancels even newer patchsets with older ones.
+     * Tests that abandoned patchsets cancel running builds in Hazelcast mode.
      *
      * @throws Exception if unexpected errors appear.
      */
     @Test
     @LocalData("common")
-    public void testAbortNewPatchsetsPolicyCancelsAnyPatchset() throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC));
-
-        GerritTrigger trigger = Setup.createDefaultTrigger(project);
-        trigger.setGerritProjects(Collections.singletonList(
-            new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")),
-                null, null, null, false)));
-        BuildCancellationPolicy policy = new BuildCancellationPolicy(true, false, false, false);
-        policy.setEnabled(true);
-        trigger.setBuildCancellationPolicy(policy);
-        project.addTrigger(trigger);
-        trigger.start(project, false);
-
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, SERVER_WAIT);
-
-        // Trigger build with patchset 2
-        PatchsetCreated patchset2 = Setup.createPatchsetCreated();
-        patchset2.getChange().setId("Iabc123");
-        patchset2.getChange().setNumber("1000");
-        patchset2.getPatchSet().setNumber("2");
-
-        gerritServer.triggerEvent(patchset2);
-
-        waitForBuildToStart(project, BUILD_TIMEOUT);
-        FreeStyleBuild build1 = project.getLastBuild();
-        assertTrue(build1.isBuilding());
-
-        // Trigger patchset 1 (older, but should still cancel build1 due to policy)
-        PatchsetCreated patchset1 = Setup.createPatchsetCreated();
-        patchset1.getChange().setId("Iabc123");
-        patchset1.getChange().setNumber("1000");
-        patchset1.getPatchSet().setNumber("1");
-
-        gerritServer.triggerEvent(patchset1);
-
-        jenkins.waitUntilNoActivity();
-
-        // Verify build1 was aborted
-        assertEquals(Result.ABORTED, build1.getResult());
-    }
-
-    /**
-     * Tests that builds in queue are canceled before they start.
-     *
-     * @throws Exception if unexpected errors appear.
-     */
-    @Test
-    @LocalData("common")
-    public void testCancelsQueuedBuilds() throws Exception {
-        // Create a job that will queue builds (only 1 executor available)
-        jenkins.jenkins.setNumExecutors(1);
-
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getBuildersList().add(new SleepBuilder(SLEEP_5_SEC));
-
-        GerritTrigger trigger = Setup.createDefaultTrigger(project);
-        trigger.setGerritProjects(Collections.singletonList(
-            new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")),
-                null, null, null, false)));
-        BuildCancellationPolicy policy = new BuildCancellationPolicy(false, false, false, false);
-        policy.setEnabled(true);
-        trigger.setBuildCancellationPolicy(policy);
-        project.addTrigger(trigger);
-        trigger.start(project, false);
-
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, SERVER_WAIT);
-
-        // Trigger build with patchset 1 (will start immediately)
-        PatchsetCreated patchset1 = Setup.createPatchsetCreated();
-        patchset1.getChange().setId("Iabc123");
-        patchset1.getChange().setNumber("1000");
-        patchset1.getPatchSet().setNumber("1");
-
-        gerritServer.triggerEvent(patchset1);
-
-        // Wait for build to START (not complete)
-        waitForBuildToStart(project, BUILD_TIMEOUT);
-
-        // Trigger patchset 1 again (will be queued due to single executor)
-        gerritServer.triggerEvent(patchset1);
-
-        // Wait a bit for it to enter queue
-        await().until(() -> jenkins.jenkins.getQueue().getItems().length > 0);
-
-        // Trigger patchset 2 (should cancel queued build)
-        PatchsetCreated patchset2 = Setup.createPatchsetCreated();
-        patchset2.getChange().setId("Iabc123");
-        patchset2.getChange().setNumber("1000");
-        patchset2.getPatchSet().setNumber("2");
-
-        gerritServer.triggerEvent(patchset2);
-
-        // Wait for all builds to complete
-        jenkins.waitUntilNoActivity();
-
-        // Verify first build completed (was running)
-        FreeStyleBuild build1 = project.getBuilds().get(1);
-        assertNotNull(build1);
-        assertEquals(Result.ABORTED, build1.getResult());
-
-        // Verify new patchset build completed successfully
-        FreeStyleBuild lastBuild = project.getLastBuild();
-        assertNotNull(lastBuild);
-        jenkins.assertBuildStatusSuccess(lastBuild);
-    }
-
-    /**
-     * Tests that abandoned patchsets cancel running builds.
-     *
-     * @throws Exception if unexpected errors appear.
-     */
-    @Test
-    @LocalData("common")
-    public void testAbandonedPatchsetCancelsRunningBuild() throws Exception {
+    public void testAbandonedPatchsetCancelsRunningBuildHazelcast() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC));
 
@@ -381,29 +308,29 @@ public class BuildCancellationIntegrationTest {
         jenkins.waitUntilNoActivity();
 
         // Verify build was aborted
-        assertEquals(Result.ABORTED, build1.getResult());
+        assertEquals("Build should be ABORTED (Hazelcast mode)", Result.ABORTED, build1.getResult());
 
         // Verify it was aborted with the correct interruption cause
         assertInterruptionCause(build1, Messages.AbortedByAbandonedPatchset());
     }
 
     /**
-     * Tests that different changes don't interfere with each other.
+     * Tests that abortNewPatchsets policy cancels even newer patchsets in Hazelcast mode.
      *
      * @throws Exception if unexpected errors appear.
      */
     @Test
     @LocalData("common")
-    public void testDifferentChangesDoNotCancel() throws Exception {
+    public void testAbortNewPatchsetsPolicyCancelsAnyPatchsetHazelcast() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getBuildersList().add(new SleepBuilder(SLEEP_5_SEC));
+        project.getBuildersList().add(new SleepBuilder(SLEEP_10_SEC));
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setGerritProjects(Collections.singletonList(
             new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")),
                 null, null, null, false)));
-        BuildCancellationPolicy policy = new BuildCancellationPolicy(true, true, false, false);
+        BuildCancellationPolicy policy = new BuildCancellationPolicy(true, false, false, false);
         policy.setEnabled(true);
         trigger.setBuildCancellationPolicy(policy);
         project.addTrigger(trigger);
@@ -411,72 +338,7 @@ public class BuildCancellationIntegrationTest {
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, SERVER_WAIT);
 
-        // Trigger build for change 1000
-        PatchsetCreated change1000 = Setup.createPatchsetCreated();
-        change1000.getChange().setId("Iabc123");
-        change1000.getChange().setNumber("1000");
-        change1000.getPatchSet().setNumber("1");
-
-        gerritServer.triggerEvent(change1000);
-
-        waitForBuildToStart(project, BUILD_TIMEOUT);
-        FreeStyleBuild build1 = project.getLastBuild();
-        assertTrue(build1.isBuilding());
-
-        // Trigger build for change 2000 (different change)
-        PatchsetCreated change2000 = Setup.createPatchsetCreated();
-        change2000.getChange().setId("Idef456");
-        change2000.getChange().setNumber("2000");
-        change2000.getPatchSet().setNumber("1");
-
-        gerritServer.triggerEvent(change2000);
-
-        jenkins.waitUntilNoActivity();
-
-        // Verify both builds completed successfully (no cancellation)
-        assertEquals(Result.SUCCESS, build1.getResult());
-
-        FreeStyleBuild build2 = project.getLastBuild();
-        jenkins.assertBuildStatusSuccess(build2);
-    }
-
-    /**
-     * Tests that policy disabled does not cancel builds.
-     *
-     * @throws Exception if unexpected errors appear.
-     */
-    @Test
-    @LocalData("common")
-    public void testPolicyDisabledDoesNotCancel() throws Exception {
-        FreeStyleProject project = jenkins.createFreeStyleProject();
-        project.getBuildersList().add(new SleepBuilder(SLEEP_5_SEC));
-
-        GerritTrigger trigger = Setup.createDefaultTrigger(project);
-        trigger.setGerritProjects(Collections.singletonList(
-            new GerritProject(CompareType.ANT, "**",
-                Collections.singletonList(new Branch(CompareType.ANT, "**")),
-                null, null, null, false)));
-        BuildCancellationPolicy policy = new BuildCancellationPolicy(false, false, false, false);
-        policy.setEnabled(false); // Disabled
-        trigger.setBuildCancellationPolicy(policy);
-        project.addTrigger(trigger);
-        trigger.start(project, false);
-
-        serverMock.waitForCommand(GERRIT_STREAM_EVENTS, SERVER_WAIT);
-
-        // Trigger build with patchset 1
-        PatchsetCreated patchset1 = Setup.createPatchsetCreated();
-        patchset1.getChange().setId("Iabc123");
-        patchset1.getChange().setNumber("1000");
-        patchset1.getPatchSet().setNumber("1");
-
-        gerritServer.triggerEvent(patchset1);
-
-        waitForBuildToStart(project, BUILD_TIMEOUT);
-        FreeStyleBuild build1 = project.getLastBuild();
-        assertTrue(build1.isBuilding());
-
-        // Trigger patchset 2 (should NOT cancel build1 because policy is disabled)
+        // Trigger build with patchset 2
         PatchsetCreated patchset2 = Setup.createPatchsetCreated();
         patchset2.getChange().setId("Iabc123");
         patchset2.getChange().setNumber("1000");
@@ -484,12 +346,21 @@ public class BuildCancellationIntegrationTest {
 
         gerritServer.triggerEvent(patchset2);
 
+        waitForBuildToStart(project, BUILD_TIMEOUT);
+        FreeStyleBuild build1 = project.getLastBuild();
+        assertTrue(build1.isBuilding());
+
+        // Trigger patchset 1 (older, but should still cancel build1 due to policy)
+        PatchsetCreated patchset1 = Setup.createPatchsetCreated();
+        patchset1.getChange().setId("Iabc123");
+        patchset1.getChange().setNumber("1000");
+        patchset1.getPatchSet().setNumber("1");
+
+        gerritServer.triggerEvent(patchset1);
+
         jenkins.waitUntilNoActivity();
 
-        // Verify both builds completed successfully (no cancellation)
-        assertEquals(Result.SUCCESS, build1.getResult());
-
-        FreeStyleBuild build2 = project.getLastBuild();
-        jenkins.assertBuildStatusSuccess(build2);
+        // Verify build1 was aborted
+        assertEquals("Build should be ABORTED (Hazelcast mode)", Result.ABORTED, build1.getResult());
     }
 }

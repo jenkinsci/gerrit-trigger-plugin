@@ -88,7 +88,7 @@ public final class EventIdentifier {
      * Generates ID for change-based events (patchset-created, comment-added, etc.).
      *
      * @param event the change-based event
-     * @return event ID in format: change-{number}-{patchset}-{type}-{timestamp}
+     * @return event ID in format: change-{project}-{number}-{patchset}-{type}-{timestamp}
      */
     private static String generateChangeBasedEventId(ChangeBasedEvent event) {
         Change change = event.getChange();
@@ -102,8 +102,10 @@ public final class EventIdentifier {
         // Fall back to receivedOn if eventCreatedOn is not available
         long timestamp = getEventTimestamp(event);
 
-        // Format: change-<number>-<patchset>-<type>-<timestamp>
-        return String.format("change-%s-%s-%s-%d",
+        // Format: change-{project}-{number}-{patchset}-{type}-{timestamp}
+        // Project is included because change numbers are only unique within a project
+        return String.format("change-%s-%s-%s-%s-%d",
+                sanitize(change.getProject()),
                 change.getNumber(),
                 patchSet.getNumber(),
                 sanitizeEventType(event.getEventType().getTypeValue()),

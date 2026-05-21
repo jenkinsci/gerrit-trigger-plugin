@@ -73,8 +73,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
     /**
      * Gson instance for JSON serialization of events.
+     * Configured to handle polymorphic event types by including runtime type information.
      */
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapter(GerritTriggeredEvent.class, new PolymorphicEventTypeAdapter())
+            .create();
 
     /**
      * Distributed mode storage (coordination mode).
@@ -92,7 +95,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             HazelcastInstance hz = HazelcastInstanceProvider.getInstance();
             if (hz != null) {
                 distributedMemory = hz.getMap(MAP_NAME);
-                logger.debug("Initialized distributed BuildMemory map: {}", MAP_NAME);
+                logger.debug("Initialized distributed BuildMemory map: {} (size: {})",
+                        MAP_NAME, distributedMemory.size());
             } else {
                 logger.warn("Hazelcast unavailable, distributed memory not available");
             }
@@ -108,7 +112,15 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      */
     private String serializeEvent(GerritTriggeredEvent event) {
         try {
-            return GSON.toJson(event);
+            // IMPORTANT: Must explicitly specify GerritTriggeredEvent.class to ensure
+            // the PolymorphicEventTypeAdapter is used, even when event is a concrete subclass
+            String json = GSON.toJson(event, GerritTriggeredEvent.class);
+            if (json != null) {
+                logger.trace("Serialized event {} to JSON (length: {})", event, json.length());
+            } else {
+                logger.trace("Serialized event {} to JSON (length: 0)", event);
+            }
+            return json;
         } catch (Exception e) {
             logger.error("Failed to serialize event to JSON: " + event, e);
             return null;
@@ -123,9 +135,19 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      */
     private GerritTriggeredEvent deserializeEvent(String eventJson) {
         try {
-            return GSON.fromJson(eventJson, GerritTriggeredEvent.class);
+            if (eventJson == null) {
+                logger.warn("Cannot deserialize null eventJson");
+                return null;
+            }
+            GerritTriggeredEvent event = GSON.fromJson(eventJson, GerritTriggeredEvent.class);
+            logger.trace("Deserialized JSON (length: {}) to event: {}", eventJson.length(), event);
+            return event;
         } catch (Exception e) {
-            logger.error("Failed to deserialize event from JSON", e);
+            if (eventJson != null) {
+                logger.error("Failed to deserialize event from JSON (length: " + eventJson.length() + ")", e);
+            } else {
+                logger.error("Failed to deserialize event from NULL JSON", e);
+            }
             return null;
         }
     }
@@ -168,6 +190,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                     // Restore additional entry data
                     MemoryImprint.Entry entry = imprint.getEntry(project);
                     if (entry != null) {
+                        entry.setBuildCompleted(entryData.isBuildCompleted());
                         entry.setCancelling(entryData.isCancelling());
                         entry.setCancelled(entryData.isCancelled());
                         entry.setCustomUrl(entryData.getCustomUrl());
@@ -207,21 +230,20 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         }
 
         BuildMemoryKey key = new BuildMemoryKey(event);
-        MemoryImprintData data = map.get(key);
+        String projectFullName = project.getFullName();
+        String eventJson = serializeEvent(event);
 
-        if (data == null) {
-            // Create new memory imprint data
-            data = new MemoryImprintData();
-            data.setEventJson(serializeEvent(event));
+        // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
+        // This is critical when multiple projects are triggered by the same event simultaneously.
+        // Without atomic operations, concurrent threads can overwrite each other's entries,
+        // causing some project entries to be lost from BuildMemory (which breaks cancellation logic).
+        Boolean wasNew = map.executeOnKey(key, new TriggeredProcessor(projectFullName, eventJson));
+
+        if (wasNew) {
+            logger.trace("Triggered event stored in distributed memory: {} for project: {}", key, projectFullName);
+        } else {
+            logger.trace("Project {} already triggered for event: {}", projectFullName, key);
         }
-
-        // Add entry for triggered project
-        EntryData entryData = new EntryData();
-        entryData.setProjectFullName(project.getFullName());
-        data.addEntry(entryData);
-
-        map.put(key, data);
-        logger.trace("Triggered event stored in distributed memory: {}", key);
     }
 
     @Override
@@ -573,12 +595,26 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         // Convert all entries
         for (Map.Entry<BuildMemoryKey, MemoryImprintData> entry : map.entrySet()) {
-            GerritTriggeredEvent event = deserializeEvent(entry.getValue().getEventJson());
-            if (event != null) {
-                MemoryImprint imprint = reconstructMemoryImprint(event, entry.getValue());
-                result.put(event, imprint);
+            MemoryImprintData data = entry.getValue();
+            if (data != null) {
+                GerritTriggeredEvent event = deserializeEvent(data.getEventJson());
+                if (event != null) {
+                    MemoryImprint imprint = reconstructMemoryImprint(event, data);
+                    result.put(event, imprint);
+                }
             }
         }
+
+        logger.trace("Returning {} events from distributed memory", result.size());
         return result;
+    }
+
+    @Override
+    public boolean eventsMatch(@NonNull GerritTriggeredEvent event1, @NonNull GerritTriggeredEvent event2) {
+        // In distributed mode, use logical comparison via EventIdentifier
+        // because events may be deserialized from Hazelcast, creating new object instances
+        String id1 = EventIdentifier.generateEventId(event1);
+        String id2 = EventIdentifier.generateEventId(event2);
+        return id1.equals(id2);
     }
 }

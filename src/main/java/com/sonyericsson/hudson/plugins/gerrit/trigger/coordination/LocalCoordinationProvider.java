@@ -114,4 +114,24 @@ public class LocalCoordinationProvider extends CoordinationModeProvider {
     public EventClaimStrategy createEventClaimStrategy() {
         return new LocalEventClaimStrategy();
     }
+
+    /**
+     * Initializes local coordination mode.
+     * <p>
+     * Local mode requires no initialization - no external resources to set up.
+     */
+    @Override
+    public void initialize() {
+        // Local mode needs no initialization
+    }
+
+    /**
+     * Shuts down local coordination mode.
+     * <p>
+     * Local mode requires no shutdown - no external resources to release.
+     */
+    @Override
+    public void shutdown() {
+        // Local mode needs no shutdown
+    }
 }

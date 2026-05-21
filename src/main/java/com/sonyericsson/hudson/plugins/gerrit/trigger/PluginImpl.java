@@ -581,10 +581,10 @@ public class PluginImpl extends GlobalConfiguration {
         logger.trace("Loading configs");
         load();
 
-        // Initialize Hazelcast early (before any code that might use CoordinationModeFactory)
+        // Initialize coordination providers early (before any code that might use CoordinationModeFactory)
         // This must happen before BuildMemory, EventClaimStrategy, or NotificationClaimStrategy are used
-        // because HazelcastCoordinationProvider.isAvailable() checks if Hazelcast is initialized
-        initializeHazelcast();
+        // because provider.isAvailable() may check if resources are initialized
+        initializeCoordinationProviders();
 
         GerritSendCommandQueue.initialize(pluginConfig);
         gerritEventManager = new JenkinsAwareGerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
@@ -595,38 +595,31 @@ public class PluginImpl extends GlobalConfiguration {
     }
 
     /**
-     * Initialize Hazelcast if coordination mode is configured as 'hazelcast'.
+     * Initialize all coordination mode providers.
      * <p>
      * This is called early in plugin startup, before any code that might use
-     * CoordinationModeFactory. This ensures HazelcastCoordinationProvider.isAvailable()
-     * can see that Hazelcast is initialized and ready.
+     * CoordinationModeFactory. This ensures providers can initialize their resources
+     * and be ready when isAvailable() is called during provider discovery.
      * <p>
-     * Fails gracefully - if initialization fails, plugin continues in local mode.
+     * Fails gracefully - if a provider's initialization fails, it will not be available
+     * and the factory will fall back to the next highest-priority provider.
      */
-    private void initializeHazelcast() {
-        String coordinationMode = System.getProperty("gerrit.trigger.coordination.mode", "local");
-
-        if (!"hazelcast".equalsIgnoreCase(coordinationMode)) {
-            logger.debug("Coordination mode is '{}', Hazelcast will not be initialized", coordinationMode);
-            return;
-        }
-
-        logger.info("Coordination mode is 'hazelcast', initializing Hazelcast...");
-        try {
-            boolean initialized = com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
-                    .HazelcastManager.initialize();
-            if (initialized) {
-                logger.info("Hazelcast initialized successfully");
-                String status = com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
-                        .HazelcastManager.getStatus();
-                logger.info("Hazelcast status: {}", status);
-            } else {
-                logger.warn("Hazelcast initialization returned false (mode may be disabled)");
+    private void initializeCoordinationProviders() {
+        logger.debug("Initializing coordination providers...");
+        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider
+                : hudson.ExtensionList.lookup(
+                        com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class)) {
+            try {
+                logger.debug("Initializing provider: {}", provider.getModeName());
+                provider.initialize();
+                logger.debug("Provider {} initialized successfully", provider.getModeName());
+            } catch (Exception e) {
+                logger.warn("Failed to initialize coordination provider: {}. "
+                        + "Provider will not be available.", provider.getModeName(), e);
+                // Continue with other providers even if one fails
             }
-        } catch (Exception e) {
-            logger.error("Failed to initialize Hazelcast. Plugin will continue in local mode.", e);
-            // Continue plugin startup even if Hazelcast fails - will fall back to local mode
         }
+        logger.debug("Coordination provider initialization complete");
     }
 
     /**
@@ -713,9 +706,9 @@ public class PluginImpl extends GlobalConfiguration {
     public void stop() {
         active = false;
 
-        // Shutdown Hazelcast before stopping servers
+        // Shutdown coordination providers before stopping servers
         // This ensures any coordination operations are cleaned up before servers disconnect
-        shutdownHazelcast();
+        shutdownCoordinationProviders();
 
         for (GerritServer s : servers) {
             s.stop();
@@ -730,24 +723,27 @@ public class PluginImpl extends GlobalConfiguration {
     }
 
     /**
-     * Shutdown Hazelcast if it was initialized.
+     * Shutdown all coordination mode providers.
      * <p>
-     * Called during plugin shutdown to clean up Hazelcast resources.
+     * Called during plugin shutdown to clean up coordination resources.
      * Fails gracefully - errors are logged but don't prevent plugin shutdown.
      */
-    private void shutdownHazelcast() {
-        try {
-            if (com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
-                    .HazelcastManager.isInitialized()) {
-                logger.info("Shutting down Hazelcast...");
-                com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast
-                        .HazelcastManager.shutdown();
-                logger.info("Hazelcast shutdown complete");
+    private void shutdownCoordinationProviders() {
+        logger.debug("Shutting down coordination providers...");
+        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider
+                : hudson.ExtensionList.lookup(
+                        com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class)) {
+            try {
+                logger.debug("Shutting down provider: {}", provider.getModeName());
+                provider.shutdown();
+                logger.debug("Provider {} shut down successfully", provider.getModeName());
+            } catch (Exception e) {
+                logger.warn("Error shutting down coordination provider: {} (non-critical, continuing shutdown)",
+                        provider.getModeName(), e);
+                // Continue with other providers even if one fails
             }
-        } catch (Exception e) {
-            logger.error("Error shutting down Hazelcast (non-critical, continuing shutdown)", e);
-            // Continue with plugin shutdown even if Hazelcast shutdown fails
         }
+        logger.debug("Coordination provider shutdown complete");
     }
 
     /**
