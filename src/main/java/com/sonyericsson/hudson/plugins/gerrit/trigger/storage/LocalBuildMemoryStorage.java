@@ -329,4 +329,10 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
         // Return a copy to avoid concurrent modification issues
         return new TreeMap<>(memory);
     }
+
+    @Override
+    public boolean eventsMatch(@NonNull GerritTriggeredEvent event1, @NonNull GerritTriggeredEvent event2) {
+        // In local mode, use identity comparison since events are never serialized
+        return event1 == event2;
+    }
 }

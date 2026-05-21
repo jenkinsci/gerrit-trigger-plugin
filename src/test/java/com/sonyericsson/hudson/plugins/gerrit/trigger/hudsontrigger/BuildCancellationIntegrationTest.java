@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -60,7 +61,6 @@ import static org.junit.Assert.assertTrue;
  * Integration tests for build cancellation feature that verify actual job cancellation
  * in Jenkins queue and running executors.
  *
- * @author Ignacio Roncero &lt;ironcero@cloudbees.com&gt;
  */
 public class BuildCancellationIntegrationTest {
 
@@ -108,12 +108,15 @@ public class BuildCancellationIntegrationTest {
     }
 
     /**
-     * Tears down the SSH server.
+     * Tears down the SSH server and clears Hazelcast state if active.
      *
      * @throws Exception if teardown fails
      */
     @After
     public void tearDown() throws Exception {
+        // Clear Hazelcast state to prevent pollution between tests
+        HazelcastTestHelper.clearAllMaps();
+
         if (sshd != null) {
             sshd.stop(true);
             sshd = null;

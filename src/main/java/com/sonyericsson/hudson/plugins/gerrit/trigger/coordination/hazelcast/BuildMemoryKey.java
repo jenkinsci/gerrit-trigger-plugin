@@ -38,7 +38,14 @@ public class BuildMemoryKey implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final String eventId;
+    private String eventId;
+
+    /**
+     * No-arg constructor for serialization.
+     */
+    public BuildMemoryKey() {
+        this.eventId = null;
+    }
 
     /**
      * Constructor from GerritTriggeredEvent.

@@ -58,6 +58,8 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 
 import jenkins.model.TransientActionFactory;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -72,6 +74,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritManualCause;
@@ -94,7 +97,27 @@ class ReplicationQueueTaskDispatcherTest {
 
     private static final int HOURSBEFORECHANGEMERGEDFORPATCHSET = -8;
     private static final int HOURBEFOREREPLICATIONCACHECREATED = -1;
+    private static final long ONE_SECOND_MS = 1000;
+    private static final long TWO_SECONDS_MS = 2000;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
+
+    /**
+     * Clear Hazelcast state before running this test class.
+     * Ensures clean state regardless of what tests ran before.
+     */
+    @BeforeClass
+    public static void setUpClass() {
+        HazelcastTestHelper.clearAllMaps();
+    }
+
+    /**
+     * Clear Hazelcast state after running this test class.
+     * Prevents pollution of subsequent tests.
+     */
+    @AfterClass
+    public static void tearDownClass() {
+        HazelcastTestHelper.clearAllMaps();
+    }
 
     /**
      * Create ReplicationQueueTaskDispatcher with a mocked GerritHandler.
@@ -420,19 +443,32 @@ class ReplicationQueueTaskDispatcherTest {
         //to Gerrit for review).
         //For change merged event, a check on the event timestamp is done to make sure not to unblock the build for
         //a replica event that was fired before the current change merged event.
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/branch", "someGerritServer",
-                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+
+        // Set explicit timestamps AFTER cache creation to avoid expiry issues.
+        // Timestamps must be relative to ensure old < changeMerged < new ordering.
+        long baseTime = System.currentTimeMillis() + ONE_SECOND_MS;  // Start 1 second in the future
+        long oldReplicaTime = baseTime;
+        long changeMergedTime = baseTime + ONE_SECOND_MS;  // 1 second after old replica
+        long newReplicaTime = baseTime + TWO_SECONDS_MS;  // 2 seconds after old replica
+
+        RefReplicated oldRefReplicated = Setup.createRefReplicatedEvent("someProject", "refs/heads/branch",
+                "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS);
+        oldRefReplicated.setReceivedOn(oldReplicaTime);
+        dispatcher.gerritEvent(oldRefReplicated);
 
         ChangeMerged changeMerged = Setup.createChangeMerged("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
+        changeMerged.setReceivedOn(changeMergedTime);
         Item item = createItem(changeMerged, new String[] {"slaveA"});
 
         assertNotNull(dispatcher.canRun(item),
                 "Item should be blocked as the replica event happened before the change event");
 
         //fire the replica event that will unblock the item
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/branch", "someGerritServer",
-                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+        RefReplicated newRefReplicated = Setup.createRefReplicatedEvent("someProject", "refs/heads/branch",
+                "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS);
+        newRefReplicated.setReceivedOn(newReplicaTime);
+        dispatcher.gerritEvent(newRefReplicated);
 
         assertNull(dispatcher.canRun(item),
                 "Item should not be blocked anymore as a newer replica event was received");
@@ -641,14 +677,27 @@ class ReplicationQueueTaskDispatcherTest {
      */
     @Test
     void shouldBlockItemUntilProperReplicationEventIsReceived() {
+        // Set explicit timestamps to avoid cache expiry issues.
+        // Old events should be before RefUpdated, new events after.
+        long baseTime = System.currentTimeMillis() + ONE_SECOND_MS;
+        long oldEventTime = baseTime;
+        long refUpdatedTime = baseTime + ONE_SECOND_MS;
+        long newEventTime = baseTime + TWO_SECONDS_MS;
+
         //send replication events created before the actual event
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-                "slaveB", RefReplicated.SUCCEEDED_STATUS));
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+        RefReplicated oldRefRepB = Setup.createRefReplicatedEvent("someProject", "refs/heads/master",
+                "someGerritServer", "slaveB", RefReplicated.SUCCEEDED_STATUS);
+        oldRefRepB.setReceivedOn(oldEventTime);
+        dispatcher.gerritEvent(oldRefRepB);
+
+        RefReplicated oldRefRepA = Setup.createRefReplicatedEvent("someProject", "refs/heads/master",
+                "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS);
+        oldRefRepA.setReceivedOn(oldEventTime);
+        dispatcher.gerritEvent(oldRefRepA);
 
         RefUpdated refUpdated = Setup.createRefUpdated("someGerritServer", "someProject",
                 "master");
+        refUpdated.setReceivedOn(refUpdatedTime);
         Item item = createItem(refUpdated, new String[] {"slaveA", "slaveB"});
 
         //item is blocked since the cached replication events are time stamped before the actual event
@@ -660,10 +709,15 @@ class ReplicationQueueTaskDispatcherTest {
         assertTrue(cause.getShortDescription().contains("slaveB"));
 
         //send replication events created after the actual event
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-                "slaveB", RefReplicated.SUCCEEDED_STATUS));
-        dispatcher.gerritEvent(Setup.createRefReplicatedEvent("someProject", "refs/heads/master", "someGerritServer",
-                "slaveA", RefReplicated.SUCCEEDED_STATUS));
+        RefReplicated newRefRepB = Setup.createRefReplicatedEvent("someProject", "refs/heads/master",
+                "someGerritServer", "slaveB", RefReplicated.SUCCEEDED_STATUS);
+        newRefRepB.setReceivedOn(newEventTime);
+        dispatcher.gerritEvent(newRefRepB);
+
+        RefReplicated newRefRepA = Setup.createRefReplicatedEvent("someProject", "refs/heads/master",
+                "someGerritServer", "slaveA", RefReplicated.SUCCEEDED_STATUS);
+        newRefRepA.setReceivedOn(newEventTime);
+        dispatcher.gerritEvent(newRefRepA);
 
         assertNull(dispatcher.canRun(item), "Item should not be blocked");
         verify(queueMock, times(1)).maintain();

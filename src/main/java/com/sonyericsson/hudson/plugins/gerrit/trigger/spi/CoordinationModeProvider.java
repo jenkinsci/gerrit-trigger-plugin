@@ -162,4 +162,47 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * @return a new EventClaimStrategy instance (non-null)
      */
     public abstract EventClaimStrategy createEventClaimStrategy();
+
+    /**
+     * Initializes this coordination mode provider.
+     *
+     * <p>Called during plugin startup (PluginImpl.start()) to initialize any resources
+     * needed by this provider. For example:</p>
+     * <ul>
+     *   <li>Local mode: no-op (no initialization needed)</li>
+     *   <li>Hazelcast mode: initializes Hazelcast instance and cluster membership</li>
+     *   <li>Redis mode: establishes connection pool</li>
+     *   <li>JDBC mode: initializes database connection</li>
+     * </ul>
+     *
+     * <p><b>IMPORTANT:</b> This method is called BEFORE the provider is selected by
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory}.
+     * The provider must be fully initialized when {@link #isAvailable()} is called during
+     * provider discovery.</p>
+     *
+     * <p><b>Error Handling:</b> If initialization fails, implementations should throw an
+     * exception. The plugin will log the error and continue, allowing {@link #isAvailable()}
+     * to return false so a fallback provider can be selected.</p>
+     *
+     * @throws Exception if initialization fails
+     */
+    public abstract void initialize() throws Exception;
+
+    /**
+     * Shuts down this coordination mode provider.
+     *
+     * <p>Called during plugin shutdown (PluginImpl.stop()) to release any resources
+     * held by this provider. For example:</p>
+     * <ul>
+     *   <li>Local mode: no-op (no resources to release)</li>
+     *   <li>Hazelcast mode: shuts down Hazelcast instance gracefully</li>
+     *   <li>Redis mode: closes connection pool</li>
+     *   <li>JDBC mode: closes database connections</li>
+     * </ul>
+     *
+     * <p><b>Error Handling:</b> Implementations should handle errors gracefully and
+     * not throw exceptions, as this is called during shutdown and exceptions cannot
+     * be meaningfully handled.</p>
+     */
+    public abstract void shutdown();
 }

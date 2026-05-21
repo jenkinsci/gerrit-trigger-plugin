@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * All three coordination concerns (build state storage, notification rights, event processing rights)
  * now use the same Extension Points pattern consistently.
  *
- * @see CoordinationModeFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider (fallback)
  * @author CloudBees, Inc.
  */
@@ -169,5 +169,47 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
     public EventClaimStrategy createEventClaimStrategy() {
         logger.info("Creating HazelcastEventClaimStrategy");
         return new HazelcastEventClaimStrategy();
+    }
+
+    /**
+     * Initializes Hazelcast coordination mode.
+     * <p>
+     * Only initializes if coordination mode is configured as 'hazelcast'.
+     * This ensures Hazelcast is not started when using local mode.
+     * <p>
+     * If initialization fails, an exception is thrown and the provider will
+     * not be available (isAvailable() will return false).
+     *
+     * @throws Exception if Hazelcast initialization fails
+     */
+    @Override
+    public void initialize() throws Exception {
+        // Check coordination mode - only initialize if this provider should be used
+        String configuredMode = getConfiguredMode();
+        if (!HAZELCAST_MODE.equalsIgnoreCase(configuredMode)) {
+            logger.trace("Coordination mode is '{}', skipping Hazelcast initialization", configuredMode);
+            return;
+        }
+
+        logger.info("Initializing Hazelcast coordination mode...");
+        boolean initialized = HazelcastManager.initialize();
+        if (initialized) {
+            logger.info("Hazelcast initialized successfully");
+        } else {
+            logger.warn("Hazelcast initialization returned false - may already be initialized");
+        }
+    }
+
+    /**
+     * Shuts down Hazelcast coordination mode.
+     * <p>
+     * This gracefully shuts down the Hazelcast instance, leaving the cluster
+     * and releasing all resources.
+     */
+    @Override
+    public void shutdown() {
+        logger.info("Shutting down Hazelcast coordination mode...");
+        HazelcastManager.shutdown();
+        logger.info("Hazelcast shut down complete");
     }
 }
