@@ -82,23 +82,33 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     /**
      * Distributed mode storage (coordination mode).
      * Lazy-initialized when first accessed.
+     * Marked volatile for thread-safe double-checked locking pattern.
      */
-    private transient IMap<BuildMemoryKey, MemoryImprintData> distributedMemory = null;
+    private transient volatile IMap<BuildMemoryKey, MemoryImprintData> distributedMemory = null;
 
     /**
-     * Gets or initializes the distributed memory map.
+     * Gets or initializes the distributed memory map using thread-safe double-checked locking.
+     * <p>
+     * Uses volatile field and synchronized block to ensure only one thread initializes
+     * the map while avoiding synchronization overhead on subsequent accesses.
      *
      * @return distributed memory map, or null if Hazelcast unavailable
      */
     private IMap<BuildMemoryKey, MemoryImprintData> getDistributedMemory() {
+        // First check (no locking) - fast path for already-initialized case
         if (distributedMemory == null) {
-            HazelcastInstance hz = HazelcastInstanceProvider.getInstance();
-            if (hz != null) {
-                distributedMemory = hz.getMap(MAP_NAME);
-                logger.debug("Initialized distributed BuildMemory map: {} (size: {})",
-                        MAP_NAME, distributedMemory.size());
-            } else {
-                logger.warn("Hazelcast unavailable, distributed memory not available");
+            synchronized (this) {
+                // Second check (with locking) - ensures only one thread initializes
+                if (distributedMemory == null) {
+                    HazelcastInstance hz = HazelcastInstanceProvider.getInstance();
+                    if (hz != null) {
+                        distributedMemory = hz.getMap(MAP_NAME);
+                        logger.debug("Initialized distributed BuildMemory map: {} (size: {})",
+                                MAP_NAME, distributedMemory.size());
+                    } else {
+                        logger.warn("Hazelcast unavailable, distributed memory not available");
+                    }
+                }
             }
         }
         return distributedMemory;
