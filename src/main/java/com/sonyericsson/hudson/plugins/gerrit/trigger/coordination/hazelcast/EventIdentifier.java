@@ -56,6 +56,21 @@ public final class EventIdentifier {
     private static final int SHORT_REVISION_LENGTH = 8;
 
     /**
+     * Initial prime number for hash computation (standard Java hashCode practice).
+     */
+    private static final int HASH_INITIAL_PRIME = 17;
+
+    /**
+     * Multiplier prime number for hash computation (standard Java hashCode practice).
+     */
+    private static final int HASH_MULTIPLIER_PRIME = 31;
+
+    /**
+     * Number of bits to shift for long-to-int hash conversion.
+     */
+    private static final int HASH_LONG_SHIFT_BITS = 32;
+
+    /**
      * Private constructor to prevent instantiation.
      */
     private EventIdentifier() {
@@ -86,9 +101,12 @@ public final class EventIdentifier {
 
     /**
      * Generates ID for change-based events (patchset-created, comment-added, etc.).
+     * <p>
+     * Prefers {@code changeId} over deprecated {@code change.getNumber()}.
+     * Includes branch since changeId is not unique across branches.
      *
      * @param event the change-based event
-     * @return event ID in format: change-{project}-{number}-{patchset}-{type}-{timestamp}
+     * @return event ID in format: change-{project}-{changeId}-{branch}-{patchset}-{type}-{timestamp}
      */
     private static String generateChangeBasedEventId(ChangeBasedEvent event) {
         Change change = event.getChange();
@@ -102,11 +120,28 @@ public final class EventIdentifier {
         // Fall back to receivedOn if eventCreatedOn is not available
         long timestamp = getEventTimestamp(event);
 
-        // Format: change-{project}-{number}-{patchset}-{type}-{timestamp}
-        // Project is included because change numbers are only unique within a project
-        return String.format("change-%s-%s-%s-%s-%d",
+        // Prefer changeId (I...) over deprecated change number
+        // Note: changeId is not unique across branches, so branch must be included
+        String changeIdentifier;
+        if (change.getId() != null && !change.getId().isEmpty()) {
+            // Use Change-Id (format: I1234567890abcdef...)
+            changeIdentifier = sanitize(change.getId());
+        } else {
+            // Fallback to change number if changeId not available (old Gerrit versions)
+            changeIdentifier = "num-" + change.getNumber();
+        }
+
+        // Include branch for uniqueness (changeId can be reused across branches)
+        String branch = "unknown";
+        if (change.getBranch() != null && !change.getBranch().isEmpty()) {
+            branch = sanitize(change.getBranch());
+        }
+
+        // Format: change-{project}-{changeId}-{branch}-{patchset}-{type}-{timestamp}
+        return String.format("change-%s-%s-%s-%s-%s-%d",
                 sanitize(change.getProject()),
-                change.getNumber(),
+                changeIdentifier,
+                branch,
                 patchSet.getNumber(),
                 sanitizeEventType(event.getEventType().getTypeValue()),
                 timestamp);
@@ -149,21 +184,68 @@ public final class EventIdentifier {
 
     /**
      * Generates fallback ID for events that don't match known patterns.
+     * <p>
+     * Uses only deterministic fields to ensure the same event produces the same ID
+     * across all replicas. Specifically avoids {@code hashCode()} which is not stable
+     * across JVMs.
      *
      * @param event the event
-     * @return event ID in format: event-{type}-{timestamp}-{hash}
+     * @return event ID in format: event-{type}-{server}-{timestamp}-{deterministicHash}
      */
     private static String generateFallbackEventId(GerritTriggeredEvent event) {
         // Use server-side timestamp (eventCreatedOn) for consistency across replicas
         // Fall back to receivedOn if eventCreatedOn is not available
         long timestamp = getEventTimestamp(event);
 
-        // Format: event-<type>-<timestamp>-<hash>
-        // Hash provides uniqueness when timestamp alone isn't sufficient
-        return String.format("event-%s-%d-%08x",
+        // Get server name for additional uniqueness
+        String serverName = "unknown";
+        if (event.getProvider() != null && event.getProvider().getName() != null) {
+            serverName = sanitize(event.getProvider().getName());
+        }
+
+        // Create deterministic hash from event fields (not object hashCode!)
+        int deterministicHash = computeDeterministicHash(event);
+
+        // Format: event-<type>-<server>-<timestamp>-<deterministicHash>
+        // All components are deterministic across replicas
+        return String.format("event-%s-%s-%d-%08x",
                 sanitizeEventType(event.getEventType().getTypeValue()),
+                serverName,
                 timestamp,
-                event.hashCode());
+                deterministicHash);
+    }
+
+    /**
+     * Computes a deterministic hash from event fields.
+     * <p>
+     * This hash is stable across JVMs because it's computed from the event's actual
+     * field values, not from the object's identity or {@code hashCode()}.
+     * <p>
+     * Uses the same fields that would typically be in a well-implemented {@code hashCode()}:
+     * event type and timestamp. The provider name is included in the event ID directly,
+     * so doesn't need to be part of the hash.
+     *
+     * @param event the event
+     * @return deterministic hash value
+     */
+    private static int computeDeterministicHash(GerritTriggeredEvent event) {
+        int result = HASH_INITIAL_PRIME; // Start with prime number
+
+        // Use event type (always available)
+        if (event.getEventType() != null && event.getEventType().getTypeValue() != null) {
+            result = HASH_MULTIPLIER_PRIME * result + event.getEventType().getTypeValue().hashCode();
+        }
+
+        // Use timestamp (already deterministic across replicas)
+        long timestamp = getEventTimestamp(event);
+        result = HASH_MULTIPLIER_PRIME * result + (int)(timestamp ^ (timestamp >>> HASH_LONG_SHIFT_BITS));
+
+        // Use server name if available
+        if (event.getProvider() != null && event.getProvider().getName() != null) {
+            result = HASH_MULTIPLIER_PRIME * result + event.getProvider().getName().hashCode();
+        }
+
+        return result;
     }
 
     /**
