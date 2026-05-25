@@ -59,8 +59,33 @@ import java.util.Map;
  *   <li>Coordination mode is set to 'hazelcast' via system property</li>
  *   <li>Hazelcast instance is available and running</li>
  * </ul>
+ * <p>
+ * <b>Serialization Strategy (MemoryImprint ↔ MemoryImprintData):</b>
+ * <p>
+ * This class handles conversion between the API type
+ * ({@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint})
+ * and the serialization type ({@link MemoryImprintData}):
+ * <ul>
+ *   <li><b>Write Path</b>: Business logic → MemoryImprint → (convert) → MemoryImprintData → Hazelcast IMap</li>
+ *   <li><b>Read Path</b>: Hazelcast IMap → MemoryImprintData → (reconstruct) → MemoryImprint → Business logic</li>
+ * </ul>
+ * <p>
+ * <b>Conversion Details:</b>
+ * <ul>
+ *   <li><b>Event Serialization</b>: {@link #serializeEvent} converts GerritTriggeredEvent to JSON
+ *       using {@link PolymorphicEventTypeAdapter} for type preservation</li>
+ *   <li><b>Entry Data Extraction</b>: EntryProcessors extract string identifiers (project full names,
+ *       build IDs) from Jenkins objects before storage</li>
+ *   <li><b>Reconstruction</b>: {@link #reconstructMemoryImprint} deserializes JSON to events and
+ *       looks up Jenkins objects via {@link jenkins.model.Jenkins#getItemByFullName}</li>
+ * </ul>
+ * <p>
+ * This conversion happens only at storage boundaries, keeping the rest of the plugin
+ * unaware of serialization concerns.
  *
  * @see HazelcastCoordinationProvider
+ * @see MemoryImprintData
+ * @see PolymorphicEventTypeAdapter
  */
 public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
