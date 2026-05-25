@@ -33,12 +33,14 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildCompletedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildCompletedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildStartedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildStartedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import org.slf4j.Logger;
@@ -120,12 +122,19 @@ public class GerritNotifierFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                if (config.isUseRestApi()
-                        && memoryImprint.getEvent() instanceof ChangeBasedEvent) {
-                    GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
-                } else {
-                    GerritSendCommandQueue.queue(new BuildCompletedCommandJob(config, memoryImprint, listener));
-                }
+                GerritTriggeredEvent event = memoryImprint.getEvent();
+
+                // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
+                NotificationClaimStrategy notificationClaimStrategy =
+                    CoordinationModeFactory.get().getClaimStrategy();
+                notificationClaimStrategy.withClaim(event, () -> {
+                    if (config.isUseRestApi()
+                            && event instanceof ChangeBasedEvent) {
+                        GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
+                    } else {
+                        GerritSendCommandQueue.queue(new BuildCompletedCommandJob(config, memoryImprint, listener));
+                    }
+                });
             } else {
                 logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
@@ -196,12 +205,17 @@ public class GerritNotifierFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
-                    GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
-                            (ChangeBasedEvent)event, stats));
-                } else {
-                    GerritSendCommandQueue.queue(new BuildStartedCommandJob(config, build, listener, event, stats));
-                }
+                // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
+                NotificationClaimStrategy notificationClaimStrategy =
+                    CoordinationModeFactory.get().getClaimStrategy();
+                notificationClaimStrategy.withClaim(event, () -> {
+                    if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
+                        GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
+                                (ChangeBasedEvent)event, stats));
+                    } else {
+                        GerritSendCommandQueue.queue(new BuildStartedCommandJob(config, build, listener, event, stats));
+                    }
+                });
             } else {
                 logger.warn("Nothing queued since there is no configuration for serverName: {}", serverName);
             }
