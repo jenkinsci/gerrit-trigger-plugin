@@ -189,14 +189,14 @@ public final class HazelcastConfig {
         } else if ("kubernetes".equalsIgnoreCase(discoveryMode) || isKubernetesEnvironment()) {
             configureKubernetesDiscovery(joinConfig, port);
         } else if ("tcp".equalsIgnoreCase(discoveryMode) || hasTcpMembersConfigured()) {
-            configureTcpDiscovery(joinConfig);
+            configureTcpDiscovery(joinConfig, port);
         } else {
             // Fallback: Try Kubernetes, then TCP
             logger.info("Auto-detecting discovery mechanism...");
             if (isKubernetesEnvironment()) {
                 configureKubernetesDiscovery(joinConfig, port);
             } else {
-                configureTcpDiscovery(joinConfig);
+                configureTcpDiscovery(joinConfig, port);
             }
         }
 
@@ -235,17 +235,18 @@ public final class HazelcastConfig {
      * Configures TCP/IP discovery with static member list.
      *
      * @param joinConfig the join configuration
+     * @param port the Hazelcast port (used in fallback and example messages)
      */
-    private static void configureTcpDiscovery(JoinConfig joinConfig) {
+    private static void configureTcpDiscovery(JoinConfig joinConfig, int port) {
         String tcpMembers = System.getProperty(TCP_MEMBERS_PROPERTY, "");
 
         if (tcpMembers.isEmpty()) {
             logger.warn("TCP discovery mode selected but no members configured. "
                     + "Set {} system property.", TCP_MEMBERS_PROPERTY);
-            logger.warn("Example: -D{}=replica-0.jenkins:5701,replica-1.jenkins:5701",
-                    TCP_MEMBERS_PROPERTY);
+            logger.warn("Example: -D{}=replica-0.jenkins:{},replica-1.jenkins:{}",
+                    TCP_MEMBERS_PROPERTY, port, port);
             // Use localhost as fallback for single-instance testing
-            tcpMembers = "localhost:5701";
+            tcpMembers = "localhost:" + port;
         }
 
         logger.info("Configuring TCP/IP discovery with members: {}", tcpMembers);
