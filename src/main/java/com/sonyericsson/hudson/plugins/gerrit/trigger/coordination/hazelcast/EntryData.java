@@ -110,14 +110,14 @@ public class EntryData {
 
     /**
      * Sets the build ID.
+     * <p>
+     * Note: Does not automatically set startedTimestamp. Callers should explicitly set
+     * the timestamp using {@link #setStartedTimestamp(Long)} when appropriate.
      *
      * @param buildId build ID
      */
     public void setBuildId(String buildId) {
         this.buildId = buildId;
-        if (buildId != null && startedTimestamp == null) {
-            this.startedTimestamp = System.currentTimeMillis();
-        }
     }
 
     /**
@@ -131,14 +131,14 @@ public class EntryData {
 
     /**
      * Sets build completed status.
+     * <p>
+     * Note: Does not automatically set completedTimestamp. Callers should explicitly set
+     * the timestamp using {@link #setCompletedTimestamp(Long)} when appropriate.
      *
      * @param buildCompleted completed status
      */
     public void setBuildCompleted(boolean buildCompleted) {
         this.buildCompleted = buildCompleted;
-        if (buildCompleted && completedTimestamp == null) {
-            this.completedTimestamp = System.currentTimeMillis();
-        }
     }
 
     /**
