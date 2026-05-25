@@ -24,11 +24,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAllAction;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
@@ -122,18 +124,23 @@ public final class EventListener implements GerritEventListener {
             return;
         }
         if (event instanceof GerritTriggeredEvent triggeredEvent) {
-            synchronized (this) {
-                if (t.isInteresting(triggeredEvent)) {
-                    logger.trace("The event is interesting.");
-                    abortBuild(t, triggeredEvent);
-                    if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
-                        logger.trace("Just aborting build based on event not scheduling new one.");
-                        return;
+
+            // Claim event for processing (prevents duplicate builds in HA/HS environments)
+            EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+            eventClaimStrategy.withClaim(triggeredEvent, () -> {
+                synchronized (this) {
+                    if (t.isInteresting(triggeredEvent)) {
+                        logger.trace("The event is interesting.");
+                        abortBuild(t, triggeredEvent);
+                        if (t.isOnlyAbortRunningBuild(triggeredEvent)) {
+                            logger.trace("Just aborting build based on event not scheduling new one.");
+                            return;
+                        }
+                        notifyOnTriggered(t, triggeredEvent);
+                        schedule(t, new GerritCause(triggeredEvent, t.isSilentMode()), triggeredEvent);
                     }
-                    notifyOnTriggered(t, triggeredEvent);
-                    schedule(t, new GerritCause(triggeredEvent, t.isSilentMode()), triggeredEvent);
                 }
-            }
+            });
         }
     }
 
@@ -162,18 +169,23 @@ public final class EventListener implements GerritEventListener {
             // to just return now without processing the event.
             return;
         }
-        synchronized (this) {
-            if (t.isInteresting(event)) {
-                logger.trace("The event is interesting.");
-                abortBuild(t, event);
-                if (t.isOnlyAbortRunningBuild(event)) {
-                    logger.trace("Just aborting build based on event not scheduling new one.");
-                    return;
+
+        // Claim event for processing (prevents duplicate builds in HA/HS environments)
+        EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+        eventClaimStrategy.withClaim(event, () -> {
+            synchronized (this) {
+                if (t.isInteresting(event)) {
+                    logger.trace("The event is interesting.");
+                    abortBuild(t, event);
+                    if (t.isOnlyAbortRunningBuild(event)) {
+                        logger.trace("Just aborting build based on event not scheduling new one.");
+                        return;
+                    }
+                    notifyOnTriggered(t, event);
+                    schedule(t, new GerritManualCause(event, t.isSilentMode()), event);
                 }
-                notifyOnTriggered(t, event);
-                schedule(t, new GerritManualCause(event, t.isSilentMode()), event);
             }
-        }
+        });
     }
 
     /**
@@ -208,18 +220,23 @@ public final class EventListener implements GerritEventListener {
             // to just return now without processing the event.
             return;
         }
-        synchronized (this) {
-            if (t.isInteresting(event) && t.commentAddedMatch(event)) {
-                logger.trace("The event is interesting.");
-                abortBuild(t, event);
-                if (t.isOnlyAbortRunningBuild(event)) {
-                    logger.trace("Just aborting build based on event not scheduling new one.");
-                    return;
+
+        // Claim event for processing (prevents duplicate builds in HA/HS environments)
+        EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+        eventClaimStrategy.withClaim(event, () -> {
+            synchronized (this) {
+                if (t.isInteresting(event) && t.commentAddedMatch(event)) {
+                    logger.trace("The event is interesting.");
+                    abortBuild(t, event);
+                    if (t.isOnlyAbortRunningBuild(event)) {
+                        logger.trace("Just aborting build based on event not scheduling new one.");
+                        return;
+                    }
+                    notifyOnTriggered(t, event);
+                    schedule(t, new GerritCause(event, t.isSilentMode()), event);
                 }
-                notifyOnTriggered(t, event);
-                schedule(t, new GerritCause(event, t.isSilentMode()), event);
             }
-        }
+        });
     }
 
     /**
