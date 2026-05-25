@@ -250,9 +250,18 @@ public final class HazelcastConfig {
 
         logger.info("Configuring TCP/IP discovery with members: {}", tcpMembers);
 
-        joinConfig.getTcpIpConfig()
-                .setEnabled(true)
-                .addMember(tcpMembers);
+        // Split comma-separated member list and add each member individually
+        String[] members = tcpMembers.split(",");
+        com.hazelcast.config.TcpIpConfig tcpIpConfig = joinConfig.getTcpIpConfig();
+        tcpIpConfig.setEnabled(true);
+
+        for (String member : members) {
+            String trimmedMember = member.trim();
+            if (!trimmedMember.isEmpty()) {
+                tcpIpConfig.addMember(trimmedMember);
+                logger.debug("Added TCP member: {}", trimmedMember);
+            }
+        }
 
         // Disable other discovery methods
         joinConfig.getKubernetesConfig().setEnabled(false);
