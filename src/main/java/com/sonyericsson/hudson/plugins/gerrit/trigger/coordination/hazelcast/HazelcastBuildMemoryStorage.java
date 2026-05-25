@@ -272,12 +272,17 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // This is critical when multiple projects are triggered by the same event simultaneously.
         // Without atomic operations, concurrent threads can overwrite each other's entries,
         // causing some project entries to be lost from BuildMemory (which breaks cancellation logic).
-        Boolean wasNew = map.executeOnKey(key, new TriggeredProcessor(projectFullName, eventJson));
+        try {
+            Boolean wasNew = map.executeOnKey(key, new TriggeredProcessor(projectFullName, eventJson));
 
-        if (wasNew) {
-            logger.trace("Triggered event stored in distributed memory: {} for project: {}", key, projectFullName);
-        } else {
-            logger.trace("Project {} already triggered for event: {}", projectFullName, key);
+            if (wasNew) {
+                logger.trace("Triggered event stored in distributed memory: {} for project: {}", key, projectFullName);
+            } else {
+                logger.trace("Project {} already triggered for event: {}", projectFullName, key);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to store triggered event in distributed memory for project: {} event: {}",
+                    projectFullName, key, e);
         }
     }
 
@@ -294,12 +299,17 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String buildId = build.getId();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        Boolean found = map.executeOnKey(key, new BuildStartedProcessor(projectFullName, buildId));
+        try {
+            Boolean found = map.executeOnKey(key, new BuildStartedProcessor(projectFullName, buildId));
 
-        if (!found) {
-            logger.warn("Build started without being registered first (distributed mode).");
+            if (!found) {
+                logger.warn("Build started without being registered first (distributed mode).");
+            }
+            logger.trace("Build started event stored in distributed memory: {}", key);
+        } catch (Exception e) {
+            logger.error("Failed to mark build started in distributed memory: project={}, build={}, event={}",
+                    projectFullName, buildId, key, e);
         }
-        logger.trace("Build started event stored in distributed memory: {}", key);
     }
 
     @Override
@@ -315,12 +325,17 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String buildId = build.getId();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        Boolean found = map.executeOnKey(key, new BuildCompletedProcessor(projectFullName, buildId));
+        try {
+            Boolean found = map.executeOnKey(key, new BuildCompletedProcessor(projectFullName, buildId));
 
-        if (!found) {
-            logger.debug("Build completed without being registered first (distributed mode).");
+            if (!found) {
+                logger.debug("Build completed without being registered first (distributed mode).");
+            }
+            logger.trace("Build completed event stored in distributed memory: {}", key);
+        } catch (Exception e) {
+            logger.error("Failed to mark build completed in distributed memory: project={}, build={}, event={}",
+                    projectFullName, buildId, key, e);
         }
-        logger.trace("Build completed event stored in distributed memory: {}", key);
     }
 
     @Override
@@ -337,9 +352,13 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String eventJson = serializeEvent(event);
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        map.executeOnKey(key, new RetriggeredProcessor(projectFullName, eventJson, otherBuilds));
-
-        logger.trace("Retriggered event stored in distributed memory: {}", key);
+        try {
+            map.executeOnKey(key, new RetriggeredProcessor(projectFullName, eventJson, otherBuilds));
+            logger.trace("Retriggered event stored in distributed memory: {}", key);
+        } catch (Exception e) {
+            logger.error("Failed to record retriggered in distributed memory: project={}, event={}",
+                    projectFullName, key, e);
+        }
     }
 
     @Override
@@ -354,12 +373,17 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        Boolean found = map.executeOnKey(key, new BuildCancelledProcessor(projectFullName));
+        try {
+            Boolean found = map.executeOnKey(key, new BuildCancelledProcessor(projectFullName));
 
-        if (!found) {
-            logger.debug("Build cancelled without being registered first (distributed mode).");
+            if (!found) {
+                logger.debug("Build cancelled without being registered first (distributed mode).");
+            }
+            logger.trace("Cancelled event stored in distributed memory: {}", key);
+        } catch (Exception e) {
+            logger.error("Failed to mark cancelled in distributed memory: project={}, event={}",
+                    projectFullName, key, e);
         }
-        logger.trace("Cancelled event stored in distributed memory: {}", key);
     }
 
     @Override
@@ -374,9 +398,13 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        map.executeOnKey(key, new SetCancellingProcessor(projectFullName));
-
-        logger.trace("Cancelling flag set in distributed memory for event: {}", key);
+        try {
+            map.executeOnKey(key, new SetCancellingProcessor(projectFullName));
+            logger.trace("Cancelling flag set in distributed memory for event: {}", key);
+        } catch (Exception e) {
+            logger.error("Failed to set cancelling flag in distributed memory: project={}, event={}",
+                    projectFullName, key, e);
+        }
     }
 
     @Override
@@ -405,17 +433,23 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         java.util.Set<BuildMemoryKey> keys = new java.util.HashSet<>(map.keySet());
 
         for (BuildMemoryKey key : keys) {
-            // Execute processor atomically on partition owner
-            Boolean shouldDelete = map.executeOnKey(key, new RemoveProjectProcessor(projectFullName));
+            try {
+                // Execute processor atomically on partition owner
+                Boolean shouldDelete = map.executeOnKey(key, new RemoveProjectProcessor(projectFullName));
 
-            if (shouldDelete != null && shouldDelete) {
-                // MemoryImprintData is now empty - delete the map entry
-                map.delete(key);
-                logger.trace("Removed empty entry for project {} from distributed memory: {}",
-                    projectFullName, key);
-            } else if (shouldDelete != null) {
-                logger.trace("Removed project {} from distributed memory entry: {}",
-                    projectFullName, key);
+                if (shouldDelete != null && shouldDelete) {
+                    // MemoryImprintData is now empty - delete the map entry
+                    map.delete(key);
+                    logger.trace("Removed empty entry for project {} from distributed memory: {}",
+                        projectFullName, key);
+                } else if (shouldDelete != null) {
+                    logger.trace("Removed project {} from distributed memory entry: {}",
+                        projectFullName, key);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to remove project from distributed memory entry: project={}, key={}",
+                        projectFullName, key, e);
+                // Continue processing other keys
             }
         }
     }
@@ -521,12 +555,17 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        Boolean found = map.executeOnKey(key, new SetCustomUrlProcessor(projectFullName, customUrl));
+        try {
+            Boolean found = map.executeOnKey(key, new SetCustomUrlProcessor(projectFullName, customUrl));
 
-        if (found) {
-            logger.trace("Recording custom URL for {}: {}", event, customUrl);
-        } else {
-            logger.warn("Could not set custom URL - event not found: {}", event);
+            if (found) {
+                logger.trace("Recording custom URL for {}: {}", event, customUrl);
+            } else {
+                logger.warn("Could not set custom URL - event not found: {}", event);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to set custom URL in distributed memory: project={}, event={}, url={}",
+                    projectFullName, key, customUrl, e);
         }
     }
 
@@ -543,13 +582,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
-        Boolean found = map.executeOnKey(key,
-                new SetUnsuccessfulMessageProcessor(projectFullName, unsuccessfulMessage));
+        try {
+            Boolean found = map.executeOnKey(key,
+                    new SetUnsuccessfulMessageProcessor(projectFullName, unsuccessfulMessage));
 
-        if (found) {
-            logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
-        } else {
-            logger.warn("Could not set unsuccessful message - event not found: {}", event);
+            if (found) {
+                logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
+            } else {
+                logger.warn("Could not set unsuccessful message - event not found: {}", event);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to set unsuccessful message in distributed memory: project={}, event={}, message={}",
+                    projectFullName, key, unsuccessfulMessage, e);
         }
     }
 
