@@ -26,11 +26,25 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 /**
- * Serializable data for BuildMemory Entry.
+ * Serializable data transfer object for BuildMemory Entry in Hazelcast distributed storage.
  * <p>
- * Stores job and build information without Jenkins object references.
- * Uses Compact Serialization for cross-JVM compatibility.
+ * This class is the serialization-friendly counterpart to
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry}.
+ * It stores the same information but uses only primitives and strings instead of Jenkins object references.
+ * <p>
+ * <b>Stored Data:</b>
+ * <ul>
+ *   <li><b>projectFullName</b>: String identifier for the job (instead of {@link hudson.model.Job} reference)</li>
+ *   <li><b>buildId</b>: String identifier for the build (instead of {@link hudson.model.Run} reference)</li>
+ *   <li><b>Build state</b>: completion status, cancellation flags, timestamps</li>
+ *   <li><b>Feedback data</b>: custom URLs and unsuccessful messages for Gerrit comments</li>
+ * </ul>
+ * <p>
+ * Uses Hazelcast Compact Serialization for cross-JVM compatibility in sidecar deployments.
  *
+ * @see MemoryImprintData
+ * @see HazelcastBuildMemoryStorage#reconstructMemoryImprint
+ * @see EntryDataSerializer
  */
 public class EntryData {
 

@@ -27,11 +27,56 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Serializable data for MemoryImprint to store in Hazelcast.
+ * Serializable data transfer object for BuildMemory storage in Hazelcast distributed maps.
  * <p>
- * Contains simplified Entry data without complex object references.
- * Uses Compact Serialization for cross-JVM compatibility in sidecar deployments.
+ * <b>Design Rationale - Why separate from MemoryImprint?</b>
+ * <p>
+ * This class exists alongside
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint}
+ * to separate API concerns from serialization concerns:
+ * <ul>
+ *   <li><b>MemoryImprint</b>: The main API class used by business logic throughout the plugin.
+ *       Contains Jenkins objects ({@link hudson.model.Job}, {@link hudson.model.Run},
+ *       {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent})
+ *       which are not serializable or cross-JVM compatible.</li>
+ *   <li><b>MemoryImprintData</b>: Serialization-optimized data structure for Hazelcast storage.
+ *       Contains only primitives and strings (event JSON, project full names, build IDs)
+ *       which can be safely serialized across JVM boundaries.</li>
+ * </ul>
+ * <p>
+ * <b>Key Benefits of This Design:</b>
+ * <ul>
+ *   <li><b>Cross-JVM Compatibility</b>: Uses Hazelcast Compact Serialization which works across
+ *       different JVMs and classloaders (critical for sidecar deployment scenarios)</li>
+ *   <li><b>API Stability</b>: MemoryImprint API remains unchanged, preserving backward compatibility
+ *       with existing code throughout the plugin</li>
+ *   <li><b>No Object References</b>: Avoids serializing Jenkins objects which may not exist on
+ *       remote replicas or may change between serialization/deserialization</li>
+ *   <li><b>Explicit Conversion</b>: Forces explicit conversion at storage boundaries, making
+ *       the serialization strategy visible and testable</li>
+ * </ul>
+ * <p>
+ * <b>Conversion Strategy:</b>
+ * <ul>
+ *   <li><b>Storage</b>: {@link HazelcastBuildMemoryStorage} converts MemoryImprint to MemoryImprintData
+ *       by serializing events to JSON and extracting string identifiers (project names, build IDs)</li>
+ *   <li><b>Retrieval</b>: {@link HazelcastBuildMemoryStorage#reconstructMemoryImprint} converts
+ *       MemoryImprintData back to MemoryImprint by deserializing events and looking up Jenkins
+ *       objects via {@link jenkins.model.Jenkins#getItemByFullName}</li>
+ * </ul>
+ * <p>
+ * <b>Alternative Considered and Rejected:</b>
+ * Making MemoryImprint directly serializable was rejected because:
+ * <ul>
+ *   <li>Jenkins objects (Job, Run) are not reliably serializable across replicas</li>
+ *   <li>GerritTriggeredEvent requires custom polymorphic serialization</li>
+ *   <li>Would break in sidecar scenarios where classloaders differ</li>
+ *   <li>Would tightly couple the API to Hazelcast serialization details</li>
+ * </ul>
  *
+ * @see HazelcastBuildMemoryStorage
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint
+ * @see MemoryImprintDataSerializer
  */
 public class MemoryImprintData {
 
