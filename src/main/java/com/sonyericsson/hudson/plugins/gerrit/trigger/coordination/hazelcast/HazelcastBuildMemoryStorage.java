@@ -298,51 +298,12 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         }
 
         BuildMemoryKey key = new BuildMemoryKey(event);
-        MemoryImprintData data = map.get(key);
-
-        if (data == null) {
-            // Create new memory imprint data
-            data = new MemoryImprintData();
-            data.setEventJson(serializeEvent(event));
-
-            if (otherBuilds != null) {
-                // Populate with old build info
-                for (Run build : otherBuilds) {
-                    EntryData entryData = new EntryData();
-                    entryData.setProjectFullName(build.getParent().getFullName());
-                    entryData.setBuildId(build.getId());
-                    entryData.setBuildCompleted(!build.isBuilding());
-                    data.addEntry(entryData);
-                }
-            }
-        }
-
-        // Reset the retriggered project (clear build info)
         String projectFullName = project.getFullName();
-        boolean found = false;
+        String eventJson = serializeEvent(event);
 
-        if (data.getEntries() != null) {
-            for (EntryData entry : data.getEntries()) {
-                if (projectFullName.equals(entry.getProjectFullName())) {
-                    // Reset this entry
-                    entry.setBuildId(null);
-                    entry.setBuildCompleted(false);
-                    entry.setStartedTimestamp(null);
-                    entry.setCompletedTimestamp(null);
-                    found = true;
-                    break;
-                }
-            }
-        }
+        // ATOMIC OPERATION - Executes on partition owner, prevents race conditions
+        map.executeOnKey(key, new RetriggeredProcessor(projectFullName, eventJson, otherBuilds));
 
-        if (!found) {
-            // Add new entry for retriggered project
-            EntryData entryData = new EntryData();
-            entryData.setProjectFullName(projectFullName);
-            data.addEntry(entryData);
-        }
-
-        map.put(key, data);
         logger.trace("Retriggered event stored in distributed memory: {}", key);
     }
 
@@ -404,21 +365,22 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             return;
         }
 
-        // Iterate over all entries in distributed memory
-        for (Map.Entry<BuildMemoryKey, MemoryImprintData> mapEntry : map.entrySet()) {
-            MemoryImprintData data = mapEntry.getValue();
-            if (data.getEntries() != null) {
-                // Remove entries matching this project
-                boolean removed = data.getEntries().removeIf(
-                    entry -> projectFullName.equals(entry.getProjectFullName())
-                );
+        // ATOMIC OPERATION - Process each entry atomically to prevent race conditions
+        // Collect keys first to avoid ConcurrentModificationException
+        java.util.Set<BuildMemoryKey> keys = new java.util.HashSet<>(map.keySet());
 
-                // If we removed anything, update the map
-                if (removed) {
-                    map.put(mapEntry.getKey(), data);
-                    logger.trace("Removed project {} from distributed memory entry: {}",
-                        projectFullName, mapEntry.getKey());
-                }
+        for (BuildMemoryKey key : keys) {
+            // Execute processor atomically on partition owner
+            Boolean shouldDelete = map.executeOnKey(key, new RemoveProjectProcessor(projectFullName));
+
+            if (shouldDelete != null && shouldDelete) {
+                // MemoryImprintData is now empty - delete the map entry
+                map.delete(key);
+                logger.trace("Removed empty entry for project {} from distributed memory: {}",
+                    projectFullName, key);
+            } else if (shouldDelete != null) {
+                logger.trace("Removed project {} from distributed memory entry: {}",
+                    projectFullName, key);
             }
         }
     }
