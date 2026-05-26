@@ -38,9 +38,9 @@ public class EntryDataSerializer implements CompactSerializer<EntryData> {
 
     /**
      * Type name for schema registration.
-     * Must be unique across all compact serialized types.
+     * Uses fully-qualified name to prevent conflicts in shared Hazelcast clusters.
      */
-    private static final String TYPE_NAME = "EntryData";
+    private static final String TYPE_NAME = "com.sonyericsson.gerrit.trigger.EntryData";
 
     @Override
     @NonNull

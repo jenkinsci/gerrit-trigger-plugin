@@ -1,6 +1,8 @@
 /*
  * The MIT License
  *
+ * Copyright 2026 CloudBees, Inc.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -35,7 +37,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
  * compatibility with sidecar deployment. The sidecar Hazelcast cluster doesn't need
  * this class in its classpath.
  *
- * @author CloudBees, Inc.
  */
 public class EventClaim {
 

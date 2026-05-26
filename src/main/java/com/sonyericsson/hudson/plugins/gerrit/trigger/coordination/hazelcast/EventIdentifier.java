@@ -32,7 +32,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
 /**
  * Utility class for generating unique, consistent event identifiers.
  * <p>
- * Event IDs are used for distributed event claiming in CloudBees HA/HS environments.
+ * Event IDs are used for distributed event claiming in HA/HS (High Availability/High Scalability) environments.
  * The same Gerrit event arriving at different replicas must produce the same event ID
  * to enable proper claim coordination.
  * <p>

@@ -35,7 +35,7 @@ import java.util.function.Consumer;
 /**
  * Hazelcast-backed implementation of NotificationClaimStrategy for HA/HS deployments.
  * <p>
- * In CloudBees HA/HS environments with multiple replicas, each replica tracks build
+ * In HA/HS (High Availability/High Scalability) environments with multiple replicas, each replica tracks build
  * completions independently. To prevent duplicate notifications to Gerrit,
  * replicas use distributed notification claiming:
  * <ul>
@@ -50,7 +50,6 @@ import java.util.function.Consumer;
  * allows notification sending to continue (better to risk duplicate notifications than
  * lose feedback entirely).
  *
- * @author CloudBees, Inc.
  */
 public class HazelcastNotificationClaimStrategy extends NotificationClaimStrategy {
 
@@ -106,8 +105,14 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
             if (previousValue == null) {
                 // Successfully claimed notification right
                 logger.debug("Successfully claimed notification right for event: {}", eventId);
-                claimed.run();
-                return new SuccessfulClaim();
+                try {
+                    claimed.run();
+                    return new SuccessfulClaim();
+                } catch (Exception actionException) {
+                    logger.error("Error executing notification action after successful claim: {}", eventId,
+                            actionException);
+                    return new FailedClaim(actionException);
+                }
             } else {
                 // Another replica already claimed notification
                 logger.debug("Another replica already claimed notification for event: {}", eventId);

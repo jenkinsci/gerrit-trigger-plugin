@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- *
+ * Copyright 2026 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,9 +43,9 @@ public class MemoryImprintDataSerializer implements CompactSerializer<MemoryImpr
 
     /**
      * Type name for schema registration.
-     * Must be unique across all compact serialized types.
+     * Uses fully-qualified name to prevent conflicts in shared Hazelcast clusters.
      */
-    private static final String TYPE_NAME = "MemoryImprintData";
+    private static final String TYPE_NAME = "com.sonyericsson.gerrit.trigger.MemoryImprintData";
 
     @Override
     @NonNull

@@ -37,7 +37,6 @@ import java.util.Map;
  * <p>
  * Thread-safe atomic operation.
  *
- * @author CloudBees, Inc.
  */
 public class SetCancellingProcessor implements EntryProcessor<BuildMemoryKey, MemoryImprintData, Object> {
 
