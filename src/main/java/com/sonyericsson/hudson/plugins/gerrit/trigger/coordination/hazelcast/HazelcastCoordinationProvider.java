@@ -57,11 +57,8 @@ import org.slf4j.LoggerFactory;
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider (fallback)
- * @author CloudBees, Inc.
  */
-// CHECKSTYLE:OFF MagicNumber - Ordinal must be literal in annotation, 100 ensures higher priority than fallback
 @Extension(ordinal = HazelcastCoordinationProvider.HAZELCAST_PRIORITY)
-// CHECKSTYLE:ON MagicNumber
 public class HazelcastCoordinationProvider extends CoordinationModeProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(HazelcastCoordinationProvider.class);

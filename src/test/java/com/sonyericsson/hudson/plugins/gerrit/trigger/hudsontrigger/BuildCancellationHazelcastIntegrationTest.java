@@ -52,6 +52,8 @@ import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 import static org.junit.Assert.assertEquals;
@@ -64,11 +66,14 @@ import static org.junit.Assert.assertTrue;
  * These tests verify that build cancellation works correctly when using
  * Hazelcast-backed BuildMemoryStorage instead of local TreeMap storage.
  * <p>
- * This is critical for CloudBees HA/HS deployments where multiple Jenkins
+ * This is critical for HA/HS (High Availability/High Scalability) deployments where multiple Jenkins
  * instances share state via Hazelcast.
  *
  */
 public class BuildCancellationHazelcastIntegrationTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(
+            BuildCancellationHazelcastIntegrationTest.class);
 
     /**
      * Hazelcast test infrastructure - MUST be declared before JenkinsRule.
@@ -157,10 +162,10 @@ public class BuildCancellationHazelcastIntegrationTest {
             modeName = "UNKNOWN";
         }
 
-        System.out.println("=== COORDINATION MODE VERIFICATION ===");
-        System.out.println("Mode: " + modeName);
-        System.out.println("Storage: " + storageClass);
-        System.out.println("======================================");
+        logger.info("=== COORDINATION MODE VERIFICATION ===");
+        logger.info("Mode: {}", modeName);
+        logger.info("Storage: {}", storageClass);
+        logger.info("======================================");
 
         assertEquals("Expected Hazelcast storage", "HazelcastBuildMemoryStorage", storageClass);
         assertEquals("Expected Hazelcast mode", "Hazelcast (Distributed)", modeName);

@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 /**
  * Hazelcast-backed implementation of EventClaimStrategy for HA/HS deployments.
  * <p>
- * In CloudBees HA/HS environments with multiple replicas, each Gerrit event
+ * In HA/HS (High Availability/High Scalability) environments with multiple replicas, each Gerrit event
  * arrives at all replicas via SSH event stream. To prevent duplicate builds,
  * replicas use distributed event claiming:
  * <ul>
@@ -54,7 +54,6 @@ import java.util.function.Consumer;
  * <strong>Fail-open behavior:</strong> If Hazelcast is unavailable, this strategy
  * allows event processing to continue (better to risk duplicate builds than drop events).
  *
- * @author CloudBees, Inc.
  */
 public class HazelcastEventClaimStrategy extends EventClaimStrategy {
 
@@ -122,8 +121,13 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                     // Allow this job to also process the event
                     logger.trace("Event already claimed by this replica, allowing: {} (job processing)",
                             eventId);
-                    claimed.run();
-                    return new SuccessfulClaim();
+                    try {
+                        claimed.run();
+                        return new SuccessfulClaim();
+                    } catch (Exception actionException) {
+                        logger.error("Error executing action after claim: {}", eventId, actionException);
+                        return new FailedClaim(actionException);
+                    }
                 } else {
                     // Claimed by ANOTHER replica - skip processing
                     logger.debug("Event already claimed by {}: {} (type: {})",
@@ -152,16 +156,26 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                 // Successfully claimed by this replica
                 logger.debug("Successfully claimed event: {} (type: {})",
                         eventId, event.getEventType().getTypeValue());
-                claimed.run();
-                return new SuccessfulClaim();
+                try {
+                    claimed.run();
+                    return new SuccessfulClaim();
+                } catch (Exception actionException) {
+                    logger.error("Error executing action after successful claim: {}", eventId, actionException);
+                    return new FailedClaim(actionException);
+                }
             } else {
                 // Race condition: another replica claimed it between our get() and putIfAbsent()
                 // Check if it was claimed by this replica or another
                 if (previousClaim.getClaimedBy().equals(thisInstanceId)) {
                     // Claimed by THIS replica (race between jobs on same replica)
                     logger.trace("Event claimed by this replica during race condition: {}", eventId);
-                    claimed.run();
-                    return new SuccessfulClaim();
+                    try {
+                        claimed.run();
+                        return new SuccessfulClaim();
+                    } catch (Exception actionException) {
+                        logger.error("Error executing action in race condition: {}", eventId, actionException);
+                        return new FailedClaim(actionException);
+                    }
                 } else {
                     // Claimed by ANOTHER replica
                     logger.debug("Event claimed by {} during race condition: {} (type: {})",

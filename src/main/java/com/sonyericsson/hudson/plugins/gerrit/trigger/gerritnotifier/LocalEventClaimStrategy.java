@@ -111,8 +111,12 @@ public class LocalEventClaimStrategy extends EventClaimStrategy {
         @Override
         @NonNull
         public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // Execute error handler
-            onError.accept(exception);
+            // Execute error handler (wrapped for safety)
+            try {
+                onError.accept(exception);
+            } catch (Exception e) {
+                logger.error("Error in error handler", e);
+            }
             return this;
         }
     }

@@ -1,6 +1,8 @@
 /*
  * The MIT License
  *
+ * Copyright 2026 CloudBees, Inc.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -36,15 +38,14 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * The serializer writes a schema with field names and types, which the sidecar
  * Hazelcast can process without needing the EventClaim class.
  *
- * @author CloudBees, Inc.
  */
 public class EventClaimSerializer implements CompactSerializer<EventClaim> {
 
     /**
      * Type name for schema registration.
-     * Must be unique across all compact serialized types.
+     * Uses fully-qualified name to prevent conflicts in shared Hazelcast clusters.
      */
-    private static final String TYPE_NAME = "EventClaim";
+    private static final String TYPE_NAME = "com.sonyericsson.gerrit.trigger.EventClaim";
 
     @Override
     @NonNull
