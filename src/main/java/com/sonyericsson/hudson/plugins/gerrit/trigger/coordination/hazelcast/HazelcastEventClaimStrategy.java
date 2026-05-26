@@ -23,6 +23,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResult;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResults;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -31,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /**
  * Hazelcast-backed implementation of EventClaimStrategy for HA/HS deployments.
@@ -110,9 +111,9 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
             // Fail-open: execute the action even without claiming
             try {
                 claimed.run();
-                return new SuccessfulClaim();
+                return ClaimResults.success();
             } catch (Exception e) {
-                return new FailedClaim(e);
+                return ClaimResults.failed(e);
             }
         }
 
@@ -136,16 +137,16 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                             eventId);
                     try {
                         claimed.run();
-                        return new SuccessfulClaim();
+                        return ClaimResults.success();
                     } catch (Exception actionException) {
                         logger.error("Error executing action after claim: {}", eventId, actionException);
-                        return new FailedClaim(actionException);
+                        return ClaimResults.failed(actionException);
                     }
                 } else {
                     // Claimed by ANOTHER replica - skip processing
                     logger.debug("Event already claimed by {}: {} (type: {})",
                             existingClaim.getClaimedBy(), eventId, event.getEventType().getTypeValue());
-                    return new NotClaimedResult();
+                    return ClaimResults.notClaimed();
                 }
             }
 
@@ -171,10 +172,10 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                         eventId, event.getEventType().getTypeValue());
                 try {
                     claimed.run();
-                    return new SuccessfulClaim();
+                    return ClaimResults.success();
                 } catch (Exception actionException) {
                     logger.error("Error executing action after successful claim: {}", eventId, actionException);
-                    return new FailedClaim(actionException);
+                    return ClaimResults.failed(actionException);
                 }
             } else {
                 // Race condition: another replica claimed it between our get() and putIfAbsent()
@@ -184,16 +185,16 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                     logger.trace("Event claimed by this replica during race condition: {}", eventId);
                     try {
                         claimed.run();
-                        return new SuccessfulClaim();
+                        return ClaimResults.success();
                     } catch (Exception actionException) {
                         logger.error("Error executing action in race condition: {}", eventId, actionException);
-                        return new FailedClaim(actionException);
+                        return ClaimResults.failed(actionException);
                     }
                 } else {
                     // Claimed by ANOTHER replica
                     logger.debug("Event claimed by {} during race condition: {} (type: {})",
                             previousClaim.getClaimedBy(), eventId, event.getEventType().getTypeValue());
-                    return new NotClaimedResult();
+                    return ClaimResults.notClaimed();
                 }
             }
         } catch (Exception e) {
@@ -204,9 +205,9 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
                 claimed.run();
             } catch (Exception innerException) {
                 logger.error("Error executing claimed action after claim failure", innerException);
-                return new FailedClaim(innerException);
+                return ClaimResults.failed(innerException);
             }
-            return new SuccessfulClaim();
+            return ClaimResults.success();
         }
     }
 
@@ -264,83 +265,5 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
             }
         }
         return DEFAULT_CLAIM_TTL_SECONDS;
-    }
-
-    /**
-     * Successful claim result - the action was executed.
-     */
-    private static class SuccessfulClaim implements ClaimResult {
-        @Override
-        @NonNull
-        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
-            // Claim was successful, don't run notClaimed handler
-            return this;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // No error occurred
-            return this;
-        }
-    }
-
-    /**
-     * Not claimed result - another instance already claimed the event.
-     */
-    private static class NotClaimedResult implements ClaimResult {
-        @Override
-        @NonNull
-        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
-            // Run the notClaimed handler
-            try {
-                notClaimed.run();
-            } catch (Exception e) {
-                logger.error("Error in notClaimed handler", e);
-            }
-            return this;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // No error occurred (just not claimed)
-            return this;
-        }
-    }
-
-    /**
-     * Failed claim result - an error occurred during processing.
-     */
-    private static class FailedClaim implements ClaimResult {
-        private final Exception exception;
-
-        /**
-         * Constructor.
-         *
-         * @param exception the exception that occurred
-         */
-        FailedClaim(Exception exception) {
-            this.exception = exception;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
-            // Don't run notClaimed - this was an error, not a "not claimed" situation
-            return this;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // Run the error handler
-            try {
-                onError.accept(exception);
-            } catch (Exception e) {
-                logger.error("Error in error handler", e);
-            }
-            return this;
-        }
     }
 }
