@@ -36,6 +36,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
     private static final long serialVersionUID = 1L;
 
     private final String projectFullName;
+    private final long timestamp;
 
     /**
      * Constructor.
@@ -44,6 +45,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
      */
     public BuildCancelledProcessor(String projectFullName) {
         this.projectFullName = projectFullName;
+        this.timestamp = System.currentTimeMillis();
     }
 
     @Override
@@ -62,6 +64,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
                 if (projectFullName.equals(entryData.getProjectFullName())) {
                     entryData.setCancelled(true);
                     entryData.setCancelling(false);  // Clear cancelling flag
+                    entryData.setCompletedTimestamp(timestamp);  // Set completion timestamp
                     entryData.setBuildCompleted(true);  // Cancelled builds are also completed
                     found = true;
                     break;
@@ -75,6 +78,7 @@ public class BuildCancelledProcessor implements EntryProcessor<BuildMemoryKey, M
             newEntry.setProjectFullName(projectFullName);
             newEntry.setCancelled(true);
             newEntry.setCancelling(false);
+            newEntry.setCompletedTimestamp(timestamp);  // Set completion timestamp
             newEntry.setBuildCompleted(true);  // Cancelled builds are also completed
             data.addEntry(newEntry);
         }

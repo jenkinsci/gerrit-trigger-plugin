@@ -69,8 +69,8 @@ public class BuildCompletedProcessor implements EntryProcessor<BuildMemoryKey, M
                     if (entryData.getBuildId() == null) {
                         entryData.setBuildId(buildId);
                     }
-                    entryData.setBuildCompleted(true);
                     entryData.setCompletedTimestamp(timestamp);
+                    entryData.setBuildCompleted(true);
                     found = true;
                     break;
                 }
@@ -82,8 +82,8 @@ public class BuildCompletedProcessor implements EntryProcessor<BuildMemoryKey, M
             EntryData newEntry = new EntryData();
             newEntry.setProjectFullName(projectFullName);
             newEntry.setBuildId(buildId);
-            newEntry.setBuildCompleted(true);
             newEntry.setCompletedTimestamp(timestamp);
+            newEntry.setBuildCompleted(true);
             data.addEntry(newEntry);
         }
 
