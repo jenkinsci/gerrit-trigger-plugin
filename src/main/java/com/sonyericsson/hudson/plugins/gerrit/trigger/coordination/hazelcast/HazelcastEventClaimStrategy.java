@@ -78,6 +78,12 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
     private static final String CLAIM_TTL_PROPERTY = "gerrit.trigger.coordination.hazelcast.claim.ttl.seconds";
 
     /**
+     * Cached claim TTL in seconds.
+     * Parsed once at class initialization from system property or default.
+     */
+    private static final long CLAIM_TTL_SECONDS = parseClaimTtlSeconds();
+
+    /**
      * Cached instance identifier (hostname or pod name).
      */
     private static volatile String instanceId = null;
@@ -138,7 +144,7 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
             EventClaim previousClaim = claimsMap.putIfAbsent(
                     eventId,
                     claim,
-                    getClaimTtlSeconds(),
+                    CLAIM_TTL_SECONDS,
                     TimeUnit.SECONDS
             );
 
@@ -205,25 +211,29 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
     }
 
     /**
-     * Gets the configured claim TTL in seconds.
+     * Parses the configured claim TTL in seconds from system property.
      * <p>
+     * Called once at class initialization to parse and cache the TTL value.
      * Can be overridden via system property {@link #CLAIM_TTL_PROPERTY}.
      * Default is {@link #DEFAULT_CLAIM_TTL_SECONDS} (5 minutes).
      *
      * @return TTL in seconds
      */
-    private static long getClaimTtlSeconds() {
+    private static long parseClaimTtlSeconds() {
         String ttlProperty = System.getProperty(CLAIM_TTL_PROPERTY);
         if (ttlProperty != null) {
             try {
                 long ttl = Long.parseLong(ttlProperty);
                 if (ttl > 0) {
+                    logger.info("Using custom claim TTL: {} seconds (from system property)", ttl);
                     return ttl;
                 } else {
-                    logger.warn("Invalid claim TTL property (must be > 0): {}, using default", ttlProperty);
+                    logger.warn("Invalid claim TTL property (must be > 0): {}, using default: {}",
+                            ttlProperty, DEFAULT_CLAIM_TTL_SECONDS);
                 }
             } catch (NumberFormatException e) {
-                logger.warn("Invalid claim TTL property (not a number): {}, using default", ttlProperty);
+                logger.warn("Invalid claim TTL property (not a number): {}, using default: {}",
+                        ttlProperty, DEFAULT_CLAIM_TTL_SECONDS);
             }
         }
         return DEFAULT_CLAIM_TTL_SECONDS;
