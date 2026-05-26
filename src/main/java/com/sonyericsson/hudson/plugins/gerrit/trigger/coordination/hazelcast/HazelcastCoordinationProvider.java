@@ -21,6 +21,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
@@ -73,6 +74,12 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      * The mode name that enables this provider.
      */
     private static final String HAZELCAST_MODE = "hazelcast";
+
+    /**
+     * The Hazelcast instance for this provider.
+     * Set during initialization, used to create strategies.
+     */
+    private HazelcastInstance hazelcastInstance;
 
     /**
      * Checks if this provider is available.
@@ -131,8 +138,10 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      */
     @Override
     public BuildMemoryStorage createStorage() {
-        logger.info("Creating HazelcastBuildMemoryStorage");
-        return new HazelcastBuildMemoryStorage();
+        // Fetch instance from provider (multiple Extension instances may exist)
+        HazelcastInstance instance = HazelcastInstanceProvider.getInstanceOrThrow();
+        logger.info("Creating HazelcastBuildMemoryStorage with instance: {}", instance.getName());
+        return new HazelcastBuildMemoryStorage(instance);
     }
 
     /**
@@ -145,8 +154,10 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      */
     @Override
     public NotificationClaimStrategy createClaimStrategy() {
-        logger.info("Creating HazelcastNotificationClaimStrategy");
-        return new HazelcastNotificationClaimStrategy();
+        // Fetch instance from provider (multiple Extension instances may exist)
+        HazelcastInstance instance = HazelcastInstanceProvider.getInstanceOrThrow();
+        logger.info("Creating HazelcastNotificationClaimStrategy with instance: {}", instance.getName());
+        return new HazelcastNotificationClaimStrategy(instance);
     }
 
     /**
@@ -164,8 +175,10 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      */
     @Override
     public EventClaimStrategy createEventClaimStrategy() {
-        logger.info("Creating HazelcastEventClaimStrategy");
-        return new HazelcastEventClaimStrategy();
+        // Fetch instance from provider (multiple Extension instances may exist)
+        HazelcastInstance instance = HazelcastInstanceProvider.getInstanceOrThrow();
+        logger.info("Creating HazelcastEventClaimStrategy with instance: {}", instance.getName());
+        return new HazelcastEventClaimStrategy(instance);
     }
 
     /**
@@ -189,12 +202,8 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
         }
 
         logger.info("Initializing Hazelcast coordination mode...");
-        boolean initialized = HazelcastManager.initialize();
-        if (initialized) {
-            logger.info("Hazelcast initialized successfully");
-        } else {
-            logger.warn("Hazelcast initialization returned false - may already be initialized");
-        }
+        this.hazelcastInstance = HazelcastManager.initialize();
+        logger.info("Hazelcast initialized successfully");
     }
 
     /**
