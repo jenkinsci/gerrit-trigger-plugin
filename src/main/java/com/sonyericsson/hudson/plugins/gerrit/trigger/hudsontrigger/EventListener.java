@@ -128,7 +128,7 @@ public final class EventListener implements GerritEventListener {
             // Claim event for processing (prevents duplicate builds in HA/HS environments)
             EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
             eventClaimStrategy.withClaim(triggeredEvent, () -> {
-                synchronized (this) {
+                synchronized (EventListener.this) {
                     if (t.isInteresting(triggeredEvent)) {
                         logger.trace("The event is interesting.");
                         abortBuild(t, triggeredEvent);
@@ -173,7 +173,7 @@ public final class EventListener implements GerritEventListener {
         // Claim event for processing (prevents duplicate builds in HA/HS environments)
         EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
-            synchronized (this) {
+            synchronized (EventListener.this) {
                 if (t.isInteresting(event)) {
                     logger.trace("The event is interesting.");
                     abortBuild(t, event);
@@ -224,7 +224,7 @@ public final class EventListener implements GerritEventListener {
         // Claim event for processing (prevents duplicate builds in HA/HS environments)
         EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
-            synchronized (this) {
+            synchronized (EventListener.this) {
                 if (t.isInteresting(event) && t.commentAddedMatch(event)) {
                     logger.trace("The event is interesting.");
                     abortBuild(t, event);
