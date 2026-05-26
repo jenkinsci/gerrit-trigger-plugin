@@ -87,6 +87,13 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
     private static final String NOTIFICATION_TTL_PROPERTY =
             "gerrit.trigger.coordination.hazelcast.notification.ttl.minutes";
 
+    /**
+     * Cached claim TTL in seconds.
+     * Parsed once at class initialization from system property or default.
+     */
+    private static final int NOTIFICATION_TTL_SECONDS = parseNotificationTtlMinutes();
+
+
     @Override
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
@@ -111,7 +118,7 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
             Boolean previousValue = notificationFlags.putIfAbsent(
                     flagKey,
                     Boolean.TRUE,
-                    getNotificationTtlMinutes(),
+                    NOTIFICATION_TTL_SECONDS,
                     TimeUnit.MINUTES
             );
 
@@ -146,19 +153,21 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
     }
 
     /**
-     * Gets the configured notification claim TTL in minutes.
+     * Parse the configured notification claim TTL in minutes.
      * <p>
+     * Called once at class initialization to parse and cache the TTL value.
      * Can be overridden via system property {@link #NOTIFICATION_TTL_PROPERTY}.
      * Default is {@link #DEFAULT_NOTIFICATION_CLAIM_TTL_MINUTES} (10 minutes).
      *
      * @return TTL in minutes
      */
-    private static int getNotificationTtlMinutes() {
+    private static int parseNotificationTtlMinutes() {
         String ttlProperty = System.getProperty(NOTIFICATION_TTL_PROPERTY);
         if (ttlProperty != null) {
             try {
                 int ttl = Integer.parseInt(ttlProperty);
                 if (ttl > 0) {
+                    logger.info("Using custom notification TTL: {} seconds (from system property)", ttl);
                     return ttl;
                 } else {
                     logger.warn("Invalid notification TTL property (must be > 0): {}, using default", ttlProperty);
