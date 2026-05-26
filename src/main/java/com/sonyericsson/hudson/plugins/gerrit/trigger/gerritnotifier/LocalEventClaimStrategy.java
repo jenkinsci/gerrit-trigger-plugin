@@ -23,13 +23,13 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResult;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResults;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Consumer;
 
 /**
  * Local (standalone) implementation of EventClaimStrategy.
@@ -61,63 +61,10 @@ public class LocalEventClaimStrategy extends EventClaimStrategy {
         // Local mode: always claim and execute immediately
         try {
             claimed.run();
-            return new SuccessfulClaim();
+            return ClaimResults.success();
         } catch (Exception e) {
             logger.error("Error processing event in local mode", e);
-            return new FailedClaim(e);
-        }
-    }
-
-    /**
-     * Claim result for successful claim (local mode always succeeds).
-     */
-    private static class SuccessfulClaim implements ClaimResult {
-        @Override
-        @NonNull
-        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
-            // Never called - local mode always claims
-            return this;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // Never called - no error occurred
-            return this;
-        }
-    }
-
-    /**
-     * Claim result for failed claim (exception during processing).
-     */
-    private static class FailedClaim implements ClaimResult {
-        private final Exception exception;
-
-        /**
-         * Constructor.
-         * @param exception the exception that occurred
-         */
-        FailedClaim(Exception exception) {
-            this.exception = exception;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult notClaimed(@NonNull Runnable notClaimed) {
-            // Never called - local mode always claims (even if it fails during execution)
-            return this;
-        }
-
-        @Override
-        @NonNull
-        public ClaimResult onError(@NonNull Consumer<Exception> onError) {
-            // Execute error handler (wrapped for safety)
-            try {
-                onError.accept(exception);
-            } catch (Exception e) {
-                logger.error("Error in error handler", e);
-            }
-            return this;
+            return ClaimResults.failed(e);
         }
     }
 }

@@ -25,7 +25,6 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.function.Consumer;
 
 /**
  * Abstract base class for notification claiming strategies in different deployment modes.
@@ -99,38 +98,8 @@ public abstract class NotificationClaimStrategy {
      * @param event the Gerrit event to claim notification rights for
      * @param claimed action to execute if claim succeeds (runs with claim held, auto-released)
      * @return ClaimResult for chaining notClaimed/onError handlers
+     * @see ClaimResults for shared result implementations
      */
     @NonNull
     public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed);
-
-    /**
-     * Result of a notification claim attempt, allows chaining handlers for not-claimed and error cases.
-     *
-     * <p>This interface supports a fluent API pattern for handling different outcomes
-     * of the claim attempt.</p>
-     */
-    public interface ClaimResult {
-        /**
-         * Handler called if the claim was not acquired (another instance already sending notification).
-         *
-         * <p>This is optional - if not specified, nothing happens when the claim fails.</p>
-         *
-         * @param notClaimed action to execute if claim failed
-         * @return this for chaining
-         */
-        @NonNull
-        ClaimResult notClaimed(@NonNull Runnable notClaimed);
-
-        /**
-         * Handler called if an exception occurs during notification sending.
-         *
-         * <p>This is optional - if not specified, exceptions are silently ignored
-         * (though they may be logged by the implementation).</p>
-         *
-         * @param onError action to execute on error (receives the exception)
-         * @return this for chaining
-         */
-        @NonNull
-        ClaimResult onError(@NonNull Consumer<Exception> onError);
-    }
 }
