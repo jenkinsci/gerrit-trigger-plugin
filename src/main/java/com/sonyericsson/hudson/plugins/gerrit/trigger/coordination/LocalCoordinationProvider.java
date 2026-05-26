@@ -50,9 +50,7 @@ import hudson.Extension;
  * @see LocalEventClaimStrategy
  * @see CoordinationModeFactory
  */
-// CHECKSTYLE:OFF MagicNumber - Ordinal must be literal in annotation, -1000 ensures fallback priority
 @Extension(ordinal = LocalCoordinationProvider.FALLBACK_PRIORITY)
-// CHECKSTYLE:ON MagicNumber
 public class LocalCoordinationProvider extends CoordinationModeProvider {
 
     /**

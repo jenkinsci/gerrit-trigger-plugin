@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- *  Copyright 2026 CloudBees, Inc.
+ * Copyright 2026 CloudBees, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,6 @@ import java.util.Map;
  * in future policy checks.
  * <p>
  * Thread-safe atomic operation.
- *
  */
 public class SetCancellingProcessor implements EntryProcessor<BuildMemoryKey, MemoryImprintData, Object> {
 
