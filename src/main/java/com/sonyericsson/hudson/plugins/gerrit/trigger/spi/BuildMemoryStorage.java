@@ -47,10 +47,6 @@ import java.util.Map;
  * <p>
  * Implementations are discovered via Jenkins Extension Points pattern using
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.
- * <p>
- * <strong>Design Note:</strong> This is an abstract class (not an interface) to allow
- * adding concrete helper methods in the future without breaking existing implementations.
- * This follows Jenkins plugin development best practices.
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory

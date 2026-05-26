@@ -64,9 +64,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>Implementations are discovered via the Extension Points pattern using
  * {@link CoordinationModeProvider}.</p>
  *
- * <p><strong>Design Note:</strong> This is an abstract class (not an interface) to allow
- * adding concrete helper methods in the future without breaking existing implementations.</p>
- *
  * @see CoordinationModeProvider
  */
 public abstract class NotificationClaimStrategy {
