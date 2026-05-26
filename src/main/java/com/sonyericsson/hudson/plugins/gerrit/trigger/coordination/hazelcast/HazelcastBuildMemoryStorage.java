@@ -105,11 +105,25 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             .create();
 
     /**
+     * The Hazelcast instance to use for distributed storage.
+     */
+    private final HazelcastInstance hazelcastInstance;
+
+    /**
      * Distributed mode storage (coordination mode).
      * Lazy-initialized when first accessed.
      * Marked volatile for thread-safe double-checked locking pattern.
      */
     private transient volatile IMap<BuildMemoryKey, MemoryImprintData> distributedMemory = null;
+
+    /**
+     * Constructor.
+     *
+     * @param hazelcastInstance the Hazelcast instance to use
+     */
+    public HazelcastBuildMemoryStorage(@NonNull HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
     /**
      * Gets or initializes the distributed memory map using thread-safe double-checked locking.
@@ -125,9 +139,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             synchronized (this) {
                 // Second check (with locking) - ensures only one thread initializes
                 if (distributedMemory == null) {
-                    HazelcastInstance hz = HazelcastInstanceProvider.getInstance();
-                    if (hz != null) {
-                        distributedMemory = hz.getMap(MAP_NAME);
+                    if (hazelcastInstance != null) {
+                        distributedMemory = hazelcastInstance.getMap(MAP_NAME);
                         logger.debug("Initialized distributed BuildMemory map: {} (size: {})",
                                 MAP_NAME, distributedMemory.size());
                     } else {

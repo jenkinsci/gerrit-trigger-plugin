@@ -56,9 +56,23 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
     private static final Logger logger = LoggerFactory.getLogger(HazelcastNotificationClaimStrategy.class);
 
     /**
+     * The Hazelcast instance to use for notification claiming.
+     */
+    private final HazelcastInstance hazelcastInstance;
+
+    /**
      * Hazelcast map name for notification claim flags.
      */
     private static final String NOTIFICATION_FLAGS_MAP = "gerrit-trigger-notification-flags";
+
+    /**
+     * Constructor.
+     *
+     * @param hazelcastInstance the Hazelcast instance to use
+     */
+    public HazelcastNotificationClaimStrategy(@NonNull HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
     /**
      * Default notification claim TTL in minutes (10 minutes).
@@ -76,9 +90,8 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
     @Override
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
-        // Get Hazelcast instance
-        HazelcastInstance hz = HazelcastInstanceProvider.getInstance();
-        if (hz == null) {
+        // Check Hazelcast instance availability
+        if (hazelcastInstance == null) {
             logger.warn("Hazelcast not available for notification claim, proceeding with local mode (fail-open)");
             // Fail-open: execute the notification action even without claiming
             try {
@@ -90,7 +103,7 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
         }
 
         try {
-            IMap<String, Boolean> notificationFlags = hz.getMap(NOTIFICATION_FLAGS_MAP);
+            IMap<String, Boolean> notificationFlags = hazelcastInstance.getMap(NOTIFICATION_FLAGS_MAP);
             String eventId = EventIdentifier.generateEventId(event);
             String flagKey = "notified-" + eventId;
 

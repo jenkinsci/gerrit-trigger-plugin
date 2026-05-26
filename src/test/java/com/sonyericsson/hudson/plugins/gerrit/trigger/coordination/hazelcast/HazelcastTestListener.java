@@ -66,9 +66,9 @@ public class HazelcastTestListener extends RunListener {
             if (!HazelcastManager.isInitialized()) {
                 try {
                     logger.info("Initializing Hazelcast for test suite...");
-                    boolean success = HazelcastManager.initialize();
+                    com.hazelcast.core.HazelcastInstance instance = HazelcastManager.initialize();
 
-                    if (success) {
+                    if (instance != null) {
                         initialized = true;
                         shouldInitialize = true;
                         logger.info("Hazelcast initialized successfully for test suite");

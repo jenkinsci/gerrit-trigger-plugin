@@ -56,16 +56,19 @@ public final class HazelcastManager {
      * Creates a Hazelcast member in the Jenkins JVM with configuration from
      * {@link HazelcastConfig#createConfig()}.
      * <p>
-     * This method is idempotent - calling it multiple times has no effect if already initialized.
+     * This method is idempotent - calling it multiple times returns the existing instance.
      *
-     * @return true if Hazelcast was initialized (or already initialized)
+     * @return the Hazelcast instance
      * @throws RuntimeException if initialization fails
      */
-    public static boolean initialize() {
+    public static HazelcastInstance initialize() {
         synchronized (INIT_LOCK) {
             if (initialized) {
                 logger.debug("Hazelcast is already initialized");
-                return true;
+                HazelcastInstance existing = HazelcastInstanceProvider.getInstance();
+                if (existing != null) {
+                    return existing;
+                }
             }
 
             try {
@@ -77,7 +80,7 @@ public final class HazelcastManager {
                 // Create Hazelcast instance
                 HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
 
-                // Register with provider
+                // Register with provider (for backward compatibility with helper methods)
                 HazelcastInstanceProvider.setInstance(hazelcastInstance);
 
                 initialized = true;
@@ -89,7 +92,7 @@ public final class HazelcastManager {
                         hazelcastInstance.getName(),
                         clusterSize);
 
-                return true;
+                return hazelcastInstance;
 
             } catch (Exception e) {
                 logger.error("Failed to initialize Hazelcast", e);
@@ -156,9 +159,9 @@ public final class HazelcastManager {
      * This will shutdown the existing instance and create a new one.
      * Used when configuration has changed.
      *
-     * @return true if reinitialized successfully
+     * @return the new Hazelcast instance
      */
-    public static boolean reinitialize() {
+    public static HazelcastInstance reinitialize() {
         logger.info("Reinitializing Hazelcast...");
 
         synchronized (INIT_LOCK) {

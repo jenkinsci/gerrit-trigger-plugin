@@ -96,9 +96,9 @@ public class HazelcastTestRule extends ExternalResource {
         // Initialize Hazelcast if not already initialized
         if (!HazelcastManager.isInitialized()) {
             logger.info("Initializing Hazelcast for test...");
-            boolean success = HazelcastManager.initialize();
+            com.hazelcast.core.HazelcastInstance instance = HazelcastManager.initialize();
 
-            if (!success) {
+            if (instance == null) {
                 throw new IllegalStateException("Failed to initialize Hazelcast for test");
             }
 

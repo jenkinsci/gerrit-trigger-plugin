@@ -60,9 +60,23 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
     private static final Logger logger = LoggerFactory.getLogger(HazelcastEventClaimStrategy.class);
 
     /**
+     * The Hazelcast instance to use for event claiming.
+     */
+    private final HazelcastInstance hazelcastInstance;
+
+    /**
      * Hazelcast map name for event claims.
      */
     private static final String CLAIMS_MAP_NAME = "gerrit-trigger-event-claims";
+
+    /**
+     * Constructor.
+     *
+     * @param hazelcastInstance the Hazelcast instance to use
+     */
+    public HazelcastEventClaimStrategy(@NonNull HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
 
     /**
      * Default TTL for event claims in seconds (5 minutes).
@@ -90,9 +104,8 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
     @Override
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
-        // Get Hazelcast instance
-        HazelcastInstance hazelcast = HazelcastInstanceProvider.getInstance();
-        if (hazelcast == null) {
+        // Check Hazelcast instance availability
+        if (hazelcastInstance == null) {
             logger.error("Hazelcast not available, cannot claim event. Allowing event processing (fail-open).");
             // Fail-open: execute the action even without claiming
             try {
@@ -109,7 +122,7 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
 
         try {
             // Get claims map
-            IMap<String, EventClaim> claimsMap = hazelcast.getMap(CLAIMS_MAP_NAME);
+            IMap<String, EventClaim> claimsMap = hazelcastInstance.getMap(CLAIMS_MAP_NAME);
 
             // Check if event is already claimed
             EventClaim existingClaim = claimsMap.get(eventId);
