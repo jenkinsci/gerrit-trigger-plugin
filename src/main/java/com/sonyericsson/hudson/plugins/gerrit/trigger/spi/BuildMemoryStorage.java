@@ -288,15 +288,21 @@ public abstract class BuildMemoryStorage {
     public abstract Map<GerritTriggeredEvent, MemoryImprint> getAllEvents();
 
     /**
-     * Checks if two events are logically equivalent.
+     * Checks if two events are logically equivalent for cancellation purposes.
      * <p>
      * This method allows each storage implementation to define its own event equality
      * semantics. This is critical for proper operation in different coordination modes:
      * <ul>
-     *   <li><strong>Local mode:</strong> Uses identity comparison (==) since events are
-     *       never serialized/deserialized</li>
+     *   <li><strong>Local mode:</strong> Uses identity comparison (==) as an optimization since
+     *       the same event object instance is passed through the system. Note that event classes
+     *       implement logical {@code .equals()} (see
+     *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause} and
+     *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction}),
+     *       which is used for TreeMap key lookup. The identity check here is purely for
+     *       performance in cancellation logic.</li>
      *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
-     *       since events are serialized/deserialized across replicas</li>
+     *       since events are serialized/deserialized across replicas and object identity
+     *       is lost.</li>
      * </ul>
      * <p>
      * <strong>Design rationale:</strong> Event equality semantics belong in the storage
