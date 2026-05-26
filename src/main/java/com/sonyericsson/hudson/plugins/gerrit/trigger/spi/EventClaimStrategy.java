@@ -52,15 +52,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * });
  * </pre>
  *
- * <h2>Benefits:</h2>
- * <ul>
- *   <li>Automatic claim lifecycle management (no manual release needed)</li>
- *   <li>No risk of forgetting to release claim in finally blocks</li>
- *   <li>Cleaner integration code</li>
- *   <li>Built-in error handling</li>
- *   <li>Follows Jenkins patterns (Queue, ACL)</li>
- * </ul>
- *
  * <p>Implementations are discovered via the Extension Points pattern using
  * {@link CoordinationModeProvider}.</p>
  *
