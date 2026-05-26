@@ -595,31 +595,46 @@ public class PluginImpl extends GlobalConfiguration {
     }
 
     /**
-     * Initialize all coordination mode providers.
+     * Initialize the active coordination mode provider.
      * <p>
      * This is called early in plugin startup, before any code that might use
-     * CoordinationModeFactory. This ensures providers can initialize their resources
-     * and be ready when isAvailable() is called during provider discovery.
+     * CoordinationModeFactory. Uses the same discovery logic as CoordinationModeFactory
+     * to find the active provider (highest ordinal where isAvailable() returns true),
+     * then initializes only that provider.
+     * <p>
+     * Only initializing the active provider is more efficient than calling initialize()
+     * on all providers and letting each one check if it should run.
      * <p>
      * Fails gracefully - if a provider's initialization fails, it will not be available
      * and the factory will fall back to the next highest-priority provider.
      */
     private void initializeCoordinationProviders() {
-        logger.debug("Initializing coordination providers...");
-        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider
-                : hudson.ExtensionList.lookup(
-                        com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class)) {
-            try {
-                logger.debug("Initializing provider: {}", provider.getModeName());
-                provider.initialize();
-                logger.debug("Provider {} initialized successfully", provider.getModeName());
-            } catch (Exception e) {
-                logger.warn("Failed to initialize coordination provider: {}. "
-                        + "Provider will not be available.", provider.getModeName(), e);
-                // Continue with other providers even if one fails
+        logger.debug("Discovering active coordination provider...");
+        hudson.ExtensionList<com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider> providers =
+                hudson.ExtensionList.lookup(
+                        com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class);
+
+        // ExtensionList is already ordered by ordinal (highest first)
+        // Find and initialize only the first available provider
+        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider : providers) {
+            logger.debug("Checking provider: {} (available={})", provider.getModeName(), provider.isAvailable());
+
+            if (provider.isAvailable()) {
+                try {
+                    logger.info("Initializing active coordination provider: {}", provider.getModeName());
+                    provider.initialize();
+                    logger.info("Provider {} initialized successfully", provider.getModeName());
+                    return; // Only initialize the active provider
+                } catch (Exception e) {
+                    logger.warn("Failed to initialize coordination provider: {}. "
+                            + "Trying next available provider.", provider.getModeName(), e);
+                    // Continue to next provider if this one fails
+                }
             }
         }
-        logger.debug("Coordination provider initialization complete");
+
+        logger.warn("No coordination provider initialized - this should not happen as LocalCoordinationProvider "
+                + "should always be available");
     }
 
     /**

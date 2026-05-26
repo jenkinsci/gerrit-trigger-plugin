@@ -84,17 +84,16 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
     /**
      * Checks if this provider is available.
      * <p>
-     * Returns true only if:
-     * <ul>
-     *   <li>Coordination mode is configured as 'hazelcast' (via system property)</li>
-     *   <li>Hazelcast instance is initialized and running</li>
-     * </ul>
+     * Returns true only if coordination mode is configured as 'hazelcast' (via system property).
      * <p>
      * Uses the {@link CoordinationModeProvider#getConfiguredMode()} helper method to check
      * the coordination mode. This is future-proof - when we add UI configuration for coordination
      * modes, only that one helper method needs to be updated.
+     * <p>
+     * Note: This method checks configuration only, not initialization status. Hazelcast is
+     * initialized later via {@link #initialize()}, after the provider is selected.
      *
-     * @return true if Hazelcast coordination mode is available, false otherwise
+     * @return true if Hazelcast coordination mode is configured, false otherwise
      */
     @Override
     public boolean isAvailable() {
@@ -105,15 +104,7 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
             return false;
         }
 
-        // Check Hazelcast availability
-        if (!HazelcastInstanceProvider.isInitialized()) {
-            logger.warn("Coordination mode is '{}' but Hazelcast not initialized. "
-                    + "Hazelcast must be initialized before coordination provider discovery. "
-                    + "Falling back to local mode.", HAZELCAST_MODE);
-            return false;
-        }
-
-        logger.info("Hazelcast coordination mode active");
+        logger.debug("Hazelcast coordination mode configured");
         return true;
     }
 
