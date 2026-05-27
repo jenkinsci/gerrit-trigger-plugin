@@ -127,7 +127,7 @@ public class GerritNotifierFactory {
                 // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
                 NotificationClaimStrategy notificationClaimStrategy =
                     CoordinationModeFactory.get().getClaimStrategy();
-                notificationClaimStrategy.withClaim(event, () -> {
+                notificationClaimStrategy.withClaim(event, "build-completed", () -> {
                     if (config.isUseRestApi()
                             && event instanceof ChangeBasedEvent) {
                         GerritSendCommandQueue.queue(new BuildCompletedRestCommandJob(config, memoryImprint, listener));
@@ -208,7 +208,7 @@ public class GerritNotifierFactory {
                 // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
                 NotificationClaimStrategy notificationClaimStrategy =
                     CoordinationModeFactory.get().getClaimStrategy();
-                notificationClaimStrategy.withClaim(event, () -> {
+                notificationClaimStrategy.withClaim(event, "build-started", () -> {
                     if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
                         GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
                                 (ChangeBasedEvent)event, stats));

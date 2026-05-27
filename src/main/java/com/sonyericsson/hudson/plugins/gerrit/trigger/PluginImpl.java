@@ -598,12 +598,13 @@ public class PluginImpl extends GlobalConfiguration {
      * Initialize the active coordination mode provider.
      * <p>
      * This is called early in plugin startup, before any code that might use
-     * CoordinationModeFactory. Uses the same discovery logic as CoordinationModeFactory
-     * to find the active provider (highest ordinal where isAvailable() returns true),
-     * then initializes only that provider.
+     * CoordinationModeFactory. Only initializes the provider that matches the configured
+     * coordination mode, making it more efficient than calling initialize() on all providers.
      * <p>
-     * Only initializing the active provider is more efficient than calling initialize()
-     * on all providers and letting each one check if it should run.
+     * <strong>Implementation Note:</strong> We cannot use {@code provider.isAvailable()}
+     * before initialization because isAvailable() checks if the provider is actually initialized.
+     * Instead, we check the configured mode directly and initialize the matching provider.
+     * After initialization, isAvailable() will return true.
      * <p>
      * Fails gracefully - if a provider's initialization fails, it will not be available
      * and the factory will fall back to the next highest-priority provider.
@@ -614,20 +615,31 @@ public class PluginImpl extends GlobalConfiguration {
                 hudson.ExtensionList.lookup(
                         com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class);
 
-        // ExtensionList is already ordered by ordinal (highest first)
-        // Find and initialize only the first available provider
-        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider : providers) {
-            logger.debug("Checking provider: {} (available={})", provider.getModeName(), provider.isAvailable());
+        // Get configured mode to determine which provider to initialize
+        String configuredMode = com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
+                .getConfiguredMode();
+        logger.debug("Configured coordination mode: {}", configuredMode);
 
-            if (provider.isAvailable()) {
+        // ExtensionList is already ordered by ordinal (highest first)
+        // Find and initialize the provider that matches the configured mode
+        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider : providers) {
+            // Check if this provider's mode matches the configuration
+            // We cannot use isAvailable() here because it checks initialization status
+            String providerMode = provider.getModeName();
+            boolean matches = providerMode.toLowerCase().contains(configuredMode.toLowerCase())
+                    || configuredMode.equalsIgnoreCase("default") && providerMode.equals("Local");
+
+            logger.debug("Checking provider: {} (matches={})", providerMode, matches);
+
+            if (matches) {
                 try {
-                    logger.info("Initializing active coordination provider: {}", provider.getModeName());
+                    logger.info("Initializing coordination provider: {}", provider.getModeName());
                     provider.initialize();
                     logger.info("Provider {} initialized successfully", provider.getModeName());
-                    return; // Only initialize the active provider
+                    return; // Only initialize the matching provider
                 } catch (Exception e) {
                     logger.warn("Failed to initialize coordination provider: {}. "
-                            + "Trying next available provider.", provider.getModeName(), e);
+                            + "Will fall back to next available provider.", provider.getModeName(), e);
                     // Continue to next provider if this one fails
                 }
             }

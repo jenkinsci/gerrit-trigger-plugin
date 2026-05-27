@@ -41,7 +41,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <h2>Fluent API Pattern:</h2>
  * <p>Uses fluent API pattern similar to Jenkins Queue and ACL for automatic resource management:</p>
  * <pre>
- * claimStrategy.withClaim(event, () -&gt; {
+ * claimStrategy.withClaim(event, "build-completed", () -&gt; {
  *     sendNotificationToGerrit(event, buildResult);
  * })
  * .notClaimed(() -&gt; {
@@ -68,7 +68,7 @@ public abstract class NotificationClaimStrategy {
      *
      * <p><b>Usage Example:</b></p>
      * <pre>
-     * claimStrategy.withClaim(event, () -&gt; {
+     * claimStrategy.withClaim(event, "build-completed", () -&gt; {
      *     // This code runs only if claim was acquired
      *     // Claim is automatically released after this block
      *     sendNotificationToGerrit(event, buildResult);
@@ -84,10 +84,29 @@ public abstract class NotificationClaimStrategy {
      * </pre>
      *
      * @param event the Gerrit event to claim notification rights for
+     * @param notificationType the type of notification (e.g., "build-started", "build-completed")
      * @param claimed action to execute if claim succeeds (runs with claim held, auto-released)
      * @return ClaimResult for chaining notClaimed/onError handlers
      * @see ClaimResults for shared result implementations
      */
     @NonNull
-    public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed);
+    public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
+                                          @NonNull String notificationType,
+                                          @NonNull Runnable claimed);
+
+    /**
+     * Attempts to claim the right to send notification and execute the given action if successful.
+     * This is a convenience method that uses a default notification type.
+     *
+     * <p><b>Deprecated:</b> Use {@link #withClaim(GerritTriggeredEvent, String, Runnable)} instead
+     * to properly differentiate between notification types (build-started vs build-completed).</p>
+     *
+     * @param event the Gerrit event to claim notification rights for
+     * @param claimed action to execute if claim succeeds
+     * @return ClaimResult for chaining notClaimed/onError handlers
+     */
+    @NonNull
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
+        return withClaim(event, "default", claimed);
+    }
 }
