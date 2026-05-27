@@ -207,9 +207,11 @@ public class GerritNotifierFactory {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
                 // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
+                // Build-started uses per-job claim (each job sends its own notification)
+                String jobName = build.getParent().getFullName();
                 NotificationClaimStrategy notificationClaimStrategy =
                     CoordinationModeFactory.get().getClaimStrategy();
-                notificationClaimStrategy.withClaim(event, "build-started", () -> {
+                notificationClaimStrategy.withClaim(event, "build-started", jobName, () -> {
                     if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
                         GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,
                                 (ChangeBasedEvent)event, stats));

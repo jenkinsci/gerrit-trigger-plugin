@@ -66,25 +66,30 @@ public abstract class NotificationClaimStrategy {
      * <p>The claim is automatically released after the action executes (success or failure),
      * so implementations do not need manual cleanup code.</p>
      *
+     * <p><b>Notification Claim Scoping:</b></p>
+     * <ul>
+     *   <li><b>Per-job claims</b> (jobIdentifier != null): Each job sends its own notification
+     *       (e.g., build-started notifications where each job notifies independently)</li>
+     *   <li><b>Per-event claims</b> (jobIdentifier == null): One notification per event
+     *       (e.g., build-completed where feedback is aggregated across all builds)</li>
+     * </ul>
+     *
      * <p><b>Usage Example:</b></p>
      * <pre>
-     * claimStrategy.withClaim(event, "build-completed", () -&gt; {
-     *     // This code runs only if claim was acquired
-     *     // Claim is automatically released after this block
-     *     sendNotificationToGerrit(event, buildResult);
-     * })
-     * .notClaimed(() -&gt; {
-     *     // Optional: runs if claim was not acquired
-     *     logger.debug("Another instance is sending notification");
-     * })
-     * .onError((ex) -&gt; {
-     *     // Optional: runs if an exception occurs during processing
-     *     logger.error("Failed to send notification", ex);
+     * // Per-job claim (build-started)
+     * claimStrategy.withClaim(event, "build-started", jobName, () -&gt; {
+     *     sendBuildStartedNotification(event, build);
+     * });
+     *
+     * // Per-event claim (build-completed)
+     * claimStrategy.withClaim(event, "build-completed", null, () -&gt; {
+     *     sendAggregatedBuildCompletedNotification(event, allBuilds);
      * });
      * </pre>
      *
      * @param event the Gerrit event to claim notification rights for
      * @param notificationType the type of notification (e.g., "build-started", "build-completed")
+     * @param jobIdentifier optional job identifier for per-job claims, null for per-event claims
      * @param claimed action to execute if claim succeeds (runs with claim held, auto-released)
      * @return ClaimResult for chaining notClaimed/onError handlers
      * @see ClaimResults for shared result implementations
@@ -92,14 +97,29 @@ public abstract class NotificationClaimStrategy {
     @NonNull
     public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
                                           @NonNull String notificationType,
+                                          String jobIdentifier,
                                           @NonNull Runnable claimed);
 
     /**
-     * Attempts to claim the right to send notification and execute the given action if successful.
-     * This is a convenience method that uses a default notification type.
+     * Convenience method without job identifier - creates per-event claim.
      *
-     * <p><b>Deprecated:</b> Use {@link #withClaim(GerritTriggeredEvent, String, Runnable)} instead
-     * to properly differentiate between notification types (build-started vs build-completed).</p>
+     * @param event the Gerrit event to claim notification rights for
+     * @param notificationType the type of notification (e.g., "build-started", "build-completed")
+     * @param claimed action to execute if claim succeeds
+     * @return ClaimResult for chaining notClaimed/onError handlers
+     */
+    @NonNull
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
+                                  @NonNull String notificationType,
+                                  @NonNull Runnable claimed) {
+        return withClaim(event, notificationType, null, claimed);
+    }
+
+    /**
+     * Legacy convenience method that uses a default notification type.
+     *
+     * <p><b>Deprecated:</b> Use {@link #withClaim(GerritTriggeredEvent, String, String, Runnable)} instead
+     * to properly differentiate between notification types and scopes.</p>
      *
      * @param event the Gerrit event to claim notification rights for
      * @param claimed action to execute if claim succeeds
@@ -107,6 +127,6 @@ public abstract class NotificationClaimStrategy {
      */
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
-        return withClaim(event, "default", claimed);
+        return withClaim(event, "default", null, claimed);
     }
 }
