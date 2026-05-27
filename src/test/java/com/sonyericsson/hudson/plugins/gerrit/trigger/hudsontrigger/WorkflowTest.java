@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastInstanceProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
@@ -41,12 +42,15 @@ import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -68,12 +72,38 @@ import static org.hamcrest.MatcherAssert.assertThat;
  */
 public class WorkflowTest {
 
+    private static final Logger logger = LoggerFactory.getLogger(WorkflowTest.class);
+
     /**
      * Jenkins rule.
      */
     // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
     @Rule
     public final JenkinsRule jenkinsRule = new JenkinsRule();
+
+    /**
+     * Clear Hazelcast notification map before each test.
+     * This prevents test pollution when running multiple WorkflowTest methods in Hazelcast mode,
+     * since all tests use the same mock event ID.
+     */
+    @Before
+    public void clearHazelcastNotificationMap() {
+        // Only clear if Hazelcast is initialized
+        if (HazelcastInstanceProvider.isInitialized()) {
+            try {
+                com.hazelcast.core.HazelcastInstance instance = HazelcastInstanceProvider.getInstance();
+                com.hazelcast.map.IMap<String, Boolean> notificationFlags =
+                        instance.getMap("gerrit-trigger-notification-flags");
+                int clearedCount = notificationFlags.size();
+                notificationFlags.clear();
+                if (clearedCount > 0) {
+                    logger.info("Cleared {} notification claim(s) before WorkflowTest", clearedCount);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to clear Hazelcast notification flags in WorkflowTest", e);
+            }
+        }
+    }
 
     /**
      * Trigger test.
@@ -346,7 +376,9 @@ public class WorkflowTest {
         private void configure(JenkinsRule jenkinsRule) throws IOException {
             PluginImpl.getInstance().addServer(this);
             Config config = (Config)getConfig();
-            config.setGerritFrontEndURL(jenkinsRule.getURL().toString() + getUrlName() + "/");
+            String frontEndUrl = jenkinsRule.getURL().toString() + getUrlName() + "/";
+
+            config.setGerritFrontEndURL(frontEndUrl);
             config.setUseRestApi(true);
             config.setGerritHttpUserName("user");
             config.setGerritHttpPassword("passwd");
