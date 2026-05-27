@@ -120,6 +120,7 @@ public class GerritNotifierFactory {
     public void queueBuildCompleted(BuildMemory.MemoryImprint memoryImprint, TaskListener listener) {
         String serverName = getServerName(memoryImprint);
         if (serverName != null) {
+            GerritServer server = PluginImpl.getServer_(serverName);
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
                 GerritTriggeredEvent event = memoryImprint.getEvent();
