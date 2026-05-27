@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
+import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.JoinConfig;
 import com.hazelcast.config.NetworkConfig;
@@ -108,6 +109,36 @@ public final class HazelcastConfig {
     public static final String TCP_MEMBERS_PROPERTY = "gerrit.trigger.coordination.hazelcast.tcp.members";
 
     /**
+     * System property to set Hazelcast instance mode.
+     * Values: "member" (default, creates an embedded cluster member) or
+     * "client" (connects to an existing Hazelcast cluster, e.g. a sidecar container).
+     * Client mode is recommended when a Hazelcast sidecar is already present in the pod,
+     * as it reuses the existing cross-pod cluster instead of creating a new one.
+     */
+    public static final String INSTANCE_MODE_PROPERTY = "gerrit.trigger.coordination.hazelcast.instance.mode";
+
+    /**
+     * System property to specify addresses for Hazelcast client mode (comma-separated host:port).
+     * Default: "localhost:5702" — assumes a Hazelcast sidecar listening on port 5702 in the same pod.
+     * Example: "localhost:5702"
+     */
+    public static final String CLIENT_ADDRESSES_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.client.addresses";
+
+    /**
+     * System property to specify the cluster name for Hazelcast client mode.
+     * Must match the cluster name of the target Hazelcast cluster.
+     * Default: {@link #DEFAULT_CLUSTER_NAME}.
+     */
+    public static final String CLIENT_CLUSTER_NAME_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.client.cluster.name";
+
+    /**
+     * Default address for Hazelcast client mode: local sidecar on port 5702.
+     */
+    public static final String DEFAULT_CLIENT_ADDRESS = "localhost:5702";
+
+    /**
      * Private constructor to prevent instantiation.
      */
     private HazelcastConfig() {
@@ -186,12 +217,14 @@ public final class HazelcastConfig {
         if ("multicast".equalsIgnoreCase(discoveryMode)) {
             // Multicast mode - primarily for testing
             configureMulticastDiscovery(joinConfig);
-        } else if ("kubernetes".equalsIgnoreCase(discoveryMode) || isKubernetesEnvironment()) {
+        } else if ("kubernetes".equalsIgnoreCase(discoveryMode)) {
+            // Explicit kubernetes mode - always use Kubernetes discovery regardless of environment
             configureKubernetesDiscovery(joinConfig, port);
         } else if ("tcp".equalsIgnoreCase(discoveryMode) || hasTcpMembersConfigured()) {
+            // Explicit tcp mode, or TCP members configured - always use TCP discovery
             configureTcpDiscovery(joinConfig, port);
         } else {
-            // Fallback: Try Kubernetes, then TCP
+            // Auto-detect: no explicit mode set, try Kubernetes first, then TCP
             logger.info("Auto-detecting discovery mechanism...");
             if (isKubernetesEnvironment()) {
                 configureKubernetesDiscovery(joinConfig, port);
@@ -293,6 +326,59 @@ public final class HazelcastConfig {
         joinConfig.getKubernetesConfig().setEnabled(false);
         joinConfig.getAwsConfig().setEnabled(false);
         joinConfig.getAzureConfig().setEnabled(false);
+    }
+
+    /**
+     * Returns true if Hazelcast client mode is configured.
+     * <p>
+     * In client mode the plugin connects to an existing Hazelcast cluster (e.g. a sidecar)
+     * instead of creating its own embedded member. This avoids port conflicts and reuses
+     * the cross-pod cluster that the sidecar already maintains.
+     *
+     * @return true when {@link #INSTANCE_MODE_PROPERTY} is set to "client"
+     */
+    public static boolean isClientMode() {
+        return "client".equalsIgnoreCase(System.getProperty(INSTANCE_MODE_PROPERTY, "member"));
+    }
+
+    /**
+     * Creates a Hazelcast client configuration to connect to an existing cluster.
+     * <p>
+     * Used when {@link #isClientMode()} is true. The client connects to the addresses
+     * specified by {@link #CLIENT_ADDRESSES_PROPERTY} (default: {@link #DEFAULT_CLIENT_ADDRESS})
+     * and joins the cluster whose name matches {@link #CLIENT_CLUSTER_NAME_PROPERTY}.
+     *
+     * @return configured Hazelcast ClientConfig
+     */
+    public static ClientConfig createClientConfig() {
+        ClientConfig config = new ClientConfig();
+
+        String clusterName = System.getProperty(CLIENT_CLUSTER_NAME_PROPERTY, DEFAULT_CLUSTER_NAME);
+        config.setClusterName(clusterName);
+        logger.info("Hazelcast client cluster name: {}", clusterName);
+
+        String addressesProperty = System.getProperty(CLIENT_ADDRESSES_PROPERTY, DEFAULT_CLIENT_ADDRESS);
+        logger.info("Hazelcast client addresses: {}", addressesProperty);
+
+        for (String address : addressesProperty.split(",")) {
+            String trimmed = address.trim();
+            if (!trimmed.isEmpty()) {
+                config.getNetworkConfig().addAddress(trimmed);
+            }
+        }
+
+        config.setProperty("hazelcast.logging.type", "slf4j");
+
+        // Register Compact Serializers — must match member config for cross-JVM deserialization
+        config.getSerializationConfig()
+                .getCompactSerializationConfig()
+                .addSerializer(new EventClaimSerializer())
+                .addSerializer(new EntryDataSerializer())
+                .addSerializer(new MemoryImprintDataSerializer());
+        logger.debug("Registered Compact Serializers for EventClaim, EntryData, and MemoryImprintData");
+
+        logger.info("Hazelcast client configuration created for cluster: {}", clusterName);
+        return config;
     }
 
     /**

@@ -68,6 +68,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
@@ -137,6 +138,28 @@ public class PluginImpl extends GlobalConfiguration {
      * System property used during testing to replace the location of the public key for mock connections.
      */
     public static final String TEST_SSH_KEYFILE_LOCATION_PROPERTY = PluginImpl.class.getName() + "_test_ssh_key_file";
+
+    /**
+     * System property: minimum number of Hazelcast cluster members expected before connecting to Gerrit.
+     * Default 1 disables the wait (single-instance or local mode).
+     * Set to 2 or more in HA/HS deployments to prevent the startup race where events arrive before
+     * the distributed claim map is shared across replicas.
+     */
+    public static final String HAZELCAST_EXPECTED_MEMBERS_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.expected.members";
+
+    /**
+     * System property: maximum seconds to wait for Hazelcast cluster formation.
+     * Default: 30 seconds.
+     */
+    public static final String HAZELCAST_CLUSTER_WAIT_TIMEOUT_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.cluster.wait.timeout.seconds";
+
+    private static final int DEFAULT_EXPECTED_CLUSTER_MEMBERS = 1;
+
+    private static final int DEFAULT_CLUSTER_WAIT_TIMEOUT_SECONDS = 30;
+
+    private static final long CLUSTER_WAIT_POLL_INTERVAL_MS = 500L;
 
     /**
      * Gets api.
@@ -586,12 +609,71 @@ public class PluginImpl extends GlobalConfiguration {
         // because provider.isAvailable() may check if resources are initialized
         initializeCoordinationProviders();
 
+        // Wait for Hazelcast cluster to reach the expected member count before connecting to Gerrit.
+        // Without this, events received during the startup window bypass the distributed claim mechanism
+        // and cause duplicate builds across replicas.
+        waitForHazelcastCluster();
+
         GerritSendCommandQueue.initialize(pluginConfig);
         gerritEventManager = new JenkinsAwareGerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
         for (GerritServer s : servers) {
             s.start();
         }
         active = true;
+    }
+
+    /**
+     * Waits for the Hazelcast cluster to reach the expected number of members before
+     * Gerrit server connections are opened.
+     * <p>
+     * In HA/HS deployments each replica has its own SSH connection to Gerrit and therefore
+     * receives every event independently. Without this guard, a replica that starts while
+     * the Hazelcast cluster is still forming will process events against its own single-member
+     * IMap, making the distributed claim invisible to other replicas and causing duplicate builds.
+     * <p>
+     * The wait is skipped when Hazelcast is not active (local mode) or when
+     * {@link #HAZELCAST_EXPECTED_MEMBERS_PROPERTY} is 1 (the default).
+     */
+    private void waitForHazelcastCluster() {
+        com.hazelcast.core.HazelcastInstance hz =
+                com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastInstanceProvider
+                        .getInstance();
+        if (hz == null) {
+            return;
+        }
+
+        int expectedMembers = Integer.getInteger(HAZELCAST_EXPECTED_MEMBERS_PROPERTY,
+                DEFAULT_EXPECTED_CLUSTER_MEMBERS);
+        if (expectedMembers <= DEFAULT_EXPECTED_CLUSTER_MEMBERS) {
+            return;
+        }
+
+        int timeoutSeconds = Integer.getInteger(HAZELCAST_CLUSTER_WAIT_TIMEOUT_PROPERTY,
+                DEFAULT_CLUSTER_WAIT_TIMEOUT_SECONDS);
+        logger.info("Waiting for Hazelcast cluster to form ({} expected members, timeout: {}s)...",
+                expectedMembers, timeoutSeconds);
+
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(timeoutSeconds);
+        int currentSize = hz.getCluster().getMembers().size();
+        while (currentSize < expectedMembers && System.currentTimeMillis() < deadline) {
+            logger.debug("Hazelcast cluster has {} of {} expected members, waiting...",
+                    currentSize, expectedMembers);
+            try {
+                Thread.sleep(CLUSTER_WAIT_POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Interrupted while waiting for Hazelcast cluster formation");
+                return;
+            }
+            currentSize = hz.getCluster().getMembers().size();
+        }
+
+        if (currentSize >= expectedMembers) {
+            logger.info("Hazelcast cluster ready: {} member(s)", currentSize);
+        } else {
+            logger.warn("Timed out waiting for Hazelcast cluster ({}/{} members). "
+                    + "Proceeding anyway - duplicate builds may occur.", currentSize, expectedMembers);
+        }
     }
 
     /**
