@@ -31,6 +31,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastInstanceProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
@@ -42,6 +43,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
@@ -75,7 +78,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-//CS IGNORE MagicNumber FOR NEXT 920 LINES. REASON: Testdata.
+//CS IGNORE MagicNumber FOR NEXT 960 LINES. REASON: Testdata.
 
 /**
  * Some full run-through tests from trigger to build finished.
@@ -83,6 +86,8 @@ import static org.junit.Assert.fail;
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class SpecGerritTriggerHudsonTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(SpecGerritTriggerHudsonTest.class);
 
     /**
      * An instance of Jenkins Rule.
@@ -112,6 +117,8 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Before
     public void setUp() throws Exception {
+        // Clear Hazelcast maps before each test to prevent test pollution
+        clearHazelcastMaps();
         SshdServerMock.generateKeyPair();
 
         serverMock = new SshdServerMock();
@@ -124,6 +131,39 @@ public class SpecGerritTriggerHudsonTest {
         serverMock.returnCommandFor("gerrit approve.*", SshdServerMock.EofCommandMock.class);
         gerritServer = PluginImpl.getFirstServer_();
         SshdServerMock.configureFor(sshd, gerritServer, true);
+    }
+
+    /**
+     * Clear Hazelcast notification and event claim maps before each test.
+     * This prevents test pollution when running multiple test methods in Hazelcast mode,
+     * since many tests use the same mock event IDs.
+     */
+    private void clearHazelcastMaps() {
+        // Only clear if Hazelcast is initialized
+        if (HazelcastInstanceProvider.isInitialized()) {
+            try {
+                com.hazelcast.core.HazelcastInstance instance = HazelcastInstanceProvider.getInstance();
+
+                // Clear notification flags
+                com.hazelcast.map.IMap<String, Boolean> notificationFlags =
+                        instance.getMap("gerrit-trigger-notification-flags");
+                int notificationCount = notificationFlags.size();
+                notificationFlags.clear();
+
+                // Clear event claims
+                com.hazelcast.map.IMap<String, ?> eventClaims =
+                        instance.getMap("gerrit-trigger-event-claims");
+                int eventClaimCount = eventClaims.size();
+                eventClaims.clear();
+
+                if (notificationCount > 0 || eventClaimCount > 0) {
+                    logger.info("Cleared {} notification claim(s) and {} event claim(s) before test",
+                            notificationCount, eventClaimCount);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to clear Hazelcast maps in SpecGerritTriggerHudsonTest", e);
+            }
+        }
     }
 
     /**
@@ -376,6 +416,9 @@ public class SpecGerritTriggerHudsonTest {
         System.out.println("Build Started");
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
         patchsetCreated.getChange().setNumber("2000");
+        // Must also set unique Change-Id for different change number
+        // (in real Gerrit, each change has its own unique Change-Id)
+        patchsetCreated.getChange().setId("Ibbddeeff987654321");
         gerritServer.triggerEvent(patchsetCreated);
         System.out.println("PatchSet 2 created");
 

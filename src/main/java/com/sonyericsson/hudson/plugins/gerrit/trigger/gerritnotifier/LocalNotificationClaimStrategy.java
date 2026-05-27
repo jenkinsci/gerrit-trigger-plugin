@@ -49,8 +49,10 @@ public class LocalNotificationClaimStrategy extends NotificationClaimStrategy {
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
                                   @NonNull String notificationType,
+                                  String jobIdentifier,
                                   @NonNull Runnable claimed) {
         // In local mode, always allow notification - no coordination needed
+        // jobIdentifier is ignored since there's only one instance
         try {
             claimed.run();
             return ClaimResults.success();

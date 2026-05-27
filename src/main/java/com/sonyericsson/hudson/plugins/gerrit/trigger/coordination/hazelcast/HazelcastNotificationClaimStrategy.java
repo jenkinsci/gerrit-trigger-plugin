@@ -99,8 +99,10 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
     @NonNull
     public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
                                   @NonNull String notificationType,
+                                  String jobIdentifier,
                                   @NonNull Runnable claimed) {
-        logger.debug("Claiming notification for event: {} (type: {})", event, notificationType);
+        logger.debug("Claiming notification for event: {} (type: {}, job: {})",
+                event, notificationType, jobIdentifier);
 
         // Check Hazelcast instance availability
         if (hazelcastInstance == null) {
@@ -117,8 +119,16 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
         try {
             IMap<String, Boolean> notificationFlags = hazelcastInstance.getMap(NOTIFICATION_FLAGS_MAP);
             String eventId = EventIdentifier.generateEventId(event);
-            // Include notification type in key to differentiate build-started vs build-completed
-            String flagKey = "notified-" + notificationType + "-" + eventId;
+
+            // Build claim key:
+            // - With job identifier: per-job claim (e.g., build-started notifications)
+            // - Without job identifier: per-event claim (e.g., build-completed notifications)
+            String flagKey;
+            if (jobIdentifier != null && !jobIdentifier.isEmpty()) {
+                flagKey = "notified-" + notificationType + "-" + eventId + "-" + jobIdentifier;
+            } else {
+                flagKey = "notified-" + notificationType + "-" + eventId;
+            }
 
             logger.debug("Notification claim key: {}", flagKey);
 
@@ -132,20 +142,20 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
 
             if (previousValue == null) {
                 // Successfully claimed notification right
-                logger.debug("Successfully claimed notification right for event: {} (type: {})",
-                        eventId, notificationType);
+                logger.debug("Successfully claimed notification right for event: {} (type: {}, job: {})",
+                        eventId, notificationType, jobIdentifier);
                 try {
                     claimed.run();
                     return ClaimResults.success();
                 } catch (Exception actionException) {
-                    logger.error("Error executing notification action after successful claim: {} (type: {})",
-                            eventId, notificationType, actionException);
+                    logger.error("Error executing notification action after successful claim: {} (type: {}, job: {})",
+                            eventId, notificationType, jobIdentifier, actionException);
                     return ClaimResults.failed(actionException);
                 }
             } else {
                 // Another replica already claimed notification
-                logger.debug("Another replica already claimed notification for event: {} (type: {})",
-                        eventId, notificationType);
+                logger.debug("Another replica already claimed notification for event: {} (type: {}, job: {})",
+                        eventId, notificationType, jobIdentifier);
                 return ClaimResults.notClaimed();
             }
         } catch (Exception e) {
