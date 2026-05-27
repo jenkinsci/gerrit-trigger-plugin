@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
+import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
@@ -51,14 +52,16 @@ public final class HazelcastManager {
     }
 
     /**
-     * Initializes Hazelcast embedded member.
+     * Initializes Hazelcast in the mode determined by {@link HazelcastConfig#isClientMode()}.
      * <p>
-     * Creates a Hazelcast member in the Jenkins JVM with configuration from
-     * {@link HazelcastConfig#createConfig()}.
+     * In <em>member mode</em> (default) an embedded Hazelcast member is created that forms
+     * its own cluster with other replicas. In <em>client mode</em> a lightweight Hazelcast
+     * client connects to an existing cluster (e.g. a sidecar container on the same pod),
+     * reusing its cross-pod topology without starting a new member.
      * <p>
-     * This method is idempotent - calling it multiple times returns the existing instance.
+     * This method is idempotent — calling it multiple times returns the existing instance.
      *
-     * @return the Hazelcast instance
+     * @return the Hazelcast instance (member or client)
      * @throws RuntimeException if initialization fails
      */
     public static HazelcastInstance initialize() {
@@ -72,26 +75,15 @@ public final class HazelcastManager {
             }
 
             try {
-                logger.info("Initializing Hazelcast embedded member...");
+                HazelcastInstance hazelcastInstance;
+                if (HazelcastConfig.isClientMode()) {
+                    hazelcastInstance = initializeClient();
+                } else {
+                    hazelcastInstance = initializeMember();
+                }
 
-                // Create Hazelcast configuration
-                com.hazelcast.config.Config config = HazelcastConfig.createConfig();
-
-                // Create Hazelcast instance
-                HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-
-                // Register with provider (for backward compatibility with helper methods)
                 HazelcastInstanceProvider.setInstance(hazelcastInstance);
-
                 initialized = true;
-
-                // Log cluster information
-                int clusterSize = hazelcastInstance.getCluster().getMembers().size();
-                logger.info("Hazelcast embedded member initialized. Cluster: {}, Instance: {}, Members: {}",
-                        config.getClusterName(),
-                        hazelcastInstance.getName(),
-                        clusterSize);
-
                 return hazelcastInstance;
 
             } catch (Exception e) {
@@ -100,6 +92,38 @@ public final class HazelcastManager {
                 throw new RuntimeException("Failed to initialize Hazelcast", e);
             }
         }
+    }
+
+    /**
+     * Creates a Hazelcast embedded member using {@link HazelcastConfig#createConfig()}.
+     *
+     * @return the initialized Hazelcast member instance
+     */
+    private static HazelcastInstance initializeMember() {
+        logger.info("Initializing Hazelcast embedded member...");
+        com.hazelcast.config.Config config = HazelcastConfig.createConfig();
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance(config);
+        logger.info("Hazelcast embedded member initialized. Cluster: {}, Instance: {}, Members: {}",
+                config.getClusterName(), hz.getName(), hz.getCluster().getMembers().size());
+        return hz;
+    }
+
+    /**
+     * Creates a Hazelcast client using {@link HazelcastConfig#createClientConfig()}.
+     * <p>
+     * The client connects to an existing cluster (e.g. a Hazelcast sidecar on the same pod)
+     * and accesses its distributed maps. No new cluster member is created, so there is no
+     * port conflict with the sidecar and no need for cross-pod member discovery.
+     *
+     * @return the initialized Hazelcast client instance
+     */
+    private static HazelcastInstance initializeClient() {
+        logger.info("Initializing Hazelcast client (connecting to existing cluster)...");
+        com.hazelcast.client.config.ClientConfig config = HazelcastConfig.createClientConfig();
+        HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
+        logger.info("Hazelcast client initialized. Cluster: {}, Members: {}",
+                config.getClusterName(), hz.getCluster().getMembers().size());
+        return hz;
     }
 
     /**
@@ -196,9 +220,18 @@ public final class HazelcastManager {
 
         try {
             int clusterSize = instance.getCluster().getMembers().size();
-            String clusterName = instance.getConfig().getClusterName();
             String instanceName = instance.getName();
 
+            if (HazelcastConfig.isClientMode()) {
+                // getConfig() is not supported on Hazelcast clients
+                String clusterName = System.getProperty(
+                        HazelcastConfig.CLIENT_CLUSTER_NAME_PROPERTY,
+                        HazelcastConfig.DEFAULT_CLUSTER_NAME);
+                return String.format("Hazelcast Client: Running | Cluster: %s | Members: %d",
+                        clusterName, clusterSize);
+            }
+
+            String clusterName = instance.getConfig().getClusterName();
             return String.format("Hazelcast: Running | Cluster: %s | Instance: %s | Members: %d",
                     clusterName, instanceName, clusterSize);
         } catch (Exception e) {
