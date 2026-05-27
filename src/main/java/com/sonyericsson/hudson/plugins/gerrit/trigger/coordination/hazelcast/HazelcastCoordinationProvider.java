@@ -84,16 +84,24 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
     /**
      * Checks if this provider is available.
      * <p>
-     * Returns true only if coordination mode is configured as 'hazelcast' (via system property).
+     * Returns true only if:
+     * <ul>
+     *   <li>Coordination mode is configured as 'hazelcast' (via system property)</li>
+     *   <li>Hazelcast instance is initialized and running</li>
+     * </ul>
      * <p>
      * Uses the {@link CoordinationModeProvider#getConfiguredMode()} helper method to check
      * the coordination mode. This is future-proof - when we add UI configuration for coordination
      * modes, only that one helper method needs to be updated.
      * <p>
-     * Note: This method checks configuration only, not initialization status. Hazelcast is
-     * initialized later via {@link #initialize()}, after the provider is selected.
+     * The initialization check is necessary because
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory}
+     * may call this method before
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl}
+     * has initialized providers. Without this check, the factory would select Hazelcast provider
+     * before Hazelcast is actually running, causing builds to not trigger.
      *
-     * @return true if Hazelcast coordination mode is configured, false otherwise
+     * @return true if Hazelcast coordination mode is available, false otherwise
      */
     @Override
     public boolean isAvailable() {
@@ -104,7 +112,14 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
             return false;
         }
 
-        logger.debug("Hazelcast coordination mode configured");
+        // Check Hazelcast availability
+        if (!HazelcastInstanceProvider.isInitialized()) {
+            logger.debug("Coordination mode is '{}' but Hazelcast not initialized yet. "
+                    + "Provider will become available after initialization.", HAZELCAST_MODE);
+            return false;
+        }
+
+        logger.debug("Hazelcast coordination mode active");
         return true;
     }
 

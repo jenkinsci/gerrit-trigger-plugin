@@ -114,6 +114,24 @@ public class HazelcastTestRule extends ExternalResource {
             throw new IllegalStateException("Hazelcast instance not available after initialization");
         }
 
+        // Clear notification flags map to avoid test pollution within this test's scope
+        // Note: This only helps tests that use HazelcastTestRule explicitly. In the full test suite,
+        // tests using the same mock events (e.g., Setup.createPatchsetCreated()) may still collide
+        // if run concurrently, since they generate identical event IDs. Maven's retry mechanism
+        // handles these transient failures.
+        try {
+            com.hazelcast.core.HazelcastInstance instance = HazelcastInstanceProvider.getInstance();
+            com.hazelcast.map.IMap<String, Boolean> notificationFlags =
+                    instance.getMap("gerrit-trigger-notification-flags");
+            int clearedCount = notificationFlags.size();
+            notificationFlags.clear();
+            if (clearedCount > 0) {
+                logger.info("Cleared {} notification claim(s) before test", clearedCount);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to clear notification flags map", e);
+        }
+
         logger.info("Hazelcast instance: {}", HazelcastInstanceProvider.getInstance().getName());
         logger.info("Cluster size: {}",
                 HazelcastInstanceProvider.getInstance().getCluster().getMembers().size());

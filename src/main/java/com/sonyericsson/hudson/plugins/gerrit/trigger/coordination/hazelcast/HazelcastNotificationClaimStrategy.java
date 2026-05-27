@@ -89,15 +89,19 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
             "gerrit.trigger.coordination.hazelcast.notification.ttl.minutes";
 
     /**
-     * Cached claim TTL in seconds.
+     * Cached claim TTL in minutes.
      * Parsed once at class initialization from system property or default.
      */
-    private static final int NOTIFICATION_TTL_SECONDS = parseNotificationTtlMinutes();
+    private static final int NOTIFICATION_TTL_MINUTES = parseNotificationTtlMinutes();
 
 
     @Override
     @NonNull
-    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
+                                  @NonNull String notificationType,
+                                  @NonNull Runnable claimed) {
+        logger.debug("Claiming notification for event: {} (type: {})", event, notificationType);
+
         // Check Hazelcast instance availability
         if (hazelcastInstance == null) {
             logger.warn("Hazelcast not available for notification claim, proceeding with local mode (fail-open)");
@@ -113,30 +117,35 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
         try {
             IMap<String, Boolean> notificationFlags = hazelcastInstance.getMap(NOTIFICATION_FLAGS_MAP);
             String eventId = EventIdentifier.generateEventId(event);
-            String flagKey = "notified-" + eventId;
+            // Include notification type in key to differentiate build-started vs build-completed
+            String flagKey = "notified-" + notificationType + "-" + eventId;
+
+            logger.debug("Notification claim key: {}", flagKey);
 
             // Atomic operation: set flag if not already set
             Boolean previousValue = notificationFlags.putIfAbsent(
                     flagKey,
                     Boolean.TRUE,
-                    NOTIFICATION_TTL_SECONDS,
+                    NOTIFICATION_TTL_MINUTES,
                     TimeUnit.MINUTES
             );
 
             if (previousValue == null) {
                 // Successfully claimed notification right
-                logger.debug("Successfully claimed notification right for event: {}", eventId);
+                logger.debug("Successfully claimed notification right for event: {} (type: {})",
+                        eventId, notificationType);
                 try {
                     claimed.run();
                     return ClaimResults.success();
                 } catch (Exception actionException) {
-                    logger.error("Error executing notification action after successful claim: {}", eventId,
-                            actionException);
+                    logger.error("Error executing notification action after successful claim: {} (type: {})",
+                            eventId, notificationType, actionException);
                     return ClaimResults.failed(actionException);
                 }
             } else {
                 // Another replica already claimed notification
-                logger.debug("Another replica already claimed notification for event: {}", eventId);
+                logger.debug("Another replica already claimed notification for event: {} (type: {})",
+                        eventId, notificationType);
                 return ClaimResults.notClaimed();
             }
         } catch (Exception e) {
