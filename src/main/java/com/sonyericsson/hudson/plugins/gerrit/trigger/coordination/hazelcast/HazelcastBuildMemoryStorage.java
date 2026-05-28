@@ -221,9 +221,19 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 String projectFullName = entryData.getProjectFullName();
                 Job project = jenkins.getItemByFullName(projectFullName, Job.class);
 
+                logger.info("[HZ-DIAG] reconstruct: project='{}' found={} buildId='{}' completed={} cancelled={}",
+                        projectFullName, project != null, entryData.getBuildId(),
+                        entryData.isBuildCompleted(), entryData.isCancelled());
+
                 if (project != null) {
                     if (entryData.getBuildId() != null) {
                         Run build = project.getBuild(entryData.getBuildId());
+                        String buildResult = "N/A";
+                        if (build != null) {
+                            buildResult = String.valueOf(build.getResult());
+                        }
+                        logger.info("[HZ-DIAG] reconstruct: project.getBuild('{}') = {} result={}",
+                                entryData.getBuildId(), build != null, buildResult);
                         if (build != null) {
                             imprint.set(project, build, entryData.isBuildCompleted());
                         } else {
@@ -263,6 +273,12 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         BuildMemoryKey key = new BuildMemoryKey(event);
         MemoryImprintData data = map.get(key);
+        int entryCount = -1;
+        if (data != null && data.getEntries() != null) {
+            entryCount = data.getEntries().size();
+        }
+        logger.info("[HZ-DIAG] getMemoryImprint key={} dataFound={} entries={}",
+                key, data != null, entryCount);
         if (data != null) {
             return reconstructMemoryImprint(event, data);
         }
@@ -280,6 +296,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         BuildMemoryKey key = new BuildMemoryKey(event);
         String projectFullName = project.getFullName();
         String eventJson = serializeEvent(event);
+
+        logger.info("[HZ-DIAG] triggered key={} project={}", key, projectFullName);
 
         // ATOMIC OPERATION - Distributed lock ensures only one replica modifies this entry at a time.
         // This is critical when multiple projects are triggered by the same event simultaneously.
@@ -309,6 +327,12 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 data.addEntry(newEntry);
             }
             map.put(key, data);
+            int triggeredEntries = 0;
+            if (data.getEntries() != null) {
+                triggeredEntries = data.getEntries().size();
+            }
+            logger.info("[HZ-DIAG] triggered stored: key={} found={} totalEntries={}",
+                    key, found, triggeredEntries);
             if (!found) {
                 logger.trace("Triggered event stored in distributed memory: {} for project: {}", key, projectFullName);
             } else {
@@ -385,6 +409,9 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = build.getParent().getFullName();
         String buildId = build.getId();
 
+        logger.info("[HZ-DIAG] completed key={} project={} buildId={} result={}",
+                key, projectFullName, buildId, build.getResult());
+
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         long completedTimestamp = System.currentTimeMillis();
         map.lock(key);
@@ -416,6 +443,12 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 data.addEntry(newEntry);
             }
             map.put(key, data);
+            int completedEntries = 0;
+            if (data.getEntries() != null) {
+                completedEntries = data.getEntries().size();
+            }
+            logger.info("[HZ-DIAG] completed stored: key={} found={} totalEntries={} buildCompleted={}",
+                    key, found, completedEntries, true);
             if (!found) {
                 logger.debug("Build completed without being registered first (distributed mode).");
             }
@@ -506,14 +539,28 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 data = new MemoryImprintData();
             }
             boolean found = false;
+            boolean modified = false;
             if (data.getEntries() != null) {
                 for (EntryData entryData : data.getEntries()) {
                     if (projectFullName.equals(entryData.getProjectFullName())) {
-                        entryData.setCancelled(true);
-                        entryData.setCancelling(false);
-                        entryData.setCompletedTimestamp(cancelledTimestamp);
-                        entryData.setBuildCompleted(true);
                         found = true;
+                        // Only mark as cancelled if the build never started (buildId is null)
+                        // OR was actively being cancelled by a new patchset (cancelling flag was set).
+                        // If buildId is already set but cancelling is false, this is a cross-replica
+                        // queue deduplication: the actual build is running on another replica.
+                        // Writing cancelled=true in that case poisons the shared map and causes
+                        // premature "No Builds Executed" feedback.
+                        if (entryData.getBuildId() == null || entryData.isCancelling()) {
+                            entryData.setCancelled(true);
+                            entryData.setCancelling(false);
+                            entryData.setCompletedTimestamp(cancelledTimestamp);
+                            entryData.setBuildCompleted(true);
+                            modified = true;
+                        } else {
+                            logger.debug("Skipping cancelled() for project={} event={}: "
+                                    + "buildId already set by another replica (cross-replica queue dedup)",
+                                    projectFullName, key);
+                        }
                         break;
                     }
                 }
@@ -526,8 +573,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 newEntry.setCompletedTimestamp(cancelledTimestamp);
                 newEntry.setBuildCompleted(true);
                 data.addEntry(newEntry);
+                modified = true;
             }
-            map.put(key, data);
+            if (modified) {
+                map.put(key, data);
+            }
             if (!found) {
                 logger.debug("Build cancelled without being registered first (distributed mode).");
             }
@@ -636,7 +686,16 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     @Override
     public synchronized boolean isAllBuildsCompleted(@NonNull GerritTriggeredEvent event) {
         MemoryImprint imprint = getMemoryImprint(event);
-        return imprint != null && imprint.isAllBuildsCompleted();
+        boolean result = imprint != null && imprint.isAllBuildsCompleted();
+        logger.info("[HZ-DIAG] isAllBuildsCompleted: imprintNull={} result={}",
+                imprint == null, result);
+        if (imprint != null) {
+            logger.info("[HZ-DIAG] isAllBuildsCompleted: wereAllBuildsSuccessful={} wereAnyBuildsFailed={}"
+                    + " wereAllBuildsNotBuilt={}",
+                    imprint.wereAllBuildsSuccessful(), imprint.wereAnyBuildsFailed(),
+                    imprint.wereAllBuildsNotBuilt());
+        }
+        return result;
     }
 
     @Override
