@@ -25,10 +25,12 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalEventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalNotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalQueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
 import hudson.Extension;
 
@@ -111,6 +113,17 @@ public class LocalCoordinationProvider extends CoordinationModeProvider {
     @Override
     public EventClaimStrategy createEventClaimStrategy() {
         return new LocalEventClaimStrategy();
+    }
+
+    /**
+     * Creates a new local queue cancellation strategy instance.
+     * Always returns false - no HA load balancer present in standalone mode.
+     *
+     * @return a new LocalQueueCancellationStrategy
+     */
+    @Override
+    public QueueCancellationStrategy createQueueCancellationStrategy() {
+        return new LocalQueueCancellationStrategy();
     }
 
     /**

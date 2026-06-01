@@ -455,7 +455,9 @@ public class BuildMemory {
         if (!abortBecauseOfTopic) {
 
             Change change = runningChangeBasedEvent.getChange();
-            if (!change.equals(event.getChange())) {
+            Change newChange = event.getChange();
+            boolean changesEqual = change != null && change.equals(newChange);
+            if (!changesEqual) {
                 return true;
             }
 

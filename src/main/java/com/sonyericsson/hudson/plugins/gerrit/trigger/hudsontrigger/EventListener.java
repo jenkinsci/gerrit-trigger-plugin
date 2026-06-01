@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
@@ -259,12 +260,12 @@ public final class EventListener implements GerritEventListener {
             return;
         }
 
+        BuildCancellationPolicy policy = t.getBuildCancellationPolicy();
         // Per-trigger cancellation policy
-        if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled()) {
-            logger.debug("Cancelling builds for event {} using trigger policy", changeBasedEvent);
+        if (policy != null && policy.isEnabled()) {
             listener.getMemory().cancelTriggeredJob(
                     changeBasedEvent,
-                    t.getBuildCancellationPolicy(),
+                    policy,
                     t,
                     t.getJob());
         }

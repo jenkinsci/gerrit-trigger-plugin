@@ -27,9 +27,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalEventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalNotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalQueueCancellationStrategy;
 import hudson.Extension;
 import hudson.ExtensionList;
 import org.slf4j.Logger;
@@ -115,6 +117,12 @@ public class CoordinationModeFactory {
      * Instance field - managed by Jenkins lifecycle, not static.
      */
     private volatile EventClaimStrategy eventClaimStrategy;
+
+    /**
+     * The queue cancellation strategy instance, lazily initialized.
+     * Instance field - managed by Jenkins lifecycle, not static.
+     */
+    private volatile QueueCancellationStrategy queueCancellationStrategy;
 
     /**
      * Constructor - called by Jenkins once per Jenkins instance.
@@ -210,6 +218,21 @@ public class CoordinationModeFactory {
     }
 
     /**
+     * Gets the QueueCancellationStrategy instance for the current coordination mode.
+     *
+     * <p>Uses double-checked locking for thread-safe lazy initialization.
+     * The mode is discovered and instances are created on first access.</p>
+     *
+     * @return the queue cancellation strategy implementation
+     * @throws IllegalStateException if no available mode provider is found
+     */
+    @NonNull
+    public QueueCancellationStrategy getQueueCancellationStrategy() {
+        ensureInitialized();
+        return queueCancellationStrategy;
+    }
+
+    /**
      * Ensures the factory is initialized by discovering the mode if needed.
      * Uses double-checked locking for thread safety.
      */
@@ -277,10 +300,12 @@ public class CoordinationModeFactory {
             storage = selectedProvider.createStorage();
             claimStrategy = selectedProvider.createClaimStrategy();
             eventClaimStrategy = selectedProvider.createEventClaimStrategy();
+            queueCancellationStrategy = selectedProvider.createQueueCancellationStrategy();
 
             logger.info("Created BuildMemoryStorage: {}", storage.getClass().getSimpleName());
             logger.info("Created NotificationClaimStrategy: {}", claimStrategy.getClass().getSimpleName());
             logger.info("Created EventClaimStrategy: {}", eventClaimStrategy.getClass().getSimpleName());
+            logger.info("Created QueueCancellationStrategy: {}", queueCancellationStrategy.getClass().getSimpleName());
 
         } catch (Exception e) {
             logger.warn("Failed to discover mode via ExtensionList, using fallback", e);
@@ -297,6 +322,7 @@ public class CoordinationModeFactory {
         storage = new LocalBuildMemoryStorage();
         claimStrategy = new LocalNotificationClaimStrategy();
         eventClaimStrategy = new LocalEventClaimStrategy();
+        queueCancellationStrategy = new LocalQueueCancellationStrategy();
         selectedMode = null; // No provider in fallback mode
     }
 
