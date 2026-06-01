@@ -164,6 +164,26 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     public abstract EventClaimStrategy createEventClaimStrategy();
 
     /**
+     * Creates a new QueueCancellationStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The QueueCancellationStrategy determines whether a cancelled Jenkins queue item
+     * should be ignored because it was moved by the HA load balancer rather than being
+     * cancelled by a user or a new patchset event. In local mode, this is a NO-OP (always
+     * returns false). In distributed mode (e.g., Hazelcast), this inspects the item for
+     * load-balancer markers.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new QueueCancellationStrategy instance (non-null)
+     */
+    public abstract QueueCancellationStrategy createQueueCancellationStrategy();
+
+    /**
      * Initializes this coordination mode provider.
      *
      * <p>Called during plugin startup (PluginImpl.start()) to initialize any resources

@@ -11,6 +11,7 @@ import hudson.util.LogTaskListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 
@@ -25,6 +26,9 @@ public class GerritQueueListener extends QueueListener {
     @Override
     public void onLeft(LeftItem item) {
         if (item.isCancelled() && item.task instanceof Job) {
+            if (CoordinationModeFactory.get().getQueueCancellationStrategy().isLoadBalancedCancellation(item)) {
+                return;
+            }
             for (Cause cause : item.getCauses()) {
                 if (cause instanceof GerritCause gerritCause && !gerritCause.isSilentMode()) {
                     GerritTriggeredEvent event = gerritCause.getEvent();

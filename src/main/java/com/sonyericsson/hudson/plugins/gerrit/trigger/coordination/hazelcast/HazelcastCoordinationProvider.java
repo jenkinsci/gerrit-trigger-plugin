@@ -26,6 +26,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import hudson.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,6 +186,20 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
         HazelcastInstance instance = HazelcastInstanceProvider.getInstanceOrThrow();
         logger.info("Creating HazelcastEventClaimStrategy with instance: {}", instance.getName());
         return new HazelcastEventClaimStrategy(instance);
+    }
+
+    /**
+     * Creates Hazelcast queue cancellation strategy.
+     * <p>
+     * Detects cancellations triggered by the CloudBees HA load balancer so that
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritQueueListener}
+     * can skip them and avoid sending premature Gerrit feedback.
+     *
+     * @return HazelcastQueueCancellationStrategy instance
+     */
+    @Override
+    public QueueCancellationStrategy createQueueCancellationStrategy() {
+        return new HazelcastQueueCancellationStrategy();
     }
 
     /**
