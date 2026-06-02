@@ -289,8 +289,11 @@ public abstract class BuildMemoryStorage {
      * This method allows each storage implementation to define its own event equality
      * semantics. This is critical for proper operation in different coordination modes:
      * <ul>
-     *   <li><strong>Local mode:</strong> Uses identity comparison (==) as an optimization since
-     *       the same event object instance is passed through the system. Note that event classes
+     *   <li><strong>Local mode:</strong> Use logical equality so that deserialized
+     *       event instances (e.g. GerritCause.tEvent loaded from disk) are correctly
+     *       matched against in-memory events. Most trigger events extend ChangeBasedEvent,
+     *       whose equals() compares eventType, change, and patchSet fields — all stable
+     *       across serialization boundaries. Note that event classes
      *       implement logical {@code .equals()} (see
      *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause} and
      *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction}),
