@@ -332,10 +332,10 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
 
     @Override
     public boolean eventsMatch(@NonNull GerritTriggeredEvent event1, @NonNull GerritTriggeredEvent event2) {
-        // In local mode, use identity comparison as an optimization since the same event object
-        // instance is passed through the system. Events do implement logical equals() (see
-        // GerritCause and BadgeAction) which is used for TreeMap key lookup. The identity check
-        // here is purely for performance in cancellation logic.
-        return event1 == event2;
+        // Use logical equality so that deserialized event instances (e.g. GerritCause.tEvent
+        // loaded from disk) are correctly matched against in-memory events.
+        // Most trigger events extend ChangeBasedEvent, whose equals() compares eventType,
+        // change, and patchSet fields — all stable across serialization boundaries.
+        return event1.equals(event2);
     }
 }

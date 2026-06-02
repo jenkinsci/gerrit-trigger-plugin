@@ -720,8 +720,11 @@ public class PluginImpl extends GlobalConfiguration {
         // Explicit fallback to LocalCoordinationProvider, which is always available.
         for (CoordinationModeProvider provider : providers) {
             if (provider instanceof LocalCoordinationProvider) {
-                logger.info("Initializing LocalCoordinationProvider{}",
-                        "local".equalsIgnoreCase(configuredMode) ? "" : " (fallback after failed initialization)");
+                if ("local".equalsIgnoreCase(configuredMode)) {
+                    logger.info("Initializing LocalCoordinationProvider");
+                } else {
+                    logger.info("Initializing LocalCoordinationProvider (fallback after failed initialization)");
+                }
                 try {
                     provider.initialize();
                 } catch (Exception e) {
