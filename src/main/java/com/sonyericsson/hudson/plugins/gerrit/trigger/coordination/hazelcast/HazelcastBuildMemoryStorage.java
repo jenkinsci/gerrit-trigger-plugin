@@ -34,6 +34,8 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Executor;
@@ -41,6 +43,7 @@ import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.security.ACL;
+import jenkins.model.CauseOfInterruption;
 import hudson.security.ACLContext;
 import jenkins.model.Jenkins;
 import org.slf4j.Logger;
@@ -124,6 +127,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     private static final long ABORT_INBOX_TTL_SECONDS = 60;
 
     /**
+     * Abort inbox value indicating the build was superseded by a new patchset.
+     * The receiving replica will use {@link NewPatchSetInterruption} as the cause.
+     */
+    private static final String CAUSE_NEW_PATCHSET = "NEW_PATCHSET";
+
+    /**
+     * Abort inbox value indicating the patchset was abandoned.
+     * The receiving replica will use {@link AbandonedPatchsetInterruption} as the cause.
+     */
+    private static final String CAUSE_ABANDONED = "ABANDONED";
+
+    /**
      * Gson instance for JSON serialization of events.
      * Configured to handle polymorphic event types by including runtime type information.
      */
@@ -167,8 +182,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         if (hazelcastInstance == null) {
             return;
         }
-        IMap<String, Long> abortInbox = hazelcastInstance.getMap(ABORT_INBOX_MAP_NAME);
-        abortInbox.addEntryListener((EntryAddedListener<String, Long>)event -> {
+        IMap<String, String> abortInbox = hazelcastInstance.getMap(ABORT_INBOX_MAP_NAME);
+        abortInbox.addEntryListener((EntryAddedListener<String, String>)event -> {
             String abortKey = event.getKey();
             int lastColon = abortKey.lastIndexOf(':');
             if (lastColon < 0) {
@@ -177,7 +192,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             }
             String jobName = abortKey.substring(0, lastColon);
             String buildId = abortKey.substring(lastColon + 1);
-            handleAbortRequest(jobName, buildId);
+            String causeType = event.getValue();
+            handleAbortRequest(jobName, buildId, causeType);
         }, false);
         logger.debug("Registered abort-inbox listener on map: {}", ABORT_INBOX_MAP_NAME);
     }
@@ -185,11 +201,19 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     /**
      * Handles an abort request received via the abort inbox IMap.
      * Looks up the build on this replica and interrupts it if still running.
+     * <p>
+     * The {@code causeType} string determines which {@link CauseOfInterruption} subclass
+     * is used so that the aborted build is annotated with the correct reason:
+     * <ul>
+     *   <li>{@value #CAUSE_ABANDONED} → {@link AbandonedPatchsetInterruption}</li>
+     *   <li>{@value #CAUSE_NEW_PATCHSET} (or any other value) → {@link NewPatchSetInterruption}</li>
+     * </ul>
      *
-     * @param jobName full name of the job
-     * @param buildId build number as string
+     * @param jobName   full name of the job
+     * @param buildId   build number as string
+     * @param causeType cause type string ({@value #CAUSE_ABANDONED} or {@value #CAUSE_NEW_PATCHSET})
      */
-    private static void handleAbortRequest(String jobName, String buildId) {
+    private static void handleAbortRequest(String jobName, String buildId, String causeType) {
         try (ACLContext ignored = ACL.as(ACL.SYSTEM)) {
             Jenkins jenkins = Jenkins.getInstanceOrNull();
             if (jenkins == null) {
@@ -205,8 +229,14 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             }
             Executor executor = build.getExecutor();
             if (executor != null) {
-                executor.interrupt(Result.ABORTED);
-                logger.info("Abort-inbox: interrupted job={} build={}", jobName, buildId);
+                CauseOfInterruption cause;
+                if (CAUSE_ABANDONED.equals(causeType)) {
+                    cause = new AbandonedPatchsetInterruption();
+                } else {
+                    cause = new NewPatchSetInterruption();
+                }
+                executor.interrupt(Result.ABORTED, cause);
+                logger.info("Abort-inbox: interrupted job={} build={} cause={}", jobName, buildId, causeType);
             }
         } catch (Exception e) {
             logger.error("Abort-inbox: failed to abort job={} build={}", jobName, buildId, e);
@@ -652,7 +682,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        List<String> buildIdsToAbort = new ArrayList<>();
         map.lock(key);
         try {
             MemoryImprintData data = map.get(key);
@@ -663,10 +692,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                         if (!entryData.isBuildCompleted() && !entryData.isCancelling() && !entryData.isCancelled()) {
                             entryData.setCancelling(true);
                             updated = true;
-                            String buildId = entryData.getBuildId();
-                            if (buildId != null) {
-                                buildIdsToAbort.add(buildId);
-                            }
                         }
                     }
                 }
@@ -681,6 +706,42 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         } finally {
             map.unlock(key);
         }
+    }
+
+    @Override
+    public synchronized void requestCrossReplicaAbort(@NonNull GerritTriggeredEvent event, @NonNull Job project,
+                                                       @NonNull CauseOfInterruption cause) {
+        if (hazelcastInstance == null) {
+            return;
+        }
+
+        IMap<String, MemoryImprintData> map = getDistributedMemory();
+        if (map == null) {
+            return;
+        }
+
+        String key = EventIdentifier.generateEventId(event);
+        String projectFullName = project.getFullName();
+        String causeType;
+        if (cause instanceof AbandonedPatchsetInterruption) {
+            causeType = CAUSE_ABANDONED;
+        } else {
+            causeType = CAUSE_NEW_PATCHSET;
+        }
+
+        // Collect build IDs that were marked as cancelling for this project/event.
+        // setCancelling() has already set isCancelling=true in the distributed map.
+        List<String> buildIdsToAbort = new ArrayList<>();
+        MemoryImprintData data = map.get(key);
+        if (data != null && data.getEntries() != null) {
+            for (EntryData entryData : data.getEntries()) {
+                if (projectFullName.equals(entryData.getProjectFullName())
+                        && entryData.isCancelling()
+                        && entryData.getBuildId() != null) {
+                    buildIdsToAbort.add(entryData.getBuildId());
+                }
+            }
+        }
 
         // Put abort requests into the distributed abort inbox for cross-replica cancellation.
         // Each Jenkins replica has a listener on this map (registered in the constructor) and will
@@ -688,11 +749,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // NOTE: executeOnMember() cannot be used in Hazelcast CLIENT mode because it runs the task
         // on the Hazelcast sidecar JVM, which does not have Jenkins classes on its classpath.
         if (!buildIdsToAbort.isEmpty()) {
-            IMap<String, Long> abortInbox = hazelcastInstance.getMap(ABORT_INBOX_MAP_NAME);
+            IMap<String, String> abortInbox = hazelcastInstance.getMap(ABORT_INBOX_MAP_NAME);
             for (String buildId : buildIdsToAbort) {
                 String abortKey = projectFullName + ":" + buildId;
-                abortInbox.put(abortKey, System.currentTimeMillis(), ABORT_INBOX_TTL_SECONDS, TimeUnit.SECONDS);
-                logger.info("Queued cross-replica abort: job={} build={}", projectFullName, buildId);
+                abortInbox.put(abortKey, causeType, ABORT_INBOX_TTL_SECONDS, TimeUnit.SECONDS);
+                logger.info("Queued cross-replica abort: job={} build={} cause={}", projectFullName, buildId, causeType);
             }
         }
     }
