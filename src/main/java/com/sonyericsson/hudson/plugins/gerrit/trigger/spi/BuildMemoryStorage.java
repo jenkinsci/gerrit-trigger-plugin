@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Job;
 import hudson.model.Run;
+import jenkins.model.CauseOfInterruption;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -282,6 +283,30 @@ public abstract class BuildMemoryStorage {
      */
     @NonNull
     public abstract Map<GerritTriggeredEvent, MemoryImprint> getAllEvents();
+
+    /**
+     * Requests cross-replica abort for builds tracked for this event and project.
+     * <p>
+     * In distributed deployments, this notifies other replicas to abort any
+     * matching builds running on their local executors. The cause of interruption
+     * is forwarded so the aborted build is annotated with the correct reason
+     * (e.g. {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption}
+     * vs {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption}).
+     * <p>
+     * This method is called from
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#cancelOutdatedBuilds}
+     * after {@link #setCancelling} has already marked the entry, so the cause is known at this point.
+     * <p>
+     * The default implementation is a no-op — standalone Jenkins has no other replicas to notify.
+     *
+     * @param event   the event whose builds should be aborted on remote replicas
+     * @param project the project being cancelled
+     * @param cause   the cause of interruption
+     */
+    public void requestCrossReplicaAbort(@NonNull GerritTriggeredEvent event, @NonNull Job project,
+                                         @NonNull CauseOfInterruption cause) {
+        // Default no-op: standalone mode has no other replicas to notify
+    }
 
     /**
      * Checks if two events are logically equivalent for cancellation purposes.
