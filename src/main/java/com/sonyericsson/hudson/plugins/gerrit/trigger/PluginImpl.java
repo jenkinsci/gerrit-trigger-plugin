@@ -24,8 +24,10 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
@@ -692,43 +694,44 @@ public class PluginImpl extends GlobalConfiguration {
      * and the factory will fall back to the next highest-priority provider.
      */
     private void initializeCoordinationProviders() {
-        logger.debug("Discovering active coordination provider...");
-        hudson.ExtensionList<com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider> providers =
-                hudson.ExtensionList.lookup(
-                        com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider.class);
-
-        // Get configured mode to determine which provider to initialize
-        String configuredMode = com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
-                .getConfiguredMode();
+        ExtensionList<CoordinationModeProvider> providers = ExtensionList.lookup(CoordinationModeProvider.class);
+        String configuredMode = CoordinationModeProvider.getConfiguredMode();
         logger.debug("Configured coordination mode: {}", configuredMode);
 
-        // ExtensionList is already ordered by ordinal (highest first)
-        // Find and initialize the provider that matches the configured mode
-        for (com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider provider : providers) {
-            // Check if this provider's mode matches the configuration
-            // We cannot use isAvailable() here because it checks initialization status
-            String providerMode = provider.getModeName();
-            boolean matches = providerMode.toLowerCase().contains(configuredMode.toLowerCase())
-                    || configuredMode.equalsIgnoreCase("default") && providerMode.equals("Local");
-
-            logger.debug("Checking provider: {} (matches={})", providerMode, matches);
-
-            if (matches) {
-                try {
-                    logger.info("Initializing coordination provider: {}", provider.getModeName());
-                    provider.initialize();
-                    logger.info("Provider {} initialized successfully", provider.getModeName());
-                    return; // Only initialize the matching provider
-                } catch (Exception e) {
-                    logger.warn("Failed to initialize coordination provider: {}. "
-                            + "Will fall back to next available provider.", provider.getModeName(), e);
-                    // Continue to next provider if this one fails
+        // Try to initialize the configured (non-local) provider first.
+        // Local is handled separately below as the explicit fallback.
+        if (!"local".equalsIgnoreCase(configuredMode)) {
+            for (CoordinationModeProvider provider : providers) {
+                if (provider.getModeName().equalsIgnoreCase(configuredMode)) {
+                    try {
+                        logger.info("Initializing coordination provider: {}", provider.getModeName());
+                        provider.initialize();
+                        logger.info("Provider {} initialized successfully", provider.getModeName());
+                        return;
+                    } catch (Exception e) {
+                        logger.warn("Failed to initialize {} coordination provider. Falling back to Local.",
+                                provider.getModeName(), e);
+                        break;
+                    }
                 }
             }
         }
 
-        logger.warn("No coordination provider initialized - this should not happen as LocalCoordinationProvider "
-                + "should always be available");
+        // Explicit fallback to LocalCoordinationProvider, which is always available.
+        for (CoordinationModeProvider provider : providers) {
+            if (provider instanceof LocalCoordinationProvider) {
+                logger.info("Initializing LocalCoordinationProvider{}",
+                        "local".equalsIgnoreCase(configuredMode) ? "" : " (fallback after failed initialization)");
+                try {
+                    provider.initialize();
+                } catch (Exception e) {
+                    logger.error("Failed to initialize LocalCoordinationProvider - this should never happen", e);
+                }
+                return;
+            }
+        }
+
+        logger.error("LocalCoordinationProvider not found - this should never happen");
     }
 
     /**
