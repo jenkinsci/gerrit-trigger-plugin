@@ -369,6 +369,16 @@ public class BuildMemory {
                 ChangeBasedEvent runningChangeBasedEvent = (ChangeBasedEvent)runningEvent;
                 logger.debug("Checking running event: {}", runningChangeBasedEvent);
 
+                // Never cancel an event against itself (self-cancellation).
+                // This can happen when isAbortNewPatchsets=true and the same event is
+                // processed by multiple jobs — the second job finds the first job's entry
+                // in memory and considers the event "outdated" against itself, poisoning
+                // the isCancelling flag before the build is even scheduled.
+                if (storage.eventsMatch(newEvent, runningChangeBasedEvent)) {
+                    logger.debug("Skipping self-cancellation: running event matches new event");
+                    continue;
+                }
+
                 if (shouldIgnoreEvent(newEvent, policy, runningChangeBasedEvent, trigger)) {
                     logger.debug("Ignoring event based on policy");
                     continue;
