@@ -194,7 +194,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             String buildId = abortKey.substring(lastColon + 1);
             String causeType = event.getValue();
             handleAbortRequest(jobName, buildId, causeType);
-        }, false);
+        }, true);  // includeValue=true: the cause type string is needed by handleAbortRequest
         logger.debug("Registered abort-inbox listener on map: {}", ABORT_INBOX_MAP_NAME);
     }
 

@@ -699,20 +699,25 @@ public class PluginImpl extends GlobalConfiguration {
         logger.debug("Configured coordination mode: {}", configuredMode);
 
         // Try to initialize the configured (non-local) provider first.
+        // Each provider's initialize() internally checks the configured mode and is a no-op
+        // if the mode doesn't match, so we try non-local providers in priority order.
         // Local is handled separately below as the explicit fallback.
         if (!"local".equalsIgnoreCase(configuredMode)) {
             for (CoordinationModeProvider provider : providers) {
-                if (provider.getModeName().equalsIgnoreCase(configuredMode)) {
-                    try {
-                        logger.info("Initializing coordination provider: {}", provider.getModeName());
-                        provider.initialize();
+                if (provider instanceof LocalCoordinationProvider) {
+                    continue;
+                }
+                try {
+                    logger.info("Initializing coordination provider: {}", provider.getModeName());
+                    provider.initialize();
+                    if (provider.isAvailable()) {
                         logger.info("Provider {} initialized successfully", provider.getModeName());
                         return;
-                    } catch (Exception e) {
-                        logger.warn("Failed to initialize {} coordination provider. Falling back to Local.",
-                                provider.getModeName(), e);
-                        break;
                     }
+                } catch (Exception e) {
+                    logger.warn("Failed to initialize {} coordination provider. Falling back to Local.",
+                            provider.getModeName(), e);
+                    break;
                 }
             }
         }
