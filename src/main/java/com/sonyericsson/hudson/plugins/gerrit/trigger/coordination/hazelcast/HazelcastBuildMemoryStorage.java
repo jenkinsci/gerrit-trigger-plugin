@@ -38,6 +38,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPat
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
+import hudson.model.Computer;
 import hudson.model.Executor;
 import hudson.model.Job;
 import hudson.model.Result;
@@ -46,6 +47,7 @@ import hudson.security.ACL;
 import jenkins.model.CauseOfInterruption;
 import hudson.security.ACLContext;
 import jenkins.model.Jenkins;
+import jenkins.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,6 +141,19 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     private static final String CAUSE_ABANDONED = "ABANDONED";
 
     /**
+     * Delay in seconds before writing a deferred cross-replica abort inbox entry.
+     * <p>
+     * When {@code started()} detects that an entry is already marked {@code isCancelling=true}
+     * (race condition: build started after the abort decision was made), we write to the abort
+     * inbox to notify other replicas. However, firing the interrupt immediately during CPS
+     * pipeline initialization has no effect — the CPS execution thread has not yet started
+     * executing steps, so the interrupt flag is lost. A short delay ensures the pipeline has
+     * time to finish initialization and block in its first {@code sleep()} or similar step
+     * before the interrupt is delivered.
+     */
+    private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
+
+    /**
      * Gson instance for JSON serialization of events.
      * Configured to handle polymorphic event types by including runtime type information.
      */
@@ -227,16 +242,49 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             if (build == null || !build.isBuilding()) {
                 return;
             }
-            Executor executor = build.getExecutor();
-            if (executor != null) {
-                CauseOfInterruption cause;
-                if (CAUSE_ABANDONED.equals(causeType)) {
-                    cause = new AbandonedPatchsetInterruption();
-                } else {
-                    cause = new NewPatchSetInterruption();
+
+            // Ensure the build has been running long enough for CPS pipeline initialization
+            // to complete. Interrupting a Pipeline build during CPS initialization (first few
+            // seconds) has no effect: the CPS execution thread is still setting up the program
+            // state and has not yet entered a step that responds to executor.interrupt().
+            // If the build is too fresh, schedule a direct retry after the remaining delay.
+            long buildAgeMs = System.currentTimeMillis() - build.getStartTimeInMillis();
+            long minBuildAgeMs = TimeUnit.SECONDS.toMillis(DEFERRED_ABORT_DELAY_SECONDS);
+            if (buildAgeMs < minBuildAgeMs) {
+                long retryDelayMs = minBuildAgeMs - buildAgeMs;
+                logger.info("Abort-inbox: build={}/{} is only {}ms old, retrying in {}ms",
+                        jobName, buildId, buildAgeMs, retryDelayMs);
+                Timer.get().schedule(
+                        () -> handleAbortRequest(jobName, buildId, causeType),
+                        retryDelayMs, TimeUnit.MILLISECONDS);
+                return;
+            }
+
+            CauseOfInterruption cause;
+            if (CAUSE_ABANDONED.equals(causeType)) {
+                cause = new AbandonedPatchsetInterruption();
+            } else {
+                cause = new NewPatchSetInterruption();
+            }
+            // Iterate all executors to find the one currently running this build.
+            // Using build.getExecutor() is unreliable for Pipeline jobs: the flyweight
+            // executor (controller-side CPS orchestrator) may be parked/suspended while
+            // the actual work runs on an agent executor. Iterating computers mirrors the
+            // same approach used in BuildMemory.cancelMatchingJobs() for local cancellation.
+            boolean interrupted = false;
+            for (Computer c : jenkins.getComputers()) {
+                for (Executor e : c.getAllExecutors()) {
+                    if (build.equals(e.getCurrentExecutable())) {
+                        e.interrupt(Result.ABORTED, cause);
+                        interrupted = true;
+                    }
                 }
-                executor.interrupt(Result.ABORTED, cause);
+            }
+            if (interrupted) {
                 logger.info("Abort-inbox: interrupted job={} build={} cause={}", jobName, buildId, causeType);
+            } else {
+                logger.debug("Abort-inbox: no executor found for job={} build={} (may not be running locally)",
+                        jobName, buildId);
             }
         } catch (Exception e) {
             logger.error("Abort-inbox: failed to abort job={} build={}", jobName, buildId, e);
@@ -454,6 +502,12 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         long startedTimestamp = System.currentTimeMillis();
+        // Track whether a deferred cross-replica abort needs to be sent after the lock is released.
+        // This handles the race condition where requestCrossReplicaAbort() was called before this
+        // build's buildId was written to Hazelcast (buildId was null at that time, so no abort
+        // inbox entry was written). We detect this by checking isCancelling on the entry after
+        // writing the buildId, and then write the abort inbox entry here.
+        boolean pendingCrossReplicaAbort = false;
         map.lock(key);
         try {
             MemoryImprintData data = map.get(key);
@@ -467,6 +521,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                         entryData.setBuildId(buildId);
                         entryData.setStartedTimestamp(startedTimestamp);
                         found = true;
+                        // If this entry is already marked for cancellation, we need to trigger
+                        // cross-replica abort now that buildId is known.
+                        if (entryData.isCancelling()) {
+                            pendingCrossReplicaAbort = true;
+                        }
                         break;
                     }
                 }
@@ -488,6 +547,29 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                     projectFullName, buildId, key, e);
         } finally {
             map.unlock(key);
+        }
+
+        // Deferred cross-replica abort: if the entry was already marked for cancellation when this
+        // build started, requestCrossReplicaAbort() previously found buildId=null and could not
+        // write the abort inbox entry. Now that buildId is known, schedule the abort signal with
+        // a short delay so the CPS pipeline has time to complete initialization before the
+        // interrupt is delivered. Firing the interrupt too early (during CPS init, before any
+        // step begins) has no effect — the interrupt flag is set on the wrong thread context.
+        if (pendingCrossReplicaAbort && hazelcastInstance != null) {
+            final HazelcastInstance hz = hazelcastInstance;
+            final String abortKey = projectFullName + ":" + buildId;
+            logger.info("Scheduling deferred cross-replica abort in {}s (started race): job={} build={}",
+                    DEFERRED_ABORT_DELAY_SECONDS, projectFullName, buildId);
+            Timer.get().schedule(() -> {
+                try {
+                    IMap<String, String> abortInbox = hz.getMap(ABORT_INBOX_MAP_NAME);
+                    abortInbox.put(abortKey, CAUSE_NEW_PATCHSET, ABORT_INBOX_TTL_SECONDS, TimeUnit.SECONDS);
+                    logger.info("Queued deferred cross-replica abort (started race): job={} build={} cause={}",
+                            projectFullName, buildId, CAUSE_NEW_PATCHSET);
+                } catch (Exception ex) {
+                    logger.warn("Failed to write deferred abort inbox entry: key={}", abortKey, ex);
+                }
+            }, DEFERRED_ABORT_DELAY_SECONDS, TimeUnit.SECONDS);
         }
     }
 
