@@ -770,32 +770,20 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 for (EntryData entryData : data.getEntries()) {
                     if (projectFullName.equals(entryData.getProjectFullName())) {
                         found = true;
-                        // Only mark as completed when our own code explicitly flagged this entry
-                        // for cancellation (setCancelling was called by cancelOutdatedEvents).
-                        // External queue cancellations (e.g. QueueLoadBalancer moving the item to
-                        // another replica) must be skipped: setting completed=true here would cause
-                        // allBuildsCompleted() to call forget(), removing the event from the shared
-                        // IMap before the other replica has a chance to run cancelOutdatedEvents().
-                        if (entryData.isCancelling()) {
-                            entryData.setCancelled(true);
-                            entryData.setCancelling(false);
-                            entryData.setCompletedTimestamp(cancelledTimestamp);
-                            entryData.setBuildCompleted(true);
-                            modified = true;
-                        } else {
-                            logger.debug("Skipping cancelled() for project={} event={}: "
-                                    + "isCancelling=false, buildId={}. Likely external cancellation "
-                                    + "(e.g. QueueLoadBalancer); not marking as completed.",
-                                    projectFullName, key, entryData.getBuildId());
-                        }
+                        // Mark as cancelled unconditionally. Load-balanced cancellations
+                        // (QueueLoadBalancer moving items between replicas) are already
+                        // filtered out upstream by GerritQueueListener.isLoadBalancedCancellation()
+                        // before cancelled() is ever called.
+                        entryData.setCancelled(true);
+                        entryData.setCancelling(false);
+                        entryData.setCompletedTimestamp(cancelledTimestamp);
+                        entryData.setBuildCompleted(true);
+                        modified = true;
                         break;
                     }
                 }
             }
             if (!found) {
-                // No entry for this project - skip. If the entry was explicitly cancelled
-                // (isCancelling was set), it would have been found because setCancelling()
-                // only updates existing entries. This path is an untracked external cancellation.
                 logger.debug("cancelled() called for untracked project={} event={}: skipping.",
                         projectFullName, key);
             }

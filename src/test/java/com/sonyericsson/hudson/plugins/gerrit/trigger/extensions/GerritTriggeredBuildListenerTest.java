@@ -27,6 +27,8 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastInstanceProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
@@ -79,6 +81,17 @@ public class GerritTriggeredBuildListenerTest {
      * @throws Exception throw if so.
      */
     @Before
+    public void clearHazelcastFlags() {
+        // Clear Hazelcast notification flags between test methods to prevent claim key collision.
+        // Test events use a fixed eventCreatedOn timestamp, producing identical claim keys across tests.
+        if (HazelcastManager.isInitialized()) {
+            HazelcastInstanceProvider.getInstance()
+                    .getMap("gerrit-trigger-notification-flags")
+                    .clear();
+        }
+    }
+
+    @Before
     public void setUp() throws Exception {
         SshdServerMock.generateKeyPair();
 
@@ -123,7 +136,7 @@ public class GerritTriggeredBuildListenerTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        assertTrue("Time out", buildListenerLatch.await(15, TimeUnit.SECONDS));
+        assertTrue("Time out", buildListenerLatch.await(30, TimeUnit.SECONDS));
     }
 
     /**

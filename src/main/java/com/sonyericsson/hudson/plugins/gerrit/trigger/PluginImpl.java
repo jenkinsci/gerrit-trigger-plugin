@@ -24,6 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
@@ -610,6 +611,12 @@ public class PluginImpl extends GlobalConfiguration {
         // This must happen before BuildMemory, EventClaimStrategy, or NotificationClaimStrategy are used
         // because provider.isAvailable() may check if resources are initialized
         initializeCoordinationProviders();
+
+        // Eagerly initialize CoordinationModeFactory so discoverMode() runs now (during startup)
+        // rather than lazily on first event — deferred initialization can add several seconds of
+        // latency to the first build trigger when ExtensionList.lookup() is called from a
+        // background event-processing thread.
+        CoordinationModeFactory.get().getStorage();
 
         // Wait for Hazelcast cluster to reach the expected member count before connecting to Gerrit.
         // Without this, events received during the startup window bypass the distributed claim mechanism
