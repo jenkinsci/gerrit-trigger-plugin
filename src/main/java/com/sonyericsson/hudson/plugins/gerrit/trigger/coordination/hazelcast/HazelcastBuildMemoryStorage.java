@@ -64,7 +64,12 @@ import java.util.concurrent.TimeUnit;
  * Hazelcast-backed implementation of BuildMemoryStorage for HA/HS deployments.
  * <p>
  * Uses distributed IMap for storing build memory across multiple Jenkins replicas.
- * All operations use atomic EntryProcessor to prevent race conditions.
+ * All operations use distributed locks ({@code map.tryLock(key, timeout, unit)}) to prevent race conditions.
+ * <p>
+ * <b>Note on EntryProcessors:</b> EntryProcessors are intentionally not used. In Hazelcast
+ * client mode the processor class executes on the Hazelcast sidecar JVM, which does not have
+ * Jenkins or plugin classes on its classpath, causing {@link ClassNotFoundException} at runtime.
+ * Distributed locks provide equivalent atomicity guarantees without this constraint.
  * <p>
  * This implementation is automatically selected when:
  * <ul>
@@ -86,8 +91,8 @@ import java.util.concurrent.TimeUnit;
  * <ul>
  *   <li><b>Event Serialization</b>: {@link #serializeEvent} converts GerritTriggeredEvent to JSON
  *       using {@link PolymorphicEventTypeAdapter} for type preservation</li>
- *   <li><b>Entry Data Extraction</b>: EntryProcessors extract string identifiers (project full names,
- *       build IDs) from Jenkins objects before storage</li>
+ *   <li><b>Entry Data Extraction</b>: String identifiers (project full names, build IDs) are
+ *       extracted from Jenkins objects before storage inside distributed-lock sections</li>
  *   <li><b>Reconstruction</b>: {@link #reconstructMemoryImprint} deserializes JSON to events and
  *       looks up Jenkins objects via {@link jenkins.model.Jenkins#getItemByFullName}</li>
  * </ul>
@@ -152,6 +157,15 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * before the interrupt is delivered.
      */
     private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
+
+    /**
+     * Maximum time in seconds to wait when acquiring a distributed lock.
+     * <p>
+     * Using {@link IMap#tryLock(Object, long, TimeUnit)} instead of {@link IMap#lock(Object)}
+     * prevents threads from blocking indefinitely when a lock is stuck (e.g. after an
+     * interrupted lock acquisition that left the Hazelcast server holding the lock).
+     */
+    private static final int LOCK_ACQUIRE_TIMEOUT_SECONDS = 10;
 
     /**
      * Gson instance for JSON serialization of events.
@@ -319,6 +333,31 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
     }
 
     /**
+     * Attempts to acquire a distributed lock with a bounded timeout.
+     * <p>
+     * Unlike {@link IMap#lock(Object)}, this method will not block indefinitely.
+     * If the lock cannot be acquired within {@link #LOCK_ACQUIRE_TIMEOUT_SECONDS} seconds
+     * (e.g. a previous holder was interrupted mid-operation and left the lock unreleased),
+     * this method returns {@code false} so the caller can skip the operation rather than
+     * deadlocking a Gerrit event worker thread.
+     * <p>
+     * If interrupted while waiting, the thread's interrupt status is restored before returning.
+     *
+     * @param map the distributed map that owns the lock
+     * @param key the key to lock
+     * @return {@code true} if the lock was acquired, {@code false} otherwise
+     */
+    private static boolean tryLockWithTimeout(IMap<String, MemoryImprintData> map, String key) {
+        try {
+            return map.tryLock(key, LOCK_ACQUIRE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while waiting for distributed lock on key: {}", key);
+            return false;
+        }
+    }
+
+    /**
      * Serializes a GerritTriggeredEvent to JSON.
      *
      * @param event the event to serialize
@@ -453,7 +492,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // causing some project entries to be lost from BuildMemory (which breaks cancellation logic).
         // Note: EntryProcessor is NOT used here because in client mode the processor class would need
         // to exist on the Hazelcast sidecar member's classpath, causing ClassNotFoundException.
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping triggered()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -508,7 +551,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // inbox entry was written). We detect this by checking isCancelling on the entry after
         // writing the buildId, and then write the abort inbox entry here.
         boolean pendingCrossReplicaAbort = false;
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping started()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -587,7 +634,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         long completedTimestamp = System.currentTimeMillis();
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping completed()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -642,7 +693,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String eventJson = serializeEvent(event);
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping retriggered()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -699,7 +754,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         long cancelledTimestamp = System.currentTimeMillis();
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping cancelled()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -764,7 +823,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping setCancelling()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data != null && data.getEntries() != null) {
@@ -866,7 +929,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         java.util.Set<String> keys = new java.util.HashSet<>(map.keySet());
 
         for (String key : keys) {
-            map.lock(key);
+            if (!tryLockWithTimeout(map, key)) {
+                logger.error("Could not acquire distributed lock for key {} within {}s - skipping removeProject() entry",
+                        key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+                continue;
+            }
             try {
                 MemoryImprintData data = map.get(key);
                 if (data == null || data.getEntries() == null) {
@@ -996,7 +1063,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s - skipping setEntryCustomUrl()",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null || data.getEntries() == null) {
@@ -1038,7 +1109,11 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        map.lock(key);
+        if (!tryLockWithTimeout(map, key)) {
+            logger.error("Could not acquire distributed lock for key {} within {}s"
+                    + " - skipping setEntryUnsuccessfulMessage()", key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+            return;
+        }
         try {
             MemoryImprintData data = map.get(key);
             if (data == null || data.getEntries() == null) {
