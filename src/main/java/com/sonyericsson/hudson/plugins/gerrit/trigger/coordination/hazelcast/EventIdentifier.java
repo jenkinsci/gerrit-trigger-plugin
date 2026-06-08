@@ -56,21 +56,6 @@ public final class EventIdentifier {
     private static final int SHORT_REVISION_LENGTH = 8;
 
     /**
-     * Initial prime number for hash computation (standard Java hashCode practice).
-     */
-    private static final int HASH_INITIAL_PRIME = 17;
-
-    /**
-     * Multiplier prime number for hash computation (standard Java hashCode practice).
-     */
-    private static final int HASH_MULTIPLIER_PRIME = 31;
-
-    /**
-     * Number of bits to shift for long-to-int hash conversion.
-     */
-    private static final int HASH_LONG_SHIFT_BITS = 32;
-
-    /**
      * Private constructor to prevent instantiation.
      */
     private EventIdentifier() {
@@ -185,12 +170,13 @@ public final class EventIdentifier {
     /**
      * Generates fallback ID for events that don't match known patterns.
      * <p>
-     * Uses only deterministic fields to ensure the same event produces the same ID
-     * across all replicas. Specifically avoids {@code hashCode()} which is not stable
-     * across JVMs.
+     * Uses {@code event.hashCode()} for uniqueness. All events in the gerrit-events library
+     * implement their own content-based {@code hashCode()}, so this is stable across replicas.
+     * If a specific event type has a weak {@code hashCode()}, the fix belongs in the
+     * gerrit-events library.
      *
      * @param event the event
-     * @return event ID in format: event-{type}-{server}-{timestamp}-{deterministicHash}
+     * @return event ID in format: event-{type}-{server}-{timestamp}-{hash}
      */
     private static String generateFallbackEventId(GerritTriggeredEvent event) {
         // Use server-side timestamp (eventCreatedOn) for consistency across replicas
@@ -203,49 +189,12 @@ public final class EventIdentifier {
             serverName = sanitize(event.getProvider().getName());
         }
 
-        // Create deterministic hash from event fields (not object hashCode!)
-        int deterministicHash = computeDeterministicHash(event);
-
-        // Format: event-<type>-<server>-<timestamp>-<deterministicHash>
-        // All components are deterministic across replicas
+        // Format: event-<type>-<server>-<timestamp>-<hash>
         return String.format("event-%s-%s-%d-%08x",
                 sanitizeEventType(event.getEventType().getTypeValue()),
                 serverName,
                 timestamp,
-                deterministicHash);
-    }
-
-    /**
-     * Computes a deterministic hash from event fields.
-     * <p>
-     * This hash is stable across JVMs because it's computed from the event's actual
-     * field values, not from the object's identity or {@code hashCode()}.
-     * <p>
-     * Uses the same fields that would typically be in a well-implemented {@code hashCode()}:
-     * event type and timestamp. The provider name is included in the event ID directly,
-     * so doesn't need to be part of the hash.
-     *
-     * @param event the event
-     * @return deterministic hash value
-     */
-    private static int computeDeterministicHash(GerritTriggeredEvent event) {
-        int result = HASH_INITIAL_PRIME; // Start with prime number
-
-        // Use event type (always available)
-        if (event.getEventType() != null && event.getEventType().getTypeValue() != null) {
-            result = HASH_MULTIPLIER_PRIME * result + event.getEventType().getTypeValue().hashCode();
-        }
-
-        // Use timestamp (already deterministic across replicas)
-        long timestamp = getEventTimestamp(event);
-        result = HASH_MULTIPLIER_PRIME * result + (int)(timestamp ^ (timestamp >>> HASH_LONG_SHIFT_BITS));
-
-        // Use server name if available
-        if (event.getProvider() != null && event.getProvider().getName() != null) {
-            result = HASH_MULTIPLIER_PRIME * result + event.getProvider().getName().hashCode();
-        }
-
-        return result;
+                event.hashCode());
     }
 
     /**
