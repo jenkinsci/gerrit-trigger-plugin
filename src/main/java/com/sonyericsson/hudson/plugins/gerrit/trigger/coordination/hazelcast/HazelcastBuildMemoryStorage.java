@@ -91,8 +91,6 @@ import java.util.concurrent.TimeUnit;
  * <ul>
  *   <li><b>Event Serialization</b>: {@link #serializeEvent} converts GerritTriggeredEvent to JSON
  *       using {@link PolymorphicEventTypeAdapter} for type preservation</li>
- *   <li><b>Entry Data Extraction</b>: String identifiers (project full names, build IDs) are
- *       extracted from Jenkins objects before storage inside distributed-lock sections</li>
  *   <li><b>Reconstruction</b>: {@link #reconstructMemoryImprint} deserializes JSON to events and
  *       looks up Jenkins objects via {@link jenkins.model.Jenkins#getItemByFullName}</li>
  * </ul>
