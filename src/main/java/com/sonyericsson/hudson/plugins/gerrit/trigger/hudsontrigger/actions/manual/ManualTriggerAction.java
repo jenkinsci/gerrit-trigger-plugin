@@ -153,6 +153,9 @@ public class ManualTriggerAction implements RootAction {
      * @return the config of the server or null if config not found.
      */
     private IGerritHudsonTriggerConfig getServerConfig(String serverName) {
+        if (serverName == null) {
+            return null;
+        }
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
@@ -325,7 +328,13 @@ public class ManualTriggerAction implements RootAction {
         IGerritHudsonTriggerConfig config = getServerConfig(selectedServer);
 
         if (config != null) {
-            GerritQueryHandler handler = new GerritQueryHandler(config);
+            GerritServer server = PluginImpl.getServer_(selectedServer);
+            GerritQueryHandler handler = null;
+            if (server != null) {
+                handler = server.getQueryHandler();
+            } else {
+                handler = new GerritQueryHandler(config);
+            }
             clearSessionData(session);
             session.setAttribute("queryString", queryString);
 

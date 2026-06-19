@@ -102,6 +102,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventSource;
 import com.sonymobile.tools.gerrit.gerritevents.GerritRestPoller;
+import com.sonymobile.tools.gerrit.gerritevents.GerritRestQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -264,7 +265,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
      */
     public GerritQueryHandler getQueryHandler() {
         if (gerritQueryHnadler == null) {
-            gerritQueryHnadler = new GerritQueryHandler(config);
+            if (config.isUseHttpsPoller()) {
+                gerritQueryHnadler = new GerritRestQueryHandler(config);
+            } else {
+                gerritQueryHnadler = new GerritQueryHandler(config);
+            }
         }
         return gerritQueryHnadler;
     }
