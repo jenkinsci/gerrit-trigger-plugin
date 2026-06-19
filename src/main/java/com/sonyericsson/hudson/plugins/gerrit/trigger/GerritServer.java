@@ -101,6 +101,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventSource;
+import com.sonymobile.tools.gerrit.gerritevents.GerritRestPoller;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -582,9 +583,23 @@ public class GerritServer implements Describable<GerritServer>, Action {
     public synchronized void startConnection() {
         checkPermission();
         if (!config.hasDefaultValues()) {
-            if (gerritConnection == null) {
+            if (gerritConnection != null && gerritConnection.isConnected()) {
+                logger.warn("Already started!");
+            } else {
+                // If there's an existing but dead connection, stop it first
+                if (gerritConnection != null) {
+                    logger.info("{}: Stopping failed connection before restart.", name);
+                    gerritConnection.shutdown(false);
+                    gerritConnection.removeListener(gerritConnectionListener);
+                    gerritConnection.removeListener(missedEventsPlaybackManager);
+                }
                 logger.debug("Starting Gerrit connection...");
-                gerritConnection = new GerritConnection(name, config);
+                if (config.isUseHttpsPoller()) {
+                    logger.info("{}: Using HTTPS polling for Gerrit events.", name);
+                    gerritConnection = new GerritRestPoller(name, config);
+                } else {
+                    gerritConnection = new GerritConnection(name, config);
+                }
                 if (config.isTriggerOnAllComments()) {
                     logger.info("Will trigger on all comments, even from the configured user.");
                 } else {
@@ -599,8 +614,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 gerritConnection.addListener(missedEventsPlaybackManager);
 
                 gerritConnection.start();
-            } else {
-                logger.warn("Already started!");
             }
             // Initialize project list update after connection with Gerrit server
             projectListUpdater.initProjectListUpdater();
