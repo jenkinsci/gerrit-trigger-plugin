@@ -345,6 +345,29 @@
                         </f:entry>
                     </f:optionalBlock>
                 </f:section>
+                <f:section title="${%HTTPS Event Polling}" icon="symbol-cloud-outline plugin-ionicons-api">
+                    <f:optionalBlock name="useHttpsPoller"
+                                     title="${%Use HTTPS Polling for Events}"
+                                     checked="${it.config.useHttpsPoller}"
+                                     help="/plugin/gerrit-trigger/help-UseHttpsPoller.html">
+                        <f:entry title="${%Poll Interval (seconds)}"
+                                 help="/plugin/gerrit-trigger/help-HttpsPollInterval.html">
+                            <f:number name="httpsPollInterval"
+                                      value="${it.config.httpsPollInterval}"
+                                      default="${com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_INTERVAL}"
+                                      clazz="positive-number"
+                                      min="1"/>
+                        </f:entry>
+                        <f:entry title="${%Max Changes Per Poll}"
+                                 help="/plugin/gerrit-trigger/help-HttpsPollMaxChanges.html">
+                            <f:number name="httpsPollMaxChanges"
+                                      value="${it.config.httpsPollMaxChanges}"
+                                      default="${com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_MAX_CHANGES}"
+                                      clazz="positive-number"
+                                      min="1"/>
+                        </f:entry>
+                    </f:optionalBlock>
+                </f:section>
                 <j:if test="${instance.isReplicationEventsSupported()}">
                     <f:section title="${%Replication Events}" icon="symbol-share-social-outline plugin-ionicons-api">
                         <f:optionalBlock name="enableReplication"

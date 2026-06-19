@@ -1,0 +1,16 @@
+<div>
+    When enabled, Gerrit events will be received by polling the Gerrit REST API over HTTPS
+    instead of using the SSH <code>stream-events</code> command.
+    <br><br>
+    This is useful when SSH access to the Gerrit server is not available, or when network
+    policies require HTTPS-only communication.
+    <br><br>
+    <b>Requirements:</b>
+    <ul>
+        <li>The Gerrit Frontend URL must be set and reachable</li>
+        <li>HTTP credentials must be configured (in the REST API section)</li>
+        <li>Gerrit must have the REST API enabled</li>
+    </ul>
+    <br>
+    If disabled, the plugin will use the standard SSH stream-events connection.
+</div>

@@ -162,6 +162,21 @@ public class Config implements IGerritHudsonTriggerConfig {
      * Global default for notification level.
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
+    /**
+     * Default value for {@link #isUseHttpsPoller()}.
+     */
+    public static final boolean DEFAULT_USE_HTTPS_POLLER =
+        com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_USE_HTTPS_POLLER;
+    /**
+     * Default value for {@link #getHttpsPollInterval()}.
+     */
+    public static final int DEFAULT_HTTPS_POLL_INTERVAL =
+        com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_INTERVAL;
+    /**
+     * Default value for {@link #getHttpsPollMaxChanges()}.
+     */
+    public static final int DEFAULT_HTTPS_POLL_MAX_CHANGES =
+        com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_MAX_CHANGES;
 
     private String gerritHostName;
     private int gerritSshPort;
@@ -175,6 +190,9 @@ public class Config implements IGerritHudsonTriggerConfig {
     private Secret gerritHttpPassword;
     private boolean restCodeReview;
     private boolean restVerified;
+    private boolean useHttpsPoller;
+    private int httpsPollInterval;
+    private int httpsPollMaxChanges;
     @Deprecated
     private transient boolean gerritBuildCurrentPatchesOnly;
     @Deprecated
@@ -246,6 +264,9 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
         restCodeReview = config.isRestCodeReview();
         restVerified = config.isRestVerified();
+        useHttpsPoller = config.isUseHttpsPoller();
+        httpsPollInterval = config.getHttpsPollInterval();
+        httpsPollMaxChanges = config.getHttpsPollMaxChanges();
         gerritBuildCurrentPatchesOnly = config.isGerritBuildCurrentPatchesOnly();
         numberOfWorkerThreads = config.getNumberOfReceivingWorkerThreads();
         numberOfSendingWorkerThreads = config.getNumberOfSendingWorkerThreads();
@@ -418,6 +439,17 @@ public class Config implements IGerritHudsonTriggerConfig {
             restVerified = restApi.optBoolean("restVerified", true);
         } else {
             useRestApi = false;
+        }
+
+        if (formData.has("useHttpsPoller")) {
+            useHttpsPoller = true;
+            JSONObject httpsPoller = formData.getJSONObject("useHttpsPoller");
+            httpsPollInterval = httpsPoller.optInt("httpsPollInterval", DEFAULT_HTTPS_POLL_INTERVAL);
+            httpsPollMaxChanges = httpsPoller.optInt("httpsPollMaxChanges", DEFAULT_HTTPS_POLL_MAX_CHANGES);
+        } else {
+            useHttpsPoller = false;
+            httpsPollInterval = DEFAULT_HTTPS_POLL_INTERVAL;
+            httpsPollMaxChanges = DEFAULT_HTTPS_POLL_MAX_CHANGES;
         }
 
         replicationConfig = ReplicationConfig.createReplicationConfigFromJSON(formData);
@@ -1432,6 +1464,54 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public void setRestVerified(boolean restVerified) {
         this.restVerified = restVerified;
+    }
+
+    @Override
+    public boolean isUseHttpsPoller() {
+        return useHttpsPoller;
+    }
+
+    /**
+     * Sets useHttpsPoller.
+     * @param useHttpsPoller true if HTTPS polling should be used for event ingestion.
+     * @see #isUseHttpsPoller()
+     */
+    public void setUseHttpsPoller(boolean useHttpsPoller) {
+        this.useHttpsPoller = useHttpsPoller;
+    }
+
+    @Override
+    public int getHttpsPollInterval() {
+        if (httpsPollInterval <= 0) {
+            httpsPollInterval = DEFAULT_HTTPS_POLL_INTERVAL;
+        }
+        return httpsPollInterval;
+    }
+
+    /**
+     * Sets httpsPollInterval.
+     * @param httpsPollInterval the poll interval in seconds.
+     * @see #getHttpsPollInterval()
+     */
+    public void setHttpsPollInterval(int httpsPollInterval) {
+        this.httpsPollInterval = httpsPollInterval;
+    }
+
+    @Override
+    public int getHttpsPollMaxChanges() {
+        if (httpsPollMaxChanges <= 0) {
+            httpsPollMaxChanges = DEFAULT_HTTPS_POLL_MAX_CHANGES;
+        }
+        return httpsPollMaxChanges;
+    }
+
+    /**
+     * Sets httpsPollMaxChanges.
+     * @param httpsPollMaxChanges the maximum changes per poll.
+     * @see #getHttpsPollMaxChanges()
+     */
+    public void setHttpsPollMaxChanges(int httpsPollMaxChanges) {
+        this.httpsPollMaxChanges = httpsPollMaxChanges;
     }
 
     /**
