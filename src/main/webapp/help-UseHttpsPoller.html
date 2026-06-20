@@ -12,5 +12,13 @@
         <li>Gerrit must have the REST API enabled</li>
     </ul>
     <br>
+    <b>Note on server version and warnings:</b>
+    The REST API reports the full git-describe version (e.g. <code>3.13.3-877-g4b89419c9d</code>),
+    while the SSH <code>gerrit version</code> command reports only the base release tag
+    (e.g. <code>3.13.3</code>). If your Gerrit is running a development/snapshot build,
+    the plugin may show a snapshot version warning (orange settings icon) under HTTPS polling
+    that does not appear under SSH. This is cosmetic and does not affect functionality —
+    all feature checks use the base version number.
+    <br><br>
     If disabled, the plugin will use the standard SSH stream-events connection.
 </div>
