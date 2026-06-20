@@ -228,7 +228,125 @@ repo sync
 repo download $GERRIT_PROJECT $GERRIT_CHANGE_NUMBER/$GERRIT_PATCHSET_NUMBER
 ----
 
-=== Missed Events Playback Feature (Available from v. 2.14.0)
+=== Connection Transport Options
+
+The plugin supports three transport mechanisms for receiving Gerrit events.
+Choose the one that best fits your network environment and Gerrit setup.
+
+=== SSH Stream-Events (Default)
+
+The traditional transport. The plugin opens a persistent SSH connection to
+the Gerrit server and runs `gerrit stream-events`. Events arrive in near
+real-time.
+
+*Requirements:*
+* SSH access to the Gerrit server (typically port 29418)
+* SSH key configured for the Jenkins user in Gerrit
+* `+Stream Events+` capability granted to the user
+
+=== HTTPS Polling (New)
+
+The plugin periodically polls the Gerrit REST API over HTTPS to detect
+changes. No SSH connection is required.
+
+*Requirements:*
+* Gerrit Frontend URL must be reachable
+* HTTP credentials configured in the REST API section
+* Gerrit REST API enabled
+
+*Setup:*
+. Navigate to *Manage Jenkins > Gerrit Trigger* and edit your server
+. In the *Gerrit Connection Setting* section, check *Use HTTPS Polling for Events*
+. Configure *Poll Interval* (seconds, default 10) and *Max Changes Per Poll* (default 100)
+. In the *REST API* section, enable *Use REST API* and enter HTTP credentials
+. Save and restart the connection
+
+*Events detected via HTTPS polling:*
+
+| Event | Detection method
+| *PatchsetCreated* | New change or revision change
+| *ChangeMerged* | Status transition from REVIEWED to MERGED
+| *ChangeAbandoned* | Status transition to ABANDONED
+| *TopicChanged* | Topic field change on known change
+| *WipStateChanged* | `work_in_progress` field toggle
+| *PrivateStateChanged* | `is_private` field toggle
+
+*Limitations:* The following events cannot be detected via polling because
+Gerrit's REST API does not expose them:
+`CommentAdded`, `DraftPublished`, `RefUpdated`, `ProjectCreated`,
+`ChangeDeleted`, `MergeFailed`, `ReviewerAdded`, `VoteDeleted`,
+`HashtagsChanged`, `RefReplicated`, `RefReplicationDone`, `PatchsetNotified`.
+
+Consider using webhooks for full event coverage (see below).
+
+*Note on server version display:* The REST API reports the full git-describe
+version (e.g. `3.13.3-877-g4b89419c9d`), while the SSH `gerrit version`
+command reports only the base release tag (e.g. `3.13.3`). If your Gerrit
+is running a development/snapshot build, the plugin may show a snapshot
+version warning (orange settings icon) under HTTPS polling that does not
+appear under SSH. This is cosmetic and does not affect functionality.
+
+=== Webhooks (New)
+
+The plugin exposes an HTTP endpoint that receives events pushed from
+Gerrit's webhook or events-log plugin. This provides real-time event
+delivery over HTTPS without polling.
+
+*Requirements:*
+* Gerrit's https://gerrit.googlesource.com/plugins/webhooks/[webhooks plugin]
+  or https://gerrit.googlesource.com/plugins/events-log/[events-log plugin]
+  installed on the Gerrit server
+* Jenkins root URL configured (*Manage Jenkins > Configure System > Jenkins Location*)
+
+*Setup:*
+. Navigate to *Manage Jenkins > Gerrit Trigger* and edit your server
+. Copy the *Webhook URL* displayed on the server configuration page
+. Configure Gerrit's webhooks plugin to POST to this URL:
+
+[source,syntaxhighlighter-pre]
+----
+[remote "jenkins"]
+    url = http://jenkins.example.com/gerrit-trigger/webhook?server=myServer
+    event = patchset-created
+    event = change-merged
+    event = change-abandoned
+    event = comment-added
+    event = topic-changed
+    event = ref-updated
+    event = wip-state-changed
+    event = private-state-changed
+----
+
+. Restart Gerrit's webhooks plugin or reload the configuration
+
+The endpoint accepts standard `stream-events` JSON payloads (single object
+or JSON array batched by the events-log plugin).
+
+*Advantages of webhooks over polling:*
+* Near real-time event delivery (no polling delay)
+* All event types supported (full parity with SSH stream-events)
+* Lower load on the Gerrit server (no repeated poll requests)
+
+== HTTPS Git Clone URL (GERRIT_GIT_URL) (New)
+
+When HTTPS polling or webhooks are enabled, builds receive an additional
+environment parameter `GERRIT_GIT_URL` containing the HTTPS git clone
+URL for the project:
+
+[source]
+----
+GERRIT_GIT_URL=https://gerrit.example.com/a/myproject.git
+----
+
+Use this in pipeline scripts or freestyle job SCM configuration to clone
+via HTTPS instead of SSH:
+
+[source,syntaxhighlighter-pre]
+----
+git url: "${GERRIT_GIT_URL}", refspec: "${GERRIT_REFSPEC}", branch: "${GERRIT_BRANCH}"
+----
+
+== Missed Events Playback Feature (Available from v. 2.14.0)
 
 NOTE: This feature replaces the "Check Non-Reviewed Patchsets" option that was
 part of a Job's Gerrit Trigger configuration.
@@ -339,6 +457,20 @@ the change-set checkout. However, it's very easy to perform the checkout
 using the Gerrit parameters provided to the build, along with the
 existing Workflow step for Git (or other supported SCM) e.g.
 
+*HTTPS checkout using GERRIT_GIT_URL (recommended):*
+
+[source,syntaxhighlighter-pre]
+----
+node {
+  // Clone via HTTPS using the Gerrit-provided URL — no SSH key needed
+  git url: "${GERRIT_GIT_URL}",
+      refspec: "${GERRIT_REFSPEC}",
+      branch: "${GERRIT_BRANCH}"
+}
+----
+
+*SSH checkout using GERRIT_REFSPEC:*
+
 [source,syntaxhighlighter-pre]
 ----
 node {
@@ -358,6 +490,49 @@ node {
 
 Note though that with this approach the changelog will not show
 correctly.
+
+=== Key Build Parameters
+
+The following parameters are available in builds triggered by Gerrit events:
+
+[cols="2,5,1",options="header"]
+|===
+| Parameter | Description | New
+| `GERRIT_NAME` | The name of the Gerrit server
+| `GERRIT_HOST` | The hostname of the Gerrit server
+| `GERRIT_PORT` | The port of the Gerrit server
+| `GERRIT_SCHEME` | The transport scheme (ssh, https, webhook)
+| `GERRIT_VERSION` | The Gerrit server version
+| `GERRIT_PROJECT` | The Gerrit project name
+| `GERRIT_BRANCH` | The branch name
+| `GERRIT_REFSPEC` | The git refspec for the change (e.g. `refs/changes/56/3456/1`)
+| `GERRIT_REFNAME` | The ref name (for Ref Updated events)
+| `GERRIT_OLDREV` | The old revision (for Ref Updated events)
+| `GERRIT_NEWREV` | The new revision
+| `GERRIT_EVENT_TYPE` | The type of the Gerrit event
+| `GERRIT_EVENT_HASH` | A hash of the event for unique identification
+| `GERRIT_CHANGE_ID` | The Gerrit change ID
+| `GERRIT_CHANGE_NUMBER` | The Gerrit change number
+| `GERRIT_CHANGE_URL` | The URL to the change in Gerrit's web UI
+| `GERRIT_CHANGE_SUBJECT` | The commit message's first line
+| `GERRIT_CHANGE_COMMIT_MESSAGE` | The full commit message
+| `GERRIT_PATCHSET_NUMBER` | The patch set number
+| `GERRIT_PATCHSET_REVISION` | The patch set revision (commit SHA)
+| `GERRIT_CHANGE_OWNER` / `*_NAME` / `*_EMAIL` | The change owner's details
+| `GERRIT_PATCHSET_UPLOADER` / `*_NAME` / `*_EMAIL` | The uploader's details
+| `GERRIT_EVENT_ACCOUNT` / `*_NAME` / `*_EMAIL` | The event triggerer's details
+| `GERRIT_CHANGE_ABANDONER` / `*_NAME` / `*_EMAIL` | The abandoner's details
+| `GERRIT_CHANGE_RESTORER` / `*_NAME` / `*_EMAIL` | The restorer's details
+| `GERRIT_TOPIC` | The change topic |
+| `GERRIT_OLD_TOPIC` | The old topic (for topic-changed events) |
+| `GERRIT_HASHTAGS` | The change hashtags (comma-separated) |
+| `GERRIT_CHANGE_WIP_STATE` | Whether the change is Work-In-Progress |
+| `GERRIT_CHANGE_PRIVATE_STATE` | Whether the change is private |
+| `GERRIT_GIT_URL` | The HTTPS git clone URL for the project | ✅
+|===
+
+See also the link:#connection-transport-options[Connection Transport Options] for information
+about the new HTTPS polling and webhook transports.
 
 == Tips & Tricks
 
