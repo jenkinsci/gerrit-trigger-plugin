@@ -603,16 +603,23 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
             logger.info("Starting command: " + command);
-            //Default implementation just waits for a disconnect
-            while (!isDestroyed()) {
-                try {
-                    synchronized (this) {
-                        this.wait(WAIT_FOR_DESTROYED);
+            // Wait for disconnect on a dedicated thread so we do not occupy a mina worker thread
+            // for the lifetime of the command. A long-lived blocking command (e.g. stream-events)
+            // would otherwise starve mina's I/O pool on CPU-constrained CI and prevent other
+            // channels from delivering EOF.
+            Thread waiter = new Thread(() -> {
+                while (!isDestroyed()) {
+                    try {
+                        synchronized (this) {
+                            this.wait(WAIT_FOR_DESTROYED);
+                        }
+                    } catch (InterruptedException e) {
+                        logger.fine("[SSHD-CommandMock] Awake.");
                     }
-                } catch (InterruptedException e) {
-                    logger.fine("[SSHD-CommandMock] Awake.");
                 }
-            }
+            }, "CommandMock-waiter: " + command);
+            waiter.setDaemon(true);
+            waiter.start();
         }
 
         /**
@@ -698,11 +705,6 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
             logger.info("Starting EOF-command: " + getCommand());
-            // Close output stream so the client reliably sees channel EOF before the exit status.
-            OutputStream out = getOutputStream();
-            if (out != null) {
-                out.close();
-            }
             this.stop(0);
         }
     }
