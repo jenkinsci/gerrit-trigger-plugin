@@ -156,7 +156,7 @@ public class VoteSameTopicTest {
      */
     private void checkCommand(String pattern) {
         //CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: Testdata.
-        server.waitForCommand(pattern, 30000);
+        server.waitForCommand(pattern, 3000);
     }
 
     /**
@@ -184,13 +184,6 @@ public class VoteSameTopicTest {
         @Override
         public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
                 throws InterruptedException, IOException {
-            var logger = listener.getLogger();
-            logger.println("Building...");
-            build.getEnvironment(listener).forEach((k, v) -> {
-                if (k.contains("GERRIT")) {
-                    logger.printf("%s = %s%n", k, v);
-                }
-            });
             return true;
         }
 

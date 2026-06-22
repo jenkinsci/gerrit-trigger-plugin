@@ -698,6 +698,11 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
             logger.info("Starting EOF-command: " + getCommand());
+            // Close output stream so the client reliably sees channel EOF before the exit status.
+            OutputStream out = getOutputStream();
+            if (out != null) {
+                out.close();
+            }
             this.stop(0);
         }
     }
