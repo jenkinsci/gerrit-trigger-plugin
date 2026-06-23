@@ -705,6 +705,13 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
             logger.info("Starting EOF-command: " + getCommand());
+            // Flush and close the output stream before signaling exit, like the other commands do,
+            // so the client sees channel EOF explicitly rather than relying on the exit callback.
+            OutputStream out = getOutputStream();
+            if (out != null) {
+                out.flush();
+                out.close();
+            }
             this.stop(0);
         }
     }
