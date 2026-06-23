@@ -155,8 +155,11 @@ public class VoteSameTopicTest {
      * @param pattern the command pattern
      */
     private void checkCommand(String pattern) {
+        // Reviews are sent serially through the pool-size-1 send queue; on CPU-starved CI each
+        // SSH round-trip can take ~1s, so the "Build Successful" reviews queued behind the
+        // "Build Started" ones need a generous window. This is real slowness, not a hang.
         //CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: Testdata.
-        server.waitForCommand(pattern, 3000);
+        server.waitForCommand(pattern, 30000);
     }
 
     /**
