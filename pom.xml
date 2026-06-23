@@ -62,7 +62,7 @@
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <no-test-jar>false</no-test-jar>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <build-failure-analyzer-plugin.version>2.5.0</build-failure-analyzer-plugin.version>
+        <build-failure-analyzer-plugin.version>3.887.vc872cf1b_7dff</build-failure-analyzer-plugin.version>
         <checkstyle.version>3.6.0</checkstyle.version>
         <surefire.rerunFailingTestsCount>3</surefire.rerunFailingTestsCount>
         <forkCount>0.5C</forkCount>
