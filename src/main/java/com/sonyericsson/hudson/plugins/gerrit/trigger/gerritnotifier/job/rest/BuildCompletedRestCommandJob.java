@@ -77,9 +77,9 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
 
     @Override
     protected ReviewInput createReview() {
-        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
             String message = parameterExpander.getBuildCompletedMessage(memoryImprint, listener);
-            Collection<ReviewLabel> scoredLabels = new ArrayList<ReviewLabel>();
+            Collection<ReviewLabel> scoredLabels = new ArrayList<>();
             if (memoryImprint.getEvent().isScorable()) {
                 if (config.isRestCodeReview()) {
                     Integer crValue = parameterExpander.getMinimumCodeReviewValue(memoryImprint, true);
@@ -100,7 +100,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
             }
             Notify notificationLevel = parameterExpander.getHighestNotificationLevel(memoryImprint, true);
             List<GerritMessageProvider> gerritMessageProviders = GerritMessageProvider.all();
-            Collection<CommentedFile> commentedFiles = new ArrayList<CommentedFile>();
+            Collection<CommentedFile> commentedFiles = new ArrayList<>();
             if (gerritMessageProviders != null) {
                 for (GerritMessageProvider gerritMessageProvider : gerritMessageProviders) {
                     for (BuildMemory.MemoryImprint.Entry e : memoryImprint.getEntries()) {

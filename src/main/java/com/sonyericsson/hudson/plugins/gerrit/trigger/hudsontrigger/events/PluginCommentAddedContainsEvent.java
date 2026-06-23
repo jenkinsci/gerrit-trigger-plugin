@@ -25,6 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import hudson.Extension;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
@@ -60,6 +61,7 @@ public class PluginCommentAddedContainsEvent extends PluginGerritEvent
         }
     }
 
+    @Serial
     private static final long serialVersionUID = -1190562081236235820L;
 
     private String commentAddedCommentContains;

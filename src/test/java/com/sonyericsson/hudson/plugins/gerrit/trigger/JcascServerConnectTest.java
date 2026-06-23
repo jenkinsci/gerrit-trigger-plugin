@@ -105,10 +105,10 @@ public class JcascServerConnectTest {
      */
     @After
     public void cleanup() throws Exception {
-        sshd1.stop(true);
+        sshdMock1.stopServer(sshd1);
         sshd1 = null;
         sshdMock1 = null;
-        sshd2.stop(true);
+        sshdMock2.stopServer(sshd2);
         sshd2 = null;
         sshdMock2 = null;
     }

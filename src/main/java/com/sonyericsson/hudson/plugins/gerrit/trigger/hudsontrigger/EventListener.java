@@ -121,8 +121,7 @@ public final class EventListener implements GerritEventListener {
             // to just return now without processing the event.
             return;
         }
-        if (event instanceof GerritTriggeredEvent) {
-            GerritTriggeredEvent triggeredEvent = (GerritTriggeredEvent)event;
+        if (event instanceof GerritTriggeredEvent triggeredEvent) {
             synchronized (this) {
                 if (t.isInteresting(triggeredEvent)) {
                     logger.trace("The event is interesting.");
@@ -230,11 +229,10 @@ public final class EventListener implements GerritEventListener {
      * @param event GerritTriggeredEvent.
      */
     private void abortBuild(GerritTrigger t, GerritTriggeredEvent event) {
-        if (!(event instanceof ChangeBasedEvent)) {
+        if (!(event instanceof ChangeBasedEvent changeBasedEvent)) {
             return;
         }
 
-        ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
         if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled()) {
             t.getRunningJobs(t.getJob()).cancelTriggeredJob(changeBasedEvent,
                     t.getJob().getFullName(), t.getBuildCancellationPolicy());
@@ -272,8 +270,7 @@ public final class EventListener implements GerritEventListener {
         if (cause instanceof GerritUserCause) {
             // it's a manual trigger, no need for a quiet period
             projectbuildDelay = 0;
-        } else if (project instanceof ParameterizedJobMixIn.ParameterizedJob) {
-            ParameterizedJobMixIn.ParameterizedJob abstractProject = (ParameterizedJobMixIn.ParameterizedJob)project;
+        } else if (project instanceof ParameterizedJobMixIn.ParameterizedJob abstractProject) {
             if (abstractProject.getQuietPeriod() > projectbuildDelay) {
                 projectbuildDelay = abstractProject.getQuietPeriod();
             }
@@ -288,8 +285,7 @@ public final class EventListener implements GerritEventListener {
                     + project.getClass().getName());
         }
 
-        if (event instanceof ChangeBasedEvent) {
-            ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+        if (event instanceof ChangeBasedEvent changeBasedEvent) {
             if (null != changeBasedEvent.getPatchSet()) {
                 logger.info("Project {} Build Scheduled: {} By event: {}",
                         project.getName(), (futureBuild != null),
@@ -300,8 +296,7 @@ public final class EventListener implements GerritEventListener {
                         project.getName(), (futureBuild != null),
                         changeBasedEvent.getChange().getNumber());
             }
-        } else if (event instanceof RefUpdated) {
-            RefUpdated refUpdated = (RefUpdated)event;
+        } else if (event instanceof RefUpdated refUpdated) {
             logger.info("Project {} Build Scheduled: {} By event: {}",
                     project.getName(), (futureBuild != null),
                     refUpdated.getRefUpdate().getRefName() + " " + refUpdated.getRefUpdate().getNewRev());
@@ -399,7 +394,7 @@ public final class EventListener implements GerritEventListener {
     private List<ParameterValue> getDefaultParametersValues(Job project) {
         ParametersDefinitionProperty paramDefProp =
                 (ParametersDefinitionProperty)project.getProperty(ParametersDefinitionProperty.class);
-        List<ParameterValue> defValues = new ArrayList<ParameterValue>();
+        List<ParameterValue> defValues = new ArrayList<>();
 
         /*
          * This check is made ONLY if someone calls this method even if isParametrized() is false.

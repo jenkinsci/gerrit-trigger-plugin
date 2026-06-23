@@ -46,7 +46,7 @@ public class EventTimeSlice {
     /**
      * events to persist.
      */
-    protected List<GerritTriggeredEvent> events = Collections.synchronizedList(new ArrayList<GerritTriggeredEvent>());
+    protected List<GerritTriggeredEvent> events = Collections.synchronizedList(new ArrayList<>());
 
     /**
      *

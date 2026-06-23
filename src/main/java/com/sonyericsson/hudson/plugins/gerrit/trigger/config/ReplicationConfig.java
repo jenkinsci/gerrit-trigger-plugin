@@ -79,7 +79,7 @@ public class ReplicationConfig {
     public ReplicationConfig(ReplicationConfig config) {
         enableReplication = config.isEnableReplication();
         if (config.getGerritSlaves() != null) {
-            slaves = new LinkedList<GerritSlave>();
+            slaves = new LinkedList<>();
             for (GerritSlave slave : config.getGerritSlaves()) {
                 GerritSlave slaveCopy = new GerritSlave(slave.getName(), slave.getHost(), slave.getTimeoutInSeconds());
                 slaves.add(slaveCopy);
@@ -96,7 +96,7 @@ public class ReplicationConfig {
      */
     @DataBoundConstructor
     public ReplicationConfig() {
-        this(false, new LinkedList<GerritSlave>(), false, null);
+        this(false, new LinkedList<>(), false, null);
     }
 
     /**
@@ -214,7 +214,7 @@ public class ReplicationConfig {
      */
     public static ReplicationConfig createReplicationConfigFromJSON(JSONObject formData) {
         ReplicationConfig replicationConfig;
-        List<GerritSlave> slaves = new LinkedList<GerritSlave>();
+        List<GerritSlave> slaves = new LinkedList<>();
 
         boolean enableReplication = formData.has(ENABLE_REPLICATION_JSON_KEY);
         if (enableReplication) {
@@ -227,7 +227,7 @@ public class ReplicationConfig {
             } else if (slavesAsJSON instanceof JSONObject) {
                 slaves.add(GerritSlave.createGerritSlaveFromJSON((JSONObject)slavesAsJSON));
             }
-            if (slaves.size() == 0) {
+            if (slaves.isEmpty()) {
                 throw new Failure(Messages.OneSlaveMustBeDefined());
             }
 
@@ -245,6 +245,7 @@ public class ReplicationConfig {
                     for (GerritSlave gerritSlave : slaves) {
                         if (defaultSlaveId.equals(gerritSlave.getId())) {
                             defaultSlaveExist = true;
+                            break;
                         }
                     }
                     if (!defaultSlaveExist) {

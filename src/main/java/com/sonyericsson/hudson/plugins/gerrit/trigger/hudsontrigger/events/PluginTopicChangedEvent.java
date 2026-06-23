@@ -31,12 +31,14 @@ import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
  * An event configuration that causes the build to be triggered when a topic is changed.
  */
 public class PluginTopicChangedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = -8490721342780735276L;
 
     /**

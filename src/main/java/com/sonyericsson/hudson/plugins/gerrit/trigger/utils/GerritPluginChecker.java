@@ -28,6 +28,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.utils;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,26 +81,16 @@ public final class GerritPluginChecker {
      * @return true/false if installed or not.
      */
     private static boolean decodeStatus(int statusCode, String pluginName, boolean quiet) {
-        String message = "";
-        switch (statusCode) {
-            case HttpURLConnection.HTTP_OK:
-                message = Messages.PluginInstalled(pluginName);
-                break;
-            case HttpURLConnection.HTTP_NOT_FOUND:
-                message = Messages.PluginNotInstalled(pluginName);
-                break;
-            case HttpURLConnection.HTTP_UNAUTHORIZED:
-                message = Messages.PluginHttpConnectionUnauthorized(pluginName,
-                        Messages.HttpConnectionUnauthorized());
-                break;
-            case HttpURLConnection.HTTP_FORBIDDEN:
-                message = Messages.PluginHttpConnectionForbidden(pluginName,
-                        Messages.HttpConnectionUnauthorized());
-                break;
-            default:
-                message = Messages.PluginHttpConnectionGeneralError(pluginName,
-                        Messages.HttpConnectionError(statusCode));
-        }
+        String message = switch (statusCode) {
+            case HttpURLConnection.HTTP_OK -> Messages.PluginInstalled(pluginName);
+            case HttpURLConnection.HTTP_NOT_FOUND -> Messages.PluginNotInstalled(pluginName);
+            case HttpURLConnection.HTTP_UNAUTHORIZED -> Messages.PluginHttpConnectionUnauthorized(pluginName,
+                    Messages.HttpConnectionUnauthorized());
+            case HttpURLConnection.HTTP_FORBIDDEN -> Messages.PluginHttpConnectionForbidden(pluginName,
+                    Messages.HttpConnectionUnauthorized());
+            default -> Messages.PluginHttpConnectionGeneralError(pluginName,
+                    Messages.HttpConnectionError(statusCode));
+        };
         logMsg(message, quiet);
         return HttpURLConnection.HTTP_OK == statusCode;
     }
@@ -136,6 +127,7 @@ public final class GerritPluginChecker {
      * @param quiet Whether we want to log a message.
      * @return true if enabled, false if not, and null if we couldn't tell.
      */
+    @SuppressFBWarnings("NP_BOOLEAN_RETURN_NULL")
     public static Boolean isPluginEnabled(IGerritHudsonTriggerConfig config, String pluginName, boolean quiet) {
         String restUrl = buildURL(config);
         if (restUrl == null) {
@@ -144,9 +136,7 @@ public final class GerritPluginChecker {
         }
         logger.trace("{}plugins/{}/", restUrl, pluginName);
 
-        CloseableHttpResponse execute = null;
-        try {
-            execute = HttpUtils.performHTTPGet(config, restUrl + "plugins/" + pluginName + "/");
+        try (CloseableHttpResponse execute = HttpUtils.performHTTPGet(config, restUrl + "plugins/" + pluginName + "/")) {
             int statusCode = execute.getStatusLine().getStatusCode();
             logger.debug("status code: {}", statusCode);
             return decodeStatus(statusCode, pluginName, quiet);
@@ -154,14 +144,6 @@ public final class GerritPluginChecker {
             logger.warn(Messages.PluginHttpConnectionGeneralError(pluginName,
                     e.getMessage()), e);
             return null;
-        } finally {
-            if (execute != null) {
-                try {
-                    execute.close();
-                } catch (Exception exp) {
-                    logger.trace("Error happened when close http client.", exp);
-                }
-            }
         }
     }
 }
