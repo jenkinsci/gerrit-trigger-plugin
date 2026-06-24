@@ -110,13 +110,8 @@ public class EventListenersReport implements ModelObject {
     public static EventListenersReport report() {
         GerritHandler handler = PluginImpl.getHandler_();
         if (handler != null) {
-            Set<EventListener> jobs = new TreeSet<EventListener>(new Comparator<EventListener>() {
-                @Override
-                public int compare(EventListener o1, EventListener o2) {
-                    return o1.getJob().compareTo(o2.getJob());
-                }
-            });
-            Set<GerritEventListener> others = new LinkedHashSet<GerritEventListener>();
+            Set<EventListener> jobs = new TreeSet<>(Comparator.comparing(EventListener::getJob));
+            Set<GerritEventListener> others = new LinkedHashSet<>();
 
             Set<GerritEventListener> view = handler.getGerritEventListenersView();
             for (GerritEventListener listener : view) {

@@ -26,7 +26,7 @@
          xmlns:t="/lib/hudson" xmlns:s="/lib/form" xmlns:p="/lib/hudson/project">
     <l:ajax>
         <l:pane id="triggerMonitor" title="${%Triggered Builds}" width="3">
-            <j:set var="monitor" value="${request.session.getAttribute('trigger_monitor')}"/>
+            <j:set var="monitor" value="${request2.session.getAttribute('trigger_monitor')}"/>
             <j:forEach items="${monitor.eventsIterator}" var="state">
                 <tr>
                     <td width="14">

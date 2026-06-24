@@ -59,7 +59,7 @@ public class SystemEventThread extends EventThread {
      */
     @Override
     public void run() {
-        try (ACLContext ctx = ACL.as(ACL.SYSTEM)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
             super.run();
         }
     }
