@@ -116,7 +116,7 @@ public class BackCompat252HudsonTest {
      */
     @After
     public void tearDown() throws Exception {
-        sshd.stop(true);
+        server.stopServer(sshd);
         sshd = null;
         server = null;
     }

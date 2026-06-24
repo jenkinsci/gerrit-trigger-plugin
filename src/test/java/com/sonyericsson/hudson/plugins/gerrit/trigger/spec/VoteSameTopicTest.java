@@ -28,6 +28,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.jvnet.hudson.test.BuildWatcher;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
 
@@ -45,9 +46,14 @@ public class VoteSameTopicTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
+    // CS IGNORE VisibilityModifier FOR NEXT 5 LINES. REASON: JenkinsRule.
     @Rule
     public JenkinsRule j = new JenkinsRule();
+    /**
+     * Print build logs to test output.
+     */
+    @Rule
+    public BuildWatcher watcher = new BuildWatcher();
     private List<FreeStyleProject> jobs = new ArrayList<>();
 
     private SshdServerMock server;
@@ -118,13 +124,13 @@ public class VoteSameTopicTest {
      */
     @After
     public void tearDown() throws Exception {
-        sshd.stop(true);
+        server.stopServer(sshd);
         sshd = null;
     }
 
     /**
      * Trigger a
-     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.createCommentAdded} event and wait until no activity.
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event and wait until no activity.
      * @param project The gerrit project name.
      * @throws Exception if so
      */
@@ -149,14 +155,16 @@ public class VoteSameTopicTest {
      * @param pattern the command pattern
      */
     private void checkCommand(String pattern) {
+        // Reviews are sent serially through the pool-size-1 send queue; on CPU-starved CI each
+        // SSH round-trip can take ~1s, so the "Build Successful" reviews queued behind the
+        // "Build Started" ones need a generous window. This is real slowness, not a hang.
         //CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: Testdata.
-        server.waitForCommand(pattern, 3000);
+        server.waitForCommand(pattern, 30000);
     }
 
     /**
-     * Tests the {@link Config#setVoteSameTopic} setting
-     * for {@link GerritTrigger#commitMessageParameterMode} when the build is triggered by a
-     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.createCommentAdded} event.
+     * Tests the {@link Config#setVoteSameTopic} setting when the build is triggered by a
+     * {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event.
      *
      * @throws Exception if so
      */

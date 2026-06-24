@@ -240,8 +240,7 @@ public final class Setup {
      * @param account account that caused event
      * @return a new PatchsetCreated event.
      */
-    public static PatchsetCreated createPatchsetCreatedWithAccounts(Account owner, Account uploader, Account account)
-    {
+    public static PatchsetCreated createPatchsetCreatedWithAccounts(Account owner, Account uploader, Account account) {
         PatchsetCreated event = createPatchsetCreated();
         event.getChange().setOwner(owner);
         event.getPatchSet().setUploader(uploader);

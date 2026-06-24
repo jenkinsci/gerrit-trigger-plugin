@@ -33,6 +33,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.regex.Pattern;
 
@@ -59,6 +60,7 @@ public class PluginHashtagsChangedEvent extends PluginGerritEvent implements Ser
         }
     }
 
+    @Serial
     private static final long serialVersionUID = -7504226521891459396L;
 
     private String hashtagChanged;

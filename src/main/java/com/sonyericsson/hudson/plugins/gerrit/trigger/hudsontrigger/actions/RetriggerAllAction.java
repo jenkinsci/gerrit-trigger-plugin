@@ -37,8 +37,8 @@ import java.io.IOException;
 import hudson.model.Job;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.verb.POST;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.getPluginImageUrl;
@@ -143,12 +143,12 @@ public class RetriggerAllAction implements Action {
 
     /**
      * Handles the request to re-trigger and redirects back to the page that called.
-     * @param request StaplerRequest the request.
-     * @param response StaplerResponse the response handler.
+     * @param request StaplerRequest2 the request.
+     * @param response StaplerResponse2 the response handler.
      * @throws IOException in case of Stapler issues
      */
     @POST
-    public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
+    public void doIndex(StaplerRequest2 request, StaplerResponse2 response) throws IOException {
 
         if (!hasPermission()) {
             //TODO Access denied message to user?
