@@ -227,6 +227,13 @@
                         checked="${it.silentMode}"/>
         </f:entry>
 
+        <f:entry field="topicAbortDisable"
+                 title="${%Topic Abort Disable}"
+                 help="/plugin/gerrit-trigger/trigger/help-TopicAbort.html">
+            <f:checkbox name="topicAbortDisable"
+                        checked="${it.topicAbortDisable}"/>
+        </f:entry>
+
         <f:optionalProperty field="topicAssociation"
                             title="${%Topic Association}"
                             help="/plugin/gerrit-trigger/trigger/help-TopicAssociation.html"/>
