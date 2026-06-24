@@ -139,6 +139,7 @@ public class GerritTrigger extends Trigger<Job> {
     @Deprecated
     private transient boolean enableTopicAssociation = Config.DEFAULT_ENABLE_TOPIC_ASSOCIATION;
     private TopicAssociation topicAssociation;
+    private boolean topicAbort;
     private String notificationLevel;
     private boolean silentStartMode;
     private boolean escapeQuotes;
@@ -750,7 +751,7 @@ public class GerritTrigger extends Trigger<Job> {
             return server.getConfig().getCategories();
          } else {
             logger.error("Could not find server {}", serverName);
-            return new LinkedList<VerdictCategory>();
+            return new LinkedList<>();
          }
     }
 
@@ -922,8 +923,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof GerritTrigger) {
-            GerritTrigger that = (GerritTrigger)obj;
+        if (obj instanceof GerritTrigger that) {
             if (job == null || that.job == null) {
                 return super.equals(obj);
             } else {
@@ -944,8 +944,8 @@ public class GerritTrigger extends Trigger<Job> {
     private boolean isChangeInteresting(Change change, GerritProject project, GerritQueryHandler gerritQueryHandler) {
         boolean shouldTrigger = false;
         boolean containsFilePathsOrForbiddenFilePaths = ((project.getFilePaths() != null
-                && project.getFilePaths().size() > 0)
-                || (project.getForbiddenFilePaths() != null && project.getForbiddenFilePaths().size() > 0));
+                && !project.getFilePaths().isEmpty())
+                || (project.getForbiddenFilePaths() != null && !project.getForbiddenFilePaths().isEmpty()));
 
         if (isFileTriggerEnabled() && containsFilePathsOrForbiddenFilePaths) {
             if (project.isInteresting(change,
@@ -1045,11 +1045,7 @@ public class GerritTrigger extends Trigger<Job> {
             return true;
         }
 
-        if (isTopicAssociationInteresting(event, project)) {
-            return true;
-        }
-
-        return false;
+        return isTopicAssociationInteresting(event, project);
     }
 
     /**
@@ -1105,9 +1101,7 @@ public class GerritTrigger extends Trigger<Job> {
 
         IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
         if (serverConfig != null && serverConfig.isGerritBuildCurrentPatchesOnly()) {
-            if (serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets()) {
-                return true;
-            }
+            return serverConfig.getBuildCurrentPatchesOnly().isAbortAbandonedPatchsets();
         }
 
         return false;
@@ -1159,13 +1153,11 @@ public class GerritTrigger extends Trigger<Job> {
         while (allGerritProjects.hasNext()) {
             GerritProject p = allGerritProjects.next();
             try {
-                if (event instanceof ChangeBasedEvent) {
-                    ChangeBasedEvent changeBasedEvent = (ChangeBasedEvent)event;
+                if (event instanceof ChangeBasedEvent changeBasedEvent) {
                     if (isChangeBasedEventInteresting(changeBasedEvent, p)) {
                         return true;
                     }
-                } else if (event instanceof RefUpdated) {
-                    RefUpdated refUpdated = (RefUpdated)event;
+                } else if (event instanceof RefUpdated refUpdated) {
                     Change change = new Change();
                     change.setProject(refUpdated.getRefUpdate().getProject());
                     change.setBranch(refUpdated.getRefUpdate().getRefName());
@@ -1594,7 +1586,7 @@ public class GerritTrigger extends Trigger<Job> {
      */
     private void initializeTriggerOnEvents() {
         if (triggerOnEvents == null) {
-            triggerOnEvents = new LinkedList<PluginGerritEvent>();
+            triggerOnEvents = new LinkedList<>();
         }
         if (triggerOnEvents.isEmpty()) {
             triggerOnEvents.add(new PluginPatchsetCreatedEvent());
@@ -1948,6 +1940,25 @@ public class GerritTrigger extends Trigger<Job> {
     }
 
     /**
+     * Enable or disable Topic abort option.
+     *
+     * @param enable true or false.
+     */
+    @DataBoundSetter
+    public void setTopicAbortDisable(boolean enable) {
+        topicAbort = enable;
+    }
+
+    /**
+    * Check if topic association is enabled.
+    *
+    * @return true if so.
+    */
+    public boolean isTopicAbortDisable() {
+        return topicAbort;
+    }
+
+    /**
      * Enable or disable Topic Association option.
      * Replaced by {@link #setTopicAssociation(TopicAssociation)} ()
      *
@@ -2124,7 +2135,7 @@ public class GerritTrigger extends Trigger<Job> {
      * @return list of GerritSlave (can be empty but never null)
      */
     public List<GerritSlave> gerritSlavesToWaitFor(String gerritServerName) {
-        List<GerritSlave> gerritSlaves = new ArrayList<GerritSlave>();
+        List<GerritSlave> gerritSlaves = new ArrayList<>();
 
         GerritServer gerritServer = PluginImpl.getServer_(gerritServerName);
         if (gerritServer == null) {
@@ -2151,7 +2162,7 @@ public class GerritTrigger extends Trigger<Job> {
 
     @Override
     public List<Action> getProjectActions() {
-        List<Action> list = new LinkedList<Action>();
+        List<Action> list = new LinkedList<>();
         list.add(triggerInformationAction);
         return list;
     }
@@ -2266,6 +2277,7 @@ public class GerritTrigger extends Trigger<Job> {
         }
 
         return policy.isAbortSameTopic()
+                && !isTopicAbortDisable()
                 && topicName != null
                 && !topicName.isEmpty()
                 && topicName.equals(runningChange.getChange().getTopic());

@@ -54,7 +54,7 @@ import hudson.model.Items;
 import hudson.model.Run;
 import hudson.security.Permission;
 import hudson.security.PermissionGroup;
-
+import hudson.security.PermissionScope;
 import jenkins.model.GlobalConfiguration;
 import org.jenkinsci.Symbol;
 import org.kohsuke.accmod.Restricted;
@@ -110,7 +110,8 @@ public class PluginImpl extends GlobalConfiguration {
     public static final Permission MANUAL_TRIGGER = new Permission(PERMISSION_GROUP,
             "ManualTrigger",
             Messages._ManualTriggerPermissionDescription(),
-            Jenkins.ADMINISTER);
+            Jenkins.ADMINISTER,
+            PermissionScope.JENKINS);
     /**
      * The permission that allows users to perform the
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.RetriggerAction}.
@@ -118,10 +119,11 @@ public class PluginImpl extends GlobalConfiguration {
     public static final Permission RETRIGGER = new Permission(PERMISSION_GROUP,
             "Retrigger",
             Messages._RetriggerPermissionDescription(),
-            Item.BUILD);
+            Item.BUILD,
+            PermissionScope.JENKINS);
 
     private static final Logger logger = LoggerFactory.getLogger(PluginImpl.class);
-    private final List<GerritServer> servers = new CopyOnWriteArrayList<GerritServer>();
+    private final List<GerritServer> servers = new CopyOnWriteArrayList<>();
     private transient GerritHandler gerritEventManager;
     private transient volatile boolean active = false;
 
@@ -233,7 +235,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @return the list of server names as a list.
      */
     public List<String> getServerNames() {
-        LinkedList<String> names = new LinkedList<String>();
+        LinkedList<String> names = new LinkedList<>();
         for (GerritServer s : getServers()) {
             names.add(s.getName());
         }
@@ -435,6 +437,7 @@ public class PluginImpl extends GlobalConfiguration {
         for (GerritServer s : getServers()) {
             if (s.getName().equals(serverName)) {
                 contains = true;
+                break;
             }
         }
         return contains;
@@ -569,7 +572,7 @@ public class PluginImpl extends GlobalConfiguration {
      * @return the list of jobs configured with this server.
      */
     public List<Job> getConfiguredJobs(String serverName) {
-        LinkedList<Job> configuredJobs = new LinkedList<Job>();
+        LinkedList<Job> configuredJobs = new LinkedList<>();
         for (Job<?, ?> project : Jenkins.get().getItems(Job.class)) { //get the jobs
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
 

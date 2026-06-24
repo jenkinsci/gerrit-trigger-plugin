@@ -48,8 +48,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -201,7 +201,7 @@ public class BuildCompletedRestCommandJobHudsonTest {
          * @param response the response
          * @throws IOException if so.
          */
-        public void doDynamic(StaplerRequest request, StaplerResponse response) throws IOException {
+        public void doDynamic(StaplerRequest2 request, StaplerResponse2 response) throws IOException {
             String path = request.getRestOfPath();
             // Only track review calls, not plugin-availability checks that may race with the assertion
             if (!path.startsWith("/plugins/")) {

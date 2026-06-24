@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.jenkinsci.Symbol;
@@ -40,6 +41,7 @@ import jenkins.model.Jenkins;
  * private state changed.
  */
 public class PluginPrivateStateChangedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = 782691143033502579L;
 
     /**

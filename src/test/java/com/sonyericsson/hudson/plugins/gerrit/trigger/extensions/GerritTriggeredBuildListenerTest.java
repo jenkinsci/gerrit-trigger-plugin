@@ -114,7 +114,7 @@ public class GerritTriggeredBuildListenerTest {
      */
     @After
     public void tearDown() throws Exception {
-        sshd.stop(true);
+        server.stopServer(sshd);
         sshd = null;
     }
 

@@ -97,7 +97,7 @@ public class Hashtag extends AbstractDescribableImpl<Hashtag> {
         if (hashtags == null) {
             hashtags = new ArrayList<>();
         }
-        return hashtags.stream().anyMatch(hashtag-> compareType.matches(pattern, hashtag));
+        return hashtags.stream().anyMatch(hashtag -> compareType.matches(pattern, hashtag));
     }
 
     /**
