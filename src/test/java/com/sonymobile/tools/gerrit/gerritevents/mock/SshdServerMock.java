@@ -30,7 +30,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import org.apache.commons.lang.StringUtils;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.UserAuthNoneFactory;
 import org.apache.sshd.server.channel.ChannelSession;
@@ -59,6 +58,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,6 +92,8 @@ import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.VALUE
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
 public class SshdServerMock implements CommandFactory {
+
+    private static final Logger logger = Logger.getLogger(SshdServerMock.class.getName());
 
     /**
      * The stream-events command.
@@ -302,7 +304,7 @@ public class SshdServerMock implements CommandFactory {
                 }
             }
         } while (command == null);
-        System.out.println("Found it!!! " + command.getCommand());
+        logger.info("Found it!!! " + command.getCommand());
         return command;
     }
 
@@ -354,7 +356,27 @@ public class SshdServerMock implements CommandFactory {
         sshd.setUserAuthFactories(List.of(new UserAuthNoneFactory()));
         sshd.setCommandFactory(server);
         sshd.start();
+        logger.info("Started " + sshd.getPort());
         return sshd;
+    }
+
+    /**
+     * Stop the server and any commands still running.
+     * @param server the server to stop
+     * @throws IOException if so
+     */
+    public synchronized void stopServer(SshServer server) throws IOException {
+        logger.info("Stopping " + server.getPort());
+        if (commandHistory != null) {
+            commandHistory.forEach(c -> {
+                boolean destr = c.isDestroyed();
+                logger.info("\t" + c.getCommand() + (destr ? " DESTROYED" : " LIVE"));
+                if (!destr) {
+                    c.destroy(null);
+                }
+            });
+        }
+        server.stop(true);
     }
 
     /**
@@ -425,7 +447,7 @@ public class SshdServerMock implements CommandFactory {
     public static Config getConfigFor(final SshServer sshd, KeyPairFiles sshKey, IGerritHudsonTriggerConfig existing) {
         Config c = new Config(existing);
         String host = sshd.getHost();
-        if (StringUtils.isBlank(host)) {
+        if (host == null || host.isBlank()) {
             c.setGerritHostName("localhost");
         } else {
             c.setGerritHostName(host);
@@ -467,17 +489,17 @@ public class SshdServerMock implements CommandFactory {
                     throw new IOException("Could not delete temp public key");
                 }
             }
-            System.out.println("Generating test key-pair.");
+            logger.fine("Generating test key-pair.");
             JSch jsch = new JSch();
             KeyPair kpair = KeyPair.genKeyPair(jsch, KeyPair.RSA);
 
             kpair.writePrivateKey(new FileOutputStream(priv));
             kpair.writePublicKey(new FileOutputStream(pub), "Test");
-            System.out.println("Finger print: " + kpair.getFingerPrint());
+            logger.fine("Finger print: " + kpair.getFingerPrint());
             kpair.dispose();
             sshKey = new KeyPairFiles(priv, pub);
         } else {
-            System.out.println("Test key-pair seems to already exist.");
+            logger.fine("Test key-pair seems to already exist.");
             sshKey = new KeyPairFiles(priv, pub);
         }
 
@@ -580,17 +602,24 @@ public class SshdServerMock implements CommandFactory {
          */
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
-            System.out.println("Starting command: " + command);
-            //Default implementation just waits for a disconnect
-            while (!isDestroyed()) {
-                try {
-                    synchronized (this) {
-                        this.wait(WAIT_FOR_DESTROYED);
+            logger.info("Starting command: " + command);
+            // Wait for disconnect on a dedicated thread so we do not occupy a mina worker thread
+            // for the lifetime of the command. A long-lived blocking command (e.g. stream-events)
+            // would otherwise starve mina's I/O pool on CPU-constrained CI and prevent other
+            // channels from delivering EOF.
+            Thread waiter = new Thread(() -> {
+                while (!isDestroyed()) {
+                    try {
+                        synchronized (this) {
+                            this.wait(WAIT_FOR_DESTROYED);
+                        }
+                    } catch (InterruptedException e) {
+                        logger.fine("[SSHD-CommandMock] Awake.");
                     }
-                } catch (InterruptedException e) {
-                    System.err.println("[SSHD-CommandMock] Awake.");
                 }
-            }
+            }, "CommandMock-waiter: " + command);
+            waiter.setDaemon(true);
+            waiter.start();
         }
 
         /**
@@ -606,6 +635,7 @@ public class SshdServerMock implements CommandFactory {
         public void destroy(ChannelSession channel) {
             synchronized (this) {
                 destroyed = true;
+                logger.fine("DESTROYED " + command);
                 notifyAll();
             }
         }
@@ -674,7 +704,14 @@ public class SshdServerMock implements CommandFactory {
 
         @Override
         public void start(ChannelSession channel, Environment environment) throws IOException {
-            System.out.println("Starting EOF-command: " + getCommand());
+            logger.info("Starting EOF-command: " + getCommand());
+            // Flush and close the output stream before signaling exit, like the other commands do,
+            // so the client sees channel EOF explicitly rather than relying on the exit callback.
+            OutputStream out = getOutputStream();
+            if (out != null) {
+                out.flush();
+                out.close();
+            }
             this.stop(0);
         }
     }
@@ -718,20 +755,20 @@ public class SshdServerMock implements CommandFactory {
 
         @Override
         public void start(final ChannelSession channel, final Environment environment) throws IOException {
-            System.out.println("Starting PL-command: " + getCommand());
+            logger.info("Starting PL-command: " + getCommand());
             while (!isNow()) {
                 synchronized (this) {
                     try {
                         this.wait(ONE_SECOND);
                     } catch (InterruptedException e) {
-                        System.err.println("Interrupted while waiting.");
+                        logger.warning("Interrupted while waiting.");
                     }
                 }
             }
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                     new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
                 for (String line : lines) {
-                    System.out.println("Sending: " + line);
+                    logger.info("Sending: " + line);
                     out.println(line);
                 }
             }
@@ -755,10 +792,10 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "gerrit version 2.11.4";
-            System.out.println("Starting PL-command: " + getCommand());
+            logger.info("Starting PL-command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + line);
+                logger.info("Sending: " + line);
                 out.println(line);
             }
             this.stop(0);
@@ -851,10 +888,10 @@ public class SshdServerMock implements CommandFactory {
             change.put(STATUS, "NEW");
             change.put("currentPatchSet", currentPatchSet);
 
-            System.out.println("Starting QueryLastPatchSet: " + getCommand());
+            logger.info("Starting QueryLastPatchSet: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + change);
+                logger.info("Sending: " + change);
                 out.println(change);
             }
             this.stop(0);
@@ -969,10 +1006,10 @@ public class SshdServerMock implements CommandFactory {
             change.put("currentPatchSet", currentPatchSet);
             change.put("patchSets", patchSets);
 
-            System.out.println("Starting QueryAllPatchSets: " + getCommand());
+            logger.info("Starting QueryAllPatchSets: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + change);
+                logger.info("Sending: " + change);
                 out.println(change);
             }
             this.stop(0);
@@ -1076,16 +1113,16 @@ public class SshdServerMock implements CommandFactory {
             change.put("currentPatchSet", patchSet1);
             change.put("topic", "topic");
 
-            System.out.println("Starting QueryTopic: " + getCommand());
+            logger.info("Starting QueryTopic: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + change);
+                logger.info("Sending: " + change);
                 out.println(change);
                 change.put(PROJECT, "project2");
                 change.put(ID, "I2343434345");
                 change.put(NUMBER, "101");
                 change.put("currentPatchSet", patchSet2);
-                System.out.println("Sending: " + change);
+                logger.info("Sending: " + change);
                 out.println(change);
             }
             this.stop(0);
@@ -1109,10 +1146,10 @@ public class SshdServerMock implements CommandFactory {
         @Override
         public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "abcProject";
-            System.out.println("Starting PL-command: " + getCommand());
+            logger.info("Starting Project command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + line);
+                logger.info("Sending: " + line);
                 out.println(line);
             }
             this.stop(0);
@@ -1138,12 +1175,12 @@ public class SshdServerMock implements CommandFactory {
         public void start(final ChannelSession channel, final Environment environment) throws IOException {
             String line = "abcProject";
             String line2 = "defProject";
-            System.out.println("Starting PL-command: " + getCommand());
+            logger.info("Starting Project 2 command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
                         new OutputStreamWriter(getOutputStream(), StandardCharsets.UTF_8)))) {
-                System.out.println("Sending: " + line);
+                logger.info("Sending: " + line);
                 out.println(line);
-                System.out.println("Sending: " + line2);
+                logger.info("Sending: " + line2);
                 out.println(line2);
             }
             this.stop(0);

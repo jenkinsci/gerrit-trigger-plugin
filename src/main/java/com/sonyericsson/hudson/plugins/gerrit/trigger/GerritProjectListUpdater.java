@@ -271,7 +271,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
                         activeConfig.getGerritAuthentication()
                 );
                 List<String> projects = readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
-                if (projects.size() > 0) {
+                if (!projects.isEmpty()) {
                     setGerritProjects(projects);
                     logger.info("Project list from {} contains {} entries", serverName, projects.size());
                 } else {
@@ -318,7 +318,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      * @throws IOException if something unfortunate happens.
      */
     public static List<String> readProjects(Reader commandReader) throws IOException {
-        List<String> projects = new ArrayList<String>();
+        List<String> projects = new ArrayList<>();
         BufferedReader br = new BufferedReader(commandReader);
         String line = br.readLine();
 
@@ -365,7 +365,7 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
      */
     public synchronized List<String> getGerritProjects() {
         if (gerritProjects == null) {
-            gerritProjects = new ArrayList<String>();
+            gerritProjects = new ArrayList<>();
         }
         return gerritProjects;
     }

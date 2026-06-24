@@ -24,27 +24,57 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
+import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 /**
  * An event configuration that causes the build to be triggered when a change is merged.
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
 public class PluginChangeMergedEvent extends PluginGerritEvent implements Serializable {
+    @Serial
     private static final long serialVersionUID = 2277980034044218950L;
+
+    private String commitMessageContainsRegEx = "";
+
+    private transient Pattern commitMessagePattern = null;
 
     /**
      * Standard constructor.
      */
     @DataBoundConstructor
     public PluginChangeMergedEvent() {
+    }
+
+    /**
+     * Setter for commitMessageContainsRegEx.
+     *
+     * @param commitMessageContainsRegEx Trigger if this regex matches the commit message
+     */
+    @DataBoundSetter
+    public void setCommitMessageContainsRegEx(String commitMessageContainsRegEx) {
+        this.commitMessageContainsRegEx = commitMessageContainsRegEx;
+        this.commitMessagePattern = null;
+    }
+
+    /**
+     * Getter for commitMessageContainsRegEx field.
+     *
+     * @return commitMessageContainsRegEx
+     */
+    public String getCommitMessageContainsRegEx() {
+        return commitMessageContainsRegEx;
     }
 
     /**
@@ -59,6 +89,22 @@ public class PluginChangeMergedEvent extends PluginGerritEvent implements Serial
     @Override
     public Class getCorrespondingEventClass() {
         return ChangeMerged.class;
+    }
+
+    @Override
+    public boolean shouldTriggerOn(GerritTriggeredEvent event) {
+        if (!super.shouldTriggerOn(event)) {
+            return false;
+        }
+        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
+            if (commitMessagePattern == null) {
+                commitMessagePattern = Pattern.compile(
+                        this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);
+            }
+            String commitMessage = ((ChangeMerged)event).getChange().getCommitMessage();
+            return commitMessagePattern.matcher(commitMessage).find();
+        }
+        return true;
     }
 
     /**

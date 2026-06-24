@@ -87,7 +87,7 @@ public class TriggerContext {
         if (others == null) {
             return null;
         }
-        return new ArrayList<TriggeredItemEntity>(others);
+        return new ArrayList<>(others);
     }
 
     /**
@@ -160,7 +160,7 @@ public class TriggerContext {
      */
     public synchronized void addOtherBuild(Run build) {
         if (others == null) {
-            others = new LinkedList<TriggeredItemEntity>();
+            others = new LinkedList<>();
         }
         TriggeredItemEntity other = findOtherBuild(build);
         if (other == null) {
@@ -181,7 +181,7 @@ public class TriggerContext {
      */
     public synchronized void addOtherProject(Job project) {
         if (others == null) {
-            others = new LinkedList<TriggeredItemEntity>();
+            others = new LinkedList<>();
         }
         if (findOtherProject(project) == null) {
             others.add(new TriggeredItemEntity(project));
@@ -238,7 +238,7 @@ public class TriggerContext {
      * @return a list of builds from this context.
      */
     public synchronized List<Run> getOtherBuilds() {
-        List<Run> list = new LinkedList<Run>();
+        List<Run> list = new LinkedList<>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getBuild() != null) {
@@ -255,7 +255,7 @@ public class TriggerContext {
      * @return a list of projects from this context.
      */
     public synchronized List<Job> getOtherProjects() {
-        List<Job> list = new LinkedList<Job>();
+        List<Job> list = new LinkedList<>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 if (entity.getProject() != null) {
@@ -276,7 +276,7 @@ public class TriggerContext {
      */
     public synchronized List<TriggeredItemEntity> getSortedOthers() {
         int lastBuilding = 0;
-        LinkedList<TriggeredItemEntity> result = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> result = new LinkedList<>();
         if (others != null) {
             for (TriggeredItemEntity entity : others) {
                 Run build = entity.getBuild();

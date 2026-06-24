@@ -95,10 +95,7 @@ public class Topic extends AbstractDescribableImpl<Topic> {
         if (topic == null) {
             topic = "";
         }
-        if (compareType.matches(pattern, topic)) {
-            return true;
-        }
-        return false;
+        return compareType.matches(pattern, topic);
     }
 
     /**

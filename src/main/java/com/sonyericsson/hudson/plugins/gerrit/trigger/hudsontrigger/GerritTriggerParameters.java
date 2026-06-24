@@ -59,7 +59,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 /**
  * The parameters to add to a build.
@@ -108,6 +107,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_TOPIC_CHANGER_EMAIL,
     /**
+     * The username of the changer of the topic.
+     */
+    GERRIT_TOPIC_CHANGER_USERNAME,
+    /**
      * Parameter name for the change-id.
      */
     GERRIT_CHANGE_ID,
@@ -148,6 +151,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_ABANDONER_EMAIL,
     /**
+     * The username of the abandoner of the change.
+     */
+    GERRIT_CHANGE_ABANDONER_USERNAME,
+    /**
      * The name and email of the owner of the change.
      */
     GERRIT_CHANGE_OWNER,
@@ -159,6 +166,10 @@ public enum GerritTriggerParameters {
      * The email of the owner of the change.
      */
     GERRIT_CHANGE_OWNER_EMAIL,
+    /**
+     * The username of the owner of the change.
+     */
+    GERRIT_CHANGE_OWNER_USERNAME,
     /**
      * The name and email of the restorer of the change.
      */
@@ -172,6 +183,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_CHANGE_RESTORER_EMAIL,
     /**
+     * The username of the restorer of the change.
+     */
+    GERRIT_CHANGE_RESTORER_USERNAME,
+    /**
      * The name and email of the uploader of the patch-set.
      */
     GERRIT_PATCHSET_UPLOADER,
@@ -184,6 +199,10 @@ public enum GerritTriggerParameters {
      */
     GERRIT_PATCHSET_UPLOADER_EMAIL,
     /**
+     * The username of the uploader of the patch-set.
+     */
+    GERRIT_PATCHSET_UPLOADER_USERNAME,
+    /**
      * The name and email of the person who triggered the event.
      */
     GERRIT_EVENT_ACCOUNT,
@@ -195,6 +214,10 @@ public enum GerritTriggerParameters {
      * The email of the person who triggered the event.
      */
     GERRIT_EVENT_ACCOUNT_EMAIL,
+    /**
+     * The username of the person who triggered the event.
+     */
+    GERRIT_EVENT_ACCOUNT_USERNAME,
     /**
      * The refname in a ref-updated event.
      */
@@ -219,6 +242,10 @@ public enum GerritTriggerParameters {
      * The email of the submitter in a ref-updated event.
      */
     GERRIT_SUBMITTER_EMAIL,
+    /**
+     * The username of the submitter in a ref-updated event.
+     */
+    GERRIT_SUBMITTER_USERNAME,
     /**
      * The name of the Gerrit instance.
      */
@@ -278,7 +305,7 @@ public enum GerritTriggerParameters {
      * @see #name()
      */
     public static Set<String> getNamesSet() {
-        Set<String> names = new TreeSet<String>();
+        Set<String> names = new TreeSet<>();
         for (GerritTriggerParameters p : GerritTriggerParameters.values()) {
             names.add(p.name());
         }
@@ -419,13 +446,11 @@ public enum GerritTriggerParameters {
         GERRIT_EVENT_TYPE.setOrCreateStringParameterValue(
                 parameters, gerritEvent.getEventType().getTypeValue(), escapeQuotes);
         GERRIT_EVENT_HASH.setOrCreateStringParameterValue(
-                parameters, String.valueOf(((java.lang.Object)gerritEvent).hashCode()), escapeQuotes);
-        if (gerritEvent instanceof ChangeBasedEvent) {
-            ChangeBasedEvent event = (ChangeBasedEvent)gerritEvent;
+                parameters, String.valueOf(gerritEvent.hashCode()), escapeQuotes);
+        if (gerritEvent instanceof ChangeBasedEvent event) {
             setOrCreateParametersForChangeBasedEvent(event, parameters, escapeQuotes, nameAndEmailParameterMode,
                     changeSubjectMode, project, commitMessageMode, commentTextMode);
-        } else if (gerritEvent instanceof RefUpdated) {
-            RefUpdated event = (RefUpdated)gerritEvent;
+        } else if (gerritEvent instanceof RefUpdated event) {
             GERRIT_REFNAME.setOrCreateStringParameterValue(
                     parameters, event.getRefUpdate().getRefName(), escapeQuotes);
             GERRIT_PROJECT.setOrCreateStringParameterValue(
@@ -443,6 +468,8 @@ public enum GerritTriggerParameters {
                     parameters, getName(account), escapeQuotes);
             GERRIT_EVENT_ACCOUNT_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(account), escapeQuotes);
+            GERRIT_EVENT_ACCOUNT_USERNAME.setOrCreateStringParameterValue(
+                    parameters, getUsername(account), escapeQuotes);
         }
         Provider provider = gerritEvent.getProvider();
         if (provider != null) {
@@ -515,6 +542,8 @@ public enum GerritTriggerParameters {
                         parameters, getName(((ChangeRestored)event).getRestorer()), escapeQuotes);
                 GERRIT_CHANGE_RESTORER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeRestored)event).getRestorer()), escapeQuotes);
+                GERRIT_CHANGE_RESTORER_USERNAME.setOrCreateStringParameterValue(
+                        parameters, getUsername(((ChangeRestored)event).getRestorer()), escapeQuotes);
             }
             changeSubjectMode.setOrCreateParameterValue(GERRIT_CHANGE_SUBJECT, parameters,
                     event.getChange().getSubject(), ParameterMode.PlainMode.STRING, escapeQuotes);
@@ -536,6 +565,8 @@ public enum GerritTriggerParameters {
                         parameters, getName(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
                 GERRIT_CHANGE_ABANDONER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
+                GERRIT_CHANGE_ABANDONER_USERNAME.setOrCreateStringParameterValue(
+                        parameters, getUsername(((ChangeAbandoned)event).getAbandoner()), escapeQuotes);
             }
             if (event instanceof TopicChanged) {
                 GERRIT_OLD_TOPIC.setOrCreateStringParameterValue(parameters,
@@ -548,6 +579,8 @@ public enum GerritTriggerParameters {
                         parameters, getName(((TopicChanged)event).getChanger()), escapeQuotes);
                 GERRIT_TOPIC_CHANGER_EMAIL.setOrCreateStringParameterValue(
                         parameters, getEmail(((TopicChanged)event).getChanger()), escapeQuotes);
+                GERRIT_TOPIC_CHANGER_USERNAME.setOrCreateStringParameterValue(
+                        parameters, getUsername(((TopicChanged)event).getChanger()), escapeQuotes);
             }
             if (event instanceof ChangeMerged) {
                 GERRIT_NEWREV.setOrCreateStringParameterValue(
@@ -559,6 +592,8 @@ public enum GerritTriggerParameters {
                     parameters, getName(event.getChange().getOwner()), escapeQuotes);
             GERRIT_CHANGE_OWNER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(event.getChange().getOwner()), escapeQuotes);
+            GERRIT_CHANGE_OWNER_USERNAME.setOrCreateStringParameterValue(
+                    parameters, getUsername(event.getChange().getOwner()), escapeQuotes);
             Account uploader = findUploader(event);
             nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_PATCHSET_UPLOADER, parameters,
                     getNameAndEmail(uploader), ParameterMode.PlainMode.STRING, escapeQuotes);
@@ -566,6 +601,8 @@ public enum GerritTriggerParameters {
                     parameters, getName(uploader), escapeQuotes);
             GERRIT_PATCHSET_UPLOADER_EMAIL.setOrCreateStringParameterValue(
                     parameters, getEmail(uploader), escapeQuotes);
+            GERRIT_PATCHSET_UPLOADER_USERNAME.setOrCreateStringParameterValue(
+                    parameters, getUsername(uploader), escapeQuotes);
             if (event instanceof CommentAdded) {
                 String comment = ((CommentAdded)event).getComment();
                 if (comment != null) {
@@ -576,10 +613,8 @@ public enum GerritTriggerParameters {
                         getUpdatedApprovals((CommentAdded)event), false);
             }
         if (event instanceof HashtagsChanged) {
-            String addedHashtags = ((HashtagsChanged)event).getAddedHashtags().stream()
-                    .collect(Collectors.joining(","));
-            String removedHashtags = ((HashtagsChanged)event).getRemovedHashtags().stream()
-                    .collect(Collectors.joining(","));
+            String addedHashtags = String.join(",", ((HashtagsChanged)event).getAddedHashtags());
+            String removedHashtags = String.join(",", ((HashtagsChanged)event).getRemovedHashtags());
             GERRIT_ADDED_HASHTAGS.setOrCreateStringParameterValue(parameters, addedHashtags, escapeQuotes);
             GERRIT_REMOVED_HASHTAGS.setOrCreateStringParameterValue(parameters, removedHashtags, escapeQuotes);
         }
@@ -656,6 +691,21 @@ public enum GerritTriggerParameters {
             return event.getPatchSet().getUploader();
         } else {
             return event.getAccount();
+        }
+    }
+
+    /**
+     * Convenience method to avoid NPE on none existent accounts.
+     *
+     * @param account the account.
+     * @return the username in the account or null if Account is null.
+     * @see com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account#getUsername()
+     */
+    private static String getUsername(Account account) {
+        if (account == null) {
+            return "";
+        } else {
+            return account.getUsername();
         }
     }
 

@@ -16,8 +16,7 @@ import hudson.model.listeners.SaveableListener;
 public class GerritSaveableListener extends SaveableListener {
     @Override
     public void onChange(Saveable o, XmlFile file) {
-        if (o instanceof Job<?, ?>) {
-            Job<?, ?> project = (Job<?, ?>)o;
+        if (o instanceof Job<?, ?> project) {
             GerritTrigger gerritTrigger = GerritTrigger.getTrigger(project);
             if (gerritTrigger == null) {
                 PluginImpl plugin = PluginImpl.getInstance();
