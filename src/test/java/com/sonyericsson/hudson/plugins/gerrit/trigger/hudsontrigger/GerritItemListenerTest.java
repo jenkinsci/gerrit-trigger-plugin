@@ -34,12 +34,13 @@ import hudson.model.AbstractProject;
 import hudson.model.FreeStyleProject;
 import hudson.model.Job;
 import hudson.model.Run;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.mockito.Mockito;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -47,9 +48,9 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -59,23 +60,25 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link GerritItemListener}.
  */
-public class GerritItemListenerTest {
+@WithJenkins
+class GerritItemListenerTest {
 
     /**
      * Jenkins rule instance.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private final String gerritServerName = "testServer";
     private GerritServer gerritServer;
 
     /**
      * Setup the mock'ed environment.
+     *
+     * @param rule the jenkins rule
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup(JenkinsRule rule) {
+        j = rule;
         gerritServer = spy(new GerritServer(gerritServerName));
         doNothing().when(gerritServer).startConnection();
         PluginImpl.getInstance().addServer(gerritServer);
@@ -84,10 +87,9 @@ public class GerritItemListenerTest {
     /**
      * Tests {@link GerritItemListener#onLoaded()} gets connection.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testOnLoadedWithConnection() throws Exception {
+    void testOnLoadedWithConnection() {
         gerritServer.setNoConnectionOnStartup(false);
         GerritItemListener listener = new GerritItemListener();
         listener.onLoaded();
@@ -97,10 +99,9 @@ public class GerritItemListenerTest {
     /**
      * Tests {@link GerritItemListener#onLoaded()} does not get connection.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testOnLoadedWithNoConnection() throws Exception {
+    void testOnLoadedWithNoConnection() {
         gerritServer.setNoConnectionOnStartup(true);
         GerritItemListener listener = new GerritItemListener();
         listener.onLoaded();
@@ -114,7 +115,7 @@ public class GerritItemListenerTest {
      */
     @Test
     @Issue("JENKINS-27651")
-    public void testOnJobRenamed() throws Exception {
+    void testOnJobRenamed() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("MyJob");
         GerritHandler handler = PluginImpl.getInstance().getHandler();
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
@@ -125,7 +126,7 @@ public class GerritItemListenerTest {
         int before = handler.getEventListenersCount();
 
         job.renameTo("MyJobRenamed");
-        assertEquals("We leak some listeners", before, handler.getEventListenersCount());
+        assertEquals(before, handler.getEventListenersCount(), "We leak some listeners");
 
         handler.notifyListeners(event);
 
@@ -140,7 +141,7 @@ public class GerritItemListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnJobDeleted() throws Exception {
+    void testOnJobDeleted() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("MyJob");
         FreeStyleProject jobToBeDeleted = j.createFreeStyleProject("JobToBeDeleted");
         jobToBeDeleted.getBuildersList().add(new SleepBuilder(TimeUnit.MINUTES.toMillis(1)));
@@ -161,7 +162,7 @@ public class GerritItemListenerTest {
         assertNotNull(job.getLastBuild());
         assertTrue(listener.isAllBuildsCompleted());
 
-        assertEquals("We should remove listener from delete job", before - 1, handler.getEventListenersCount());
+        assertEquals(before - 1, handler.getEventListenersCount(), "We should remove listener from delete job");
     }
 
     /**
@@ -170,7 +171,7 @@ public class GerritItemListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnJobUpdated() throws Exception {
+    void testOnJobUpdated() throws Exception {
         FreeStyleProject job = j.createFreeStyleProject("MyJob");
         GerritHandler handler = PluginImpl.getInstance().getHandler();
 
@@ -180,7 +181,7 @@ public class GerritItemListenerTest {
 
         job.removeTrigger(DUMMY_DESCRIPTOR);
 
-        assertEquals("We leak some listeners", before - 1, handler.getEventListenersCount());
+        assertEquals(before - 1, handler.getEventListenersCount(), "We leak some listeners");
     }
 
     /**

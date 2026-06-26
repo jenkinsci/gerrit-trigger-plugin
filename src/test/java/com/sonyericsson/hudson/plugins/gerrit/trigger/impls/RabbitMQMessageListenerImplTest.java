@@ -26,11 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.impls;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.fail;
-
 import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
-import org.junit.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,6 +40,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import com.rabbitmq.client.impl.LongStringHelper;
+import org.junit.jupiter.api.Test;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.GerritTriggerApi;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginNotFoundException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.PluginStatusException;
@@ -54,9 +54,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
  *
  * @author rinrinne a.k.a. rin_ne (rinrin.ne@gmail.com)
  */
-public class RabbitMQMessageListenerImplTest {
+class RabbitMQMessageListenerImplTest {
 
-    GerritTriggerApi apiMock = mock(GerritTriggerApi.class);
+    final GerritTriggerApi apiMock = mock(GerritTriggerApi.class);
 
     /**
      * Tests if received event.
@@ -65,7 +65,7 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveTest() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveTest() throws PluginNotFoundException, PluginStatusException {
         Handler handlerMock = mock(Handler.class);
         doReturn(handlerMock).when(apiMock).getHandler();
 
@@ -83,14 +83,14 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveWithHeaderTest() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveWithHeaderTest() throws PluginNotFoundException, PluginStatusException {
         Handler handlerMock = mock(Handler.class);
         doReturn(handlerMock).when(apiMock).getHandler();
 
         RabbitMQMessageListenerImpl listener = new RabbitMQMessageListenerImpl();
         Whitebox.setInternalState(listener, GerritTriggerApi.class, apiMock);
 
-        Map<String, Object> header = new HashMap<String, Object>();
+        Map<String, Object> header = new HashMap<>();
         header.put("gerrit-name", LongStringHelper.asLongString("gerrit1"));
         header.put("gerrit-host", LongStringHelper.asLongString("gerrit1.localhost"));
         header.put("gerrit-port", LongStringHelper.asLongString("29418"));
@@ -118,7 +118,7 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveFromUnknownQueueTest() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveFromUnknownQueueTest() throws PluginNotFoundException, PluginStatusException {
         Handler handlerMock = mock(Handler.class);
         doReturn(handlerMock).when(apiMock).getHandler();
 
@@ -137,7 +137,7 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveWithUnknownContentTypeTest() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveWithUnknownContentTypeTest() throws PluginNotFoundException, PluginStatusException {
         Handler handlerMock = mock(Handler.class);
         doReturn(handlerMock).when(apiMock).getHandler();
 
@@ -156,7 +156,7 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveAfterUnbindTest() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveAfterUnbindTest() throws PluginNotFoundException, PluginStatusException {
         Handler handlerMock = mock(Handler.class);
         doReturn(handlerMock).when(apiMock).getHandler();
 
@@ -180,18 +180,14 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveWithPluginNotFoundException() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveWithPluginNotFoundException() throws PluginNotFoundException, PluginStatusException {
         doThrow(new PluginNotFoundException()).when(apiMock).getHandler();
 
         RabbitMQMessageListenerImpl listener = new RabbitMQMessageListenerImpl();
         Whitebox.setInternalState(listener, GerritTriggerApi.class, apiMock);
 
         listener.onBind("TEST");
-        try {
-            listener.onReceive("TEST", "application/json", null, "test message".getBytes());
-        } catch (Exception ex) {
-            fail();
-        }
+        assertDoesNotThrow(() -> listener.onReceive("TEST", "application/json", null, "test message".getBytes()));
     }
 
     /**
@@ -202,17 +198,13 @@ public class RabbitMQMessageListenerImplTest {
      * @throws PluginStatusException throw if plugin status is wrong.
      */
     @Test
-    public void onReceiveWithPluginStatusException() throws PluginNotFoundException, PluginStatusException {
+    void onReceiveWithPluginStatusException() throws PluginNotFoundException, PluginStatusException {
         doThrow(new PluginStatusException()).when(apiMock).getHandler();
 
         RabbitMQMessageListenerImpl listener = new RabbitMQMessageListenerImpl();
         Whitebox.setInternalState(listener, GerritTriggerApi.class, apiMock);
 
         listener.onBind("TEST");
-        try {
-            listener.onReceive("TEST", "application/json", null, "test message".getBytes());
-        } catch (Exception ex) {
-            fail();
-        }
+        assertDoesNotThrow(() -> listener.onReceive("TEST", "application/json", null, "test message".getBytes()));
     }
 }

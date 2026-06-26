@@ -28,12 +28,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreat
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -42,15 +42,14 @@ import static org.mockito.Mockito.when;
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.TriggerMonitor}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class TriggerMonitorTest {
+class TriggerMonitorTest {
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc
     /**
      * Tests {@link TriggerMonitor#add(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testAdd() throws Exception {
+    void testAdd() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -63,10 +62,9 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#contains(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}
      * when it does.
-     * @throws Exception if so.
      */
     @Test
-    public void testContains() throws Exception {
+    void testContains() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -78,11 +76,10 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#contains(com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle)}
      * when nothing is.
-     * @throws Exception if so.
      */
-    @SuppressWarnings({"deprecation" })
+    @SuppressWarnings({"deprecation"})
     @Test
-    public void testContainsFalse() throws Exception {
+    void testContainsFalse() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -94,10 +91,9 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#triggerScanStarting(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * when it is.
-     * @throws Exception if so.
      */
     @Test
-    public void testTriggerScanStarting() throws Exception {
+    void testTriggerScanStarting() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -111,10 +107,9 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#triggerScanStarting(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * when it is not.
-     * @throws Exception if so.
      */
     @Test
-    public void testTriggerScanStartingFalse() throws Exception {
+    void testTriggerScanStartingFalse() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -128,10 +123,9 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#triggerScanDone(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * when it is.
-     * @throws Exception if so.
      */
     @Test
-    public void testTriggerScanDone() throws Exception {
+    void testTriggerScanDone() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -146,10 +140,9 @@ public class TriggerMonitorTest {
     /**
      * Tests {@link TriggerMonitor#triggerScanDone(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * when it is not.
-     * @throws Exception if so.
      */
     @Test
-    public void testTriggerScanDoneFalse() throws Exception {
+    void testTriggerScanDoneFalse() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -164,10 +157,9 @@ public class TriggerMonitorTest {
 
     /**
      * Tests {@link TriggerMonitor#projectTriggered(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Job)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testProjectTriggered() throws Exception {
+    void testProjectTriggered() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -185,10 +177,9 @@ public class TriggerMonitorTest {
     /**
      * Tests
      * {@link TriggerMonitor#buildStarted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Run)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testBuildStarted() throws Exception {
+    void testBuildStarted() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -211,10 +202,9 @@ public class TriggerMonitorTest {
     /**
      * Tests
      * {@link TriggerMonitor#buildCompleted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent, hudson.model.Run)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testBuildCompleted() throws Exception {
+    void testBuildCompleted() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);
@@ -236,10 +226,9 @@ public class TriggerMonitorTest {
 
     /**
      * Tests {@link TriggerMonitor#allBuildsCompleted(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testAllBuildsCompleted() throws Exception {
+    void testAllBuildsCompleted() {
         TriggerMonitor monitor = new TriggerMonitor();
         ManualPatchsetCreated patch = Setup.createManualPatchsetCreated();
         monitor.add(patch);

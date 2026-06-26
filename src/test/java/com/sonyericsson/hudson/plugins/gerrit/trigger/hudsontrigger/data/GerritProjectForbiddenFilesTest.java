@@ -25,37 +25,31 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 
-import org.junit.Test;
-
 import java.util.LinkedList;
-import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
+import java.util.List;
 
 /**
  * Testing if Forbidden File Paths usage corrupts the list of files checked.
  * @author Peter Walls &lt;peter.walls@se.bosch.com&gt;
  */
-public class GerritProjectForbiddenFilesTest {
-
-    /**
-     * Constructor.
-     */
-    public GerritProjectForbiddenFilesTest() {
-    }
+class GerritProjectForbiddenFilesTest {
 
     /**
      * Tests.
      */
     @Test
-    public void testFileRemoved() {
-        List<Branch> branches = new LinkedList<Branch>();
+    void testFileRemoved() {
+        List<Branch> branches = new LinkedList<>();
         branches.add(new Branch(CompareType.PLAIN, "master"));
-        List<Topic> topics = new LinkedList<Topic>();
-        List<FilePath> filePaths = new LinkedList<FilePath>();
-        List<FilePath> forbiddenFilePaths = new LinkedList<FilePath>();
+        List<Topic> topics = new LinkedList<>();
+        List<FilePath> filePaths = new LinkedList<>();
+        List<FilePath> forbiddenFilePaths = new LinkedList<>();
         forbiddenFilePaths.add(new FilePath(CompareType.ANT, "t*.txt"));
-        List<String> files = new LinkedList<String>();
+        List<String> files = new LinkedList<>();
         files.add("test.txt");
         files.add("hide.txt");
         GerritProject config = new GerritProject(

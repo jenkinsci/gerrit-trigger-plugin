@@ -14,9 +14,9 @@ import hudson.model.Job;
 import jenkins.model.Jenkins;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -33,7 +33,7 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 /**
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
-public class EventListenerTest {
+class EventListenerTest {
 
     private EventListener listener;
     private AbstractProject project;
@@ -47,8 +47,8 @@ public class EventListenerTest {
     /**
      * Setup all the mocks.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         project = mock(AbstractProject.class);
         doReturn("MockProject").when(project).getFullName();
         listener = new EventListener(project);
@@ -74,8 +74,8 @@ public class EventListenerTest {
         gerritRunListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(gerritRunListener);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
         pluginMockedStatic.close();
         gerritRunListenerMockedStatic.close();
@@ -85,10 +85,9 @@ public class EventListenerTest {
      * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * is called/reflected when a {@link PatchsetCreated} event arrives.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGerritEventGerritEvent() throws Exception {
+    void testGerritEventGerritEvent() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
         handler.notifyListeners(patchsetCreated);
         verify(listener).gerritEvent(same(patchsetCreated));
@@ -99,10 +98,9 @@ public class EventListenerTest {
      * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent)}
      * is called/reflected when a {@link ChangeMerged} event arrives.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGerritEventChangeMerged() throws Exception {
+    void testGerritEventChangeMerged() {
         ChangeMerged changeMerged = Setup.createChangeMerged();
         handler.notifyListeners(changeMerged);
         verify(listener).gerritEvent(same(changeMerged));
@@ -114,10 +112,9 @@ public class EventListenerTest {
      * Tests that {@link EventListener#gerritEvent(ManualPatchsetCreated)}
      * is called/reflected when a {@link ManualPatchsetCreated} event arrives.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGerritEventManualPatchsetCreated() throws Exception {
+    void testGerritEventManualPatchsetCreated() {
         ManualPatchsetCreated manualPatchsetCreated = Setup.createManualPatchsetCreated();
         handler.notifyListeners(manualPatchsetCreated);
         verify(listener).gerritEvent(same(manualPatchsetCreated));
@@ -128,10 +125,9 @@ public class EventListenerTest {
      * Tests that {@link EventListener#gerritEvent(com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded)}
      * is called/reflected when a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.CommentAdded} event arrives.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGerritEventCommentAdded() throws Exception {
+    void testGerritEventCommentAdded() {
         CommentAdded commentAdded = Setup.createCommentAdded();
         when(trigger.commentAddedMatch(same(commentAdded))).thenReturn(true);
 
@@ -149,8 +145,8 @@ public class EventListenerTest {
      * @return a argThat(matcher)
      */
     private GerritCause isExactClass(final Class<? extends GerritCause> klass) {
-        return argThat(new BaseMatcher<GerritCause>() {
-            Class<? extends GerritCause> theClass = klass;
+        return argThat(new BaseMatcher<>() {
+            final Class<? extends GerritCause> theClass = klass;
 
             @Override
             public boolean matches(Object item) {

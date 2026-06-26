@@ -40,11 +40,12 @@ import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
 
@@ -59,30 +60,37 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.hamcrest.core.StringContains.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author <a href="mailto:tom.fennelly@gmail.com">tom.fennelly@gmail.com</a>
  */
-public class WorkflowTest {
+@WithJenkins
+class WorkflowTest {
 
     /**
      * Jenkins rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule jenkinsRule = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Trigger test.
      * @throws Exception if there is one.
      */
     @Test
-    public void testTriggerWorkflow() throws Exception {
-        jenkinsRule.jenkins.setCrumbIssuer(null);
-        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+    void testTriggerWorkflow() throws Exception {
+        j.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(j);
 
         gerritServer.start();
         try {
@@ -102,8 +110,8 @@ public class WorkflowTest {
             JSONObject verifiedMessage = gerritServer.waitForNextVerified();
             // System.out.println(gerritServer.lastContent);
             String message = verifiedMessage.getString("message");
-            Assert.assertTrue(message.startsWith("Build Successful"));
-            Assert.assertTrue(message.contains("job/WFJob/1/"));
+            assertTrue(message.startsWith("Build Successful"));
+            assertTrue(message.contains("job/WFJob/1/"));
             JSONObject labels = verifiedMessage.getJSONObject("labels");
             assertEquals(1, labels.getInt("Verified"));
         } finally {
@@ -116,19 +124,21 @@ public class WorkflowTest {
      * @throws Exception if there is one.
      */
     @Test
-    public void testWorkflowStepSetsCustomUrl() throws Exception {
-        jenkinsRule.jenkins.setCrumbIssuer(null);
-        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+    void testWorkflowStepSetsCustomUrl() throws Exception {
+        j.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(j);
 
         gerritServer.start();
         try {
             PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
 
-            WorkflowJob job = createWorkflowJob(event, ""
-                + "node {\n"
-                + "   stage ('Build') {\n"
-                + "   setGerritReview customUrl: 'myCustomUrl'\n"
-                + "}}\n");
+            WorkflowJob job = createWorkflowJob(event, """
+                    \
+                    node {
+                       stage ('Build') {
+                       setGerritReview customUrl: 'myCustomUrl'
+                    }}
+                    """);
 
             PluginImpl.getHandler_().post(event);
 
@@ -142,8 +152,8 @@ public class WorkflowTest {
             JSONObject verifiedMessage = gerritServer.waitForNextVerified();
             // System.out.println(gerritServer.lastContent);
             String message = verifiedMessage.getString("message");
-            Assert.assertTrue(message.startsWith("Build Successful"));
-            Assert.assertTrue(message.contains("myCustomUrl"));
+            assertTrue(message.startsWith("Build Successful"));
+            assertTrue(message.contains("myCustomUrl"));
             JSONObject labels = verifiedMessage.getJSONObject("labels");
             assertEquals(1, labels.getInt("Verified"));
         } finally {
@@ -156,20 +166,22 @@ public class WorkflowTest {
      * @throws Exception if there is one.
      */
     @Test
-    public void testWorkflowStepSetsUnsuccessfulMessage() throws Exception {
-        jenkinsRule.jenkins.setCrumbIssuer(null);
-        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+    void testWorkflowStepSetsUnsuccessfulMessage() throws Exception {
+        j.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(j);
 
         gerritServer.start();
         try {
             PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
 
-            WorkflowJob job = createWorkflowJob(event, ""
-                + "node {\n"
-                + "   stage ('Build') {\n"
-                + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
-                + "   currentBuild.setResult('FAILURE')\n"
-                + "}}\n");
+            WorkflowJob job = createWorkflowJob(event, """
+                    \
+                    node {
+                       stage ('Build') {
+                       setGerritReview unsuccessfulMessage: 'myMessage'
+                       currentBuild.setResult('FAILURE')
+                    }}
+                    """);
 
             PluginImpl.getHandler_().post(event);
 
@@ -184,8 +196,8 @@ public class WorkflowTest {
             JSONObject verifiedMessage = gerritServer.waitForNextVerified();
             // System.out.println(gerritServer.lastContent);
             String message = verifiedMessage.getString("message");
-            Assert.assertTrue(message.startsWith("Build Failed"));
-            Assert.assertTrue(message.contains("myMessage"));
+            assertTrue(message.startsWith("Build Failed"));
+            assertTrue(message.contains("myMessage"));
             JSONObject labels = verifiedMessage.getJSONObject("labels");
             assertEquals(0, labels.getInt("Verified"));
         } finally {
@@ -198,19 +210,21 @@ public class WorkflowTest {
      * @throws Exception if there is one.
      */
     @Test
-    public void testWorkflowStepSetsUnsuccessfulMessageWithSuccessfulBuild() throws Exception {
-        jenkinsRule.jenkins.setCrumbIssuer(null);
-        MockGerritServer gerritServer = MockGerritServer.get(jenkinsRule);
+    void testWorkflowStepSetsUnsuccessfulMessageWithSuccessfulBuild() throws Exception {
+        j.jenkins.setCrumbIssuer(null);
+        MockGerritServer gerritServer = MockGerritServer.get(j);
 
         gerritServer.start();
         try {
             PatchsetCreated event = Setup.createPatchsetCreated(gerritServer.getName());
 
-            WorkflowJob job = createWorkflowJob(event, ""
-                + "node {\n"
-                + "   stage ('Build') {\n"
-                + "   setGerritReview unsuccessfulMessage: 'myMessage'\n"
-                + "}}\n");
+            WorkflowJob job = createWorkflowJob(event, """
+                    \
+                    node {
+                       stage ('Build') {
+                       setGerritReview unsuccessfulMessage: 'myMessage'
+                    }}
+                    """);
 
             PluginImpl.getHandler_().post(event);
 
@@ -225,8 +239,8 @@ public class WorkflowTest {
             JSONObject verifiedMessage = gerritServer.waitForNextVerified();
             // System.out.println(gerritServer.lastContent);
             String message = verifiedMessage.getString("message");
-            Assert.assertTrue(message.startsWith("Build Successful"));
-            Assert.assertFalse(message.contains("myMessage"));
+            assertTrue(message.startsWith("Build Successful"));
+            assertFalse(message.contains("myMessage"));
             JSONObject labels = verifiedMessage.getJSONObject("labels");
             assertEquals(1, labels.getInt("Verified"));
         } finally {
@@ -240,11 +254,11 @@ public class WorkflowTest {
      * @throws Exception if so.
      */
     @Test
-    public void testConfigRoundTrip() throws Exception {
+    void testConfigRoundTrip() throws Exception {
         PatchsetCreated event = Setup.createPatchsetCreated(PluginImpl.DEFAULT_SERVER_NAME);
         WorkflowJob job = createWorkflowJob(event);
-        jenkinsRule.configRoundtrip(job);
-        job = (WorkflowJob)jenkinsRule.jenkins.getItem("WFJob");
+        j.configRoundtrip(job);
+        job = (WorkflowJob)j.jenkins.getItem("WFJob");
         GerritTrigger trigger = GerritTrigger.getTrigger(job);
         assertFalse(trigger.isSilentMode());
         assertEquals(1, trigger.getGerritBuildSuccessfulCodeReviewValue().intValue());
@@ -267,11 +281,13 @@ public class WorkflowTest {
      * @throws Exception if so
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event) throws Exception {
-        return createWorkflowJob(event, ""
-                + "node {\n"
-                + "   stage ('Build') {\n"
-                + "   sh \"echo Gerrit trigger: ${GERRIT_EVENT_TYPE}\"\n"
-                + "}}\n");
+        return createWorkflowJob(event, """
+                \
+                node {
+                   stage ('Build') {
+                   sh "echo Gerrit trigger: ${GERRIT_EVENT_TYPE}"
+                }}
+                """);
     }
 
     /**
@@ -283,7 +299,7 @@ public class WorkflowTest {
      * @throws Exception if so
      */
     private WorkflowJob createWorkflowJob(PatchsetCreated event, String script) throws Exception {
-        WorkflowJob job = jenkinsRule.jenkins.createProject(WorkflowJob.class, "WFJob");
+        WorkflowJob job = j.jenkins.createProject(WorkflowJob.class, "WFJob");
         job.setDefinition(new CpsFlowDefinition(script, true));
 
         GerritTrigger trigger = Setup.createDefaultTrigger(job);
@@ -310,7 +326,6 @@ public class WorkflowTest {
         MatcherAssert.assertThat(JenkinsRule.getLog(run), containsString(substring));
     }
 
-
     /**
      * Mock Gerrit server.
      */
@@ -322,6 +337,7 @@ public class WorkflowTest {
         /**
          * Create server instance.
          */
+        // CS IGNORE RedundantModifier FOR NEXT 2 LINES. REASON: Must be public.
         public MockGerritServer() {
             super(PluginImpl.DEFAULT_SERVER_NAME);
         }
@@ -363,14 +379,12 @@ public class WorkflowTest {
             while (lastContent == null) {
                 // CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: It's magic.
                 if (System.currentTimeMillis() > start + 20000) {
-                    Assert.fail("Timed out waiting on Verified message from Gerrit Trigger plugin.");
+                    fail("Timed out waiting on Verified message from Gerrit Trigger plugin.");
                 }
-                try {
+                assertDoesNotThrow(() -> {
                     // CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: It's magic.
                     Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Assert.fail("Unexpected interrupt: " + e.getMessage());
-                }
+                }, "Unexpected interrupt: ");
             }
             return JSONObject.fromObject(lastContent);
         }

@@ -24,12 +24,12 @@
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import org.junit.jupiter.api.Test;
+
 import com.sonymobile.tools.gerrit.gerritevents.GerritSendCommandQueue;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -38,15 +38,14 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritAdministrativeMonitorTest {
+class GerritAdministrativeMonitorTest {
 
     /**
      * Tests {@link GerritAdministrativeMonitor#isSendQueueWarning()} is true when it should.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsSendQueueWarningWithEqualThreshold() throws Exception {
+    void testIsSendQueueWarningWithEqualThreshold() {
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         monitor = spy(monitor);
         when(monitor.getSendQueueSize()).thenReturn(GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD);
@@ -56,10 +55,9 @@ public class GerritAdministrativeMonitorTest {
     /**
      * Tests {@link GerritAdministrativeMonitor#isSendQueueWarning()} is true when it should.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsSendQueueWarningWithOverThreshold() throws Exception {
+    void testIsSendQueueWarningWithOverThreshold() {
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         monitor = spy(monitor);
         when(monitor.getSendQueueSize()).thenReturn(GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD + 1);
@@ -69,10 +67,9 @@ public class GerritAdministrativeMonitorTest {
     /**
      * Tests {@link GerritAdministrativeMonitor#isSendQueueWarning()} is false when it should.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsSendQueueWarningWithUnderThreshold() throws Exception {
+    void testIsSendQueueWarningWithUnderThreshold() {
         GerritAdministrativeMonitor monitor = new GerritAdministrativeMonitor();
         monitor = spy(monitor);
         when(monitor.getSendQueueSize()).thenReturn(GerritSendCommandQueue.SEND_QUEUE_SIZE_WARNING_THRESHOLD - 1);

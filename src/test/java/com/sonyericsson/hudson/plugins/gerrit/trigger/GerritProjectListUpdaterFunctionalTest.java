@@ -26,33 +26,33 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.Timeout;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.recipes.WithTimeout;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 //CS IGNORE AvoidStarImport FOR NEXT 1 LINES. REASON: UnitTest.
 
 /**
  * Functional Test for Project List Updater.
  *
  */
-public class GerritProjectListUpdaterFunctionalTest {
+@WithJenkins
+class GerritProjectListUpdaterFunctionalTest {
 
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private static final int SLEEPTIME = 1;
     private static final int TIMEOUT = 500;
@@ -76,10 +76,13 @@ public class GerritProjectListUpdaterFunctionalTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         sshKey = SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -97,8 +100,8 @@ public class GerritProjectListUpdaterFunctionalTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
     }
@@ -108,9 +111,9 @@ public class GerritProjectListUpdaterFunctionalTest {
      * connection startup.
      * @throws Exception if occurs.
      */
-    @WithTimeout(TIMEOUT)
+    @Timeout(TIMEOUT)
     @Test
-    public void testProjectListUpdateActiveOnStartup() throws Exception {
+    void testProjectListUpdateActiveOnStartup() throws Exception {
         GerritServer gerritServer = new GerritServer("ABCDEF");
         Config config = (Config)gerritServer.getConfig();
         config.setGerritAuthKeyFile(sshKey.getPrivateKey());
@@ -132,7 +135,7 @@ public class GerritProjectListUpdaterFunctionalTest {
         }
 
         startTime = System.currentTimeMillis();
-        while (gerritServer.getGerritProjects().size() == 0) {
+        while (gerritServer.getGerritProjects().isEmpty()) {
             TimeUnit.SECONDS.sleep(SLEEPTIME);
             if (TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) > MAXSLEEPTIME) {
                 break;

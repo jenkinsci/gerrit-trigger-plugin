@@ -1,12 +1,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.event;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
+
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeKind;
+
+import org.junit.jupiter.api.Test;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Account;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
@@ -17,13 +18,13 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
  *
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class PluginPatchsetCreatedEventTest {
+class PluginPatchsetCreatedEventTest {
 
     /**
      * Tests that it should fire on all type of patchset.
      */
     @Test
-    public void shouldFireOnAllTypeOfPatchset() {
+    void shouldFireOnAllTypeOfPatchset() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
             new PluginPatchsetCreatedEvent();
         PatchsetCreated patchsetCreated = new PatchsetCreated();
@@ -39,7 +40,7 @@ public class PluginPatchsetCreatedEventTest {
      * Tests that it should not fire on draft patchset when they are excluded.
      */
     @Test
-    public void shouldNotFireOnDraftPatchsetWhenExcluded() {
+    void shouldNotFireOnDraftPatchsetWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
                 new PluginPatchsetCreatedEvent();
         pluginPatchsetCreatedEvent.setExcludeDrafts(true);
@@ -58,7 +59,7 @@ public class PluginPatchsetCreatedEventTest {
      * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
      */
     @Test
-    public void shouldNotFireOnTrivialRebaseWhenExcluded() {
+    void shouldNotFireOnTrivialRebaseWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
                 new PluginPatchsetCreatedEvent();
         pluginPatchsetCreatedEvent.setExcludeTrivialRebase(true);
@@ -79,7 +80,7 @@ public class PluginPatchsetCreatedEventTest {
      * @author Doug Kelly &lt;dougk.ff7@gmail.com&gt;
      */
     @Test
-    public void shouldNotFireOnNoCodeChangeWhenExcluded() {
+    void shouldNotFireOnNoCodeChangeWhenExcluded() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
                 new PluginPatchsetCreatedEvent();
         pluginPatchsetCreatedEvent.setExcludeNoCodeChange(true);
@@ -98,7 +99,7 @@ public class PluginPatchsetCreatedEventTest {
      * Test that it should, or should not, fire if the commit message matches a regular expression.
      */
     @Test
-    public void commitMessageRegExCheck() {
+    void commitMessageRegExCheck() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
                 new PluginPatchsetCreatedEvent();
         PatchsetCreated patchsetCreated = new PatchsetCreated();
@@ -143,7 +144,7 @@ public class PluginPatchsetCreatedEventTest {
      * Test that it should, or should not, fire if the uploader name matches a regular expression.
      */
     @Test
-    public void uploaderNameRegExCheck() {
+    void uploaderNameRegExCheck() {
         PluginPatchsetCreatedEvent pluginPatchsetCreatedEvent =
                 new PluginPatchsetCreatedEvent();
         PatchsetCreated patchsetCreated = new PatchsetCreated();

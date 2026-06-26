@@ -28,8 +28,9 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import org.junit.jupiter.api.Test;
+
 import net.sf.json.JSONObject;
-import org.junit.Test;
 
 import java.util.List;
 
@@ -46,9 +47,9 @@ import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REF;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.SUBJECT;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.URL;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
@@ -57,13 +58,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ManualPatchsetCreatedTest {
+class ManualPatchsetCreatedTest {
+
     /**
      * Tests {@link ManualPatchsetCreated#addListener(GerritEventLifecycleListener)}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testAddListener() throws Exception {
+    void testAddListener() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);
@@ -74,10 +75,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#removeListener(GerritEventLifecycleListener)}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testRemoveListener() throws Exception {
+    void testRemoveListener() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -89,10 +89,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireTriggerScanStarting()}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireTriggerScanStarting() throws Exception {
+    void testFireTriggerScanStarting() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -106,10 +105,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireTriggerScanDone()}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireTriggerScanDone() throws Exception {
+    void testFireTriggerScanDone() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
 
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -123,10 +121,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireProjectTriggered(hudson.model.Job)}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireProjectTriggered() throws Exception {
+    void testFireProjectTriggered() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractProject project = mock(AbstractProject.class);
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -140,10 +137,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireBuildStarted(hudson.model.Run)}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireBuildStarted() throws Exception {
+    void testFireBuildStarted() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractBuild build = mock(AbstractBuild.class);
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -157,10 +153,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireBuildCompleted(hudson.model.Run)}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireBuildCompleted() throws Exception {
+    void testFireBuildCompleted() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         AbstractBuild build = mock(AbstractBuild.class);
         TestableManualPatchset lifecycle = new TestableManualPatchset();
@@ -174,10 +169,9 @@ public class ManualPatchsetCreatedTest {
 
     /**
      * Tests {@link ManualPatchsetCreated#fireAllBuildsCompleted()}.
-     * @throws Exception if the unfortunate happens.
      */
     @Test
-    public void testFireAllBuildsCompleted() throws Exception {
+    void testFireAllBuildsCompleted() {
         GerritEventLifecycleListener listener = mock(GerritEventLifecycleListener.class);
         TestableManualPatchset lifecycle = new TestableManualPatchset();
         lifecycle.addListener(listener);

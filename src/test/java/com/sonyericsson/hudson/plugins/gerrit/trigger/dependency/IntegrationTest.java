@@ -13,11 +13,14 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.FreeStyleProject;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.BuildWatcher;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.BuildWatcherExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,8 +29,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,31 +39,35 @@ import static org.mockito.Mockito.when;
  * The set of integration tests for dependency feature of Gerrit Trigger Plugin.
  * Can be moved or renamed in future to be more generic.
  */
-public class IntegrationTest {
+@WithJenkins
+class IntegrationTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 9 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+    private JenkinsRule j;
 
     /**
      * Outputs build logs to std out.
      */
-    @Rule
-    public BuildWatcher buildWatcher = new BuildWatcher();
+    @RegisterExtension
+    private static final BuildWatcherExtension BUILD_WATCHER = new BuildWatcherExtension();
 
     private static final int TIMEOUT = 10;
     private static final int POLLING_INTERVAL = 1000;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Test that child build see the env variables that contains information about "parent" build.
      * @throws Exception throw if so
      */
     @Test
-    public void testChildBuildSeeParametersOfParentJob() throws Exception {
+    void testChildBuildSeeParametersOfParentJob() throws Exception {
         // CS IGNORE MagicNumber FOR NEXT 1 LINES. REASON: Non-magic number.
-        assumeTrue("TODO does not work on Java 17", Runtime.version().feature() < 17);
+        assumeTrue(Runtime.version().feature() < 17, "TODO does not work on Java 17");
         String gerritServerName = "";
         GerritServer gerritServer = createMockGerritServer(gerritServerName);
         PluginImpl.getInstance().addServer(gerritServer);
@@ -83,9 +90,9 @@ public class IntegrationTest {
         waitCompletedBuild(parent);
         waitCompletedBuild(child);
 
-        jenkinsRule.assertBuildStatusSuccess(parent.getLastCompletedBuild());
-        assertEquals(environmentBuilder.getEnvVars().get("TRIGGER_parent_BUILD_NAME"), "parent");
-        assertEquals(environmentBuilder.getEnvVars().get("TRIGGER_DEPENDENCY_KEYS"), "parent");
+        j.assertBuildStatusSuccess(parent.getLastCompletedBuild());
+        assertEquals("parent", environmentBuilder.getEnvVars().get("TRIGGER_parent_BUILD_NAME"));
+        assertEquals("parent", environmentBuilder.getEnvVars().get("TRIGGER_DEPENDENCY_KEYS"));
     }
 
     /**
@@ -121,7 +128,7 @@ public class IntegrationTest {
     private FreeStyleProject createJobWithGerritTrigger(String name,
                                                         GerritTrigger trigger,
                                                         List<PluginGerritEvent> triggerOnEvents) throws IOException {
-        FreeStyleProject project = jenkinsRule.createFreeStyleProject(name);
+        FreeStyleProject project = j.createFreeStyleProject(name);
         project.addTrigger(trigger);
         trigger.setTriggerOnEvents(triggerOnEvents);
         trigger.start(project, true);
@@ -136,7 +143,7 @@ public class IntegrationTest {
         PluginGerritEvent triggeredEvent = mock(PluginGerritEvent.class);
         when(triggeredEvent.shouldTriggerOn(any(GerritTriggeredEvent.class))).thenReturn(true);
 
-        List<PluginGerritEvent> triggerOnEvents = new ArrayList<PluginGerritEvent>(1);
+        List<PluginGerritEvent> triggerOnEvents = new ArrayList<>(1);
         triggerOnEvents.add(triggeredEvent);
         return triggerOnEvents;
     }
@@ -146,7 +153,7 @@ public class IntegrationTest {
      * @return list with one mocked instance of GerritProject class
      */
     private List<GerritProject> createMockGerritProjectList() {
-        List<GerritProject> projectList = new ArrayList<GerritProject>();
+        List<GerritProject> projectList = new ArrayList<>();
 
         GerritProject project = mock(GerritProject.class);
 

@@ -50,13 +50,15 @@ import hudson.model.Run;
 import hudson.model.TopLevelItem;
 
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.BuildWatcher;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.SleepBuilder;
+import org.jvnet.hudson.test.junit.jupiter.BuildWatcherExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.Arrays;
@@ -66,13 +68,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 920 LINES. REASON: Testdata.
 
@@ -81,20 +81,19 @@ import static org.junit.Assert.fail;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class SpecGerritTriggerHudsonTest {
+@WithJenkins
+class SpecGerritTriggerHudsonTest {
 
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 9 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     /**
      * Outputs build logs to std out.
      */
-    @Rule
-    public final BuildWatcher watcher = new BuildWatcher();
+    @RegisterExtension
+    private static final BuildWatcherExtension BUILD_WATCHER = new BuildWatcherExtension();
 
     //TODO Fix the SshdServerMock so that asserts can be done on review commands.
 
@@ -107,10 +106,13 @@ public class SpecGerritTriggerHudsonTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         SshdServerMock.generateKeyPair();
 
         serverMock = new SshdServerMock();
@@ -130,8 +132,8 @@ public class SpecGerritTriggerHudsonTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         serverMock.stopServer(sshd);
         sshd = null;
     }
@@ -142,7 +144,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggeredSilentStartModeBuild() throws Exception {
+    void testTriggeredSilentStartModeBuild() throws Exception {
         FreeStyleProject project = new TestUtils.JobBuilder(j).silentStartMode(true).build();
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -161,20 +163,14 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggeredNoSilentStartModeBuild() throws Exception {
+    void testTriggeredNoSilentStartModeBuild() throws Exception {
         FreeStyleProject project = new TestUtils.JobBuilder(j).name("projectX").silentStartMode(false).build();
 
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         TestUtils.waitForBuilds(project, 1, 20000);
 
-        try {
-            serverMock.waitForNrCommands("Build Started", 1, 5000);
-        } catch (Exception e) {
-            System.out.println(e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
-            fail("Should not throw exception.");
-        }
+        serverMock.waitForNrCommands("Build Started", 1, 5000);
     }
 
     /**
@@ -184,7 +180,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggeredSilentStartModeMixedBuild() throws Exception {
+    void testTriggeredSilentStartModeMixedBuild() throws Exception {
         gerritServer.getConfig().setNumberOfSendingWorkerThreads(3);
 
         final int nrOfJobs = 3;
@@ -202,7 +198,7 @@ public class SpecGerritTriggerHudsonTest {
             }
             copyProject.save();
         }
-        assertEquals("Wrong number of jobs", nrOfJobs + 1, j.jenkins.getAllItems().size());
+        assertEquals(nrOfJobs + 1, j.jenkins.getAllItems().size(), "Wrong number of jobs");
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
         int expectedBuildStarted = nrOfJobs + 1 - nrOfSilentStartJobs;
@@ -226,7 +222,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDynamicTriggeredBuildWithPlainBranch() throws Exception {
+    void testDynamicTriggeredBuildWithPlainBranch() throws Exception {
         testDynamicTriggeredBuild("=branch");
     }
 
@@ -236,7 +232,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDynamicTriggeredBuildWithAntBranch() throws Exception {
+    void testDynamicTriggeredBuildWithAntBranch() throws Exception {
         testDynamicTriggeredBuild("^**");
     }
 
@@ -265,7 +261,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDoubleTriggeredBuild() throws Exception {
+    void testDoubleTriggeredBuild() throws Exception {
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(5000));
@@ -311,7 +307,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDoubleTriggeredBuildWithProjects() throws Exception {
+    void testDoubleTriggeredBuildWithProjects() throws Exception {
         FreeStyleProject project1 = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         FreeStyleProject project2 = DuplicatesUtil.createGerritTriggeredJob(j, "projectY");
         project1.getBuildersList().add(new SleepBuilder(5000));
@@ -357,7 +353,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDoubleTriggeredBuildsOfDifferentChange() throws Exception {
+    void testDoubleTriggeredBuildsOfDifferentChange() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(5000));
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
@@ -408,7 +404,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTripleTriggeredBuildWithProjects() throws Exception {
+    void testTripleTriggeredBuildWithProjects() throws Exception {
         FreeStyleProject project1 = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         FreeStyleProject project2 = DuplicatesUtil.createGerritTriggeredJob(j, "projectY");
         project1.getBuildersList().add(new SleepBuilder(5000));
@@ -469,7 +465,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyAbortManual() throws Exception {
+    void testBuildLatestPatchsetOnlyAbortManual() throws Exception {
         buildLatestPatchsetOnlyAndReport(true, false, Result.ABORTED, Result.SUCCESS, Result.SUCCESS);
     }
 
@@ -483,7 +479,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyAbortManualAndNew() throws Exception {
+    void testBuildLatestPatchsetOnlyAbortManualAndNew() throws Exception {
         buildLatestPatchsetOnlyAndReport(true, true, Result.ABORTED, Result.ABORTED, Result.SUCCESS);
     }
 
@@ -496,7 +492,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyAbortNeitherManualNorNew() throws Exception {
+    void testBuildLatestPatchsetOnlyAbortNeitherManualNorNew() throws Exception {
         buildLatestPatchsetOnlyAndReport(false, false, Result.SUCCESS, Result.SUCCESS, Result.SUCCESS);
     }
 
@@ -509,7 +505,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyAbortNew() throws Exception {
+    void testBuildLatestPatchsetOnlyAbortNew() throws Exception {
         buildLatestPatchsetOnlyAndReport(false, true, Result.SUCCESS, Result.ABORTED, Result.SUCCESS);
     }
 
@@ -523,7 +519,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyNonRelatedChangeCannotAbort() throws Exception {
+    void testBuildLatestPatchsetOnlyNonRelatedChangeCannotAbort() throws Exception {
         BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
@@ -557,7 +553,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testBuildLatestPatchsetOnlyNonRelatedChangeDifferentBranchCannotAbort() throws Exception {
+    void testBuildLatestPatchsetOnlyNonRelatedChangeDifferentBranchCannotAbort() throws Exception {
         BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
@@ -599,7 +595,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testOngoingBuildWithSameTopicWillBeAborted() throws Exception {
+    void testOngoingBuildWithSameTopicWillBeAborted() throws Exception {
         BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
@@ -641,7 +637,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testOngoingBuildWithSameTopicWillBeAbortedByTopicChangedEvent() throws Exception {
+    void testOngoingBuildWithSameTopicWillBeAbortedByTopicChangedEvent() throws Exception {
         BuildCancellationPolicy policy = gerritServer.getConfig().getBuildCurrentPatchesOnly();
         policy.setEnabled(true);
         policy.setAbortManualPatchsets(false);
@@ -726,7 +722,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testNotBuildLatestPatchsetOnly() throws Exception {
+    void testNotBuildLatestPatchsetOnly() throws Exception {
         gerritServer.getConfig().getBuildCurrentPatchesOnly().setEnabled(false);
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
@@ -755,7 +751,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggerScopedAbortLatestPatchsetOnly() throws Exception {
+    void testTriggerScopedAbortLatestPatchsetOnly() throws Exception {
         Random rand = new Random();
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new PrintToLogBuilder("Cancel project building."));
@@ -796,7 +792,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggerScopedMultipleAbortLatestPatchsetOnly() throws Exception {
+    void testTriggerScopedMultipleAbortLatestPatchsetOnly() throws Exception {
         Random rand = new Random();
 
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
@@ -840,7 +836,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggerScopedAndServerAbortLatestPatchsetOnly() throws Exception {
+    void testTriggerScopedAndServerAbortLatestPatchsetOnly() throws Exception {
         Random rand = new Random();
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new SleepBuilder(3000));
@@ -875,7 +871,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testTriggerOnCommentAdded() throws Exception {
+    void testTriggerOnCommentAdded() throws Exception {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
         project.getBuildersList().add(new SleepBuilder(DELAY));
@@ -894,7 +890,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testDoubleTriggeredOnCommentAdded() throws Exception {
+    void testDoubleTriggeredOnCommentAdded() throws Exception {
         gerritServer.getConfig().setCategories(Setup.createCodeReviewVerdictCategoryList());
 
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJobForCommentAdded(j, "projectX");
@@ -935,7 +931,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testProjectRename() throws Exception {
+    void testProjectRename() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, "projectX");
         serverMock.waitForCommand(GERRIT_STREAM_EVENTS, DELAY);
 
@@ -958,7 +954,7 @@ public class SpecGerritTriggerHudsonTest {
      */
     @Test
     @LocalData
-    public void testAbortAbandonedPatchset() throws Exception {
+    void testAbortAbandonedPatchset() throws Exception {
         Random rand = new Random();
         FreeStyleProject cancelProject = new TestUtils.JobBuilder(j).name("cancel-project" + rand.nextInt()).build();
         cancelProject.getBuildersList().add(new SleepBuilder(3000));

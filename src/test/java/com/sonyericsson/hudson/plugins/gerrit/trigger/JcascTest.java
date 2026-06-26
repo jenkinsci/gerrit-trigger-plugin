@@ -34,11 +34,11 @@ import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import io.jenkins.plugins.casc.ConfigurationAsCode;
 import io.jenkins.plugins.casc.misc.ConfiguredWithCode;
 import io.jenkins.plugins.casc.misc.JenkinsConfiguredWithCodeRule;
+import io.jenkins.plugins.casc.misc.junit.jupiter.WithJenkinsConfiguredWithCode;
 import io.jenkins.plugins.casc.yaml.YamlSource;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.tools.ant.filters.StringInputStream;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
@@ -49,21 +49,19 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
 // CS IGNORE Javadoc FOR NEXT 400 LINES. REASON: Test methods.
-public class JcascTest {
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsConfiguredWithCodeRule j = new JenkinsConfiguredWithCodeRule();
+@WithJenkinsConfiguredWithCode
+class JcascTest {
 
     @Test
     @ConfiguredWithCode("casc.yaml")
-    public void load() throws Exception {
+    void load(JenkinsConfiguredWithCodeRule j) throws Exception {
         verifyDefaultSetup(true);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {

@@ -36,51 +36,51 @@ import hudson.model.ParameterValue;
 import hudson.model.StringParameterValue;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.WithoutJenkins;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link GerritTriggerParameters}.
  *
  * @author <a href="robert.sandell@sonymobile.com">Robert Sandell</a>
  */
-public class GerritTriggerParametersTest {
+@WithJenkins
+class GerritTriggerParametersTest {
 
     /**
      * Jenkins rule instance.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private MockGerritHudsonTriggerConfig config;
 
     /**
      * Run before every test to setup some mocks.
+     *
+     * @param rule the jenkins rule
      */
-    @Before
-    public void setup() {
-        if (j.jenkins != null) {
-            config = Setup.createConfig();
-            GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
-            server.setConfig(config);
-            PluginImpl plugin = PluginImpl.getInstance();
-            assertNotNull(plugin);
-            plugin.setServers(Collections.singletonList(server));
-        } //else running @WithoutJenkins
+    @BeforeEach
+    void setup(JenkinsRule rule) {
+        j = rule;
+        config = Setup.createConfig();
+        GerritServer server = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
+        server.setConfig(config);
+        PluginImpl plugin = PluginImpl.getInstance();
+        assertNotNull(plugin);
+        plugin.setServers(Collections.singletonList(server));
     }
 
     // CS IGNORE LineLength FOR NEXT 3 LINES. REASON: JavaDoc.
@@ -91,10 +91,10 @@ public class GerritTriggerParametersTest {
      * @throws Exception if so
      */
     @Test
-    public void setOrCreateParametersProviderUrl() throws Exception {
+    void setOrCreateParametersProviderUrl() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         AbstractProject project = j.createFreeStyleProject();
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);
@@ -109,12 +109,12 @@ public class GerritTriggerParametersTest {
      * @throws Exception if so
      */
     @Test
-    public void setOrCreateParametersUrlNoProvider() throws Exception {
+    void setOrCreateParametersUrlNoProvider() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         created.setProvider(null);
         AbstractProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);
@@ -129,21 +129,22 @@ public class GerritTriggerParametersTest {
      * @throws Exception if so
      */
     @Test
-    public void setOrCreateParametersUrlNoProviderAnyServer() throws Exception {
+    void setOrCreateParametersUrlNoProviderAnyServer() throws Exception {
         PatchsetCreated created = Setup.createPatchsetCreated();
         created.setProvider(null);
         AbstractProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setServerName(GerritServer.ANY_SERVER);
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(created, project, parameters);
         StringParameterValue param = findParameter(GerritTriggerParameters.GERRIT_CHANGE_URL, parameters);
         assertNotNull(param);
         assertTrue(param.value.startsWith(config.getGerritFrontEndUrl()));
     }
 
-    @Test @WithoutJenkins
-    public void testGetUpdatedApprovals() {
+    @Test
+    @WithoutJenkins
+    void testGetUpdatedApprovals() {
         JSONArray approvals = new JSONArray();
         JSONObject approval = new JSONObject();
         approval
@@ -188,12 +189,12 @@ public class GerritTriggerParametersTest {
      * @throws Exception if so
      */
     @Test
-    public void testHashtagsInParameter() throws Exception {
+    void testHashtagsInParameter() throws Exception {
         HashtagsChanged hashtagsChanged = Setup.createHashtagsChanged();
         AbstractProject project = j.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setServerName(GerritServer.ANY_SERVER);
-        LinkedList<ParameterValue> parameters = new LinkedList<ParameterValue>();
+        LinkedList<ParameterValue> parameters = new LinkedList<>();
         GerritTriggerParameters.setOrCreateParameters(hashtagsChanged, project, parameters);
         StringParameterValue hashtags = findParameter(GerritTriggerParameters.GERRIT_HASHTAGS, parameters);
         StringParameterValue addedHashtags = findParameter(GerritTriggerParameters.GERRIT_ADDED_HASHTAGS, parameters);
@@ -203,12 +204,9 @@ public class GerritTriggerParametersTest {
         assertNotNull(hashtags);
         assertNotNull(addedHashtags);
         assertNotNull(removedHashtags);
-        assertEquals(hashtagsChanged.getHashtags().stream()
-                .collect(Collectors.joining(",")), hashtags.getValue());
-        assertEquals(hashtagsChanged.getAddedHashtags().stream()
-                .collect(Collectors.joining(",")), addedHashtags.getValue());
-        assertEquals(hashtagsChanged.getRemovedHashtags().stream()
-                .collect(Collectors.joining(",")), removedHashtags.getValue());
+        assertEquals(String.join(",", hashtagsChanged.getHashtags()), hashtags.getValue());
+        assertEquals(String.join(",", hashtagsChanged.getAddedHashtags()), addedHashtags.getValue());
+        assertEquals(String.join(",", hashtagsChanged.getRemovedHashtags()), removedHashtags.getValue());
     }
 
     /**

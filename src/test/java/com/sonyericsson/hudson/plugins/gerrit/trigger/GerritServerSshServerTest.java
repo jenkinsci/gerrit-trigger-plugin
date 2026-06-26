@@ -9,31 +9,31 @@ import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * {@link GerritServerHudsonTest}s that requires a {@link SshdServerMock}.
  *
  * Extracted for isolation in debugging.
  */
-public class GerritServerSshServerTest {
+@WithJenkins
+class GerritServerSshServerTest {
 
     // CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: Test data.
 
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private final String gerritServerOneName = "testServer1";
     private final String gerritServerTwoName = "testServer2";
@@ -51,10 +51,13 @@ public class GerritServerSshServerTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         sshKey = SshdServerMock.generateKeyPair();
 
         serverOne = new SshdServerMock();
@@ -76,8 +79,8 @@ public class GerritServerSshServerTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         gerritServerOne.stop();
         gerritServerTwo.stop();
         serverOne.stopServer(sshdOne);
@@ -93,7 +96,7 @@ public class GerritServerSshServerTest {
      * @throws Exception Error creating job.
      */
     @Test
-    public void testTriggeringFromMultipleGerritServers() throws Exception {
+    void testTriggeringFromMultipleGerritServers() throws Exception {
         gerritServerOne = new GerritServer(gerritServerOneName);
         gerritServerTwo = new GerritServer(gerritServerTwoName);
         SshdServerMock.configureFor(sshdOne, sshKey, gerritServerOne);

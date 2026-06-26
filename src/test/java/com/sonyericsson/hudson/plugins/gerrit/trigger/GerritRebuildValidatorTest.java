@@ -1,30 +1,36 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import static org.junit.Assert.assertNotNull;
-
 import hudson.ExtensionList;
 import hudson.model.Action;
 import hudson.model.FreeStyleProject;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Tests for {@link GerritRebuildValidator}.
  */
-public class GerritRebuildValidatorTest {
+@WithJenkins
+class GerritRebuildValidatorTest {
 
     /**
      * An instance of {@link JenkinsRule}.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     @Issue("JENKINS-72409")
     @Test
-    public void testRebuildValidatorStackOverflow() throws Exception {
+    void testRebuildValidatorStackOverflow() throws Exception {
         assertNotNull(ExtensionList.lookupSingleton(GerritRebuildValidator.class));
         FreeStyleProject p = j.createFreeStyleProject();
         j.assertBuildStatusSuccess(p.scheduleBuild2(0, null, new Action[0]));

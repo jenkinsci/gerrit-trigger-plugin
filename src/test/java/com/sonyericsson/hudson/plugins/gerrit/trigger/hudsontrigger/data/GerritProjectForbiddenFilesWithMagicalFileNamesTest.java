@@ -25,37 +25,31 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 
-import org.junit.Test;
-
 import java.util.LinkedList;
-import java.util.List;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import org.junit.jupiter.api.Test;
+import java.util.List;
 
 /**
  * Testing if magical file names are ignored with Forbidden File Paths and do not make change interesting.
  * @author Adam Romanek&lt;romanek.adam@gmail.com&gt;
  */
-public class GerritProjectForbiddenFilesWithMagicalFileNamesTest {
-
-    /**
-     * Constructor.
-     */
-    public GerritProjectForbiddenFilesWithMagicalFileNamesTest() {
-    }
+class GerritProjectForbiddenFilesWithMagicalFileNamesTest {
 
     /**
      * Tests.
      */
     @Test
-    public void testMagicalFileNamesDoNotMakeChangeInteresting() {
-        List<Branch> branches = new LinkedList<Branch>();
+    void testMagicalFileNamesDoNotMakeChangeInteresting() {
+        List<Branch> branches = new LinkedList<>();
         branches.add(new Branch(CompareType.PLAIN, "master"));
-        List<Topic> topics = new LinkedList<Topic>();
-        List<FilePath> filePaths = new LinkedList<FilePath>();
-        List<FilePath> forbiddenFilePaths = new LinkedList<FilePath>();
+        List<Topic> topics = new LinkedList<>();
+        List<FilePath> filePaths = new LinkedList<>();
+        List<FilePath> forbiddenFilePaths = new LinkedList<>();
         forbiddenFilePaths.add(new FilePath(CompareType.ANT, "README.md"));
-        List<String> files = new LinkedList<String>();
+        List<String> files = new LinkedList<>();
         files.add("/COMMIT_MSG");
         files.add("/MERGE_LIST");
         files.add("/PATCHSET_LEVEL");

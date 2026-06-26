@@ -27,13 +27,14 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.version;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -42,7 +43,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for the version checking of Gerrit.
  */
-public class VersionCheckTest {
+class VersionCheckTest {
 
     private final String testServer = "server";
     private GerritServer server;
@@ -51,8 +52,8 @@ public class VersionCheckTest {
     /**
      * Pre setup for all tests.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         pluginMockedStatic = mockStatic(PluginImpl.class);
         PluginImpl plugin = mock(PluginImpl.class);
         server = mock(GerritServer.class);
@@ -61,8 +62,8 @@ public class VersionCheckTest {
         pluginMockedStatic.when(() -> PluginImpl.getServer_(eq(testServer))).thenReturn(server);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         pluginMockedStatic.close();
     }
 
@@ -70,7 +71,7 @@ public class VersionCheckTest {
      * Tests that the gerrit version is high enough to run the file trigger feature.
      */
     @Test
-    public void testHighEnoughVersion() {
+    void testHighEnoughVersion() {
         when(server.getGerritVersion()).thenReturn("2.3.1-450");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
@@ -79,7 +80,7 @@ public class VersionCheckTest {
      * Tests that the gerrit version is not high enough to run the file trigger feature.
      */
     @Test
-    public void testNotHighEnoughVersion() {
+    void testNotHighEnoughVersion() {
         when(server.getGerritVersion()).thenReturn("2.2.2.1-150");
         assertFalse(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
@@ -88,7 +89,7 @@ public class VersionCheckTest {
      * Tests that the gerrit version is not high enough to run the file trigger feature.
      */
     @Test
-    public void testUnknownVersionEmpty() {
+    void testUnknownVersionEmpty() {
         when(server.getGerritVersion()).thenReturn("");
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger, testServer));
     }
@@ -97,7 +98,7 @@ public class VersionCheckTest {
      * Tests that the gerrit version is not high enough to run the file trigger feature.
      */
     @Test
-    public void testUnknownVersionNull() {
+    void testUnknownVersionNull() {
         when(server.getGerritVersion()).thenReturn(null);
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger , testServer));
     }
@@ -106,7 +107,7 @@ public class VersionCheckTest {
      * Tests that the gerrit version is a snapshot and therefore high enough to run the file trigger feature..
      */
     @Test
-    public void testSnapshotVersion() {
+    void testSnapshotVersion() {
         String version = "2.2.2.1-340-g47084d4";
         when(server.getGerritVersion()).thenReturn(version);
         assertTrue(GerritVersionChecker.isCorrectVersion(GerritVersionChecker.Feature.fileTrigger , testServer));

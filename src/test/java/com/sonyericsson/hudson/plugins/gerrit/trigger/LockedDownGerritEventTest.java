@@ -26,9 +26,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.io.IOException;
@@ -48,10 +48,10 @@ import hudson.model.Result;
 
 import jenkins.model.Jenkins;
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.Issue;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -63,6 +63,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Unit test to ensure build can be triggered even if
@@ -70,14 +71,13 @@ import org.jvnet.hudson.test.MockAuthorizationStrategy;
  *
  * @author Scott Hebert &lt;scott.hebert@ericsson.com&gt;
  */
-public class LockedDownGerritEventTest {
+@WithJenkins
+class LockedDownGerritEventTest {
 
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     //private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
@@ -91,10 +91,13 @@ public class LockedDownGerritEventTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         sshKey = SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -110,8 +113,8 @@ public class LockedDownGerritEventTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
     }
@@ -130,7 +133,7 @@ public class LockedDownGerritEventTest {
      * @throws Exception throw if so.
      */
     @Test
-    public void testTriggerWithLockedDownInstance() throws Exception {
+    void testTriggerWithLockedDownInstance() throws Exception {
         FreeStyleProject project = DuplicatesUtil.createGerritTriggeredJob(j, projectName);
 
         Setup.lockDown(j);
@@ -167,8 +170,8 @@ public class LockedDownGerritEventTest {
      * @throws Exception if so
      */
     @Test
-    @Issue({"SECURITY-402", "SECURITY-403" })
-    public void testUserCanConfigureAJob() throws Exception {
+    @Issue({"SECURITY-402", "SECURITY-403"})
+    void testUserCanConfigureAJob() throws Exception {
 
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         SshdServerMock.configureFor(sshd, gerritServer);
@@ -212,8 +215,8 @@ public class LockedDownGerritEventTest {
      * @throws Exception if so
      */
     @Test
-    @Issue({"SECURITY-402", "SECURITY-403" })
-    public void testOnlyAdminCanPerformServerConfigurationActions() throws Exception {
+    @Issue({"SECURITY-402", "SECURITY-403"})
+    void testOnlyAdminCanPerformServerConfigurationActions() throws Exception {
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);
@@ -241,8 +244,9 @@ public class LockedDownGerritEventTest {
      *
      * @throws Exception if so
      */
-    @Test @Issue("SECURITY-1527")
-    public void testGetTestConnectionNotWorking() throws Exception {
+    @Test
+    @Issue("SECURITY-1527")
+    void testGetTestConnectionNotWorking() throws Exception {
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);
@@ -283,8 +287,9 @@ public class LockedDownGerritEventTest {
      *
      * @throws Exception if so
      */
-    @Test @Issue("SECURITY-1527")
-    public void testPostTestConnectionNotWorking() throws Exception {
+    @Test
+    @Issue("SECURITY-1527")
+    void testPostTestConnectionNotWorking() throws Exception {
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);
@@ -324,8 +329,9 @@ public class LockedDownGerritEventTest {
      *
      * @throws Exception if so
      */
-    @Test @Issue("SECURITY-1527")
-    public void testPostTestConnectionWorking() throws Exception {
+    @Test
+    @Issue("SECURITY-1527")
+    void testPostTestConnectionWorking() throws Exception {
         GerritServer gerritServer = new GerritServer(PluginImpl.DEFAULT_SERVER_NAME);
         SshdServerMock.configureFor(sshd, gerritServer);
         PluginImpl.getInstance().addServer(gerritServer);

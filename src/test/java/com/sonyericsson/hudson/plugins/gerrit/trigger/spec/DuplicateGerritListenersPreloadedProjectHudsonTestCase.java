@@ -46,10 +46,11 @@ import hudson.model.Item;
 import hudson.model.TopLevelItem;
 import org.apache.commons.io.IOUtils;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -84,11 +85,11 @@ import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 import static org.hamcrest.Matchers.iterableWithSize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 400 LINES. REASON: testdata.
 
@@ -99,32 +100,33 @@ import static org.junit.Assert.assertTrue;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
+@WithJenkins
+class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private Collection<GerritEventListener> originalListeners;
 
     /**
      * Save the initial listeners so verification can focus on those that are introduced during test.
+     *
+     * @param rule the jenkins rule
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup(JenkinsRule rule) {
+        j = rule;
         originalListeners = getGerritEventListeners();
     }
 
     /**
      * Tests that the trigger is added as a listener during startup of the server.
      *
-     * @throws Exception if so.
      */
     @Test
     @LocalData
-    public void testProject() throws Exception {
+    void testProject() {
         assertNrOfEventListeners(0);
     }
 
@@ -135,7 +137,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     @Test
     @LocalData
-    public void testCreateNewProject() throws Exception {
+    void testCreateNewProject() throws Exception {
         @SuppressWarnings("unused")
         FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
         assertNrOfEventListeners(1);
@@ -148,7 +150,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     @Test
     @LocalData
-    public void testReconfigureNewProject() throws Exception {
+    void testReconfigureNewProject() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testing1");
 
         assertNrOfEventListeners(1);
@@ -164,7 +166,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     @Test
     @LocalData
-    public void testReconfigureUsingRestApi() throws Exception {
+    void testReconfigureUsingRestApi() throws Exception {
         assertNrOfEventListeners(0);
         TopLevelItem testProj = j.jenkins.getItem("testProj");
         String gerritProjectPattern = "someotherproject";
@@ -189,7 +191,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     @Test
     @LocalData
-    public void testReconfigureUsingCli() throws Exception {
+    void testReconfigureUsingCli() throws Exception {
         assertNrOfEventListeners(0);
         TopLevelItem testProj = j.jenkins.getItem("testProj");
         String gerritProjectPattern = "someotherproject";
@@ -197,7 +199,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
         String xml = changeConfigXml(gerritProjectPattern, document);
 
         List<String> cmd = javaCliJarCmd("update-job", testProj.getFullName());
-        Process process = Runtime.getRuntime().exec(cmd.toArray(new String[cmd.size()]));
+        Process process = Runtime.getRuntime().exec(cmd.toArray(new String[0]));
         OutputStream output = process.getOutputStream();
         IOUtils.write(xml, output);
         IOUtils.closeQuietly(output);
@@ -252,7 +254,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
                     "com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener")) {
                 found = true;
                 GerritTrigger trigger = (GerritTrigger)getTrigger.invoke(listener);
-                assertNotNull("No Trigger for EventListener", trigger);
+                assertNotNull(trigger, "No Trigger for EventListener");
                 assertSame(Whitebox.getInternalState(trigger, "job"), j.jenkins.getItem("testProj"));
                 List<GerritProject> projectList = trigger.getGerritProjects();
                 assertEquals(2, projectList.size());
@@ -260,12 +262,13 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
                 for (GerritProject project : projectList) {
                     if (gerritProjectPattern.equals(project.getPattern())) {
                         foundSomeOtherProject = true;
+                        break;
                     }
                 }
-                assertTrue("Could not find " + gerritProjectPattern, foundSomeOtherProject);
+                assertTrue(foundSomeOtherProject, "Could not find " + gerritProjectPattern);
             }
         }
-        assertTrue("No EventListener", found);
+        assertTrue(found, "No EventListener");
     }
 
     /**
@@ -326,7 +329,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      */
     Document loadConfigXmlViaCli(TopLevelItem job) throws Exception {
         List<String> cmd = javaCliJarCmd("get-job", job.getFullName());
-        Process process = Runtime.getRuntime().exec(cmd.toArray(new String[cmd.size()]));
+        Process process = Runtime.getRuntime().exec(cmd.toArray(new String[0]));
         String xml = IOUtils.toString(process.getInputStream());
 
         assertEquals(0, process.waitFor());
@@ -347,7 +350,7 @@ public class DuplicateGerritListenersPreloadedProjectHudsonTestCase {
      * @throws URISyntaxException if so
      */
     List<String> javaCliJarCmd(String... cmd) throws IOException, URISyntaxException {
-        List<String> commands = new ArrayList<String>(cmd.length + 5);
+        List<String> commands = new ArrayList<>(cmd.length + 5);
         commands.add(String.format("%s/bin/java", System.getProperty("java.home")));
         commands.add("-jar");
         commands.add(new File(j.jenkins.getJnlpJars("jenkins-cli.jar").getURL().toURI()).getAbsolutePath());

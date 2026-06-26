@@ -40,13 +40,12 @@ import hudson.model.AbstractProject;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.MockedStatic;
+import org.junit.jupiter.api.AfterEach;
 
-import java.io.IOException;
+import jenkins.model.Jenkins;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -62,7 +61,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class SpecGerritVerifiedSetterTest {
+class SpecGerritVerifiedSetterTest {
 
     private TaskListener taskListener;
     private GerritCmdRunner mockGerritCmdRunner;
@@ -80,8 +79,8 @@ public class SpecGerritVerifiedSetterTest {
      *
      * @throws Exception if so
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         messageProviderMockedStatic = mockStatic(GerritMessageProvider.class);
         messageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(null);
 
@@ -118,8 +117,8 @@ public class SpecGerritVerifiedSetterTest {
         triggeredBuildListenerMockedStatic.when(GerritTriggeredBuildListener::all).thenReturn(mock(ExtensionList.class));
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         messageProviderMockedStatic.close();
         jenkinsMockedStatic.close();
         triggeredBuildListenerMockedStatic.close();
@@ -129,12 +128,9 @@ public class SpecGerritVerifiedSetterTest {
     /**
      * A test.
      *
-     * @throws IOException          IOException
-     * @throws InterruptedException InterruptedException
      */
     @Test
-    public void shouldCallGerritWithVerifiedOkFlagWhenBuildWasSuccessful()
-            throws IOException, InterruptedException {
+    void shouldCallGerritWithVerifiedOkFlagWhenBuildWasSuccessful() {
 
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
@@ -160,12 +156,9 @@ public class SpecGerritVerifiedSetterTest {
     /**
      * A test.
      *
-     * @throws IOException          IOException
-     * @throws InterruptedException InterruptedException
      */
     @Test
-    public void shouldCallGerritWithVerifiedRejectFlagWhenBuildWasNotSuccessful()
-            throws IOException, InterruptedException {
+    void shouldCallGerritWithVerifiedRejectFlagWhenBuildWasNotSuccessful() {
 
         when(build.getResult()).thenReturn(Result.FAILURE);
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -190,12 +183,11 @@ public class SpecGerritVerifiedSetterTest {
     /**
      * A test.
      *
-     * @throws IOException          IOException
-     * @throws InterruptedException InterruptedException
+     * @throws Exception          Exception
      */
     @Test
-    public void shouldCallGerritWithVerifiedFailedFlagWhenBuildOneBuildFailedAndAnotherSuccessful()
-            throws IOException, InterruptedException {
+    void shouldCallGerritWithVerifiedFailedFlagWhenBuildOneBuildFailedAndAnotherSuccessful()
+            throws Exception {
 
         when(build.getResult()).thenReturn(Result.SUCCESS);
 

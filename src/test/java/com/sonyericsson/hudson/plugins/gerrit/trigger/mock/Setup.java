@@ -72,7 +72,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.junit.Assert;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
 
@@ -83,7 +83,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -516,7 +516,7 @@ public final class Setup {
         patch.setNumber("1");
         patch.setRevision("9999");
         event.setPatchset(patch);
-        List<Approval> approvals = new LinkedList<Approval>();
+        List<Approval> approvals = new LinkedList<>();
         Approval approval = new Approval();
         approval.setType("Code-Review");
         approval.setValue("1");
@@ -679,7 +679,7 @@ public final class Setup {
      */
     public static GerritTrigger createDefaultTrigger(Job job) {
         PluginPatchsetCreatedEvent pluginEvent = new PluginPatchsetCreatedEvent();
-        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<>();
         triggerOnEvents.add(pluginEvent);
         boolean silentMode = true;
         boolean silentStart = false;
@@ -713,7 +713,7 @@ public final class Setup {
                 } else if (job instanceof WorkflowJob) {
                     ((WorkflowJob)job).addTrigger(trigger);
                 } else {
-                    Assert.fail("Unsupported Job type: " + job.getClass().getName());
+                    fail("Unsupported Job type: " + job.getClass().getName());
                 }
             } catch (IOException e) {
                 // for the sake of testing this should be ok
@@ -732,7 +732,7 @@ public final class Setup {
      */
     public static GerritTrigger createRefUpdatedTrigger(Job job) {
         PluginRefUpdatedEvent pluginEvent = new PluginRefUpdatedEvent();
-        List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+        List<PluginGerritEvent> triggerOnEvents = new LinkedList<>();
         triggerOnEvents.add(pluginEvent);
         boolean silentMode = true;
         boolean silentStart = false;
@@ -749,7 +749,7 @@ public final class Setup {
                 } else if (job instanceof WorkflowJob) {
                     ((WorkflowJob)job).addTrigger(trigger);
                 } else {
-                    Assert.fail("Unsupported Job type: " + job.getClass().getName());
+                    fail("Unsupported Job type: " + job.getClass().getName());
                 }
             } catch (IOException e) {
                 // for the sake of testing this should be ok
@@ -780,8 +780,7 @@ public final class Setup {
         GerritTrigger trigger = Setup.createGerritTrigger(build);
         when(trigger.getBuildUnsuccessfulFilepath()).thenReturn(filepath);
 
-        ToGerritRunListener toGerritRunListener = spy(new ToGerritRunListener());
-        return toGerritRunListener;
+        return spy(new ToGerritRunListener());
     }
 
     /**
@@ -790,7 +789,7 @@ public final class Setup {
      */
     public static List<VerdictCategory> createCodeReviewVerdictCategoryList() {
         VerdictCategory cat = new VerdictCategory("Code-Review", "Code review");
-        List<VerdictCategory> list = new LinkedList<VerdictCategory>();
+        List<VerdictCategory> list = new LinkedList<>();
         list.add(cat);
         return list;
     }
@@ -951,9 +950,8 @@ public final class Setup {
     /**
      * Lock down the instance.
      * @param j JenkinsRule.
-     * @throws Exception throw if so.
      */
-    public static void lockDown(JenkinsRule j) throws Exception {
+    public static void lockDown(JenkinsRule j) {
         SecurityRealm securityRealm = j.createDummySecurityRealm();
         j.getInstance().setSecurityRealm(securityRealm);
         j.getInstance().setAuthorizationStrategy(
@@ -963,9 +961,8 @@ public final class Setup {
     /**
      * Unlock the instance.
      * @param j JenkinsRule.
-     * @throws Exception throw if so.
      */
-    public static void unLock(JenkinsRule j) throws Exception {
+    public static void unLock(JenkinsRule j) {
         j.getInstance().setSecurityRealm(SecurityRealm.NO_AUTHENTICATION);
     }
 

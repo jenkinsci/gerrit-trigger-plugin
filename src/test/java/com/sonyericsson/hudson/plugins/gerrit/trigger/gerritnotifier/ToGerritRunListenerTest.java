@@ -46,10 +46,11 @@ import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.TaskListener;
+import org.junit.jupiter.api.AfterEach;
+
 import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.io.File;
@@ -59,7 +60,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -81,7 +82,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ToGerritRunListenerTest {
+class ToGerritRunListenerTest {
 
     private GerritNotifier mockNotifier;
     private GerritNotifierFactory mockNotificationFactory;
@@ -95,10 +96,9 @@ public class ToGerritRunListenerTest {
     /**
      * Creates a new static mock of GerritNotifier before each test.
      *
-     * @throws Exception if so.
      */
-    @Before
-    public void setup() throws Exception {
+    @BeforeEach
+    void setup() {
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
@@ -118,8 +118,8 @@ public class ToGerritRunListenerTest {
         when(server.getName()).thenReturn(PluginImpl.DEFAULT_SERVER_NAME);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
         mockGerritNotifierFactoryMockedStatic.close();
         pluginMockedStatic.close();
@@ -129,10 +129,9 @@ public class ToGerritRunListenerTest {
      * Returns a mocked version of an AbstractProject, where getFullName() returns the provided name.
      *
      * @param fullName - the name of the project.
-     * @throws Exception if so.
      * @return a mock.
      */
-    private AbstractProject mockProject(String fullName) throws Exception {
+    private AbstractProject mockProject(String fullName) {
         AbstractProject project = mock(AbstractProject.class);
         doReturn(fullName).when(project).getFullName();
         when(jenkins.getItemByFullName(eq(fullName), same(AbstractProject.class))).thenReturn(project);
@@ -165,7 +164,7 @@ public class ToGerritRunListenerTest {
         doReturn(envVars).when(build).getEnvironment();
         doReturn(envVars).when(build).getEnvironment(any(TaskListener.class));
 
-        Map<String, String> buildVarsMap = new HashMap<String, String>();
+        Map<String, String> buildVarsMap = new HashMap<>();
         buildVarsMap.put("BUILD_NUM", Integer.toString(buildNumber));
         when(build.getBuildVariables()).thenReturn(buildVarsMap);
 
@@ -179,7 +178,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnCompleted() throws Exception {
+    void testOnCompleted() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -211,7 +210,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnCompletedSilentMode() throws Exception {
+    void testOnCompletedSilentMode() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -237,7 +236,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testObtainUnsuccessfulMessageNoFilepathConfigured() throws Exception {
+    void testObtainUnsuccessfulMessageNoFilepathConfigured() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = spy(Setup.createPatchsetCreated());
 
@@ -258,7 +257,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testObtainUnsuccessfulMessageNoMatchingFiles() throws Exception {
+    void testObtainUnsuccessfulMessageNoMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         FilePath[] fileList = {};
         String filepath = "error-file*.txt";
@@ -282,7 +281,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testObtainUnsuccessfulMessageWithMatchingFiles() throws Exception {
+    void testObtainUnsuccessfulMessageWithMatchingFiles() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         String filepath = "error-file*.txt";
         String message = "This is the failure";
@@ -315,7 +314,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnStarted() throws Exception {
+    void testOnStarted() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -343,7 +342,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testOnStartedSilentMode() throws Exception {
+    void testOnStartedSilentMode() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -365,10 +364,9 @@ public class ToGerritRunListenerTest {
      * Tests {@link ToGerritRunListener#onTriggered(hudson.model.Job,
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent)}.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testOnTriggered() throws Exception {
+    void testOnTriggered() {
         AbstractProject project = mockProject("projectX");
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -384,10 +382,9 @@ public class ToGerritRunListenerTest {
      * Tests {@link ToGerritRunListener#onRetriggered(hudson.model.Job,
      * com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent, java.util.List)}.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testOnRetriggered() throws Exception {
+    void testOnRetriggered() {
         AbstractProject project = mockProject("projectX");
         ManualPatchsetCreated event = Setup.createManualPatchsetCreated();
         event = spy(event);
@@ -406,13 +403,13 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testCleanUpGerritCausesOne() throws Exception {
+    void testCleanUpGerritCausesOne() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         when(causeAction.getCauses()).thenReturn(causes);
         when(build.getAction(CauseAction.class)).thenReturn(causeAction);
@@ -431,13 +428,13 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testCleanUpGerritCausesThree() throws Exception {
+    void testCleanUpGerritCausesThree() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(cause);
         causes.add(cause);
@@ -458,13 +455,13 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testCleanUpGerritCausesThreeInstances() throws Exception {
+    void testCleanUpGerritCausesThreeInstances() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause cause = new GerritCause(event, true);
         when(build.getCause(GerritCause.class)).thenReturn(cause);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(new GerritCause(event, true));
         causes.add(new GerritCause(event, true));
@@ -485,7 +482,7 @@ public class ToGerritRunListenerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testCleanUpGerritCausesOneManual() throws Exception {
+    void testCleanUpGerritCausesOneManual() throws Exception {
         AbstractBuild build = mockBuild("projectX", 2);
         PatchsetCreated event = Setup.createPatchsetCreated();
         GerritCause cause = new GerritCause(event, true);
@@ -494,7 +491,7 @@ public class ToGerritRunListenerTest {
         manualCause.setEvent(event);
         manualCause.setSilentMode(true);
         CauseAction causeAction = mock(CauseAction.class);
-        List<Cause> causes = new LinkedList<Cause>();
+        List<Cause> causes = new LinkedList<>();
         causes.add(cause);
         causes.add(manualCause);
         causes.add(cause);

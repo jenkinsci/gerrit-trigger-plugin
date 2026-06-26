@@ -2,24 +2,25 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.event;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginHashtagsChangedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.HashtagsChanged;
+
+import org.junit.jupiter.api.Test;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.TopicChanged;
 
-import org.junit.Test;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for {@link PluginHashtagsChangedEvent}.
  */
-public class PluginHashtagsChangedEventTest {
+class PluginHashtagsChangedEventTest {
 
     /**
      * Tests that it should fire on all type of patchset.
      */
     @Test
-    public void shouldFireOnHashtagsChanged() {
+    void shouldFireOnHashtagsChanged() {
         PluginHashtagsChangedEvent pluginHashtagsChangedEvent =
                 new PluginHashtagsChangedEvent(".*Hashtag.*");
         HashtagsChanged hashtagsChanged = Setup.createHashtagsChanged();
@@ -37,7 +38,7 @@ public class PluginHashtagsChangedEventTest {
      * Tests that it should not fire on draft patchset when they are excluded.
      */
     @Test
-    public void hashtagsRegExCheck() {
+    void hashtagsRegExCheck() {
         PluginHashtagsChangedEvent pluginHashtagsChangedEvent =
                 new PluginHashtagsChangedEvent("mHashtags.*");
         HashtagsChanged hashtagsChanged = Setup.createHashtagsChanged();

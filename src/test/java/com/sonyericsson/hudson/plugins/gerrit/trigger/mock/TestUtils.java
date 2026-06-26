@@ -37,7 +37,6 @@ import hudson.model.AbstractProject;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -96,7 +95,7 @@ public final class TestUtils {
      * @return the reference of future build to start.
      */
     public static AtomicReference<Run> getFutureBuildToStart(GerritEventLifecycle event) {
-        final AtomicReference<Run> reference = new AtomicReference<Run>();
+        final AtomicReference<Run> reference = new AtomicReference<>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
             public void buildStarted(GerritEvent event, Run build) {
@@ -113,7 +112,7 @@ public final class TestUtils {
      * @return the reference of future build to start.
      */
     public static AtomicReference<Run> getFutureBuildToStart2(GerritEventLifecycle event) {
-        final AtomicReference<Run> reference = new AtomicReference<Run>();
+        final AtomicReference<Run> reference = new AtomicReference<>();
         event.addListener(new GerritEventLifeCycleAdaptor() {
             @Override
             public void buildStarted(GerritEvent event, Run build) {
@@ -177,11 +176,9 @@ public final class TestUtils {
             } catch (InterruptedException e) {
                 System.err.println("Interrupted while waiting!");
             }
-            final Iterator<Run> iterator = project._getRuns().iterator();
-            while (iterator.hasNext()) {
-                final Run next = iterator.next();
+            for (Run next : (Iterable<Run>)project._getRuns()) {
                 Cause cause = next.getCause(GerritCause.class);
-                if (cause != null && cause instanceof GerritCause) {
+                if (cause instanceof GerritCause) {
                     if (cbe.equals(((GerritCause)cause).getEvent())) {
                         if (next.isBuilding()) {
                             returnBuild = (AbstractBuild)next;
@@ -229,10 +226,10 @@ public final class TestUtils {
      */
     public static class JobBuilder {
         private static final String DEFAULT_JOB_NAME = "gerritProjectX";
-        private JenkinsRule j;
+        private final JenkinsRule j;
         private String jobName;
 
-        private List<GerritProject> projects = new ArrayList<GerritProject>();
+        private final List<GerritProject> projects = new ArrayList<>();
         private String serverName = PluginImpl.DEFAULT_SERVER_NAME;
         private boolean silentMode = false;
         private boolean silentStartMode = false;
@@ -267,8 +264,8 @@ public final class TestUtils {
          * @return this
          */
         public JobBuilder project(CompareType compareType, String pattern, Branch... branches) {
-            List<Branch> bs = new ArrayList<Branch>();
-            if (branches == null || branches.length <= 0) {
+            List<Branch> bs = new ArrayList<>();
+            if (branches == null || branches.length == 0) {
                 bs.add(new Branch(CompareType.ANT, "**"));
             } else {
                 Collections.addAll(bs, branches);

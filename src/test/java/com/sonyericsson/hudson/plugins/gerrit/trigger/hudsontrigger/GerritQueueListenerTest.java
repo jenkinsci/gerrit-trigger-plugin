@@ -37,20 +37,23 @@ import java.util.concurrent.TimeUnit;
 
 import jenkins.model.Jenkins;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Tests for {@link ToGerritRunListener}.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritQueueListenerTest {
+@WithJenkins
+class GerritQueueListenerTest {
 
     private static final int TIMEOUT_SECONDS = 60;
     private static final int QUIET_PERIOD = 5;
@@ -58,9 +61,12 @@ public class GerritQueueListenerTest {
     /**
      * Jenkins rule instance.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
-    @Rule
-    public JenkinsRule jenkinsRule = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Tests that event is properly removed if only one project is triggered
@@ -69,8 +75,8 @@ public class GerritQueueListenerTest {
      * @throws Exception if something goes wrong
      */
     @Test
-    public void testCancelledQueueItemIsOnlyTriggeredProject() throws Exception {
-        FreeStyleProject project = jenkinsRule.createFreeStyleProject();
+    void testCancelledQueueItemIsOnlyTriggeredProject() throws Exception {
+        FreeStyleProject project = j.createFreeStyleProject();
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = new GerritCause(event, false);
 
@@ -79,7 +85,7 @@ public class GerritQueueListenerTest {
         project.scheduleBuild2(QUIET_PERIOD, gerritCause);
 
         Item item = waitForBlockedItem(project, TIMEOUT_SECONDS);
-        Queue queue = jenkinsRule.getInstance().getQueue();
+        Queue queue = j.getInstance().getQueue();
         queue.doCancelItem(item.getId());
         assertThat(queue.isEmpty(), equalTo(true));
         assertThat(project.getBuilds().size(), equalTo(0));
@@ -93,9 +99,9 @@ public class GerritQueueListenerTest {
      * @throws Exception if something goes wrong
      */
     @Test
-    public void testCancelledOneQueueItemOfTwo() throws Exception {
-        FreeStyleProject project = jenkinsRule.createFreeStyleProject();
-        FreeStyleProject project2 = jenkinsRule.createFreeStyleProject();
+    void testCancelledOneQueueItemOfTwo() throws Exception {
+        FreeStyleProject project = j.createFreeStyleProject();
+        FreeStyleProject project2 = j.createFreeStyleProject();
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = new GerritCause(event, false);
 
@@ -106,7 +112,7 @@ public class GerritQueueListenerTest {
         QueueTaskFuture<FreeStyleBuild> future2 = project2.scheduleBuild2(QUIET_PERIOD, gerritCause);
 
         Item item = waitForBlockedItem(project, TIMEOUT_SECONDS);
-        Queue queue = jenkinsRule.getInstance().getQueue();
+        Queue queue = j.getInstance().getQueue();
         queue.doCancelItem(item.getId());
         FreeStyleBuild build = future2.get();
         assertThat(queue.isEmpty(), equalTo(true));

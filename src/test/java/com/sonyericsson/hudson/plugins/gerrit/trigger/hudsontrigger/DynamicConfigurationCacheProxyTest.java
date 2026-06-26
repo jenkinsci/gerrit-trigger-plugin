@@ -1,16 +1,17 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -20,7 +21,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for {@link DynamicConfigurationCacheProxy}.
  */
-public class DynamicConfigurationCacheProxyTest {
+class DynamicConfigurationCacheProxyTest {
 
     private static final long REFRESH_INTERVAL_N = -1000L;
     private static final int REFRESH_INTERNAL_P = 1000;
@@ -29,17 +30,16 @@ public class DynamicConfigurationCacheProxyTest {
 
     /**
      * Cleans the cache and sets mocks before every test.
-     * @throws Exception if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         DynamicConfigurationCacheProxy.getInstance().clear();
         dynamicUrlProcessorMockedStatic = mockStatic(GerritDynamicUrlProcessor.class);
         gerritTriggerTimerMockedStatic = mockStatic(GerritTriggerTimer.class);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         dynamicUrlProcessorMockedStatic.close();
         gerritTriggerTimerMockedStatic.close();
     }
@@ -59,7 +59,7 @@ public class DynamicConfigurationCacheProxyTest {
      * @throws Exception if so.
      */
     @Test
-    public void fetchDirectlyWithoutCache() throws Exception {
+    void fetchDirectlyWithoutCache() throws Exception {
         List<GerritProject> expected = Collections.singletonList(mock(GerritProject.class));
         when(GerritDynamicUrlProcessor.fetch(anyString())).thenReturn(expected);
 
@@ -73,7 +73,7 @@ public class DynamicConfigurationCacheProxyTest {
      * @throws Exception if so.
      */
     @Test
-    public void fetchDirectlyWithCache() throws Exception {
+    void fetchDirectlyWithCache() throws Exception {
         List<GerritProject> gerritProjects1 = Collections.singletonList(mock(GerritProject.class));
         List<GerritProject> gerritProjects2 = Collections.singletonList(mock(GerritProject.class));
         dynamicUrlProcessorMockedStatic
@@ -95,7 +95,7 @@ public class DynamicConfigurationCacheProxyTest {
      * @throws Exception if so.
      */
     @Test
-    public void fetchThroughCache() throws Exception {
+    void fetchThroughCache() throws Exception {
         List<GerritProject> gerritProjects1 = Collections.singletonList(mock(GerritProject.class));
         List<GerritProject> gerritProjects2 = Collections.singletonList(mock(GerritProject.class));
         dynamicUrlProcessorMockedStatic

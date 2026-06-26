@@ -24,8 +24,8 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.dependency;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.same;
@@ -64,12 +64,13 @@ import java.util.concurrent.TimeUnit;
 
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import org.junit.jupiter.api.AfterEach;
+
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -88,7 +89,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher}.
  * @author Yannick Bréhon &lt;yannick.brehon@smartmatic.com&gt;
  */
-public class DependencyQueueTaskDispatcherTest {
+class DependencyQueueTaskDispatcherTest {
 
     private DependencyQueueTaskDispatcher dispatcher;
     private Queue queueMock;
@@ -105,8 +106,8 @@ public class DependencyQueueTaskDispatcherTest {
     /**
      * Create DependencyQueueTaskDispatcher with a mocked GerritHandler.
      */
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gerritHandlerMock = mock(GerritHandler.class);
         dispatcher = new DependencyQueueTaskDispatcher(gerritHandlerMock);
         gerritTriggerMock = mock(GerritTrigger.class);
@@ -127,8 +128,8 @@ public class DependencyQueueTaskDispatcherTest {
         runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(toGerritRunListenerMock);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
         runListenerMockedStatic.close();
     }
@@ -137,7 +138,7 @@ public class DependencyQueueTaskDispatcherTest {
      * Test that it should register as event listener on init.
      */
     @Test
-    public void shouldRegisterAsEventListenerOnInit() {
+    void shouldRegisterAsEventListenerOnInit() {
         verify(gerritHandlerMock, times(1)).addListener(dispatcher);
     }
 
@@ -145,19 +146,19 @@ public class DependencyQueueTaskDispatcherTest {
      * Test that it should not block an item the task of which is not an AbstractProject.
      */
     @Test
-    public void shouldNotBlockNonAbstractProjects() {
-        List<Action> actions = new ArrayList<Action>();
+    void shouldNotBlockNonAbstractProjects() {
+        List<Action> actions = new ArrayList<>();
         WaitingItem item = new WaitingItem(Calendar.getInstance(), null, actions);
         CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem(item));
-        assertNull("Build should not be blocked", cause);
+        assertNull(cause, "Build should not be blocked");
     }
 
     /**
      * Test that it should not block item without a gerritCause.
      */
     @Test
-    public void shouldNotBlockItemdWithoutGerritCause() {
-        assertNull("Build should not be blocked", dispatcher.canRun(mock(Queue.Item.class)));
+    void shouldNotBlockItemdWithoutGerritCause() {
+        assertNull(dispatcher.canRun(mock(Queue.Item.class)), "Build should not be blocked");
     }
 
     /**
@@ -167,8 +168,8 @@ public class DependencyQueueTaskDispatcherTest {
      * an empty constructor that do not value to GerritEvent so, let's test it.
      */
     @Test
-    public void shouldNotBlockItemWithGerritCauseWithoutGerritEvent() {
-        assertNull("Build should not be blocked", dispatcher.canRun(createItem(new GerritCause(), null)));
+    void shouldNotBlockItemWithGerritCauseWithoutGerritEvent() {
+        assertNull(dispatcher.canRun(createItem(new GerritCause(), null)), "Build should not be blocked");
     }
 
     /**
@@ -178,45 +179,45 @@ public class DependencyQueueTaskDispatcherTest {
      * actually pulls it from the queue. But at that time, dependency-wise, we don't care anymore.
      */
     @Test
-    public void shouldNotBlockBuildableItem() {
+    void shouldNotBlockBuildableItem() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, null);
 
         CauseOfBlockage cause = dispatcher.canRun(new Queue.BuildableItem((WaitingItem)item));
-        assertNull("Build should not be blocked", cause);
+        assertNull(cause, "Build should not be blocked");
     }
 
     /**
      * Test that it should not block item without GerritTrigger configured.
      */
     @Test
-    public void shouldNotBlockItemWithoutGerritTrigger() {
+    void shouldNotBlockItemWithoutGerritTrigger() {
         Queue.Item item = createItem(new PatchsetCreated(), null);
         when(abstractProjectMock.getTrigger(GerritTrigger.class)).thenReturn(null);
-        assertNull("Build should not be blocked", dispatcher.canRun(item));
+        assertNull(dispatcher.canRun(item), "Build should not be blocked");
     }
 
     /**
      * Test that it should not block item which has no dependencies.
      */
     @Test
-    public void shouldNotBlockItemWithNoDependencies() {
+    void shouldNotBlockItemWithNoDependencies() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, "");
-        assertNull("Build should not be blocked", dispatcher.canRun(item));
+        assertNull(dispatcher.canRun(item), "Build should not be blocked");
     }
 
     /**
      * Test that it should not block item which has null dependencies.
      */
     @Test
-    public void shouldNotBlockItemWithNullDependencies() {
+    void shouldNotBlockItemWithNullDependencies() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, null);
-        assertNull("Build should not be blocked", dispatcher.canRun(item));
+        assertNull(dispatcher.canRun(item), "Build should not be blocked");
     }
 
     /**
@@ -224,31 +225,31 @@ public class DependencyQueueTaskDispatcherTest {
      * onDoneTriggeringAll, the build should wait for the dependency to be done, and then should build.
      */
     @Test
-    public void shouldBlockTriggeringEvents() {
+    void shouldBlockTriggeringEvents() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         dispatcher.onTriggeringAll(patchsetCreated);
         Queue.Item item = createItem(patchsetCreated, "upstream");
         CauseOfBlockage cause = dispatcher.canRun(item);
-        assertNotNull("Build should be blocked", cause);
+        assertNotNull(cause, "Build should be blocked");
         dispatcher.onDoneTriggeringAll(patchsetCreated);
 
         //Setting the dependency as "triggered but not built"
         setBuilding(patchsetCreated, true);
         cause = dispatcher.canRun(item);
-        assertNotNull("Build should be blocked", cause);
+        assertNotNull(cause, "Build should be blocked");
 
         //Setting the dependency as "triggered and built"
         setBuilding(patchsetCreated, false);
         cause = dispatcher.canRun(item);
-        assertNull("Build should not be blocked", cause);
+        assertNull(cause, "Build should not be blocked");
     }
 
     /**
      * Test that an job is waiting for parent if parent was not triggered, but is interested in event.
      */
     @Test
-    public void shouldBlockNonTriggeringButInterestingEvents() {
+    void shouldBlockNonTriggeringButInterestingEvents() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, "upstream");
@@ -257,7 +258,7 @@ public class DependencyQueueTaskDispatcherTest {
         setTriggered(patchsetCreated, false);
 
         CauseOfBlockage cause = dispatcher.canRun(item);
-        assertNotNull("Build should be blocked", cause);
+        assertNotNull(cause, "Build should be blocked");
         assertThat(cause, instanceOf(BecauseWaitingForOtherProjectsToTrigger.class));
     }
 
@@ -298,14 +299,14 @@ public class DependencyQueueTaskDispatcherTest {
      * Test that child job contains the list of builds it depends on as a StringParameters.
      */
     @Test
-    public void unblockedItemContainsParamsFromDependencies() {
+    void unblockedItemContainsParamsFromDependencies() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
                 "refs/changes/1/1/1");
 
         Queue.Item item = createItem(patchsetCreated, "upstream");
         dispatcher.onDoneTriggeringAll(patchsetCreated);
 
-        List<Run> runs = new ArrayList<Run>();
+        List<Run> runs = new ArrayList<>();
         AbstractBuild build = Mockito.mock(AbstractBuild.class);
         runs.add(build);
         when(build.getResult()).thenReturn(Result.SUCCESS);
@@ -332,7 +333,7 @@ public class DependencyQueueTaskDispatcherTest {
      * Test that it should not block a project whose dependencies are all built.
      */
     @Test
-    public void shouldNotBlockIfDependenciesAreBuilt() {
+    void shouldNotBlockIfDependenciesAreBuilt() {
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
             "refs/changes/1/1/1");
         Queue.Item item = createItem(patchsetCreated, "upstream");
@@ -340,7 +341,7 @@ public class DependencyQueueTaskDispatcherTest {
         //Setting the dependency as "triggered and built"
         setBuilding(patchsetCreated, false);
         CauseOfBlockage cause = dispatcher.canRun(item);
-        assertNull("Build should not be blocked", cause);
+        assertNull(cause, "Build should not be blocked");
     }
 
     /**
@@ -348,7 +349,7 @@ public class DependencyQueueTaskDispatcherTest {
      * and then let them run free once triggering is done.
      */
     @Test
-    public void shouldBlockTriggeringManualPatchsetCreated() {
+    void shouldBlockTriggeringManualPatchsetCreated() {
         ManualPatchsetCreated manualPatchsetCreated = spy(Setup.createManualPatchsetCreated());
         //Event notification
         dispatcher.gerritEvent(manualPatchsetCreated);
@@ -356,19 +357,19 @@ public class DependencyQueueTaskDispatcherTest {
         verify(manualPatchsetCreated, times(1)).addListener(dispatcher);
         Queue.Item item = createItem(manualPatchsetCreated, "upstream");
         CauseOfBlockage cause = dispatcher.canRun(item);
-        assertNotNull("Build should be blocked", cause);
+        assertNotNull(cause, "Build should be blocked");
         dispatcher.triggerScanDone(manualPatchsetCreated);
         //Lifecycle handler should be notified of remove listener
         verify(manualPatchsetCreated, times(1)).removeListener(dispatcher);
         //Setting the dependency as "triggered but not built"
         setBuilding(manualPatchsetCreated, true);
         cause = dispatcher.canRun(item);
-        assertNotNull("Build should be blocked", cause);
+        assertNotNull(cause, "Build should be blocked");
         //Setting the dependency as "triggered and built"
         doReturn(false).when(toGerritRunListenerMock).
                 isBuilding(abstractProjectDependencyMock, manualPatchsetCreated);
         cause = dispatcher.canRun(item);
-        assertNull("Build should not be blocked", cause);
+        assertNull(cause, "Build should not be blocked");
     }
 
     /**
@@ -395,7 +396,7 @@ public class DependencyQueueTaskDispatcherTest {
      * @return the queue item
      */
     private Queue.Item createItem(GerritCause gerritCause, String dependency) {
-        List<Action> actions = new ArrayList<Action>();
+        List<Action> actions = new ArrayList<>();
         actions.add(new CauseAction(gerritCause));
 
         abstractProjectMock = mock(AbstractProject.class);

@@ -32,13 +32,15 @@ import hudson.model.ParametersAction;
 import hudson.model.Run;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import jakarta.annotation.Nonnull;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -47,32 +49,33 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.core.StringContains.containsString;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Tests various aspects of {@link GerritTriggerParameters.ParameterMode}.
  *
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  */
-public class ParameterModeJenkinsTest {
+@WithJenkins
+class ParameterModeJenkinsTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
     private FreeStyleProject job;
     private GerritTrigger trigger;
 
     /**
      * Shared setup for all tests.
      *
-     * @throws IOException if so.
+     * @param rule the jenkins rule
+     *
+     * @throws Exception if so.
      */
-    @Before
-    public void setup() throws IOException {
-
+    @BeforeEach
+    void setup(JenkinsRule rule) throws Exception {
+        j = rule;
         MockGerritHudsonTriggerConfig config = Setup.createConfig();
         GerritServer server = new MockGerritServer("gerrit version 2.11.4");
         server.setConfig(config);
@@ -93,7 +96,7 @@ public class ParameterModeJenkinsTest {
     /**
      * Mock Gerrit server with a version.
      */
-    public static class MockGerritServer extends GerritServer {
+    static class MockGerritServer extends GerritServer {
 
         private String version;
 
@@ -101,7 +104,7 @@ public class ParameterModeJenkinsTest {
          * Create Gerrit Server with Version.
          * @param gerritVersion mock version for Gerrit.
          */
-        public MockGerritServer(String gerritVersion) {
+        MockGerritServer(String gerritVersion) {
             super(PluginImpl.DEFAULT_SERVER_NAME);
             version = gerritVersion;
         }
@@ -114,10 +117,11 @@ public class ParameterModeJenkinsTest {
         /**
          * Create server instance.
          */
-        public MockGerritServer() {
+        MockGerritServer() {
             super(PluginImpl.DEFAULT_SERVER_NAME);
         }
     }
+
     /**
      * Tests the default {@link GerritTriggerParameters.ParameterMode#PLAIN}
      * when the build is triggered by a
@@ -126,7 +130,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeDefault() throws Exception {
+    void testNameAndEmailParameterModeDefault() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
         PluginImpl.getHandler_().triggerEvent(Setup.createPatchsetCreatedWithAccounts(ac, ac, ac));
@@ -148,7 +152,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeDefaultChangeAbandoned() throws Exception {
+    void testNameAndEmailParameterModeDefaultChangeAbandoned() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
         trigger.getTriggerOnEvents().add(new PluginChangeAbandonedEvent());
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
@@ -176,7 +180,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeDefaultTopicChanged() throws Exception {
+    void testNameAndEmailParameterModeDefaultTopicChanged() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
         trigger.getTriggerOnEvents().add(new PluginTopicChangedEvent());
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
@@ -205,7 +209,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeDefaultChangeRestored() throws Exception {
+    void testNameAndEmailParameterModeDefaultChangeRestored() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
         trigger.getTriggerOnEvents().add(new PluginChangeRestoredEvent());
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
@@ -233,7 +237,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeDefaultRefUpdated() throws Exception {
+    void testNameAndEmailParameterModeDefaultRefUpdated() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode());
         trigger.getTriggerOnEvents().add(new PluginRefUpdatedEvent());
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
@@ -258,7 +262,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeBase64() throws Exception {
+    void testNameAndEmailParameterModeBase64() throws Exception {
         trigger.setNameAndEmailParameterMode(GerritTriggerParameters.ParameterMode.BASE64);
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
         PluginImpl.getHandler_().triggerEvent(Setup.createPatchsetCreatedWithAccounts(ac, ac, ac));
@@ -281,7 +285,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testNameAndEmailParameterModeNone() throws Exception {
+    void testNameAndEmailParameterModeNone() throws Exception {
         trigger.setNameAndEmailParameterMode(GerritTriggerParameters.ParameterMode.NONE);
         Account ac = new Account("Bobby", "rsandell@cloudbees.com");
         PluginImpl.getHandler_().triggerEvent(Setup.createPatchsetCreatedWithAccounts(ac, ac, ac));
@@ -305,7 +309,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommitMessageParameterModeDefault() throws Exception {
+    void testCommitMessageParameterModeDefault() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.BASE64, trigger.getCommitMessageParameterMode());
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -326,7 +330,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommitMessageParameterModePlain() throws Exception {
+    void testCommitMessageParameterModePlain() throws Exception {
         trigger.setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode.PLAIN);
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -347,7 +351,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommitMessageParameterModeNone() throws Exception {
+    void testCommitMessageParameterModeNone() throws Exception {
         trigger.setCommitMessageParameterMode(GerritTriggerParameters.ParameterMode.NONE);
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -366,7 +370,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommentTextParameterModeDefault() throws Exception {
+    void testCommentTextParameterModeDefault() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.BASE64, trigger.getCommentTextParameterMode());
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         String expected = "Triggering comment";
@@ -388,7 +392,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommentTextParameterModePlain() throws Exception {
+    void testCommentTextParameterModePlain() throws Exception {
         trigger.setCommentTextParameterMode(GerritTriggerParameters.ParameterMode.PLAIN);
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         String expected = "Triggering comment";
@@ -410,7 +414,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testCommentTextParameterModeNone() throws Exception {
+    void testCommentTextParameterModeNone() throws Exception {
         trigger.setCommentTextParameterMode(GerritTriggerParameters.ParameterMode.NONE);
         trigger.getTriggerOnEvents().add(new PluginCommentAddedEvent("Code-Review", "1"));
         String expected = "Triggering comment";
@@ -430,7 +434,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testChangeSubjectParameterModeNone() throws Exception {
+    void testChangeSubjectParameterModeNone() throws Exception {
         trigger.setChangeSubjectParameterMode(GerritTriggerParameters.ParameterMode.NONE);
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -449,7 +453,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testChangeSubjectParameterModeDefault() throws Exception {
+    void testChangeSubjectParameterModeDefault() throws Exception {
         assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getChangeSubjectParameterMode());
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -470,7 +474,7 @@ public class ParameterModeJenkinsTest {
      * @throws Exception if so
      */
     @Test
-    public void testChangeSubjectParameterModeBase64() throws Exception {
+    void testChangeSubjectParameterModeBase64() throws Exception {
         trigger.setChangeSubjectParameterMode(GerritTriggerParameters.ParameterMode.BASE64);
         String expected = "A new commit has arrived!";
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -514,8 +518,7 @@ public class ParameterModeJenkinsTest {
     public static class ParametersBuilder extends Builder {
 
         @Override
-        public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-                throws InterruptedException, IOException {
+        public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
             EnvVars vars = new EnvVars();
             ParametersAction parametersAction = build.getAction(ParametersAction.class);
             if (parametersAction != null) {
@@ -543,6 +546,7 @@ public class ParameterModeJenkinsTest {
             }
 
             @Override
+            @Nonnull
             public String getDisplayName() {
                 return "Print Env vars";
             }

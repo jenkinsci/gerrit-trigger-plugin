@@ -35,12 +35,13 @@ import hudson.ExtensionList;
 import hudson.model.Result;
 
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TestExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.concurrent.CountDownLatch;
@@ -49,8 +50,9 @@ import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
 
@@ -59,13 +61,12 @@ import static org.junit.Assert.assertTrue;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class GerritTriggeredBuildListenerTest {
+@WithJenkins
+class GerritTriggeredBuildListenerTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private SshServer sshd;
 
@@ -76,10 +77,13 @@ public class GerritTriggeredBuildListenerTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -99,8 +103,8 @@ public class GerritTriggeredBuildListenerTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
     }
@@ -112,10 +116,10 @@ public class GerritTriggeredBuildListenerTest {
      */
     @LocalData
     @Test
-    public void testListenTriggeredBuild() throws Exception {
+    void testListenTriggeredBuild() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
                 Jenkins.get().getExtensionList(GerritTriggeredBuildListener.class);
-        assertTrue("Listener has not been registered", list.size() > 0);
+        assertFalse(list.isEmpty(), "Listener has not been registered");
 
         buildListenerLatch = new CountDownLatch(2);
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
@@ -123,7 +127,7 @@ public class GerritTriggeredBuildListenerTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        assertTrue("Time out", buildListenerLatch.await(15, TimeUnit.SECONDS));
+        assertTrue(buildListenerLatch.await(15, TimeUnit.SECONDS), "Time out");
     }
 
     /**
@@ -133,10 +137,10 @@ public class GerritTriggeredBuildListenerTest {
      */
     @LocalData
     @Test
-    public void testListenTriggeredBuildWithNoBuildScheduleDelay() throws Exception {
+    void testListenTriggeredBuildWithNoBuildScheduleDelay() throws Exception {
         ExtensionList<GerritTriggeredBuildListener> list =
                 Jenkins.get().getExtensionList(GerritTriggeredBuildListener.class);
-        assertTrue("Listener has not been registered", list.size() > 0);
+        assertFalse(list.isEmpty(), "Listener has not been registered");
 
         buildListenerLatch = new CountDownLatch(2);
         GerritServer gerritServer = PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME);
@@ -150,7 +154,7 @@ public class GerritTriggeredBuildListenerTest {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 2000);
         gerritServer.triggerEvent(Setup.createPatchsetCreated());
 
-        assertTrue("Time out", buildListenerLatch.await(15, TimeUnit.SECONDS));
+        assertTrue(buildListenerLatch.await(15, TimeUnit.SECONDS), "Time out");
     }
 
     /**

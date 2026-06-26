@@ -3,9 +3,9 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject;
 
-import org.junit.Test;
-
 import java.io.File;
+
+import org.junit.jupiter.api.Test;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -14,13 +14,13 @@ import java.text.ParseException;
 import java.util.List;
 
 import static java.lang.System.lineSeparator;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test for {@link GerritDynamicUrlProcessor}.
  */
-public class GerritDynamicUrlProcessorTest {
+class GerritDynamicUrlProcessorTest {
 
     private static final String PROJECT = "project";
     private static final String BRANCH = "branch";
@@ -35,13 +35,11 @@ public class GerritDynamicUrlProcessorTest {
      * Should throw {@link MalformedURLException} when url is null or empty.
      */
     @Test
-    public void testGerritTriggerConfigUrlIsNull() {
-        assertThrows(MalformedURLException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(null);
-        });
-        assertThrows(MalformedURLException.class, () -> {
-            GerritDynamicUrlProcessor.fetch("");
-        });
+    void testGerritTriggerConfigUrlIsNull() {
+        assertThrows(MalformedURLException.class, () ->
+            GerritDynamicUrlProcessor.fetch(null));
+        assertThrows(MalformedURLException.class, () ->
+            GerritDynamicUrlProcessor.fetch(""));
     }
 
     /**
@@ -51,7 +49,7 @@ public class GerritDynamicUrlProcessorTest {
      * @throws ParseException if so.
      */
     @Test
-    public void testGerritTriggerConfigUrlFullOptions() throws IOException, ParseException {
+    void testGerritTriggerConfigUrlFullOptions() throws IOException, ParseException {
         StringBuilder configContent = new StringBuilder();
         configContent.append(newLine("# comment"))
                 .append(newLine("p~" + PROJECT))
@@ -91,69 +89,60 @@ public class GerritDynamicUrlProcessorTest {
     /**
      * Test {@link GerritDynamicUrlProcessor#fetch(String)} with wrong content.
      *
-     * @throws IOException    if so.
-     * @throws ParseException if so.
      */
     @Test
-    public void testGerritTriggerConfigUrlWithWrongContent() throws IOException, ParseException {
+    void testGerritTriggerConfigUrlWithWrongContent() {
         String filename = "testGerritTriggerConfigUrlWithWrongContent";
         //Error pattern
         StringBuilder configContent = new StringBuilder();
         configContent.append(newLine("p~" + PROJECT))
                 .append(newLine("a~advance"));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent.toString())));
 
         //Error format
         StringBuilder configContent1 = new StringBuilder();
         configContent1.append(newLine("p " + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent1.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent1.toString())));
 
         // branch before project
         StringBuilder configContent2 = new StringBuilder();
         configContent2.append(newLine("b~" + BRANCH))
                 .append(newLine("p~" + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent2.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent2.toString())));
 
         // topic before project
         StringBuilder configContent3 = new StringBuilder();
         configContent3.append(newLine("t~" + TOPIC))
                 .append(newLine("p~" + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent3.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent3.toString())));
 
 
         // hashtag before project
         StringBuilder configContent4 = new StringBuilder();
         configContent4.append(newLine("h~" + HASHTAG))
                 .append(newLine("p~" + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent4.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent4.toString())));
 
 
         // file before project
         StringBuilder configContent5 = new StringBuilder();
         configContent5.append(newLine("f~" + FILE))
                 .append(newLine("p~" + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent5.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent5.toString())));
 
 
         // forbidden file before project
         StringBuilder configContent6 = new StringBuilder();
         configContent6.append(newLine("o~" + FORBIDDEN_FILE))
                 .append(newLine("p~" + PROJECT));
-        assertThrows(ParseException.class, () -> {
-            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent6.toString()));
-        });
+        assertThrows(ParseException.class, () ->
+            GerritDynamicUrlProcessor.fetch(generateDynamicTriggerConfigFile(filename, configContent6.toString())));
 
     }
 

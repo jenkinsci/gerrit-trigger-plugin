@@ -29,26 +29,29 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import hudson.model.FreeStyleProject;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsSessionRule;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.jvnet.hudson.test.junit.jupiter.JenkinsSessionExtension;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests the TopicAssociation method.
  * @author Christoph Kreisl
  */
-public class TopicAssociationTest {
+@WithJenkins
+class TopicAssociationTest {
 
 
     /**
-     *  Jenkins Session Rule for testing.
+     *  Jenkins Session Extension for testing.
      */
-    //CS IGNORE VisibilityModifier FOR NEXT 1 LINES. REASON: JenkinsSessionRule must be public.
-    @Rule public JenkinsSessionRule session = new JenkinsSessionRule();
+    @RegisterExtension
+    private final JenkinsSessionExtension session = new JenkinsSessionExtension();
 
     /**
      * Create a custom change for testing.
@@ -66,7 +69,7 @@ public class TopicAssociationTest {
      * Test if change with status is interesting.
      */
     @Test
-    public void testIsInterestingChange() {
+    void testIsInterestingChange() {
         TopicAssociation topicAssociation = new TopicAssociation();
 
         Change c = createChange(GerritChangeStatus.NEW);
@@ -94,7 +97,7 @@ public class TopicAssociationTest {
      * @throws Throwable on failure
      */
     @Test
-    public void testTopicAssociationSetAfterRestart() throws Throwable {
+    void testTopicAssociationSetAfterRestart() throws Throwable {
         session.then(j -> {
             FreeStyleProject foo = j.createFreeStyleProject("foo");
             GerritTrigger trigger = Setup.createDefaultTrigger(foo);

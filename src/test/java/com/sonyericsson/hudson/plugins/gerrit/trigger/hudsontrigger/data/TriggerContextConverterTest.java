@@ -42,12 +42,12 @@ import hudson.model.Cause;
 import hudson.model.Saveable;
 import hudson.security.ACL;
 import hudson.util.XStream2;
+import org.junit.jupiter.api.AfterEach;
 
 import jenkins.model.Jenkins;
 import jenkins.model.TransientActionFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.Collections;
@@ -55,13 +55,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.same;
@@ -76,7 +77,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class TriggerContextConverterTest {
+class TriggerContextConverterTest {
     private Jenkins jenkins;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
 
@@ -85,8 +86,8 @@ public class TriggerContextConverterTest {
     /**
      * Mock Jenkins.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
@@ -95,8 +96,8 @@ public class TriggerContextConverterTest {
         jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
@@ -106,16 +107,15 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}. With an empty list of "others".
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalNoOthers() throws Exception {
+    void testMarshalNoOthers() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        context.setOthers(new LinkedList<TriggeredItemEntity>());
+        context.setOthers(new LinkedList<>());
 
         TestMarshalClass t = new TestMarshalClass(context, "Bobby", new TestMarshalClass(context, "SomeoneElse"));
 
@@ -142,13 +142,12 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@code TriggerContext.thisBuild} set to null.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalNoThisBuild() throws Exception {
+    void testMarshalNoThisBuild() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
-        context.setOthers(new LinkedList<TriggeredItemEntity>());
+        context.setOthers(new LinkedList<>());
 
         TestMarshalClass t = new TestMarshalClass(context, "Me", new TestMarshalClass(context, "SomeoneElse"));
 
@@ -172,14 +171,13 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}. With {@code TriggerContext.event} set to null.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalNoEvent() throws Exception {
+    void testMarshalNoEvent() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
         TriggerContext context = new TriggerContext(null);
         context.setThisBuild(entity);
-        context.setOthers(new LinkedList<TriggeredItemEntity>());
+        context.setOthers(new LinkedList<>());
 
         TestMarshalClass t = new TestMarshalClass(context, "Me", new TestMarshalClass(context, "SomeoneElse"));
 
@@ -212,16 +210,15 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#marshal(Object, com.thoughtworks.xstream.io.HierarchicalStreamWriter,
      * com.thoughtworks.xstream.converters.MarshallingContext)}. With list of "others" containing two items.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthers() throws Exception {
+    void testMarshalWithOthers() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -236,7 +233,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
-        assertTrue(readT.getEntity().getEvent() instanceof PatchsetCreated);
+        assertInstanceOf(PatchsetCreated.class, readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -256,16 +253,15 @@ public class TriggerContextConverterTest {
      * com.thoughtworks.xstream.converters.MarshallingContext)}. With list of "others" containing two items and a null
      * item between them.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthersOneNull() throws Exception {
+    void testMarshalWithOthersOneNull() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         PatchsetCreated event = Setup.createPatchsetCreated();
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(null);
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
@@ -307,17 +303,16 @@ public class TriggerContextConverterTest {
      * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeAbandoned} event and
      * list of "others" containing two items.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthersChangeAbandoned() throws Exception {
+    void testMarshalWithOthersChangeAbandoned() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         ChangeAbandoned event = Setup.createChangeAbandoned();
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -332,7 +327,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
-        assertTrue(readT.getEntity().getEvent() instanceof ChangeAbandoned);
+        assertInstanceOf(ChangeAbandoned.class, readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -353,17 +348,16 @@ public class TriggerContextConverterTest {
      * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged} event and
      * list of "others" containing two items.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthersChangeMerged() throws Exception {
+    void testMarshalWithOthersChangeMerged() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         ChangeMerged event = Setup.createChangeMerged();
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -378,7 +372,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
-        assertTrue(readT.getEntity().getEvent() instanceof ChangeMerged);
+        assertInstanceOf(ChangeMerged.class, readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -399,17 +393,16 @@ public class TriggerContextConverterTest {
      * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeRestored} event and
      * list of "others" containing two items.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthersChangeRestored() throws Exception {
+    void testMarshalWithOthersChangeRestored() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         ChangeRestored event = Setup.createChangeRestored();
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -424,7 +417,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
-        assertTrue(readT.getEntity().getEvent() instanceof ChangeRestored);
+        assertInstanceOf(ChangeRestored.class, readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -445,14 +438,13 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
      * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "retriggerAction_oldData.xml" as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testUnmarshalOldData1() throws Exception {
+    void testUnmarshalOldData1() {
         XStream xStream = new XStream2();
         xStream.registerConverter(new TriggerContextConverter());
         Object obj = xStream.fromXML(getClass().getResourceAsStream("retriggerAction_oldData.xml"));
-        assertTrue(obj instanceof RetriggerAction);
+        assertInstanceOf(RetriggerAction.class, obj);
         RetriggerAction action = (RetriggerAction)obj;
         TriggerContext context = Whitebox.getInternalState(action, "context");
         assertNotNull(context.getEvent());
@@ -479,17 +471,16 @@ public class TriggerContextConverterTest {
      * With a {@link com.sonymobile.tools.gerrit.gerritevents.dto.events.DraftPublished} event and
      * list of "others" containing two items.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testMarshalWithOthersDraftPublished() throws Exception {
+    void testMarshalWithOthersDraftPublished() {
         TriggeredItemEntity entity = new TriggeredItemEntity(100, "projectX");
 
         DraftPublished event = Setup.createDraftPublished();
 
         TriggerContext context = new TriggerContext(event);
         context.setThisBuild(entity);
-        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<TriggeredItemEntity>();
+        LinkedList<TriggeredItemEntity> otherBuilds = new LinkedList<>();
         otherBuilds.add(new TriggeredItemEntity(1, "projectY"));
         otherBuilds.add(new TriggeredItemEntity(12, "projectZ"));
         context.setOthers(otherBuilds);
@@ -504,7 +495,7 @@ public class TriggerContextConverterTest {
 
         assertNotNull(readT.getEntity());
         assertNotNull(readT.getEntity().getEvent());
-        assertTrue(readT.getEntity().getEvent() instanceof DraftPublished);
+        assertInstanceOf(DraftPublished.class, readT.getEntity().getEvent());
         assertNotNull(readT.getEntity().getThisBuild());
         assertNotNull(readT.getEntity().getOthers());
 
@@ -525,14 +516,13 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
      * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "retriggerAction_oldData2.xml" as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testUnmarshalOldData2() throws Exception {
+    void testUnmarshalOldData2() {
         XStream xStream = new XStream2();
         xStream.registerConverter(new TriggerContextConverter());
         Object obj = xStream.fromXML(getClass().getResourceAsStream("retriggerAction_oldData2.xml"));
-        assertTrue(obj instanceof RetriggerAction);
+        assertInstanceOf(RetriggerAction.class, obj);
         RetriggerAction action = (RetriggerAction)obj;
         TriggerContext context = Whitebox.getInternalState(action, "context");
         assertNotNull(context.getEvent());
@@ -563,10 +553,9 @@ public class TriggerContextConverterTest {
      * Tests {@link TriggerContextConverter#unmarshal(com.thoughtworks.xstream.io.HierarchicalStreamReader,
      * com.thoughtworks.xstream.converters.UnmarshallingContext)}. With "matrix_build.xml" as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testUnmarshalOldMatrixBuild() throws Exception {
+    void testUnmarshalOldMatrixBuild() {
         try (MockedStatic<OldDataMonitor> oldDataMonitorMockedStatic = mockStatic(OldDataMonitor.class);
              MockedStatic<ExtensionList> extensionListMockedStatic = mockStatic(ExtensionList.class)) {
             oldDataMonitorMockedStatic
@@ -576,7 +565,7 @@ public class TriggerContextConverterTest {
             xStream.registerConverter(new TriggerContextConverter());
             xStream.alias("matrix-run", MatrixRun.class);
             Object obj = xStream.fromXML(getClass().getResourceAsStream("matrix_build.xml"));
-            assertTrue(obj instanceof MatrixRun);
+            assertInstanceOf(MatrixRun.class, obj);
             MatrixRun run = (MatrixRun)obj;
 
             ExtensionList listMock = mock(ExtensionList.class);
@@ -609,10 +598,9 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#canConvert(Class)}. With {@link TriggerContext}.class as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testCanConvert() throws Exception {
+    void testCanConvert() {
         TriggerContextConverter conv = new TriggerContextConverter();
         assertTrue(conv.canConvert(TriggerContext.class));
     }
@@ -620,10 +608,9 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#canConvert(Class)}. With {@link String}.class as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testCanConvertString() throws Exception {
+    void testCanConvertString() {
         TriggerContextConverter conv = new TriggerContextConverter();
         assertFalse(conv.canConvert(String.class));
     }
@@ -631,10 +618,9 @@ public class TriggerContextConverterTest {
     /**
      * Tests {@link TriggerContextConverter#canConvert(Class)}. With a subclass of {@link TriggerContext} as input.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testCanConvertSub() throws Exception {
+    void testCanConvertSub() {
         TriggerContextConverter conv = new TriggerContextConverter();
         assertFalse(conv.canConvert(TriggerContextSub.class));
     }

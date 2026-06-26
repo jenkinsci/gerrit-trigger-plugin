@@ -28,15 +28,16 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Job;
+import org.junit.jupiter.api.AfterEach;
+
 import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
@@ -49,7 +50,7 @@ import static org.mockito.Mockito.when;
  * Tests {@link BuildMemory.MemoryImprint}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class MemoryImprintTest {
+class MemoryImprintTest {
 
     private static int nameCount = 0;
     private AbstractProject project;
@@ -62,16 +63,16 @@ public class MemoryImprintTest {
      *
      * @see #setup()
      */
-    @Before
-    public void fullSetup() {
+    @BeforeEach
+    void fullSetup() {
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         setup();
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
@@ -100,7 +101,7 @@ public class MemoryImprintTest {
      * With no previous project.
      */
     @Test
-    public void testResetNoPreviousProject() {
+    void testResetNoPreviousProject() {
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated());
         imprint.reset(project);
         assertEquals(1, imprint.getEntries().length);
@@ -112,7 +113,7 @@ public class MemoryImprintTest {
      * With one previous project provided in the constructor.
      */
     @Test
-    public void testResetPreviousProject() {
+    void testResetPreviousProject() {
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated(), project);
         imprint.reset(project);
         assertEquals(1, imprint.getEntries().length);
@@ -124,7 +125,7 @@ public class MemoryImprintTest {
      * With one previous build provided bu the set method.
      */
     @Test
-    public void testResetPreviousBuild() {
+    void testResetPreviousBuild() {
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated());
         imprint.set(project, build);
         assertEquals(1, imprint.getEntries().length);
@@ -140,7 +141,7 @@ public class MemoryImprintTest {
      * With two previous projects.
      */
     @Test
-    public void testResetTwoPreviousProjects() {
+    void testResetTwoPreviousProjects() {
         AbstractProject project1 = project;
         BuildMemory.MemoryImprint imprint = new BuildMemory.MemoryImprint(Setup.createPatchsetCreated(), project);
         setup();
@@ -156,7 +157,7 @@ public class MemoryImprintTest {
      * With two previous builds.
      */
     @Test
-    public void testResetTwoPreviousBuilds() {
+    void testResetTwoPreviousBuilds() {
         AbstractProject project1 = project;
         AbstractBuild build1 = build;
         setup();
