@@ -100,6 +100,7 @@ import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritQueryHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventSource;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
@@ -152,7 +153,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private transient boolean timeoutWakeup = false;
     private transient String connectionResponse = "";
     private transient GerritHandler gerritEventManager;
-    private transient GerritConnection gerritConnection;
+    private transient GerritEventSource gerritConnection;
     private transient GerritProjectListUpdater projectListUpdater;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;

@@ -32,7 +32,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListene
 import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
 import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
-import com.sonymobile.tools.gerrit.gerritevents.GerritConnection;
+import com.sonymobile.tools.gerrit.gerritevents.GerritEventSource;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -151,7 +151,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         server.start();
 
         createGerritTriggeredJob(j, "testJob4");
-        GerritConnection connection = Whitebox.getInternalState(server, GerritConnection.class);
+        GerritEventSource connection = Whitebox.getInternalState(server, GerritEventSource.class);
         assertNull(connection);
         assertAllListenersAreRegistered(server);
         Config config = (Config)server.getConfig();
@@ -163,7 +163,7 @@ public class DuplicateGerritListenersHudsonTestCase {
         server.startConnection();
 
         assertAllListenersAreRegistered(server);
-        connection = Whitebox.getInternalState(server, GerritConnection.class);
+        connection = Whitebox.getInternalState(server, GerritEventSource.class);
         assertNotNull(connection);
     }
 
