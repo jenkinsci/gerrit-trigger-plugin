@@ -534,6 +534,115 @@ The following parameters are available in builds triggered by Gerrit events:
 See also the link:#connection-transport-options[Connection Transport Options] for information
 about the new HTTPS polling and webhook transports.
 
+=== Pipeline Steps
+
+The plugin provides the following pipeline steps for interacting with
+the Gerrit REST API during a build.
+
+==== gerritTriggerReview
+
+Posts a review (labels, message, and collected comments) to the Gerrit
+change that triggered the current build. This step also publishes any
+comments previously collected by `gerritTriggerComment` steps within
+the same pipeline run.
+
+*Parameters:*
+
+[cols="2,5,1",options="header"]
+|===
+| Parameter | Description | Required
+| `labels` | Map of label name to integer score, e.g. `[Verified: 1, 'Code-Review': -1]` | No
+| `message` | Review message (max 500 characters) | No
+| `notify` | Whom to notify: `NONE`, `OWNER`, `OWNER_REVIEWERS`, or `ALL` | No
+|===
+
+*Examples:*
+
+[source,syntaxhighlighter-pre]
+----
+// Post a single label
+gerritTriggerReview labels: [Verified: 1], message: 'Build passed'
+
+// Post multiple labels
+gerritTriggerReview labels: [Verified: -1, 'Code-Review': -1], message: 'Failed tests'
+
+// Post with comments collected by gerritTriggerComment steps
+gerritTriggerReview labels: [Verified: 1], message: 'Looks good', notify: 'NONE'
+----
+
+==== gerritTriggerComment
+
+Adds a review comment that will be posted to Gerrit when the
+`gerritTriggerReview` step is executed. Comments are collected during
+pipeline execution and batched into the review. If no `gerritTriggerReview`
+step is present, comments are not posted to Gerrit.
+
+*Parameters:*
+
+[cols="2,5,1",options="header"]
+|===
+| Parameter | Description | Required
+| `path` | File path relative to the repository root | Yes
+| `message` | Comment text (max 500 characters) | Yes
+| `line` | Line number for inline comments (omit for file-level) | No
+|===
+
+*Examples:*
+
+[source,syntaxhighlighter-pre]
+----
+// File-level comment
+gerritTriggerComment path: 'src/main/java/Foo.java', message: 'Nice work overall'
+
+// Line-level comment
+gerritTriggerComment path: 'src/main/java/Foo.java', line: 42, message: 'This can be simplified'
+----
+
+==== gerritTriggerCheck
+
+Posts check results to the Gerrit change that triggered the current build
+via the Gerrit checks REST API (`/a/changes/.../revisions/.../checks/`).
+This allows pipelines to report checker results (e.g. from static analysis,
+CI builds) that appear in the Gerrit checks tab. Requires the Gerrit
+`checks` plugin to be installed on the Gerrit server.
+
+*Parameters:*
+
+[cols="2,5,1",options="header"]
+|===
+| Parameter | Description | Required
+| `checks` | Map of checker UUID to state, e.g. `['example:checker': 'FAILED']` | Yes
+| `message` | Short message explaining the check state | No
+| `url` | URL to detailed results (defaults to build console log) | No
+|===
+
+*Valid check states:* `RUNNING`, `SUCCESSFUL`, `FAILED`, `NOT_STARTED`,
+`SCHEDULED`, `NOT_RELEVANT`.
+
+Timestamps are automatically set based on the state: `RUNNING` sets the
+started timestamp, `SUCCESSFUL` and `FAILED` set the finished timestamp.
+
+*Examples:*
+
+[source,syntaxhighlighter-pre]
+----
+// Report a single check as failed
+gerritTriggerCheck checks: ['example:checker': 'FAILED']
+
+// Report multiple checks with a message
+gerritTriggerCheck checks: ['checker-a': 'SUCCESSFUL', 'checker-b': 'FAILED'],
+    message: 'Pipeline completed'
+
+// Report with a custom URL
+gerritTriggerCheck checks: ['checker-a': 'SUCCESSFUL'],
+    message: 'All tests passed',
+    url: 'https://jenkins.example.com/job/myjob/42/'
+
+// Mark a check as running (e.g. at the start of a stage)
+gerritTriggerCheck checks: ['checker-a': 'RUNNING'],
+    message: 'Tests in progress...'
+----
+
 == Tips & Tricks
 
 This section contains some useful tips and tricks that users has come up
