@@ -3,6 +3,9 @@
  *
  * Copyright (c) 2024 Amarula Solutions. All rights reserved.
  *
+ * Adapted from the gerrit-code-review-plugin:
+ * Copyright (C) 2019 SAP SE
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -99,7 +102,7 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
  *     message: 'Tests in progress...'
  * </pre>
  *
- * @author Michael Trimarchi
+ * @author Thomas Draebing &lt;thomas.draebing@sap.com&gt;
  */
 public class GerritTriggerCheckStep extends Step {
 
