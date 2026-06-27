@@ -78,6 +78,23 @@
                                       min="1"/>
                         </f:entry>
                     </f:optionalBlock>
+                    <f:entry title="${%Webhook URL}"
+                             help="/plugin/gerrit-trigger/help-WebhookUrl.html">
+                        <j:set var="webhookUrl"
+                               value="${com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritWebhookReceiver.getWebhookUrl(it.name)}"/>
+                        <j:choose>
+                            <j:when test="${webhookUrl != null}">
+                                <div class="jenkins-copy-button">
+                                    <input type="text" readonly="readonly" value="${webhookUrl}" class="jenkins-input"/>
+                                </div>
+                            </j:when>
+                            <j:otherwise>
+                                <div class="warning">
+                                    Jenkins root URL not configured. Set it in Manage Jenkins &gt; Configure System.
+                                </div>
+                            </j:otherwise>
+                        </j:choose>
+                    </f:entry>
                     <!-- SSH-only fields: hidden/shown client-side when HTTPS polling toggled -->
                     <div class="ssh-only-section" style="${it.config.useHttpsPoller ? 'display:none' : ''}">
                     <f:entry title="${%SSH Port}"
