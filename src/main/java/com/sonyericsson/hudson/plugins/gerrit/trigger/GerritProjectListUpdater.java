@@ -34,14 +34,29 @@ import com.sonymobile.tools.gerrit.gerritevents.ssh.SshException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.Credentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -264,20 +279,22 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
             if (isConnected()) {
                 logger.info("Trying to load project list.");
                 IGerritHudsonTriggerConfig activeConfig = getConfig();
-                SshConnection sshConnection = SshConnectionFactory.getConnection(
-                        activeConfig.getGerritHostName(),
-                        activeConfig.getGerritSshPort(),
-                        activeConfig.getGerritProxy(),
-                        activeConfig.getGerritAuthentication()
-                );
-                List<String> projects = readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
+                if (activeConfig == null) {
+                    logger.error("Could not load project list: config is null for {}", serverName);
+                    return;
+                }
+                List<String> projects;
+                if (activeConfig.isUseHttpsPoller()) {
+                    projects = loadProjectsViaRest(activeConfig);
+                } else {
+                    projects = loadProjectsViaSsh(activeConfig);
+                }
                 if (!projects.isEmpty()) {
                     setGerritProjects(projects);
                     logger.info("Project list from {} contains {} entries", serverName, projects.size());
                 } else {
                     logger.warn("Project list from {} contains 0 projects", serverName);
                 }
-                sshConnection.disconnect();
             } else {
                 logger.warn("Could not connect to Gerrit server when updating Gerrit project list: "
                         + "Server is not connected (timeout)");
@@ -287,6 +304,99 @@ public class GerritProjectListUpdater implements ConnectionListener, NamedGerrit
         } catch (IOException ex) {
             logger.error("Could not read stream with Gerrit projects: ", ex);
         }
+    }
+
+    /**
+     * Loads the project list via the SSH {@code gerrit ls-projects} command.
+     *
+     * @param activeConfig the server configuration.
+     * @return the list of project names.
+     * @throws SshException if an SSH error occurs.
+     * @throws IOException if an I/O error occurs.
+     */
+    private List<String> loadProjectsViaSsh(IGerritHudsonTriggerConfig activeConfig)
+            throws SshException, IOException {
+        SshConnection sshConnection = SshConnectionFactory.getConnection(
+                activeConfig.getGerritHostName(),
+                activeConfig.getGerritSshPort(),
+                activeConfig.getGerritProxy(),
+                activeConfig.getGerritAuthentication()
+        );
+        try {
+            return readProjects(sshConnection.executeCommandReader(GERRIT_LS_PROJECTS));
+        } finally {
+            sshConnection.disconnect();
+        }
+    }
+
+    /**
+     * Loads the project list via the Gerrit REST API.
+     *
+     * @param activeConfig the server configuration.
+     * @return the list of project names.
+     * @throws IOException if an I/O error occurs.
+     */
+    private List<String> loadProjectsViaRest(IGerritHudsonTriggerConfig activeConfig)
+            throws IOException {
+        String frontEndUrl = activeConfig.getGerritFrontEndUrl();
+        StringBuilder urlBuilder = new StringBuilder(frontEndUrl);
+        if (!frontEndUrl.endsWith("/")) {
+            urlBuilder.append('/');
+        }
+        urlBuilder.append("a/projects/?d");
+
+        Credentials httpCredentials = activeConfig.getHttpCredentials();
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(AuthScope.ANY, httpCredentials);
+        HttpClient httpClient = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider)
+                .build();
+        HttpGet httpGet = new HttpGet(urlBuilder.toString());
+        HttpResponse response = httpClient.execute(httpGet);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpURLConnection.HTTP_OK) {
+            throw new IOException("HTTP " + statusCode + " for project list query");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent(),
+                        StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+        }
+        String body = sb.toString();
+        // Strip Gerrit JSON hijacking prevention prefix
+        if (body.startsWith(")]}'")) {
+            body = body.substring(")]}'".length());
+        }
+        return readProjectsFromJson(body);
+    }
+
+    /**
+     * Reads project names from a Gerrit REST API projects JSON response.
+     * The response format is a JSON object where each key is a project name.
+     *
+     * @param jsonBody the JSON response body.
+     * @return the list of project names.
+     * @throws IOException if JSON parsing fails.
+     */
+    static List<String> readProjectsFromJson(String jsonBody) throws IOException {
+        List<String> projects = new ArrayList<String>();
+        try {
+            JSONObject json = (JSONObject)JSONSerializer.toJSON(jsonBody);
+            for (Iterator<?> it = json.keys(); it.hasNext();) {
+                String key = (String)it.next();
+                if (key != null && !key.isEmpty()) {
+                    projects.add(key);
+                }
+            }
+        } catch (Exception ex) {
+            throw new IOException("Failed to parse projects JSON response", ex);
+        }
+        return projects;
     }
 
     /**
