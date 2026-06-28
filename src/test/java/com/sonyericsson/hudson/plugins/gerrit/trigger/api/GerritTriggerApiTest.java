@@ -24,6 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import hudson.model.FreeStyleBuild;
@@ -115,7 +116,7 @@ class GerritTriggerApiTest {
         FreeStyleProject project = new TestUtils.JobBuilder(j).serverName(gerritServerName).build();
         server.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         GerritTriggerApi api = new GerritTriggerApi();
-        Handler handler = api.getHandler();
+        Handler handler = assertDoesNotThrow(api::getHandler);
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gerritServerName));
         TestUtils.waitForBuilds(project, 1, 20000);

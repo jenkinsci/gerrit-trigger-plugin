@@ -56,6 +56,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -316,7 +317,7 @@ class GerritMissedEventsFunctionalTest {
                                           int buildNumberToWaitFor) throws Exception {
 
         GerritTriggerApi api = new GerritTriggerApi();
-        Handler handler = api.getHandler();
+        Handler handler = assertDoesNotThrow(api::getHandler);
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gServer.getName()));
         TestUtils.waitForBuilds(project, buildNumberToWaitFor);

@@ -188,7 +188,7 @@ class GerritMissedEventsPlaybackManagerTest {
      * And we can convert to events.
      */
     @Test
-    void testConvertJSONToEvents() throws Exception {
+    void testConvertJSONToEvents() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
@@ -224,8 +224,8 @@ class GerritMissedEventsPlaybackManagerTest {
                         .withBody(json)));
 
 
-        List<GerritTriggeredEvent> events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
         assertEquals(1, events.size(), "Should have 1 event");
 
     }
@@ -238,15 +238,15 @@ class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    void testHandleMalformedConnection() throws Exception {
+    void testHandleMalformedConnection() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.MALFORMED_RESPONSE_CHUNK)));
 
-        List<GerritTriggeredEvent> events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
         assertEquals(0, events.size(), "Should have 0 event");
 
     }
@@ -259,15 +259,15 @@ class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    void testHandleEmptyResponse() throws Exception {
+    void testHandleEmptyResponse() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
 
-        List<GerritTriggeredEvent> events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
         assertEquals(0, events.size(), "Should have 0 event");
 
     }
@@ -280,15 +280,15 @@ class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    void testHandleGarbageResponse() throws Exception {
+    void testHandleGarbageResponse() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
-        List<GerritTriggeredEvent> events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
         assertEquals(0, events.size(), "Should have 0 event");
 
     }
