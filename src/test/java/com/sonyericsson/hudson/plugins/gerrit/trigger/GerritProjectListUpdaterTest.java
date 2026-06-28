@@ -23,33 +23,27 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 /**
  * Test class for the GerritProjectListUpdater.
  *
  * @author Gustaf Lundh &lt;Gustaf.Lundh@sonyericsson.com&gt;
  */
-public class GerritProjectListUpdaterTest {
-
-    /**
-     * Standard constructor.
-     */
-    public GerritProjectListUpdaterTest() {
-    }
+class GerritProjectListUpdaterTest {
 
     /**
      * Test of readProjects method, of class GerritProjectListUpdater.
      * @throws IOException IOException
      */
     @Test
-    public void testReadProjects() throws IOException {
+    void testReadProjects() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("tools/somepath/someproject\n");
         stringBuilder.append("tools/hello/jenkins\n");
@@ -57,10 +51,10 @@ public class GerritProjectListUpdaterTest {
 
         List<String> projects = GerritProjectListUpdater.readProjects(new StringReader(stringBuilder.toString()));
 
-        assertArrayEquals(projects.toArray(), new String[] {
-            "tools/somepath/someproject",
-            "tools/hello/jenkins",
-            "tools/gerrit",
-        });
+        assertArrayEquals(new String[]{
+                "tools/somepath/someproject",
+                "tools/hello/jenkins",
+                "tools/gerrit",
+        }, projects.toArray());
     }
 }

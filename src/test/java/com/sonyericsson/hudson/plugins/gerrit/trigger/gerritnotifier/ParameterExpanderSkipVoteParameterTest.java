@@ -29,21 +29,20 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 import hudson.model.Result;
+import org.junit.jupiter.api.AfterEach;
 
 import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -51,70 +50,76 @@ import static org.mockito.Mockito.when;
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: TestData.
 
 /**
- * {@link Parameterized} Tests for {@link ParameterExpander} with
+ * {@link ParameterizedTest} Tests for {@link ParameterExpander} with
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()} configured.
  *
  * @author Robert Sandell &lt;robert.sandell@sonymobile.com&gt;
  */
-@RunWith(Parameterized.class)
-public class ParameterExpanderSkipVoteParameterTest {
+class ParameterExpanderSkipVoteParameterTest {
 
-    private TestParameter parameter;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
-
-    /**
-     * Parametrized test Constructor.
-     *
-     * @param parameter the test parameters.
-     */
-    public ParameterExpanderSkipVoteParameterTest(TestParameter parameter) {
-        this.parameter = parameter;
-    }
+    private final BuildMemory.MemoryImprint memoryImprint = mock(BuildMemory.MemoryImprint.class);
 
     /**
      * Mock Jenkins.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         Jenkins jenkins = mock(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
     /**
      * Tests that {@link ParameterExpander#getMinimumCodeReviewValue(BuildMemory.MemoryImprint, boolean)}
-     * returns {@link TestParameter#expectedCodeReview}.
+     * returns {@param expectedCodeReview}.
+     *
+     * @param expectedCodeReview
+     * @param expectedVerified
+     * @param entries
      */
-    @Test
-    public void testCodeReview() {
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testCodeReview(Integer expectedCodeReview, Integer expectedVerified,
+                        BuildMemory.MemoryImprint.Entry[] entries) {
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         ParameterExpander instance = new ParameterExpander(config);
-        Integer result = instance.getMinimumCodeReviewValue(parameter.memoryImprint, true);
-        if (parameter.expectedCodeReview == null) {
+        Integer result = instance.getMinimumCodeReviewValue(memoryImprint, true);
+        if (expectedCodeReview == null) {
             assertNull(result);
         } else {
-            assertEquals(Integer.valueOf(parameter.expectedCodeReview), result);
+            assertEquals(expectedCodeReview, result);
         }
     }
 
     /**
      * Tests that {@link ParameterExpander#getMinimumVerifiedValue(BuildMemory.MemoryImprint, boolean, Integer)}
-     * returns {@link TestParameter#expectedVerified}.
+     * returns {@param expectedVerified}.
+     *
+     * @param expectedCodeReview
+     * @param expectedVerified
+     * @param entries
      */
-    @Test
-    public void testVerified() {
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testVerified(Integer expectedCodeReview, Integer expectedVerified,
+                      BuildMemory.MemoryImprint.Entry[] entries) {
+        when(memoryImprint.getEntries()).thenReturn(entries);
+
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         ParameterExpander instance = new ParameterExpander(config);
-        Integer result = instance.getMinimumVerifiedValue(parameter.memoryImprint, true, Integer.MAX_VALUE);
-        if (parameter.expectedVerified == null) {
+        Integer result = instance.getMinimumVerifiedValue(memoryImprint, true, Integer.MAX_VALUE);
+        if (expectedVerified == null) {
             assertNull(result);
         } else {
-            assertEquals(Integer.valueOf(parameter.expectedVerified), result);
+            assertEquals(expectedVerified, result);
         }
     }
 
@@ -122,102 +127,100 @@ public class ParameterExpanderSkipVoteParameterTest {
      * Returns the parameters for the JUnit Runner to pass to the Constructor.
      * @return parameters.
      */
-    @Parameterized.Parameters
-    public static Collection getParameters() {
-        List<TestParameter[]> parameters = new LinkedList<TestParameter[]>();
+    static List<Arguments> parameters() {
+        List<Arguments> parameters = new LinkedList<>();
 
-        parameters.add(createParameter(+1, +2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true)
-                ));
-        parameters.add(createParameter(+1, +2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.FAILURE, -1, -2, true)
-                ));
-        parameters.add(createParameter(+1, +2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
-                Setup.createAndSetupMemoryImprintEntry(Result.FAILURE, -1, -2, true)
-                ));
-        parameters.add(createParameter(-1, -2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false)
-                ));
-        parameters.add(createParameter(-1, -2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false)
-                ));
-        parameters.add(createParameter(+1, +2,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false)
-                ));
-        parameters.add(createParameter(-1, -2,
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false)
-                ));
-        parameters.add(createParameter(-5, -6,
-                Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, false)
-        ));
-        parameters.add(createParameter(null, null,
-                Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, true)
-        ));
-        parameters.add(createParameter(null, null,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true)
-                ));
-        parameters.add(createParameter(null, null,
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true)
-                ));
-        parameters.add(createParameter(null, null,
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
-                Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true)
-                ));
-        parameters.add(createParameter(null, null,
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
-                Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true)
-                ));
+        parameters.add(Arguments.of(
+                +1,
+                +2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                        Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                        Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                        Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
+                }));
+        parameters.add(Arguments.of(
+                        1,
+                +2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                    Setup.createAndSetupMemoryImprintEntry(Result.FAILURE, -1, -2, true),
+                }));
+        parameters.add(Arguments.of(
+                +1,
+                +2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
+                    Setup.createAndSetupMemoryImprintEntry(Result.FAILURE, -1, -2, true),
+                }));
+        parameters.add(Arguments.of(
+                -1,
+                -2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
+                }));
+        parameters.add(Arguments.of(
+                -1,
+               -2,
+               new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+               }));
+        parameters.add(Arguments.of(
+                +1,
+                +2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, false),
+                }));
+        parameters.add(Arguments.of(
+                -1,
+                -2,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, false),
+                }));
+        parameters.add(Arguments.of(
+                -5,
+                -6,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, false),
+                }));
+        parameters.add(Arguments.of(
+                null,
+               null,
+               new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.ABORTED, -5, -6, true),
+               }));
+        parameters.add(Arguments.of(
+                null,
+                null,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
+                }));
+        parameters.add(Arguments.of(
+                null,
+                null,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
+                }));
+        parameters.add(Arguments.of(
+                null,
+                null,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
+                    Setup.createAndSetupMemoryImprintEntry(Result.UNSTABLE, -1, -2, true),
+                }));
+        parameters.add(Arguments.of(
+                null,
+                null,
+                new BuildMemory.MemoryImprint.Entry[]{
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
+                    Setup.createAndSetupMemoryImprintEntry(Result.SUCCESS, +1, +2, true),
+                }));
 
         return parameters;
-    }
-
-    /**
-     * Creates one parameter (in a one size array).
-     * So that it is simple to add to the list of parameters to return from {@link #getParameters()}.
-     *
-     * @param expectedCodeReview the expected code review vote
-     * @param expectedVerified the expected verified vote
-     * @param entries the build memory entries
-     * @return the created test parameter.
-     */
-    private static TestParameter[] createParameter(Integer expectedCodeReview, Integer expectedVerified,
-                                                   BuildMemory.MemoryImprint.Entry... entries) {
-        return new TestParameter[]{new TestParameter(expectedCodeReview, expectedVerified, entries)};
-    }
-
-
-    /**
-     * Parameters for the tests.
-     */
-    public static class TestParameter {
-
-        BuildMemory.MemoryImprint memoryImprint;
-        private Integer expectedCodeReview;
-        private Integer expectedVerified;
-
-        /**
-         * Convenience constructor.
-         *
-         * @param expectedCodeReview the expected code review vote
-         * @param expectedVerified the expected verified vote.
-         * @param entries the build memory entries.
-         */
-        public TestParameter(Integer expectedCodeReview, Integer expectedVerified,
-                BuildMemory.MemoryImprint.Entry... entries) {
-            this.expectedCodeReview = expectedCodeReview;
-            this.expectedVerified = expectedVerified;
-            memoryImprint = mock(BuildMemory.MemoryImprint.class);
-            when(memoryImprint.getEntries()).thenReturn(entries);
-        }
     }
 }

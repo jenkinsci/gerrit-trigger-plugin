@@ -23,50 +23,48 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Testdata.
 /**
  * Tests the equals and hashCode of TriggerContext.Wrap.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(Parameterized.class)
-public class TriggerContextParameterizedTriggeredItemEntityTest {
-
-    private TestParameter parameter;
-
-    /**
-     * Constructor taking the parameters.
-     * @param parameter the parameters.
-     */
-    public TriggerContextParameterizedTriggeredItemEntityTest(TestParameter parameter) {
-        this.parameter = parameter;
-    }
+class TriggerContextParameterizedTriggeredItemEntityTest {
 
     /**
      * Tests the equals method with the parameterized scenario.
+     *
+     * @param wrap1
+     * @param wrap2
+     * @param equal
      */
-    @Test
-    public void testEquals() {
-        Assert.assertEquals(parameter.equal, parameter.wrap1.equals(parameter.wrap2));
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testEquals(TriggeredItemEntity wrap1, Object wrap2, boolean equal) {
+        assertEquals(equal, wrap1.equals(wrap2));
     }
 
     /**
      * Tests the hashCode method with the parameterized scenario.
-     * Except for when {@link TestParameter#wrap2} == null, when it will just pass.
+     * Except for when {@param wrap2} == null, when it will just pass.
+     *
+     * @param wrap1
+     * @param wrap2
+     * @param equal
      */
-    @Test
-    public void testHashCode() {
-        if (parameter.wrap2 != null) {
-            Assert.assertEquals(parameter.equal, parameter.wrap1.hashCode() == parameter.wrap2.hashCode());
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testHashCode(TriggeredItemEntity wrap1, Object wrap2, boolean equal) {
+        if (wrap2 != null) {
+            assertEquals(equal, wrap1.hashCode() == wrap2.hashCode());
         }
     }
 
@@ -74,99 +72,76 @@ public class TriggerContextParameterizedTriggeredItemEntityTest {
      * Returns the parameters for the JUnit Runner to pass to the Constructor.
      * @return parameters.
      */
-    @Parameters
-    public static final Collection getParameters() {
-        List<TestParameter[]> parameters = new LinkedList<TestParameter[]>();
+    static List<Arguments> parameters() {
+        List<Arguments> parameters = new LinkedList<>();
 
-        parameters.add(new TestParameter[]{new TestParameter(
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(0, "project"),
                     new TriggeredItemEntity(0, "project"),
-                    true), });
+                    true));
         TriggeredItemEntity w = new TriggeredItemEntity(1, "project");
-        parameters.add(new TestParameter[]{new TestParameter(w, w, true)});
-        parameters.add(new TestParameter[]{new TestParameter(
+        parameters.add(Arguments.of(w, w, true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(Integer.MAX_VALUE, "project"),
                     new TriggeredItemEntity(Integer.MAX_VALUE, "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
-                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
-                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
-                    new TriggeredItemEntity(Integer.valueOf(4), "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    true));
+        parameters.add(Arguments.of(
+                    new TriggeredItemEntity(4, "project"),
+                    new TriggeredItemEntity(4, "project"),
+                    true));
+        parameters.add(Arguments.of(
+                    new TriggeredItemEntity(4, "project"),
+                    new TriggeredItemEntity(4, "project"),
+                    true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(null, "project"),
                     new TriggeredItemEntity(null, "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity((Integer)null, null),
                     new TriggeredItemEntity((Integer)null, null),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(200, "project"),
                     new TriggeredItemEntity(200, "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(200, "project"),
                     new TriggeredItemEntity(200, "project"),
-                    true), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    true));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(200, "OneProject"),
                     new TriggeredItemEntity(200, "AnotherProject"),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(100, "OneProject"),
                     new TriggeredItemEntity(200, "AnotherProject"),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(200, "Project"),
                     new TriggeredItemEntity(100, "Project"),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(null, "Project"),
                     new TriggeredItemEntity(100, "Project"),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(null, "Project"),
                     new TriggeredItemEntity(100, null),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(100, "Project"),
                     new TriggeredItemEntity(100, null),
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(100, "Project"),
                     "Project",
-                    false), });
-        parameters.add(new TestParameter[]{new TestParameter(
+                    false));
+        parameters.add(Arguments.of(
                     new TriggeredItemEntity(100, "Project"),
                     null,
-                    false), });
+                    false));
 
         return parameters;
-    }
-
-    /**
-     * Parameters for the tests.
-     */
-    public static class TestParameter {
-
-        TriggeredItemEntity wrap1;
-        Object wrap2;
-        boolean equal;
-
-        /**
-         * Convenience constructor.
-         * @param wrap1 the first object.
-         * @param wrap2 the second object to pass to the first.
-         * @param equal if they should be equal.
-         */
-        public TestParameter(TriggeredItemEntity wrap1, Object wrap2, boolean equal) {
-            this.wrap1 = wrap1;
-            this.wrap2 = wrap2;
-            this.equal = equal;
-        }
     }
 }

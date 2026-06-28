@@ -2,10 +2,10 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.plugins.git.util.BuildChooserContext;
 import hudson.plugins.git.Revision;
-import static org.junit.Assert.assertEquals;
 
 import jenkins.model.Jenkins;
-import org.junit.Test;
+
+import java.io.Serial;
 import java.util.Collection;
 import hudson.model.Job;
 import hudson.model.Run;
@@ -15,10 +15,13 @@ import hudson.EnvVars;
 import java.io.IOException;
 import java.io.Serializable;
 import org.jenkinsci.plugins.gitclient.GitClient;
+import org.junit.jupiter.api.Test;
+
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import org.eclipse.jgit.lib.ObjectId;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,13 +29,15 @@ import static org.mockito.Mockito.when;
  * Tests for {@link GerritTriggerBuildChooser}.
  * @author Jacob Keller
  */
-public class GerritTriggerBuildChooserTest {
+class GerritTriggerBuildChooserTest {
+
     /**
      * Copied from the Git plugin because the real implementation is private.
      *
      * Ideally we can find a way to have this work somehow without needing to have this copy...
      */
     static class BuildChooserContextImpl implements BuildChooserContext, Serializable {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         final Job project;
@@ -100,7 +105,7 @@ public class GerritTriggerBuildChooserTest {
      * @throws Exception if so.
      */
     @Test
-    public void testGerritTriggerBuildChooser() throws Exception {
+    void testGerritTriggerBuildChooser() throws Exception {
         GerritTriggerBuildChooser chooser = new GerritTriggerBuildChooser();
         final ObjectId fetchHead = ObjectId.fromString("7f3547c6d55946e25e99a847b5160d69e59994ba");
         final ObjectId patchsetRevision = ObjectId.fromString("38b0940738376ee1b66c332a2cb6d4d37bafa4e4");

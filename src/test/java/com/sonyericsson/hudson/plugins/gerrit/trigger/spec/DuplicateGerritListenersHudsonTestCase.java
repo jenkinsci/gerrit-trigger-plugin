@@ -44,10 +44,11 @@ import hudson.model.Item;
 import hudson.model.FreeStyleProject;
 
 import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.Collection;
@@ -55,9 +56,9 @@ import java.util.List;
 
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil.createGerritTriggeredJob;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 
@@ -70,23 +71,25 @@ import static org.hamcrest.MatcherAssert.assertThat;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class DuplicateGerritListenersHudsonTestCase {
+@WithJenkins
+class DuplicateGerritListenersHudsonTestCase {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private SshdServerMock.KeyPairFiles keyFile;
 
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         keyFile = SshdServerMock.generateKeyPair();
     }
 
@@ -97,7 +100,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      */
     @LocalData
     @Test
-    public void testNewProjectCreation() throws Exception {
+    void testNewProjectCreation() throws Exception {
         createGerritTriggeredJob(j, "testJob1");
         assertAllListenersAreRegistered(
                 PluginImpl.getInstance().getServer(PluginImpl.DEFAULT_SERVER_NAME));
@@ -110,7 +113,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      */
     @LocalData
     @Test
-    public void testNewProjectCreationWithReSave() throws Exception {
+    void testNewProjectCreationWithReSave() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob2");
         j.configRoundtrip((Item)p);
         assertAllListenersAreRegistered(
@@ -124,7 +127,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      */
     @LocalData
     @Test
-    public void testNewProjectCreationWithReName() throws Exception {
+    void testNewProjectCreationWithReName() throws Exception {
         FreeStyleProject p = createGerritTriggeredJob(j, "testJob3");
 
         HtmlForm form = j.createWebClient().getPage(p, "confirm-rename").getFormByName("config");
@@ -141,7 +144,7 @@ public class DuplicateGerritListenersHudsonTestCase {
      * @throws Exception if so.
      */
     @Test
-    public void testNewProjectCreationFirstNoConnection() throws Exception {
+    void testNewProjectCreationFirstNoConnection() throws Exception {
         @SuppressWarnings("unused")
         List<GerritServer> servers = PluginImpl.getInstance().getServers();
 

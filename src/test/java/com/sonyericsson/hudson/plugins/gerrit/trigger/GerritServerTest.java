@@ -28,18 +28,18 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnec
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
 
 import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.mockito.MockedStatic;
 
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -54,9 +54,7 @@ public class GerritServerTest {
     /**
      * Jenkins rule instance.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private final String gerritServerOneName = "testServer1";
     private GerritServer gerritServerOne;
@@ -66,8 +64,8 @@ public class GerritServerTest {
     /**
      * Setup the mock'ed environment.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         PluginImpl plugin = mock(PluginImpl.class);
         pluginMockedStatic = mockStatic(PluginImpl.class);
         pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
@@ -79,18 +77,17 @@ public class GerritServerTest {
         when(plugin.getServer(eq(gerritServerOneName))).thenReturn(gerritServerOne);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         pluginMockedStatic.close();
     }
 
     /**
      * Tests {@link GerritServer#isGerritSnapshotVersion()} is true when it should.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsGerritSnapshotVersion() throws Exception {
+    void testIsGerritSnapshotVersion() {
         String version = "2.2.2.1-340-g47084d4";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
@@ -100,10 +97,9 @@ public class GerritServerTest {
     /**
      * Tests {@link GerritServer#isGerritSnapshotVersion()} is false for an official version.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsGerritSnapshotVersionNot() throws Exception {
+    void testIsGerritSnapshotVersionNot() {
         String version = "2.2.2.1";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
@@ -113,10 +109,9 @@ public class GerritServerTest {
     /**
      * Tests {@link GerritServer#isGerritSnapshotVersion()} is false for a RC version.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testIsGerritSnapshotVersionNotRc() throws Exception {
+    void testIsGerritSnapshotVersionNotRc() {
         String version = "2.3-rc0";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
@@ -126,15 +121,14 @@ public class GerritServerTest {
     /**
      * Tests {@link GerritServer#getDisabledFeatures()}.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGetDisabledFeatures() throws Exception {
+    void testGetDisabledFeatures() {
         String version = "2.2.2.1";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
 
-        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<GerritVersionChecker.Feature>();
+        List<GerritVersionChecker.Feature> disabledFeatures = new LinkedList<>();
         if (gerritServerOne.hasDisabledFeatures()) {
             disabledFeatures = gerritServerOne.getDisabledFeatures();
         }
@@ -143,19 +137,19 @@ public class GerritServerTest {
         for (GerritVersionChecker.Feature feature : disabledFeatures) {
             if (feature == GerritVersionChecker.Feature.fileTrigger) {
                 foundFileTrigger = true;
+                break;
             }
         }
-        assertTrue("Expected to find the file trigger feature!", foundFileTrigger);
+        assertTrue(foundFileTrigger, "Expected to find the file trigger feature!");
     }
 
     /**
      * Tests {@link GerritServer#getDisabledFeatures()} is empty for version 2.9. TODO update this test's
      * version check whenever we get a new feature requiring a newer version.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGetDisabledFeaturesNone() throws Exception {
+    void testGetDisabledFeaturesNone() {
         String version = "3.3";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
@@ -167,10 +161,9 @@ public class GerritServerTest {
     /**
      * Tests {@link GerritServer#getDisabledFeatures()} is true when it should be.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testHasDisabledFeatures() throws Exception {
+    void testHasDisabledFeatures() {
         String version = "2.2.2.1";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();
@@ -182,10 +175,9 @@ public class GerritServerTest {
      * Tests {@link GerritServer#getDisabledFeatures()} is false when it should. TODO update this test's
      * version check whenever we get a new feature requiring a newer version.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testHasDisabledFeaturesNot() throws Exception {
+    void testHasDisabledFeaturesNot() {
         String version = "3.3";
         when(gerritServerOne.getGerritVersion()).thenReturn(version);
         listener.checkGerritVersionFeatures();

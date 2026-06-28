@@ -25,23 +25,33 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import hudson.model.FreeStyleProject;
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests to see if jobs from Gerrit-Trigger v. 2.10.1 can be loaded.
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class BackCompat2101HudsonTest extends HudsonTestCase {
+@WithJenkins
+class BackCompat2101HudsonTest  {
 
     /**
      * Tests that a dynamic trigger config in 2.10.1 carries over correctly.
      * @see https://issues.jenkins-ci.org/browse/JENKINS-22155
+     *
+     * @param rule the jenkins rule
      */
+    @Test
     @LocalData
-    public void testDynamicTriggerLoading() {
-        FreeStyleProject project = (FreeStyleProject)jenkins.getItem("DynamicTrigger");
+    void testDynamicTriggerLoading(JenkinsRule rule) {
+        FreeStyleProject project = (FreeStyleProject)rule.jenkins.getItem("DynamicTrigger");
         assertNotNull(project);
         GerritTrigger trigger = GerritTrigger.getTrigger(project);
         assertNotNull(trigger);

@@ -33,9 +33,11 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.Plugi
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent;
 import com.sonyericsson.jenkins.plugins.bfa.test.utils.Whitebox;
 import hudson.model.FreeStyleProject;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import static org.hamcrest.Matchers.instanceOf;
@@ -44,24 +46,28 @@ import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsIterableContaining.hasItem;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Robert Sandell &lt;rsandell@cloudbees.com&gt;.
  */
-public class BackCompat2173JenkinsTest {
+@WithJenkins
+class BackCompat2173JenkinsTest {
 
     /**
      * The rule which we follow.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Tests a job called AllOff that has most advanced boolean settings set to false.
@@ -72,7 +78,7 @@ public class BackCompat2173JenkinsTest {
      */
     @Test
     @LocalData
-    public void testAllOff() throws Exception {
+    void testAllOff() throws Exception {
         FreeStyleProject job = j.jenkins.getItemByFullName("AllOff", FreeStyleProject.class);
         GerritTrigger trigger = GerritTrigger.getTrigger(job);
         verifyAllOff(trigger);
@@ -89,25 +95,25 @@ public class BackCompat2173JenkinsTest {
     private void verifyAllOff(GerritTrigger trigger) {
         assertNotNull(trigger);
         assertNotNull(trigger.getSkipVote());
-        assertFalse("Skip not built", trigger.getSkipVote().isOnNotBuilt());
+        assertFalse(trigger.getSkipVote().isOnNotBuilt(), "Skip not built");
         assertNotNull(trigger.getGerritBuildFailedCodeReviewValue());
-        assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                trigger.getGerritBuildFailedCodeReviewValue());
-        assertFalse("Silent Mode", trigger.isSilentMode());
-        assertEquals("Notification level", "ALL", trigger.getNotificationLevel());
-        assertFalse("Silent start", trigger.isSilentStartMode());
-        assertFalse("Escape quotes", trigger.isEscapeQuotes());
-        assertFalse("No name and email", trigger.isNoNameAndEmailParameters());
-        assertSame("Name and email mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
-                trigger.getNameAndEmailParameterMode());
-        assertFalse("Readable message", trigger.isReadableMessage());
-        assertSame("Commit message mode == BASE64", GerritTriggerParameters.ParameterMode.BASE64,
-                trigger.getCommitMessageParameterMode());
+        assertEquals(Integer.valueOf(0), trigger.getGerritBuildFailedCodeReviewValue(),
+                "Build Failed Code Review value");
+        assertFalse(trigger.isSilentMode(), "Silent Mode");
+        assertEquals("ALL", trigger.getNotificationLevel(), "Notification level");
+        assertFalse(trigger.isSilentStartMode(), "Silent start");
+        assertFalse(trigger.isEscapeQuotes(), "Escape quotes");
+        assertFalse(trigger.isNoNameAndEmailParameters(), "No name and email");
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getNameAndEmailParameterMode(),
+                "Name and email mode == PLAIN");
+        assertFalse(trigger.isReadableMessage(), "Readable message");
+        assertSame(GerritTriggerParameters.ParameterMode.BASE64, trigger.getCommitMessageParameterMode(),
+                "Commit message mode == BASE64");
         //Setting introduced after the version under test, so it should have the default value
-        assertSame("Change subject mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
-                trigger.getChangeSubjectParameterMode());
-        assertSame("Comment text mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
-                trigger.getCommentTextParameterMode());
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getChangeSubjectParameterMode(),
+                "Change subject mode == PLAIN");
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getCommentTextParameterMode(),
+                "Comment text mode == PLAIN");
         assertEquals(GerritServer.ANY_SERVER, trigger.getServerName());
 
         assertThat(trigger.getGerritProjects(), hasItem(
@@ -146,7 +152,7 @@ public class BackCompat2173JenkinsTest {
      */
     @Test
     @LocalData
-    public void testAllOn() throws Exception {
+    void testAllOn() throws Exception {
         FreeStyleProject job = j.jenkins.getItemByFullName("AllOn", FreeStyleProject.class);
         GerritTrigger trigger = GerritTrigger.getTrigger(job);
         verifyAllOn(trigger);
@@ -163,23 +169,23 @@ public class BackCompat2173JenkinsTest {
     private void verifyAllOn(GerritTrigger trigger) {
         assertNotNull(trigger);
         assertNotNull(trigger.getSkipVote());
-        assertTrue("Skip not built", trigger.getSkipVote().isOnNotBuilt());
+        assertTrue(trigger.getSkipVote().isOnNotBuilt(), "Skip not built");
         assertNotNull(trigger.getGerritBuildNotBuiltCodeReviewValue());
-        assertEquals("Build Failed Code Review value", Integer.valueOf(0),
-                trigger.getGerritBuildNotBuiltCodeReviewValue());
-        assertFalse("Silent Mode", trigger.isSilentMode());
-        assertEquals("Notification level", "OWNER", trigger.getNotificationLevel());
-        assertTrue("Silent start", trigger.isSilentStartMode());
-        assertTrue("Escape quotes", trigger.isEscapeQuotes());
-        assertTrue("No name and email", trigger.isNoNameAndEmailParameters());
-        assertSame("Name and email mode == NONE", GerritTriggerParameters.ParameterMode.NONE,
-                trigger.getNameAndEmailParameterMode());
-        assertTrue("Readable message", trigger.isReadableMessage());
-        assertSame("Commit message mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
-                trigger.getCommitMessageParameterMode());
+        assertEquals(Integer.valueOf(0), trigger.getGerritBuildNotBuiltCodeReviewValue(),
+                "Build Failed Code Review value");
+        assertFalse(trigger.isSilentMode(), "Silent Mode");
+        assertEquals("OWNER", trigger.getNotificationLevel(), "Notification level");
+        assertTrue(trigger.isSilentStartMode(), "Silent start");
+        assertTrue(trigger.isEscapeQuotes(), "Escape quotes");
+        assertTrue(trigger.isNoNameAndEmailParameters(), "No name and email");
+        assertSame(GerritTriggerParameters.ParameterMode.NONE, trigger.getNameAndEmailParameterMode(),
+                "Name and email mode == NONE");
+        assertTrue(trigger.isReadableMessage(), "Readable message");
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getCommitMessageParameterMode(),
+                "Commit message mode == PLAIN");
         //Setting introduced after the version under test, so it should have the default value
-        assertSame("Change subject mode == PLAIN", GerritTriggerParameters.ParameterMode.PLAIN,
-                trigger.getChangeSubjectParameterMode());
+        assertSame(GerritTriggerParameters.ParameterMode.PLAIN, trigger.getChangeSubjectParameterMode(),
+                "Change subject mode == PLAIN");
         assertEquals(GerritServer.ANY_SERVER, trigger.getServerName());
 
         assertThat(trigger.getGerritProjects(), hasItem(

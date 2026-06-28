@@ -27,16 +27,16 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
  * Tests the TriggerContext's public methods.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class TriggerContextTest {
+class TriggerContextTest {
 
     /**
      * Returns a mocked version of an AbstractProject, where getFullName() returns the provided name.
@@ -80,7 +80,7 @@ public class TriggerContextTest {
      * Test of getOthers method, of class TriggerContext.
      */
     @Test
-    public void testGetOthers() {
+    void testGetOthers() {
         TriggerContext context = new TriggerContext(mockBuild("projectX", 1), null,
                 Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
@@ -91,7 +91,7 @@ public class TriggerContextTest {
      * Test of setOthers method, of class TriggerContext.
      */
     @Test
-    public void testSetOthers() {
+    void testSetOthers() {
         TriggerContext context = new TriggerContext();
         context.setOthers(Collections.singletonList(new TriggeredItemEntity(1, "projectY")));
         assertNotNull(context.getOthers());
@@ -102,7 +102,7 @@ public class TriggerContextTest {
      * Test of getThisBuild method, of class TriggerContext.
      */
     @Test
-    public void testGetThisBuild() {
+    void testGetThisBuild() {
         AbstractBuild build = mockBuild("myProject", 1);
         TriggerContext context = new TriggerContext(build, null, null);
         assertNotNull(context.getThisBuild());
@@ -114,7 +114,7 @@ public class TriggerContextTest {
      * Test of setThisBuild method, of class TriggerContext.
      */
     @Test
-    public void testSetThisBuildTriggerContextWrap() {
+    void testSetThisBuildTriggerContextWrap() {
         TriggerContext context = new TriggerContext();
         TriggeredItemEntity wrap = new TriggeredItemEntity(1, "myProject");
         context.setThisBuild(wrap);
@@ -127,7 +127,7 @@ public class TriggerContextTest {
      * Test of setThisBuild method, of class TriggerContext.
      */
     @Test
-    public void testSetThisBuildAbstractBuild() {
+    void testSetThisBuildAbstractBuild() {
         TriggerContext context = new TriggerContext();
         AbstractBuild build = mockBuild("myProject", 1);
         context.setThisBuild(build);
@@ -140,7 +140,7 @@ public class TriggerContextTest {
      * Test of addOtherBuild method, of class TriggerContext.
      */
     @Test
-    public void testAddOtherBuild() {
+    void testAddOtherBuild() {
         TriggerContext context = new TriggerContext();
         AbstractBuild build = mockBuild("myProject", 1);
         context.addOtherBuild(build);
@@ -152,7 +152,7 @@ public class TriggerContextTest {
      * Test of addOtherBuild method with two builds, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherBuilds() {
+    void testAddTwoOtherBuilds() {
         TriggerContext context = new TriggerContext();
         AbstractBuild build = mockBuild("myProject", 1);
         context.addOtherBuild(build);
@@ -166,7 +166,7 @@ public class TriggerContextTest {
      * Test of addOtherBuild method with two builds that are the same, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherBuildsOfSameType() {
+    void testAddTwoOtherBuildsOfSameType() {
         TriggerContext context = new TriggerContext();
         AbstractBuild build = mockBuild("myProject", 1);
         context.addOtherBuild(build);
@@ -180,7 +180,7 @@ public class TriggerContextTest {
      * Test of addOtherProject method, of class TriggerContext.
      */
     @Test
-    public void testAddOtherProject() {
+    void testAddOtherProject() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -192,7 +192,7 @@ public class TriggerContextTest {
      * Test of addOtherProject method, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherProjects() {
+    void testAddTwoOtherProjects() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -206,7 +206,7 @@ public class TriggerContextTest {
      * Test of addOtherProject method, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherProjectsWithSameName() {
+    void testAddTwoOtherProjectsWithSameName() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -220,7 +220,7 @@ public class TriggerContextTest {
      * Test of addOtherProject method, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherProjectsAndOneBuild() {
+    void testAddTwoOtherProjectsAndOneBuild() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -236,7 +236,7 @@ public class TriggerContextTest {
      * Test of addOtherProject method, of class TriggerContext.
      */
     @Test
-    public void testAddTwoOtherProjectsAndOneBuildOfSameProject() {
+    void testAddTwoOtherProjectsAndOneBuildOfSameProject() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -252,7 +252,7 @@ public class TriggerContextTest {
      * Test of hasOthers method with others, of class TriggerContext.
      */
     @Test
-    public void testHasOthersTrue() {
+    void testHasOthersTrue() {
         TriggerContext context = new TriggerContext();
         AbstractProject project = mockProject("myProject");
         context.addOtherProject(project);
@@ -263,7 +263,7 @@ public class TriggerContextTest {
      * Test of hasOthers method with null others, of class TriggerContext.
      */
     @Test
-    public void testHasOthersFalseNull() {
+    void testHasOthersFalseNull() {
         TriggerContext context = new TriggerContext();
         assertFalse(context.hasOthers());
     }
@@ -272,8 +272,8 @@ public class TriggerContextTest {
      * Test of hasOthers method with no others, of class TriggerContext.
      */
     @Test
-    public void testHasOthersFalse() {
-        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<TriggeredItemEntity>());
+    void testHasOthersFalse() {
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<>());
         assertFalse(context.hasOthers());
     }
 
@@ -282,8 +282,8 @@ public class TriggerContextTest {
      * With an empty list of "others".
      */
     @Test
-    public void testGetOtherBuilds() {
-        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<TriggeredItemEntity>());
+    void testGetOtherBuilds() {
+        TriggerContext context = new TriggerContext(mockBuild("p", 2), null, new LinkedList<>());
         List<Run> others = context.getOtherBuilds();
         assertNotNull(others);
         assertEquals(0, others.size());
@@ -294,7 +294,7 @@ public class TriggerContextTest {
      * With a null list of "others".
      */
     @Test
-    public void testGetOtherBuildsNull() {
+    void testGetOtherBuildsNull() {
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, null);
         List<Run> others = context.getOtherBuilds();
         assertNotNull(others);
@@ -306,8 +306,8 @@ public class TriggerContextTest {
      * With a list of "others" containing one build.
      */
     @Test
-    public void testGetOtherBuildsOne() {
-        List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
+    void testGetOtherBuildsOne() {
+        List<TriggeredItemEntity> bah = new LinkedList<>();
         bah.add(new TriggeredItemEntity(mockBuild("p2", 3)));
         TriggerContext context = new TriggerContext(mockBuild("p", 2), null, bah);
         List<Run> others = context.getOtherBuilds();
@@ -322,7 +322,7 @@ public class TriggerContextTest {
      * With a list of "others" containing several builds in different stage.
      */
     @Test
-    public void testGetSortedOthers() {
+    void testGetSortedOthers() {
         AbstractBuild buildInProgress0 = mockBuild("p0", 1);
         when(buildInProgress0.isBuilding()).thenReturn(true);
 
@@ -334,7 +334,7 @@ public class TriggerContextTest {
         TriggeredItemEntity itemWithNullBuild = new TriggeredItemEntity(project);
         itemWithNullBuild.setBuildNumber(777);
 
-        List<TriggeredItemEntity> bah = new LinkedList<TriggeredItemEntity>();
+        List<TriggeredItemEntity> bah = new LinkedList<>();
         bah.add(new TriggeredItemEntity(mockBuild("p4", 1)));
         bah.add(new TriggeredItemEntity(mockProject("p5")));
         bah.add(new TriggeredItemEntity(buildInProgress1));

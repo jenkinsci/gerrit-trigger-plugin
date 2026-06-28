@@ -1,13 +1,14 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.event;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeMergedEvent;
+
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
+
+import org.junit.jupiter.api.Test;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeMerged;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
@@ -15,13 +16,13 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 /**
  * Tests for {@link PluginChangeMergedEvent}.
  */
-public class PluginChangeMergedEventTest {
+class PluginChangeMergedEventTest {
 
     /**
      * Tests that it should fire on all merged changes when no regex is set.
      */
     @Test
-    public void shouldFireOnAllMergedChanges() {
+    void shouldFireOnAllMergedChanges() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         assertTrue(event.shouldTriggerOn(createChangeMerged("some commit message")));
     }
@@ -30,7 +31,7 @@ public class PluginChangeMergedEventTest {
      * Tests that it fires when commit message matches the regex.
      */
     @Test
-    public void shouldFireWhenCommitMessageMatchesRegEx() {
+    void shouldFireWhenCommitMessageMatchesRegEx() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         event.setCommitMessageContainsRegEx("^fix:");
         assertTrue(event.shouldTriggerOn(createChangeMerged("fix: correct a bug")));
@@ -40,7 +41,7 @@ public class PluginChangeMergedEventTest {
      * Tests that it does not fire when commit message does not match the regex.
      */
     @Test
-    public void shouldNotFireWhenCommitMessageDoesNotMatchRegEx() {
+    void shouldNotFireWhenCommitMessageDoesNotMatchRegEx() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         event.setCommitMessageContainsRegEx("^fix:");
         assertFalse(event.shouldTriggerOn(createChangeMerged("docs: update readme")));
@@ -50,7 +51,7 @@ public class PluginChangeMergedEventTest {
      * Tests that the cached pattern is reused on subsequent calls.
      */
     @Test
-    public void shouldReuseCompiledPattern() {
+    void shouldReuseCompiledPattern() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         event.setCommitMessageContainsRegEx("^fix:");
         assertTrue(event.shouldTriggerOn(createChangeMerged("fix: first change")));
@@ -61,7 +62,7 @@ public class PluginChangeMergedEventTest {
      * Tests that it fires when regex is null or empty.
      */
     @Test
-    public void shouldFireWhenRegExIsNullOrEmpty() {
+    void shouldFireWhenRegExIsNullOrEmpty() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         ChangeMerged changeMerged = createChangeMerged("any commit message");
         event.setCommitMessageContainsRegEx(null);
@@ -74,7 +75,7 @@ public class PluginChangeMergedEventTest {
      * Tests that the getter returns the value set by the setter.
      */
     @Test
-    public void getterReturnsSetValue() {
+    void getterReturnsSetValue() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         event.setCommitMessageContainsRegEx("^feat:");
         assertEquals("^feat:", event.getCommitMessageContainsRegEx());
@@ -84,7 +85,7 @@ public class PluginChangeMergedEventTest {
      * Tests that it does not fire for a non-ChangeMerged event type.
      */
     @Test
-    public void shouldNotFireForWrongEventType() {
+    void shouldNotFireForWrongEventType() {
         PluginChangeMergedEvent event = new PluginChangeMergedEvent();
         PatchsetCreated patchsetCreated = new PatchsetCreated();
         patchsetCreated.setPatchset(new PatchSet());

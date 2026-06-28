@@ -35,20 +35,22 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author Jiri Engelthaler &lt;EngyCZ@gmail.com&gt;
  */
-public class ManualTriggerActionApprovalTest {
+@WithJenkins
+class ManualTriggerActionApprovalTest {
 
     private static final int VERIFIED_COLUMN = 10;
     private static final int CODE_REVIEW_COLUMN = 11;
@@ -57,9 +59,7 @@ public class ManualTriggerActionApprovalTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private final String gerritServerName = "testServer";
     private final String projectName = "testProject";
@@ -70,10 +70,13 @@ public class ManualTriggerActionApprovalTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         final SshdServerMock.KeyPairFiles sshKey = SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -100,8 +103,8 @@ public class ManualTriggerActionApprovalTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
     }
@@ -113,7 +116,7 @@ public class ManualTriggerActionApprovalTest {
      * @throws Exception if so.
      */
     @Test
-    public void testDoGerritSearchLastPatchSet() throws Exception {
+    void testDoGerritSearchLastPatchSet() throws Exception {
         JenkinsRule.WebClient client = j.createWebClient();
         HtmlPage page = client.goTo("gerrit_manual_trigger");
         HtmlForm theSearch = page.getFormByName("theSearch");
@@ -137,7 +140,7 @@ public class ManualTriggerActionApprovalTest {
      * @throws Exception if so.
      */
     @Test
-    public void testDoGerritSearchAllPatchSets() throws Exception {
+    void testDoGerritSearchAllPatchSets() throws Exception {
         JenkinsRule.WebClient client = j.createWebClient();
         HtmlPage page = client.goTo("gerrit_manual_trigger");
         HtmlForm theSearch = page.getFormByName("theSearch");

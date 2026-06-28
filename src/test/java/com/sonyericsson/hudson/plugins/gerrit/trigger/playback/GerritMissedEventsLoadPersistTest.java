@@ -38,28 +38,27 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import hudson.XmlFile;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.AfterEach;
+
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Date;
 import java.util.Random;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,7 +72,7 @@ import static org.mockito.Mockito.when;
  * Missed events load and persist tests.
  *
  */
-public class GerritMissedEventsLoadPersistTest {
+class GerritMissedEventsLoadPersistTest {
 
     private static final int MAXRANDOMNUMBER = 100;
     private static final int SLEEPTIME = 500;
@@ -84,17 +83,10 @@ public class GerritMissedEventsLoadPersistTest {
     private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
-     * Default constructor.
-     */
-    public GerritMissedEventsLoadPersistTest() {
-    }
-
-    /**
      * Create mocks.
-     * @throws IOException if it occurs.
      */
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws Exception {
         Jenkins jenkinsMock = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
@@ -114,19 +106,9 @@ public class GerritMissedEventsLoadPersistTest {
 
         missedEventsPlaybackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
 
-        File tmpFile = null;
-        try {
-            tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
-        } catch (IOException e) {
-            fail("Failed to create Temp File");
-        }
+        File tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
         tmpFile.deleteOnExit();
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(tmpFile);
-        } catch (FileNotFoundException e) {
-            fail("Failed to write to Temp File");
-        }
+        PrintWriter out = new PrintWriter(tmpFile);
         String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
                 + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
                 + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
@@ -151,8 +133,8 @@ public class GerritMissedEventsLoadPersistTest {
         ).thenReturn(true);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
         pluginMockedStatic.close();
         missedEventsPlaybackManagerMockedStatic.close();
@@ -164,7 +146,7 @@ public class GerritMissedEventsLoadPersistTest {
      * @throws IOException if occurs.
      */
     @Test
-    public void testNullEventCreatedOn() throws IOException {
+    void testNullEventCreatedOn() throws IOException {
         InputStream stream = getClass().getResourceAsStream("DeserializeEventCreatedOnTest.json");
         String json = IOUtils.toString(stream);
         JSONObject jsonObject = JSONObject.fromObject(json);
@@ -178,6 +160,7 @@ public class GerritMissedEventsLoadPersistTest {
         assertFalse(missingEventsPlaybackManager.saveTimestamp(gEvt));
 
     }
+
     /**
      * Given a non-existing timestamp file
      * When we attempt to load it
@@ -185,17 +168,13 @@ public class GerritMissedEventsLoadPersistTest {
      * @throws IOException if it occurs.
      */
     @Test
-    public void testLoadTimeStampFromNonExistentFile() throws IOException {
+    void testLoadTimeStampFromNonExistentFile() throws IOException {
 
         GerritMissedEventsPlaybackManager.getConfigXml("defaultServer").delete();
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
 
         assertNull(missingEventsPlaybackManager.serverTimestamp);
 
@@ -208,15 +187,11 @@ public class GerritMissedEventsLoadPersistTest {
      * Then we retrieve a non-null map.
      */
     @Test
-    public void testLoadTimeStampFromFile() {
+    void testLoadTimeStampFromFile() {
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
 
         assertNotNull(missingEventsPlaybackManager.serverTimestamp);
     }
@@ -228,17 +203,13 @@ public class GerritMissedEventsLoadPersistTest {
      * Then the timestamp is persisted.
      */
     @Test
-    public void testPersistTimeStampToFile() {
+    void testPersistTimeStampToFile() {
 
         Random randomGenerator = new Random();
         int randomInt = randomGenerator.nextInt(MAXRANDOMNUMBER);
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager(Integer.valueOf(randomInt).toString() + "-server");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
 
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
                 "refs/heads/master");
@@ -255,15 +226,11 @@ public class GerritMissedEventsLoadPersistTest {
     private GerritMissedEventsPlaybackManager setupManager() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
 
         assertNotNull(missingEventsPlaybackManager.serverTimestamp);
 
-        assertTrue("should be true", missingEventsPlaybackManager.isSupported());
+        assertTrue(missingEventsPlaybackManager.isSupported(), "should be true");
 
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
                 "refs/heads/master");
@@ -272,22 +239,15 @@ public class GerritMissedEventsLoadPersistTest {
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
-        try {
-            Thread.sleep(SLEEPTIME);
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(() -> Thread.sleep(SLEEPTIME));
 
         missingEventsPlaybackManager.connectionDown();
         missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
         return missingEventsPlaybackManager;
     }
+
     /**
      * Given an existing timestamp file
      * When a connection is restarted
@@ -295,13 +255,13 @@ public class GerritMissedEventsLoadPersistTest {
      * should be greater than 0.
      */
     @Test
-    public void testGetTimeStampDiff() {
+    void testGetTimeStampDiff() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
         assertNotNull(missingEventsPlaybackManager.serverTimestamp);
-        TestCase.assertTrue("Diff should be greater than 0",
-                new Date().getTime() - missingEventsPlaybackManager.getDateFromTimestamp().getTime() > 0);
+        assertTrue(new Date().getTime() - missingEventsPlaybackManager.getDateFromTimestamp().getTime() > 0,
+                "Diff should be greater than 0");
 
         missingEventsPlaybackManager.shutdown();
     }

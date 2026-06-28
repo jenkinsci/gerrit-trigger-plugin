@@ -36,20 +36,21 @@ import hudson.model.Job;
 import hudson.model.Result;
 import hudson.triggers.Trigger;
 import hudson.triggers.TriggerDescriptor;
+import org.junit.jupiter.api.AfterEach;
+
 import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.HashMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
@@ -60,17 +61,17 @@ import static org.mockito.Mockito.when;
 //CS IGNORE MagicNumber FOR NEXT 700 LINES. REASON: test-data.
 
 /**
- * JUnit 4 tests of {@link BuildMemory}.
+ * JUnit 5 tests of {@link BuildMemory}.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class BuildMemoryTest {
+class BuildMemoryTest {
 
     private static int nameCount = 0;
-    AbstractProject project;
+    private AbstractProject project;
     private AbstractBuild build;
     private Jenkins jenkins;
     private HashMap<TriggerDescriptor, Trigger<?>> triggers;
-    private GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
+    private final GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
     private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
@@ -78,16 +79,16 @@ public class BuildMemoryTest {
      *
      * @see #setup()
      */
-    @Before
-    public void setupFull() {
+    @BeforeEach
+    void setupFull() {
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkins);
         setup();
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
@@ -117,7 +118,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testGetMemoryImprint() {
+    void testGetMemoryImprint() {
         System.out.println("getMemoryImprint");
 
         BuildMemory instance = new BuildMemory();
@@ -135,7 +136,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsCompletedTrue() {
+    void testIsAllBuildsCompletedTrue() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -155,7 +156,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsCompletedFalse() {
+    void testIsAllBuildsCompletedFalse() {
         System.out.println("isAllBuildsCompleted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -175,7 +176,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsCompletedBuildMemoryPatchSetKeyTrue() {
+    void testIsAllBuildsCompletedBuildMemoryPatchSetKeyTrue() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -196,7 +197,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsCompletedBuildMemoryPatchSetKeyFalse() {
+    void testIsAllBuildsCompletedBuildMemoryPatchSetKeyFalse() {
         System.out.println("isAllBuildsCompleted True");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -217,7 +218,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testGetBuildsStartedStats() {
+    void testGetBuildsStartedStats() {
         System.out.println("getBuildsStartedStats");
 
         BuildMemory instance = new BuildMemory();
@@ -246,7 +247,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsStartedPatchsetCreatedTrue() {
+    void testIsAllBuildsStartedPatchsetCreatedTrue() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -265,7 +266,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsStartedPatchsetCreatedFalse() {
+    void testIsAllBuildsStartedPatchsetCreatedFalse() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -287,7 +288,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testIsAllBuildsStartedBuildMemoryPatchSetKey() {
+    void testIsAllBuildsStartedBuildMemoryPatchSetKey() {
         System.out.println("isAllBuildsStarted");
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
@@ -307,7 +308,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testCompleted() {
+    void testCompleted() {
         System.out.println("completed");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -321,7 +322,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testCancelled() {
+    void testCancelled() {
         System.out.println("cancelled");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -334,7 +335,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testStarted() {
+    void testStarted() {
         System.out.println("started");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -348,7 +349,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testTriggered() {
+    void testTriggered() {
         System.out.println("triggered");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -363,7 +364,7 @@ public class BuildMemoryTest {
      * test.
      */
     @Test
-    public void testForget() {
+    void testForget() {
         System.out.println("forget");
         PatchsetCreated event = Setup.createPatchsetCreated();
 
@@ -379,7 +380,7 @@ public class BuildMemoryTest {
      * With one memories.
      */
     @Test
-    public void testIsBuildingTrue() {
+    void testIsBuildingTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         BuildMemory instance = new BuildMemory();
@@ -392,7 +393,7 @@ public class BuildMemoryTest {
      * With two memories.
      */
     @Test
-    public void testIsBuildingTrue2() {
+    void testIsBuildingTrue2() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         BuildMemory instance = new BuildMemory();
@@ -413,7 +414,7 @@ public class BuildMemoryTest {
      * With no memory.
      */
     @Test
-    public void testIsBuildingFalse() {
+    void testIsBuildingFalse() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         assertFalse(instance.isBuilding(event));
@@ -424,7 +425,7 @@ public class BuildMemoryTest {
      * With another event in memory.
      */
     @Test
-    public void testIsBuildingFalseSomethingElseIs() {
+    void testIsBuildingFalseSomethingElseIs() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -441,7 +442,7 @@ public class BuildMemoryTest {
      * With a forgotten build.
      */
     @Test
-    public void testIsBuildingFalseWhenForgotten() {
+    void testIsBuildingFalseWhenForgotten() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -455,7 +456,7 @@ public class BuildMemoryTest {
      * With one started project in memory.
      */
     @Test
-    public void testIsBuildingProjectTrue() {
+    void testIsBuildingProjectTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         BuildMemory instance = new BuildMemory();
@@ -468,7 +469,7 @@ public class BuildMemoryTest {
      * With two events with started builds in memory.
      */
     @Test
-    public void testIsBuildingProjectTrue2() {
+    void testIsBuildingProjectTrue2() {
         PatchsetCreated event = Setup.createPatchsetCreated();
 
         BuildMemory instance = new BuildMemory();
@@ -496,7 +497,7 @@ public class BuildMemoryTest {
      * With an empty memory.
      */
     @Test
-    public void testIsBuildingProjectFalse() {
+    void testIsBuildingProjectFalse() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         assertFalse(instance.isBuilding(event, project));
@@ -507,7 +508,7 @@ public class BuildMemoryTest {
      * With a triggered build in memory.
      */
     @Test
-    public void testIsBuildingProjectTriggeredTrue() {
+    void testIsBuildingProjectTriggeredTrue() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         instance.triggered(event, project);
@@ -519,7 +520,7 @@ public class BuildMemoryTest {
      * With a completed build in memory.
      */
     @Test
-    public void testIsBuildingProjectCompletedFalse() {
+    void testIsBuildingProjectCompletedFalse() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
         when(build.getResult()).thenReturn(Result.UNSTABLE);
@@ -532,7 +533,7 @@ public class BuildMemoryTest {
      * With no previous memory and an empty list of "others".
      */
     @Test
-    public void testRetriggeredNoMemoryOneProject() {
+    void testRetriggeredNoMemoryOneProject() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -549,7 +550,7 @@ public class BuildMemoryTest {
      * With no previous memory and null list of "others".
      */
     @Test
-    public void testRetriggeredNoMemoryOneProjectNullOthers() {
+    void testRetriggeredNoMemoryOneProjectNullOthers() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -566,7 +567,7 @@ public class BuildMemoryTest {
      * With two started builds and the one to be retriggered as completed already in memory.
      */
     @Test
-    public void testRetriggeredExistingMemory() {
+    void testRetriggeredExistingMemory() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -606,7 +607,7 @@ public class BuildMemoryTest {
      * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
      */
     @Test
-    public void testWereAllBuildsSuccessfulOneUnstableSkipped() {
+    void testWereAllBuildsSuccessfulOneUnstableSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -654,7 +655,7 @@ public class BuildMemoryTest {
      * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
      */
     @Test
-    public void testWereAllBuildsSuccessfulOneFailedSkipped() {
+    void testWereAllBuildsSuccessfulOneFailedSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -702,7 +703,7 @@ public class BuildMemoryTest {
      * {@link BuildMemory.MemoryImprint#wereAllBuildsSuccessful()} will return true.
      */
     @Test
-    public void testWereAllBuildsSuccessfulOneUnstableOneFailedBothSkippedOneSuccessful() {
+    void testWereAllBuildsSuccessfulOneUnstableOneFailedBothSkippedOneSuccessful() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -752,7 +753,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulUnstableOneSuccessfulSkipped() {
+    void testWereAllBuildsSuccessfulUnstableOneSuccessfulSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -804,7 +805,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulUnstableTwoSuccessfulOneSkipped() {
+    void testWereAllBuildsSuccessfulUnstableTwoSuccessfulOneSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -853,7 +854,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulOneSuccessfulAndSkipped() {
+    void testWereAllBuildsSuccessfulOneSuccessfulAndSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -879,7 +880,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulOneUnstableAndSkipped() {
+    void testWereAllBuildsSuccessfulOneUnstableAndSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -906,7 +907,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulTwoUnstableBothSkipped() {
+    void testWereAllBuildsSuccessfulTwoUnstableBothSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 
@@ -944,7 +945,7 @@ public class BuildMemoryTest {
      * As before the skip vote feature was implemented.
      */
     @Test
-    public void testWereAllBuildsSuccessfulTwoSuccessfulBothSkipped() {
+    void testWereAllBuildsSuccessfulTwoSuccessfulBothSkipped() {
         PatchsetCreated event = Setup.createPatchsetCreated();
         BuildMemory instance = new BuildMemory();
 

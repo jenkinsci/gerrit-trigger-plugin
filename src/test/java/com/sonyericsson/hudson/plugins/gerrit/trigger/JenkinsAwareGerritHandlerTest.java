@@ -30,9 +30,9 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
@@ -46,23 +46,23 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  *
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class JenkinsAwareGerritHandlerTest {
+class JenkinsAwareGerritHandlerTest {
 
     private JenkinsAwareGerritHandler gerritHandler;
 
     /**
      * Creates a JenkinsAwareGerritHandler.
      */
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         gerritHandler = new JenkinsAwareGerritHandler(DEFAULT_NR_OF_RECEIVING_WORKER_THREADS);
     }
 
     /**
      * Shuts down the JenkinsAwareGerritHandler.
      */
-    @After
-    public void shutDown() {
+    @AfterEach
+    void shutDown() {
         if (gerritHandler != null) {
             gerritHandler.shutdown(true);
         }
@@ -73,7 +73,7 @@ public class JenkinsAwareGerritHandlerTest {
      * Tests that JenkinsAwareGerritHandler Notifies GerritEventListener.
      */
     @Test
-    public void shouldNotifyGerritEventListener() {
+    void shouldNotifyGerritEventListener() {
         GerritEventListener eventListenerMock = mock(GerritEventListener.class);
         gerritHandler.addListener(eventListenerMock);
         PatchsetCreated patchset = Setup.createPatchsetCreated();
@@ -87,7 +87,7 @@ public class JenkinsAwareGerritHandlerTest {
      * Tests that JenkinsAwareGerritHandler Notifies GerritEventLifecycleListener.
      */
     @Test
-    public void shouldNotifyLifecycleListener() {
+    void shouldNotifyLifecycleListener() {
         GerritEventLifecycleListener lifecycleListenerMock = mock(GerritEventLifecycleListener.class);
         ManualPatchsetCreated manualPatchset = Setup.createManualPatchsetCreated();
         manualPatchset.addListener(lifecycleListenerMock);

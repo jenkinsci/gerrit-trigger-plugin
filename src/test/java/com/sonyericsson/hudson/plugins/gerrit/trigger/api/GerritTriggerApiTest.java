@@ -24,30 +24,31 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.api;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.sonymobile.tools.gerrit.gerritevents.Handler;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.api.exception.GerritTriggerException;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 
 /**
@@ -55,15 +56,14 @@ import static org.junit.Assert.fail;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class GerritTriggerApiTest {
+@WithJenkins
+class GerritTriggerApiTest {
     // CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test data.
 
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     private SshdServerMock server;
     private SshServer sshd;
@@ -72,10 +72,13 @@ public class GerritTriggerApiTest {
     /**
      * Runs before test method.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         sshKey = SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -91,8 +94,8 @@ public class GerritTriggerApiTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
     }
@@ -102,7 +105,7 @@ public class GerritTriggerApiTest {
      * @throws Exception Error creating job.
      */
     @Test
-    public void testApiTriggerBuild() throws Exception {
+    void testApiTriggerBuild() throws Exception {
         String gerritServerName = "testServer";
         GerritServer gerritServer = new GerritServer(gerritServerName);
         gerritServer.setConfig(SshdServerMock.getConfigFor(sshd, sshKey, gerritServer.getConfig()));
@@ -113,12 +116,7 @@ public class GerritTriggerApiTest {
         FreeStyleProject project = new TestUtils.JobBuilder(j).serverName(gerritServerName).build();
         server.waitForCommand(GERRIT_STREAM_EVENTS, 20000);
         GerritTriggerApi api = new GerritTriggerApi();
-        Handler handler = null;
-        try {
-            handler = api.getHandler();
-        } catch (GerritTriggerException ex) {
-            fail(ex.getMessage());
-        }
+        Handler handler = assertDoesNotThrow(api::getHandler);
         assertNotNull(handler);
         handler.post(Setup.createPatchsetCreated(gerritServerName));
         TestUtils.waitForBuilds(project, 1, 20000);

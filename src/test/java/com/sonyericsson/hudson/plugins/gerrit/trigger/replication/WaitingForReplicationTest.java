@@ -23,15 +23,15 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
-import static org.junit.Assert.assertEquals;
-
 import java.util.ArrayList;
-import java.util.List;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import java.util.List;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 //CS IGNORE MagicNumber FOR NEXT 50 LINES. REASON: testdata.
 
@@ -39,15 +39,15 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritS
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.replication.WaitingForReplication}.
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class WaitingForReplicationTest {
+class WaitingForReplicationTest {
 
     /**
      * Test that {@link WaitingForReplication#getShortDescription()} return a
      * message including all the slaves display name.
      */
     @Test
-    public void shouldReturnADescriptionWithAllSlaves() {
-        List<GerritSlave> slaves = new ArrayList<GerritSlave>();
+    void shouldReturnADescriptionWithAllSlaves() {
+        List<GerritSlave> slaves = new ArrayList<>();
         slaves.add(new GerritSlave("slaveA", null, 1234));
 
         WaitingForReplication waitingForReplication = new WaitingForReplication(slaves);

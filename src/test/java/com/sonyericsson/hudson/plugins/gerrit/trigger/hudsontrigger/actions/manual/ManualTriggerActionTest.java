@@ -23,7 +23,8 @@
  */
 
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.AdditionalMatchers.or;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
@@ -32,7 +33,8 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import java.util.HashMap;
@@ -41,8 +43,6 @@ import java.util.List;
 
 //CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static import
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.ManualTriggerAction.ID_SEPARATOR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -52,15 +52,14 @@ import static org.mockito.Mockito.when;
 /**
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ManualTriggerActionTest {
+class ManualTriggerActionTest {
 
     /**
      * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject, int)}.
      * With Code-Review patchset info.
-     * @throws Exception if so.
      */
     @Test
-    public void testGetCodeReview() throws Exception {
+    void testGetCodeReview() {
         JSONObject json = new JSONObject();
         JSONObject currentPatchSet = new JSONObject();
 
@@ -102,10 +101,9 @@ public class ManualTriggerActionTest {
     /**
      * Tests {@link ManualTriggerAction#getCodeReview(net.sf.json.JSONObject)}.
      * With an empty JSON object.
-     * @throws Exception if so.
      */
     @Test
-    public void testGetCodeReviewNoPatchSet() throws Exception {
+    void testGetCodeReviewNoPatchSet() {
         JSONObject json = new JSONObject();
 
         ManualTriggerAction action = new ManualTriggerAction();
@@ -119,10 +117,9 @@ public class ManualTriggerActionTest {
     /**
      * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject, int)}.
      * With Verified patchset info.
-     * @throws Exception if so.
      */
     @Test
-    public void testGetVerified() throws Exception {
+    void testGetVerified() {
         JSONObject json = new JSONObject();
         JSONObject currentPatchSet = new JSONObject();
 
@@ -164,10 +161,9 @@ public class ManualTriggerActionTest {
     /**
      * Tests {@link ManualTriggerAction#getVerified(net.sf.json.JSONObject)}.
      * With an empty JSON object.
-     * @throws Exception if so.
      */
     @Test
-    public void testGetVerifiedNoPatchSet() throws Exception {
+    void testGetVerifiedNoPatchSet() {
         JSONObject json = new JSONObject();
 
         ManualTriggerAction action = new ManualTriggerAction();
@@ -183,7 +179,7 @@ public class ManualTriggerActionTest {
      * With patch info.
      */
     @Test
-    public void testGenerateTheId() {
+    void testGenerateTheId() {
         JSONObject change = new JSONObject();
         change.put("id", "I10abc01");
         change.put("number", "100");
@@ -204,7 +200,7 @@ public class ManualTriggerActionTest {
      * With no patch info.
      */
     @Test
-    public void testGenerateTheIdNoPatch() {
+    void testGenerateTheIdNoPatch() {
         JSONObject change = new JSONObject();
         change.put("id", "I10abc01");
         change.put("number", "100");
@@ -218,10 +214,9 @@ public class ManualTriggerActionTest {
 
     /**
      * Tests {@code ManualTriggerAction.indexResult(List)}.
-     * @throws Exception if so.
      */
     @Test
-    public void testIndexResult() throws Exception {
+    void testIndexResult() {
         JSONObject change = new JSONObject();
         change.put("id", "I10abc01");
         change.put("number", "100");
@@ -235,7 +230,7 @@ public class ManualTriggerActionTest {
 
         change.put("patchSets", patchSets);
 
-        List<JSONObject> result = new LinkedList<JSONObject>();
+        List<JSONObject> result = new LinkedList<>();
         result.add(change);
 
         JSONObject type = new JSONObject();
@@ -254,7 +249,7 @@ public class ManualTriggerActionTest {
      * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject, String)} with a URL in the event info.
      */
     @Test
-    public void testGetGerritUrlJson() {
+    void testGetGerritUrlJson() {
         JSONObject change = new JSONObject();
         change.put("url", "http://gerrit/test");
         ManualTriggerAction action = new ManualTriggerAction();
@@ -267,7 +262,7 @@ public class ManualTriggerActionTest {
      * Tests {@link ManualTriggerAction#getGerritUrl(net.sf.json.JSONObject, String)} without a URL in the event info.
      */
     @Test
-    public void testGetGerritUrlJsonNoUrl() {
+    void testGetGerritUrlJsonNoUrl() {
         JSONObject change = new JSONObject();
         change.put("number", "100");
         try (MockedStatic<PluginImpl> pluginMockedStatic = mockStatic(PluginImpl.class)) {

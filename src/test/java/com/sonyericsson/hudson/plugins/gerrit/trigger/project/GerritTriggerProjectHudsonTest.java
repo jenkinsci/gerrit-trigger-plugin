@@ -35,10 +35,12 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.DuplicatesUtil;
 import hudson.model.FreeStyleProject;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.JenkinsRule.WebClient;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,20 +55,24 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * Tests for the project setup for a Gerrit triggered project.
  * @author Tomas Westling &lt;tomas.westling@sonymobile.com&gt;
  */
-public class GerritTriggerProjectHudsonTest {
+@WithJenkins
+class GerritTriggerProjectHudsonTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Tests that the dropdown list for comment added is populated with the correct values.
      * @throws Exception if so.
      */
     @Test
-    public void testPopulateDropDown() throws Exception {
+    void testPopulateDropDown() throws Exception {
         @SuppressWarnings("unused")
         List<GerritServer> servers = PluginImpl.getInstance().getServers();
 
@@ -92,7 +98,7 @@ public class GerritTriggerProjectHudsonTest {
      * @throws Exception if so.
      */
     @Test
-    public void testPopulateDropDownFromTwoServers() throws Exception {
+    void testPopulateDropDownFromTwoServers() throws Exception {
         @SuppressWarnings("unused")
         List<GerritServer> servers = PluginImpl.getInstance().getServers();
 
@@ -129,7 +135,7 @@ public class GerritTriggerProjectHudsonTest {
     private void verifyOptions(HtmlSelect select, List<String> expected) {
         Iterator<DomElement> iterator = select.getChildElements().iterator();
         Collections.sort(expected);
-        List<String> actual = new ArrayList<String>(expected.size());
+        List<String> actual = new ArrayList<>(expected.size());
         while (iterator.hasNext()) {
             DomElement option = iterator.next();
             actual.add(option.getAttribute("value"));

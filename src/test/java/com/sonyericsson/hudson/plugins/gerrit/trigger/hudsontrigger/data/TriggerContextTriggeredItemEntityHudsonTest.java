@@ -28,24 +28,42 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Cause.UserCause;
-import org.jvnet.hudson.test.HudsonTestCase;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /**
  * Tests the TriggerContext.Wrap class in a Hudson context.
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase {
+@WithJenkins
+class TriggerContextTriggeredItemEntityHudsonTest {
 
+    /**
+     * Jenkins rule instance.
+     */
+    private JenkinsRule j;
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * Tests that {@link TriggeredItemEntity#getProject()} can find a project from its name.
      * @throws IOException if so.
      */
-    public void testGetProject() throws IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
+    @Test
+    void testGetProject() throws IOException {
+        AbstractProject project = j.createFreeStyleProject("myProject");
         TriggeredItemEntity wrap = new TriggeredItemEntity(null, "myProject");
         assertNotNull(wrap.getProject());
         assertSame(project, wrap.getProject());
@@ -57,8 +75,9 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
      * @throws InterruptedException if so.
      * @throws ExecutionException if so.
      */
-    public void testGetBuild() throws IOException, InterruptedException, ExecutionException {
-        AbstractProject project = createFreeStyleProject("myProject");
+    @Test
+    void testGetBuild() throws IOException, InterruptedException, ExecutionException {
+        AbstractProject project = j.createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(build.getNumber(), "myProject");
         assertNotNull(wrap.getBuild());
@@ -72,8 +91,9 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
      * @throws ExecutionException if so.
      * @throws IOException if so.
      */
-    public void testInitProjectBuild() throws InterruptedException, ExecutionException, IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
+    @Test
+    void testInitProjectBuild() throws InterruptedException, ExecutionException, IOException {
+        AbstractProject project = j.createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(project, build);
         assertEquals(project.getFullName(), wrap.getProjectId());
@@ -87,8 +107,9 @@ public class TriggerContextTriggeredItemEntityHudsonTest extends HudsonTestCase 
      * @throws ExecutionException if so.
      * @throws IOException if so.
      */
-    public void testInitBuild() throws InterruptedException, ExecutionException, IOException {
-        AbstractProject project = createFreeStyleProject("myProject");
+    @Test
+    void testInitBuild() throws InterruptedException, ExecutionException, IOException {
+        AbstractProject project = j.createFreeStyleProject("myProject");
         AbstractBuild build = (AbstractBuild)project.scheduleBuild2(0, new UserCause()).get();
         TriggeredItemEntity wrap = new TriggeredItemEntity(build);
         assertEquals(project.getFullName(), wrap.getProjectId());

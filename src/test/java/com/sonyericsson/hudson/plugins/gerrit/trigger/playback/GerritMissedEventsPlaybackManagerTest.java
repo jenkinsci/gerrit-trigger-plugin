@@ -25,7 +25,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.playback;
 
 import com.github.tomakehurst.wiremock.http.Fault;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
@@ -40,27 +40,25 @@ import hudson.XmlFile;
 import hudson.security.ACL;
 import jenkins.model.Jenkins;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -72,18 +70,19 @@ import static org.mockito.Mockito.when;
  *
  * missed events tests for events-log plugin interaction.
  */
-public class GerritMissedEventsPlaybackManagerTest {
+class GerritMissedEventsPlaybackManagerTest {
 
     /**
      * regexp for change events plugin.
      */
     public static final String EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP = ".+plugins/events-log/events/.+";
     /**
-     * instance of WireMockRule.
+     * instance of WireMockExtension.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: WireMockRule.
-    @Rule
-    public final WireMockRule wireMockRule = new WireMockRule(0); // No-args constructor defaults to port 8089
+    @RegisterExtension
+    private static final WireMockExtension WIRE_MOCK = WireMockExtension.newInstance()
+            .options(wireMockConfig().dynamicPort())
+            .build();
     private XmlFile xmlFile;
     private static final int SLEEPTIME = 500;
     private static final int HTTPOK = 200;
@@ -93,17 +92,10 @@ public class GerritMissedEventsPlaybackManagerTest {
     private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
-     * Default constructor.
-     */
-    public GerritMissedEventsPlaybackManagerTest() {
-    }
-
-    /**
      * Create ReplicationQueueTaskDispatcher with a mocked GerritHandler.
-     * @throws IOException if it occurs.
      */
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws Exception {
         Jenkins jenkinsMock = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
@@ -114,7 +106,7 @@ public class GerritMissedEventsPlaybackManagerTest {
         GerritServer server = mock(GerritServer.class);
 
         MockPluginCheckerConfig config = new MockPluginCheckerConfig();
-        config.setGerritFrontEndURL("http://localhost:" + wireMockRule.port());
+        config.setGerritFrontEndURL("http://localhost:" + WIRE_MOCK.getPort());
         config.setUseRestApi(true);
         config.setGerritHttpUserName("user");
         config.setGerritHttpPassword("passwd");
@@ -129,19 +121,9 @@ public class GerritMissedEventsPlaybackManagerTest {
 
         playbackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
 
-        File tmpFile = null;
-        try {
-            tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
-        } catch (IOException e) {
-            fail("Failed to create Temp File");
-        }
+        File tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
         tmpFile.deleteOnExit();
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(tmpFile);
-        } catch (FileNotFoundException e) {
-            fail("Failed to write to Temp File");
-        }
+        PrintWriter out = new PrintWriter(tmpFile);
         String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
                 + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
                 + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
@@ -162,8 +144,8 @@ public class GerritMissedEventsPlaybackManagerTest {
                 , anyString(), anyBoolean())).thenReturn(true);
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
         pluginMockedStatic.close();
         playbackManagerMockedStatic.close();
@@ -177,15 +159,11 @@ public class GerritMissedEventsPlaybackManagerTest {
     private GerritMissedEventsPlaybackManager setupManager() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
 
         assertNotNull(missingEventsPlaybackManager.serverTimestamp);
 
-        assertTrue("should be true", missingEventsPlaybackManager.isSupported());
+        assertTrue(missingEventsPlaybackManager.isSupported(), "should be true");
 
         PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
                 "refs/heads/master");
@@ -194,20 +172,12 @@ public class GerritMissedEventsPlaybackManagerTest {
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
         missingEventsPlaybackManager.gerritEvent(patchsetCreated);
-        try {
-            Thread.sleep(SLEEPTIME);
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(() -> Thread.sleep(SLEEPTIME));
 
         missingEventsPlaybackManager.connectionDown();
         missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        try {
-            missingEventsPlaybackManager.load();
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
+        assertDoesNotThrow(missingEventsPlaybackManager::load);
         return missingEventsPlaybackManager;
     }
 
@@ -218,7 +188,7 @@ public class GerritMissedEventsPlaybackManagerTest {
      * And we can convert to events.
      */
     @Test
-    public void testConvertJSONToEvents() {
+    void testConvertJSONToEvents() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
@@ -247,22 +217,16 @@ public class GerritMissedEventsPlaybackManagerTest {
                 + "//jenkins/tn/job/tn-review/22579/ : FAILURE\"}\n";
 
 
-        stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
+        WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse()
                         .withStatus(HTTPOK)
                         .withHeader("Content-Type", "text/html")
                         .withBody(json)));
 
 
-        List<GerritTriggeredEvent> events = new ArrayList<GerritTriggeredEvent>();
-        try {
-            events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        Assert.assertEquals("Should have 1 event", 1, events.size());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
+        assertEquals(1, events.size(), "Should have 1 event");
 
     }
 
@@ -274,22 +238,16 @@ public class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    public void testHandleMalformedConnection() {
+    void testHandleMalformedConnection() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
-        stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
+        WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.MALFORMED_RESPONSE_CHUNK)));
 
-        List<GerritTriggeredEvent> events = new ArrayList<GerritTriggeredEvent>();
-        try {
-            events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        Assert.assertEquals("Should have 0 event", 0, events.size());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
+        assertEquals(0, events.size(), "Should have 0 event");
 
     }
 
@@ -301,22 +259,16 @@ public class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    public void testHandleEmptyResponse() {
+    void testHandleEmptyResponse() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
-        stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
+        WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
 
-        List<GerritTriggeredEvent> events = new ArrayList<GerritTriggeredEvent>();
-        try {
-            events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        Assert.assertEquals("Should have 0 event", 0, events.size());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
+        assertEquals(0, events.size(), "Should have 0 event");
 
     }
 
@@ -328,22 +280,16 @@ public class GerritMissedEventsPlaybackManagerTest {
      * And we return an empty set of events.
      */
     @Test
-    public void testHandleGarbageResponse() {
+    void testHandleGarbageResponse() {
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager =
                 setupManager();
 
-        stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
+        WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
-        List<GerritTriggeredEvent> events = new ArrayList<GerritTriggeredEvent>();
-        try {
-            events = missingEventsPlaybackManager.getEventsFromDateRange(
-                    missingEventsPlaybackManager.getDateFromTimestamp());
-        } catch (IOException e) {
-            fail(e.getMessage());
-        }
-
-        Assert.assertEquals("Should have 0 event", 0, events.size());
+        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+                    missingEventsPlaybackManager.getDateFromTimestamp()));
+        assertEquals(0, events.size(), "Should have 0 event");
 
     }
 
@@ -351,14 +297,14 @@ public class GerritMissedEventsPlaybackManagerTest {
      * This tests that the initial `isSupported` state is false.
      */
     @Test
-    public void testInitialSupportedState() {
+    void testInitialSupportedState() {
        // Option 1a: not supported
        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(false);
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+        assertFalse(missingEventsPlaybackManager.isSupported(), "isSupported should be false");
 
        // Option 1b: not supported
        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
@@ -366,7 +312,7 @@ public class GerritMissedEventsPlaybackManagerTest {
 
         missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+        assertFalse(missingEventsPlaybackManager.isSupported(), "isSupported should be false");
 
        // Option 2: supported
        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
@@ -374,7 +320,7 @@ public class GerritMissedEventsPlaybackManagerTest {
 
         missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+        assertTrue(missingEventsPlaybackManager.isSupported(), "isSupported should be true");
     }
 
     /**
@@ -382,24 +328,24 @@ public class GerritMissedEventsPlaybackManagerTest {
      * cannot determine the state successfully.
      */
     @Test
-    public void testStateOnlyChangesWhenValid() {
+    void testStateOnlyChangesWhenValid() {
        pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                , anyString(), anyBoolean())).thenReturn(false);
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
-        Assert.assertFalse("isSupported should be false", missingEventsPlaybackManager.isSupported());
+        assertFalse(missingEventsPlaybackManager.isSupported(), "isSupported should be false");
 
         pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(true);
 
         missingEventsPlaybackManager.checkIfEventsLogPluginSupported();
-        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+        assertTrue(missingEventsPlaybackManager.isSupported(), "isSupported should be true");
 
         pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(null);
 
         missingEventsPlaybackManager.checkIfEventsLogPluginSupported();
-        Assert.assertTrue("isSupported should be true", missingEventsPlaybackManager.isSupported());
+        assertTrue(missingEventsPlaybackManager.isSupported(), "isSupported should be true");
     }
 }

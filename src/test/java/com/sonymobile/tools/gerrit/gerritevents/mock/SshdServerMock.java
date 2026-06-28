@@ -163,7 +163,7 @@ public class SshdServerMock implements CommandFactory {
     protected synchronized CommandMock setCurrentCommand(CommandMock command) {
         currentCommand = command;
         if (commandHistory == null) {
-            commandHistory = new LinkedList<CommandMock>();
+            commandHistory = new LinkedList<>();
         }
         commandHistory.add(0, command);
         return currentCommand;
@@ -275,7 +275,7 @@ public class SshdServerMock implements CommandFactory {
         Constructor<? extends CommandMock> constructor = cmd.getConstructor(argumentTypes);
         if (constructor != null) {
             if (commandLookups == null) {
-                commandLookups = new LinkedList<CommandLookup>();
+                commandLookups = new LinkedList<>();
             }
             commandLookups.add(new CommandLookup(cmd, commandPattern, oneShot, constructor, arguments));
         }
@@ -466,10 +466,9 @@ public class SshdServerMock implements CommandFactory {
      * @return the path to the private key file
      *
      * @throws IOException          if so.
-     * @throws InterruptedException if interrupted while waiting for ssh-keygen to finish.
      * @throws JSchException        if creation of the keys goes wrong.
      */
-    public static KeyPairFiles generateKeyPair() throws IOException, InterruptedException, JSchException {
+    public static KeyPairFiles generateKeyPair() throws IOException, JSchException {
         // Can't use java.io.tmp: '/tmp' is explicitely set in some XML config files.`
         File tmp = new File("/tmp");
         if (!tmp.exists()) {
@@ -512,8 +511,8 @@ public class SshdServerMock implements CommandFactory {
      * Returned from {@link #generateKeyPair()}.
      */
     public static final class KeyPairFiles {
-        private File privateKey;
-        private File publicKey;
+        private final File privateKey;
+        private final File publicKey;
 
         /**
          * Standard constructor.
@@ -563,7 +562,7 @@ public class SshdServerMock implements CommandFactory {
         /**
          * The command.
          */
-        protected String command;
+        protected final String command;
 
         /**
          * Standard constructor.
@@ -722,7 +721,7 @@ public class SshdServerMock implements CommandFactory {
      */
     public static class PrintLinesCommand extends CommandMock {
 
-        private List<String> lines;
+        private final List<String> lines;
         private boolean doItNow = false;
 
         /**
@@ -754,7 +753,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             logger.info("Starting PL-command: " + getCommand());
             while (!isNow()) {
                 synchronized (this) {
@@ -790,7 +789,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             String line = "gerrit version 2.11.4";
             logger.info("Starting PL-command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -817,7 +816,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
 
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
@@ -913,7 +912,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
             final int lastUpdated = 1449170950;
@@ -1031,7 +1030,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             final int createdOn1 = 1449170072;
             final int createdOn2 = 1449168976;
             final int lastUpdated = 1449170950;
@@ -1144,7 +1143,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             String line = "abcProject";
             logger.info("Starting Project command: " + getCommand());
             try (PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -1172,7 +1171,7 @@ public class SshdServerMock implements CommandFactory {
         }
 
         @Override
-        public void start(final ChannelSession channel, final Environment environment) throws IOException {
+        public void start(final ChannelSession channel, final Environment environment) {
             String line = "abcProject";
             String line2 = "defProject";
             logger.info("Starting Project 2 command: " + getCommand());
@@ -1193,11 +1192,11 @@ public class SshdServerMock implements CommandFactory {
      * @see SshdServerMock#findAndCreateCommand(String)
      */
     public static class CommandLookup {
-        private Class<? extends CommandMock> cmdClass;
-        private Pattern commandPattern;
-        private boolean oneShot;
-        private Constructor<? extends CommandMock> constructor;
-        private Object[] arguments;
+        private final Class<? extends CommandMock> cmdClass;
+        private final Pattern commandPattern;
+        private final boolean oneShot;
+        private final Constructor<? extends CommandMock> constructor;
+        private final Object[] arguments;
 
         /**
          * Standard constructor.
@@ -1261,7 +1260,7 @@ public class SshdServerMock implements CommandFactory {
          */
         public CommandMock newInstance(String command) {
             try {
-                if (arguments == null || arguments.length <= 0) {
+                if (arguments == null || arguments.length == 0) {
                     return constructor.newInstance(command);
                 } else {
                     Object[] args = new Object[arguments.length + 1];

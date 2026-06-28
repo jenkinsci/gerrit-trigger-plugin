@@ -84,7 +84,7 @@ public abstract class DuplicatesUtil {
     public static FreeStyleProject createGerritTriggeredJob(JenkinsRule rule,
             String projectName, String serverName) throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject(projectName);
-        List<GerritProject> projects = new LinkedList<GerritProject>();
+        List<GerritProject> projects = new LinkedList<>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null, false));
         p.addTrigger(new GerritTrigger(projects, null,
@@ -107,14 +107,14 @@ public abstract class DuplicatesUtil {
     public static FreeStyleProject createGerritDynamicTriggeredJob(JenkinsRule rule, String name,
             String branchSetting) throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject(name);
-        List<GerritProject> projects = new LinkedList<GerritProject>();
+        List<GerritProject> projects = new LinkedList<>();
 
         File file = File.createTempFile("dynamic", "txt");
         FileWriter fw = new FileWriter(file);
         fw.write("p=project\n");
         fw.write("b" + branchSetting);
         fw.close();
-        List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
+        List<PluginGerritEvent> list = new LinkedList<>();
         URI uri = file.toURI();
         String filepath = uri.toURL().toString();
         GerritTrigger trigger = new GerritTrigger(projects, null,
@@ -155,11 +155,11 @@ public abstract class DuplicatesUtil {
             String name, String serverName)
             throws Exception {
         FreeStyleProject p = rule.createFreeStyleProject(name);
-        List<GerritProject> projects = new LinkedList<GerritProject>();
+        List<GerritProject> projects = new LinkedList<>();
         projects.add(new GerritProject(CompareType.ANT, "**",
                 Collections.singletonList(new Branch(CompareType.ANT, "**")), null, null, null, false));
         PluginCommentAddedEvent event = new PluginCommentAddedEvent("Code-Review", "1");
-        List<PluginGerritEvent> list = new LinkedList<PluginGerritEvent>();
+        List<PluginGerritEvent> list = new LinkedList<>();
         list.add(event);
         p.addTrigger(new GerritTrigger(projects, null,
                 null, null, null, null, null, null, null, null, null, null,

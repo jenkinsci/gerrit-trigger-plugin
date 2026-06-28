@@ -1,12 +1,11 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import hudson.MarkupText;
 import hudson.model.AbstractBuild;
-
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
@@ -16,14 +15,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  * Test for {@link ChangeIdAnnotator}.
  * @author Kohsuke Kawaguchi
  */
-public class ChangeIdAnnotatorTest {
+class ChangeIdAnnotatorTest {
 
     /**
      * the test.
      */
     @Test
-    public void testFoo() {
-
+    void testFoo() {
         AbstractBuild<?, ?> b = mock(AbstractBuild.class);
         when(b.getCause(GerritCause.class)).thenReturn(null);
         annotateAndVerify(b,
@@ -35,8 +33,11 @@ public class ChangeIdAnnotatorTest {
         gerritCause.setEvent(patchsetCreated);
         when(b.getCause(GerritCause.class)).thenReturn(gerritCause);
         annotateAndVerify(b,
-                          "test\ntest\nChange-Id: <a href='http://gerrit/r/I1234567890123456789012345678901234567890'>"
-                                + "I1234567890123456789012345678901234567890</a>",
+                """
+                        test
+                        test
+                        Change-Id: <a href='http://gerrit/r/I1234567890123456789012345678901234567890'>\
+                        I1234567890123456789012345678901234567890</a>""",
                           "test\ntest\nChange-Id: I1234567890123456789012345678901234567890");
 
         annotateAndVerify(b,
@@ -58,6 +59,6 @@ public class ChangeIdAnnotatorTest {
         MarkupText t = new MarkupText(plain);
         new ChangeIdAnnotator().annotate(b, null, t);
         System.out.println(t.toString(true));
-        Assert.assertEquals(expected, t.toString(true));
+        assertEquals(expected, t.toString(true));
     }
 }

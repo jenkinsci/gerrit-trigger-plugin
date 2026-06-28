@@ -26,7 +26,7 @@ public final class GerritMatchers {
     static class IsAManualCause extends org.hamcrest.BaseMatcher<GerritCause> {
 
         private final org.mockito.internal.matchers.InstanceOf internal;
-        private boolean silentMode;
+        private final boolean silentMode;
 
         /**
          * Constructor.
@@ -97,7 +97,7 @@ public final class GerritMatchers {
      */
     static class IsParameterActionWithStringParameterValue extends org.hamcrest.BaseMatcher<hudson.model.Action> {
 
-        NameAndValue[] nameAndValues;
+        final NameAndValue[] nameAndValues;
 
         /**
          * Standard Constructor.
@@ -126,11 +126,10 @@ public final class GerritMatchers {
                 for (NameAndValue nv : nameAndValues) {
                     hudson.model.ParameterValue parameterValue = ((ParametersAction)action).getParameter(nv.name);
 
-                    if (parameterValue != null && parameterValue instanceof hudson.model.StringParameterValue) {
-                        hudson.model.StringParameterValue param = (hudson.model.StringParameterValue)parameterValue;
+                    if (parameterValue instanceof hudson.model.StringParameterValue param) {
                         if (!nv.name.equals(param.getName()) || !nv.value.equals(param.value)) {
                             System.err.println("Required parameter is [" + param.getName() + "=" + param.value
-                                    + "] should be [" + nv.toString() + "]");
+                                    + "] should be [" + nv + "]");
                             return false;
                         }
                     } else {
@@ -155,8 +154,8 @@ public final class GerritMatchers {
          * Data structure for a name and a value.
          */
         static class NameAndValue {
-            private String name;
-            private String value;
+            private final String name;
+            private final String value;
 
             /**
              * Standard constructor.
@@ -261,7 +260,7 @@ public final class GerritMatchers {
      * @return the matcher.
      */
     static org.hamcrest.BaseMatcher<java.util.List<hudson.model.Action>> hasCauseActionContainingUserCauseMatcher() {
-        return new org.hamcrest.BaseMatcher<java.util.List<hudson.model.Action>>() {
+        return new org.hamcrest.BaseMatcher<>() {
             @Override
             public boolean matches(Object item) {
                 if (item instanceof java.util.List) {
@@ -327,8 +326,7 @@ public final class GerritMatchers {
             public boolean matches(Object item) {
                 if (item instanceof java.util.List) {
                     for (Action a : ((java.util.List<hudson.model.Action>)item)) {
-                        if (a instanceof ParametersAction) {
-                            ParametersAction parameters = (ParametersAction)a;
+                        if (a instanceof ParametersAction parameters) {
                             hudson.model.ParameterValue parameter = parameters.getParameter(key);
                             if (parameter != null) {
                                 return value.equals(parameter.getValue());

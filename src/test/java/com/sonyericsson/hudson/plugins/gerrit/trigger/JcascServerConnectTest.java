@@ -24,12 +24,12 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
 import static com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock.GERRIT_STREAM_EVENTS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import io.jenkins.plugins.casc.ConfigurationAsCode;
@@ -39,16 +39,18 @@ import org.apache.sshd.server.SshServer;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.tools.ant.filters.StringInputStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * Tests Jenkins Configuration as Code changes to Gerrit Server connections.
  */
-public class JcascServerConnectTest {
+@WithJenkins
+class JcascServerConnectTest {
     private PluginImpl pluginImpl;
     private SshdServerMock.KeyPairFiles sshKey;
     private SshdServerMock sshdMock1;
@@ -62,17 +64,18 @@ public class JcascServerConnectTest {
     /**
      * Ensure Jenkins instance is created.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public final JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     /**
      * Setup environment before each test execution.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception throw if so.
      */
-    @Before
-    public void setup() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         pluginImpl = PluginImpl.getInstance();
         sshKey = SshdServerMock.generateKeyPair();
 
@@ -103,8 +106,8 @@ public class JcascServerConnectTest {
      *
      * @throws Exception throw if so.
      */
-    @After
-    public void cleanup() throws Exception {
+    @AfterEach
+    void cleanup() throws Exception {
         sshdMock1.stopServer(sshd1);
         sshd1 = null;
         sshdMock1 = null;
@@ -116,10 +119,9 @@ public class JcascServerConnectTest {
     /**
      * Test adding a server to the configuration and then remove it.
      *
-     * @throws Exception throw if so.
      */
     @Test
-    public void testAddThenRemoveServer() throws Exception {
+    void testAddThenRemoveServer() {
         assertEquals(0, pluginImpl.getServers().size());
 
         String config1 = generateCascConfig(sshd1);
@@ -143,10 +145,9 @@ public class JcascServerConnectTest {
     /**
      * Test adding a server and then update configuration without any changes.
      *
-     * @throws Exception throw if so.
      */
     @Test
-    public void testUpdateWithSameServer() throws Exception {
+    void testUpdateWithSameServer() {
         assertEquals(0, pluginImpl.getServers().size());
 
         String config1 = generateCascConfig(sshd1);
@@ -175,10 +176,9 @@ public class JcascServerConnectTest {
     /**
      * Test adding a server and then update configuration with a different server.
      *
-     * @throws Exception throw if so.
      */
     @Test
-    public void testUpdateWithDifferentServer() throws Exception {
+    void testUpdateWithDifferentServer() {
         assertEquals(0, pluginImpl.getServers().size());
 
         String config1 = generateCascConfig(sshd1);
@@ -208,10 +208,9 @@ public class JcascServerConnectTest {
     /**
      * Test adding a server and then update configuration by adding a second server.
      *
-     * @throws Exception throw if so.
      */
     @Test
-    public void testUpdateWithSecondServer() throws Exception {
+    void testUpdateWithSecondServer() {
         assertEquals(0, pluginImpl.getServers().size());
 
         String config1 = generateCascConfig(sshd1);

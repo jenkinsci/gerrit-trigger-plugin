@@ -44,6 +44,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,17 +53,17 @@ import jenkins.model.Jenkins;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -74,7 +75,7 @@ import static org.mockito.Mockito.when;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ParameterExpanderTest {
+class ParameterExpanderTest {
 
     private Jenkins jenkins;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
@@ -82,16 +83,16 @@ public class ParameterExpanderTest {
     /**
      * Mock Jenkins.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkins = mock(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
         when(jenkins.getRootUrl()).thenReturn("http://localhost/");
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
@@ -100,7 +101,7 @@ public class ParameterExpanderTest {
      * @throws Exception Exception
      */
     @Test
-    public void testGetBuildStartedCommand() throws Exception {
+    void testGetBuildStartedCommand() throws Exception {
         TaskListener taskListener = mock(TaskListener.class);
 
         GerritTrigger trigger = mock(GerritTrigger.class);
@@ -119,7 +120,7 @@ public class ParameterExpanderTest {
 
 
         try (MockedStatic<GerritMessageProvider> messageProviderMockedStatic = mockStatic(GerritMessageProvider.class)) {
-            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
             messageProviderExtensionList.add(new GerritMessageProviderExtension());
             messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
             messageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
@@ -130,20 +131,20 @@ public class ParameterExpanderTest {
 
             String result = instance.getBuildStartedCommand(r, taskListener, event, stats);
             System.out.println("result: " + result);
-            assertTrue("Missing START_MESSAGE_VAL from getBuildStartMessage()",
-                    result.contains("START_MESSAGE_VAL"));
-            assertTrue("Missing CHANGE_ID", result.contains("CHANGE_ID=Iddaaddaa123456789"));
-            assertTrue("Missing PATCHSET", result.contains("PATCHSET=1"));
-            assertTrue("Missing VERIFIED", result.contains("VERIFIED=1"));
-            assertTrue("Missing CODEREVIEW", result.contains("CODEREVIEW=32"));
-            assertTrue("Missing NOTIFICATION_LEVEL", result.contains("NOTIFICATION_LEVEL=ALL"));
-            assertTrue("Missing REFSPEC", result.contains("REFSPEC=" + expectedRefSpec));
-            assertTrue("Missing ENV_BRANCH", result.contains("ENV_BRANCH=branch"));
-            assertTrue("Missing ENV_CHANGE", result.contains("ENV_CHANGE=1000"));
-            assertTrue("Missing ENV_REFSPEC", result.contains("ENV_REFSPEC=" + expectedRefSpec));
-            assertTrue("Missing ENV_CHANGEURL", result.contains("ENV_CHANGEURL=http://gerrit/1000"));
-            assertTrue("Missing CUSTOM_MESSAGE", result.contains("CUSTOM_MESSAGE_BUILD_STARTED"));
-            assertTrue("Newlines are stripped", result.contains("Message\nwith newline"));
+            assertTrue(result.contains("START_MESSAGE_VAL"),
+                    "Missing START_MESSAGE_VAL from getBuildStartMessage()");
+            assertTrue(result.contains("CHANGE_ID=Iddaaddaa123456789"), "Missing CHANGE_ID");
+            assertTrue(result.contains("PATCHSET=1"), "Missing PATCHSET");
+            assertTrue(result.contains("VERIFIED=1"), "Missing VERIFIED");
+            assertTrue(result.contains("CODEREVIEW=32"), "Missing CODEREVIEW");
+            assertTrue(result.contains("NOTIFICATION_LEVEL=ALL"), "Missing NOTIFICATION_LEVEL");
+            assertTrue(result.contains("REFSPEC=" + expectedRefSpec), "Missing REFSPEC");
+            assertTrue(result.contains("ENV_BRANCH=branch"), "Missing ENV_BRANCH");
+            assertTrue(result.contains("ENV_CHANGE=1000"), "Missing ENV_CHANGE");
+            assertTrue(result.contains("ENV_REFSPEC=" + expectedRefSpec), "Missing ENV_REFSPEC");
+            assertTrue(result.contains("ENV_CHANGEURL=http://gerrit/1000"), "Missing ENV_CHANGEURL");
+            assertTrue(result.contains("CUSTOM_MESSAGE_BUILD_STARTED"), "Missing CUSTOM_MESSAGE");
+            assertTrue(result.contains("Message\nwith newline"), "Newlines are stripped");
         }
     }
 
@@ -151,7 +152,7 @@ public class ParameterExpanderTest {
      * test.
      */
     @Test
-    public void testGetMinimumVerifiedValue() {
+    void testGetMinimumVerifiedValue() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -191,7 +192,7 @@ public class ParameterExpanderTest {
      * test.
      */
     @Test
-    public void testGetMinimumCodeReviewValue() {
+    void testGetMinimumCodeReviewValue() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -232,7 +233,7 @@ public class ParameterExpanderTest {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     @Test
-    public void testGetMinimumCodeReviewValueOneUnstableSkipped() {
+    void testGetMinimumCodeReviewValueOneUnstableSkipped() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -267,7 +268,7 @@ public class ParameterExpanderTest {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     @Test
-    public void testGetMinimumCodeReviewValueOneSuccessfulSkipped() {
+    void testGetMinimumCodeReviewValueOneSuccessfulSkipped() {
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -293,7 +294,7 @@ public class ParameterExpanderTest {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     @Test
-    public void testGetMinimumCodeReviewValueForOneJobOverridenBuildSuccessful() {
+    void testGetMinimumCodeReviewValueForOneJobOverridenBuildSuccessful() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -305,7 +306,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -323,7 +324,7 @@ public class ParameterExpanderTest {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     @Test
-    public void testGetMinimumCodeReviewValueForOneJobOverridenBuildFailed() {
+    void testGetMinimumCodeReviewValueForOneJobOverridenBuildFailed() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -335,7 +336,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(Integer.valueOf(-2));
+        when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(-2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -353,7 +354,7 @@ public class ParameterExpanderTest {
      * @see com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger#getSkipVote()
      */
     @Test
-    public void testGetMinimumCodeReviewValueForOneJobOverridenMixed() {
+    void testGetMinimumCodeReviewValueForOneJobOverridenMixed() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -365,7 +366,7 @@ public class ParameterExpanderTest {
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.FAILURE);
 
         trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(Integer.valueOf(2));
+        when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(2);
         entries[1] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         when(memoryImprint.getEntries()).thenReturn(entries);
@@ -382,7 +383,7 @@ public class ParameterExpanderTest {
      *
      */
     @Test
-    public void testGetVerifiedValueOneSuccessJobAndMissingFailedJob() {
+    void testGetVerifiedValueOneSuccessJobAndMissingFailedJob() {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
         ParameterExpander instance = new ParameterExpander(config, jenkins);
@@ -390,7 +391,7 @@ public class ParameterExpanderTest {
         MemoryImprint.Entry[] entries = new MemoryImprint.Entry[2];
 
         GerritTrigger trigger = mock(GerritTrigger.class);
-        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(Integer.valueOf(2));
+        when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(2);
         entries[0] = Setup.createAndSetupMemoryImprintEntry(trigger, Result.SUCCESS);
 
         trigger = mock(GerritTrigger.class);
@@ -402,7 +403,7 @@ public class ParameterExpanderTest {
         // but score should be saturated to Failed verified value from config.
         Integer result = instance.getMinimumVerifiedValue(memoryImprint, false,
                 config.getGerritBuildFailedVerifiedValue());
-        assertEquals(Integer.valueOf(config.getGerritBuildFailedVerifiedValue()), result);
+        assertEquals(config.getGerritBuildFailedVerifiedValue(), result);
     }
 
     /**
@@ -411,7 +412,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandSuccessful() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessful("",
                 "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessful("http://example.org/<CHANGE_ID>",
@@ -426,7 +427,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandNotBuilt() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandNotBuilt() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults("", new String[] {},
                 new Result[] {Result.NOT_BUILT}, Setup.createPatchsetCreated(),
                 null, null, "NONE", false);
@@ -439,7 +440,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandSuccessfulChangeAbandoned() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandSuccessfulChangeAbandoned() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("",
                 "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("http://example.org/<CHANGE_ID>",
@@ -447,6 +448,7 @@ public class ParameterExpanderTest {
         tryGetBuildCompletedCommandSuccessfulChangeAbandoned("${BUILD_URL}console",
                 "\n\nhttp://localhost/test/console : SUCCESS");
     }
+
     /**
      * Same test as {@link #testGetBuildCompletedCommandSuccessful()}, but with ChangeMerged event instead.
      *
@@ -454,7 +456,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandSuccessfulChangeMerged() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandSuccessfulChangeMerged() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeMerged("",
                 "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeMerged("http://example.org/<CHANGE_ID>",
@@ -470,7 +472,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandSuccessfulChangeRestored() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandSuccessfulChangeRestored() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandSuccessfulChangeRestored("",
                 "\n\nhttp://localhost/test/ : SUCCESS");
         tryGetBuildCompletedCommandSuccessfulChangeRestored("http://example.org/<CHANGE_ID>",
@@ -486,7 +488,7 @@ public class ParameterExpanderTest {
      * @throws InterruptedException InterruptedException
      */
     @Test
-    public void testGetBuildCompletedCommandMulipleBuildsMessageOrder() throws IOException, InterruptedException {
+    void testGetBuildCompletedCommandMulipleBuildsMessageOrder() throws IOException, InterruptedException {
         tryGetBuildCompletedCommandEventWithResults("",
                 new String[] { // messages must be in order
                     "\n\nhttp://localhost/test/ : FAILURE",
@@ -501,7 +503,7 @@ public class ParameterExpanderTest {
      * (Conservative approach is to assume Failed build if the build is now missing.)
      */
     @Test
-    public void testGetBuildCompletedMissingFailedBuild() throws IOException, InterruptedException {
+    void testGetBuildCompletedMissingFailedBuild() throws IOException, InterruptedException {
         int buildResults = 2;
         IGerritHudsonTriggerConfig config = Setup.createConfig();
         Integer expectedVerifiedVote = config.getGerritBuildFailedVerifiedValue();
@@ -690,7 +692,7 @@ public class ParameterExpanderTest {
 
         try (MockedStatic<GerritMessageProvider> mockedStatic = mockStatic(GerritMessageProvider.class)) {
 
-            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
             messageProviderExtensionList.add(new GerritMessageProviderExtension());
             messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
             mockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
@@ -728,7 +730,7 @@ public class ParameterExpanderTest {
      * @throws Exception if so
      */
     @Test
-    public void testBuildStatsWithUnsuccessfulMessage() throws Exception {
+    void testBuildStatsWithUnsuccessfulMessage() throws Exception {
         tryBuildStatsFailureCommand("This was an unsuccessful message. ",
                 "\n\nhttp://localhost/test/ : FAILURE <<<\nThis was an unsuccessful message.\n>>>");
         tryBuildStatsFailureCommand(null, "\n\nhttp://localhost/test/ : FAILURE");
@@ -781,7 +783,7 @@ public class ParameterExpanderTest {
 
         try (MockedStatic<GerritMessageProvider> gerritMessageProviderMockedStatic
                      = mockStatic(GerritMessageProvider.class)) {
-            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
             messageProviderExtensionList.add(new GerritMessageProviderExtension());
             messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
             gerritMessageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
@@ -804,7 +806,7 @@ public class ParameterExpanderTest {
      * @throws Exception if so
      */
     @Test
-    public void getBuildStatsFailureCommandWithNullsForCodeReviewValues() throws Exception {
+    void getBuildStatsFailureCommandWithNullsForCodeReviewValues() throws Exception {
         IGerritHudsonTriggerConfig config = Setup.createConfigWithCodeReviewsNull();
 
         TaskListener taskListener = mock(TaskListener.class);
@@ -839,7 +841,7 @@ public class ParameterExpanderTest {
 
         try (MockedStatic<GerritMessageProvider> gerritMessageProviderMockedStatic
                      = mockStatic(GerritMessageProvider.class)) {
-            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<GerritMessageProvider>();
+            List<GerritMessageProvider> messageProviderExtensionList = new LinkedList<>();
             messageProviderExtensionList.add(new GerritMessageProviderExtension());
             messageProviderExtensionList.add(new GerritMessageProviderExtensionReturnNull());
             gerritMessageProviderMockedStatic.when(GerritMessageProvider::all).thenReturn(messageProviderExtensionList);
@@ -849,7 +851,7 @@ public class ParameterExpanderTest {
             String result = instance.getBuildCompletedCommand(memoryImprint, taskListener, null);
             System.out.println("Result: " + result);
 
-            assertTrue("Missing Build has Failed", result.contains("This Build has Failed"));
+            assertTrue(result.contains("This Build has Failed"), "Missing Build has Failed");
         }
     }
 
@@ -884,6 +886,7 @@ public class ParameterExpanderTest {
      * Extension implementing GerritMessageProvider to provide a custom build message.
      */
     public static class GerritMessageProviderExtension extends GerritMessageProvider {
+        @Serial
         private static final long serialVersionUID = -7565217057927807166L;
 
         @Override
@@ -901,6 +904,7 @@ public class ParameterExpanderTest {
      * Extension implementing GerritMessageProvider to provide a custom build message (null).
      */
     public static class GerritMessageProviderExtensionReturnNull extends GerritMessageProvider {
+        @Serial
         private static final long serialVersionUID = -3479376646924947609L;
 
         @Override
@@ -927,7 +931,7 @@ public class ParameterExpanderTest {
     /**
      * Checks containment of multiple strings in another string.
      */
-    public static final class SubstringMatcher extends TypeSafeMatcher<String> {
+    static final class SubstringMatcher extends TypeSafeMatcher<String> {
 
         private final String[] substrings;
 
@@ -936,7 +940,7 @@ public class ParameterExpanderTest {
          *
          * @param substrings the substrings to check
          */
-        public SubstringMatcher(final String... substrings) {
+        SubstringMatcher(final String... substrings) {
             this.substrings = substrings;
         }
 

@@ -26,14 +26,14 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.config;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventType;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,15 +42,15 @@ import java.util.List;
  *
  * @author rinrinne &lt;rinrin.ne@gmail.com&gt;
  */
-public class PluginConfigTest {
+class PluginConfigTest {
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
 
     /**
      * Resets the GerritEventType enum.
      */
-    @After
-    public void afterTest() {
+    @AfterEach
+    void afterTest() {
      // TODO if an event type is added with a default other than true
         // in the future then this needs to be updated to check each
         // events default value.
@@ -64,7 +64,7 @@ public class PluginConfigTest {
      * filterIn using partial event list.
      */
     @Test
-    public void testSetValues() {
+    void testSetValues() {
         String events = "change-abandoned change-merged change-restored";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
@@ -91,7 +91,7 @@ public class PluginConfigTest {
      * filterIn using empty event list.
      */
     @Test
-    public void testCopyConfig() {
+    void testCopyConfig() {
         String events = "";
         String formString = "{"
                 + "\"numberOfSendingWorkerThreads\":\"4\","
@@ -113,7 +113,7 @@ public class PluginConfigTest {
      * for event filter.
      */
     @Test
-    public void testDefaultEventFilter() {
+    void testDefaultEventFilter() {
         List<String> defaultEventFilter = PluginConfig.getDefaultEventFilter();
         String events = "null";
         String formString = "{"

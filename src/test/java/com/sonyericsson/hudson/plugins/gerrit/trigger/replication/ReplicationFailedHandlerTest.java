@@ -23,26 +23,26 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import hudson.AbortException;
 import hudson.model.Environment;
+import org.junit.jupiter.api.BeforeEach;
 import hudson.model.AbstractBuild;
 
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationFailedHandler}.
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  *
  */
-public class ReplicationFailedHandlerTest {
+class ReplicationFailedHandlerTest {
 
     private ReplicationFailedHandler handler;
     private AbstractBuild<?, ?> abstractBuildMock;
@@ -50,8 +50,8 @@ public class ReplicationFailedHandlerTest {
     /**
      * Create ReplicationFailedHandler and a mocked AbstractBuild.
      */
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         handler = new ReplicationFailedHandler();
         abstractBuildMock = mock(AbstractBuild.class);
     }
@@ -63,7 +63,7 @@ public class ReplicationFailedHandlerTest {
      * @throws InterruptedException if test is failing
      */
     @Test
-    public void shouldReturnAnEmptyEnvironmentWhenActionNotFound() throws IOException, InterruptedException {
+    void shouldReturnAnEmptyEnvironmentWhenActionNotFound() throws IOException, InterruptedException {
         Environment env = handler.setUpEnvironment(abstractBuildMock, null, null);
         assertNotNull(env);
     }
@@ -71,18 +71,14 @@ public class ReplicationFailedHandlerTest {
     /**
      * Test that setUpEnvironment throws an AbortException when build does contain
      * a ReplicationFailedAction.
-     * @throws IOException if test is failing
-     * @throws InterruptedException if test is failing
      */
     @Test
-    public void shouldThrowAbortExceptionWheReplicationFailedActionIsFound() throws IOException, InterruptedException {
+    void shouldThrowAbortExceptionWheReplicationFailedActionIsFound() {
         when(abstractBuildMock.getAction(ReplicationFailedAction.class)).thenReturn(
             new ReplicationFailedAction("someReason"));
-        try {
-            handler.setUpEnvironment(abstractBuildMock, null, null);
-            fail("should have raise an AbortException");
-        } catch (AbortException e) {
-            assertEquals("someReason", e.getMessage());
-        }
+
+        AbortException e = assertThrows(AbortException.class,
+                () -> handler.setUpEnvironment(abstractBuildMock, null, null));
+        assertEquals("someReason", e.getMessage());
     }
 }

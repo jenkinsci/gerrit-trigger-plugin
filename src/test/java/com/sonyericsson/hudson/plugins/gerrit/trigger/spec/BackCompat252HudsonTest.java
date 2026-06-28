@@ -49,21 +49,22 @@ import hudson.model.Result;
 import hudson.model.TopLevelItem;
 import hudson.util.RunList;
 import org.apache.sshd.server.SshServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.recipes.LocalData;
 
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
@@ -71,7 +72,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class BackCompat252HudsonTest {
+@WithJenkins
+class BackCompat252HudsonTest {
 
     /**
      * The stream-events command.
@@ -80,19 +82,20 @@ public class BackCompat252HudsonTest {
     /**
      * An instance of Jenkins Rule.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
     private SshServer sshd;
     private SshdServerMock server;
 
     /**
      * Starts up the sshd server.
      *
+     * @param rule the jenkins rule
+     *
      * @throws Exception if so
      */
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) throws Exception {
+        j = rule;
         SshdServerMock.generateKeyPair();
 
         server = new SshdServerMock();
@@ -114,8 +117,8 @@ public class BackCompat252HudsonTest {
      *
      * @throws Exception if so
      */
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
         server = null;
@@ -126,7 +129,7 @@ public class BackCompat252HudsonTest {
      */
     @Test
     @LocalData
-    public void testFreeStyleJob() {
+    void testFreeStyleJob() {
         TopLevelItem freestyleJobItem = j.jenkins.getItem("freestyleJob");
         assertThat(freestyleJobItem, instanceOf(AbstractProject.class));
         AbstractProject freestyleJob = (AbstractProject)freestyleJobItem;
@@ -144,8 +147,8 @@ public class BackCompat252HudsonTest {
         assertThat(branch.getPattern(), equalTo("bra.*"));
         List<PluginGerritEvent> triggerOnEvents = trigger.getTriggerOnEvents();
         assertThat(triggerOnEvents.size(), equalTo(2));
-        assertSame(triggerOnEvents.get(0).getCorrespondingEventClass(), PatchsetCreated.class);
-        assertSame(triggerOnEvents.get(1).getCorrespondingEventClass(), DraftPublished.class);
+        assertSame(PatchsetCreated.class, triggerOnEvents.get(0).getCorrespondingEventClass());
+        assertSame(DraftPublished.class, triggerOnEvents.get(1).getCorrespondingEventClass());
     }
 
     /**
@@ -153,7 +156,7 @@ public class BackCompat252HudsonTest {
      */
     @Test
     @LocalData
-    public void testMatrixJob() {
+    void testMatrixJob() {
         TopLevelItem matrixJobItem = j.jenkins.getItem("matrixJob");
         assertThat(matrixJobItem, instanceOf(AbstractProject.class));
         AbstractProject matrixJob = (AbstractProject)matrixJobItem;
@@ -171,8 +174,8 @@ public class BackCompat252HudsonTest {
         assertThat(branch.getPattern(), equalTo(".*er"));
         List<PluginGerritEvent> triggerOnEvents = trigger.getTriggerOnEvents();
         assertThat(triggerOnEvents.size(), equalTo(2));
-        assertSame(triggerOnEvents.get(0).getCorrespondingEventClass(), PatchsetCreated.class);
-        assertSame(triggerOnEvents.get(1).getCorrespondingEventClass(), DraftPublished.class);
+        assertSame(PatchsetCreated.class, triggerOnEvents.get(0).getCorrespondingEventClass());
+        assertSame(DraftPublished.class, triggerOnEvents.get(1).getCorrespondingEventClass());
     }
 
     /**
@@ -180,13 +183,13 @@ public class BackCompat252HudsonTest {
      */
     @Test
     @LocalData
-    public void testFreeStyleBuild() {
+    void testFreeStyleBuild() {
         Item item = j.jenkins.getItem("freestyleJob");
         assertThat("Item is not a FreeStyleProject", item, instanceOf(FreeStyleProject.class));
         FreeStyleProject proj = (FreeStyleProject)item;
         RunList<FreeStyleBuild> builds = proj.getBuilds();
         assertNotNull(builds);
-        assertFalse("The build list should not be empty", builds.isEmpty());
+        assertFalse(builds.isEmpty(), "The build list should not be empty");
         FreeStyleBuild freeStyleBuild = proj.getFirstBuild();
         assertNotNull(freeStyleBuild.getAction(RetriggerAction.class));
         GerritManualCause cause = freeStyleBuild.getCause(GerritManualCause.class);
@@ -196,7 +199,7 @@ public class BackCompat252HudsonTest {
         GerritTriggeredEvent event = action.getEvent();
         assertNotNull(event);
         GerritEventType eventType = event.getEventType();
-        assertSame(eventType.getEventRepresentative(), PatchsetCreated.class);
+        assertSame(PatchsetCreated.class, eventType.getEventRepresentative());
     }
 
     /**
@@ -204,13 +207,13 @@ public class BackCompat252HudsonTest {
      */
     @Test
     @LocalData
-    public void testMatrixBuild() {
+    void testMatrixBuild() {
         Item item = j.jenkins.getItem("matrixJob");
         assertThat("Item is not a MatrixProject", item, instanceOf(MatrixProject.class));
         MatrixProject proj = (MatrixProject)item;
         RunList<MatrixBuild> builds = proj.getBuilds();
         assertNotNull(builds);
-        assertFalse("The build list should not be empty", builds.isEmpty());
+        assertFalse(builds.isEmpty(), "The build list should not be empty");
         MatrixBuild matrixBuild = proj.getFirstBuild();
         assertNotNull(matrixBuild.getAction(RetriggerAction.class));
         GerritManualCause cause = matrixBuild.getCause(GerritManualCause.class);
@@ -226,7 +229,7 @@ public class BackCompat252HudsonTest {
      */
     @Test
     @LocalData
-    public void testNewTriggeredBuild() {
+    void testNewTriggeredBuild() {
         server.waitForCommand(GERRIT_STREAM_EVENTS, 10000);
         Item item = j.jenkins.getItem("freestyleJob");
         assertThat("Item is not a FreeStyleProject", item, instanceOf(FreeStyleProject.class));

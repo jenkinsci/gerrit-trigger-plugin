@@ -37,17 +37,18 @@ import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.View;
 import hudson.scm.SCM;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test-data.
 
@@ -56,17 +57,17 @@ import static org.junit.Assert.fail;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ManualTriggerActionPermissionTest {
+@WithJenkins
+class ManualTriggerActionPermissionTest {
 
     /**
      * Running test in Jenkins.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 2 LINES. REASON: JenkinsRule.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
         j.jenkins.setAuthorizationStrategy(
                 new MockAuthorizationStrategy()
@@ -97,19 +98,16 @@ public class ManualTriggerActionPermissionTest {
      * @throws Exception if so.
      */
     @Test
-    public void testGetGetUrlNameNotPermitted() throws Exception {
+    void testGetGetUrlNameNotPermitted() throws Exception {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient();
         HtmlPage page = wc.goTo("");
-        try {
-            HtmlAnchor a = page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName()));
-            assertNull(a);
-        } catch (ElementNotFoundException e) {
-            return;
-        }
-        fail("Anonymous should not see the RootAction");
+
+        assertThrows(ElementNotFoundException.class,
+                () -> page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName())),
+                "Anonymous should not see the RootAction");
     }
 
     /**
@@ -119,18 +117,16 @@ public class ManualTriggerActionPermissionTest {
      * @throws Exception if so.
      */
     @Test
-    public void testGetUrlName() throws Exception {
+    void testGetUrlName() throws Exception {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient().login("admin", "admin");
         HtmlPage page = wc.goTo("");
-        try {
-            HtmlAnchor a = page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName()));
-            assertNotNull(a);
-        } catch (ElementNotFoundException e) {
-            fail("Admin should see the RootAction");
-        }
+        HtmlAnchor a = assertDoesNotThrow(() ->
+            page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName())),
+                "Admin should see the RootAction");
+        assertNotNull(a);
     }
 
     /**
@@ -140,27 +136,24 @@ public class ManualTriggerActionPermissionTest {
      * @throws Exception if so.
      */
     @Test
-    public void testGetUrlNamePrivileged() throws Exception {
+    void testGetUrlNamePrivileged() throws Exception {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient().login("bobby", "bobby");
         HtmlPage page = wc.goTo("");
-        try {
+        assertDoesNotThrow(() -> {
             HtmlAnchor a = page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName()));
             assertNotNull(a);
-        } catch (ElementNotFoundException e) {
-            fail("Bobby should see the RootAction");
-        }
+        }, "Bobby should see the RootAction");
     }
 
     /**
      * A simple check so that the action's config.jelly gets the correct Permission to check.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testGetRequiredPermission() throws Exception {
+    void testGetRequiredPermission() {
         ManualTriggerAction action = getManualTriggerAction();
         assertSame(PluginImpl.MANUAL_TRIGGER, action.getRequiredPermission());
     }
@@ -174,24 +167,18 @@ public class ManualTriggerActionPermissionTest {
      * @throws Exception if so.
      */
     @Test
-    public void testDoGerritSearch() throws Exception {
+    void testDoGerritSearch() throws Exception {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient().login("bobby", "bobby");
-        try {
-            HtmlPage page = wc.goTo(action.getUrlName());
-            HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValue("2000");
-            Page result = j.submit(form);
-            j.assertGoodStatus(result);
-        } catch (FailingHttpStatusCodeException e) {
-            if (e.getStatusCode() == 403) {
-                fail("Bobby should have been able to access the search page");
-            } else {
-                throw e;
-            }
-        }
+
+        HtmlPage page = wc.goTo(action.getUrlName());
+        HtmlForm form = page.getFormByName("theSearch");
+        form.getInputByName("queryString").setValue("2000");
+        Page result = assertDoesNotThrow(() -> j.submit(form),
+                "Bobby should have been able to access the search page");
+        j.assertGoodStatus(result);
     }
 
     //CS IGNORE LineLength FOR NEXT 4 LINES. REASON: Javadoc link.
@@ -200,24 +187,21 @@ public class ManualTriggerActionPermissionTest {
      * Tests that an anonymous user can not perform a search via
      * {@link ManualTriggerAction#doGerritSearch(String, String, boolean, org.kohsuke.stapler.StaplerRequest2, org.kohsuke.stapler.StaplerResponse2)}.
      *
-     * @throws Exception if so.
      */
     @Test
-    public void testDoGerritSearchNotPermitted() throws Exception {
+    void testDoGerritSearchNotPermitted() {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient();
-        try {
-            HtmlPage page = wc.goTo(action.getUrlName());
-            HtmlForm form = page.getFormByName("theSearch");
-            form.getInputByName("queryString").setValue("2000");
-            j.submit(form);
-        } catch (FailingHttpStatusCodeException e) {
-            assertEquals(403, e.getStatusCode());
-            return;
-        }
-        fail("Anonymous should not have been able to access the search page");
+
+        FailingHttpStatusCodeException e = assertThrows(FailingHttpStatusCodeException.class, () -> {
+                    HtmlPage page = wc.goTo(action.getUrlName());
+                    HtmlForm form = page.getFormByName("theSearch");
+                    form.getInputByName("queryString").setValue("2000");
+                    j.submit(form);
+                }, "Anonymous should not have been able to access the search page");
+        assertEquals(403, e.getStatusCode());
     }
 
     /**

@@ -29,21 +29,19 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 
 import hudson.model.Result;
+import org.junit.jupiter.api.AfterEach;
 
 import jenkins.model.Jenkins;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
@@ -56,62 +54,67 @@ import static org.mockito.Mockito.when;
  * and {@link ParameterExpander#getVerifiedValue(hudson.model.Result, GerritTrigger)}
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-@RunWith(Parameterized.class)
-public class ParameterExpanderParameterizedTest {
+class ParameterExpanderParameterizedTest {
 
-    private final TestParameters parameters;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
-
-    /**
-     * Constructor.
-     * @param parameters parameters.
-     */
-    public ParameterExpanderParameterizedTest(TestParameters parameters) {
-        this.parameters = parameters;
-    }
 
     /**
      * Mock Jenkins.
      */
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         Jenkins jenkins = mock(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkins);
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() {
         jenkinsMockedStatic.close();
     }
 
     /**
      * test.
+     *
+     * @param config
+     * @param result
+     * @param trigger
+     * @param expectedCodeReview
+     * @param expectedVerified
      */
-    @Test
-    public void testGetVerifiedValue() {
-        ParameterExpander instance = new ParameterExpander(parameters.config);
-        assertEquals(Integer.valueOf(parameters.expectedVerified),
-                instance.getVerifiedValue(parameters.result, parameters.trigger));
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testGetVerifiedValue(IGerritHudsonTriggerConfig config, Result result, GerritTrigger trigger,
+                              int expectedCodeReview, int expectedVerified) {
+        ParameterExpander instance = new ParameterExpander(config);
+        assertEquals(Integer.valueOf(expectedVerified),
+                instance.getVerifiedValue(result, trigger));
     }
 
     /**
      * test.
+     *
+     * @param config
+     * @param result
+     * @param trigger
+     * @param expectedCodeReview
+     * @param expectedVerified
      */
-    @Test
-    public void testGetCodeReviewValue() {
-        ParameterExpander instance = new ParameterExpander(parameters.config);
-        assertEquals(Integer.valueOf(parameters.expectedCodeReview),
-                instance.getCodeReviewValue(parameters.result, parameters.trigger));
+    @ParameterizedTest
+    @MethodSource("parameters")
+    void testGetCodeReviewValue(IGerritHudsonTriggerConfig config, Result result, GerritTrigger trigger,
+                                int expectedCodeReview, int expectedVerified) {
+        ParameterExpander instance = new ParameterExpander(config);
+        assertEquals(Integer.valueOf(expectedCodeReview),
+                instance.getCodeReviewValue(result, trigger));
     }
 
     /**
      * Parameters.
      * @return parameters
      */
-    @Parameters
-    public static Collection getParameters() {
-        List<TestParameters[]> list = new LinkedList<TestParameters[]>();
+    static List<Arguments> parameters() {
+        List<Arguments> list = new LinkedList<>();
 
         IGerritHudsonTriggerConfig config = Setup.createConfig();
 
@@ -122,87 +125,53 @@ public class ParameterExpanderParameterizedTest {
         GerritTrigger trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.SUCCESS, trigger, 4, 3)});
+        list.add(Arguments.of(config, Result.SUCCESS, trigger, 4, 3));
         //SUCCESS overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildSuccessfulCodeReviewValue()).thenReturn(21);
         when(trigger.getGerritBuildSuccessfulVerifiedValue()).thenReturn(22);
-        list.add(new TestParameters[]{new TestParameters(config, Result.SUCCESS, trigger, 21, 22)});
+        list.add(Arguments.of(config, Result.SUCCESS, trigger, 21, 22));
         //FAILURE Not overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.FAILURE, trigger, -2, -1)});
+        list.add(Arguments.of(config, Result.FAILURE, trigger, -2, -1));
         //FAILURE overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildFailedCodeReviewValue()).thenReturn(31);
         when(trigger.getGerritBuildFailedVerifiedValue()).thenReturn(32);
-        list.add(new TestParameters[]{new TestParameters(config, Result.FAILURE, trigger, 31, 32)});
+        list.add(Arguments.of(config, Result.FAILURE, trigger, 31, 32));
         //UNSTABLE overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(-21);
         when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(-22);
-        list.add(new TestParameters[]{new TestParameters(config, Result.UNSTABLE, trigger, -21, -22)});
+        list.add(Arguments.of(config, Result.UNSTABLE, trigger, -21, -22));
         //OTHER Not overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildNotBuiltCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildNotBuiltVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.NOT_BUILT, trigger, -6, -5)});
+        list.add(Arguments.of(config, Result.NOT_BUILT, trigger, -6, -5));
         //OTHER overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildNotBuiltCodeReviewValue()).thenReturn(-51);
         when(trigger.getGerritBuildNotBuiltVerifiedValue()).thenReturn(-52);
-        list.add(new TestParameters[]{new TestParameters(config, Result.NOT_BUILT, trigger, -51, -52)});
+        list.add(Arguments.of(config, Result.NOT_BUILT, trigger, -51, -52));
         //ABORTED Not overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 3, -2)});
+        list.add(Arguments.of(config, Result.ABORTED, trigger, 3, -2));
         //ABORTED overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildAbortedCodeReviewValue()).thenReturn(41);
         when(trigger.getGerritBuildAbortedVerifiedValue()).thenReturn(42);
-        list.add(new TestParameters[]{new TestParameters(config, Result.ABORTED, trigger, 41, 42)});
+        list.add(Arguments.of(config, Result.ABORTED, trigger, 41, 42));
         //UNSTABLE Not overridden
         trigger = mock(GerritTrigger.class);
         when(trigger.getGerritBuildUnstableCodeReviewValue()).thenReturn(null);
         when(trigger.getGerritBuildUnstableVerifiedValue()).thenReturn(null);
-        list.add(new TestParameters[]{new TestParameters(config, Result.UNSTABLE, trigger, -4, -3)});
+        list.add(Arguments.of(config, Result.UNSTABLE, trigger, -4, -3));
 
         return list;
-    }
-
-    /**
-     * Parameters for the test.
-     */
-    public static class TestParameters {
-        IGerritHudsonTriggerConfig config;
-        Result result;
-        GerritTrigger trigger;
-        int expectedCodeReview;
-        int expectedVerified;
-
-        /**
-         * Constructor.
-         * @param config config
-         * @param result result
-         * @param trigger trigger
-         * @param expectedCodeReview expectedCodeReview
-         * @param expectedVerified expectedVerified
-         */
-        public TestParameters(IGerritHudsonTriggerConfig config, Result result, GerritTrigger trigger,
-                int expectedCodeReview, int expectedVerified) {
-            this.config = config;
-            this.result = result;
-            this.trigger = trigger;
-            this.expectedCodeReview = expectedCodeReview;
-            this.expectedVerified = expectedVerified;
-        }
-
-        /**
-         * Constructor.
-         */
-        public TestParameters() {
-        }
     }
 }

@@ -23,14 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.replication;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefReplicated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
@@ -41,13 +41,13 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
  * Tests {@link com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationCache}.
  * @author Hugo Arès &lt;hugo.ares@ericsson.com&gt;
  */
-public class ReplicationCacheTest {
+class ReplicationCacheTest {
 
     /**
      * Test that it should return cached event.
      */
     @Test
-    public void shouldReturnCachedEvent() {
+    void shouldReturnCachedEvent() {
         ReplicationCache replicationCache = ReplicationCache.Factory.createCache();
         RefReplicated refReplicated = Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someServer",
             "someSlave", null);
@@ -61,7 +61,7 @@ public class ReplicationCacheTest {
      * Test that it should return null when no cached event found.
      */
     @Test
-    public void shouldReturnNullWhenNoCachedEventFound() {
+    void shouldReturnNullWhenNoCachedEventFound() {
         ReplicationCache replicationCache = ReplicationCache.Factory.createCache();
         assertNull(replicationCache.getIfPresent("someServer", "someProject", "refs/changes/1/1/1", "someSlave"));
     }
@@ -71,7 +71,7 @@ public class ReplicationCacheTest {
      * @throws InterruptedException if something goes wrong
      */
     @Test
-    public void shouldEvictExpiredEvent() throws InterruptedException {
+    void shouldEvictExpiredEvent() throws InterruptedException {
         ReplicationCache replicationCache = ReplicationCache.Factory.createCache(100, TimeUnit.MILLISECONDS);
         RefReplicated refReplicated = Setup.createRefReplicatedEvent("someProject", "refs/changes/1/1/1", "someServer",
             "someSlave", null);
@@ -83,15 +83,15 @@ public class ReplicationCacheTest {
 
         //event is no longer in the cache
         Thread.sleep(100);
-        assertNull("Event should have been evicted from the cache",
-            replicationCache.getIfPresent("someServer", "someProject", "refs/changes/1/1/1", "someSlave"));
+        assertNull(replicationCache.getIfPresent("someServer", "someProject", "refs/changes/1/1/1", "someSlave"),
+            "Event should have been evicted from the cache");
     }
 
     /**
      * Test that it should return proper isExpired boolean, if not expired and if it is.
      */
     @Test
-    public void shouldReturnIsExpired() {
+    void shouldReturnIsExpired() {
         ReplicationCache replicationCache = ReplicationCache.Factory.createCache(100, TimeUnit.MILLISECONDS);
         assertFalse(replicationCache.isExpired(System.currentTimeMillis()));
         assertTrue(replicationCache.isExpired(System.currentTimeMillis() - 200));

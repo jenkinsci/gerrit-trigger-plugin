@@ -74,13 +74,14 @@ import jenkins.util.Timer;
 import net.sf.json.JSONObject;
 
 import org.acegisecurity.Authentication;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -116,11 +117,11 @@ import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NAME;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.NUMBER;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REF;
 import static com.sonymobile.tools.gerrit.gerritevents.dto.GerritEventKeys.REVISION;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.any;
@@ -147,7 +148,8 @@ import static org.mockito.hamcrest.MockitoHamcrest.argThat;
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class GerritTriggerTest {
+class GerritTriggerTest {
+
     private static MockedStatic<PluginImpl> pluginMockedStatic;
     private static MockedStatic<Jenkins> jenkinsMockedStatic;
     private static Jenkins jenkinsMock;
@@ -163,8 +165,8 @@ public class GerritTriggerTest {
     private MockedStatic<AbstractProject> abstractProjectMockedStatic;
     private static MockedStatic<QueueIdStrategy> queueIdStrategyMockedStatic;
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
         closeIfInstanced(
                 queueTaskDispatcherMockedStatic,
                 gerritTriggerMockedStatic,
@@ -202,7 +204,7 @@ public class GerritTriggerTest {
      * test.
      */
     @Test
-    public void testMakeRefSpec1() {
+    void testMakeRefSpec1() {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setNumber("1");
@@ -219,8 +221,7 @@ public class GerritTriggerTest {
      * test.
      */
     @Test
-    public void testMakeRefSpec2() {
-
+    void testMakeRefSpec2() {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setNumber("12");
@@ -237,8 +238,7 @@ public class GerritTriggerTest {
      * test.
      */
     @Test
-    public void testMakeRefSpec3() {
-
+    void testMakeRefSpec3() {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setNumber("123");
@@ -255,7 +255,7 @@ public class GerritTriggerTest {
      * test.
      */
     @Test
-    public void testMakeRefSpec4() {
+    void testMakeRefSpec4() {
         PatchsetCreated event = new PatchsetCreated();
         Change change = new Change();
         change.setNumber("2131");
@@ -274,7 +274,7 @@ public class GerritTriggerTest {
      * gets called with an average buildScheduleDelay 20.
      */
     @Test
-    public void testScheduleWithAverageBuildScheduleDelay() {
+    void testScheduleWithAverageBuildScheduleDelay() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject();
         mockPluginConfig(20);
@@ -297,18 +297,13 @@ public class GerritTriggerTest {
      * @throws Exception if so.
      */
     @Test
-    public void testProjectRename() throws Exception {
+    void testProjectRename() throws Exception {
         mockConfig();
         mockPluginConfig(0);
         // we'll make AbstractProject return different names over time
         final String[] name = new String[1];
         AbstractProject project = mock(AbstractProject.class);
-        when(project.getFullName()).thenAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                return name[0];
-            }
-        });
+        when(project.getFullName()).thenAnswer(invocation -> name[0]);
 
         name[0] = "OriginalName";
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
@@ -327,7 +322,7 @@ public class GerritTriggerTest {
      * Tests that initializeTriggerOnEvents is run correctly by the start method.
      */
     @Test
-    public void testInitializeTriggerOnEvents() {
+    void testInitializeTriggerOnEvents() {
         mockPluginConfig(0);
         AbstractProject project = mockProject();
         boolean silentStartMode = false;
@@ -343,7 +338,7 @@ public class GerritTriggerTest {
         triggerOnEvents = Whitebox.getInternalState(trigger, "triggerOnEvents");
         assertNotNull(triggerOnEvents);
         List<PluginGerritEvent> events = (List<PluginGerritEvent>)triggerOnEvents;
-        assertEquals(events.size(), 2);
+        assertEquals(2, events.size());
     }
 
     /**
@@ -352,7 +347,7 @@ public class GerritTriggerTest {
      * gets called with an negative buildScheduleDelay -20.
      */
     @Test
-    public void testScheduleWithNegativeBuildScheduleDelay() {
+    void testScheduleWithNegativeBuildScheduleDelay() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject();
         mockPluginConfig(-20);
@@ -372,7 +367,7 @@ public class GerritTriggerTest {
      * gets called with an negative buildScheduleDelay -20.
      */
     @Test
-    public void testScheduleWithNoBuildScheduleDelay() {
+    void testScheduleWithNoBuildScheduleDelay() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject();
         mockPluginConfig(0);
@@ -394,7 +389,7 @@ public class GerritTriggerTest {
      * gets called with an negative buildScheduleDelay 10000.
      */
     @Test
-    public void testScheduleWithMaximumBuildScheduleDelay() {
+    void testScheduleWithMaximumBuildScheduleDelay() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject();
         mockPluginConfig(10000);
@@ -417,9 +412,9 @@ public class GerritTriggerTest {
      * gets called with correct parameters when there are some default parameters present.
      */
     @Test
-    public void testScheduleWithDefaultParameters() {
+    void testScheduleWithDefaultParameters() {
         Queue queue = mockJenkinsQueue();
-        List<ParameterDefinition> list = new LinkedList<ParameterDefinition>();
+        List<ParameterDefinition> list = new LinkedList<>();
         list.add(new StringParameterDefinition("MOCK_PARAM", "mock_value"));
         AbstractProject project = mockProject(list);
 
@@ -447,7 +442,7 @@ public class GerritTriggerTest {
      * gets called with correct parameters when there are no default parameters present.
      */
     @Test
-    public void testScheduleWithNoDefaultParameters() {
+    void testScheduleWithNoDefaultParameters() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -474,7 +469,7 @@ public class GerritTriggerTest {
      * gets called with correct change owner and uploader parameters when there are no default parameters present.
      */
     @Test
-    public void testScheduleWithOwnerAndUploader() {
+    void testScheduleWithOwnerAndUploader() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -515,7 +510,7 @@ public class GerritTriggerTest {
      * And sets the event.uploader to null keeping event.patchSet.uploader.
      */
     @Test
-    public void testScheduleWithOwnerAndOneUploaderNull() {
+    void testScheduleWithOwnerAndOneUploaderNull() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -556,7 +551,7 @@ public class GerritTriggerTest {
      * And sets the event.patchSet.uploader to null keeping event.uploader set.
      */
     @Test
-    public void testScheduleWithOwnerAndOtherUploaderNull() {
+    void testScheduleWithOwnerAndOtherUploaderNull() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -598,7 +593,7 @@ public class GerritTriggerTest {
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
     @Test
-    public void testScheduleWithOwnerAndBothUploadersNull() {
+    void testScheduleWithOwnerAndBothUploadersNull() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -638,7 +633,7 @@ public class GerritTriggerTest {
      * And sets the event.patchSet.uploader and event.uploader to null.
      */
     @Test
-    public void testScheduleWithOwnerAndPartOfUploadersNull() {
+    void testScheduleWithOwnerAndPartOfUploadersNull() {
         Queue queue = mockJenkinsQueue();
         AbstractProject project = mockProject(Collections.emptyList());
 
@@ -677,7 +672,7 @@ public class GerritTriggerTest {
      * Tests GerritTrigger.retriggerThisBuild.
      */
     @Test
-    public void testRetriggerThisBuild() {
+    void testRetriggerThisBuild() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -714,7 +709,7 @@ public class GerritTriggerTest {
      * Tests GerritTrigger.retriggerThisBuild when the trigger is configured for silentMode.
      */
     @Test
-    public void testRetriggerThisBuildSilent() {
+    void testRetriggerThisBuildSilent() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -752,7 +747,7 @@ public class GerritTriggerTest {
      * Tests GerritTrigger.retriggerAllBuilds with one additional build in the context.
      */
     @Test
-    public void testRetriggerAllBuilds() {
+    void testRetriggerAllBuilds() {
         final AbstractProject thisProject = mockProject();
         final AbstractProject otherProject = mockProject("Other_MockedProject");
 
@@ -813,7 +808,7 @@ public class GerritTriggerTest {
      * with a normal scenario.
      */
     @Test
-    public void testGerritEvent() {
+    void testGerritEvent() {
         AbstractProject project = mockProject();
         Queue queue = mockConfig(project);
         try (MockedStatic<ToGerritRunListener> runListenerMockedStatic = mockStatic(ToGerritRunListener.class)) {
@@ -848,7 +843,7 @@ public class GerritTriggerTest {
      * @throws java.io.IOException if so.
      */
     @Test
-    public void testGerritEventNotBuildable() throws IOException {
+    void testGerritEventNotBuildable() throws IOException {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(false);
@@ -891,7 +886,7 @@ public class GerritTriggerTest {
      * with a non interesting change.
      */
     @Test
-    public void testGerritEventNotInteresting() {
+    void testGerritEventNotInteresting() {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(true);
@@ -938,7 +933,7 @@ public class GerritTriggerTest {
      * With a ManualPatchsetCreated event.
      */
     @Test
-    public void testGerritEventManualEvent() {
+    void testGerritEventManualEvent() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -972,7 +967,7 @@ public class GerritTriggerTest {
      * With a RefUpdated event with short ref name.
      */
     @Test
-    public void testGerritEventRefUpdatedShortName() {
+    void testGerritEventRefUpdatedShortName() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -981,7 +976,7 @@ public class GerritTriggerTest {
             ToGerritRunListener listener = mock(ToGerritRunListener.class);
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
-            List<Branch> branches = new ArrayList<Branch>();
+            List<Branch> branches = new ArrayList<>();
             Branch br = new Branch();
             br.setCompareType(CompareType.PLAIN);
             br.setPattern("master");
@@ -1011,7 +1006,7 @@ public class GerritTriggerTest {
      * With a RefUpdated event with long ref name.
      */
     @Test
-    public void testGerritEventRefUpdatedLongName() {
+    void testGerritEventRefUpdatedLongName() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -1020,7 +1015,7 @@ public class GerritTriggerTest {
             ToGerritRunListener listener = mock(ToGerritRunListener.class);
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
-            List<Branch> branches = new ArrayList<Branch>();
+            List<Branch> branches = new ArrayList<>();
             Branch br = new Branch();
             br.setCompareType(CompareType.PLAIN);
             br.setPattern("master");
@@ -1050,7 +1045,7 @@ public class GerritTriggerTest {
      * With a RefUpdated event with a tag as ref name.
      */
     @Test
-    public void testGerritEventRefUpdatedWithTag() {
+    void testGerritEventRefUpdatedWithTag() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -1059,7 +1054,7 @@ public class GerritTriggerTest {
             ToGerritRunListener listener = mock(ToGerritRunListener.class);
             runListenerMockedStatic.when(ToGerritRunListener::getInstance).thenReturn(listener);
 
-            List<Branch> branches = new ArrayList<Branch>();
+            List<Branch> branches = new ArrayList<>();
             Branch br = new Branch();
             br.setCompareType(CompareType.PLAIN);
             br.setPattern("refs/tags/1.0");
@@ -1089,7 +1084,7 @@ public class GerritTriggerTest {
      * with a normal scenario, but with silentMode on.
      */
     @Test
-    public void testGerritEventSilentMode() {
+    void testGerritEventSilentMode() {
         AbstractProject project = mockProject();
 
         Queue queue = mockConfig(project);
@@ -1122,7 +1117,7 @@ public class GerritTriggerTest {
      * With a ManualPatchsetCreated event and silentMode on.
      */
     @Test
-    public void testGerritEventManualEventSilentMode() {
+    void testGerritEventManualEventSilentMode() {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockProject");
         when(project.isBuildable()).thenReturn(true);
@@ -1161,7 +1156,7 @@ public class GerritTriggerTest {
      * when the escapeQuotes setting is on.
      */
     @Test
-    public void testCreateParametersWhenTriggerWithEscapeQuotesOn() {
+    void testCreateParametersWhenTriggerWithEscapeQuotesOn() {
         mockConfig();
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
         String stringWithQuotesEscaped = "Fixed \\\" the thing to make \\\" some thing fun";
@@ -1221,7 +1216,7 @@ public class GerritTriggerTest {
      * when the escapeQuotes setting is off.
      */
     @Test
-    public void testCreateParametersWhenTriggerWithEscapeQuotesOff() {
+    void testCreateParametersWhenTriggerWithEscapeQuotesOff() {
         mockConfig();
         String stringWithQuotes = "Fixed \" the thing to make \" some thing fun";
         String stringWithoutQuotes = "Fixed  the thing to make  some thing fun";
@@ -1281,7 +1276,7 @@ public class GerritTriggerTest {
      * when the readableMessage setting is on.
      */
     @Test
-    public void testCreateParametersWhenTriggerWithReadableMessageOn() {
+    void testCreateParametersWhenTriggerWithReadableMessageOn() {
         mockConfig();
         String stringReadable = "This is human readable message";
 
@@ -1328,7 +1323,7 @@ public class GerritTriggerTest {
      * when the readableMessage setting is off.
      */
     @Test
-    public void testCreateParametersWhenTriggerWithReadableMessageOff() {
+    void testCreateParametersWhenTriggerWithReadableMessageOff() {
         mockConfig();
         String stringReadable = "This is human readable message";
         String stringEncoded = "VGhpcyBpcyBodW1hbiByZWFkYWJsZSBtZXNzYWdl";
@@ -1489,7 +1484,7 @@ public class GerritTriggerTest {
      * return empty slave list when the Gerrit Server is not found.
      */
     @Test
-    public void shouldReturnEmptySlaveListWhenGerritServerNotFound() {
+    void shouldReturnEmptySlaveListWhenGerritServerNotFound() {
         // setup
         mockConfig();
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
@@ -1505,7 +1500,7 @@ public class GerritTriggerTest {
      * return empty slave list when not configured.
      */
     @Test
-    public void shouldReturnEmptySlaveListWhenNotConfigured() {
+    void shouldReturnEmptySlaveListWhenNotConfigured() {
         mockConfig();
         IGerritHudsonTriggerConfig configMock = setupSeverConfigMock();
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
@@ -1528,7 +1523,7 @@ public class GerritTriggerTest {
      * return slaves configured globally, at the administrative level.
      */
     @Test
-    public void shouldReturnGlobalSlavesWhenConfigured() {
+    void shouldReturnGlobalSlavesWhenConfigured() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = Setup.createDefaultTrigger(null);
 
@@ -1565,7 +1560,7 @@ public class GerritTriggerTest {
      * return slave configured at the job level.
      */
     @Test
-    public void shouldReturnSlaveSelectedInJobWhenConfigured() {
+    void shouldReturnSlaveSelectedInJobWhenConfigured() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
                 false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
@@ -1586,7 +1581,7 @@ public class GerritTriggerTest {
      * return default slave when slave configure at the job level does not exist.
      */
     @Test
-    public void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
+    void shouldReturnDefaultSlaveWhenJobConfiguredSlaveDoesNotExist() {
         ReplicationConfig replicationConfigMock = setupReplicationConfigMock();
         GerritTrigger gerritTrigger = new GerritTrigger(null, null, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, false, true,
                 false, false, "", "", "", "", "", "", "", null, PluginImpl.DEFAULT_SERVER_NAME, "slaveUUID", null,
@@ -1616,7 +1611,7 @@ public class GerritTriggerTest {
      * This should check that a project with no dependencies validates; and a project with itself as a dep does not.
      */
     @Test
-    public void testDependencyValidationOnlyOneProjectInvolved() {
+    void testDependencyValidationOnlyOneProjectInvolved() {
         dependencySetUp();
         GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
@@ -1632,7 +1627,7 @@ public class GerritTriggerTest {
      * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
      */
     @Test
-    public void testDependencyValidationTwoProjectsInvolved() {
+    void testDependencyValidationTwoProjectsInvolved() {
         dependencySetUp();
         GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
@@ -1654,7 +1649,7 @@ public class GerritTriggerTest {
      * It should prevent a cycle from forming and return FormValidation.ok() when no cycle exists.
      */
     @Test
-    public void testDependencyValidationThreeProjectsInvolved() {
+    void testDependencyValidationThreeProjectsInvolved() {
         dependencySetUp();
         GerritTriggerDescriptor descriptor = new GerritTriggerDescriptor();
         assertNotNull(descriptor);
@@ -1675,7 +1670,7 @@ public class GerritTriggerTest {
      * With a RefUpdated event with long ref name.
      */
     @Test
-    public void testGerritEventPrivateStateChanged() {
+    void testGerritEventPrivateStateChanged() {
         AbstractProject project = mockProject();
         Queue queue = mockConfig(project);
         try (MockedStatic<ToGerritRunListener> runListenerMockedStatic = mockStatic(ToGerritRunListener.class)) {
@@ -1693,7 +1688,7 @@ public class GerritTriggerTest {
             trigger.setEscapeQuotes(false);
             trigger.setSilentMode(false);
             PluginPrivateStateChangedEvent pluginEvent = new PluginPrivateStateChangedEvent();
-            List<PluginGerritEvent> triggerOnEvents = new LinkedList<PluginGerritEvent>();
+            List<PluginGerritEvent> triggerOnEvents = new LinkedList<>();
             triggerOnEvents.add(pluginEvent);
             trigger.setTriggerOnEvents(triggerOnEvents);
             Whitebox.setInternalState(trigger, "job", project);
@@ -1712,7 +1707,7 @@ public class GerritTriggerTest {
      * With a RefUpdated event with long ref name.
      */
     @Test
-    public void testGerritEventWipStateChanged() {
+    void testGerritEventWipStateChanged() {
         AbstractProject project = mockProject();
         Queue queue = mockConfig(project);
         try (MockedStatic<ToGerritRunListener> runListenerMockedStatic = mockStatic(ToGerritRunListener.class)) {
@@ -1753,10 +1748,9 @@ public class GerritTriggerTest {
     /**
      * Tests that dynamic project configurations for disabled jobs do not block the event listener.
      *
-     * @throws Exception on failure
      */
     @Test
-    public void testDynamicTriggerDoesNotBlockForDisabledJobs() throws Exception {
+    void testDynamicTriggerDoesNotBlockForDisabledJobs() {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(false);
@@ -1828,7 +1822,7 @@ public class GerritTriggerTest {
      * @throws Exception on failure
      */
     @Test
-    public void testDynamicTriggerUpdateFailureDoesNotBlock() throws Exception {
+    void testDynamicTriggerUpdateFailureDoesNotBlock() throws Exception {
         AbstractProject project = mock(AbstractProject.class);
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(true);
@@ -1888,18 +1882,18 @@ public class GerritTriggerTest {
      * @throws Exception on failure
      */
     @Test
-    public void testDynamicTriggerIsRead() throws Exception {
+    void testDynamicTriggerIsRead() throws Exception {
         AbstractProject project = mockProject();
         when(project.getFullName()).thenReturn("MockedProject");
         when(project.isBuildable()).thenReturn(true);
         Queue queue = mockConfig(project);
 
-        java.nio.file.Path temporaryConfigFile = java.nio.file.Files.createTempFile("GerritTriggerTest", null);
-        java.nio.file.Files.write(temporaryConfigFile, "p=my-project\nb^**".getBytes());
+        Path temporaryConfigFile = Files.createTempFile("GerritTriggerTest", null);
+        Files.write(temporaryConfigFile, "p=my-project\nb^**".getBytes());
 
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
         trigger.setDynamicTriggerConfiguration(true);
-        trigger.setTriggerConfigURL("file://" + temporaryConfigFile.toString());
+        trigger.setTriggerConfigURL("file://" + temporaryConfigFile);
         Setup.setTrigger(trigger, project);
 
         try (MockedStatic<jenkins.util.Timer> timerMockedStatic = mockStatic(jenkins.util.Timer.class)) {
@@ -1912,7 +1906,7 @@ public class GerritTriggerTest {
             assertEquals(1, dynamicGerritProjects.size());
 
             // Get rid of the temporary file.
-            java.nio.file.Files.delete(temporaryConfigFile);
+            Files.delete(temporaryConfigFile);
         }
     }
 
@@ -2109,14 +2103,12 @@ public class GerritTriggerTest {
         queueIdStrategyMockedStatic = mockStatic(QueueIdStrategy.class);
         queueIdStrategyMockedStatic.when(QueueIdStrategy::get).thenReturn(new QueueIdStrategy.DefaultStrategy());
 
-        when(queue.schedule2(any(Queue.Task.class), anyInt(), anyList())).thenAnswer(new Answer<ScheduleResult>() {
-            @Override
-            public ScheduleResult answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                Queue.WaitingItem i = new Queue.WaitingItem(
-                        new GregorianCalendar(), (Queue.Task)arguments[0], (List<Action>)arguments[2]);
-                return ScheduleResult.created(i);
-            }
+        when(queue.schedule2(any(Queue.Task.class), anyInt(), anyList())).thenAnswer(
+                (Answer<ScheduleResult>)invocation -> {
+            Object[] arguments = invocation.getArguments();
+            Queue.WaitingItem i = new Queue.WaitingItem(
+                    new GregorianCalendar(), (Queue.Task)arguments[0], (List<Action>)arguments[2]);
+            return ScheduleResult.created(i);
         });
         return queue;
     }

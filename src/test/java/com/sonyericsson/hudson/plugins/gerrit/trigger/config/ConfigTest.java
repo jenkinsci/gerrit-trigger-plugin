@@ -32,37 +32,43 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.jvnet.hudson.test.JenkinsRule;
 
 import hudson.util.Secret;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
  * @author Robert Sandell &lt;robert.sandell@sonyericsson.com&gt;
  */
-public class ConfigTest {
+@WithJenkins
+class ConfigTest {
 
     /**
      * Jenkins rule instance.
      */
-    // CS IGNORE VisibilityModifier FOR NEXT 3 LINES. REASON: Mocks tests.
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
+    private JenkinsRule j;
 
     //CS IGNORE MagicNumber FOR NEXT 100 LINES. REASON: Mocks tests.
+
+    @BeforeEach
+    void setUp(JenkinsRule rule) {
+        j = rule;
+    }
 
     /**
      * test.
      */
     @Test
-    public void testSetValues() {
+    void testSetValues() {
         String formString = "{\"gerritVerifiedCmdBuildFailed\":"
                 + "\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
@@ -154,7 +160,7 @@ public class ConfigTest {
      * Test ProjectListRefreshInterval zero value after upgrade from gerrit-trigger version 2.13.0 to 2.14.0.
      */
     @Test
-    public void testProjectListRefreshIntervalZeroValue() {
+    void testProjectListRefreshIntervalZeroValue() {
         String formString = "{\"projectListRefreshInterval\":\"0\"}";
         JSONObject form = (JSONObject)JSONSerializer.toJSON(formString);
         Config config = new Config(form);
@@ -167,7 +173,7 @@ public class ConfigTest {
      * Test creation of a config object from an existing one.
      */
     @Test
-    public void testCopyConfig() {
+    void testCopyConfig() {
         String formString = "{\"gerritVerifiedCmdBuildFailed\":"
                 + "\"gerrit review --project <GERRIT_NAME> <CHANGE>,<PATCHSET> "
                 + "--message 'Failed misserably <BUILDURL>' --verified <VERIFIED> --code-review <CODE_REVIEW>\","
@@ -257,7 +263,7 @@ public class ConfigTest {
      * Tests {@link Config#getGerritFrontEndUrlFor(String, String)}.
      */
     @Test
-    public void testGetGerritFrontEndUrlForStringString() {
+    void testGetGerritFrontEndUrlForStringString() {
         Config config = new Config();
         config.setGerritFrontEndURL("http://gerrit/");
         assertEquals("http://gerrit/1000", config.getGerritFrontEndUrlFor("1000", "1"));
@@ -270,7 +276,7 @@ public class ConfigTest {
      * With a standard PatchsetCreated event.
      */
     @Test
-    public void testGetGerritFrontEndUrlForChangeBasedEvent() {
+    void testGetGerritFrontEndUrlForChangeBasedEvent() {
         Config config = new Config();
         config.setGerritFrontEndURL("http://gerrit/");
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -282,7 +288,7 @@ public class ConfigTest {
      * With a standard PatchsetCreated event but missing url.
      */
     @Test
-    public void testGetGerritFrontEndUrlForChangeBasedEventProvider() {
+    void testGetGerritFrontEndUrlForChangeBasedEventProvider() {
         Config config = new Config();
         config.setGerritFrontEndURL("http://gerrit/");
         PatchsetCreated event = Setup.createPatchsetCreated();
@@ -295,7 +301,7 @@ public class ConfigTest {
      * With a encrypted string as password.
      */
     @Test
-    public void testGetGerritAuthKeyFilePassword() {
+    void testGetGerritAuthKeyFilePassword() {
         String formString;
         JSONObject form;
         Config config;
@@ -317,18 +323,18 @@ public class ConfigTest {
         formString = "{\"gerritAuthKeyFilePassword\":\"\"}";
         form = (JSONObject)JSONSerializer.toJSON(formString);
         config = new Config(form);
-        assertEquals("Empty check", "", config.getGerritAuthKeyFilePassword());
+        assertEquals("", config.getGerritAuthKeyFilePassword(), "Empty check");
 
         // null
         config = new Config();
-        assertEquals("Null check", "", config.getGerritAuthKeyFilePassword());
+        assertEquals("", config.getGerritAuthKeyFilePassword(), "Null check");
     }
 
     /**
      * Tests {@link Config#getGerritAuthKeyFileSecretPassword()}.
      */
     @Test
-    public void testGetGerritAuthkeyFileSecretPassword() {
+    void testGetGerritAuthkeyFileSecretPassword() {
         Config config = new Config();
         config.setGerritAuthKeyFilePassword("secretpass");
         assertEquals(Secret.fromString("secretpass"), config.getGerritAuthKeyFileSecretPassword());
@@ -338,7 +344,7 @@ public class ConfigTest {
      * Tests {@link Config#getGerritHttpSecretPassword()}.
      */
     @Test
-    public void testGetGerritHttpSecretPassword() {
+    void testGetGerritHttpSecretPassword() {
         Config config = new Config();
         config.setGerritHttpPassword("secretpass");
         assertEquals(Secret.fromString("secretpass"), config.getGerritHttpSecretPassword());

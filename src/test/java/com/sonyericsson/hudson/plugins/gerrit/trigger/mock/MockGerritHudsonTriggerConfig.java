@@ -216,7 +216,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public void setNumberOfSendingWorkerThreads(int numberOfSendingWorkerThreads) {
-        return;
+        //Empty
     }
 
     @Override
@@ -225,19 +225,19 @@ public class MockGerritHudsonTriggerConfig implements
     }
 
     //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Mock object.
-    private Integer gerritBuildStartedCodeReviewValue = Integer.valueOf(2);
-    private Integer gerritBuildSuccessfulCodeReviewValue = Integer.valueOf(4);
-    private Integer gerritBuildFailedCodeReviewValue = Integer.valueOf(-2);
-    private Integer gerritBuildUnstableCodeReviewValue = Integer.valueOf(-4);
-    private Integer gerritBuildNotBuiltCodeReviewValue = Integer.valueOf(-6);
-    private Integer gerritBuildAbortedCodeReviewValue = Integer.valueOf(3);
+    private Integer gerritBuildStartedCodeReviewValue = 2;
+    private Integer gerritBuildSuccessfulCodeReviewValue = 4;
+    private Integer gerritBuildFailedCodeReviewValue = -2;
+    private Integer gerritBuildUnstableCodeReviewValue = -4;
+    private Integer gerritBuildNotBuiltCodeReviewValue = -6;
+    private Integer gerritBuildAbortedCodeReviewValue = 3;
 
-    private Integer gerritBuildStartedVerifiedValue = Integer.valueOf(1);
-    private Integer gerritBuildSuccessfulVerifiedValue = Integer.valueOf(3);
-    private Integer gerritBuildFailedVerifiedValue = Integer.valueOf(-1);
-    private Integer gerritBuildUnstableVerifiedValue = Integer.valueOf(-3);
-    private Integer gerritBuildNotBuiltVerifiedValue = Integer.valueOf(-5);
-    private Integer gerritBuildAbortedVerifiedValue = Integer.valueOf(-2);
+    private Integer gerritBuildStartedVerifiedValue = 1;
+    private Integer gerritBuildSuccessfulVerifiedValue = 3;
+    private Integer gerritBuildFailedVerifiedValue = -1;
+    private Integer gerritBuildUnstableVerifiedValue = -3;
+    private Integer gerritBuildNotBuiltVerifiedValue = -5;
+    private Integer gerritBuildAbortedVerifiedValue = -2;
 
     @Override
     public Integer getGerritBuildStartedVerifiedValue() {
@@ -402,7 +402,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public List<VerdictCategory> getCategories() {
-        return new LinkedList<VerdictCategory>();
+        return new LinkedList<>();
     }
 
     @Override
@@ -487,7 +487,7 @@ public class MockGerritHudsonTriggerConfig implements
 
     @Override
     public WatchTimeExceptionData getExceptionData() {
-        return new WatchTimeExceptionData(new int[]{}, new LinkedList<WatchTimeExceptionData.TimeSpan>());
+        return new WatchTimeExceptionData(new int[]{}, new LinkedList<>());
     }
 
     @Override
