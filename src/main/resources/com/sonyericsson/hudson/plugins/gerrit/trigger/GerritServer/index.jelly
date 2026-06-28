@@ -51,6 +51,52 @@
                                    checkUrl="${rootURL}/${serverURL}/urlCheck"
                                    checkDependsOn=""/>
                     </f:entry>
+                    <f:entry title="${%E-mail}"
+                             help="/plugin/gerrit-trigger/help-GerritEMail.html">
+                        <f:textbox name="gerritEMail"
+                                   value="${it.config.gerritEMail}"/>
+                    </f:entry>
+                    <!-- HTTPS Event Polling -->
+                    <f:optionalBlock name="useHttpsPoller"
+                                     title="${%Use HTTPS Polling for Events}"
+                                     checked="${it.config.useHttpsPoller}"
+                                     help="/plugin/gerrit-trigger/help-UseHttpsPoller.html">
+                        <f:entry title="${%Poll Interval (seconds)}"
+                                 help="/plugin/gerrit-trigger/help-HttpsPollInterval.html">
+                            <f:number name="httpsPollInterval"
+                                      value="${it.config.httpsPollInterval}"
+                                      default="${com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_INTERVAL}"
+                                      clazz="positive-number"
+                                      min="1"/>
+                        </f:entry>
+                        <f:entry title="${%Max Changes Per Poll}"
+                                 help="/plugin/gerrit-trigger/help-HttpsPollMaxChanges.html">
+                            <f:number name="httpsPollMaxChanges"
+                                      value="${it.config.httpsPollMaxChanges}"
+                                      default="${com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_MAX_CHANGES}"
+                                      clazz="positive-number"
+                                      min="1"/>
+                        </f:entry>
+                    </f:optionalBlock>
+                    <f:entry title="${%Webhook URL}"
+                             help="/plugin/gerrit-trigger/help-WebhookUrl.html">
+                        <j:set var="webhookUrl"
+                               value="${com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritWebhookReceiver.getWebhookUrl(it.name)}"/>
+                        <j:choose>
+                            <j:when test="${webhookUrl != null}">
+                                <div class="jenkins-copy-button">
+                                    <input type="text" readonly="readonly" value="${webhookUrl}" class="jenkins-input"/>
+                                </div>
+                            </j:when>
+                            <j:otherwise>
+                                <div class="warning">
+                                    Jenkins root URL not configured. Set it in Manage Jenkins &gt; Configure System.
+                                </div>
+                            </j:otherwise>
+                        </j:choose>
+                    </f:entry>
+                    <!-- SSH-only fields: hidden/shown client-side when HTTPS polling toggled -->
+                    <div class="ssh-only-section" style="${it.config.useHttpsPoller ? 'display:none' : ''}">
                     <f:entry title="${%SSH Port}"
                              help="/plugin/gerrit-trigger/help-GerritSshPort.html">
                         <f:number name="gerritSshPort"
@@ -70,11 +116,6 @@
                                    value="${it.config.gerritUserName}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_USERNAME}"/>
                     </f:entry>
-                    <f:entry title="${%E-mail}"
-                             help="/plugin/gerrit-trigger/help-GerritEMail.html">
-                        <f:textbox name="gerritEMail"
-                                   value="${it.config.gerritEMail}"/>
-                    </f:entry>
                     <f:entry title="${%SSH Keyfile}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFile.html">
                         <f:textbox name="gerritAuthKeyFile"
@@ -89,6 +130,7 @@
                                     value="${it.config.gerritAuthKeyFileSecretPassword}"
                                     default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD}"/>
                     </f:entry>
+                    </div>
                     <f:optionalBlock name="buildCurrentPatchesOnly"
                                      title="${%Build Current Patches Only}"
                                      help="/plugin/gerrit-trigger/help-GerritBuildCurrentPatchesOnly.html"
@@ -127,11 +169,34 @@
                                     checked="${it.config.voteSameTopic}"
                                     default="false"/>
                     </f:entry>
+                    <div class="ssh-only-test-button" style="${it.config.useHttpsPoller ? 'display:none' : ''}">
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"
                                       with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
+                    </div>
                 </f:section>
+                <script>
+                <![CDATA[
+                    (function() {
+                        var cb = document.querySelector('input[name="useHttpsPoller"][type="checkbox"]');
+                        if (!cb) return;
+                        var sections = document.querySelectorAll('.ssh-only-section');
+                        var testButton = document.querySelector('.ssh-only-test-button');
+                        function toggle() {
+                            var hide = cb.checked;
+                            for (var i = 0; i < sections.length; i++) {
+                                sections[i].style.display = hide ? 'none' : '';
+                            }
+                            if (testButton) {
+                                testButton.style.display = hide ? 'none' : '';
+                            }
+                        }
+                        cb.addEventListener('change', toggle);
+                        toggle();
+                    })();
+                ]]>
+                </script>
                 <f:section title="${%Gerrit Reporting Values}" icon="symbol-list-outline plugin-ionicons-api">
                     <div class="gt-config__subsection">${%Verify}</div>
                     <f:entry title="${%Started}"

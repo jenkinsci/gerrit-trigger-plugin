@@ -47,7 +47,6 @@ import jenkins.security.stapler.StaplerDispatchable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerProxy;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
@@ -60,8 +59,6 @@ import edu.umd.cs.findbugs.annotations.CheckForNull;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLDecoder;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -306,11 +303,6 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     @Override
     public Object getTarget() {
         Jenkins jenkins = Jenkins.get();
-        // Allow unauthenticated access to webhook endpoint
-        String requestURI = Stapler.getCurrentRequest().getRequestURI();
-        if (requestURI != null && requestURI.endsWith("/webhook")) {
-            return this;
-        }
         jenkins.checkPermission(Jenkins.ADMINISTER);
         return this;
     }
@@ -457,64 +449,6 @@ public class GerritManagement extends ManagementLink implements StaplerProxy, De
     @Override
     public Permission getRequiredPermission() {
         return Jenkins.ADMINISTER;
-    }
-
-    /**
-     * Receives Gerrit webhook events and injects them into the event pipeline.
-     * Accepts POST requests with a stream-events JSON payload in the body.
-     *
-     * <p>The endpoint URL is:
-     * <code>POST /gerrit-trigger/webhook?server={serverName}</code></p>
-     *
-     * @param req the Stapler request containing the JSON payload.
-     * @param rsp the Stapler response.
-     * @param serverName the name of the Gerrit server (query parameter).
-     * @throws IOException if reading the request body fails.
-     */
-    @RequirePOST
-    public void doWebhook(StaplerRequest2 req, StaplerResponse2 rsp,
-            @QueryParameter("server") String serverName) throws IOException {
-        // Allow unauthenticated access for webhook callers
-        Jenkins.get().checkPermission(Jenkins.READ);
-
-        if (serverName == null || serverName.isEmpty()) {
-            logger.warn("Webhook request missing 'server' parameter");
-            rsp.setStatus(400);
-            rsp.getWriter().write("Missing 'server' parameter");
-            return;
-        }
-
-        GerritServer server = PluginImpl.getServer_(serverName);
-        if (server == null) {
-            logger.warn("Webhook request for unknown server: " + serverName);
-            rsp.setStatus(404);
-            rsp.getWriter().write("Unknown server: " + serverName);
-            return;
-        }
-
-        StringBuilder body = new StringBuilder();
-        try (BufferedReader reader = req.getReader()) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                body.append(line);
-            }
-        }
-        String payload = body.toString().trim();
-        if (payload.isEmpty()) {
-            logger.warn("Webhook request with empty body for server: " + serverName);
-            rsp.setStatus(400);
-            rsp.getWriter().write("Empty body");
-            return;
-        }
-
-        logger.debug("Webhook received for server {}", serverName);
-
-        int processed = com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger
-                .GerritWebhookReceiver.processPayload(payload, server);
-
-        rsp.setStatus(200);
-        rsp.setContentType("text/plain");
-        rsp.getWriter().write("OK: processed " + processed + " event(s)");
     }
 
 }

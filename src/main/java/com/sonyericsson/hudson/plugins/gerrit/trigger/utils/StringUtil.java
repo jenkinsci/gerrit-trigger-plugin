@@ -118,6 +118,23 @@ public final class StringUtil {
     }
 
     /**
+     * Creates a Gerrit git clone URL from the frontend URL and project name.
+     * Gerrit exposes git repositories at {@code {frontend_url}/a/{project}.git}.
+     *
+     * @param frontEndUrl the Gerrit front-end URL (with or without trailing slash).
+     * @param project the Gerrit project name.
+     * @return the git clone URL.
+     */
+    public static String makeGerritGitUrl(String frontEndUrl, String project) {
+        StringBuilder url = new StringBuilder(frontEndUrl);
+        if (!frontEndUrl.endsWith("/")) {
+            url.append('/');
+        }
+        url.append("a/").append(project).append(".git");
+        return url.toString();
+    }
+
+    /**
      * Escape quotes in String value.
      * @param value the name of String object having quotes.
      * @return String object as the result of escape quotes in input.

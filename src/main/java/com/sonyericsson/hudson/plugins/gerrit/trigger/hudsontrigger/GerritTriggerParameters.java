@@ -267,6 +267,11 @@ public enum GerritTriggerParameters {
      */
     GERRIT_VERSION,
     /**
+     * Parameter name for the git-over-HTTPS clone URL of the project.
+     * Format: {frontend_url}/a/{project}.git
+     */
+    GERRIT_GIT_URL,
+    /**
      * A hashcode of the Gerrit event object, to make sure every set of parameters
      * is unique (allowing jenkins to queue duplicate builds).
      */
@@ -557,6 +562,9 @@ public enum GerritTriggerParameters {
             }
             GERRIT_CHANGE_URL.setOrCreateStringParameterValue(
                     parameters, url, escapeQuotes);
+            String gitUrl = getGitURL(event, project);
+            GERRIT_GIT_URL.setOrCreateStringParameterValue(
+                    parameters, gitUrl, escapeQuotes);
             if (event instanceof ChangeAbandoned) {
                 nameAndEmailParameterMode.setOrCreateParameterValue(GERRIT_CHANGE_ABANDONER, parameters,
                         getNameAndEmail(((ChangeAbandoned)event).getAbandoner()),
@@ -676,6 +684,48 @@ public enum GerritTriggerParameters {
             }
         } else {
             logger.error("Could not find Gerrit server {}", serverName);
+        }
+        return url;
+    }
+
+    /**
+     * Get the git clone URL for the project from a ChangeBasedEvent.
+     * Format: {frontend_url}/a/{project}.git
+     *
+     * @param event the event
+     * @param project the project for which the parameters are being set
+     * @return the git clone URL
+     */
+    private static String getGitURL(ChangeBasedEvent event, Job project) {
+        String url = "";
+        String serverName = null;
+        //Figure out what serverName to use
+        if (event.getProvider() != null) {
+            serverName = event.getProvider().getName();
+        } else if (project != null) {
+            GerritTrigger trigger = GerritTrigger.getTrigger(project);
+            if (trigger != null) {
+                String name = trigger.getServerName();
+                if (!GerritServer.ANY_SERVER.equals(name)) {
+                    serverName = name;
+                }
+            }
+        }
+        GerritServer firstServer = PluginImpl.getFirstServer_();
+        if (serverName == null && firstServer != null) {
+            serverName = firstServer.getName();
+        } else if (serverName == null) {
+            return "";
+        }
+
+        GerritServer server = PluginImpl.getServer_(serverName);
+        if (server != null) {
+            IGerritHudsonTriggerConfig config = server.getConfig();
+            if (config != null && event.getChange() != null) {
+                url = StringUtil.makeGerritGitUrl(
+                        config.getGerritFrontEndUrl(),
+                        event.getChange().getProject());
+            }
         }
         return url;
     }
