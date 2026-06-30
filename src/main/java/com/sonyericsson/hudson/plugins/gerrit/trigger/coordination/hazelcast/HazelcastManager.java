@@ -41,6 +41,7 @@ public final class HazelcastManager {
 
     private static final Logger logger = LoggerFactory.getLogger(HazelcastManager.class);
 
+    // TODO: This is still a bit dangerous to do and should try to be avoided. But I guess hazelcast itself is already a static field in itself so perhaps nothing can be done?
     private static volatile boolean initialized = false;
     private static final Object INIT_LOCK = new Object();
 
