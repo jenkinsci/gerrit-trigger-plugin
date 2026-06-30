@@ -148,13 +148,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * <p>
      * When {@code started()} detects that an entry is already marked {@code isCancelling=true}
      * (race condition: build started after the abort decision was made), we write to the abort
-     * inbox to notify other replicas. However, firing the interrupt immediately during CPS
-     * pipeline initialization has no effect — the CPS execution thread has not yet started
-     * executing steps, so the interrupt flag is lost. A short delay ensures the pipeline has
-     * time to finish initialization and block in its first {@code sleep()} or similar step
-     * before the interrupt is delivered.
+     * inbox to notify other replicas after this delay so that the CPS engine has had time to
+     * attach a {@link org.jenkinsci.plugins.workflow.flow.FlowExecution} before the interrupt
+     * arrives. This value is a safety-net upper bound; {@link #handleAbortRequest} will fire
+     * earlier once {@link PipelineAbortHelper#isPipelineNotYetStarted} returns {@code false}.
      */
     private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
+
+    /**
+     * Poll interval in milliseconds used by {@link #handleAbortRequest} while waiting for a
+     * Pipeline build's CPS execution to start before delivering the interrupt.
+     */
+    private static final long ABORT_RETRY_POLL_MS = 250L;
 
     /**
      * Maximum time in seconds to wait when acquiring a distributed lock.
@@ -241,6 +246,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * @param causeType cause type string ({@value #CAUSE_ABANDONED} or {@value #CAUSE_NEW_PATCHSET})
      */
     private static void handleAbortRequest(String jobName, String buildId, String causeType) {
+        handleAbortRequest(jobName, buildId, causeType, System.currentTimeMillis());
+    }
+
+    /**
+     * @param jobName        full name of the Jenkins job
+     * @param buildId        build number as a string
+     * @param causeType      abort cause type ({@link #CAUSE_NEW_PATCHSET} or {@link #CAUSE_ABANDONED})
+     * @param firstAttemptMs wall-clock time of the first attempt, used to enforce the
+     *                       {@link #DEFERRED_ABORT_DELAY_SECONDS} safety-net upper bound
+     */
+    private static void handleAbortRequest(String jobName, String buildId,
+                                           String causeType, long firstAttemptMs) {
         try (ACLContext ignored = ACL.as(ACL.SYSTEM)) {
             Jenkins jenkins = Jenkins.getInstanceOrNull();
             if (jenkins == null) {
@@ -255,21 +272,32 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 return;
             }
 
-            // Ensure the build has been running long enough for CPS pipeline initialization
-            // to complete. Interrupting a Pipeline build during CPS initialization (first few
-            // seconds) has no effect: the CPS execution thread is still setting up the program
-            // state and has not yet entered a step that responds to executor.interrupt().
-            // If the build is too fresh, schedule a direct retry after the remaining delay.
-            long buildAgeMs = System.currentTimeMillis() - build.getStartTimeInMillis();
-            long minBuildAgeMs = TimeUnit.SECONDS.toMillis(DEFERRED_ABORT_DELAY_SECONDS);
-            if (buildAgeMs < minBuildAgeMs) {
-                long retryDelayMs = minBuildAgeMs - buildAgeMs;
-                logger.info("Abort-inbox: build={}/{} is only {}ms old, retrying in {}ms",
-                        jobName, buildId, buildAgeMs, retryDelayMs);
-                Timer.get().schedule(
-                        () -> handleAbortRequest(jobName, buildId, causeType),
-                        retryDelayMs, TimeUnit.MILLISECONDS);
-                return;
+            // For Pipeline builds, wait until the CPS execution has started (i.e.
+            // FlowExecution.getCurrentHeads() is non-empty) before delivering the interrupt.
+            // Interrupting during CPS initialisation has no effect — the interrupt flag is
+            // set before any step is registered, so it is silently lost.
+            // We poll every ABORT_RETRY_POLL_MS; the safety-net cap of DEFERRED_ABORT_DELAY_SECONDS
+            // ensures we never wait longer than the previous time-based approach.
+            boolean notYetStarted;
+            try {
+                notYetStarted = PipelineAbortHelper.isPipelineNotYetStarted(build);
+            } catch (NoClassDefFoundError e) {
+                // workflow-api not installed — not a pipeline, safe to interrupt now
+                notYetStarted = false;
+            }
+            if (notYetStarted) {
+                long elapsedMs = System.currentTimeMillis() - firstAttemptMs;
+                long maxWaitMs = TimeUnit.SECONDS.toMillis(DEFERRED_ABORT_DELAY_SECONDS);
+                if (elapsedMs < maxWaitMs) {
+                    logger.debug("Abort-inbox: build={}/{} CPS not yet started, retrying in {}ms",
+                            jobName, buildId, ABORT_RETRY_POLL_MS);
+                    Timer.get().schedule(
+                            () -> handleAbortRequest(jobName, buildId, causeType, firstAttemptMs),
+                            ABORT_RETRY_POLL_MS, TimeUnit.MILLISECONDS);
+                    return;
+                }
+                logger.info("Abort-inbox: build={}/{} CPS still not started after {}ms, interrupting anyway",
+                        jobName, buildId, elapsedMs);
             }
 
             CauseOfInterruption cause;
