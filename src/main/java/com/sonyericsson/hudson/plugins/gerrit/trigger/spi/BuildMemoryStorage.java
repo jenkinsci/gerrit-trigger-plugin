@@ -312,27 +312,25 @@ public abstract class BuildMemoryStorage {
      * Checks if two events are logically equivalent for cancellation purposes.
      * <p>
      * This method allows each storage implementation to define its own event equality
-     * semantics. This is critical for proper operation in different coordination modes:
+     * semantics. Both modes use logical comparison, but differ in their approach:
      * <ul>
-     *   <li><strong>Local mode:</strong> Use logical equality so that deserialized
-     *       event instances (e.g. GerritCause.tEvent loaded from disk) are correctly
-     *       matched against in-memory events. Most trigger events extend ChangeBasedEvent,
-     *       whose equals() compares eventType, change, and patchSet fields — all stable
-     *       across serialization boundaries. Note that event classes
-     *       implement logical {@code .equals()} (see
-     *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause} and
-     *       {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.BadgeAction}),
-     *       which is used for TreeMap key lookup. The identity check here is purely for
-     *       performance in cancellation logic.</li>
-     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
-     *       since events are serialized/deserialized across replicas and object identity
-     *       is lost.</li>
+     *   <li><strong>Local mode:</strong> Delegates to {@code ChangeBasedEvent.equals()},
+     *       which compares {@code eventType}, {@code change}, and {@code patchSet} fields.
+     *       This deliberately ignores timestamp so that deserialized event instances
+     *       (e.g. {@code GerritCause.tEvent} loaded from disk) correctly match against
+     *       in-memory events representing the same logical change.</li>
+     *   <li><strong>Distributed mode:</strong> Uses {@link EventIdentifier#generateEventId},
+     *       which produces a deterministic string key including the server-side timestamp.
+     *       The timestamp is needed because the IMap key must uniquely identify each
+     *       event reception across replicas; without it, two different events on the
+     *       same patchset could collide.</li>
      * </ul>
      * <p>
      * <strong>Design rationale:</strong> Event equality semantics belong in the storage
-     * layer, not in business logic (BuildMemory). This respects the abstraction boundary
-     * and allows future coordination modes to define their own comparison strategy without
-     * modifying BuildMemory.
+     * layer, not in business logic
+     * ({@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory}).
+     * This respects the abstraction boundary and allows future coordination modes to
+     * define their own comparison strategy without modifying BuildMemory.
      *
      * @param event1 the first event
      * @param event2 the second event

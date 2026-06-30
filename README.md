@@ -64,9 +64,19 @@ run in parallel. When enabled, a Hazelcast cluster coordinates the replicas so t
 By default the plugin runs in **local mode** and requires no additional configuration.
 Local mode is fully backward-compatible with single-instance Jenkins deployments.
 
-Hazelcast mode is activated via a JVM system property. The plugin auto-discovers
-cluster peers using Kubernetes service discovery (when running in Kubernetes) or a
-static TCP/IP member list.
+Hazelcast mode is activated via a JVM system property. The plugin supports two instance
+modes: **member** (an embedded Hazelcast node runs inside Jenkins, forming a cluster with
+other replicas) and **client** (Jenkins connects as a lightweight client to a Hazelcast
+sidecar container). In `auto` discovery mode the plugin detects its environment at startup:
+if running in Kubernetes it uses service-based peer discovery; otherwise it falls back to
+a static TCP/IP member list. See the deployment sections below for concrete configuration
+examples.
+
+Alternative coordination backends can be implemented by extending
+[`CoordinationModeProvider`](src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/spi/CoordinationModeProvider.java)
+— a Jenkins `ExtensionPoint` that wires together the storage, event-claiming, and
+notification-claiming strategies for a given coordination mode. A higher `@Extension`
+ordinal takes precedence over the built-in Hazelcast provider.
 
 
 ## Configuration Properties
