@@ -294,7 +294,7 @@ public abstract class BuildMemoryStorage {
      * vs {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption}).
      * <p>
      * This method is called from
-     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#cancelOutdatedBuilds}
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#cancelOutdatedEvents}
      * after {@link #setCancelling} has already marked the entry, so the cause is known at this point.
      * <p>
      * The default implementation is a no-op — standalone Jenkins has no other replicas to notify.
@@ -319,7 +319,7 @@ public abstract class BuildMemoryStorage {
      *       This deliberately ignores timestamp so that deserialized event instances
      *       (e.g. {@code GerritCause.tEvent} loaded from disk) correctly match against
      *       in-memory events representing the same logical change.</li>
-     *   <li><strong>Distributed mode:</strong> Uses {@link EventIdentifier#generateEventId},
+     *   <li><strong>Distributed mode:</strong> Uses {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.EventIdentifier#generateEventId},
      *       which produces a deterministic string key including the server-side timestamp.
      *       The timestamp is needed because the IMap key must uniquely identify each
      *       event reception across replicas; without it, two different events on the
