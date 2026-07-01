@@ -147,11 +147,9 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * Delay in seconds before writing a deferred cross-replica abort inbox entry.
      * <p>
      * When {@code started()} detects that an entry is already marked {@code isCancelling=true}
-     * (race condition: build started after the abort decision was made), we write to the abort
-     * inbox to notify other replicas after this delay so that the CPS engine has had time to
-     * attach a {@link org.jenkinsci.plugins.workflow.flow.FlowExecution} before the interrupt
-     * arrives. This value is a safety-net upper bound; {@link #handleAbortRequest} will fire
-     * earlier once {@link PipelineAbortHelper#isPipelineNotYetStarted} returns {@code false}.
+     * (race condition: build started after the abort decision was made), the abort inbox entry
+     * is written after this delay so the CPS engine has had time to attach a
+     * {@link org.jenkinsci.plugins.workflow.flow.FlowExecution} before the interrupt arrives.
      */
     private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
 
@@ -160,6 +158,15 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * Pipeline build's CPS execution to start before delivering the interrupt.
      */
     private static final long ABORT_RETRY_POLL_MS = 250L;
+
+    /**
+     * Maximum number of poll attempts in {@link #handleAbortRequest} before interrupting
+     * regardless of CPS execution state.
+     * <p>
+     * Total maximum wait = {@link #ABORT_RETRY_POLL_MS} * {@code ABORT_MAX_RETRIES}
+     * = 250 ms * 12 = 3 seconds.
+     */
+    private static final int ABORT_MAX_RETRIES = 12;
 
     /**
      * Maximum time in seconds to wait when acquiring a distributed lock.
@@ -246,18 +253,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * @param causeType cause type string ({@value #CAUSE_ABANDONED} or {@value #CAUSE_NEW_PATCHSET})
      */
     private static void handleAbortRequest(String jobName, String buildId, String causeType) {
-        handleAbortRequest(jobName, buildId, causeType, System.currentTimeMillis());
+        handleAbortRequest(jobName, buildId, causeType, ABORT_MAX_RETRIES);
     }
 
     /**
-     * @param jobName        full name of the Jenkins job
-     * @param buildId        build number as a string
-     * @param causeType      abort cause type ({@link #CAUSE_NEW_PATCHSET} or {@link #CAUSE_ABANDONED})
-     * @param firstAttemptMs wall-clock time of the first attempt, used to enforce the
-     *                       {@link #DEFERRED_ABORT_DELAY_SECONDS} safety-net upper bound
+     * @param jobName     full name of the Jenkins job
+     * @param buildId     build number as a string
+     * @param causeType   abort cause type ({@link #CAUSE_NEW_PATCHSET} or {@link #CAUSE_ABANDONED})
+     * @param retriesLeft remaining poll attempts before interrupting regardless of CPS state;
+     *                    decremented on each reschedule until it reaches zero
      */
     private static void handleAbortRequest(String jobName, String buildId,
-                                           String causeType, long firstAttemptMs) {
+                                           String causeType, int retriesLeft) {
         try (ACLContext ignored = ACL.as(ACL.SYSTEM)) {
             Jenkins jenkins = Jenkins.getInstanceOrNull();
             if (jenkins == null) {
@@ -276,8 +283,8 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             // FlowExecution.getCurrentHeads() is non-empty) before delivering the interrupt.
             // Interrupting during CPS initialisation has no effect — the interrupt flag is
             // set before any step is registered, so it is silently lost.
-            // We poll every ABORT_RETRY_POLL_MS; the safety-net cap of DEFERRED_ABORT_DELAY_SECONDS
-            // ensures we never wait longer than the previous time-based approach.
+            // We poll every ABORT_RETRY_POLL_MS for up to ABORT_MAX_RETRIES attempts
+            // (ABORT_RETRY_POLL_MS * ABORT_MAX_RETRIES = 3 s total maximum wait).
             boolean notYetStarted;
             try {
                 notYetStarted = PipelineAbortHelper.isPipelineNotYetStarted(build);
@@ -286,18 +293,16 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 notYetStarted = false;
             }
             if (notYetStarted) {
-                long elapsedMs = System.currentTimeMillis() - firstAttemptMs;
-                long maxWaitMs = TimeUnit.SECONDS.toMillis(DEFERRED_ABORT_DELAY_SECONDS);
-                if (elapsedMs < maxWaitMs) {
-                    logger.debug("Abort-inbox: build={}/{} CPS not yet started, retrying in {}ms",
-                            jobName, buildId, ABORT_RETRY_POLL_MS);
+                if (retriesLeft > 0) {
+                    logger.debug("Abort-inbox: build={}/{} CPS not yet started, retrying in {}ms ({} attempts left)",
+                            jobName, buildId, ABORT_RETRY_POLL_MS, retriesLeft);
                     Timer.get().schedule(
-                            () -> handleAbortRequest(jobName, buildId, causeType, firstAttemptMs),
+                            () -> handleAbortRequest(jobName, buildId, causeType, retriesLeft - 1),
                             ABORT_RETRY_POLL_MS, TimeUnit.MILLISECONDS);
                     return;
                 }
-                logger.info("Abort-inbox: build={}/{} CPS still not started after {}ms, interrupting anyway",
-                        jobName, buildId, elapsedMs);
+                logger.info("Abort-inbox: build={}/{} CPS still not started after {} attempts, interrupting anyway",
+                        jobName, buildId, ABORT_MAX_RETRIES);
             }
 
             CauseOfInterruption cause;
