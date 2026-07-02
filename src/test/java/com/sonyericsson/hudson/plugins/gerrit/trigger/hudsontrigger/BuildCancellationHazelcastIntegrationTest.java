@@ -66,7 +66,7 @@ import static org.junit.Assert.assertTrue;
  * These tests verify that build cancellation works correctly when using
  * Hazelcast-backed BuildMemoryStorage instead of local TreeMap storage.
  * <p>
- * This is critical for HA/HS (High Availability/High Scalability) deployments where multiple Jenkins
+ * This is critical for distributed scenarios where multiple Jenkins
  * instances share state via Hazelcast.
  *
  */

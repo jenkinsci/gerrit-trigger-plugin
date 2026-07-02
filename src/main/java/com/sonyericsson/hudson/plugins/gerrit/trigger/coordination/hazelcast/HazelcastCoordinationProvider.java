@@ -172,7 +172,7 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      * <p>
      * Uses distributed IMap with atomic {@code putIfAbsent} to ensure only one replica
      * processes each Gerrit event. The first replica to claim an event processes it,
-     * while other replicas skip it. This prevents duplicate builds in HA/HS deployments.
+     * while other replicas skip it. This prevents duplicate builds in distributed scenarios.
      * <p>
      * <strong>Replica-level claiming:</strong> Once a replica claims an event, ALL jobs
      * on that replica can process it. This allows multiple jobs on the same replica to be
@@ -191,7 +191,7 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
     /**
      * Creates Hazelcast queue cancellation strategy.
      * <p>
-     * Detects cancellations triggered by the CloudBees HA load balancer so that
+     * Detects cancellations triggered by the potential distributed load balancer so that
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritQueueListener}
      * can skip them and avoid sending premature Gerrit feedback.
      *

@@ -151,7 +151,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * as the highest-priority available provider.</p>
      *
      * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
-     * instances receive the same Gerrit event in HA/HS deployments. In local mode, this
+     * instances receive the same Gerrit event in distributed scenarios. In local mode, this
      * is a NO-OP (always claims). In distributed mode (e.g., Hazelcast), this uses
      * distributed coordination to ensure only one instance processes each event.</p>
      *
@@ -170,7 +170,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * as the highest-priority available provider.</p>
      *
      * <p>The QueueCancellationStrategy determines whether a cancelled Jenkins queue item
-     * should be ignored because it was moved by the HA load balancer rather than being
+     * should be ignored because it was moved by the distributed load balancer rather than being
      * cancelled by a user or a new patchset event. In local mode, this is a NO-OP (always
      * returns false). In distributed mode (e.g., Hazelcast), this inspects the item for
      * load-balancer markers.</p>

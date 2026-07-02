@@ -117,7 +117,7 @@ public class LocalCoordinationProvider extends CoordinationModeProvider {
 
     /**
      * Creates a new local queue cancellation strategy instance.
-     * Always returns false - no HA load balancer present in standalone mode.
+     * Always returns false - no distributed load balancer present in standalone mode.
      *
      * @return a new LocalQueueCancellationStrategy
      */

@@ -32,13 +32,13 @@ import java.util.logging.Logger;
 /**
  * Hazelcast (distributed) implementation of QueueCancellationStrategy.
  *
- * <p>Detects queue item cancellations triggered by the CloudBees HA load balancer
+ * <p>Detects queue item cancellations triggered by the potential distributed load balancer
  * (QueueLoadBalancer), which moves queue items between replicas by cancelling the
  * original and re-queuing it on the target replica. These cancellations must be
  * ignored to avoid sending premature "build cancelled" feedback to Gerrit.</p>
  *
  * <p>Class names are checked via string matching to avoid a mandatory compile-time
- * dependency on the CloudBees replication plugin.</p>
+ * dependency on any other kind of replication plugin.</p>
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastCoordinationProvider
  * @see QueueCancellationStrategy
@@ -48,7 +48,7 @@ public class HazelcastQueueCancellationStrategy extends QueueCancellationStrateg
     private static final Logger logger = Logger.getLogger(HazelcastQueueCancellationStrategy.class.getName());
 
     /**
-     * Returns true if the cancelled item was moved by the HA load balancer.
+     * Returns true if the cancelled item was moved by the distributed load balancer.
      *
      * <p>Two markers are checked (either is sufficient):</p>
      * <ul>
@@ -59,7 +59,7 @@ public class HazelcastQueueCancellationStrategy extends QueueCancellationStrateg
      * </ul>
      *
      * @param item the queue item that left the queue as cancelled
-     * @return true if cancelled by the HA load balancer
+     * @return true if cancelled by the distributed load balancer
      */
     @Override
     public boolean isLoadBalancedCancellation(@NonNull LeftItem item) {
@@ -69,7 +69,7 @@ public class HazelcastQueueCancellationStrategy extends QueueCancellationStrateg
                 && item.getCauseOfBlockage().getClass().getName()
                 .contains("LoadBalancedCauseOfBlockage"));
         if (result) {
-            logger.fine("Queue item cancelled due to HA load balancing, skipping Gerrit cancellation: " + item);
+            logger.fine("Queue item cancelled due to distributed load balancing, skipping Gerrit cancellation: " + item);
         }
         return result;
     }

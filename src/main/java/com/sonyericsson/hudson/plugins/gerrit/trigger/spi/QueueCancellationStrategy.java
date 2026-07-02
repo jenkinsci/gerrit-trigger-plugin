@@ -30,7 +30,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * Abstract base class for queue cancellation strategies in different deployment modes.
  *
  * <p>Determines whether a cancelled Jenkins queue item should be ignored because it was
- * cancelled by the HA load balancer (i.e. migrated to another replica), not by a user
+ * cancelled by the distributed load balancer (i.e. migrated to another replica), not by a user
  * or by a new patchset event.</p>
  *
  * <ul>
@@ -45,10 +45,10 @@ public abstract class QueueCancellationStrategy {
 
     /**
      * Determines whether a cancelled queue item should be ignored because it was
-     * cancelled by the HA load balancer moving it to another replica.
+     * cancelled by the distributed load balancer moving it to another replica.
      *
      * @param item the queue item that left the queue as cancelled
-     * @return true if the cancellation is an HA load-balancing operation and should be skipped
+     * @return true if the cancellation is an distributed load-balancing operation and should be skipped
      */
     public abstract boolean isLoadBalancedCancellation(@NonNull LeftItem item);
 }

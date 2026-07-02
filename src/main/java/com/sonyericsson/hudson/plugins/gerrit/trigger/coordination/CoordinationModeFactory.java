@@ -206,7 +206,7 @@ public class CoordinationModeFactory {
      * The mode is discovered and instances are created on first access.</p>
      *
      * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
-     * instances receive the same Gerrit event in HA/HS deployments.</p>
+     * instances receive the same Gerrit event in distributed scenarios.</p>
      *
      * @return the event claim strategy implementation
      * @throws IllegalStateException if no available mode provider is found
