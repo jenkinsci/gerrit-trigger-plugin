@@ -778,6 +778,41 @@ public class BuildMemory {
         }
 
         /**
+         * Converts this imprint to its serialization-friendly {@link MemoryImprintData} form.
+         * <p>
+         * The event is carried as-is; each entry is mapped via {@link Entry#toEntryData()}.
+         * No Jenkins lookups or serialization happen here — turning the event into a wire
+         * representation is left to the storage layer.
+         *
+         * @return the data representation of this imprint.
+         * @see #fromData(MemoryImprintData)
+         */
+        public synchronized MemoryImprintData toData() {
+            List<EntryData> entries = new ArrayList<EntryData>();
+            for (Entry entry : list) {
+                entries.add(entry.toEntryData());
+            }
+            return new MemoryImprintData(event, entries);
+        }
+
+        /**
+         * Restores a {@link MemoryImprint} from its {@link MemoryImprintData} form.
+         *
+         * @param data the data to restore from.
+         * @return the reconstructed imprint.
+         * @see #toData()
+         */
+        public static MemoryImprint fromData(@NonNull MemoryImprintData data) {
+            MemoryImprint imprint = new MemoryImprint(data.getEvent());
+            if (data.getEntries() != null) {
+                for (EntryData entryData : data.getEntries()) {
+                    imprint.list.add(Entry.fromEntryData(entryData));
+                }
+            }
+            return imprint;
+        }
+
+        /**
          * Sets the build to a project or adds the project to the list.
          *
          * @param project the project.
@@ -1165,6 +1200,65 @@ public class BuildMemory {
             @Override
             public Entry clone() {
                 return new Entry(this);
+            }
+
+            /**
+             * Constructor that restores an entry from its {@link EntryData} form.
+             * <p>
+             * All fields are copied verbatim, including the timestamps. Unlike the
+             * {@link #setBuild(Run)}/{@link #setBuildCompleted(boolean)} setters, this does not
+             * re-stamp {@code startedTimestamp}/{@code completedTimestamp} with the current time,
+             * so the original moments are preserved across a store/restore round-trip.
+             *
+             * @param data the data to restore from.
+             * @see #fromEntryData(EntryData)
+             */
+            private Entry(EntryData data) {
+                this.project = data.getProjectFullName();
+                this.build = data.getBuildId();
+                this.buildCompleted = data.isBuildCompleted();
+                this.cancelling = data.isCancelling();
+                this.cancelled = data.isCancelled();
+                this.customUrl = data.getCustomUrl();
+                this.unsuccessfulMessage = data.getUnsuccessfulMessage();
+                this.triggeredTimestamp = data.getTriggeredTimestamp();
+                this.completedTimestamp = data.getCompletedTimestamp();
+                this.startedTimestamp = data.getStartedTimestamp();
+            }
+
+            /**
+             * Converts this entry to its serialization-friendly {@link EntryData} form.
+             * <p>
+             * This is a straight field copy with no Jenkins lookups: the entry already holds the
+             * project and build as {@code String} identifiers.
+             *
+             * @return the data representation of this entry.
+             * @see #fromEntryData(EntryData)
+             */
+            public EntryData toEntryData() {
+                EntryData data = new EntryData();
+                data.setProjectFullName(project);
+                data.setBuildId(build);
+                data.setBuildCompleted(buildCompleted);
+                data.setCancelling(cancelling);
+                data.setCancelled(cancelled);
+                data.setCustomUrl(customUrl);
+                data.setUnsuccessfulMessage(unsuccessfulMessage);
+                data.setTriggeredTimestamp(triggeredTimestamp);
+                data.setCompletedTimestamp(completedTimestamp);
+                data.setStartedTimestamp(startedTimestamp);
+                return data;
+            }
+
+            /**
+             * Restores an {@link Entry} from its {@link EntryData} form.
+             *
+             * @param data the data to restore from.
+             * @return the reconstructed entry.
+             * @see #toEntryData()
+             */
+            public static Entry fromEntryData(@NonNull EntryData data) {
+                return new Entry(data);
             }
 
             /**

@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 import com.hazelcast.nio.serialization.compact.CompactReader;
 import com.hazelcast.nio.serialization.compact.CompactSerializer;
 import com.hazelcast.nio.serialization.compact.CompactWriter;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.EntryData;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**

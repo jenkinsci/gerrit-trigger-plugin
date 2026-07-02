@@ -21,30 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 /**
- * Serializable data transfer object for BuildMemory Entry in Hazelcast distributed storage.
- * <p>
- * This class is the serialization-friendly counterpart to
+ * Plain data transfer object mirroring the state of a
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint.Entry}.
- * It stores the same information but uses only primitives and strings instead of Jenkins object references.
  * <p>
- * <b>Stored Data:</b>
- * <ul>
- *   <li><b>projectFullName</b>: String identifier for the job (instead of {@link hudson.model.Job} reference)</li>
- *   <li><b>buildId</b>: String identifier for the build (instead of {@link hudson.model.Run} reference)</li>
- *   <li><b>Build state</b>: completion status, cancellation flags, timestamps</li>
- *   <li><b>Feedback data</b>: custom URLs and unsuccessful messages for Gerrit comments</li>
- * </ul>
+ * It carries only primitives and strings, so it can be serialized and shipped across JVMs
+ * (for distributed storage backends) without dragging in Jenkins object references.
+ * Note that {@code Entry} itself already stores the project and build as {@code String}
+ * identifiers and resolves the live {@link hudson.model.Job}/{@link hudson.model.Run}
+ * lazily, so the conversion is a straight field copy — see
+ * {@link BuildMemory.MemoryImprint.Entry#toEntryData()} and
+ * {@link BuildMemory.MemoryImprint.Entry#fromEntryData(EntryData)}.
  * <p>
- * Uses Hazelcast Compact Serialization for cross-JVM compatibility in sidecar deployments.
+ * This class is intentionally free of any storage-technology dependency. Concerns such as
+ * wire serialization live in the storage layer (e.g. the Hazelcast compact serializer),
+ * keeping this type reusable and easy to extract.
  *
  * @see MemoryImprintData
- * @see HazelcastBuildMemoryStorage#reconstructMemoryImprint
- * @see EntryDataSerializer
+ * @see BuildMemory.MemoryImprint.Entry
  */
 public class EntryData {
 

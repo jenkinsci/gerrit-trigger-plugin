@@ -26,14 +26,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.EntryData;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.MemoryImprintData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
@@ -79,27 +79,26 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * <b>Serialization Strategy (MemoryImprint ↔ MemoryImprintData):</b>
  * <p>
- * This class handles conversion between the API type
+ * The API type
  * ({@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint})
- * and the serialization type ({@link MemoryImprintData}):
+ * knows how to convert itself to and from its plain data form
+ * ({@link MemoryImprintData}) via
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint#toData()}
+ * and
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint#fromData(MemoryImprintData)}:
  * <ul>
- *   <li><b>Write Path</b>: Business logic → MemoryImprint → (convert) → MemoryImprintData → Hazelcast IMap</li>
- *   <li><b>Read Path</b>: Hazelcast IMap → MemoryImprintData → (reconstruct) → MemoryImprint → Business logic</li>
+ *   <li><b>Write Path</b>: Business logic → MemoryImprint → {@code toData()} → MemoryImprintData → Hazelcast IMap</li>
+ *   <li><b>Read Path</b>: Hazelcast IMap → MemoryImprintData → {@code fromData()} → MemoryImprint → Business logic</li>
  * </ul>
  * <p>
- * <b>Conversion Details:</b>
- * <ul>
- *   <li><b>Event Serialization</b>: {@link #serializeEvent} converts GerritTriggeredEvent to JSON
- *       using {@link PolymorphicEventTypeAdapter} for type preservation</li>
- *   <li><b>Reconstruction</b>: {@link #reconstructMemoryImprint} deserializes JSON to events and
- *       looks up Jenkins objects via {@link jenkins.model.Jenkins#getItemByFullName}</li>
- * </ul>
- * <p>
- * This conversion happens only at storage boundaries, keeping the rest of the plugin
- * unaware of serialization concerns.
+ * The {@link MemoryImprintData} DTO carries the event as a live object; turning it into a JSON
+ * string on the wire (with polymorphic type preservation) is handled by
+ * {@link MemoryImprintDataSerializer} — the only Hazelcast-specific serialization boundary. This
+ * keeps both the API type and the DTO unaware of storage concerns.
  *
  * @see HazelcastCoordinationProvider
  * @see MemoryImprintData
+ * @see MemoryImprintDataSerializer
  * @see PolymorphicEventTypeAdapter
  */
 public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
@@ -176,14 +175,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * interrupted lock acquisition that left the Hazelcast server holding the lock).
      */
     private static final int LOCK_ACQUIRE_TIMEOUT_SECONDS = 10;
-
-    /**
-     * Gson instance for JSON serialization of events.
-     * Configured to handle polymorphic event types by including runtime type information.
-     */
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(GerritTriggeredEvent.class, new PolymorphicEventTypeAdapter())
-            .create();
 
     /**
      * The Hazelcast instance to use for distributed storage.
@@ -388,105 +379,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         }
     }
 
-    /**
-     * Serializes a GerritTriggeredEvent to JSON.
-     *
-     * @param event the event to serialize
-     * @return JSON string, or null if serialization fails
-     */
-    private String serializeEvent(GerritTriggeredEvent event) {
-        try {
-            // IMPORTANT: Must explicitly specify GerritTriggeredEvent.class to ensure
-            // the PolymorphicEventTypeAdapter is used, even when event is a concrete subclass
-            String json = GSON.toJson(event, GerritTriggeredEvent.class);
-            if (json != null) {
-                logger.trace("Serialized event {} to JSON (length: {})", event, json.length());
-            } else {
-                logger.trace("Serialized event {} to JSON (length: 0)", event);
-            }
-            return json;
-        } catch (Exception e) {
-            logger.error("Failed to serialize event to JSON: " + event, e);
-            return null;
-        }
-    }
-
-    /**
-     * Deserializes a GerritTriggeredEvent from JSON.
-     *
-     * @param eventJson the JSON string
-     * @return deserialized event, or null if deserialization fails
-     */
-    private GerritTriggeredEvent deserializeEvent(String eventJson) {
-        try {
-            if (eventJson == null) {
-                logger.warn("Cannot deserialize null eventJson");
-                return null;
-            }
-            GerritTriggeredEvent event = GSON.fromJson(eventJson, GerritTriggeredEvent.class);
-            logger.trace("Deserialized JSON (length: {}) to event: {}", eventJson.length(), event);
-            return event;
-        } catch (Exception e) {
-            if (eventJson != null) {
-                logger.error("Failed to deserialize event from JSON (length: " + eventJson.length() + ")", e);
-            } else {
-                logger.error("Failed to deserialize event from NULL JSON", e);
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Reconstructs a MemoryImprint from distributed data.
-     *
-     * @param event the event
-     * @param data the serialized data
-     * @return reconstructed MemoryImprint
-     */
-    private MemoryImprint reconstructMemoryImprint(GerritTriggeredEvent event, MemoryImprintData data) {
-        MemoryImprint imprint = new MemoryImprint(event);
-
-        if (data.getEntries() != null) {
-            Jenkins jenkins = Jenkins.getInstanceOrNull();
-            if (jenkins == null) {
-                logger.warn("Jenkins instance not available, cannot reconstruct MemoryImprint");
-                return imprint;
-            }
-
-            for (EntryData entryData : data.getEntries()) {
-                String projectFullName = entryData.getProjectFullName();
-                Job project = jenkins.getItemByFullName(projectFullName, Job.class);
-
-                if (project != null) {
-                    if (entryData.getBuildId() != null) {
-                        Run build = project.getBuild(entryData.getBuildId());
-                        if (build != null) {
-                            imprint.set(project, build, entryData.isBuildCompleted());
-                        } else {
-                            // Build not found, but project exists - add entry without build
-                            imprint.set(project);
-                        }
-                    } else {
-                        // No build ID - project triggered but not started
-                        imprint.set(project);
-                    }
-
-                    // Restore additional entry data
-                    MemoryImprint.Entry entry = imprint.getEntry(project);
-                    if (entry != null) {
-                        entry.setBuildCompleted(entryData.isBuildCompleted());
-                        entry.setCancelling(entryData.isCancelling());
-                        entry.setCancelled(entryData.isCancelled());
-                        entry.setCustomUrl(entryData.getCustomUrl());
-                        entry.setUnsuccessfulMessage(entryData.getUnsuccessfulMessage());
-                    }
-                }
-            }
-        }
-
-        return imprint;
-    }
-
     // ===== Implement BuildMemoryStorage abstract methods =====
 
     @Override
@@ -500,7 +392,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String key = EventIdentifier.generateEventId(event);
         MemoryImprintData data = map.get(key);
         if (data != null) {
-            return reconstructMemoryImprint(event, data);
+            return MemoryImprint.fromData(data);
         }
         return null;
     }
@@ -515,7 +407,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         String key = EventIdentifier.generateEventId(event);
         String projectFullName = project.getFullName();
-        String eventJson = serializeEvent(event);
 
         // ATOMIC OPERATION - Distributed lock ensures only one replica modifies this entry at a time.
         // This is critical when multiple projects are triggered by the same event simultaneously.
@@ -532,7 +423,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             MemoryImprintData data = map.get(key);
             if (data == null) {
                 data = new MemoryImprintData();
-                data.setEventJson(eventJson);
+                data.setEvent(event);
             }
             boolean found = false;
             if (data.getEntries() != null) {
@@ -721,7 +612,6 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         String key = EventIdentifier.generateEventId(event);
         String projectFullName = project.getFullName();
-        String eventJson = serializeEvent(event);
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         if (!tryLockWithTimeout(map, key)) {
@@ -733,7 +623,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             MemoryImprintData data = map.get(key);
             if (data == null) {
                 data = new MemoryImprintData();
-                data.setEventJson(eventJson);
+                data.setEvent(event);
                 if (otherBuilds != null) {
                     for (Run otherBuild : otherBuilds) {
                         EntryData entryData = new EntryData();
@@ -1174,10 +1064,10 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // Read all entries from distributed memory
         for (Map.Entry<String, MemoryImprintData> mapEntry : map.entrySet()) {
             MemoryImprintData data = mapEntry.getValue();
-            GerritTriggeredEvent event = deserializeEvent(data.getEventJson());
+            GerritTriggeredEvent event = data.getEvent();
 
             if (event != null) {
-                MemoryImprint imprint = reconstructMemoryImprint(event, data);
+                MemoryImprint imprint = MemoryImprint.fromData(data);
                 List<MemoryImprint.Entry> triggered = new LinkedList<MemoryImprint.Entry>();
                 for (MemoryImprint.Entry tr : imprint.getEntries()) {
                     triggered.add(tr.clone());
@@ -1202,9 +1092,9 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         for (Map.Entry<String, MemoryImprintData> entry : map.entrySet()) {
             MemoryImprintData data = entry.getValue();
             if (data != null) {
-                GerritTriggeredEvent event = deserializeEvent(data.getEventJson());
+                GerritTriggeredEvent event = data.getEvent();
                 if (event != null) {
-                    MemoryImprint imprint = reconstructMemoryImprint(event, data);
+                    MemoryImprint imprint = MemoryImprint.fromData(data);
                     result.put(event, imprint);
                 }
             }
