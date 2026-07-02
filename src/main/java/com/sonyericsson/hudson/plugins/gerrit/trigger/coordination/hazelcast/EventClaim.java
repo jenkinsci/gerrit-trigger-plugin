@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 /**
  * Represents a claimed Gerrit event in the distributed cluster.
  * <p>
- * In HA/HS environments with multiple replicas, each Gerrit event
+ * In distributed environments with multiple replicas, each Gerrit event
  * arrives at all replicas. To prevent duplicate builds, replicas use event claiming:
  * the first replica to claim an event processes it, while others skip it.
  * <p>

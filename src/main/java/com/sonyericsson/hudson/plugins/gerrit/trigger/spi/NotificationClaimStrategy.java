@@ -29,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * Abstract base class for notification claiming strategies in different deployment modes.
  * Prevents duplicate notification sending when multiple Jenkins instances need to send
- * feedback to Gerrit in HA/HS deployments.
+ * feedback to Gerrit in distributed scenarios.
  *
  * <p>This abstract class enables switching between local (standalone) and coordination modes:</p>
  * <ul>

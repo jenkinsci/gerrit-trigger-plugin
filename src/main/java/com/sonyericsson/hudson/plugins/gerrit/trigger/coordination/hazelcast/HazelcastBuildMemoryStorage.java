@@ -61,7 +61,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Hazelcast-backed implementation of BuildMemoryStorage for HA/HS deployments.
+ * Hazelcast-backed implementation of BuildMemoryStorage for distributed scenarios.
  * <p>
  * Uses distributed IMap for storing build memory across multiple Jenkins replicas.
  * All operations use distributed locks ({@code map.tryLock(key, timeout, unit)}) to prevent race conditions.

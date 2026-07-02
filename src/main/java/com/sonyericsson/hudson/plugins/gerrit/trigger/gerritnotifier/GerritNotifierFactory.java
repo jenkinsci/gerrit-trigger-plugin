@@ -125,7 +125,7 @@ public class GerritNotifierFactory {
             if (config != null) {
                 GerritTriggeredEvent event = memoryImprint.getEvent();
 
-                // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
+                // Claim notification for sending (prevents duplicate notifications in distributed scenarios)
                 NotificationClaimStrategy notificationClaimStrategy =
                     CoordinationModeFactory.get().getClaimStrategy();
                 notificationClaimStrategy.withClaim(event, "build-completed", () -> {
@@ -206,7 +206,7 @@ public class GerritNotifierFactory {
         if (serverName != null) {
             IGerritHudsonTriggerConfig config = getConfig(serverName);
             if (config != null) {
-                // Claim notification for sending (prevents duplicate notifications in HA/HS environments)
+                // Claim notification for sending (prevents duplicate notifications in distributed scenarios)
                 // Build-started uses per-job claim (each job sends its own notification)
                 String jobName = build.getParent().getFullName();
                 NotificationClaimStrategy notificationClaimStrategy =

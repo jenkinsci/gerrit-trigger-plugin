@@ -35,9 +35,9 @@ import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Hazelcast-backed implementation of EventClaimStrategy for HA/HS deployments.
+ * Hazelcast-backed implementation of EventClaimStrategy for distributed scenarios.
  * <p>
- * In HA/HS (High Availability/High Scalability) environments with multiple replicas, each Gerrit event
+ * In distributed scenarios with multiple replicas, each Gerrit event
  * arrives at all replicas via SSH event stream. To prevent duplicate builds,
  * replicas use distributed event claiming:
  * <ul>

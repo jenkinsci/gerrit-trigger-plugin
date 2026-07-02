@@ -27,11 +27,11 @@ maintains.
 
 All distributed storage settings are controlled by JVM system properties passed to Jenkins on startup.
 
-| Property | Default | Description |
-|---|---|---|
-| `gerrit.trigger.coordination.mode` | `local` | Set to `hazelcast` to enable HA/HS coordination |
+| Property | Default | Description                                           |
+|---|---|-------------------------------------------------------|
+| `gerrit.trigger.coordination.mode` | `local` | Set to `hazelcast` to enable distributed coordination |
 | `gerrit.trigger.coordination.hazelcast.client.addresses` | `localhost:5702` | Comma-separated `host:port` list of sidecar addresses |
-| `gerrit.trigger.coordination.hazelcast.client.cluster.name` | `gerrit-trigger-cluster` | Cluster name to connect to |
+| `gerrit.trigger.coordination.hazelcast.client.cluster.name` | `gerrit-trigger-cluster` | Cluster name to connect to                            |
 
 Port `5702` is used by default to avoid potential conflicts with other Hazelcast cluster, which could occupy port `5701`.
 

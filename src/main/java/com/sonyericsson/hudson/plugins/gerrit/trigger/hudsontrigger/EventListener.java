@@ -126,7 +126,7 @@ public final class EventListener implements GerritEventListener {
         }
         if (event instanceof GerritTriggeredEvent triggeredEvent) {
 
-            // Claim event for processing (prevents duplicate builds in HA/HS environments)
+            // Claim event for processing (prevents duplicate builds in distributed scenarios)
             EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
             eventClaimStrategy.withClaim(triggeredEvent, () -> {
                 synchronized (EventListener.this) {
@@ -171,7 +171,7 @@ public final class EventListener implements GerritEventListener {
             return;
         }
 
-        // Claim event for processing (prevents duplicate builds in HA/HS environments)
+        // Claim event for processing (prevents duplicate builds in distributed scenarios)
         EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
             synchronized (EventListener.this) {
@@ -222,7 +222,7 @@ public final class EventListener implements GerritEventListener {
             return;
         }
 
-        // Claim event for processing (prevents duplicate builds in HA/HS environments)
+        // Claim event for processing (prevents duplicate builds in distributed scenarios)
         EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
             synchronized (EventListener.this) {

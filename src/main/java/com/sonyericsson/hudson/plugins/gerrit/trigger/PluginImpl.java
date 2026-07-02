@@ -147,7 +147,7 @@ public class PluginImpl extends GlobalConfiguration {
     /**
      * System property: minimum number of Hazelcast cluster members expected before connecting to Gerrit.
      * Default 1 disables the wait (single-instance or local mode).
-     * Set to 2 or more in HA/HS deployments to prevent the startup race where events arrive before
+     * Set to 2 or more in distributed installations to prevent the startup race where events arrive before
      * the distributed claim map is shared across replicas.
      */
     public static final String HAZELCAST_EXPECTED_MEMBERS_PROPERTY =
@@ -638,7 +638,7 @@ public class PluginImpl extends GlobalConfiguration {
      * Waits for the Hazelcast cluster to reach the expected number of members before
      * Gerrit server connections are opened.
      * <p>
-     * In HA/HS deployments each replica has its own SSH connection to Gerrit and therefore
+     * In distributed scenarios each replica has its own SSH connection to Gerrit and therefore
      * receives every event independently. Without this guard, a replica that starts while
      * the Hazelcast cluster is still forming will process events against its own single-member
      * IMap, making the distributed claim invisible to other replicas and causing duplicate builds.

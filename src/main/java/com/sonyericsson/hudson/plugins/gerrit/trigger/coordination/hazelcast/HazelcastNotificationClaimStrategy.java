@@ -34,9 +34,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Hazelcast-backed implementation of NotificationClaimStrategy for HA/HS deployments.
+ * Hazelcast-backed implementation of NotificationClaimStrategy for distributed scenarios.
  * <p>
- * In HA/HS (High Availability/High Scalability) environments with multiple replicas, each replica tracks build
+ * In distributed scenarios with multiple replicas, each replica tracks build
  * completions independently. To prevent duplicate notifications to Gerrit,
  * replicas use distributed notification claiming:
  * <ul>

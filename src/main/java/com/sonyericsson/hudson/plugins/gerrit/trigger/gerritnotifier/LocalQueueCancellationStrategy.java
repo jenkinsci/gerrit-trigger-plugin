@@ -29,7 +29,7 @@ import hudson.model.Queue.LeftItem;
 
 /**
  * Local (standalone) implementation of QueueCancellationStrategy.
- * Always returns false since there is no HA load balancer in single-instance mode.
+ * Always returns false since there is no distributed load balancer in single-instance mode.
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
  * @see QueueCancellationStrategy

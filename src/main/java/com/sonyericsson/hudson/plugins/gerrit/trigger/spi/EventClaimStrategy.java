@@ -29,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * Abstract base class for event claiming strategies in different deployment modes.
  * Prevents duplicate build processing when multiple Jenkins instances receive
- * the same Gerrit event in HA/HS deployments.
+ * the same Gerrit event in distributed scenarios.
  *
  * <p>This abstract class enables switching between local (standalone) and coordination modes:</p>
  * <ul>
