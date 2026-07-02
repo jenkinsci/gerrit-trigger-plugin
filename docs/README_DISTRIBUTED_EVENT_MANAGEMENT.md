@@ -1,6 +1,6 @@
-# Distributed storage support
+# Distributed Event Management support
 
-The plugin supports Distributed storage support where two or more Jenkins instance
+The plugin supports Distributed Event Management support where two or more Jenkins instance
 run in parallel (sharing the gerrit memory of the plugin). When enabled, a Hazelcast
 cluster coordinates the instances so that:
 
@@ -8,11 +8,11 @@ cluster coordinates the instances so that:
 - Build state is shared across instances (distributed build memory)
 - Gerrit feedback (votes and comments) is sent **exactly once** per build event
 
-By default the plugin runs in **local mode** and requires no additional configuration.
+By default, the plugin runs in **local mode** and requires no additional configuration.
 Local mode is fully backward-compatible with single-instance Jenkins deployments.
 
 Alternative coordination backends can be implemented by extending
-[`CoordinationModeProvider`](src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/spi/CoordinationModeProvider.java)
+[`CoordinationModeProvider`](../src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/spi/CoordinationModeProvider.java)
 — a Jenkins `ExtensionPoint` that wires together the storage, event-claiming, and
 notification-claiming strategies for a given coordination mode. A higher `@Extension`
 ordinal takes precedence over the built-in Hazelcast provider.
@@ -39,9 +39,10 @@ Port `5702` is used by default to avoid potential conflicts with other Hazelcast
 
 #### Kubernetes — Client Mode with Hazelcast Sidecar
 
-In Kubernetes HA/HS deployments the recommended setup runs a Hazelcast container as a
-sidecar in each Jenkins pod. The plugin connects to it as a lightweight client, reusing
-the cross-pod cluster the sidecar maintains.
+The plugin can connect to Hazelcast cluster as a lightweight client. For example, if we are running 
+K8s environment with the Jenkins instance inside a pod, we can have a side-container with Hazelcast
+to set up the Hazelcast cluster. In this kind of cases, we would the a configuration setup similar
+to the following one:
 
 Add the following JVM arguments to the Jenkins instance:
 
