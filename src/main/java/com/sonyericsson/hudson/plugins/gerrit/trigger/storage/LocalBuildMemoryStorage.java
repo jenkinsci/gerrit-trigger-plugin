@@ -121,6 +121,17 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
         entry.setBuildCompleted(true);
     }
 
+    @Override
+    public synchronized void setCancelling(@NonNull GerritTriggeredEvent event, @NonNull Job project) {
+        MemoryImprint pb = getMemoryImprint(event);
+        if (pb != null) {
+            Entry entry = pb.getEntry(project);
+            if (entry != null) {
+                entry.setCancelling(true);
+            }
+        }
+    }
+
     /**
      * Gets or creates a MemoryImprint for the given event.
      *
@@ -317,5 +328,14 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
     public synchronized Map<GerritTriggeredEvent, MemoryImprint> getAllEvents() {
         // Return a copy to avoid concurrent modification issues
         return new TreeMap<>(memory);
+    }
+
+    @Override
+    public boolean eventsMatch(@NonNull GerritTriggeredEvent event1, @NonNull GerritTriggeredEvent event2) {
+        // Use logical equality so that deserialized event instances (e.g. GerritCause.tEvent
+        // loaded from disk) are correctly matched against in-memory events.
+        // Most trigger events extend ChangeBasedEvent, whose equals() compares eventType,
+        // change, and patchSet fields — all stable across serialization boundaries.
+        return event1.equals(event2);
     }
 }

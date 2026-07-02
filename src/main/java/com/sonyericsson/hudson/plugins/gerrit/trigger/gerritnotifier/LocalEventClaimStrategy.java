@@ -25,39 +25,45 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResults;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Local (non-cluster) implementation of notification claiming.
- * Always executes the notification action since there's no need for coordination in standalone mode.
+ * Local (standalone) implementation of EventClaimStrategy.
+ * Always succeeds since there is no coordination needed in single-instance mode.
+ * Executes the claimed action immediately.
  *
- * <p>This is the default/fallback implementation used when cluster mode is not enabled.
- * In standalone Jenkins deployments, there's only one instance, so it always has the
- * right to send notifications.</p>
+ * <p>This is the fallback implementation used when no higher-priority coordination
+ * mode (like Hazelcast) is available. In standalone Jenkins deployments, there's
+ * only one instance, so it always processes all events without coordination.</p>
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
+ * @see EventClaimStrategy
  */
-public class LocalNotificationClaimStrategy extends NotificationClaimStrategy {
+public class LocalEventClaimStrategy extends EventClaimStrategy {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalNotificationClaimStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalEventClaimStrategy.class);
 
+    /**
+     * Claims the event and executes the action immediately.
+     * Always succeeds in local mode since there's no contention.
+     *
+     * @param event the Gerrit event to claim
+     * @param claimed action to execute (always runs in local mode)
+     * @return ClaimResult indicating success or error
+     */
     @Override
     @NonNull
-    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
-                                  @NonNull String notificationType,
-                                  String jobIdentifier,
-                                  @NonNull Runnable claimed) {
-        // In local mode, always allow notification - no coordination needed
-        // jobIdentifier is ignored since there's only one instance
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
+        // Local mode: always claim and execute immediately
         try {
             claimed.run();
             return ClaimResults.success();
         } catch (Exception e) {
-            logger.error("Error executing notification action", e);
+            logger.error("Error processing event in local mode", e);
             return ClaimResults.failed(e);
         }
     }

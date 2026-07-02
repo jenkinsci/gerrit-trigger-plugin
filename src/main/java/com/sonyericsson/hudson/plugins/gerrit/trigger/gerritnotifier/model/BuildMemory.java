@@ -369,6 +369,16 @@ public class BuildMemory {
                 ChangeBasedEvent runningChangeBasedEvent = (ChangeBasedEvent)runningEvent;
                 logger.debug("Checking running event: {}", runningChangeBasedEvent);
 
+                // Never cancel an event against itself (self-cancellation).
+                // This can happen when isAbortNewPatchsets=true and the same event is
+                // processed by multiple jobs — the second job finds the first job's entry
+                // in memory and considers the event "outdated" against itself, poisoning
+                // the isCancelling flag before the build is even scheduled.
+                if (storage.eventsMatch(newEvent, runningChangeBasedEvent)) {
+                    logger.debug("Skipping self-cancellation: running event matches new event");
+                    continue;
+                }
+
                 if (shouldIgnoreEvent(newEvent, policy, runningChangeBasedEvent, trigger)) {
                     logger.debug("Ignoring event based on policy");
                     continue;
@@ -403,19 +413,8 @@ public class BuildMemory {
                     // in future cancellation checks (prevents state accumulation issues).
                     // The actual "cancelled" flag will be set later by GerritQueueListener when Jenkins confirms.
                     //
-                    // IMPORTANT: We need to get the imprint from storage again to modify the real one,
-                    // not the copy from getAllEvents()
-                    MemoryImprint storageImprint = storage.getMemoryImprint(runningEvent);
-                    if (storageImprint != null) {
-                        for (Entry imprintEntry : storageImprint.getEntries()) {
-                            if (imprintEntry.isProject(jobName)
-                                    && !imprintEntry.isBuildCompleted()
-                                    && !imprintEntry.isCancelling()
-                                    && !imprintEntry.isCancelled()) {
-                                imprintEntry.setCancelling(true);
-                            }
-                        }
-                    }
+                    // Use storage.setCancelling() to persist the flag atomically
+                    storage.setCancelling(runningEvent, job);
                 }
             }
 
@@ -466,7 +465,9 @@ public class BuildMemory {
         if (!abortBecauseOfTopic) {
 
             Change change = runningChangeBasedEvent.getChange();
-            if (!change.equals(event.getChange())) {
+            Change newChange = event.getChange();
+            boolean changesEqual = change != null && change.equals(newChange);
+            if (!changesEqual) {
                 return true;
             }
 
@@ -553,6 +554,11 @@ public class BuildMemory {
                     e.interrupt(Result.ABORTED, cause);
                 }
             }
+
+            // Notify other replicas to abort matching builds on their local executors.
+            // In standalone mode this is a no-op; in distributed mode the storage
+            // puts a cause-typed entry into the abort inbox IMap.
+            storage.requestCrossReplicaAbort(event, job, cause);
         } catch (Exception e) {
             logger.error("Error canceling job", e);
         }
@@ -561,16 +567,25 @@ public class BuildMemory {
     /**
      * Checks if any of the given causes references the given event.
      * Ported from RunningJobs.checkCausedByGerrit().
+     * <p>
+     * <strong>Important:</strong> Event comparison is delegated to the storage implementation
+     * via {@link BuildMemoryStorage#eventsMatch(GerritTriggeredEvent, GerritTriggeredEvent)}.
+     * This respects the abstraction boundary:
+     * <ul>
+     *   <li><strong>Local mode:</strong> Uses identity comparison (==)</li>
+     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
+     *       since events may be deserialized</li>
+     * </ul>
      *
-     * @param event the event to check for (checks for identity, not equality)
+     * @param event the event to check for
      * @param causes the list of causes
-     * @return true if the list contains a GerritCause with this event
+     * @return true if the list contains a GerritCause with an equivalent event
      */
     private boolean checkCausedByGerrit(GerritTriggeredEvent event, Collection<Cause> causes) {
         for (Cause c : causes) {
             if (c instanceof GerritCause) {
                 GerritCause gc = (GerritCause)c;
-                if (gc.getEvent() == event) {
+                if (storage.eventsMatch(event, gc.getEvent())) {
                     return true;
                 }
             }

@@ -2,6 +2,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spec;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
@@ -126,6 +127,7 @@ public class VoteSameTopicTest {
     public void tearDown() throws Exception {
         server.stopServer(sshd);
         sshd = null;
+        HazelcastTestHelper.clearAllMaps();
     }
 
     /**

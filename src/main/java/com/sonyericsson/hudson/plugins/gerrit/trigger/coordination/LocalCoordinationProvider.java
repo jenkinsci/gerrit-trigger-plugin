@@ -23,10 +23,14 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalEventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalNotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalQueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
 import hudson.Extension;
 
@@ -45,11 +49,10 @@ import hudson.Extension;
  *
  * @see LocalBuildMemoryStorage
  * @see LocalNotificationClaimStrategy
+ * @see LocalEventClaimStrategy
  * @see CoordinationModeFactory
  */
-// CHECKSTYLE:OFF MagicNumber - Ordinal must be literal in annotation, -1000 ensures fallback priority
 @Extension(ordinal = LocalCoordinationProvider.FALLBACK_PRIORITY)
-// CHECKSTYLE:ON MagicNumber
 public class LocalCoordinationProvider extends CoordinationModeProvider {
 
     /**
@@ -99,5 +102,47 @@ public class LocalCoordinationProvider extends CoordinationModeProvider {
     @Override
     public NotificationClaimStrategy createClaimStrategy() {
         return new LocalNotificationClaimStrategy();
+    }
+
+    /**
+     * Creates a new local event claim strategy instance.
+     * Always succeeds and executes the action immediately - no coordination needed in standalone mode.
+     *
+     * @return a new LocalEventClaimStrategy
+     */
+    @Override
+    public EventClaimStrategy createEventClaimStrategy() {
+        return new LocalEventClaimStrategy();
+    }
+
+    /**
+     * Creates a new local queue cancellation strategy instance.
+     * Always returns false - no distributed load balancer present in standalone mode.
+     *
+     * @return a new LocalQueueCancellationStrategy
+     */
+    @Override
+    public QueueCancellationStrategy createQueueCancellationStrategy() {
+        return new LocalQueueCancellationStrategy();
+    }
+
+    /**
+     * Initializes local coordination mode.
+     * <p>
+     * Local mode requires no initialization - no external resources to set up.
+     */
+    @Override
+    public void initialize() {
+        // Local mode needs no initialization
+    }
+
+    /**
+     * Shuts down local coordination mode.
+     * <p>
+     * Local mode requires no shutdown - no external resources to release.
+     */
+    @Override
+    public void shutdown() {
+        // Local mode needs no shutdown
     }
 }

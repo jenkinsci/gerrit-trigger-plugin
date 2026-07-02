@@ -28,42 +28,105 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Abstract base class for notification claiming strategies in different deployment modes.
- * Subclasses handle the coordination of which Jenkins instance should send
- * notifications to Gerrit in HA/HS deployments.
+ * Prevents duplicate notification sending when multiple Jenkins instances need to send
+ * feedback to Gerrit in distributed scenarios.
  *
- * <p>This abstract class enables switching between local (standalone) and cluster modes:</p>
+ * <p>This abstract class enables switching between local (standalone) and coordination modes:</p>
  * <ul>
  *   <li><b>Local mode:</b> Always claims notification rights - no coordination needed</li>
- *   <li><b>Cluster mode:</b> Uses distributed coordination (e.g., Hazelcast) to ensure
- *       only one replica sends feedback to Gerrit per event</li>
+ *   <li><b>Hazelcast mode:</b> Uses distributed coordination to ensure only one replica sends feedback</li>
+ *   <li><b>Future modes:</b> Redis, JDBC, etc.</li>
  * </ul>
  *
- * <p>Implementations are discovered via the Extension Points pattern using
- * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.</p>
- * <p>
- * <strong>Design Note:</strong> This is an abstract class (not an interface) to allow
- * adding concrete helper methods in the future without breaking existing implementations.
- * This follows Jenkins plugin development best practices.
+ * <h2>Fluent API Pattern:</h2>
+ * <p>Uses fluent API pattern similar to Jenkins Queue and ACL for automatic resource management:</p>
+ * <pre>
+ * claimStrategy.withClaim(event, "build-completed", () -&gt; {
+ *     sendNotificationToGerrit(event, buildResult);
+ * })
+ * .notClaimed(() -&gt; {
+ *     logger.debug("Another replica sent notification, skipping");
+ * })
+ * .onError((ex) -&gt; {
+ *     logger.error("Failed to send notification", ex);
+ * });
+ * </pre>
  *
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
+ * <p>Implementations are discovered via the Extension Points pattern using
+ * {@link CoordinationModeProvider}.</p>
+ *
+ * @see CoordinationModeProvider
  */
 public abstract class NotificationClaimStrategy {
 
     /**
-     * Attempts to claim the right to send notification for an event.
-     * In local mode, always returns true. In cluster mode, uses distributed
-     * coordination to ensure only one replica sends the notification.
+     * Attempts to claim the right to send notification and execute the given action if successful.
+     * Automatically handles claim lifecycle (acquire + release).
      *
-     * @param event the Gerrit event
-     * @return true if this instance should send the notification, false otherwise
+     * <p>The claim is automatically released after the action executes (success or failure),
+     * so implementations do not need manual cleanup code.</p>
+     *
+     * <p><b>Notification Claim Scoping:</b></p>
+     * <ul>
+     *   <li><b>Per-job claims</b> (jobIdentifier != null): Each job sends its own notification
+     *       (e.g., build-started notifications where each job notifies independently)</li>
+     *   <li><b>Per-event claims</b> (jobIdentifier == null): One notification per event
+     *       (e.g., build-completed where feedback is aggregated across all builds)</li>
+     * </ul>
+     *
+     * <p><b>Usage Example:</b></p>
+     * <pre>
+     * // Per-job claim (build-started)
+     * claimStrategy.withClaim(event, "build-started", jobName, () -&gt; {
+     *     sendBuildStartedNotification(event, build);
+     * });
+     *
+     * // Per-event claim (build-completed)
+     * claimStrategy.withClaim(event, "build-completed", null, () -&gt; {
+     *     sendAggregatedBuildCompletedNotification(event, allBuilds);
+     * });
+     * </pre>
+     *
+     * @param event the Gerrit event to claim notification rights for
+     * @param notificationType the type of notification (e.g., "build-started", "build-completed")
+     * @param jobIdentifier optional job identifier for per-job claims, null for per-event claims
+     * @param claimed action to execute if claim succeeds (runs with claim held, auto-released)
+     * @return ClaimResult for chaining notClaimed/onError handlers
+     * @see ClaimResults for shared result implementations
      */
-    public abstract boolean tryClaimNotificationRight(@NonNull GerritTriggeredEvent event);
+    @NonNull
+    public abstract ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
+                                          @NonNull String notificationType,
+                                          String jobIdentifier,
+                                          @NonNull Runnable claimed);
 
     /**
-     * Releases the notification claim for an event.
-     * Called after notification is sent or on error to clean up resources.
+     * Convenience method without job identifier - creates per-event claim.
      *
-     * @param event the Gerrit event
+     * @param event the Gerrit event to claim notification rights for
+     * @param notificationType the type of notification (e.g., "build-started", "build-completed")
+     * @param claimed action to execute if claim succeeds
+     * @return ClaimResult for chaining notClaimed/onError handlers
      */
-    public abstract void releaseNotificationRight(@NonNull GerritTriggeredEvent event);
+    @NonNull
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event,
+                                  @NonNull String notificationType,
+                                  @NonNull Runnable claimed) {
+        return withClaim(event, notificationType, null, claimed);
+    }
+
+    /**
+     * Legacy convenience method that uses a default notification type.
+     *
+     * <p><b>Deprecated:</b> Use {@link #withClaim(GerritTriggeredEvent, String, String, Runnable)} instead
+     * to properly differentiate between notification types and scopes.</p>
+     *
+     * @param event the Gerrit event to claim notification rights for
+     * @param claimed action to execute if claim succeeds
+     * @return ClaimResult for chaining notClaimed/onError handlers
+     */
+    @NonNull
+    public ClaimResult withClaim(@NonNull GerritTriggeredEvent event, @NonNull Runnable claimed) {
+        return withClaim(event, "default", null, claimed);
+    }
 }

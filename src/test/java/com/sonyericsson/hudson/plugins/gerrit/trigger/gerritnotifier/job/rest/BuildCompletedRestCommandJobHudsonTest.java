@@ -27,6 +27,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastInstanceProvider;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastManager;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -77,6 +79,13 @@ public class BuildCompletedRestCommandJobHudsonTest {
     @Before
     public void unlockInstance() throws Exception {
         Setup.unLock(j);
+        // Clear Hazelcast notification flags between test methods to prevent claim key collision.
+        // Test events use a fixed eventCreatedOn timestamp, producing identical claim keys across tests.
+        if (HazelcastManager.isInitialized()) {
+            HazelcastInstanceProvider.getInstance()
+                    .getMap("gerrit-trigger-notification-flags")
+                    .clear();
+        }
     }
 
     /**
@@ -193,8 +202,12 @@ public class BuildCompletedRestCommandJobHudsonTest {
          * @throws IOException if so.
          */
         public void doDynamic(StaplerRequest2 request, StaplerResponse2 response) throws IOException {
-            lastPath = request.getRestOfPath();
-            lastContent = IOUtils.toString(request.getReader());
+            String path = request.getRestOfPath();
+            // Only track review calls, not plugin-availability checks that may race with the assertion
+            if (!path.startsWith("/plugins/")) {
+                lastPath = path;
+                lastContent = IOUtils.toString(request.getReader());
+            }
 
             response.setContentType("application/json");
             PrintWriter writer = response.getWriter();

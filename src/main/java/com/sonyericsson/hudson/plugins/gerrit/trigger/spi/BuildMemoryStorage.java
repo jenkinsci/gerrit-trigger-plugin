@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.Build
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Job;
 import hudson.model.Run;
+import jenkins.model.CauseOfInterruption;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -47,10 +48,6 @@ import java.util.Map;
  * <p>
  * Implementations are discovered via Jenkins Extension Points pattern using
  * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider}.
- * <p>
- * <strong>Design Note:</strong> This is an abstract class (not an interface) to allow
- * adding concrete helper methods in the future without breaking existing implementations.
- * This follows Jenkins plugin development best practices.
  *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory
@@ -123,6 +120,23 @@ public abstract class BuildMemoryStorage {
      * @param project the project that was cancelled
      */
     public abstract void cancelled(@NonNull GerritTriggeredEvent event, @NonNull Job project);
+
+    /**
+     * Marks a build as "cancelling" (cancellation intent) for an event.
+     * <p>
+     * This is called when the cancellation policy decides a build should be cancelled,
+     * but before Jenkins actually processes the cancellation. The "cancelling" flag
+     * prevents the same build from being considered for cancellation again in future
+     * policy checks (avoids state accumulation).
+     * <p>
+     * The actual "cancelled" flag is set later by {@link #cancelled} when Jenkins
+     * confirms the build/queue item was actually cancelled.
+     *
+     * @param event the event
+     * @param project the project being marked for cancellation
+     * @see #cancelled(GerritTriggeredEvent, Job)
+     */
+    public abstract void setCancelling(@NonNull GerritTriggeredEvent event, @NonNull Job project);
 
     /**
      * Removes the memory for an event.
@@ -269,4 +283,59 @@ public abstract class BuildMemoryStorage {
      */
     @NonNull
     public abstract Map<GerritTriggeredEvent, MemoryImprint> getAllEvents();
+
+    /**
+     * Requests cross-replica abort for builds tracked for this event and project.
+     * <p>
+     * In distributed deployments, this notifies other replicas to abort any
+     * matching builds running on their local executors. The cause of interruption
+     * is forwarded so the aborted build is annotated with the correct reason
+     * (e.g. {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption}
+     * vs {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption}).
+     * <p>
+     * This method is called from
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory#cancelOutdatedEvents}
+     * after {@link #setCancelling} has already marked the entry, so the cause is known at this point.
+     * <p>
+     * The default implementation is a no-op — standalone Jenkins has no other replicas to notify.
+     *
+     * @param event   the event whose builds should be aborted on remote replicas
+     * @param project the project being cancelled
+     * @param cause   the cause of interruption
+     */
+    public void requestCrossReplicaAbort(@NonNull GerritTriggeredEvent event, @NonNull Job project,
+                                         @NonNull CauseOfInterruption cause) {
+        // Default no-op: standalone mode has no other replicas to notify
+    }
+
+    /**
+     * Checks if two events are logically equivalent for cancellation purposes.
+     * <p>
+     * This method allows each storage implementation to define its own event equality
+     * semantics. Both modes use logical comparison, but differ in their approach:
+     * <ul>
+     *   <li><strong>Local mode:</strong> Delegates to {@code ChangeBasedEvent.equals()},
+     *       which compares {@code eventType}, {@code change}, and {@code patchSet} fields.
+     *       This deliberately ignores timestamp so that deserialized event instances
+     *       (e.g. {@code GerritCause.tEvent} loaded from disk) correctly match against
+     *       in-memory events representing the same logical change.</li>
+     *   <li><strong>Distributed mode:</strong> Uses {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.EventIdentifier#generateEventId},
+     *       which produces a deterministic string key including the server-side timestamp.
+     *       The timestamp is needed because the IMap key must uniquely identify each
+     *       event reception across replicas; without it, two different events on the
+     *       same patchset could collide.</li>
+     * </ul>
+     * <p>
+     * <strong>Design rationale:</strong> Event equality semantics belong in the storage
+     * layer, not in business logic
+     * ({@link com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory}).
+     * This respects the abstraction boundary and allows future coordination modes to
+     * define their own comparison strategy without modifying BuildMemory.
+     *
+     * @param event1 the first event
+     * @param event2 the second event
+     * @return true if the events are logically equivalent according to this storage
+     */
+    public abstract boolean eventsMatch(@NonNull GerritTriggeredEvent event1,
+                                        @NonNull GerritTriggeredEvent event2);
 }

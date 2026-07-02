@@ -63,9 +63,34 @@ import hudson.ExtensionPoint;
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
+ * @see EventClaimStrategy
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
  */
 public abstract class CoordinationModeProvider implements ExtensionPoint {
+
+    /**
+     * System property to specify coordination mode.
+     */
+    private static final String COORDINATION_MODE_PROPERTY = "gerrit.trigger.coordination.mode";
+
+    /**
+     * Gets the configured coordination mode.
+     * <p>
+     * <strong>Helper method for providers:</strong> Centralizes the logic for determining
+     * which coordination mode is configured. This allows future evolution from system
+     * properties to UI configuration without changing provider implementations.
+     * <p>
+     * <strong>Today:</strong> Reads from system property
+     * {@code gerrit.trigger.coordination.mode} (default: "local")
+     * <p>
+     * <strong>Future:</strong> Can check UI configuration when providers add config pages
+     * (e.g., Redis/JDBC providers with connection settings in Jenkins UI)
+     *
+     * @return the configured mode name (e.g., "local", "hazelcast", "redis", "jdbc")
+     */
+    public static String getConfiguredMode() {
+        return System.getProperty(COORDINATION_MODE_PROPERTY, "local");
+    }
 
     /**
      * Checks if this mode provider can create implementations in the current environment.
@@ -118,4 +143,86 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * @return a new NotificationClaimStrategy instance (non-null)
      */
     public abstract NotificationClaimStrategy createClaimStrategy();
+
+    /**
+     * Creates a new EventClaimStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
+     * instances receive the same Gerrit event in distributed scenarios. In local mode, this
+     * is a NO-OP (always claims). In distributed mode (e.g., Hazelcast), this uses
+     * distributed coordination to ensure only one instance processes each event.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new EventClaimStrategy instance (non-null)
+     */
+    public abstract EventClaimStrategy createEventClaimStrategy();
+
+    /**
+     * Creates a new QueueCancellationStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The QueueCancellationStrategy determines whether a cancelled Jenkins queue item
+     * should be ignored because it was moved by the distributed load balancer rather than being
+     * cancelled by a user or a new patchset event. In local mode, this is a NO-OP (always
+     * returns false). In distributed mode (e.g., Hazelcast), this inspects the item for
+     * load-balancer markers.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new QueueCancellationStrategy instance (non-null)
+     */
+    public abstract QueueCancellationStrategy createQueueCancellationStrategy();
+
+    /**
+     * Initializes this coordination mode provider.
+     *
+     * <p>Called during plugin startup (PluginImpl.start()) to initialize any resources
+     * needed by this provider. For example:</p>
+     * <ul>
+     *   <li>Local mode: no-op (no initialization needed)</li>
+     *   <li>Hazelcast mode: initializes Hazelcast instance and cluster membership</li>
+     *   <li>Redis mode: establishes connection pool</li>
+     *   <li>JDBC mode: initializes database connection</li>
+     * </ul>
+     *
+     * <p><b>IMPORTANT:</b> This method is called BEFORE the provider is selected by
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory}.
+     * The provider must be fully initialized when {@link #isAvailable()} is called during
+     * provider discovery.</p>
+     *
+     * <p><b>Error Handling:</b> If initialization fails, implementations should throw an
+     * exception. The plugin will log the error and continue, allowing {@link #isAvailable()}
+     * to return false so a fallback provider can be selected.</p>
+     *
+     * @throws Exception if initialization fails
+     */
+    public abstract void initialize() throws Exception;
+
+    /**
+     * Shuts down this coordination mode provider.
+     *
+     * <p>Called during plugin shutdown (PluginImpl.stop()) to release any resources
+     * held by this provider. For example:</p>
+     * <ul>
+     *   <li>Local mode: no-op (no resources to release)</li>
+     *   <li>Hazelcast mode: shuts down Hazelcast instance gracefully</li>
+     *   <li>Redis mode: closes connection pool</li>
+     *   <li>JDBC mode: closes database connections</li>
+     * </ul>
+     *
+     * <p><b>Error Handling:</b> Implementations should handle errors gracefully and
+     * not throw exceptions, as this is called during shutdown and exceptions cannot
+     * be meaningfully handled.</p>
+     */
+    public abstract void shutdown();
 }
