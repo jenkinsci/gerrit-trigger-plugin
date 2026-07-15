@@ -504,6 +504,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 newEntry.setProjectFullName(projectFullName);
                 newEntry.setBuildId(buildId);
                 newEntry.setStartedTimestamp(startedTimestamp);
+                data.setEventJson(serializeEvent(event));
                 data.addEntry(newEntry);
             }
             map.put(key, data);
@@ -586,6 +587,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 newEntry.setBuildId(buildId);
                 newEntry.setCompletedTimestamp(completedTimestamp);
                 newEntry.setBuildCompleted(true);
+                data.setEventJson(serializeEvent(event));
                 data.addEntry(newEntry);
             }
             map.put(key, data);
@@ -691,15 +693,18 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 for (EntryData entryData : data.getEntries()) {
                     if (projectFullName.equals(entryData.getProjectFullName())) {
                         found = true;
-                        // Mark as cancelled unconditionally. Load-balanced cancellations
-                        // (QueueLoadBalancer moving items between replicas) are already
-                        // filtered out upstream by GerritQueueListener.isLoadBalancedCancellation()
-                        // before cancelled() is ever called.
-                        entryData.setCancelled(true);
-                        entryData.setCancelling(false);
-                        entryData.setCompletedTimestamp(cancelledTimestamp);
-                        entryData.setBuildCompleted(true);
-                        modified = true;
+                        if (entryData.isCancelling()) {
+                            entryData.setCancelled(true);
+                            entryData.setCancelling(false);
+                            entryData.setCompletedTimestamp(cancelledTimestamp);
+                            entryData.setBuildCompleted(true);
+                            modified = true;
+                        } else {
+                            logger.debug("Skipping cancelled() for project={} event={}: "
+                                    + "isCancelling=false, buildId={}. Not explicitly marked for cancellation "
+                                    + "(likely external cancellation e.g. QueueLoadBalancer); not marking as completed.",
+                                    projectFullName, key, entryData.getBuildId());
+                        }
                         break;
                     }
                 }
