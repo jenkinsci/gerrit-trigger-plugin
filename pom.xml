@@ -394,9 +394,11 @@
             - HazelcastBuildMemoryStorage works correctly
             - Event and notification claiming strategies work
 
-            Note: Tests may fail during Hazelcast initialization if network configuration
-            is not available (e.g., no Kubernetes or TCP members configured). This is expected
-            behavior - the plugin will fall back to local mode and log warnings.
+            An embedded Hazelcast server is automatically started before any tests run by
+            HazelcastServerTestListener (discovered via
+            META-INF/services/org.junit.platform.launcher.TestExecutionListener). This provides
+            the localhost:5702 endpoint that the plugin client connects to, with no external
+            Kubernetes or TCP infrastructure required.
         -->
         <profile>
             <id>test-hazelcast</id>
@@ -410,16 +412,7 @@
                             <systemPropertyVariables>
                                 <!-- Enable Hazelcast coordination mode for tests -->
                                 <gerrit.trigger.coordination.mode>hazelcast</gerrit.trigger.coordination.mode>
-                                <!-- Use multicast for test Hazelcast cluster (simpler than Kubernetes/TCP) -->
-                                <gerrit.trigger.coordination.hazelcast.discovery.mode>multicast</gerrit.trigger.coordination.hazelcast.discovery.mode>
                             </systemPropertyVariables>
-                            <properties>
-                                <property>
-                                    <!-- Global test listener that initializes Hazelcast before any tests run -->
-                                    <name>listener</name>
-                                    <value>com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestListener</value>
-                                </property>
-                            </properties>
                         </configuration>
                     </plugin>
                 </plugins>
