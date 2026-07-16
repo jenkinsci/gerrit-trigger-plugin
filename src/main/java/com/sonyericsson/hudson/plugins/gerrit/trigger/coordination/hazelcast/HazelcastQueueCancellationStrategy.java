@@ -30,11 +30,6 @@ import hudson.model.Queue.LeftItem;
 /**
  * Hazelcast (distributed) implementation of QueueCancellationStrategy.
  *
- * <p>Protection against external queue cancellations (e.g. CloudBees QueueLoadBalancer
- * moving items between replicas) is handled by the {@code isCancelling()} guard in
- * {@link HazelcastBuildMemoryStorage#cancelled} — only entries explicitly flagged by
- * {@code cancelOutdatedEvents()} are marked as completed.</p>
- *
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastCoordinationProvider
  * @see QueueCancellationStrategy
  */
@@ -43,19 +38,15 @@ public class HazelcastQueueCancellationStrategy extends QueueCancellationStrateg
     /**
      * Returns false unconditionally.
      *
-     * <p>CloudBees {@code CancelQueueItem} calls {@code Queue.cancel(item)} with no markers
+     * <p>Potential {@code CancelQueueItem} calls {@code Queue.cancel(item)} with no markers
      * attached to the resulting {@code LeftItem}:</p>
      * <ul>
-     *   <li>{@code QueueLoadBalancerAction} is attached to the NEW item on the target replica
+     *   <li>{@code QueueLoadBalancerAction} is attached to the NEW item on the target instance
      *       (inside {@code QueueRequest} executed remotely), never to the item being cancelled.</li>
      *   <li>{@code LoadBalancedCauseOfBlockage} is a {@code BlockedItem.causeOfBlockage} that
      *       Jenkins does not copy into {@code LeftItem} — {@code LeftItem.getCauseOfBlockage()}
      *       returns null for load-balanced cancellations.</li>
      * </ul>
-     *
-     * <p>Confirmed via bytecode analysis of {@code cloudbees-replication.jar} v2656.
-     * The real protection is the {@code isCancelling()} guard in
-     * {@link HazelcastBuildMemoryStorage#cancelled}.</p>
      *
      * @param item the queue item that left the queue as cancelled
      * @return always false

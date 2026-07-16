@@ -51,6 +51,7 @@ public class EntryData {
     private boolean buildCompleted;
     private boolean cancelling;
     private boolean cancelled;
+    private boolean queueLeft;
     private String customUrl;
     private String unsuccessfulMessage;
     private long triggeredTimestamp;
@@ -173,6 +174,34 @@ public class EntryData {
      */
     public void setCancelled(boolean cancelled) {
         this.cancelled = cancelled;
+    }
+
+    /**
+     * Checks if the queue item left the queue without a prior Gerrit-triggered cancellation intent.
+     * <p>
+     * This flag covers two cases that look identical at {@code QueueListener.onLeft} time:
+     * <ul>
+     *   <li>CloudBees load-balanced move — item moved to another replica; the build will appear
+     *       again on that replica via {@code onStarted}.</li>
+     *   <li>Direct {@code Queue.doCancelItem} call without a preceding {@code setCancelling} —
+     *       item truly removed but without going through the normal Gerrit cancellation path.</li>
+     * </ul>
+     * Unlike {@link #isCancelled()}, this flag does NOT set {@link #isBuildCompleted()}, so the
+     * IMap entry is preserved for cross-replica PS2-aborts-PS1 scenarios.
+     *
+     * @return true if the queue item left without a prior cancelling intent
+     */
+    public boolean isQueueLeft() {
+        return queueLeft;
+    }
+
+    /**
+     * Sets the queueLeft flag.
+     *
+     * @param queueLeft true if the queue item left without a prior cancelling intent
+     */
+    public void setQueueLeft(boolean queueLeft) {
+        this.queueLeft = queueLeft;
     }
 
     /**

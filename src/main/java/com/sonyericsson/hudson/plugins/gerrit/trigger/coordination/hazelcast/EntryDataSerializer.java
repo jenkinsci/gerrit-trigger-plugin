@@ -52,6 +52,7 @@ public class EntryDataSerializer implements CompactSerializer<EntryData> {
         entry.setBuildCompleted(reader.readBoolean("buildCompleted"));
         entry.setCancelling(reader.readBoolean("cancelling"));
         entry.setCancelled(reader.readBoolean("cancelled"));
+        entry.setQueueLeft(reader.readBoolean("queueLeft"));
         entry.setCustomUrl(reader.readString("customUrl"));
         entry.setUnsuccessfulMessage(reader.readString("unsuccessfulMessage"));
         entry.setTriggeredTimestamp(reader.readInt64("triggeredTimestamp"));
@@ -67,6 +68,7 @@ public class EntryDataSerializer implements CompactSerializer<EntryData> {
         writer.writeBoolean("buildCompleted", entry.isBuildCompleted());
         writer.writeBoolean("cancelling", entry.isCancelling());
         writer.writeBoolean("cancelled", entry.isCancelled());
+        writer.writeBoolean("queueLeft", entry.isQueueLeft());
         writer.writeString("customUrl", entry.getCustomUrl());
         writer.writeString("unsuccessfulMessage", entry.getUnsuccessfulMessage());
         writer.writeInt64("triggeredTimestamp", entry.getTriggeredTimestamp());

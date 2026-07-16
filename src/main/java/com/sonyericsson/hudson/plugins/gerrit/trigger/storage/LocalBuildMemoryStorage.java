@@ -116,6 +116,9 @@ public class LocalBuildMemoryStorage extends BuildMemoryStorage {
         MemoryImprint pb = getOrCreateMemoryImprint(event);
         pb.set(project);
         Entry entry = pb.getEntry(project);
+        // In local (single-replica) mode there are no load-balanced queue moves, so any
+        // cancelled() call is a genuine cancellation. Always mark buildCompleted=true so that
+        // isAllBuildsCompleted() can fire Gerrit feedback when the remaining jobs finish.
         entry.setCancelled(true);
         entry.setCancelling(false);
         entry.setBuildCompleted(true);
