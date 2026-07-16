@@ -181,9 +181,9 @@ public class EntryData {
      * <p>
      * This flag covers two cases that look identical at {@code QueueListener.onLeft} time:
      * <ul>
-     *   <li>CloudBees load-balanced move — item moved to another replica; the build will appear
-     *       again on that replica via {@code onStarted}.</li>
-     *   <li>Direct {@code Queue.doCancelItem} call without a preceding {@code setCancelling} —
+     *   <li>Potential load-balanced move — item moved to another instance; the build will appear
+     *       again on that instance via {@code onStarted}.</li>
+     *   <li>Direct queue item cancellation without a preceding {@code setCancelling} —
      *       item truly removed but without going through the normal Gerrit cancellation path.</li>
      * </ul>
      * Unlike {@link #isCancelled()}, this flag does NOT set {@link #isBuildCompleted()}, so the

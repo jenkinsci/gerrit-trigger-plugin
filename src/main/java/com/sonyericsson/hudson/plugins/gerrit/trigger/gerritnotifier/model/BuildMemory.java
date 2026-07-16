@@ -1421,13 +1421,13 @@ public class BuildMemory {
              * <p>
              * This flag covers two cases that are indistinguishable at {@code QueueListener.onLeft} time:
              * <ul>
-             *   <li>CloudBees load-balanced move — the item was moved to another replica;
-             *       the build will reappear via {@code onStarted} on that replica.</li>
+             *   <li>Potential load-balanced move — the item was moved to another instance;
+             *       the build will reappear via {@code onStarted} on that instance.</li>
              *   <li>Direct {@code Queue.doCancelItem} without a preceding {@code setCancelling} —
              *       truly removed but not through the normal Gerrit cancellation path.</li>
              * </ul>
              * Unlike {@link #isCancelled()}, setting this flag does NOT also set
-             * {@link #setBuildCompleted(boolean)}, preserving the IMap entry for cross-replica
+             * {@link #setBuildCompleted(boolean)}, preserving the IMap entry for cross-instance
              * new-patchset abort scenarios (HZ-004).
              *
              * @return true if the queue item left without a prior cancelling intent

@@ -148,7 +148,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * When {@code started()} detects that an entry is already marked {@code isCancelling=true}
      * (race condition: build started after the abort decision was made), the abort inbox entry
      * is written after this delay so the CPS engine has had time to attach a
-     * {@link org.jenkinsci.plugins.workflow.flow.FlowExecution} before the interrupt arrives.
+     * FlowExecution before the interrupt arrives.
      */
     private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
 
@@ -705,13 +705,13 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                                 entryData.setBuildCompleted(true);
                             } else if (entryData.getBuildId() == null) {
                                 // No prior cancellation intent AND build has not started anywhere.
-                                // This is a CloudBees load-balanced queue move (build will restart
-                                // on another replica) or a direct Queue.doCancelItem before start.
+                                // This is a potential load-balanced queue move (build will restart
+                                // on another instance) or a direct Queue.doCancelItem before start.
                                 // Mark queueLeft=true but do NOT set buildCompleted=true so the
-                                // IMap entry is preserved for cross-replica PS2-aborts-PS1 scenarios.
+                                // IMap entry is preserved for cross-instance PS2-aborts-PS1 scenarios.
                                 // NOTE: if buildId IS already set, started() already ran on another
-                                // replica — leave the entry completely untouched so it stays visible
-                                // to cancelOutdatedBuilds on that replica.
+                                // instance — leave the entry completely untouched so it stays visible
+                                // to cancelOutdatedBuilds on that instance.
                                 entryData.setQueueLeft(true);
                             } else {
                                 logger.debug("cancelled() called after started() for project={} event={}: "
