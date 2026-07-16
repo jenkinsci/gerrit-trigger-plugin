@@ -63,6 +63,11 @@ public class HazelcastTestListener extends RunListener {
             logger.info("=== Hazelcast Test Suite Initialization ===");
             logger.info("Coordination mode property: {}", mode);
 
+            // Ensure the embedded server is running before the client tries to connect.
+            // HazelcastServerTestListener (JUnit Platform SPI) starts it for JUnit 5 tests,
+            // but this guard covers any JUnit 4 fork where the platform listener did not fire.
+            EmbeddedHazelcastTestServer.start();
+
             if (!HazelcastManager.isInitialized()) {
                 try {
                     logger.info("Initializing Hazelcast for test suite...");
