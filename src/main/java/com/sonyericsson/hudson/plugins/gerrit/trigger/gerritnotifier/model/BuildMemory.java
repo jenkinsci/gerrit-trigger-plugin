@@ -490,7 +490,15 @@ public class BuildMemory {
                     && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                     < Integer.parseInt(event.getPatchSet().getNumber());
 
-            boolean shouldCancelPatchsetNumber = policy.isAbortNewPatchsets() || isOldPatch;
+            // When both events carry patchset numbers, the numeric comparison is authoritative:
+            // only cancel the running build if it is actually the older patchset. Falling back to
+            // policy.isAbortNewPatchsets() alone assumes "a new event just arrived" implies "it's
+            // the newest patchset" - true for single-JVM sequential event processing, but false in
+            // distributed/Hazelcast deployments where cross-replica event delivery can reorder
+            // patchset events, otherwise causing the newest patchset's build to be wrongly cancelled
+            // by an older, late-arriving one. Without patchset numbers (e.g. topic-changed events),
+            // fall back to the policy flag as before.
+            boolean shouldCancelPatchsetNumber = hasPatchNumbers ? isOldPatch : policy.isAbortNewPatchsets();
 
             boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
                     && (event instanceof ChangeAbandoned);
