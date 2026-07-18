@@ -198,6 +198,7 @@ class MemoryImprintTest {
         data.setBuildCompleted(true);
         data.setCancelling(true);
         data.setCancelled(true);
+        data.setQueueLeft(true);
         data.setCustomUrl("http://example.test/custom");
         data.setUnsuccessfulMessage("nope");
         data.setTriggeredTimestamp(TRIGGERED_TS);
@@ -211,6 +212,7 @@ class MemoryImprintTest {
         assertTrue(roundTripped.isBuildCompleted());
         assertTrue(roundTripped.isCancelling());
         assertTrue(roundTripped.isCancelled());
+        assertTrue(roundTripped.isQueueLeft());
         assertEquals("http://example.test/custom", roundTripped.getCustomUrl());
         assertEquals("nope", roundTripped.getUnsuccessfulMessage());
         assertEquals(TRIGGERED_TS, roundTripped.getTriggeredTimestamp());
