@@ -354,6 +354,12 @@ public class BuildMemory {
         List<ChangeBasedEvent> outdatedEvents = new ArrayList<>();
         CauseOfInterruption cause = new NewPatchSetInterruption();
 
+        // True if newEvent is itself already outdated relative to some already-registered
+        // event that's a strictly newer patchset of the same change and still has an active
+        // build for this job. Set inside the loop below - see its own comment at the
+        // shouldIgnoreEvent call for why this direction needs a separate check.
+        boolean newEventIsOutdated = false;
+
         synchronized (storage) {
             Map<GerritTriggeredEvent, MemoryImprint> allEvents = storage.getAllEvents();
             logger.info("BuildMemory has {} events in memory", allEvents.size());
@@ -381,6 +387,20 @@ public class BuildMemory {
                 }
 
                 if (shouldIgnoreEvent(newEvent, policy, runningChangeBasedEvent, trigger)) {
+                    // shouldIgnoreEvent can return true because runningChangeBasedEvent is
+                    // actually the newer patchset (see its own isOldPatch check) - i.e.
+                    // newEvent itself is the outdated one, not the other way around. This
+                    // loop only ever asks "should I cancel the OTHER, already-registered
+                    // event?" - it never asks the reverse. Left unguarded, a late-arriving
+                    // older patchset's own build runs to completion fully unsuppressed
+                    // whenever cross-replica event delivery reorders patchset arrival
+                    // (confirmed to happen on mc3 - see the HZ-104 cross-node cancellation
+                    // race writeup). Detect that case here so newEvent gets cancelled too,
+                    // via the same isCancelling + deferred-abort machinery already used for
+                    // the normal direction.
+                    if (isNewEventOutdatedByRunningEvent(newEvent, runningChangeBasedEvent, jobName, entry.getValue())) {
+                        newEventIsOutdated = true;
+                    }
                     logger.debug("Ignoring event based on policy");
                     continue;
                 }
@@ -432,6 +452,19 @@ public class BuildMemory {
                     // Add event so it can be found and cancelled by future events
                     // This is critical for silent mode where onTriggered() isn't called
                     triggered(newEvent, job);
+
+                    // newEvent turned out to be outdated relative to an already-active newer
+                    // patchset for this exact job (see the loop above) - cancel it too, now
+                    // that it's registered, via the same post-loop cancelMatchingJobs path
+                    // used for the normal direction, so started()'s existing deferred-abort
+                    // compensator can still catch it if its own build has already started or
+                    // starts shortly on some replica.
+                    if (newEventIsOutdated) {
+                        logger.info("New event {} is itself outdated relative to an already-active "
+                                + "newer patchset for job {} - cancelling it too", newEvent, jobName);
+                        storage.setCancelling(newEvent, job);
+                        outdatedEvents.add(newEvent);
+                    }
                 }
             }
         }
@@ -504,6 +537,72 @@ public class BuildMemory {
                     && (event instanceof ChangeAbandoned);
 
             if (!shouldCancelPatchsetNumber && !isAbortAbandonedPatchset) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True if {@code runningEvent} is a strictly newer patchset of the same change as
+     * {@code newEvent} and still has an active (non-completed, non-cancelling, non-cancelled,
+     * non-queueLeft) build entry for {@code jobName} - i.e. {@code newEvent} itself is the
+     * outdated one here, not {@code runningEvent}.
+     * <p>
+     * This is the mirror image of the {@code isOldPatch} check in {@link #shouldIgnoreEvent}.
+     * That check only ever decides whether {@code runningEvent} should be cancelled by
+     * {@code newEvent} - it correctly refuses to do so when {@code runningEvent} is actually
+     * newer, but nothing then cancels {@code newEvent} itself in that case. Cross-replica event
+     * delivery can deliver a newer patchset's event to some replica before an older one reaches
+     * any replica at all (confirmed on {@code mc3} - see the HZ-104 cross-node cancellation race
+     * writeup), which is exactly when this matters: without this check, the late-arriving,
+     * actually-outdated {@code newEvent} would never recognize itself as such and would run to
+     * completion alongside the newer patchset that's already building.
+     * <p>
+     * Independently re-checks the same-change condition ({@link #shouldIgnoreEvent} can return
+     * {@code true} for several unrelated reasons - topic mismatch, different change, manual
+     * patchset policy - so its return value alone doesn't confirm this is a patchset-order
+     * situation on the same change).
+     *
+     * @param newEvent the event that just arrived
+     * @param runningEvent an already-registered event to compare against
+     * @param jobName the job to check for an active build
+     * @param imprint runningEvent's current memory imprint
+     * @return true if newEvent should be treated as already outdated relative to runningEvent
+     */
+    private boolean isNewEventOutdatedByRunningEvent(
+            ChangeBasedEvent newEvent, ChangeBasedEvent runningEvent, String jobName, MemoryImprint imprint) {
+
+        Change change = runningEvent.getChange();
+        Change newChange = newEvent.getChange();
+        if (change == null || !change.equals(newChange)) {
+            return false;
+        }
+
+        if (newEvent.getPatchSet() == null || runningEvent.getPatchSet() == null
+                || newEvent.getPatchSet().getNumber() == null || runningEvent.getPatchSet().getNumber() == null) {
+            return false;
+        }
+
+        int newEventNum;
+        int runningEventNum;
+        try {
+            newEventNum = Integer.parseInt(newEvent.getPatchSet().getNumber());
+            runningEventNum = Integer.parseInt(runningEvent.getPatchSet().getNumber());
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
+        if (runningEventNum <= newEventNum) {
+            return false;
+        }
+
+        for (Entry imprintEntry : imprint.getEntries()) {
+            if (imprintEntry.isProject(jobName)
+                    && !imprintEntry.isBuildCompleted()
+                    && !imprintEntry.isCancelling()
+                    && !imprintEntry.isCancelled()
+                    && !imprintEntry.isQueueLeft()) {
                 return true;
             }
         }

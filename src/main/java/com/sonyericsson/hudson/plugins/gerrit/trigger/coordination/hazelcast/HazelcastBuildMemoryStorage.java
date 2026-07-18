@@ -30,11 +30,13 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.diagnostics.BuildMemoryReport;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildMemory.MemoryImprint;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.BuildsStartedStats;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.EntryData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.model.MemoryImprintData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.AbandonedPatchsetInterruption;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -43,6 +45,7 @@ import hudson.model.Executor;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import jenkins.model.CauseOfInterruption;
 import hudson.security.ACLContext;
@@ -151,6 +154,24 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
      * FlowExecution before the interrupt arrives.
      */
     private static final long DEFERRED_ABORT_DELAY_SECONDS = 3L;
+
+    /**
+     * Grace period in seconds before treating an ambiguous queue-item cancellation as final.
+     * <p>
+     * {@link HazelcastQueueCancellationStrategy#isLoadBalancedCancellation} cannot reliably tell
+     * a genuine Gerrit-triggered cancellation apart from a benign cross-replica queue-item
+     * relocation - Jenkins preserves no marker on {@code LeftItem} either way (see that method's
+     * own doc comment). Rather than finalize immediately whenever {@code isCancelling} happens to
+     * already be set, {@link #cancelled} waits this long for a possible {@link #started} call to
+     * arrive from whichever replica the item actually landed on before concluding the build was
+     * genuinely, permanently cancelled.
+     * <p>
+     * This narrows the race rather than closing it: observed real-world delay between a
+     * cancellation decision and the relocated build's own started() call has been as long as ~6s
+     * in production logs, so this is set comfortably above that - but a sufficiently slow
+     * relocation can still, in principle, outlast this window.
+     */
+    private static final long CANCEL_FINALIZE_GRACE_SECONDS = 10L;
 
     /**
      * Poll interval in milliseconds used by {@link #handleAbortRequest} while waiting for a
@@ -678,12 +699,14 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        long cancelledTimestamp = System.currentTimeMillis();
         if (!tryLockWithTimeout(map, key)) {
             logger.error("Could not acquire distributed lock for key {} within {}s - skipping cancelled()",
                     key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
             return;
         }
+        // Set when this queue exit is ambiguous (isCancelling was already true) and needs a
+        // deferred re-check after the lock is released - see CANCEL_FINALIZE_GRACE_SECONDS.
+        boolean scheduleFinalizeCheck = false;
         try {
             MemoryImprintData data = map.get(key);
             if (data == null) {
@@ -697,12 +720,19 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                         found = true;
                         if (!entryData.isBuildCompleted()) {
                             if (entryData.isCancelling()) {
-                                // Gerrit-triggered cancellation: the intent was set via setCancelling()
-                                // first (e.g. by cancelOutdatedBuilds). This is a real, deliberate cancel.
-                                entryData.setCancelled(true);
-                                entryData.setCancelling(false);
-                                entryData.setCompletedTimestamp(cancelledTimestamp);
-                                entryData.setBuildCompleted(true);
+                                // Ambiguous: the intent was set via setCancelling() first (e.g. by
+                                // cancelOutdatedBuilds), but this queue exit itself could equally be
+                                // a genuine Gerrit-triggered cancellation OR a benign cross-replica
+                                // queue-item relocation - isLoadBalancedCancellation() can't tell
+                                // them apart (see its own doc comment; Jenkins preserves no marker
+                                // on LeftItem either way). Don't finalize yet: mark queueLeft (not
+                                // completed) and leave isCancelling=true so started()'s own
+                                // deferred-abort compensator still fires correctly if this really is
+                                // a relocation and the build reports in from wherever it landed.
+                                // scheduleDeferredCancelFinalize (below, after the lock is released)
+                                // decides the real outcome after a grace period.
+                                entryData.setQueueLeft(true);
+                                scheduleFinalizeCheck = true;
                             } else if (entryData.getBuildId() == null) {
                                 // No prior cancellation intent AND build has not started anywhere.
                                 // This is a potential load-balanced queue move (build will restart
@@ -742,6 +772,92 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         } finally {
             map.unlock(key);
         }
+
+        if (scheduleFinalizeCheck) {
+            scheduleDeferredCancelFinalize(event, project, key, projectFullName);
+        }
+    }
+
+    /**
+     * Re-checks a provisionally-cancelled entry after {@link #CANCEL_FINALIZE_GRACE_SECONDS} and
+     * finalizes it as a genuine cancellation only if no {@link #started} call arrived for it in
+     * the meantime.
+     * <p>
+     * Exists because {@link HazelcastQueueCancellationStrategy#isLoadBalancedCancellation} cannot
+     * distinguish a genuine Gerrit-triggered cancellation from a benign cross-replica queue-item
+     * relocation - without this grace period, a relocated-but-still-alive build was getting marked
+     * completed/forgotten (triggering premature Gerrit "No Builds Executed" feedback) before it
+     * had a chance to call {@code started()} on whichever replica it landed on, silently skipping
+     * the deferred cross-replica abort this class already schedules for the reverse race (see
+     * {@link #started}).
+     * <p>
+     * Deliberately narrows the race rather than closing it - see {@link #CANCEL_FINALIZE_GRACE_SECONDS}.
+     *
+     * @param event the event whose entry may need finalizing
+     * @param project the project/job the entry is for
+     * @param key the distributed map key for event
+     * @param projectFullName project's full name
+     */
+    private void scheduleDeferredCancelFinalize(
+            @NonNull GerritTriggeredEvent event, @NonNull Job project, String key, String projectFullName) {
+        IMap<String, MemoryImprintData> map = getDistributedMemory();
+        if (map == null) {
+            return;
+        }
+        Timer.get().schedule(() -> {
+            if (!tryLockWithTimeout(map, key)) {
+                logger.error("Could not acquire distributed lock for key {} within {}s - skipping "
+                        + "deferred cancel-finalize check", key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
+                return;
+            }
+            boolean finalized = false;
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null || data.getEntries() == null) {
+                    return;
+                }
+                for (EntryData entryData : data.getEntries()) {
+                    if (projectFullName.equals(entryData.getProjectFullName())) {
+                        if (entryData.isCancelling() && !entryData.isBuildCompleted()
+                                && entryData.getBuildId() == null) {
+                            logger.info("Finalizing deferred cancellation for project={} event={}: "
+                                    + "no started() call arrived within {}s grace period - genuine cancel.",
+                                    projectFullName, key, CANCEL_FINALIZE_GRACE_SECONDS);
+                            entryData.setCancelled(true);
+                            entryData.setCancelling(false);
+                            entryData.setCompletedTimestamp(System.currentTimeMillis());
+                            entryData.setBuildCompleted(true);
+                            map.put(key, data);
+                            finalized = true;
+                        } else {
+                            logger.debug("Deferred cancel-finalize check for project={} event={}: "
+                                    + "buildId={} isCancelling={} isBuildCompleted={} - a build "
+                                    + "reported in elsewhere or already completed; treating as a "
+                                    + "relocation, not a genuine cancellation.",
+                                    projectFullName, key, entryData.getBuildId(), entryData.isCancelling(),
+                                    entryData.isBuildCompleted());
+                        }
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Failed deferred cancel-finalize check: project={}, event={}", projectFullName, key, e);
+                return;
+            } finally {
+                map.unlock(key);
+            }
+            if (finalized) {
+                // The original GerritQueueListener#onLeft call that led here checked
+                // isAllBuildsCompleted() synchronously, before this deferred finalize ran, so it
+                // saw "not yet complete" and skipped the Gerrit-feedback/forget step. Re-invoke it
+                // now that the entry is actually finalized, exactly as it would have run
+                // synchronously had this been unambiguous from the start.
+                ToGerritRunListener runListener = ToGerritRunListener.getInstance();
+                if (runListener != null) {
+                    runListener.allBuildsCompleted(event, new GerritCause(event, false), TaskListener.NULL);
+                }
+            }
+        }, CANCEL_FINALIZE_GRACE_SECONDS, TimeUnit.SECONDS);
     }
 
     @Override
