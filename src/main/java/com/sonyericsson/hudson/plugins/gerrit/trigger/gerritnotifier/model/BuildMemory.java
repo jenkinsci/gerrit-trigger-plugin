@@ -413,11 +413,17 @@ public class BuildMemory {
                     logger.debug("Checking entry: project={}, completed={}, cancelling={}, cancelled={}",
                             imprintEntry.getProject(), imprintEntry.isBuildCompleted(),
                             imprintEntry.isCancelling(), imprintEntry.isCancelled());
+                    // Deliberately does NOT check !imprintEntry.isQueueLeft(): queueLeft means
+                    // "left the queue for an ambiguous reason (possibly a load-balanced
+                    // relocation to another mc3 replica), not yet confirmed as a genuine
+                    // cancel" - it is not itself proof the entry is done. Excluding it here
+                    // let relocated-but-not-yet-restarted entries dodge cancellation entirely
+                    // whenever a newer patchset arrived during the relocation window (the
+                    // HZ-006/HZ-104 mc3 race).
                     if (imprintEntry.isProject(jobName)
                             && !imprintEntry.isBuildCompleted()
                             && !imprintEntry.isCancelling()
-                            && !imprintEntry.isCancelled()
-                            && !imprintEntry.isQueueLeft()) {
+                            && !imprintEntry.isCancelled()) {
                         hasActiveBuildsForJob = true;
                         logger.debug("Found active build for job {}", jobName);
                         break;
@@ -598,11 +604,12 @@ public class BuildMemory {
         }
 
         for (Entry imprintEntry : imprint.getEntries()) {
+            // See the identical comment in cancelOutdatedEvents() above: queueLeft is not
+            // proof this entry is done, so it must not exclude it from being "active".
             if (imprintEntry.isProject(jobName)
                     && !imprintEntry.isBuildCompleted()
                     && !imprintEntry.isCancelling()
-                    && !imprintEntry.isCancelled()
-                    && !imprintEntry.isQueueLeft()) {
+                    && !imprintEntry.isCancelled()) {
                 return true;
             }
         }

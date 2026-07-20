@@ -883,8 +883,13 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                 boolean updated = false;
                 for (EntryData entryData : data.getEntries()) {
                     if (projectFullName.equals(entryData.getProjectFullName())) {
+                        // Not gated on !isQueueLeft(): an ambiguous queue exit (possible
+                        // load-balanced relocation) is not proof this entry is done, and must
+                        // remain eligible to be marked cancelling so a relocated-then-started
+                        // build still gets cross-replica-aborted (see BuildMemory's identical
+                        // reasoning in cancelOutdatedEvents()).
                         if (!entryData.isBuildCompleted() && !entryData.isCancelling()
-                                && !entryData.isCancelled() && !entryData.isQueueLeft()) {
+                                && !entryData.isCancelled()) {
                             entryData.setCancelling(true);
                             updated = true;
                         }
