@@ -743,6 +743,9 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
                                 // instance — leave the entry completely untouched so it stays visible
                                 // to cancelOutdatedBuilds on that instance.
                                 entryData.setQueueLeft(true);
+                                logger.info("Marking queueLeft (pre-cancellation-intent queue exit, no "
+                                        + "buildId yet) for project={} event={} - possible load-balanced "
+                                        + "relocation with no started() call yet", projectFullName, key);
                             } else {
                                 logger.debug("cancelled() called after started() for project={} event={}: "
                                         + "build already running (buildId={}), ignoring late onLeft.",
