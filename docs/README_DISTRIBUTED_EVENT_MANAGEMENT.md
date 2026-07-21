@@ -1,12 +1,12 @@
 # Distributed Event Management support
 
-The plugin supports Distributed Event Management support where two or more Jenkins instance
-run in parallel (sharing the gerrit memory of the plugin). When enabled, a Hazelcast
+The plugin supports Distributed Event Management support where two or more replicas of a Jenkins(*) instance
+run in parallel (sharing the Gerrit memory of the plugin). When enabled, a Hazelcast
 cluster coordinates the instances so that:
 
 - Each Gerrit event is processed by **exactly one** instance (event claiming)
 - Build state is shared across instances (distributed build memory)
-- Gerrit feedback (votes and comments) is sent **exactly once** per build event
+- Gerrit feedback (votes and comments) are sent **exactly once** per build event
 
 By default, the plugin runs in **local mode** and requires no additional configuration.
 Local mode is fully backward-compatible with single-instance Jenkins deployments.
@@ -17,7 +17,7 @@ Alternative coordination backends can be implemented by extending
 notification-claiming strategies for a given coordination mode. A higher `@Extension`
 ordinal takes precedence over the built-in Hazelcast provider.
 
-## Hazlecast implementation
+## Hazelcast implementation
 
 Hazelcast mode is activated via a JVM system property. Jenkins connects as a lightweight
 client to a Hazelcast sidecar container, reusing the cross-pod cluster the sidecar
@@ -85,3 +85,21 @@ rules:
     resources: ["endpointslices"]
     verbs: ["get", "list"]
 ```
+
+#### Kubernetes — Client Mode with Separate Hazelcast Cluster
+
+For larger deployments or strict separation of concerns, you can decouple the coordination layer by running a standalone Hazelcast cluster. Jenkins still connects as a lightweight client, but routes traffic to the separate cluster via a Kubernetes service instead of a sidecar.
+
+Add the following JVM arguments to the Jenkins instance, updating the client address to point to your standalone Hazelcast Kubernetes service (replace hazelcast-service.default.svc.cluster.local with your actual service DNS and namespace):
+
+    -Dgerrit.trigger.coordination.mode=hazelcast
+    -Dgerrit.trigger.coordination.hazelcast.client.addresses=hazelcast-service.default.svc.cluster.local:5702
+    -Dgerrit.trigger.coordination.hazelcast.client.cluster.name=gerrit-trigger-cluster
+
+In this topology:
+- You do not need to add the sidecar container to the Jenkins pod spec.
+- The Jenkins service account does not need RBAC permissions for peer discovery, as cluster management is handled entirely by the standalone Hazelcast nodes.
+- You must deploy and manage the Hazelcast cluster independently (e.g., via the official Hazelcast Helm chart), ensuring you configure it to match your expected `HZ_CLUSTERNAME` and port (`5702`).
+
+(*) Jenkins does not support multiple replicas for a single logical instance, this feature is not tested with Jenkins. This feature is provided for CloudBees CI (Enterprise Jenkins).
+This feature is provided as a community effort and is not endorsed or officially supported by CloudBees.
