@@ -35,6 +35,8 @@ All distributed storage settings are controlled by JVM system properties passed 
 
 Port `5702` is used by default to avoid potential conflicts with other Hazelcast cluster, which could occupy port `5701`.
 
+Cluster name must be different for each logical instance. Multiple replicas of a single instance may connect to the same cluster name.
+
 ### Configuration Example
 
 #### Kubernetes — Client Mode with Hazelcast Sidecar
@@ -99,7 +101,7 @@ Add the following JVM arguments to the Jenkins instance, updating the client add
 In this topology:
 - You do not need to add the sidecar container to the Jenkins pod spec.
 - The Jenkins service account does not need RBAC permissions for peer discovery, as cluster management is handled entirely by the standalone Hazelcast nodes.
-- You must deploy and manage the Hazelcast cluster independently (e.g., via the official Hazelcast Helm chart), ensuring you configure it to match your expected `HZ_CLUSTERNAME` and port (`5702`).
+- You must deploy and manage the Hazelcast cluster independently (e.g. via the official Hazelcast Helm chart), ensuring you configure it to match your expected `HZ_CLUSTERNAME` and port (`5702`).
 
 (*) Jenkins does not support multiple replicas for a single logical instance, this feature is not tested with Jenkins. This feature is provided for CloudBees CI (Enterprise Jenkins).
 This feature is provided as a community effort and is not endorsed or officially supported by CloudBees.
