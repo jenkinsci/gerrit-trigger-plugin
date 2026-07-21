@@ -529,15 +529,18 @@ public class BuildMemory {
                     && Integer.parseInt(runningChangeBasedEvent.getPatchSet().getNumber())
                     < Integer.parseInt(event.getPatchSet().getNumber());
 
-            // When both events carry patchset numbers, the numeric comparison is authoritative:
-            // only cancel the running build if it is actually the older patchset. Falling back to
-            // policy.isAbortNewPatchsets() alone assumes "a new event just arrived" implies "it's
-            // the newest patchset" - true for single-JVM sequential event processing, but false in
-            // distributed/Hazelcast deployments where cross-replica event delivery can reorder
-            // patchset events, otherwise causing the newest patchset's build to be wrongly cancelled
-            // by an older, late-arriving one. Without patchset numbers (e.g. topic-changed events),
-            // fall back to the policy flag as before.
-            boolean shouldCancelPatchsetNumber = hasPatchNumbers ? isOldPatch : policy.isAbortNewPatchsets();
+            // storage.requiresPatchsetOrderVerification() is false for local mode (default):
+            // events are processed sequentially in a single JVM, so arrival order can be
+            // trusted, and abortNewPatchsets means what it says - cancel the running build on
+            // any subsequent patchset event, regardless of number. It's true only for storage
+            // modes where cross-replica event delivery can reorder patchset arrival (Hazelcast);
+            // there, once both events carry patchset numbers, the numeric comparison must be
+            // authoritative instead, or a late/reordered older-patchset event can wrongly cancel
+            // an already-running newer build (the HZ-104 mc3 race). See
+            // BuildMemoryStorage#requiresPatchsetOrderVerification for the full rationale.
+            boolean shouldCancelPatchsetNumber = (hasPatchNumbers && storage.requiresPatchsetOrderVerification())
+                    ? isOldPatch
+                    : policy.isAbortNewPatchsets() || isOldPatch;
 
             boolean isAbortAbandonedPatchset = policy.isAbortAbandonedPatchsets()
                     && (event instanceof ChangeAbandoned);

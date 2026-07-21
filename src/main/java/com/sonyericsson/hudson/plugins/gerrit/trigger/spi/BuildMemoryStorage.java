@@ -338,4 +338,27 @@ public abstract class BuildMemoryStorage {
      */
     public abstract boolean eventsMatch(@NonNull GerritTriggeredEvent event1,
                                         @NonNull GerritTriggeredEvent event2);
+
+    /**
+     * Whether this storage mode requires numeric patchset-order verification before trusting
+     * that a newly-arrived event is actually newer than an already-running one.
+     * <p>
+     * <strong>Local mode (default, returns {@code false}):</strong> events are processed
+     * sequentially in a single JVM, so arrival order can be trusted. The
+     * {@code abortNewPatchsets} policy means exactly what it says: cancel the running build on
+     * any subsequent patchset event for the same change, regardless of patchset number.
+     * <p>
+     * <strong>Distributed mode (e.g. Hazelcast, returns {@code true}):</strong> cross-replica
+     * event delivery can reorder patchset arrival, so a late-arriving event with a lower
+     * patchset number does not necessarily mean it's older news - it can simply mean it took a
+     * slower path to this replica. Once both events carry patchset numbers, the numeric
+     * comparison must be treated as authoritative instead of arrival order, or a late/reordered
+     * older-patchset event can wrongly cancel an already-running newer build.
+     *
+     * @return true if numeric patchset order should override {@code abortNewPatchsets} once both
+     *         events carry patchset numbers, false to trust arrival order as before
+     */
+    public boolean requiresPatchsetOrderVerification() {
+        return false;
+    }
 }
