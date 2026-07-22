@@ -57,7 +57,7 @@ public class PipelineAbortHelperTest {
     }
 
     /**
-     * A Pipeline build blocked inside a running step has getCurrentHeads() non-empty,
+     * A Pipeline build blocked inside a running step has its FlowExecution attached,
      * so isPipelineNotYetStarted() must return false (safe to interrupt).
      */
     @Test

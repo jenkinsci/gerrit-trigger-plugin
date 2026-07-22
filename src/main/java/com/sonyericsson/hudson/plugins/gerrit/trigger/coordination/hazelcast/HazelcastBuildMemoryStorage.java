@@ -292,9 +292,10 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             }
 
             // For Pipeline builds, wait until the CPS execution has started (i.e.
-            // FlowExecution.getCurrentHeads() is non-empty) before delivering the interrupt.
-            // Interrupting during CPS initialisation has no effect — the interrupt flag is
-            // set before any step is registered, so it is silently lost.
+            // FlowExecution is attached to its FlowExecutionOwner) before delivering the
+            // interrupt. Interrupting during CPS initialisation has no effect — the interrupt
+            // flag is set before FlowExecution exists, so it is silently lost. See
+            // PipelineAbortHelper for why waiting for FlowExecution alone is sufficient.
             // We poll every ABORT_RETRY_POLL_MS for up to ABORT_MAX_RETRIES attempts
             // (ABORT_RETRY_POLL_MS * ABORT_MAX_RETRIES = 3 s total maximum wait).
             boolean notYetStarted;

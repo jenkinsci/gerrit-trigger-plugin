@@ -34,12 +34,19 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
  * the workflow plugin is present. Callers must guard with a {@code try/catch} for
  * {@link NoClassDefFoundError} or check plugin availability before calling.
  * <p>
- * Interrupting a Pipeline build during CPS initialisation (before any step has started)
- * has no effect — the interrupt flag is silently lost. This helper detects whether the
- * CPS program has advanced past initialisation by checking
- * {@link FlowExecution#getCurrentHeads()}: an empty list means no {@link
- * org.jenkinsci.plugins.workflow.graph.FlowNode} has been created yet, i.e. the pipeline
- * has not started executing steps.
+ * Interrupting a Pipeline build during CPS initialisation (before {@link FlowExecution} is
+ * attached to its {@link FlowExecutionOwner}) has no effect — the interrupt flag is silently
+ * lost. This helper detects that window by checking whether {@link FlowExecutionOwner#getOrNull()}
+ * is still {@code null}.
+ * <p>
+ * <strong>Why not also wait for {@code FlowExecution.getCurrentHeads()} to be non-empty:</strong>
+ * an earlier version of this check additionally required at least one {@link
+ * org.jenkinsci.plugins.workflow.graph.FlowNode} to exist. Repeated local trials (interrupting
+ * a build at the earliest possible moment {@code getOrNull()} became non-null, i.e. strictly
+ * before any head existed) showed the interrupt was honored (build result {@code ABORTED}) in
+ * every case, with the heads-non-empty moment consistently arriving several milliseconds later.
+ * So once {@code FlowExecution} is attached, the interrupt is already deliverable - checking
+ * heads added no observed protection, only extra polling delay.
  */
 final class PipelineAbortHelper {
 
@@ -63,11 +70,7 @@ final class PipelineAbortHelper {
         if (owner == null) {
             return false;
         }
-        FlowExecution execution = owner.getOrNull();
-        if (execution == null) {
-            // Execution not yet attached — CPS is still initialising
-            return true;
-        }
-        return execution.getCurrentHeads().isEmpty();
+        // Execution not yet attached — CPS is still initialising
+        return owner.getOrNull() == null;
     }
 }
