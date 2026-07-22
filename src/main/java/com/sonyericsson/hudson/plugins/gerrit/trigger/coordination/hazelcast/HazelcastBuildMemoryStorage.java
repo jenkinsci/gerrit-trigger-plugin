@@ -1274,12 +1274,4 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String id2 = EventIdentifier.generateEventId(event2);
         return id1.equals(id2);
     }
-
-    @Override
-    public boolean requiresPatchsetOrderVerification() {
-        // Cross-replica event delivery can reorder patchset arrival (the HZ-104 mc3 race) -
-        // numeric patchset order must override abortNewPatchsets once both events carry
-        // patchset numbers, rather than trusting that "arrived later" means "is newer".
-        return true;
-    }
 }
