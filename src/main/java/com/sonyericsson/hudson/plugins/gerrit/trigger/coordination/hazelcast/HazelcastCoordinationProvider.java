@@ -31,6 +31,8 @@ import hudson.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Coordination provider for Hazelcast distributed mode.
  * <p>
@@ -75,6 +77,39 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      * The mode name that enables this provider.
      */
     private static final String HAZELCAST_MODE = "hazelcast";
+
+    /**
+     * System property: minimum number of Hazelcast cluster members expected before connecting to Gerrit.
+     * Default 1 disables the wait (single-instance or local mode).
+     * <p>
+     * <strong>Only relevant for an externally-managed Hazelcast cluster</strong> whose member
+     * discovery/formation is decoupled from this Jenkins replica's own startup - e.g. a shared
+     * cluster whose membership can still be changing (scaling, rebalancing, network delays)
+     * independently of when this replica boots. In that topology, formation time isn't bounded
+     * by anything Jenkins controls, so it can plausibly exceed Jenkins' own (slow) startup time.
+     * <p>
+     * Does <strong>not</strong> apply to a per-replica Hazelcast sidecar (one server co-located
+     * with each Jenkins pod, joining only its Jenkins-managed peers): there, sidecar formation
+     * and Jenkins startup share the same pod lifecycle, and in practice Jenkins' own boot time
+     * (JVM start, CasC, plugin/extension loading - tens of seconds) dwarfs sidecar discovery time
+     * (single-digit seconds even from a cold multi-pod restart), so the client always observes
+     * the fully-formed cluster on its first connection regardless of this setting.
+     */
+    public static final String HAZELCAST_EXPECTED_MEMBERS_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.expected.members";
+
+    /**
+     * System property: maximum seconds to wait for Hazelcast cluster formation.
+     * Default: 30 seconds.
+     */
+    public static final String HAZELCAST_CLUSTER_WAIT_TIMEOUT_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.cluster.wait.timeout.seconds";
+
+    private static final int DEFAULT_EXPECTED_CLUSTER_MEMBERS = 1;
+
+    private static final int DEFAULT_CLUSTER_WAIT_TIMEOUT_SECONDS = 30;
+
+    private static final long CLUSTER_WAIT_POLL_INTERVAL_MS = 500L;
 
     /**
      * The Hazelcast instance for this provider.
@@ -208,6 +243,11 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      * Only initializes if coordination mode is configured as 'hazelcast'.
      * This ensures Hazelcast is not started when using local mode.
      * <p>
+     * Also waits for the Hazelcast cluster to reach the expected member count (see
+     * {@link #HAZELCAST_EXPECTED_MEMBERS_PROPERTY}) before returning, so that
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl#start()} does not open
+     * Gerrit server connections until the distributed claim map is shared across replicas.
+     * <p>
      * If initialization fails, an exception is thrown and the provider will
      * not be available (isAvailable() will return false).
      *
@@ -225,6 +265,57 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
         logger.info("Initializing Hazelcast coordination mode...");
         this.hazelcastInstance = HazelcastManager.initialize();
         logger.info("Hazelcast initialized successfully");
+
+        waitForClusterFormation(this.hazelcastInstance);
+    }
+
+    /**
+     * Waits for the Hazelcast cluster to reach the expected number of members.
+     * <p>
+     * In distributed scenarios each replica has its own SSH connection to Gerrit and therefore
+     * receives every event independently. Without this guard, a replica that starts while
+     * the Hazelcast cluster is still forming will process events against its own single-member
+     * IMap, making the distributed claim invisible to other replicas and causing duplicate builds.
+     * See {@link #HAZELCAST_EXPECTED_MEMBERS_PROPERTY} for when this scenario actually applies -
+     * in short, an externally-managed cluster, not a per-replica sidecar.
+     * <p>
+     * The wait is skipped when {@link #HAZELCAST_EXPECTED_MEMBERS_PROPERTY} is 1 (the default).
+     *
+     * @param hz the Hazelcast instance whose cluster membership should be observed
+     */
+    private void waitForClusterFormation(HazelcastInstance hz) {
+        int expectedMembers = Integer.getInteger(HAZELCAST_EXPECTED_MEMBERS_PROPERTY,
+                DEFAULT_EXPECTED_CLUSTER_MEMBERS);
+        if (expectedMembers <= DEFAULT_EXPECTED_CLUSTER_MEMBERS) {
+            return;
+        }
+
+        int timeoutSeconds = Integer.getInteger(HAZELCAST_CLUSTER_WAIT_TIMEOUT_PROPERTY,
+                DEFAULT_CLUSTER_WAIT_TIMEOUT_SECONDS);
+        logger.info("Waiting for Hazelcast cluster to form ({} expected members, timeout: {}s)...",
+                expectedMembers, timeoutSeconds);
+
+        long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(timeoutSeconds);
+        int currentSize = hz.getCluster().getMembers().size();
+        while (currentSize < expectedMembers && System.currentTimeMillis() < deadline) {
+            logger.debug("Hazelcast cluster has {} of {} expected members, waiting...",
+                    currentSize, expectedMembers);
+            try {
+                Thread.sleep(CLUSTER_WAIT_POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Interrupted while waiting for Hazelcast cluster formation");
+                return;
+            }
+            currentSize = hz.getCluster().getMembers().size();
+        }
+
+        if (currentSize >= expectedMembers) {
+            logger.info("Hazelcast cluster ready: {} member(s)", currentSize);
+        } else {
+            logger.warn("Timed out waiting for Hazelcast cluster ({}/{} members). "
+                    + "Proceeding anyway - duplicate builds may occur.", currentSize, expectedMembers);
+        }
     }
 
     /**
