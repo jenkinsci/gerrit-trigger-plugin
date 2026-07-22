@@ -35,7 +35,7 @@ All distributed storage settings are controlled by JVM system properties passed 
 
 Port `5702` is used by default to avoid potential conflicts with other Hazelcast cluster, which could occupy port `5701`.
 
-Cluster name must be different for each logical instance. Multiple replicas of a single instance may connect to the same cluster name.
+Cluster name must be different for each logical instance. Multiple replicas or nodes of a logical instance may configure the same cluster name. Different logical instances require separate cluster names.
 
 ### Configuration Example
 
