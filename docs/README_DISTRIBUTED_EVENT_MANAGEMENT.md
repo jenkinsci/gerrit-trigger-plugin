@@ -1,6 +1,6 @@
 # Distributed Event Management support
 
-The plugin supports Distributed Event Management support where two or more replicas of a Jenkins(*) instance
+The plugin supports Distributed Event Management support where two or more replicas or nodes of a logical Jenkins(*) instance
 run in parallel (sharing the Gerrit memory of the plugin). When enabled, a Hazelcast
 cluster coordinates the instances so that:
 
