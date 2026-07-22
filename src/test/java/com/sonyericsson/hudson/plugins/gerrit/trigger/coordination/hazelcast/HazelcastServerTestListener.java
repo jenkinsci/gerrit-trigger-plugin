@@ -39,8 +39,13 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Starting the server here ensures that when Jenkins initialises and
  * {@code PluginImpl.gerritStart()} calls {@link HazelcastManager#initialize()} (which creates a
- * Hazelcast client connecting to {@code localhost:5702}), the server is already listening.
- * Without this, the client hangs for several minutes trying to reach a non-existent server.
+ * Hazelcast client), the server is already listening. Without this, the client hangs for
+ * several minutes trying to reach a non-existent server.
+ * <p>
+ * The server binds to a free port chosen per forked JVM (see {@link EmbeddedHazelcastTestServer}),
+ * so this listener also points the client at that port via
+ * {@link HazelcastConfig#CLIENT_ADDRESSES_PROPERTY}. Using a fixed, shared port here would let
+ * concurrent Surefire forks collide on the same address and corrupt each other's cluster state.
  *
  * @see EmbeddedHazelcastTestServer
  */
@@ -60,7 +65,9 @@ public class HazelcastServerTestListener implements TestExecutionListener {
         }
         logger.info("=== Starting embedded Hazelcast test server (coordination mode: {}) ===", mode);
         EmbeddedHazelcastTestServer.start();
-        logger.info("=== Embedded Hazelcast test server ready ===");
+        String address = "localhost:" + EmbeddedHazelcastTestServer.getPort();
+        System.setProperty(HazelcastConfig.CLIENT_ADDRESSES_PROPERTY, address);
+        logger.info("=== Embedded Hazelcast test server ready on {} ===", address);
     }
 
     @Override

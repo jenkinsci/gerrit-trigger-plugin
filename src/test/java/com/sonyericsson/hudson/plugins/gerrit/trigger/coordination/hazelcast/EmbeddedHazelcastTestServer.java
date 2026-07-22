@@ -31,12 +31,19 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 /**
  * Starts an embedded Hazelcast member (server) in the test JVM so that
  * {@link HazelcastManager#initialize()} (which creates a client) has a server to connect to.
  * <p>
- * The server binds to {@code localhost:5702} — the same address the client uses by default
- * ({@link HazelcastConfig#DEFAULT_CLIENT_ADDRESS}).
+ * The server binds to a free port on {@code localhost} chosen at {@link #start()} time, rather
+ * than a fixed port. Maven Surefire runs multiple forked JVMs concurrently ({@code forkCount}
+ * in the pom), and a fixed port would let two forks' embedded servers collide on the same
+ * address, corrupting each other's cluster state mid-test. Callers must read {@link #getPort()}
+ * after {@link #start()} and point the Hazelcast client at it (see
+ * {@link HazelcastServerTestListener}).
  * <p>
  * This is required because since member mode was removed the plugin only creates a
  * Hazelcast <em>client</em>, so tests must supply the server themselves.
@@ -45,9 +52,8 @@ public final class EmbeddedHazelcastTestServer {
 
     private static final Logger logger = LoggerFactory.getLogger(EmbeddedHazelcastTestServer.class);
 
-    private static final int TEST_PORT = 5702;
-
     private static volatile HazelcastInstance serverInstance = null;
+    private static volatile int port = -1;
     private static final Object LOCK = new Object();
 
     private EmbeddedHazelcastTestServer() {
@@ -55,25 +61,45 @@ public final class EmbeddedHazelcastTestServer {
     }
 
     /**
-     * Starts the embedded Hazelcast server if not already running.
+     * Starts the embedded Hazelcast server if not already running, binding it to a free
+     * port on localhost.
      * Idempotent — safe to call multiple times.
      */
     public static void start() {
         synchronized (LOCK) {
             if (serverInstance != null && serverInstance.getLifecycleService().isRunning()) {
-                logger.debug("Embedded Hazelcast test server already running");
+                logger.debug("Embedded Hazelcast test server already running on port {}", port);
                 return;
             }
 
-            logger.info("Starting embedded Hazelcast test server on localhost:{}", TEST_PORT);
+            int chosenPort = findFreePort();
+            logger.info("Starting embedded Hazelcast test server on localhost:{}", chosenPort);
             try {
-                Config config = buildServerConfig();
+                Config config = buildServerConfig(chosenPort);
                 serverInstance = Hazelcast.newHazelcastInstance(config);
+                port = chosenPort;
                 logger.info("Embedded Hazelcast test server started: {}", serverInstance.getName());
             } catch (Exception e) {
                 logger.error("Failed to start embedded Hazelcast test server", e);
                 throw new RuntimeException("Failed to start embedded Hazelcast test server", e);
             }
+        }
+    }
+
+    /**
+     * Returns the port the embedded server is bound to.
+     *
+     * @return the port, or -1 if the server has not been started yet
+     */
+    public static int getPort() {
+        return port;
+    }
+
+    private static int findFreePort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to find a free port for the embedded Hazelcast test server", e);
         }
     }
 
@@ -94,6 +120,7 @@ public final class EmbeddedHazelcastTestServer {
                 logger.warn("Error stopping embedded Hazelcast test server", e);
             } finally {
                 serverInstance = null;
+                port = -1;
             }
         }
     }
@@ -108,7 +135,7 @@ public final class EmbeddedHazelcastTestServer {
         return current != null && current.getLifecycleService().isRunning();
     }
 
-    private static Config buildServerConfig() {
+    private static Config buildServerConfig(int testPort) {
         Config config = new Config();
 
         config.setClusterName(HazelcastConfig.DEFAULT_CLUSTER_NAME);
@@ -118,14 +145,14 @@ public final class EmbeddedHazelcastTestServer {
         config.setProperty("hazelcast.shutdownhook.enabled", "false");
 
         NetworkConfig network = config.getNetworkConfig();
-        network.setPort(TEST_PORT);
+        network.setPort(testPort);
         network.setPortAutoIncrement(false);
         network.getInterfaces().setEnabled(true).addInterface("127.0.0.1");
 
         // TCP-IP with only localhost — no multicast, no Kubernetes discovery
         JoinConfig join = network.getJoin();
         join.getMulticastConfig().setEnabled(false);
-        join.getTcpIpConfig().setEnabled(true).addMember("127.0.0.1:" + TEST_PORT);
+        join.getTcpIpConfig().setEnabled(true).addMember("127.0.0.1:" + testPort);
 
         return config;
     }
