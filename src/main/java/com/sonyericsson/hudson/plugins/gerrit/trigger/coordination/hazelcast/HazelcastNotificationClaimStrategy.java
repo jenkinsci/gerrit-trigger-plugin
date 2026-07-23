@@ -118,7 +118,7 @@ public class HazelcastNotificationClaimStrategy extends NotificationClaimStrateg
 
         try {
             IMap<String, Boolean> notificationFlags = hazelcastInstance.getMap(NOTIFICATION_FLAGS_MAP);
-            String eventId = EventIdentifier.generateEventId(event);
+            String eventId = EventIdGenerator.generateEventId(event);
 
             // Build claim key:
             // - With job identifier: per-job claim (e.g., build-started notifications)

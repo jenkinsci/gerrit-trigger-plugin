@@ -681,7 +681,7 @@ public class BuildMemory {
      * This respects the abstraction boundary:
      * <ul>
      *   <li><strong>Local mode:</strong> Uses identity comparison (==)</li>
-     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdentifier
+     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdGenerator
      *       since events may be deserialized</li>
      * </ul>
      *

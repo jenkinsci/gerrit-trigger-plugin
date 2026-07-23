@@ -118,7 +118,7 @@ public class HazelcastEventClaimStrategy extends EventClaimStrategy {
         }
 
         // Generate event ID
-        String eventId = EventIdentifier.generateEventId(event);
+        String eventId = EventIdGenerator.generateEventId(event);
         String thisInstanceId = getInstanceId();
 
         try {

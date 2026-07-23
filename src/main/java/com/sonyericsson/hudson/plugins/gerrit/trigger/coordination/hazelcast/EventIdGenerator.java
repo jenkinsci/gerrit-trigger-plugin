@@ -48,7 +48,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
  * (replica timestamp) to ensure identical event IDs across all replicas receiving the same event.
  *
  */
-public final class EventIdentifier {
+public final class EventIdGenerator {
 
     /**
      * Length of short Git revision hash (first 8 characters).
@@ -58,7 +58,7 @@ public final class EventIdentifier {
     /**
      * Private constructor to prevent instantiation.
      */
-    private EventIdentifier() {
+    private EventIdGenerator() {
         // Utility class
     }
 
