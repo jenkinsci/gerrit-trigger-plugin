@@ -663,9 +663,8 @@ public class BuildMemory {
                 }
             }
 
-            // Notify other replicas to abort matching builds on their local executors.
-            // In standalone mode this is a no-op; in distributed mode the storage
-            // puts a cause-typed entry into the abort inbox IMap.
+            // Ask the storage implementation to notify other replicas, if any, to
+            // abort matching builds on their local executors.
             storage.requestCrossReplicaAbort(event, job, cause);
         } catch (Exception e) {
             logger.error("Error canceling job", e);
