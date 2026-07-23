@@ -21,7 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.model.Run;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
@@ -48,7 +48,7 @@ import org.jenkinsci.plugins.workflow.flow.FlowExecutionOwner;
  * So once {@code FlowExecution} is attached, the interrupt is already deliverable - checking
  * heads added no observed protection, only extra polling delay.
  */
-final class PipelineAbortHelper {
+public final class PipelineAbortHelper {
 
     private PipelineAbortHelper() { }
 
@@ -62,7 +62,7 @@ final class PipelineAbortHelper {
      * @param build the build to check
      * @return true if the build is a pipeline still initialising
      */
-    static boolean isPipelineNotYetStarted(Run<?, ?> build) {
+    public static boolean isPipelineNotYetStarted(Run<?, ?> build) {
         if (!(build instanceof FlowExecutionOwner.Executable)) {
             return false;
         }

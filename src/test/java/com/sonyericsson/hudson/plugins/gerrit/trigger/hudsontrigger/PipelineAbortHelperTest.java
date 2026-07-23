@@ -21,7 +21,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
