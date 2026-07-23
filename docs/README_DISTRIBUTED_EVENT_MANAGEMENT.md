@@ -92,11 +92,11 @@ rules:
 
 For larger deployments or strict separation of concerns, you can decouple the coordination layer by running a standalone Hazelcast cluster. Jenkins still connects as a lightweight client, but routes traffic to the separate cluster via a Kubernetes service instead of a sidecar.
 
-Add the following JVM arguments to the Jenkins instance, updating the client address to point to your standalone Hazelcast Kubernetes service (replace hazelcast-service.default.svc.cluster.local with your actual service DNS and namespace):
+Add the following JVM arguments to the Jenkins instance, updating the client address to point to your standalone Hazelcast Kubernetes service (replace hazelcast-service.default.svc.cluster.local with your actual service DNS and namespace, along with the cluster name for your logical instance):
 
     -Dgerrit.trigger.coordination.mode=hazelcast
     -Dgerrit.trigger.coordination.hazelcast.client.addresses=hazelcast-service.default.svc.cluster.local:5702
-    -Dgerrit.trigger.coordination.hazelcast.client.cluster.name=gerrit-trigger-cluster
+    -Dgerrit.trigger.coordination.hazelcast.client.cluster.name=gerrit-trigger-cluster-<LOGICAL_INSTANCE_NAME>
 
 In this topology:
 - You do not need to add the sidecar container to the Jenkins pod spec.
