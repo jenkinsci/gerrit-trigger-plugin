@@ -28,6 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.InstanceIdentity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.HttpUtils;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -49,7 +50,6 @@ import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -70,8 +70,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 
-import jenkins.model.Jenkins;
-
 
 /**
  * The GerritMissedEventsPlaybackManager is responsible for recording a last-alive timestamp
@@ -86,18 +84,32 @@ import jenkins.model.Jenkins;
  */
 public class GerritMissedEventsPlaybackManager implements ConnectionListener, NamedGerritEventListener {
 
-    private static final String GERRIT_SERVER_EVENT_DATA_FOLDER = "/gerrit-server-event-data/";
     private static final Logger logger = LoggerFactory.getLogger(GerritMissedEventsPlaybackManager.class);
     static final String EVENTS_LOG_PLUGIN_NAME = "events-log";
     private static final String EVENTS_LOG_PLUGIN_URL = "a/plugins/" + EVENTS_LOG_PLUGIN_NAME + "/events/";
-    private static final String GERRIT_TRIGGER_SERVER_TIMESTAMPS_XML = "gerrit-trigger-server-timestamps.xml";
 
     private String serverName;
     /**
      * Server Timestamp.
      */
     protected EventTimeSlice serverTimestamp = null;
-    private static long previousTimeSlice = 0;
+    /**
+     * Time slice last persisted by this instance. Deliberately per-instance (not static): each
+     * configured Gerrit server gets its own {@link GerritMissedEventsPlaybackManager}, and a
+     * shared static field here would let one server's persistence cycle suppress another's.
+     */
+    private volatile long lastPersistedTimeSlice = 0;
+    /**
+     * Identifier for this JVM process, used to namespace this instance's persisted timestamp
+     * file from those of other JVMs sharing the same {@code JENKINS_HOME}.
+     */
+    private final String instanceId = InstanceIdentity.get();
+    /**
+     * Scoped to this manager's own server (and JVM instance) at construction time - one manager
+     * already exists per configured Gerrit server, so the store never needs to be told which
+     * server it's persisting for on every call.
+     */
+    private final InstanceTimestampStore instanceTimestampStore;
     /**
      * List that contains received Gerrit Events.
      */
@@ -114,6 +126,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     public GerritMissedEventsPlaybackManager(String name) {
         this.serverName = name;
+        this.instanceTimestampStore = new InstanceTimestampStore(serverName);
         checkIfEventsLogPluginSupported();
         previousIsSupported = isSupported;
         persistenceCheck = new GerritMissedEventsPlaybackPersistRunnable();
@@ -123,7 +136,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Start the persistenceCheck thread.
      */
     private void startPersistenceCheck() {
-        previousTimeSlice = 0;
+        lastPersistedTimeSlice = 0;
         persistenceCheck.start();
     }
 
@@ -144,13 +157,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             if (previousIsSupported && !isSupported) {
                 logger.warn("Missed Events Playback used to be supported. now it is not!");
                 // we could be missing events here that we should be persisting...
-                // so let's remove the data file so we are ready if it comes back
+                // so let's remove this instance's own data file so we are ready if it comes back
                 try {
-                    XmlFile config = getConfigXml(serverName);
-                    if (config != null) {
-                        config.delete();
-                        logger.warn("Deleting " + config.getFile().getAbsolutePath());
-                    }
+                    instanceTimestampStore.deleteTimestamp();
                 } catch (IOException e) {
                     logger.error(e.getMessage(), e);
                 }
@@ -199,12 +208,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * @throws IOException is we cannot unmarshal.
      */
     protected void load() throws IOException {
-        XmlFile xml = getConfigXml(serverName);
-        if (xml != null && xml.exists()) {
-            serverTimestamp  = (EventTimeSlice)xml.unmarshal(serverTimestamp);
-        } else {
-            serverTimestamp = null;
-        }
+        serverTimestamp = instanceTimestampStore.readTimestamp();
     }
 
     /**
@@ -562,22 +566,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     /**
      * @param serverName The Name of the Gerrit Server to load config for.
-     * @return XmlFile corresponding to gerrit-trigger-server-timestamps.xml.
+     * @return XmlFile corresponding to the legacy shared gerrit-trigger-server-timestamps.xml.
      * @throws IOException if it occurs.
+     * @deprecated kept only as the upgrade-compatibility fallback read path used by {@link
+     *         InstanceTimestampStore#computeMaxTimestampAcrossInstances()}; new writes go
+     *         to a per-JVM-instance file instead. See {@link InstanceTimestampStore}.
      */
+    @Deprecated
     @CheckForNull
     public static XmlFile getConfigXml(String serverName) throws IOException {
-        Jenkins jenkins = Jenkins.getInstanceOrNull();
-        if (jenkins == null) {
-            return null;
-        }
-
-        File dataDir = new File(jenkins.getRootDir(), GERRIT_SERVER_EVENT_DATA_FOLDER);
-        File serverDataDir = new File(dataDir, serverName);
-        serverDataDir.mkdirs();
-        File xmlFile = new File(serverDataDir, GERRIT_TRIGGER_SERVER_TIMESTAMPS_XML);
-
-        return new XmlFile(Jenkins.XSTREAM, xmlFile);
+        return new InstanceTimestampStore(serverName).getLegacyConfigXml();
     }
 
     @Override
@@ -630,24 +628,19 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         @Override
         public void run() {
-            if (serverTimestamp != null && previousTimeSlice < serverTimestamp.getTimeSlice()) {
-                previousTimeSlice = serverTimestamp.getTimeSlice();
+            if (serverTimestamp != null && lastPersistedTimeSlice < serverTimestamp.getTimeSlice()) {
+                lastPersistedTimeSlice = serverTimestamp.getTimeSlice();
                 persistTimeStamp();
             }
         }
 
         /**
-         * Saves the current event timestamp to xml.
+         * Saves the current event timestamp to this instance's own xml file.
          */
         private void persistTimeStamp() {
             try {
-                XmlFile config = getConfigXml(serverName);
-                if (config == null) {
-                    logger.error("XML " + serverName + " is null, please check file permissions.");
-                } else {
-                    EventTimeSlice serverTimestampCopy = EventTimeSlice.shallowCopy(serverTimestamp);
-                    config.write(serverTimestampCopy);
-                }
+                EventTimeSlice serverTimestampCopy = EventTimeSlice.shallowCopy(serverTimestamp);
+                instanceTimestampStore.writeTimestamp(serverTimestampCopy);
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
             }

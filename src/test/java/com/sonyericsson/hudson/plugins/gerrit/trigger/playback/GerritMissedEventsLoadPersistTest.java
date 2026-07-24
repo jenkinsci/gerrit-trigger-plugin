@@ -51,14 +51,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -76,10 +81,12 @@ class GerritMissedEventsLoadPersistTest {
 
     private static final int MAXRANDOMNUMBER = 100;
     private static final int SLEEPTIME = 500;
+    private static final long FIXTURE_TIME_SLICE = 1430244884000L;
+    private static final long REGRESSION_EVENT_SECONDS_A = 2000000000L;
+    private static final long REGRESSION_EVENT_SECONDS_B = 1000000000L;
 
     private MockedStatic<Jenkins> jenkinsMockedStatic;
     private MockedStatic<PluginImpl> pluginMockedStatic;
-    private MockedStatic<GerritMissedEventsPlaybackManager> missedEventsPlaybackManagerMockedStatic;
     private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
@@ -90,8 +97,13 @@ class GerritMissedEventsLoadPersistTest {
         Jenkins jenkinsMock = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkinsMock);
         jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
         jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
+
+        File jenkinsRootDir = Files.createTempDirectory("jenkins-root").toFile();
+        jenkinsRootDir.deleteOnExit();
+        when(jenkinsMock.getRootDir()).thenReturn(jenkinsRootDir);
 
         PluginImpl plugin = mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -103,25 +115,6 @@ class GerritMissedEventsLoadPersistTest {
         when(server.getConfig()).thenReturn(config);
         pluginMockedStatic = mockStatic(PluginImpl.class);
         pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
-
-        missedEventsPlaybackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
-
-        File tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
-        tmpFile.deleteOnExit();
-        PrintWriter out = new PrintWriter(tmpFile);
-        String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
-                + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
-                + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
-                + "<timeSlice>1430244884000</timeSlice>"
-                + "<events>"
-                + "</events>"
-                + "</com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice>";
-        out.println(text);
-        out.close();
-        XmlFile xmlFile = new XmlFile(tmpFile);
-        missedEventsPlaybackManagerMockedStatic.when(
-                () -> GerritMissedEventsPlaybackManager.getConfigXml(anyString())
-        ).thenReturn(xmlFile);
 
         pluginCheckerMockedStatic = mockStatic(GerritPluginChecker.class);
         pluginCheckerMockedStatic.when(
@@ -137,8 +130,28 @@ class GerritMissedEventsLoadPersistTest {
     void tearDown() {
         jenkinsMockedStatic.close();
         pluginMockedStatic.close();
-        missedEventsPlaybackManagerMockedStatic.close();
         pluginCheckerMockedStatic.close();
+    }
+
+    /**
+     * Writes a fixture instance timestamp file for the given server, as if this JVM instance had
+     * previously persisted it, so that {@code load()} finds it.
+     * @param serverName the Gerrit server name.
+     * @param timeSliceMillis the timestamp to write.
+     * @throws IOException if it occurs.
+     */
+    private void writeInstanceTimestampFixture(String serverName, long timeSliceMillis) throws IOException {
+        XmlFile xml = new InstanceTimestampStore(serverName).getInstanceConfigXml();
+        String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
+                + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
+                + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
+                + "<timeSlice>" + timeSliceMillis + "</timeSlice>"
+                + "<events>"
+                + "</events>"
+                + "</com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice>";
+        try (PrintWriter out = new PrintWriter(xml.getFile())) {
+            out.println(text);
+        }
     }
 
     /**
@@ -170,8 +183,6 @@ class GerritMissedEventsLoadPersistTest {
     @Test
     void testLoadTimeStampFromNonExistentFile() throws IOException {
 
-        GerritMissedEventsPlaybackManager.getConfigXml("defaultServer").delete();
-
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
         assertDoesNotThrow(missingEventsPlaybackManager::load);
@@ -185,9 +196,11 @@ class GerritMissedEventsLoadPersistTest {
      * And it contains at least one entry with a valid timestamp
      * When we attempt to load it
      * Then we retrieve a non-null map.
+     * @throws IOException if it occurs.
      */
     @Test
-    void testLoadTimeStampFromFile() {
+    void testLoadTimeStampFromFile() throws IOException {
+        writeInstanceTimestampFixture("defaultServer", FIXTURE_TIME_SLICE);
 
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
@@ -207,11 +220,14 @@ class GerritMissedEventsLoadPersistTest {
 
         Random randomGenerator = new Random();
         int randomInt = randomGenerator.nextInt(MAXRANDOMNUMBER);
+        String serverName = Integer.valueOf(randomInt).toString() + "-server";
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
-                = new GerritMissedEventsPlaybackManager(Integer.valueOf(randomInt).toString() + "-server");
+                = new GerritMissedEventsPlaybackManager(serverName);
         assertDoesNotThrow(missingEventsPlaybackManager::load);
 
-        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated("someGerritServer", "someProject",
+        // Provider name must match serverName, or gerritEvent() filters the event out as
+        // belonging to a different server and never calls saveTimestamp().
+        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated(serverName, "someProject",
                 "refs/heads/master");
         patchsetCreated.setReceivedOn(System.currentTimeMillis());
 
@@ -224,6 +240,12 @@ class GerritMissedEventsLoadPersistTest {
      * @return missingEventsPlaybackManager.
      */
     private GerritMissedEventsPlaybackManager setupManager() {
+        try {
+            writeInstanceTimestampFixture("defaultServer", FIXTURE_TIME_SLICE);
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
+
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
         assertDoesNotThrow(missingEventsPlaybackManager::load);
@@ -264,6 +286,67 @@ class GerritMissedEventsLoadPersistTest {
                 "Diff should be greater than 0");
 
         missingEventsPlaybackManager.shutdown();
+    }
+
+    /**
+     * Regression test for the fixed cross-server bug: {@code previousTimeSlice} used to be a
+     * {@code static} field shared by every {@link GerritMissedEventsPlaybackManager} instance,
+     * even though one instance is created per configured Gerrit server. A server with a larger
+     * event time slice could suppress persistence for another server with a smaller one, since
+     * the shared field would already be ahead of the second server's own time slice.
+     *
+     * <p>The persistence tick normally runs on a background scheduled thread, but Mockito's
+     * static mocks (Jenkins, in particular) are only visible on the thread that registered them.
+     * So the tick is invoked synchronously here, via the same {@code persistenceCheck} Runnable
+     * the real scheduler would use, rather than waiting on the actual background thread.
+     *
+     * <p>Given two managers for two different servers
+     * When the first receives an event with a much later time slice than the second
+     * And the first's persistence tick has already run
+     * Then the second still persists its own (smaller) time slice independently.
+     * @throws Exception if reflection or IO fails.
+     */
+    @Test
+    public void testCrossServerPersistenceIsIndependent() throws Exception {
+        String serverA = "regression-server-a";
+        String serverB = "regression-server-b";
+
+        GerritMissedEventsPlaybackManager managerA = new GerritMissedEventsPlaybackManager(serverA);
+        GerritMissedEventsPlaybackManager managerB = new GerritMissedEventsPlaybackManager(serverB);
+
+        // Epoch seconds: A is far later than B, so a shared "previousTimeSlice" set by A's tick
+        // would (before the fix) permanently block B's tick from ever persisting.
+        PatchsetCreated eventForA = Setup.createPatchsetCreated(serverA, "project", "ref",
+                Long.toString(REGRESSION_EVENT_SECONDS_A));
+        PatchsetCreated eventForB = Setup.createPatchsetCreated(serverB, "project", "ref",
+                Long.toString(REGRESSION_EVENT_SECONDS_B));
+
+        managerA.saveTimestamp(eventForA);
+        managerB.saveTimestamp(eventForB);
+
+        runPersistenceCheck(managerA);
+        runPersistenceCheck(managerB);
+
+        EventTimeSlice persistedA = new InstanceTimestampStore(serverA).readTimestamp();
+        EventTimeSlice persistedB = new InstanceTimestampStore(serverB).readTimestamp();
+
+        assertNotNull(persistedA, "server A should have persisted its own timestamp");
+        assertNotNull(persistedB, "server B should have persisted its own timestamp, independently of server A's"
+                + " later time slice");
+        assertEquals(TimeUnit.SECONDS.toMillis(REGRESSION_EVENT_SECONDS_A), persistedA.getTimeSlice());
+        assertEquals(TimeUnit.SECONDS.toMillis(REGRESSION_EVENT_SECONDS_B), persistedB.getTimeSlice());
+    }
+
+    /**
+     * Runs the manager's persistence-check tick synchronously, on the calling thread, by
+     * invoking the same Runnable the real scheduled executor would run.
+     * @param manager the manager whose tick to run.
+     * @throws ReflectiveOperationException if the private field cannot be accessed.
+     */
+    private void runPersistenceCheck(GerritMissedEventsPlaybackManager manager) throws ReflectiveOperationException {
+        Field field = GerritMissedEventsPlaybackManager.class.getDeclaredField("persistenceCheck");
+        field.setAccessible(true);
+        ((Runnable)field.get(manager)).run();
     }
 
 }
