@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.LocalQueueC
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
@@ -124,6 +125,18 @@ public class LocalCoordinationProvider extends CoordinationModeProvider {
     @Override
     public QueueCancellationStrategy createQueueCancellationStrategy() {
         return new LocalQueueCancellationStrategy();
+    }
+
+    /**
+     * Creates a new local missed-events coordination strategy instance.
+     * Reduces to a plain in-process lock and watermark - there is no other JVM to coordinate
+     * with in standalone mode.
+     *
+     * @return a new LocalMissedEventsCoordinationStrategy
+     */
+    @Override
+    public MissedEventsCoordinationStrategy createMissedEventsCoordinationStrategy() {
+        return new LocalMissedEventsCoordinationStrategy();
     }
 
     /**

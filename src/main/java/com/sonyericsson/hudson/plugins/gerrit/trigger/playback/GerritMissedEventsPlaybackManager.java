@@ -28,7 +28,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.InstanceIdentity;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.HttpUtils;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil;
@@ -62,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.Scanner;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -87,6 +91,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     private static final Logger logger = LoggerFactory.getLogger(GerritMissedEventsPlaybackManager.class);
     static final String EVENTS_LOG_PLUGIN_NAME = "events-log";
     private static final String EVENTS_LOG_PLUGIN_URL = "a/plugins/" + EVENTS_LOG_PLUGIN_NAME + "/events/";
+    /**
+     * System property: maximum age in hours a per-instance timestamp file may go without being
+     * rewritten before it is considered orphaned (from a permanently decommissioned JVM) and
+     * pruned. Default is 7 days.
+     */
+    private static final String STALE_INSTANCE_FILE_AGE_PROPERTY =
+            "gerrit.trigger.playback.instance.stale.age.hours";
+    private static final int DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS = 168;
 
     private String serverName;
     /**
@@ -226,10 +238,16 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * When the connection is established, we load in the last-alive
-     * timestamp for this server and try to determine if a time range
-     * exist whereby we missed some events. If so, request the events
-     * from the Gerrit events-log plugin and pump them in to play them back.
+     * When the connection is established, we determine the most advanced known timestamp across
+     * every JVM instance persisting state for this server (see {@link InstanceTimestampStore}),
+     * and - coordinated via {@link MissedEventsCoordinationStrategy} so that at most one JVM does
+     * this at a time and no reconnect re-requests an already-covered range - request any missed
+     * events from the Gerrit events-log plugin and pump them in to play them back.
+     *
+     * <p>This runs on every reconnect, not just process cold-start: each JVM keeps its own live
+     * Gerrit connection and event processing is already deduplicated across JVMs via the event
+     * claim strategy, so this cross-instance catch-up specifically covers the case where every
+     * JVM was simultaneously unable to process events (e.g. a full outage).</p>
      */
     @Override
     public void connectionEstablished() {
@@ -250,63 +268,90 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             playBackComplete = true;
             return;
         }
-        Date timeStampDate = getDateFromTimestamp();
-        long diff = System.currentTimeMillis() - timeStampDate.getTime();
-        if (diff > 0) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Non-zero date range from last-alive timestamp exists for server {} : {}"
-                        , serverName, Util.getPastTimeString(diff));
-            }
-        } else {
+
+        OptionalLong candidate = instanceTimestampStore.computeMaxTimestampAcrossInstances();
+        if (candidate.isEmpty()) {
+            logger.debug("No known last-alive timestamp for server {}", serverName);
+            playBackComplete = true;
+            return;
+        }
+        long candidateCatchUpFrom = candidate.getAsLong();
+        long diff = System.currentTimeMillis() - candidateCatchUpFrom;
+        if (diff <= 0) {
             logger.debug("Zero date range from last-alive timestamp for server {}", serverName);
             playBackComplete = true;
             return;
         }
-        try {
-            List<GerritTriggeredEvent> events = getEventsFromDateRange(timeStampDate);
-            logger.info("({}) missed events to process for server: {} ...", events.size(), serverName);
-            for (GerritTriggeredEvent evt: events) {
-                logger.debug("({}) Processing missed event {}", serverName, evt);
-                boolean receivedEvtFound = false;
-                synchronized (receivedEventCache) {
-                    // Must be in synchronized block
-                    for (GerritTriggeredEvent rEvt : receivedEventCache) {
-                        if (rEvt.equals(evt)) {
-                            receivedEvtFound = true;
-                            break;
-                        }
-                    }
-                }
-                if (receivedEvtFound) {
-                    logger.debug("({}) Event already triggered...skipping trigger.", serverName);
-                } else {
-
-                    //do we have this event in the time slice?
-                    long currentEventCreatedTime = evt.getEventCreatedOn().getTime();
-                    if (serverTimestamp.getTimeSlice() == currentEventCreatedTime) {
-                        if (serverTimestamp.getEvents().contains(evt)) {
-                            logger.debug("({}) Event already triggered from time slice...skipping trigger.", serverName);
-                            continue;
-                        }
-                    }
-                    logger.info("({}) Triggering: {}", serverName, evt);
-                    GerritServer server = PluginImpl.getServer_(serverName);
-                    if (server == null) {
-                        logger.error("Server for {} could not be found. Skipping this event", serverName);
-                        continue;
-                    }
-                    server.triggerEvent(evt);
-                    receivedEventCache.add(evt);
-                    logger.debug("Added event {} to received cache for server: {}", evt, serverName);
-                }
-            }
-        } catch (UnsupportedEncodingException e) {
-            logger.error("Error building URL for playback query: " + e.getMessage(), e);
-        } catch (IOException e) {
-            logger.error("Error accessing URL for playback query: " + e.getMessage(), e);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Non-zero date range from last-alive timestamp exists for server {} : {}"
+                    , serverName, Util.getPastTimeString(diff));
         }
+
+        long staleAgeMillis = TimeUnit.HOURS.toMillis(
+                Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS));
+        MissedEventsCoordinationStrategy coordinationStrategy =
+                CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
+        MissedEventsCatchUpOutcome outcome = coordinationStrategy.coordinateCatchUp(
+                serverName,
+                candidateCatchUpFrom,
+                this::fetchAndTriggerMissedEvents,
+                () -> instanceTimestampStore.pruneStaleInstanceFiles(staleAgeMillis));
+        logger.info("Missed-events catch-up outcome for server {}: {}", serverName, outcome);
+
         playBackComplete = true;
         logger.info("Processing completed for server: {}", serverName);
+    }
+
+    /**
+     * Fetches missed events from the given lower bound and feeds them into normal processing.
+     * Invoked by the {@link MissedEventsCoordinationStrategy} while its coordination lock is
+     * held, so this never runs concurrently with another JVM's catch-up for the same server.
+     *
+     * @param lowerBound the point to fetch missed events from.
+     * @return the epoch-millis timestamp this attempt started at, recorded as the new shared
+     *         watermark on success.
+     * @throws IOException if fetching or building the playback query URL fails.
+     */
+    private long fetchAndTriggerMissedEvents(Date lowerBound) throws IOException {
+        long fetchStartedAt = System.currentTimeMillis();
+        List<GerritTriggeredEvent> events = getEventsFromDateRange(lowerBound);
+        logger.info("({}) missed events to process for server: {} ...", events.size(), serverName);
+        for (GerritTriggeredEvent evt: events) {
+            logger.debug("({}) Processing missed event {}", serverName, evt);
+            boolean receivedEvtFound = false;
+            synchronized (receivedEventCache) {
+                // Must be in synchronized block
+                for (GerritTriggeredEvent rEvt : receivedEventCache) {
+                    if (rEvt.equals(evt)) {
+                        receivedEvtFound = true;
+                        break;
+                    }
+                }
+            }
+            if (receivedEvtFound) {
+                logger.debug("({}) Event already triggered...skipping trigger.", serverName);
+            } else {
+
+                //do we have this event in the time slice already known to this instance?
+                long currentEventCreatedTime = evt.getEventCreatedOn().getTime();
+                if (serverTimestamp != null && serverTimestamp.getTimeSlice() == currentEventCreatedTime) {
+                    if (serverTimestamp.getEvents().contains(evt)) {
+                        logger.debug("({}) Event already triggered from time slice...skipping trigger.", serverName);
+                        continue;
+                    }
+                }
+                logger.info("({}) Triggering: {}", serverName, evt);
+                GerritServer server = PluginImpl.getServer_(serverName);
+                if (server == null) {
+                    logger.error("Server for {} could not be found. Skipping this event", serverName);
+                    continue;
+                }
+                server.triggerEvent(evt);
+                receivedEventCache.add(evt);
+                logger.debug("Added event {} to received cache for server: {}", evt, serverName);
+            }
+        }
+        return fetchStartedAt;
     }
 
     /**

@@ -26,6 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.storage.LocalBuildMemoryStorage;
@@ -124,6 +125,12 @@ public class CoordinationMode {
      * Instance field - managed by Jenkins lifecycle, not static.
      */
     private volatile QueueCancellationStrategy queueCancellationStrategy;
+
+    /**
+     * The missed-events coordination strategy instance, lazily initialized.
+     * Instance field - managed by Jenkins lifecycle, not static.
+     */
+    private volatile MissedEventsCoordinationStrategy missedEventsCoordinationStrategy;
 
     /**
      * Constructor - called by Jenkins once per Jenkins instance.
@@ -234,7 +241,26 @@ public class CoordinationMode {
     }
 
     /**
-     * Ensures the mode is initialized by discovering it if needed.
+     * Gets the MissedEventsCoordinationStrategy instance for the current coordination mode.
+     *
+     * <p>Uses double-checked locking for thread-safe lazy initialization.
+     * The mode is discovered and instances are created on first access.</p>
+     *
+     * <p>The MissedEventsCoordinationStrategy ensures that when multiple Jenkins instances share
+     * one {@code JENKINS_HOME}, at most one of them performs missed-events playback catch-up for
+     * a given Gerrit server at a time.</p>
+     *
+     * @return the missed-events coordination strategy implementation
+     * @throws IllegalStateException if no available mode provider is found
+     */
+    @NonNull
+    public MissedEventsCoordinationStrategy getMissedEventsCoordinationStrategy() {
+        ensureInitialized();
+        return missedEventsCoordinationStrategy;
+    }
+
+    /**
+     * Ensures the factory is initialized by discovering the mode if needed.
      * Uses double-checked locking for thread safety.
      */
     private void ensureInitialized() {
@@ -297,16 +323,19 @@ public class CoordinationMode {
 
             selectedProvider = selected;
 
-            // Create all three implementations from the selected mode
+            // Create all implementations from the selected mode
             storage = selected.createStorage();
             claimStrategy = selected.createClaimStrategy();
             eventClaimStrategy = selected.createEventClaimStrategy();
             queueCancellationStrategy = selected.createQueueCancellationStrategy();
+            missedEventsCoordinationStrategy = selected.createMissedEventsCoordinationStrategy();
 
             logger.info("Created BuildMemoryStorage: {}", storage.getClass().getSimpleName());
             logger.info("Created NotificationClaimStrategy: {}", claimStrategy.getClass().getSimpleName());
             logger.info("Created EventClaimStrategy: {}", eventClaimStrategy.getClass().getSimpleName());
             logger.info("Created QueueCancellationStrategy: {}", queueCancellationStrategy.getClass().getSimpleName());
+            logger.info("Created MissedEventsCoordinationStrategy: {}",
+                    missedEventsCoordinationStrategy.getClass().getSimpleName());
 
         } catch (Exception e) {
             logger.warn("Failed to discover mode via ExtensionList, using fallback", e);
@@ -324,6 +353,7 @@ public class CoordinationMode {
         claimStrategy = new LocalNotificationClaimStrategy();
         eventClaimStrategy = new LocalEventClaimStrategy();
         queueCancellationStrategy = new LocalQueueCancellationStrategy();
+        missedEventsCoordinationStrategy = new LocalMissedEventsCoordinationStrategy();
         selectedProvider = null; // No provider in fallback mode
     }
 

@@ -185,6 +185,26 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     public abstract QueueCancellationStrategy createQueueCancellationStrategy();
 
     /**
+     * Creates a new MissedEventsCoordinationStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The MissedEventsCoordinationStrategy ensures that when multiple Jenkins instances share
+     * one {@code JENKINS_HOME}, at most one of them performs missed-events playback catch-up for
+     * a given Gerrit server at a time, and a later reconnect never re-requests an already-covered
+     * range. In local mode, this reduces to a trivial in-process lock. In distributed mode (e.g.
+     * Hazelcast), this uses a distributed lock and shared watermark.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new MissedEventsCoordinationStrategy instance (non-null)
+     */
+    public abstract MissedEventsCoordinationStrategy createMissedEventsCoordinationStrategy();
+
+    /**
      * Initializes this coordination mode provider.
      *
      * <p>Called during plugin startup (PluginImpl.start()) to initialize any resources

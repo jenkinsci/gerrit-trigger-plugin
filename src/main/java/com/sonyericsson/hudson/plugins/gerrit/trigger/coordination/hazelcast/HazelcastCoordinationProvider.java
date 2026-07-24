@@ -25,6 +25,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.CoordinationModeProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.NotificationClaimStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.QueueCancellationStrategy;
 import hudson.Extension;
@@ -235,6 +236,23 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
     @Override
     public QueueCancellationStrategy createQueueCancellationStrategy() {
         return new HazelcastQueueCancellationStrategy();
+    }
+
+    /**
+     * Creates Hazelcast missed-events coordination strategy.
+     * <p>
+     * Uses a distributed lock and shared watermark IMap to ensure only one replica performs
+     * missed-events playback catch-up for a given Gerrit server at a time, and that a later
+     * reconnect (on any replica) never re-requests an already-covered range.
+     *
+     * @return HazelcastMissedEventsCoordinationStrategy instance
+     */
+    @Override
+    public MissedEventsCoordinationStrategy createMissedEventsCoordinationStrategy() {
+        // Fetch instance from provider (multiple Extension instances may exist)
+        HazelcastInstance instance = HazelcastInstanceProvider.getInstanceOrThrow();
+        logger.info("Creating HazelcastMissedEventsCoordinationStrategy with instance: {}", instance.getName());
+        return new HazelcastMissedEventsCoordinationStrategy(instance);
     }
 
     /**
