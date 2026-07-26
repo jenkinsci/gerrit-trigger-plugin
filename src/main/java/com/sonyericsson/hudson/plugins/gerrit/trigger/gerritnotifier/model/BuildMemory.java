@@ -393,9 +393,8 @@ public class BuildMemory {
                     // loop only ever asks "should I cancel the OTHER, already-registered
                     // event?" - it never asks the reverse. Left unguarded, a late-arriving
                     // older patchset's own build runs to completion fully unsuppressed
-                    // whenever cross-replica event delivery reorders patchset arrival
-                    // (confirmed to happen on mc3 - see the HZ-104 cross-node cancellation
-                    // race writeup). Detect that case here so newEvent gets cancelled too,
+                    // whenever cross-replica event delivery reorders patchset arrival.
+                    // Detect that case here so newEvent gets cancelled too,
                     // via the same isCancelling + deferred-abort machinery already used for
                     // the normal direction.
                     if (isNewEventOutdatedByRunningEvent(newEvent, runningChangeBasedEvent, jobName, entry.getValue())) {
@@ -415,11 +414,11 @@ public class BuildMemory {
                             imprintEntry.isCancelling(), imprintEntry.isCancelled());
                     // Deliberately does NOT check !imprintEntry.isQueueLeft(): queueLeft means
                     // "left the queue for an ambiguous reason (possibly a load-balanced
-                    // relocation to another mc3 replica), not yet confirmed as a genuine
+                    // relocation to another replica), not yet confirmed as a genuine
                     // cancel" - it is not itself proof the entry is done. Excluding it here
                     // let relocated-but-not-yet-restarted entries dodge cancellation entirely
-                    // whenever a newer patchset arrived during the relocation window (the
-                    // HZ-006/HZ-104 mc3 race).
+                    // whenever a newer patchset arrived during the relocation window
+                    // (a cross-replica race).
                     if (imprintEntry.isProject(jobName)
                             && !imprintEntry.isBuildCompleted()
                             && !imprintEntry.isCancelling()
@@ -552,8 +551,7 @@ public class BuildMemory {
      * {@code newEvent} - it correctly refuses to do so when {@code runningEvent} is actually
      * newer, but nothing then cancels {@code newEvent} itself in that case. Cross-replica event
      * delivery can deliver a newer patchset's event to some replica before an older one reaches
-     * any replica at all (confirmed on {@code mc3} - see the HZ-104 cross-node cancellation race
-     * writeup), which is exactly when this matters: without this check, the late-arriving,
+     * any replica at all, which is exactly when this matters: without this check, the late-arriving,
      * actually-outdated {@code newEvent} would never recognize itself as such and would run to
      * completion alongside the newer patchset that's already building.
      * <p>
@@ -1533,7 +1531,7 @@ public class BuildMemory {
              * </ul>
              * Unlike {@link #isCancelled()}, setting this flag does NOT also set
              * {@link #setBuildCompleted(boolean)}, preserving the IMap entry for cross-instance
-             * new-patchset abort scenarios (HZ-004).
+             * new-patchset abort scenarios.
              *
              * @return true if the queue item left without a prior cancelling intent
              */

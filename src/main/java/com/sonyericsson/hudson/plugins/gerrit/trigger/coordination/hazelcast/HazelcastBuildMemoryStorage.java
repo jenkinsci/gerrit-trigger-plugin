@@ -1098,7 +1098,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // queueLeft entries (load-balanced moves or direct doCancelItem) are treated as
         // inactive — they are not running on this replica. This allows isBuilding(event)
         // to return false for the unit-test case (direct doCancelItem) while preserving
-        // the IMap key for cross-replica PS2-aborts-PS1 scenarios (HZ-004).
+        // the IMap key for cross-replica PS2-aborts-PS1 scenarios.
         for (MemoryImprint.Entry entry : imprint.getEntries()) {
             if (!entry.isBuildCompleted() && !entry.isQueueLeft()) {
                 return true;

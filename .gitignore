@@ -19,3 +19,4 @@ hostkey.ser
 /eclipse-classes
 .vscode/
 .factorypath
+graphify-out
