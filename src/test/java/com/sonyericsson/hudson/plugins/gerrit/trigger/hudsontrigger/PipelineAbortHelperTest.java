@@ -82,8 +82,9 @@ public class PipelineAbortHelperTest {
     }
 
     /**
-     * A Pipeline build that has been interrupted after it started should still
-     * report false — it is past initialisation, so delivery was correct.
+     * A Pipeline build that has been interrupted and completed should still report
+     * false — the FlowExecution remains attached after the run finishes, so it
+     * remains safe (and correct) to report as started.
      */
     @Test
     public void testAbortedPipelineReturnsFalse() throws Exception {
@@ -95,10 +96,10 @@ public class PipelineAbortHelperTest {
         WorkflowRun run = job.scheduleBuild2(0).waitForStart();
         SemaphoreStep.waitForStart("wait-abort/1", run);
 
-        // Abort while it's at the semaphore (CPS has started)
-        assertFalse(PipelineAbortHelper.isPipelineNotYetStarted(run));
-
         run.getExecutor().interrupt(Result.ABORTED);
         jenkins.waitForCompletion(run);
+
+        assertFalse("Aborted, completed pipeline should still report CPS started",
+                PipelineAbortHelper.isPipelineNotYetStarted(run));
     }
 }
