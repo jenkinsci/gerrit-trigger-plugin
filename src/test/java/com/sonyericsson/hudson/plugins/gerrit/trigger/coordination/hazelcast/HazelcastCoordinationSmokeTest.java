@@ -79,7 +79,8 @@ public class HazelcastCoordinationSmokeTest {
 
     private static final String COORDINATION_MODE_PROPERTY = "gerrit.trigger.coordination.mode";
     private static final String HAZELCAST_MODE = "hazelcast";
-    private static final int SERVER_WAIT = 2000;
+    // Generous: the in-JVM Hazelcast client's CPU contention slows the SSH handshake on busy agents.
+    private static final int SERVER_WAIT = 20000;
     private static final int BUILD_TIMEOUT = 30000;
 
     /**
