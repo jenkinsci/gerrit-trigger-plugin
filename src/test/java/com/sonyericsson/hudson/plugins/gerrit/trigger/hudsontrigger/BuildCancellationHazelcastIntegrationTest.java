@@ -26,7 +26,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.HazelcastTestRule;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
@@ -149,15 +149,15 @@ public class BuildCancellationHazelcastIntegrationTest {
      * This prevents false positives from tests running in local mode.
      */
     private void verifyHazelcastMode() {
-        CoordinationModeFactory factory = CoordinationModeFactory.get();
+        CoordinationMode mode = CoordinationMode.get();
 
         // Trigger mode discovery by accessing storage
-        String storageClass = factory.getStorage().getClass().getSimpleName();
+        String storageClass = mode.getStorage().getClass().getSimpleName();
 
         // Now get the selected mode (will not be null after storage access)
         String modeName;
-        if (factory.getSelectedMode() != null) {
-            modeName = factory.getSelectedMode().getModeName();
+        if (mode.getSelectedProvider() != null) {
+            modeName = mode.getSelectedProvider().getModeName();
         } else {
             modeName = "UNKNOWN";
         }

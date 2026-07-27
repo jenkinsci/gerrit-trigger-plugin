@@ -53,7 +53,8 @@ import hudson.ExtensionPoint;
  *
  * <h2>Provider Ordering:</h2>
  * <p>Providers are automatically ordered by Jenkins based on {@code @Extension(ordinal)} value.
- * The factory selects the first available provider from this ordered list.</p>
+ * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode}
+ * selects the first available provider from this ordered list.</p>
  * <ul>
  *   <li>Higher ordinal = Higher priority (checked first)</li>
  *   <li>{@code @Extension(ordinal = -1000)} - Local/fallback mode</li>
@@ -64,7 +65,7 @@ import hudson.ExtensionPoint;
  * @see BuildMemoryStorage
  * @see NotificationClaimStrategy
  * @see EventClaimStrategy
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode
  */
 public abstract class CoordinationModeProvider implements ExtensionPoint {
 
@@ -119,11 +120,11 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     /**
      * Creates a new BuildMemoryStorage instance for this mode.
      *
-     * <p>Called once during factory initialization after this provider is selected
+     * <p>Called once during coordination mode initialization after this provider is selected
      * as the highest-priority available provider.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
-     * factory initialization (double-checked locking). Implementations should be stateless
+     * coordination mode initialization (double-checked locking). Implementations should be stateless
      * or properly synchronized.</p>
      *
      * @return a new BuildMemoryStorage instance (non-null)
@@ -133,11 +134,11 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     /**
      * Creates a new NotificationClaimStrategy instance for this mode.
      *
-     * <p>Called once during factory initialization after this provider is selected
+     * <p>Called once during coordination mode initialization after this provider is selected
      * as the highest-priority available provider.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
-     * factory initialization (double-checked locking). Implementations should be stateless
+     * coordination mode initialization (double-checked locking). Implementations should be stateless
      * or properly synchronized.</p>
      *
      * @return a new NotificationClaimStrategy instance (non-null)
@@ -147,7 +148,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     /**
      * Creates a new EventClaimStrategy instance for this mode.
      *
-     * <p>Called once during factory initialization after this provider is selected
+     * <p>Called once during coordination mode initialization after this provider is selected
      * as the highest-priority available provider.</p>
      *
      * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
@@ -156,7 +157,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * distributed coordination to ensure only one instance processes each event.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
-     * factory initialization (double-checked locking). Implementations should be stateless
+     * coordination mode initialization (double-checked locking). Implementations should be stateless
      * or properly synchronized.</p>
      *
      * @return a new EventClaimStrategy instance (non-null)
@@ -166,7 +167,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     /**
      * Creates a new QueueCancellationStrategy instance for this mode.
      *
-     * <p>Called once during factory initialization after this provider is selected
+     * <p>Called once during coordination mode initialization after this provider is selected
      * as the highest-priority available provider.</p>
      *
      * <p>The QueueCancellationStrategy determines whether a cancelled Jenkins queue item
@@ -176,7 +177,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * load-balancer markers.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
-     * factory initialization (double-checked locking). Implementations should be stateless
+     * coordination mode initialization (double-checked locking). Implementations should be stateless
      * or properly synchronized.</p>
      *
      * @return a new QueueCancellationStrategy instance (non-null)
@@ -196,7 +197,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * </ul>
      *
      * <p><b>IMPORTANT:</b> This method is called BEFORE the provider is selected by
-     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory}.
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode}.
      * The provider must be fully initialized when {@link #isAvailable()} is called during
      * provider discovery.</p>
      *

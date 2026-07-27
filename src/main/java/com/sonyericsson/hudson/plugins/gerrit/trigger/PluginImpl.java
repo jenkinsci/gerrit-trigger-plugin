@@ -24,7 +24,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger;
 
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.dependency.DependencyQueueTaskDispatcher;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.replication.ReplicationQueueTaskDispatcher;
@@ -587,16 +587,16 @@ public class PluginImpl extends GlobalConfiguration {
         logger.trace("Loading configs");
         load();
 
-        // Initialize coordination providers early (before any code that might use CoordinationModeFactory)
+        // Initialize coordination providers early (before any code that might use CoordinationMode)
         // This must happen before BuildMemory, EventClaimStrategy, or NotificationClaimStrategy are used
         // because provider.isAvailable() may check if resources are initialized
         initializeCoordinationProviders();
 
-        // Eagerly initialize CoordinationModeFactory so discoverMode() runs now (during startup)
+        // Eagerly initialize CoordinationMode so discoverMode() runs now (during startup)
         // rather than lazily on first event — deferred initialization can add several seconds of
         // latency to the first build trigger when ExtensionList.lookup() is called from a
         // background event-processing thread.
-        CoordinationModeFactory.get().getStorage();
+        CoordinationMode.get().getStorage();
 
         GerritSendCommandQueue.initialize(pluginConfig);
         gerritEventManager = new JenkinsAwareGerritHandler(pluginConfig.getNumberOfReceivingWorkerThreads());
@@ -610,7 +610,7 @@ public class PluginImpl extends GlobalConfiguration {
      * Initialize the active coordination mode provider.
      * <p>
      * This is called early in plugin startup, before any code that might use
-     * CoordinationModeFactory. Only initializes the provider that matches the configured
+     * CoordinationMode. Only initializes the provider that matches the configured
      * coordination mode, making it more efficient than calling initialize() on all providers.
      * <p>
      * <strong>Implementation Note:</strong> We cannot use {@code provider.isAvailable()}

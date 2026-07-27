@@ -50,7 +50,7 @@ import hudson.Extension;
  * @see LocalBuildMemoryStorage
  * @see LocalNotificationClaimStrategy
  * @see LocalEventClaimStrategy
- * @see CoordinationModeFactory
+ * @see CoordinationMode
  */
 @Extension(ordinal = LocalCoordinationProvider.FALLBACK_PRIORITY)
 public class LocalCoordinationProvider extends CoordinationModeProvider {

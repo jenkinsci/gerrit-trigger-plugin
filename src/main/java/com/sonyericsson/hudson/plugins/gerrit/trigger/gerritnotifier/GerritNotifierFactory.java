@@ -33,7 +33,7 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildCompletedCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.rest.BuildCompletedRestCommandJob;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.job.ssh.BuildStartedCommandJob;
@@ -127,7 +127,7 @@ public class GerritNotifierFactory {
 
                 // Claim notification for sending (prevents duplicate notifications in distributed scenarios)
                 NotificationClaimStrategy notificationClaimStrategy =
-                    CoordinationModeFactory.get().getClaimStrategy();
+                    CoordinationMode.get().getClaimStrategy();
                 notificationClaimStrategy.withClaim(event, "build-completed", () -> {
                     if (config.isUseRestApi()
                             && event instanceof ChangeBasedEvent) {
@@ -210,7 +210,7 @@ public class GerritNotifierFactory {
                 // Build-started uses per-job claim (each job sends its own notification)
                 String jobName = build.getParent().getFullName();
                 NotificationClaimStrategy notificationClaimStrategy =
-                    CoordinationModeFactory.get().getClaimStrategy();
+                    CoordinationMode.get().getClaimStrategy();
                 notificationClaimStrategy.withClaim(event, "build-started", jobName, () -> {
                     if (config.isUseRestApi() && event instanceof ChangeBasedEvent) {
                         GerritSendCommandQueue.queue(new BuildStartedRestCommandJob(config, build, listener,

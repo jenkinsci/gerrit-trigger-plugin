@@ -85,7 +85,7 @@ public class HazelcastTestRule extends ExternalResource {
     protected void before() throws Exception {
         logger.info("=== Hazelcast Test Setup START ===");
 
-        // Skip if not running with -Ptest-hazelcast. CoordinationModeFactory is initialised
+        // Skip if not running with -Ptest-hazelcast. CoordinationMode is initialised
         // by JenkinsRule (which runs before this rule despite field order), so Hazelcast mode
         // can only be active if the property was set at JVM startup via the Maven profile.
         String preconfiguredMode = System.getProperty(COORDINATION_MODE_PROPERTY);

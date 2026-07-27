@@ -40,10 +40,11 @@ import org.slf4j.LoggerFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
- * Factory for discovering and creating coordination mode implementations.
+ * The active coordination mode, giving access to its component implementations.
  *
- * <p>This factory discovers the appropriate coordination mode (local, cluster, etc.) and
- * provides all component implementations from that mode. This ensures consistency -
+ * <p>This class selects the appropriate coordination mode (local, cluster, etc.) by
+ * discovering the highest-priority available {@link CoordinationModeProvider}, and exposes
+ * the component implementations of that mode. This ensures consistency -
  * all components come from the same mode and share the same availability conditions.</p>
  *
  * <h2>Coordination vs Triggering:</h2>
@@ -56,13 +57,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * </ul>
  *
  * <h2>Design Rationale:</h2>
- * <p>Instead of separate factories for each component, we use a single factory that
+ * <p>Instead of a separate access point for each component, a single class
  * manages the entire coordination mode. This is because:</p>
  * <ul>
  *   <li>Components always deploy together in the same mode</li>
  *   <li>Mode detection happens once, not per component</li>
  *   <li>Guaranteed consistency (no mixed modes)</li>
- *   <li>Simpler API with fewer factories to manage</li>
+ *   <li>Simpler API with a single access point</li>
  * </ul>
  *
  * <h2>Selection Logic:</h2>
@@ -74,13 +75,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * </ol>
  *
  * <h2>Thread Safety:</h2>
- * <p>This factory is thread-safe using double-checked locking pattern. Multiple threads
+ * <p>This class is thread-safe using double-checked locking pattern. Multiple threads
  * calling {@link #getStorage()} or {@link #getClaimStrategy()} concurrently will result
  * in exactly one mode being selected and one set of instances being created.</p>
  *
  * <h2>Lifecycle Management:</h2>
  * <p>This class is a Jenkins {@code @Extension} singleton, managed by Jenkins lifecycle.
- * Each Jenkins instance gets exactly one factory instance, which is automatically created
+ * Each Jenkins instance gets exactly one instance, which is automatically created
  * and discarded when Jenkins starts/stops. This design eliminates the need for manual
  * {@code reset()} methods in tests - JenkinsRule creates fresh instances automatically.</p>
  *
@@ -90,15 +91,15 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @see EventClaimStrategy
  */
 @Extension
-public class CoordinationModeFactory {
+public class CoordinationMode {
 
-    private static final Logger logger = LoggerFactory.getLogger(CoordinationModeFactory.class);
+    private static final Logger logger = LoggerFactory.getLogger(CoordinationMode.class);
 
     /**
      * The selected mode provider (for diagnostics).
      * Instance field - managed by Jenkins lifecycle, not static.
      */
-    private volatile CoordinationModeProvider selectedMode;
+    private volatile CoordinationModeProvider selectedProvider;
 
     /**
      * The storage instance, lazily initialized.
@@ -128,40 +129,40 @@ public class CoordinationModeFactory {
      * Constructor - called by Jenkins once per Jenkins instance.
      * Public constructor allows Jenkins to instantiate via @Extension mechanism.
      */
-    public CoordinationModeFactory() {
-        logger.debug("CoordinationModeFactory instance created by Jenkins");
+    public CoordinationMode() {
+        logger.debug("CoordinationMode instance created by Jenkins");
     }
 
     /**
      * Fallback instance used when Jenkins is not available (unit tests without JenkinsRule).
      * Lazily initialized on first access when ExtensionList is unavailable.
      */
-    private static volatile CoordinationModeFactory fallbackInstance;
+    private static volatile CoordinationMode fallbackInstance;
 
     /**
-     * Gets the singleton factory instance managed by Jenkins.
+     * Gets the singleton instance managed by Jenkins.
      *
      * <p>This method uses {@link ExtensionList#lookupSingleton(Class)} to retrieve
-     * the factory instance from Jenkins' extension registry. Jenkins guarantees
+     * the instance from Jenkins' extension registry. Jenkins guarantees
      * exactly one instance per Jenkins instance.</p>
      *
      * <p>If Jenkins is not available (e.g., unit tests without JenkinsRule), this method
      * creates and returns a fallback instance that uses local mode implementations.</p>
      *
-     * @return the factory instance
+     * @return the active coordination mode
      */
     @NonNull
-    public static CoordinationModeFactory get() {
+    public static CoordinationMode get() {
         try {
-            return ExtensionList.lookupSingleton(CoordinationModeFactory.class);
+            return ExtensionList.lookupSingleton(CoordinationMode.class);
         } catch (IllegalStateException | NullPointerException e) {
             // Jenkins not available (unit tests without JenkinsRule)
             // Use fallback instance with local mode
             if (fallbackInstance == null) {
-                synchronized (CoordinationModeFactory.class) {
+                synchronized (CoordinationMode.class) {
                     if (fallbackInstance == null) {
-                        logger.debug("Jenkins not available, creating fallback CoordinationModeFactory");
-                        fallbackInstance = new CoordinationModeFactory();
+                        logger.debug("Jenkins not available, creating fallback CoordinationMode");
+                        fallbackInstance = new CoordinationMode();
                     }
                 }
             }
@@ -233,13 +234,13 @@ public class CoordinationModeFactory {
     }
 
     /**
-     * Ensures the factory is initialized by discovering the mode if needed.
+     * Ensures the mode is initialized by discovering it if needed.
      * Uses double-checked locking for thread safety.
      */
     private void ensureInitialized() {
-        if (selectedMode == null) {
+        if (selectedProvider == null) {
             synchronized (this) {
-                if (selectedMode == null) {
+                if (selectedProvider == null) {
                     discoverMode();
                 }
             }
@@ -272,7 +273,7 @@ public class CoordinationModeFactory {
 
             logger.debug("Found {} provider(s)", providers.size());
 
-            CoordinationModeProvider selectedProvider = null;
+            CoordinationModeProvider selected = null;
 
             // ExtensionList is already ordered by ordinal (highest first)
             // Pick the first available provider
@@ -282,25 +283,25 @@ public class CoordinationModeFactory {
                     provider.isAvailable());
 
                 if (provider.isAvailable()) {
-                    selectedProvider = provider;
+                    selected = provider;
                     logger.info("Selected coordination mode: {}", provider.getModeName());
                     break;
                 }
             }
 
-            if (selectedProvider == null) {
+            if (selected == null) {
                 throw new IllegalStateException(
                     "No available CoordinationModeProvider found. "
                     + "At least LocalCoordinationProvider should be available.");
             }
 
-            selectedMode = selectedProvider;
+            selectedProvider = selected;
 
             // Create all three implementations from the selected mode
-            storage = selectedProvider.createStorage();
-            claimStrategy = selectedProvider.createClaimStrategy();
-            eventClaimStrategy = selectedProvider.createEventClaimStrategy();
-            queueCancellationStrategy = selectedProvider.createQueueCancellationStrategy();
+            storage = selected.createStorage();
+            claimStrategy = selected.createClaimStrategy();
+            eventClaimStrategy = selected.createEventClaimStrategy();
+            queueCancellationStrategy = selected.createQueueCancellationStrategy();
 
             logger.info("Created BuildMemoryStorage: {}", storage.getClass().getSimpleName());
             logger.info("Created NotificationClaimStrategy: {}", claimStrategy.getClass().getSimpleName());
@@ -323,7 +324,7 @@ public class CoordinationModeFactory {
         claimStrategy = new LocalNotificationClaimStrategy();
         eventClaimStrategy = new LocalEventClaimStrategy();
         queueCancellationStrategy = new LocalQueueCancellationStrategy();
-        selectedMode = null; // No provider in fallback mode
+        selectedProvider = null; // No provider in fallback mode
     }
 
     /**
@@ -331,7 +332,7 @@ public class CoordinationModeFactory {
      *
      * @return the selected provider, or null if not yet initialized or using fallback
      */
-    public CoordinationModeProvider getSelectedMode() {
-        return selectedMode;
+    public CoordinationModeProvider getSelectedProvider() {
+        return selectedProvider;
     }
 }
