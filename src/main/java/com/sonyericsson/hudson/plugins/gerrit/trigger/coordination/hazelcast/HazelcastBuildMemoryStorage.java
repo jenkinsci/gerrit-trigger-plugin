@@ -63,6 +63,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Hazelcast-backed implementation of BuildMemoryStorage for distributed scenarios.
@@ -402,6 +403,64 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         }
     }
 
+    /**
+     * Code to run while a distributed lock is held, passed to {@link #withLock}.
+     */
+    @FunctionalInterface
+    private interface LockedAction {
+        void run();
+    }
+
+    /**
+     * Outcome of a {@link #withLock} call, letting the caller react if the lock was never
+     * acquired (in which case the {@link LockedAction} did not run at all).
+     */
+    private static final class LockOutcome {
+        private final boolean acquired;
+
+        private LockOutcome(boolean acquired) {
+            this.acquired = acquired;
+        }
+
+        /**
+         * Runs {@code action} only if the lock could not be acquired.
+         *
+         * @param action ran when the lock was not acquired within {@link #LOCK_ACQUIRE_TIMEOUT_SECONDS}
+         */
+        void onFailure(Runnable action) {
+            if (!acquired) {
+                action.run();
+            }
+        }
+    }
+
+    /**
+     * Runs {@code action} while holding the distributed lock on {@code key}, always releasing
+     * the lock afterwards. If the lock cannot be acquired within
+     * {@link #LOCK_ACQUIRE_TIMEOUT_SECONDS}, {@code action} is not run at all; use the returned
+     * {@link LockOutcome#onFailure} to react to that case (e.g. logging and skipping the
+     * operation).
+     * <p>
+     * {@code action} is responsible for catching and logging its own exceptions - this method
+     * only manages lock acquisition and release, not business-logic error handling.
+     *
+     * @param map    the distributed map that owns the lock
+     * @param key    the key to lock
+     * @param action the code to run while the lock is held
+     * @return a {@link LockOutcome} - chain {@link LockOutcome#onFailure} to react to lock failure
+     */
+    private LockOutcome withLock(IMap<String, MemoryImprintData> map, String key, LockedAction action) {
+        if (!tryLockWithTimeout(map, key)) {
+            return new LockOutcome(false);
+        }
+        try {
+            action.run();
+        } finally {
+            map.unlock(key);
+        }
+        return new LockOutcome(true);
+    }
+
     // ===== Implement BuildMemoryStorage abstract methods =====
 
     @Override
@@ -437,43 +496,41 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // causing some project entries to be lost from BuildMemory (which breaks cancellation logic).
         // Note: EntryProcessor is NOT used here because in client mode the processor class would need
         // to exist on the Hazelcast sidecar member's classpath, causing ClassNotFoundException.
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping triggered()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null) {
-                data = new MemoryImprintData();
-                data.setEvent(event);
-            }
-            boolean found = false;
-            if (data.getEntries() != null) {
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        found = true;
-                        break;
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null) {
+                    data = new MemoryImprintData();
+                    data.setEvent(event);
+                }
+                boolean found = false;
+                if (data.getEntries() != null) {
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
+                if (!found) {
+                    EntryData newEntry = new EntryData();
+                    newEntry.setProjectFullName(projectFullName);
+                    data.addEntry(newEntry);
+                }
+                map.put(key, data);
+                if (!found) {
+                    logger.trace("Triggered event stored in distributed memory: {} for project: {}",
+                            key, projectFullName);
+                } else {
+                    logger.trace("Project {} already triggered for event: {}", projectFullName, key);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to store triggered event in distributed memory for project: {} event: {}",
+                        projectFullName, key, e);
             }
-            if (!found) {
-                EntryData newEntry = new EntryData();
-                newEntry.setProjectFullName(projectFullName);
-                data.addEntry(newEntry);
-            }
-            map.put(key, data);
-            if (!found) {
-                logger.trace("Triggered event stored in distributed memory: {} for project: {}", key, projectFullName);
-            } else {
-                logger.trace("Project {} already triggered for event: {}", projectFullName, key);
-            }
-        } catch (Exception e) {
-            logger.error("Failed to store triggered event in distributed memory for project: {} event: {}",
-                    projectFullName, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping triggered()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
@@ -495,55 +552,52 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // build's buildId was written to Hazelcast (buildId was null at that time, so no abort
         // inbox entry was written). We detect this by checking isCancelling on the entry after
         // writing the buildId, and then write the abort inbox entry here.
-        boolean pendingCrossReplicaAbort = false;
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping started()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null) {
-                data = new MemoryImprintData();
-            }
-            boolean found = false;
-            if (data.getEntries() != null) {
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        entryData.setBuildId(buildId);
-                        entryData.setStartedTimestamp(startedTimestamp);
-                        // The build actually started on a replica — clear any queueLeft flag that
-                        // was set when the queue item was moved by a load balancer. The entry is
-                        // now actively building and must be visible to cancelOutdatedBuilds again.
-                        entryData.setQueueLeft(false);
-                        found = true;
-                        // If this entry is already marked for cancellation, we need to trigger
-                        // cross-replica abort now that buildId is known.
-                        if (entryData.isCancelling()) {
-                            pendingCrossReplicaAbort = true;
+        AtomicBoolean pendingCrossReplicaAbort = new AtomicBoolean(false);
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null) {
+                    data = new MemoryImprintData();
+                }
+                boolean found = false;
+                if (data.getEntries() != null) {
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            entryData.setBuildId(buildId);
+                            entryData.setStartedTimestamp(startedTimestamp);
+                            // The build actually started on a replica — clear any queueLeft flag that
+                            // was set when the queue item was moved by a load balancer. The entry is
+                            // now actively building and must be visible to cancelOutdatedBuilds again.
+                            entryData.setQueueLeft(false);
+                            found = true;
+                            // If this entry is already marked for cancellation, we need to trigger
+                            // cross-replica abort now that buildId is known.
+                            if (entryData.isCancelling()) {
+                                pendingCrossReplicaAbort.set(true);
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
+                if (!found) {
+                    EntryData newEntry = new EntryData();
+                    newEntry.setProjectFullName(projectFullName);
+                    newEntry.setBuildId(buildId);
+                    newEntry.setStartedTimestamp(startedTimestamp);
+                    data.setEvent(event);
+                    data.addEntry(newEntry);
+                }
+                map.put(key, data);
+                if (!found) {
+                    logger.warn("Build started without being registered first (distributed mode).");
+                }
+                logger.trace("Build started event stored in distributed memory: {}", key);
+            } catch (Exception e) {
+                logger.error("Failed to mark build started in distributed memory: project={}, build={}, event={}",
+                        projectFullName, buildId, key, e);
             }
-            if (!found) {
-                EntryData newEntry = new EntryData();
-                newEntry.setProjectFullName(projectFullName);
-                newEntry.setBuildId(buildId);
-                newEntry.setStartedTimestamp(startedTimestamp);
-                data.addEntry(newEntry);
-            }
-            map.put(key, data);
-            if (!found) {
-                logger.warn("Build started without being registered first (distributed mode).");
-            }
-            logger.trace("Build started event stored in distributed memory: {}", key);
-        } catch (Exception e) {
-            logger.error("Failed to mark build started in distributed memory: project={}, build={}, event={}",
-                    projectFullName, buildId, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error("Could not acquire distributed lock for key {} within {}s - skipping started()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
 
         // Deferred cross-replica abort: if the entry was already marked for cancellation when this
         // build started, requestCrossReplicaAbort() previously found buildId=null and could not
@@ -551,7 +605,7 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         // a short delay so the CPS pipeline has time to complete initialization before the
         // interrupt is delivered. Firing the interrupt too early (during CPS init, before any
         // step begins) has no effect — the interrupt flag is set on the wrong thread context.
-        if (pendingCrossReplicaAbort && hazelcastInstance != null) {
+        if (pendingCrossReplicaAbort.get() && hazelcastInstance != null) {
             final HazelcastInstance hz = hazelcastInstance;
             final String abortKey = projectFullName + ":" + buildId;
             logger.info("Scheduling deferred cross-replica abort in {}s (started race): job={} build={}",
@@ -583,49 +637,47 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
         long completedTimestamp = System.currentTimeMillis();
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping completed()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null) {
-                data = new MemoryImprintData();
-            }
-            boolean found = false;
-            if (data.getEntries() != null) {
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        if (entryData.getBuildId() == null) {
-                            entryData.setBuildId(buildId);
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null) {
+                    data = new MemoryImprintData();
+                }
+                boolean found = false;
+                if (data.getEntries() != null) {
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            if (entryData.getBuildId() == null) {
+                                entryData.setBuildId(buildId);
+                            }
+                            entryData.setCompletedTimestamp(completedTimestamp);
+                            entryData.setBuildCompleted(true);
+                            found = true;
+                            break;
                         }
-                        entryData.setCompletedTimestamp(completedTimestamp);
-                        entryData.setBuildCompleted(true);
-                        found = true;
-                        break;
                     }
                 }
+                if (!found) {
+                    EntryData newEntry = new EntryData();
+                    newEntry.setProjectFullName(projectFullName);
+                    newEntry.setBuildId(buildId);
+                    newEntry.setCompletedTimestamp(completedTimestamp);
+                    newEntry.setBuildCompleted(true);
+                    data.setEvent(event);
+                    data.addEntry(newEntry);
+                }
+                map.put(key, data);
+                if (!found) {
+                    logger.debug("Build completed without being registered first (distributed mode).");
+                }
+                logger.trace("Build completed event stored in distributed memory: {}", key);
+            } catch (Exception e) {
+                logger.error("Failed to mark build completed in distributed memory: project={}, build={}, event={}",
+                        projectFullName, buildId, key, e);
             }
-            if (!found) {
-                EntryData newEntry = new EntryData();
-                newEntry.setProjectFullName(projectFullName);
-                newEntry.setBuildId(buildId);
-                newEntry.setCompletedTimestamp(completedTimestamp);
-                newEntry.setBuildCompleted(true);
-                data.addEntry(newEntry);
-            }
-            map.put(key, data);
-            if (!found) {
-                logger.debug("Build completed without being registered first (distributed mode).");
-            }
-            logger.trace("Build completed event stored in distributed memory: {}", key);
-        } catch (Exception e) {
-            logger.error("Failed to mark build completed in distributed memory: project={}, build={}, event={}",
-                    projectFullName, buildId, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping completed()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
@@ -641,52 +693,49 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping retriggered()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null) {
-                data = new MemoryImprintData();
-                data.setEvent(event);
-                if (otherBuilds != null) {
-                    for (Run otherBuild : otherBuilds) {
-                        EntryData entryData = new EntryData();
-                        entryData.setProjectFullName(otherBuild.getParent().getFullName());
-                        entryData.setBuildId(otherBuild.getId());
-                        entryData.setBuildCompleted(!otherBuild.isBuilding());
-                        data.addEntry(entryData);
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null) {
+                    data = new MemoryImprintData();
+                    data.setEvent(event);
+                    if (otherBuilds != null) {
+                        for (Run otherBuild : otherBuilds) {
+                            EntryData entryData = new EntryData();
+                            entryData.setProjectFullName(otherBuild.getParent().getFullName());
+                            entryData.setBuildId(otherBuild.getId());
+                            entryData.setBuildCompleted(!otherBuild.isBuilding());
+                            data.addEntry(entryData);
+                        }
                     }
                 }
-            }
-            boolean found = false;
-            if (data.getEntries() != null) {
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        entryData.setBuildId(null);
-                        entryData.setBuildCompleted(false);
-                        entryData.setStartedTimestamp(null);
-                        entryData.setCompletedTimestamp(null);
-                        found = true;
-                        break;
+                boolean found = false;
+                if (data.getEntries() != null) {
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            entryData.setBuildId(null);
+                            entryData.setBuildCompleted(false);
+                            entryData.setStartedTimestamp(null);
+                            entryData.setCompletedTimestamp(null);
+                            found = true;
+                            break;
+                        }
                     }
                 }
+                if (!found) {
+                    EntryData newEntry = new EntryData();
+                    newEntry.setProjectFullName(projectFullName);
+                    data.addEntry(newEntry);
+                }
+                map.put(key, data);
+                logger.trace("Retriggered event stored in distributed memory: {}", key);
+            } catch (Exception e) {
+                logger.error("Failed to record retriggered in distributed memory: project={}, event={}",
+                        projectFullName, key, e);
             }
-            if (!found) {
-                EntryData newEntry = new EntryData();
-                newEntry.setProjectFullName(projectFullName);
-                data.addEntry(newEntry);
-            }
-            map.put(key, data);
-            logger.trace("Retriggered event stored in distributed memory: {}", key);
-        } catch (Exception e) {
-            logger.error("Failed to record retriggered in distributed memory: project={}, event={}",
-                    projectFullName, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping retriggered()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
@@ -701,84 +750,81 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping cancelled()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
         // Set when this queue exit is ambiguous (isCancelling was already true) and needs a
         // deferred re-check after the lock is released - see CANCEL_FINALIZE_GRACE_SECONDS.
-        boolean scheduleFinalizeCheck = false;
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null) {
-                data = new MemoryImprintData();
-            }
-            boolean found = false;
-            boolean modified = false;
-            if (data.getEntries() != null) {
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        found = true;
-                        if (!entryData.isBuildCompleted()) {
-                            if (entryData.isCancelling()) {
-                                // Ambiguous: the intent was set via setCancelling() first (e.g. by
-                                // cancelOutdatedBuilds), but this queue exit itself could equally be
-                                // a genuine Gerrit-triggered cancellation OR a benign cross-replica
-                                // queue-item relocation - isLoadBalancedCancellation() can't tell
-                                // them apart (see its own doc comment; Jenkins preserves no marker
-                                // on LeftItem either way). Don't finalize yet: mark queueLeft (not
-                                // completed) and leave isCancelling=true so started()'s own
-                                // deferred-abort compensator still fires correctly if this really is
-                                // a relocation and the build reports in from wherever it landed.
-                                // scheduleDeferredCancelFinalize (below, after the lock is released)
-                                // decides the real outcome after a grace period.
-                                entryData.setQueueLeft(true);
-                                scheduleFinalizeCheck = true;
-                            } else if (entryData.getBuildId() == null) {
-                                // No prior cancellation intent AND build has not started anywhere.
-                                // This is a potential load-balanced queue move (build will restart
-                                // on another instance) or a direct Queue.doCancelItem before start.
-                                // Mark queueLeft=true but do NOT set buildCompleted=true so the
-                                // IMap entry is preserved for cross-instance PS2-aborts-PS1 scenarios.
-                                // NOTE: if buildId IS already set, started() already ran on another
-                                // instance — leave the entry completely untouched so it stays visible
-                                // to cancelOutdatedBuilds on that instance.
-                                entryData.setQueueLeft(true);
-                                logger.info("Marking queueLeft (pre-cancellation-intent queue exit, no "
-                                        + "buildId yet) for project={} event={} - possible load-balanced "
-                                        + "relocation with no started() call yet", projectFullName, key);
+        AtomicBoolean scheduleFinalizeCheck = new AtomicBoolean(false);
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null) {
+                    data = new MemoryImprintData();
+                }
+                boolean found = false;
+                boolean modified = false;
+                if (data.getEntries() != null) {
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            found = true;
+                            if (!entryData.isBuildCompleted()) {
+                                if (entryData.isCancelling()) {
+                                    // Ambiguous: the intent was set via setCancelling() first (e.g. by
+                                    // cancelOutdatedBuilds), but this queue exit itself could equally be
+                                    // a genuine Gerrit-triggered cancellation OR a benign cross-replica
+                                    // queue-item relocation - isLoadBalancedCancellation() can't tell
+                                    // them apart (see its own doc comment; Jenkins preserves no marker
+                                    // on LeftItem either way). Don't finalize yet: mark queueLeft (not
+                                    // completed) and leave isCancelling=true so started()'s own
+                                    // deferred-abort compensator still fires correctly if this really is
+                                    // a relocation and the build reports in from wherever it landed.
+                                    // scheduleDeferredCancelFinalize (below, after the lock is released)
+                                    // decides the real outcome after a grace period.
+                                    entryData.setQueueLeft(true);
+                                    scheduleFinalizeCheck.set(true);
+                                } else if (entryData.getBuildId() == null) {
+                                    // No prior cancellation intent AND build has not started anywhere.
+                                    // This is a potential load-balanced queue move (build will restart
+                                    // on another instance) or a direct Queue.doCancelItem before start.
+                                    // Mark queueLeft=true but do NOT set buildCompleted=true so the
+                                    // IMap entry is preserved for cross-instance PS2-aborts-PS1 scenarios.
+                                    // NOTE: if buildId IS already set, started() already ran on another
+                                    // instance — leave the entry completely untouched so it stays visible
+                                    // to cancelOutdatedBuilds on that instance.
+                                    entryData.setQueueLeft(true);
+                                    logger.info("Marking queueLeft (pre-cancellation-intent queue exit, no "
+                                            + "buildId yet) for project={} event={} - possible load-balanced "
+                                            + "relocation with no started() call yet", projectFullName, key);
+                                } else {
+                                    logger.debug("cancelled() called after started() for project={} event={}: "
+                                            + "build already running (buildId={}), ignoring late onLeft.",
+                                            projectFullName, key, entryData.getBuildId());
+                                }
+                                modified = true;
                             } else {
-                                logger.debug("cancelled() called after started() for project={} event={}: "
-                                        + "build already running (buildId={}), ignoring late onLeft.",
+                                logger.debug("Skipping cancelled() for project={} event={}: "
+                                        + "already completed, buildId={}.",
                                         projectFullName, key, entryData.getBuildId());
                             }
-                            modified = true;
-                        } else {
-                            logger.debug("Skipping cancelled() for project={} event={}: "
-                                    + "already completed, buildId={}.",
-                                    projectFullName, key, entryData.getBuildId());
+                            break;
                         }
-                        break;
                     }
                 }
+                if (!found) {
+                    logger.debug("cancelled() called for untracked project={} event={}: skipping.",
+                            projectFullName, key);
+                }
+                if (modified) {
+                    map.put(key, data);
+                }
+                logger.trace("Cancelled event stored in distributed memory: {}", key);
+            } catch (Exception e) {
+                logger.error("Failed to mark cancelled in distributed memory: project={}, event={}",
+                        projectFullName, key, e);
             }
-            if (!found) {
-                logger.debug("cancelled() called for untracked project={} event={}: skipping.",
-                        projectFullName, key);
-            }
-            if (modified) {
-                map.put(key, data);
-            }
-            logger.trace("Cancelled event stored in distributed memory: {}", key);
-        } catch (Exception e) {
-            logger.error("Failed to mark cancelled in distributed memory: project={}, event={}",
-                    projectFullName, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping cancelled()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
 
-        if (scheduleFinalizeCheck) {
+        if (scheduleFinalizeCheck.get()) {
             scheduleDeferredCancelFinalize(event, project, key, projectFullName);
         }
     }
@@ -810,48 +856,44 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
             return;
         }
         Timer.get().schedule(() -> {
-            if (!tryLockWithTimeout(map, key)) {
-                logger.error("Could not acquire distributed lock for key {} within {}s - skipping "
-                        + "deferred cancel-finalize check", key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-                return;
-            }
-            boolean finalized = false;
-            try {
-                MemoryImprintData data = map.get(key);
-                if (data == null || data.getEntries() == null) {
-                    return;
-                }
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        if (entryData.isCancelling() && !entryData.isBuildCompleted()
-                                && entryData.getBuildId() == null) {
-                            logger.info("Finalizing deferred cancellation for project={} event={}: "
-                                    + "no started() call arrived within {}s grace period - genuine cancel.",
-                                    projectFullName, key, CANCEL_FINALIZE_GRACE_SECONDS);
-                            entryData.setCancelled(true);
-                            entryData.setCancelling(false);
-                            entryData.setCompletedTimestamp(System.currentTimeMillis());
-                            entryData.setBuildCompleted(true);
-                            map.put(key, data);
-                            finalized = true;
-                        } else {
-                            logger.debug("Deferred cancel-finalize check for project={} event={}: "
-                                    + "buildId={} isCancelling={} isBuildCompleted={} - a build "
-                                    + "reported in elsewhere or already completed; treating as a "
-                                    + "relocation, not a genuine cancellation.",
-                                    projectFullName, key, entryData.getBuildId(), entryData.isCancelling(),
-                                    entryData.isBuildCompleted());
-                        }
-                        break;
+            AtomicBoolean finalized = new AtomicBoolean(false);
+            withLock(map, key, () -> {
+                try {
+                    MemoryImprintData data = map.get(key);
+                    if (data == null || data.getEntries() == null) {
+                        return;
                     }
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            if (entryData.isCancelling() && !entryData.isBuildCompleted()
+                                    && entryData.getBuildId() == null) {
+                                logger.info("Finalizing deferred cancellation for project={} event={}: "
+                                        + "no started() call arrived within {}s grace period - genuine cancel.",
+                                        projectFullName, key, CANCEL_FINALIZE_GRACE_SECONDS);
+                                entryData.setCancelled(true);
+                                entryData.setCancelling(false);
+                                entryData.setCompletedTimestamp(System.currentTimeMillis());
+                                entryData.setBuildCompleted(true);
+                                map.put(key, data);
+                                finalized.set(true);
+                            } else {
+                                logger.debug("Deferred cancel-finalize check for project={} event={}: "
+                                        + "buildId={} isCancelling={} isBuildCompleted={} - a build "
+                                        + "reported in elsewhere or already completed; treating as a "
+                                        + "relocation, not a genuine cancellation.",
+                                        projectFullName, key, entryData.getBuildId(), entryData.isCancelling(),
+                                        entryData.isBuildCompleted());
+                            }
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed deferred cancel-finalize check: project={}, event={}",
+                            projectFullName, key, e);
                 }
-            } catch (Exception e) {
-                logger.error("Failed deferred cancel-finalize check: project={}, event={}", projectFullName, key, e);
-                return;
-            } finally {
-                map.unlock(key);
-            }
-            if (finalized) {
+            }).onFailure(() -> logger.error("Could not acquire distributed lock for key {} within {}s - skipping "
+                    + "deferred cancel-finalize check", key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
+            if (finalized.get()) {
                 // The original GerritQueueListener#onLeft call that led here checked
                 // isAllBuildsCompleted() synchronously, before this deferred finalize ran, so it
                 // saw "not yet complete" and skipped the Gerrit-feedback/forget step. Re-invoke it
@@ -877,40 +919,37 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = project.getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping setCancelling()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data != null && data.getEntries() != null) {
-                boolean updated = false;
-                for (EntryData entryData : data.getEntries()) {
-                    if (projectFullName.equals(entryData.getProjectFullName())) {
-                        // Not gated on !isQueueLeft(): an ambiguous queue exit (possible
-                        // load-balanced relocation) is not proof this entry is done, and must
-                        // remain eligible to be marked cancelling so a relocated-then-started
-                        // build still gets cross-replica-aborted (see BuildMemory's identical
-                        // reasoning in cancelOutdatedEvents()).
-                        if (!entryData.isBuildCompleted() && !entryData.isCancelling()
-                                && !entryData.isCancelled()) {
-                            entryData.setCancelling(true);
-                            updated = true;
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data != null && data.getEntries() != null) {
+                    boolean updated = false;
+                    for (EntryData entryData : data.getEntries()) {
+                        if (projectFullName.equals(entryData.getProjectFullName())) {
+                            // Not gated on !isQueueLeft(): an ambiguous queue exit (possible
+                            // load-balanced relocation) is not proof this entry is done, and must
+                            // remain eligible to be marked cancelling so a relocated-then-started
+                            // build still gets cross-replica-aborted (see BuildMemory's identical
+                            // reasoning in cancelOutdatedEvents()).
+                            if (!entryData.isBuildCompleted() && !entryData.isCancelling()
+                                    && !entryData.isCancelled()) {
+                                entryData.setCancelling(true);
+                                updated = true;
+                            }
                         }
                     }
+                    if (updated) {
+                        map.put(key, data);
+                    }
                 }
-                if (updated) {
-                    map.put(key, data);
-                }
+                logger.trace("Cancelling flag set in distributed memory for event: {}", key);
+            } catch (Exception e) {
+                logger.error("Failed to set cancelling flag in distributed memory: project={}, event={}",
+                        projectFullName, key, e);
             }
-            logger.trace("Cancelling flag set in distributed memory for event: {}", key);
-        } catch (Exception e) {
-            logger.error("Failed to set cancelling flag in distributed memory: project={}, event={}",
-                    projectFullName, key, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping setCancelling()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
@@ -989,36 +1028,33 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         java.util.Set<String> keys = new java.util.HashSet<>(map.keySet());
 
         for (String key : keys) {
-            if (!tryLockWithTimeout(map, key)) {
-                logger.error("Could not acquire distributed lock for key {} within {}s - skipping removeProject() entry",
-                        key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-                continue;
-            }
-            try {
-                MemoryImprintData data = map.get(key);
-                if (data == null || data.getEntries() == null) {
-                    continue;
-                }
-                boolean removed = data.getEntries().removeIf(
-                        entryData -> projectFullName.equals(entryData.getProjectFullName()));
-                if (removed) {
-                    if (data.getEntries().isEmpty()) {
-                        map.delete(key);
-                        logger.trace("Removed empty entry for project {} from distributed memory: {}",
-                            projectFullName, key);
-                    } else {
-                        map.put(key, data);
-                        logger.trace("Removed project {} from distributed memory entry: {}",
-                            projectFullName, key);
+            withLock(map, key, () -> {
+                try {
+                    MemoryImprintData data = map.get(key);
+                    if (data == null || data.getEntries() == null) {
+                        return;
                     }
+                    boolean removed = data.getEntries().removeIf(
+                            entryData -> projectFullName.equals(entryData.getProjectFullName()));
+                    if (removed) {
+                        if (data.getEntries().isEmpty()) {
+                            map.delete(key);
+                            logger.trace("Removed empty entry for project {} from distributed memory: {}",
+                                projectFullName, key);
+                        } else {
+                            map.put(key, data);
+                            logger.trace("Removed project {} from distributed memory entry: {}",
+                                projectFullName, key);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Failed to remove project from distributed memory entry: project={}, key={}",
+                            projectFullName, key, e);
+                    // Continue processing other keys
                 }
-            } catch (Exception e) {
-                logger.error("Failed to remove project from distributed memory entry: project={}, key={}",
-                        projectFullName, key, e);
-                // Continue processing other keys
-            } finally {
-                map.unlock(key);
-            }
+            }).onFailure(() -> logger.error(
+                    "Could not acquire distributed lock for key {} within {}s - skipping removeProject() entry",
+                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
         }
     }
 
@@ -1136,37 +1172,34 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s - skipping setEntryCustomUrl()",
-                    key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null || data.getEntries() == null) {
-                logger.warn("Could not set custom URL - event not found: {}", event);
-                return;
-            }
-            boolean found = false;
-            for (EntryData entryData : data.getEntries()) {
-                if (projectFullName.equals(entryData.getProjectFullName())) {
-                    entryData.setCustomUrl(customUrl);
-                    found = true;
-                    break;
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null || data.getEntries() == null) {
+                    logger.warn("Could not set custom URL - event not found: {}", event);
+                    return;
                 }
+                boolean found = false;
+                for (EntryData entryData : data.getEntries()) {
+                    if (projectFullName.equals(entryData.getProjectFullName())) {
+                        entryData.setCustomUrl(customUrl);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    map.put(key, data);
+                    logger.trace("Recording custom URL for {}: {}", event, customUrl);
+                } else {
+                    logger.warn("Could not set custom URL - event not found: {}", event);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to set custom URL in distributed memory: project={}, event={}, url={}",
+                        projectFullName, key, customUrl, e);
             }
-            if (found) {
-                map.put(key, data);
-                logger.trace("Recording custom URL for {}: {}", event, customUrl);
-            } else {
-                logger.warn("Could not set custom URL - event not found: {}", event);
-            }
-        } catch (Exception e) {
-            logger.error("Failed to set custom URL in distributed memory: project={}, event={}, url={}",
-                    projectFullName, key, customUrl, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error(
+                "Could not acquire distributed lock for key {} within {}s - skipping setEntryCustomUrl()",
+                key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
@@ -1182,37 +1215,34 @@ public class HazelcastBuildMemoryStorage extends BuildMemoryStorage {
         String projectFullName = r.getParent().getFullName();
 
         // ATOMIC OPERATION - Distributed lock. EntryProcessor not used (ClassNotFoundException in client mode).
-        if (!tryLockWithTimeout(map, key)) {
-            logger.error("Could not acquire distributed lock for key {} within {}s"
-                    + " - skipping setEntryUnsuccessfulMessage()", key, LOCK_ACQUIRE_TIMEOUT_SECONDS);
-            return;
-        }
-        try {
-            MemoryImprintData data = map.get(key);
-            if (data == null || data.getEntries() == null) {
-                logger.warn("Could not set unsuccessful message - event not found: {}", event);
-                return;
-            }
-            boolean found = false;
-            for (EntryData entryData : data.getEntries()) {
-                if (projectFullName.equals(entryData.getProjectFullName())) {
-                    entryData.setUnsuccessfulMessage(unsuccessfulMessage);
-                    found = true;
-                    break;
+        withLock(map, key, () -> {
+            try {
+                MemoryImprintData data = map.get(key);
+                if (data == null || data.getEntries() == null) {
+                    logger.warn("Could not set unsuccessful message - event not found: {}", event);
+                    return;
                 }
+                boolean found = false;
+                for (EntryData entryData : data.getEntries()) {
+                    if (projectFullName.equals(entryData.getProjectFullName())) {
+                        entryData.setUnsuccessfulMessage(unsuccessfulMessage);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    map.put(key, data);
+                    logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
+                } else {
+                    logger.warn("Could not set unsuccessful message - event not found: {}", event);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to set unsuccessful message in distributed memory:"
+                                + " project={}, event={}, message={}",
+                        projectFullName, key, unsuccessfulMessage, e);
             }
-            if (found) {
-                map.put(key, data);
-                logger.trace("Recording unsuccessful message for {}: {}", event, unsuccessfulMessage);
-            } else {
-                logger.warn("Could not set unsuccessful message - event not found: {}", event);
-            }
-        } catch (Exception e) {
-            logger.error("Failed to set unsuccessful message in distributed memory: project={}, event={}, message={}",
-                    projectFullName, key, unsuccessfulMessage, e);
-        } finally {
-            map.unlock(key);
-        }
+        }).onFailure(() -> logger.error("Could not acquire distributed lock for key {} within {}s"
+                + " - skipping setEntryUnsuccessfulMessage()", key, LOCK_ACQUIRE_TIMEOUT_SECONDS));
     }
 
     @Override
