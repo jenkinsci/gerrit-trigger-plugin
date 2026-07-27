@@ -27,7 +27,10 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.playback;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonymobile.tools.gerrit.gerritevents.GerritHandler;
 import com.sonymobile.tools.gerrit.gerritevents.GerritJsonEventFactory;
@@ -52,8 +55,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.util.Date;
+import java.util.OptionalLong;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -67,9 +72,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -84,6 +91,9 @@ class GerritMissedEventsLoadPersistTest {
     private static final long FIXTURE_TIME_SLICE = 1430244884000L;
     private static final long REGRESSION_EVENT_SECONDS_A = 2000000000L;
     private static final long REGRESSION_EVENT_SECONDS_B = 1000000000L;
+    private static final long BORROW_TEST_OWN_TIMESTAMP_SECONDS = 1000L;
+    private static final long BORROW_TEST_BORROWED_OFFSET_MILLIS = 5000L;
+    private static final long ALREADY_CAUGHT_UP_FRESHNESS_AGE_MINUTES = 5L;
 
     private MockedStatic<Jenkins> jenkinsMockedStatic;
     private MockedStatic<PluginImpl> pluginMockedStatic;
@@ -335,6 +345,139 @@ class GerritMissedEventsLoadPersistTest {
                 + " later time slice");
         assertEquals(TimeUnit.SECONDS.toMillis(REGRESSION_EVENT_SECONDS_A), persistedA.getTimeSlice());
         assertEquals(TimeUnit.SECONDS.toMillis(REGRESSION_EVENT_SECONDS_B), persistedB.getTimeSlice());
+    }
+
+    /**
+     * Regression test for the fixed reconnect-clobber bug: {@code load()} used to unconditionally
+     * overwrite {@code serverTimestamp} from disk on every call, discarding this JVM's own
+     * already-live, in-memory knowledge on a mid-life reconnect - the file is only ever a
+     * periodically-written, lagging snapshot of that same field (see the persistence thread).
+     *
+     * <p>Given a persisted file with an old timestamp
+     * When load() is called (a cold read), then a newer event advances serverTimestamp in memory
+     * beyond the file, and then load() is called again (simulating connectionEstablished() on a
+     * reconnect, not a JVM restart)
+     * Then serverTimestamp keeps its newer in-memory value instead of being regressed back to the
+     * older file value.
+     * @throws IOException if it occurs.
+     */
+    @Test
+    public void testReconnectDoesNotClobberLiveTimestampWithStaleFile() throws IOException {
+        String serverName = "reconnect-server";
+        writeInstanceTimestampFixture(serverName, FIXTURE_TIME_SLICE);
+
+        GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
+        manager.load();
+        assertNotNull(manager.serverTimestamp);
+        assertEquals(FIXTURE_TIME_SLICE, manager.serverTimestamp.getTimeSlice());
+
+        long newerTimestampSeconds = TimeUnit.MILLISECONDS.toSeconds(FIXTURE_TIME_SLICE) + 1;
+        PatchsetCreated newerEvent = Setup.createPatchsetCreated(serverName, "someProject", "refs/heads/master",
+                Long.toString(newerTimestampSeconds));
+        manager.saveTimestamp(newerEvent);
+        assertEquals(TimeUnit.SECONDS.toMillis(newerTimestampSeconds), manager.serverTimestamp.getTimeSlice());
+
+        // Simulate a reconnect: connectionEstablished() calls load() again, without this JVM
+        // ever having restarted.
+        manager.load();
+
+        assertEquals("a reconnect must not regress this instance's own live knowledge back to the "
+                        + "stale file value", TimeUnit.SECONDS.toMillis(newerTimestampSeconds),
+                manager.serverTimestamp.getTimeSlice());
+    }
+
+    /**
+     * Given a mocked {@link MissedEventsCoordinationStrategy} reporting a shared freshness value
+     * ahead of this instance's own
+     * When the persistence tick runs
+     * Then this instance's own value is still pushed to the shared signal, but the value
+     * persisted to this instance's own local file is the larger, borrowed one - with no events,
+     * since this instance never itself observed them. This is the mechanism by which a later
+     * cold-start file scan can see cluster-wide freshness rather than only whatever this specific
+     * instance itself directly processed.
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    public void testPersistenceTickPersistsLargerBorrowedFreshnessWithNoEvents() throws Exception {
+        String serverName = "borrow-server";
+        long ownTimestampSeconds = BORROW_TEST_OWN_TIMESTAMP_SECONDS;
+        long borrowedTimestampMillis = TimeUnit.SECONDS.toMillis(ownTimestampSeconds)
+                + BORROW_TEST_BORROWED_OFFSET_MILLIS;
+
+        MissedEventsCoordinationStrategy coordinationStrategy = mock(MissedEventsCoordinationStrategy.class);
+        when(coordinationStrategy.getSharedInstanceFreshness(serverName))
+                .thenReturn(OptionalLong.of(borrowedTimestampMillis));
+        CoordinationModeFactory factory = mock(CoordinationModeFactory.class);
+        when(factory.getMissedEventsCoordinationStrategy()).thenReturn(coordinationStrategy);
+
+        try (MockedStatic<CoordinationModeFactory> factoryMockedStatic = mockStatic(CoordinationModeFactory.class)) {
+            factoryMockedStatic.when(CoordinationModeFactory::get).thenReturn(factory);
+
+            GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
+            PatchsetCreated event = Setup.createPatchsetCreated(serverName, "project", "ref",
+                    Long.toString(ownTimestampSeconds));
+            manager.saveTimestamp(event);
+
+            runPersistenceCheck(manager);
+
+            verify(coordinationStrategy).publishInstanceFreshness(serverName,
+                    TimeUnit.SECONDS.toMillis(ownTimestampSeconds));
+
+            EventTimeSlice persisted = new InstanceTimestampStore(serverName).readTimestamp();
+            assertNotNull("the borrowed, larger value should have been persisted locally", persisted);
+            assertEquals(borrowedTimestampMillis, persisted.getTimeSlice());
+            assertTrue("a borrowed value carries no events, since this instance never observed them",
+                    persisted.getEvents().isEmpty());
+        }
+    }
+
+    /**
+     * Given a mocked {@link MissedEventsCoordinationStrategy} providing a shared freshness value
+     * and an {@code ALREADY_CAUGHT_UP} outcome - this instance never itself fetches, so {@link
+     * GerritMissedEventsPlaybackManager#saveTimestamp} never runs
+     * When connectionEstablished() is called
+     * Then serverTimestamp is seeded from the computed candidate anyway, and the persistence
+     * thread is started - closing the gap where a newly caught-up instance that never itself
+     * received an event (live or replayed) would otherwise have no record of its own
+     * just-confirmed floor value.
+     * @throws Exception if reflection fails.
+     */
+    @Test
+    public void testConnectionEstablishedSeedsBaselineWhenAlreadyCaughtUp() throws Exception {
+        String serverName = "already-caught-up-server";
+        long sharedFreshnessMillis = System.currentTimeMillis()
+                - TimeUnit.MINUTES.toMillis(ALREADY_CAUGHT_UP_FRESHNESS_AGE_MINUTES);
+
+        MissedEventsCoordinationStrategy coordinationStrategy = mock(MissedEventsCoordinationStrategy.class);
+        when(coordinationStrategy.getSharedInstanceFreshness(serverName))
+                .thenReturn(OptionalLong.of(sharedFreshnessMillis));
+        when(coordinationStrategy.coordinateCatchUp(eq(serverName), eq(sharedFreshnessMillis), any(), any()))
+                .thenReturn(MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP);
+        CoordinationModeFactory factory = mock(CoordinationModeFactory.class);
+        when(factory.getMissedEventsCoordinationStrategy()).thenReturn(coordinationStrategy);
+
+        try (MockedStatic<CoordinationModeFactory> factoryMockedStatic = mockStatic(CoordinationModeFactory.class)) {
+            factoryMockedStatic.when(CoordinationModeFactory::get).thenReturn(factory);
+
+            GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
+            assertNull("no local file exists yet for this fresh server", manager.serverTimestamp);
+
+            manager.connectionEstablished();
+
+            assertNotNull("an ALREADY_CAUGHT_UP outcome must still seed this instance's own baseline",
+                    manager.serverTimestamp);
+            assertEquals(sharedFreshnessMillis, manager.serverTimestamp.getTimeSlice());
+
+            Field field = GerritMissedEventsPlaybackManager.class.getDeclaredField("persistenceCheck");
+            field.setAccessible(true);
+            Object persistenceCheck = field.get(manager);
+            Method isRunningMethod = persistenceCheck.getClass().getDeclaredMethod("isRunning");
+            isRunningMethod.setAccessible(true);
+            assertTrue("the persistence thread must start even if gerritEvent() was never called",
+                    (Boolean)isRunningMethod.invoke(persistenceCheck));
+
+            manager.shutdown();
+        }
     }
 
     /**

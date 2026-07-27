@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,6 +56,16 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
     private static final Logger logger = LoggerFactory.getLogger(HazelcastMissedEventsCoordinationStrategy.class);
 
     static final String WATERMARK_MAP_NAME = "gerrit-trigger-missed-events-watermark";
+
+    /**
+     * Cross-instance freshness map, keyed by server name, holding the most advanced last-known-
+     * alive timestamp published by any JVM for that server - see {@link #publishInstanceFreshness}
+     * and {@link #getSharedInstanceFreshness}. Deliberately a separate map from {@link
+     * #WATERMARK_MAP_NAME}: this one is an unlocked, max-only signal with no mutual-exclusion
+     * semantics, updated far more often (on every persistence tick, by every live instance) than
+     * the watermark, which only changes on an actual catch-up fetch.
+     */
+    static final String INSTANCE_FRESHNESS_MAP_NAME = "gerrit-trigger-missed-events-instance-freshness";
 
     /**
      * System property: maximum seconds to wait to acquire the missed-events coordination lock.
@@ -127,5 +138,32 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
             maintenanceAction.run();
             map.unlock(serverName);
         }
+    }
+
+    /**
+     * Atomically merges {@code timestampMillis} into the shared per-server freshness value via
+     * {@link IMap#merge}, which Hazelcast executes as a single partition-confined operation - safe
+     * for concurrent callers across every live instance without needing a lock, unlike {@link
+     * #coordinateCatchUp}'s watermark.
+     *
+     * @param serverName the Gerrit server this timestamp is for.
+     * @param timestampMillis this JVM's own last-known-alive timestamp (epoch millis).
+     */
+    @Override
+    public void publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
+        IMap<String, Long> map = hazelcastInstance.getMap(INSTANCE_FRESHNESS_MAP_NAME);
+        map.merge(serverName, timestampMillis, Math::max);
+    }
+
+    /**
+     * @param serverName the Gerrit server to look up.
+     * @return the shared freshness timestamp, or empty if no instance has published one yet.
+     */
+    @NonNull
+    @Override
+    public OptionalLong getSharedInstanceFreshness(@NonNull String serverName) {
+        IMap<String, Long> map = hazelcastInstance.getMap(INSTANCE_FRESHNESS_MAP_NAME);
+        Long value = map.get(serverName);
+        return value != null ? OptionalLong.of(value) : OptionalLong.empty();
     }
 }

@@ -31,6 +31,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.OptionalLong;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,6 +85,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         System.setProperty(HazelcastMissedEventsCoordinationStrategy.LOCK_WAIT_TIMEOUT_PROPERTY,
                 SHORT_LOCK_WAIT_TIMEOUT_SECONDS);
         clearWatermarkMap();
+        clearInstanceFreshnessMap();
     }
 
     @After
@@ -91,6 +93,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         restoreProperty(HazelcastMissedEventsCoordinationStrategy.LOCK_WAIT_TIMEOUT_PROPERTY, originalWaitTimeout);
         restoreProperty(HazelcastMissedEventsCoordinationStrategy.LOCK_LEASE_PROPERTY, originalLease);
         clearWatermarkMap();
+        clearInstanceFreshnessMap();
     }
 
     private void restoreProperty(String key, String value) {
@@ -116,6 +119,14 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         if (HazelcastInstanceProvider.isInitialized()) {
             HazelcastInstanceProvider.getInstance()
                     .getMap(HazelcastMissedEventsCoordinationStrategy.WATERMARK_MAP_NAME)
+                    .clear();
+        }
+    }
+
+    private void clearInstanceFreshnessMap() {
+        if (HazelcastInstanceProvider.isInitialized()) {
+            HazelcastInstanceProvider.getInstance()
+                    .getMap(HazelcastMissedEventsCoordinationStrategy.INSTANCE_FRESHNESS_MAP_NAME)
                     .clear();
         }
     }
@@ -292,5 +303,67 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
                 maintenanceRuns::incrementAndGet);
 
         assertEquals(2, maintenanceRuns.get());
+    }
+
+    /**
+     * Given no instance has published a freshness value for a server
+     * When getSharedInstanceFreshness is called
+     * Then it returns empty, not a default of 0 or an exception.
+     */
+    @Test
+    public void testSharedInstanceFreshnessIsEmptyWhenNothingPublished() {
+        HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
+
+        assertEquals(OptionalLong.empty(), strategy.getSharedInstanceFreshness("server-g"));
+    }
+
+    /**
+     * Given one instance publishes a freshness value
+     * When another instance (a separate strategy object backed by the same cluster) reads it
+     * Then it sees the published value - this is the cross-instance visibility the whole signal
+     * exists to provide.
+     */
+    @Test
+    public void testPublishedFreshnessIsVisibleAcrossInstances() {
+        HazelcastMissedEventsCoordinationStrategy publisher = newStrategy();
+        HazelcastMissedEventsCoordinationStrategy reader = newStrategy();
+
+        publisher.publishInstanceFreshness("server-h", WATERMARK_1000);
+
+        assertEquals(OptionalLong.of(WATERMARK_1000), reader.getSharedInstanceFreshness("server-h"));
+    }
+
+    /**
+     * Given a freshness value already published for a server
+     * When a smaller value is published for the same server
+     * Then the shared value stays at the larger one - this is a max-merge, not an overwrite, so a
+     * momentarily-behind instance can never regress what peers already know.
+     */
+    @Test
+    public void testPublishInstanceFreshnessNeverRegresses() {
+        HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
+
+        strategy.publishInstanceFreshness("server-i", WATERMARK_2000);
+        strategy.publishInstanceFreshness("server-i", WATERMARK_500);
+
+        assertEquals(OptionalLong.of(WATERMARK_2000), strategy.getSharedInstanceFreshness("server-i"));
+    }
+
+    /**
+     * Given two different servers
+     * When each publishes its own freshness value
+     * Then each server's shared value is tracked independently, same guarantee as {@link
+     * #testDifferentServersAreCoordinatedIndependently()} but for the freshness signal rather
+     * than the watermark/lock.
+     */
+    @Test
+    public void testInstanceFreshnessIsTrackedIndependentlyPerServer() {
+        HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
+
+        strategy.publishInstanceFreshness("server-j", WATERMARK_2000);
+        strategy.publishInstanceFreshness("server-k", WATERMARK_500);
+
+        assertEquals(OptionalLong.of(WATERMARK_2000), strategy.getSharedInstanceFreshness("server-j"));
+        assertEquals(OptionalLong.of(WATERMARK_500), strategy.getSharedInstanceFreshness("server-k"));
     }
 }

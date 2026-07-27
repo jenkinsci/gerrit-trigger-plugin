@@ -23,6 +23,8 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import java.util.OptionalLong;
+
 /**
  * Coordinates missed-events playback catch-up across however many JVMs are sharing one
  * {@code JENKINS_HOME} for a given Gerrit server, so that at most one JVM performs the catch-up
@@ -78,4 +80,43 @@ public abstract class MissedEventsCoordinationStrategy {
             long candidateCatchUpFrom,
             @NonNull MissedEventsCatchUpAction catchUpAction,
             @NonNull Runnable maintenanceAction);
+
+    /**
+     * Publishes this JVM's own last-known-alive timestamp for {@code serverName} to whatever
+     * shared, cross-instance freshness signal this coordination mode offers, so that other JVMs
+     * reconnecting can see it without waiting on the slower, eventually-consistent per-instance
+     * file scan ({@code InstanceTimestampStore#computeMaxTimestampAcrossInstances()}).
+     *
+     * <p>This is deliberately a separate, best-effort signal from {@link #coordinateCatchUp}'s
+     * watermark: it only ever moves forward (a max-merge, not an overwrite) and carries no mutual
+     * exclusion or lock semantics of its own - multiple JVMs publish to it concurrently and
+     * freely. A coordination mode with only one JVM to coordinate with (e.g. local mode) may
+     * implement this as a no-op, since that JVM's own per-instance file already is its complete
+     * view.</p>
+     *
+     * @param serverName the Gerrit server this timestamp is for.
+     * @param timestampMillis this JVM's own last-known-alive timestamp (epoch millis) for {@code
+     *         serverName}.
+     */
+    public abstract void publishInstanceFreshness(@NonNull String serverName, long timestampMillis);
+
+    /**
+     * Returns the most advanced last-known-alive timestamp published by any JVM (including this
+     * one) for {@code serverName} via {@link #publishInstanceFreshness}, or empty if this
+     * coordination mode has nothing to share (no JVM has published yet, or this mode doesn't
+     * support cross-instance sharing at all - e.g. local mode, or a freshly-reformed cluster with
+     * no prior state).
+     *
+     * <p>Callers should treat an empty result as "no additional information available", falling
+     * back to the per-instance file scan rather than treating it as "definitely nothing missed" -
+     * this signal is a faster-path supplement to that scan, not a replacement for it, since - in
+     * a topology where every JVM's coordination-mode member can be lost simultaneously (e.g. a
+     * Hazelcast sidecar co-located with its own Jenkins replica) - this shared value can be wiped
+     * clean by the very same outage the file-based fallback exists to survive.</p>
+     *
+     * @param serverName the Gerrit server to look up.
+     * @return the shared freshness timestamp, or empty if none is known.
+     */
+    @NonNull
+    public abstract OptionalLong getSharedInstanceFreshness(@NonNull String serverName);
 }

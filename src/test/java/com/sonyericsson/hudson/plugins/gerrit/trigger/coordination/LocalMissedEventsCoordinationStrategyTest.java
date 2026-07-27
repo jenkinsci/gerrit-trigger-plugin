@@ -26,6 +26,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOut
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.OptionalLong;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -223,5 +224,23 @@ public class LocalMissedEventsCoordinationStrategyTest {
         assertEquals(MissedEventsCatchUpOutcome.PERFORMED, outcomeB);
         assertEquals(1, callCountA.get());
         assertEquals(1, callCountB.get());
+    }
+
+    /**
+     * Given a single JVM (nothing else to share freshness with)
+     * When publishInstanceFreshness is called any number of times, for any server
+     * Then getSharedInstanceFreshness always returns empty - local mode has no cross-instance
+     * signal to offer, unlike the Hazelcast-backed implementation.
+     */
+    @Test
+    public void testSharedInstanceFreshnessIsAlwaysEmpty() {
+        LocalMissedEventsCoordinationStrategy strategy = new LocalMissedEventsCoordinationStrategy();
+
+        assertEquals(OptionalLong.empty(), strategy.getSharedInstanceFreshness("server-i"));
+
+        strategy.publishInstanceFreshness("server-i", WATERMARK_1000);
+        strategy.publishInstanceFreshness("server-i", WATERMARK_2000);
+
+        assertEquals(OptionalLong.empty(), strategy.getSharedInstanceFreshness("server-i"));
     }
 }

@@ -112,6 +112,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     private volatile long lastPersistedTimeSlice = 0;
     /**
+     * Last own {@code serverTimestamp} value pushed to the shared cross-instance freshness signal
+     * (see {@link MissedEventsCoordinationStrategy#publishInstanceFreshness}). Deliberately
+     * separate from {@link #lastPersistedTimeSlice}, which tracks what was last written to this
+     * instance's own local file - that value may be a borrowed, cluster-wide one rather than this
+     * field's own push, so the two guards can legitimately diverge.
+     */
+    private volatile long lastPublishedTimeSlice = 0;
+    /**
      * Identifier for this JVM process, used to namespace this instance's persisted timestamp
      * file from those of other JVMs sharing the same {@code JENKINS_HOME}.
      */
@@ -149,6 +157,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     private void startPersistenceCheck() {
         lastPersistedTimeSlice = 0;
+        lastPublishedTimeSlice = 0;
         persistenceCheck.start();
     }
 
@@ -220,7 +229,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * @throws IOException is we cannot unmarshal.
      */
     protected void load() throws IOException {
-        serverTimestamp = instanceTimestampStore.readTimestamp();
+        // Only read from disk on a true cold start (nothing accumulated in this JVM yet). A live
+        // reconnect (this JVM never restarted, only its Gerrit connection dropped) already holds
+        // a serverTimestamp at least as fresh as anything the file could offer - the file is only
+        // ever a lagging, periodically-written snapshot of it (see the persistence thread below) -
+        // so unconditionally re-reading here would regress this instance's own knowledge backward
+        // on every single reconnect.
+        if (serverTimestamp == null) {
+            serverTimestamp = instanceTimestampStore.readTimestamp();
+        }
     }
 
     /**
@@ -239,10 +256,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     /**
      * When the connection is established, we determine the most advanced known timestamp across
-     * every JVM instance persisting state for this server (see {@link InstanceTimestampStore}),
-     * and - coordinated via {@link MissedEventsCoordinationStrategy} so that at most one JVM does
-     * this at a time and no reconnect re-requests an already-covered range - request any missed
-     * events from the Gerrit events-log plugin and pump them in to play them back.
+     * every JVM instance persisting state for this server - combining the per-instance file scan
+     * ({@link InstanceTimestampStore#computeMaxTimestampAcrossInstances()}) with whatever faster,
+     * shared cross-instance signal this coordination mode offers ({@link
+     * MissedEventsCoordinationStrategy#getSharedInstanceFreshness}) - and - coordinated via {@link
+     * MissedEventsCoordinationStrategy#coordinateCatchUp} so that at most one JVM does this at a
+     * time and no reconnect re-requests an already-covered range - request any missed events from
+     * the Gerrit events-log plugin and pump them in to play them back.
      *
      * <p>This runs on every reconnect, not just process cold-start: each JVM keeps its own live
      * Gerrit connection and event processing is already deduplicated across JVMs via the event
@@ -269,7 +289,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             return;
         }
 
-        OptionalLong candidate = instanceTimestampStore.computeMaxTimestampAcrossInstances();
+        MissedEventsCoordinationStrategy coordinationStrategy =
+                CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
+        OptionalLong candidate = maxOptionalLong(
+                instanceTimestampStore.computeMaxTimestampAcrossInstances(),
+                coordinationStrategy.getSharedInstanceFreshness(serverName));
         if (candidate.isEmpty()) {
             logger.debug("No known last-alive timestamp for server {}", serverName);
             playBackComplete = true;
@@ -279,6 +303,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         long diff = System.currentTimeMillis() - candidateCatchUpFrom;
         if (diff <= 0) {
             logger.debug("Zero date range from last-alive timestamp for server {}", serverName);
+            ensureBaselineCaptured(candidateCatchUpFrom);
             playBackComplete = true;
             return;
         }
@@ -289,8 +314,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         long staleAgeMillis = TimeUnit.HOURS.toMillis(
                 Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS));
-        MissedEventsCoordinationStrategy coordinationStrategy =
-                CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
         MissedEventsCatchUpOutcome outcome = coordinationStrategy.coordinateCatchUp(
                 serverName,
                 candidateCatchUpFrom,
@@ -298,8 +321,54 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 () -> instanceTimestampStore.pruneStaleInstanceFiles(staleAgeMillis));
         logger.info("Missed-events catch-up outcome for server {}: {}", serverName, outcome);
 
+        ensureBaselineCaptured(candidateCatchUpFrom);
+
         playBackComplete = true;
         logger.info("Processing completed for server: {}", serverName);
+    }
+
+    /**
+     * Ensures this instance's own known baseline reflects at least {@code candidateCatchUpFrom} -
+     * the cross-instance floor just confirmed by this {@link #connectionEstablished()} call - and
+     * that the persistence thread is running to push/pull it immediately.
+     *
+     * <p>Neither an {@code ALREADY_CAUGHT_UP} outcome (this instance never itself fetched) nor a
+     * {@code PERFORMED} outcome whose fetched range happened to be empty (nor the "already
+     * essentially caught up" {@code diff <= 0} short-circuit above) ever calls {@link
+     * #saveTimestamp}, so none of them touch {@link #serverTimestamp} on their own. Without this,
+     * a newly caught-up instance that just confirmed a real floor value would have nothing
+     * capturing it - not {@code serverTimestamp}, not its own local file, not even a push to the
+     * shared freshness signal - until its own live Gerrit stream happens to deliver an event,
+     * which may be arbitrarily far in the future. The persistence thread is likewise only ever
+     * started from {@link #gerritEvent}, so an instance that has never yet processed an event of
+     * its own (live or replayed) needs it started here too, rather than waiting on that same
+     * first event.</p>
+     *
+     * @param candidateCatchUpFrom the cross-instance floor computed for this call.
+     */
+    private void ensureBaselineCaptured(long candidateCatchUpFrom) {
+        if (serverTimestamp == null) {
+            serverTimestamp = new EventTimeSlice(candidateCatchUpFrom);
+        }
+        if (!persistenceCheck.isRunning()) {
+            startPersistenceCheck();
+        }
+    }
+
+    /**
+     * @param a one candidate, possibly empty.
+     * @param b another candidate, possibly empty.
+     * @return the larger of the two if both are present, whichever one is present if only one is,
+     *         or empty if neither is.
+     */
+    private static OptionalLong maxOptionalLong(OptionalLong a, OptionalLong b) {
+        if (a.isEmpty()) {
+            return b;
+        }
+        if (b.isEmpty()) {
+            return a;
+        }
+        return OptionalLong.of(Math.max(a.getAsLong(), b.getAsLong()));
     }
 
     /**
@@ -673,19 +742,48 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         @Override
         public void run() {
-            if (serverTimestamp != null && lastPersistedTimeSlice < serverTimestamp.getTimeSlice()) {
-                lastPersistedTimeSlice = serverTimestamp.getTimeSlice();
-                persistTimeStamp();
+            long ownTimeSlice = serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE;
+            MissedEventsCoordinationStrategy coordinationStrategy =
+                    CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
+
+            // Push this instance's own freshness up first, so peers can see it - independently
+            // throttled from the local persist below, since the two can legitimately diverge
+            // (e.g. this instance's own value hasn't moved, but a peer's has).
+            if (ownTimeSlice > lastPublishedTimeSlice) {
+                lastPublishedTimeSlice = ownTimeSlice;
+                coordinationStrategy.publishInstanceFreshness(serverName, ownTimeSlice);
+            }
+
+            // Persist the best currently-known value - this instance's own, or a fresher one
+            // borrowed from a peer via the shared signal - to this instance's own local file, so a
+            // later cold-start file scan sees cluster-wide freshness, not just what this specific
+            // instance itself ever directly observed.
+            long sharedTimeSlice = coordinationStrategy.getSharedInstanceFreshness(serverName).orElse(Long.MIN_VALUE);
+            long bestKnownTimeSlice = Math.max(ownTimeSlice, sharedTimeSlice);
+            if (bestKnownTimeSlice > Long.MIN_VALUE && lastPersistedTimeSlice < bestKnownTimeSlice) {
+                lastPersistedTimeSlice = bestKnownTimeSlice;
+                persistTimeStamp(bestKnownTimeSlice, ownTimeSlice);
             }
         }
 
         /**
-         * Saves the current event timestamp to this instance's own xml file.
+         * Saves {@code timeSliceToPersist} to this instance's own xml file. When it equals this
+         * instance's own {@code ownTimeSlice}, the real {@link #serverTimestamp} (with its known
+         * events) is persisted, same as before this method took parameters; otherwise it's a value
+         * borrowed from a peer via the shared freshness signal, persisted as a bare timestamp with
+         * no events - {@link InstanceTimestampStore#computeMaxTimestampAcrossInstances()} only
+         * ever reads {@link EventTimeSlice#getTimeSlice()} back out, never the events list, so
+         * this loses nothing that read path relies on.
+         *
+         * @param timeSliceToPersist the value to write - this instance's own, or a borrowed one.
+         * @param ownTimeSlice this instance's own current time slice, for comparison.
          */
-        private void persistTimeStamp() {
+        private void persistTimeStamp(long timeSliceToPersist, long ownTimeSlice) {
             try {
-                EventTimeSlice serverTimestampCopy = EventTimeSlice.shallowCopy(serverTimestamp);
-                instanceTimestampStore.writeTimestamp(serverTimestampCopy);
+                EventTimeSlice toPersist = timeSliceToPersist == ownTimeSlice
+                        ? EventTimeSlice.shallowCopy(serverTimestamp)
+                        : new EventTimeSlice(timeSliceToPersist);
+                instanceTimestampStore.writeTimestamp(toPersist);
             } catch (IOException e) {
                 logger.error(e.getMessage(), e);
             }

@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,5 +90,27 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
             maintenanceAction.run();
             lock.unlock();
         }
+    }
+
+    /**
+     * No-op: a single JVM has no other instance to share freshness with, and its own per-instance
+     * file already is its complete view.
+     *
+     * @param serverName unused.
+     * @param timestampMillis unused.
+     */
+    @Override
+    public void publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
+        // Nothing to share with in a single-JVM deployment.
+    }
+
+    /**
+     * @param serverName unused.
+     * @return always empty - see {@link #publishInstanceFreshness}.
+     */
+    @NonNull
+    @Override
+    public OptionalLong getSharedInstanceFreshness(@NonNull String serverName) {
+        return OptionalLong.empty();
     }
 }
