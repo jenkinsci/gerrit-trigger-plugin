@@ -674,12 +674,14 @@ public class BuildMemory {
      * Ported from RunningJobs.checkCausedByGerrit().
      * <p>
      * <strong>Important:</strong> Event comparison is delegated to the storage implementation
-     * via {@link BuildMemoryStorage#eventsMatch(GerritTriggeredEvent, GerritTriggeredEvent)}.
-     * This respects the abstraction boundary:
+     * via {@link BuildMemoryStorage#eventsMatch(GerritTriggeredEvent, GerritTriggeredEvent)},
+     * which always uses logical equality rather than instance identity ({@code ==}) - events
+     * can be deserialized (e.g. {@code GerritCause}'s event loaded from disk, or from Hazelcast
+     * in distributed mode), so two logically-equal events are not guaranteed to be the same
+     * instance:
      * <ul>
-     *   <li><strong>Local mode:</strong> Uses identity comparison (==)</li>
-     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdGenerator
-     *       since events may be deserialized</li>
+     *   <li><strong>Local mode:</strong> Uses {@link Object#equals(Object)}</li>
+     *   <li><strong>Distributed mode:</strong> Uses logical comparison via EventIdGenerator</li>
      * </ul>
      *
      * @param event the event to check for
