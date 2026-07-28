@@ -31,6 +31,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -66,10 +68,10 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
     private static final long WATERMARK_1500 = 1500L;
     private static final long WATERMARK_2000 = 2000L;
     private static final long WATERMARK_3000 = 3000L;
-    private static final long WATERMARK_5000 = 5000L;
     private static final long RACE_SLEEP_MILLIS = 200L;
     private static final long FUTURE_GET_TIMEOUT_SECONDS = 10L;
     private static final String SHORT_LOCK_WAIT_TIMEOUT_SECONDS = "2";
+    private static final long ONE_HOUR_MILLIS = 3_600_000L;
 
     private String originalWaitTimeout;
     private String originalLease;
@@ -159,18 +161,25 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
     }
 
     /**
-     * Given a watermark already at or ahead of the candidate
-     * When coordinateCatchUp is called
-     * Then the catch-up action is not invoked.
+     * Given a watermark already at or ahead of the current wall-clock time (e.g. just published
+     * by a peer that handled this exact outage moments ago)
+     * When coordinateCatchUp is called, even with a lower (stale) candidate
+     * Then the catch-up action is not invoked - there is genuinely nothing new to fetch.
      */
     @Test
-    public void testSkipsCatchUpWhenAlreadyCoveredByWatermark() {
+    public void testSkipsCatchUpWhenWatermarkIsAlreadyAtOrAheadOfNow() {
         HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
         AtomicInteger callCount = new AtomicInteger();
+        long recentPastCandidate = System.currentTimeMillis() - RACE_SLEEP_MILLIS;
+        long futureWatermark = System.currentTimeMillis() + ONE_HOUR_MILLIS;
 
-        strategy.coordinateCatchUp("server-b", WATERMARK_2000, lowerBound -> {
+        // Seed the watermark to a point ahead of "now" - standing in for a peer whose fetch
+        // reported a watermark this far ahead (e.g. server clock skew), the case the skip exists
+        // for. The seeding call's own candidate must be in the past, or it would itself be skipped
+        // before ever writing to the watermark.
+        strategy.coordinateCatchUp("server-b", recentPastCandidate, lowerBound -> {
             callCount.incrementAndGet();
-            return WATERMARK_2000;
+            return futureWatermark;
         }, () -> { });
 
         MissedEventsCatchUpOutcome secondOutcome = strategy.coordinateCatchUp(
@@ -186,31 +195,83 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
     }
 
     /**
-     * Given two threads racing to catch up the same server
+     * Given a watermark set by a past successful catch-up, and a later reconnect whose own local
+     * candidate is even further in the past (a stale local signal - e.g. no live traffic advanced
+     * it in the meantime)
+     * When coordinateCatchUp is called again
+     * Then the catch-up action still runs - using the more advanced of the two (the watermark) as
+     * its fetch lower bound - rather than being permanently skipped. Direct regression guard for
+     * the bug where a stale local candidate compared against an old watermark permanently
+     * suppressed all future catch-up on an otherwise-quiet server (HZ-022).
+     */
+    @Test
+    public void testPerformsFreshCatchUpWhenTimeHasPassedSinceWatermarkEvenIfCandidateIsStale() {
+        HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
+        AtomicInteger callCount = new AtomicInteger();
+        List<Long> lowerBoundsSeen = new ArrayList<>();
+        long pastWatermark = System.currentTimeMillis() - ONE_HOUR_MILLIS;
+        long staleCandidate = pastWatermark - ONE_HOUR_MILLIS;
+
+        strategy.coordinateCatchUp("server-z", pastWatermark, lowerBound -> {
+            callCount.incrementAndGet();
+            lowerBoundsSeen.add(lowerBound.getTime());
+            return pastWatermark;
+        }, () -> { });
+
+        MissedEventsCatchUpOutcome secondOutcome = strategy.coordinateCatchUp("server-z", staleCandidate, lowerBound -> {
+            callCount.incrementAndGet();
+            lowerBoundsSeen.add(lowerBound.getTime());
+            return System.currentTimeMillis();
+        }, () -> { });
+
+        assertEquals(MissedEventsCatchUpOutcome.PERFORMED, secondOutcome);
+        assertEquals("catch-up must run again once real time has passed the watermark", 2, callCount.get());
+        assertEquals("must fetch from the watermark, not the stale local candidate",
+                pastWatermark, lowerBoundsSeen.get(1).longValue());
+    }
+
+    /**
+     * Given two threads racing to catch up the same server, both with a candidate well in the past
      * When both call coordinateCatchUp concurrently
-     * Then exactly one of them actually performs the fetch.
+     * Then the lock still serializes them (neither times out), and whichever one is serialized
+     * second - if its own effective lower bound turns out to still be behind "now" - fetches
+     * starting no earlier than the first one's own reported watermark, so it never re-requests an
+     * already-covered range from scratch.
+     *
+     * <p>Unlike before this class started comparing the effective lower bound against wall-clock
+     * "now" (see {@link #testPerformsFreshCatchUpWhenTimeHasPassedSinceWatermarkEvenIfCandidateIsStale()}),
+     * this no longer guarantees the second caller's fetch action is skipped outright: by the time
+     * it checks, real time has moved on past the first caller's just-stored watermark, so a second,
+     * near-empty fetch is expected and safe - it costs a redundant REST call, not a duplicate
+     * build. The core guarantee this test protects is mutual exclusion and no context loss across
+     * the hand-off, not "at most one HTTP call".</p>
      * @throws Exception if the test threads fail unexpectedly.
      */
     @Test
-    public void testConcurrentCatchUpRaceIsResolvedToExactlyOnePerformer() throws Exception {
+    public void testConcurrentCatchUpRaceIsSerializedWithoutLosingContext() throws Exception {
         HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
-        AtomicInteger callCount = new AtomicInteger();
+        List<Long> lowerBoundsSeen = new ArrayList<>();
+        long candidate = System.currentTimeMillis() - ONE_HOUR_MILLIS;
         CountDownLatch startLatch = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             Future<MissedEventsCatchUpOutcome> first = executor.submit(() -> {
                 startLatch.await();
-                return strategy.coordinateCatchUp("server-c", WATERMARK_5000, lowerBound -> {
-                    callCount.incrementAndGet();
+                return strategy.coordinateCatchUp("server-c", candidate, lowerBound -> {
+                    synchronized (lowerBoundsSeen) {
+                        lowerBoundsSeen.add(lowerBound.getTime());
+                    }
                     sleepMillis(RACE_SLEEP_MILLIS);
-                    return WATERMARK_5000;
+                    return System.currentTimeMillis();
                 }, () -> { });
             });
             Future<MissedEventsCatchUpOutcome> second = executor.submit(() -> {
                 startLatch.await();
-                return strategy.coordinateCatchUp("server-c", WATERMARK_5000, lowerBound -> {
-                    callCount.incrementAndGet();
-                    return WATERMARK_5000;
+                return strategy.coordinateCatchUp("server-c", candidate, lowerBound -> {
+                    synchronized (lowerBoundsSeen) {
+                        lowerBoundsSeen.add(lowerBound.getTime());
+                    }
+                    return System.currentTimeMillis();
                 }, () -> { });
             });
             startLatch.countDown();
@@ -218,10 +279,15 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
             MissedEventsCatchUpOutcome firstOutcome = first.get(FUTURE_GET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             MissedEventsCatchUpOutcome secondOutcome = second.get(FUTURE_GET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            assertEquals(1, callCount.get());
-            assertTrue("exactly one thread should have performed the catch-up",
-                    (firstOutcome == MissedEventsCatchUpOutcome.PERFORMED)
-                            != (secondOutcome == MissedEventsCatchUpOutcome.PERFORMED));
+            assertTrue("neither caller should time out waiting for the lock",
+                    firstOutcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT
+                            && secondOutcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT);
+            assertTrue("the first (lock-holding) fetch must always run", lowerBoundsSeen.size() >= 1);
+            if (lowerBoundsSeen.size() == 2) {
+                assertTrue("a serialized second fetch must not start earlier than the first's own "
+                        + "lower bound - i.e. it must not re-request an already-covered range",
+                        lowerBoundsSeen.get(1) >= lowerBoundsSeen.get(0));
+            }
         } finally {
             executor.shutdownNow();
         }

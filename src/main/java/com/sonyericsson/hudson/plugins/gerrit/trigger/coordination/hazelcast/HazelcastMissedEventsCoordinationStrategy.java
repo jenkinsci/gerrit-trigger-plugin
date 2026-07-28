@@ -120,14 +120,21 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
         try {
             Long watermark = map.get(serverName);
             long currentWatermark = watermark != null ? watermark : 0L;
-            if (currentWatermark >= candidateCatchUpFrom) {
-                logger.debug("Missed-events watermark for server {} is already at or ahead of this "
-                        + "instance's candidate ({} >= {}); skipping catch-up.",
-                        serverName, currentWatermark, candidateCatchUpFrom);
+            // Use whichever of the two is more advanced as the actual fetch lower bound, rather
+            // than treating "a peer's watermark is ahead of my own candidate" as a reason to skip
+            // fetching entirely. The watermark only reflects how far a PAST catch-up reached - it
+            // says nothing about whether a NEW gap has opened up since then, so gating on it here
+            // would (and did) permanently suppress catch-up after the first successful fetch, on
+            // an otherwise-quiet Gerrit server. Only a truly empty window (nothing possibly missed
+            // since the more advanced of the two) is skipped.
+            long effectiveLowerBound = Math.max(currentWatermark, candidateCatchUpFrom);
+            if (System.currentTimeMillis() <= effectiveLowerBound) {
+                logger.debug("Missed-events effective lower bound for server {} is already current "
+                        + "({}); nothing to catch up on.", serverName, effectiveLowerBound);
                 return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
             }
             try {
-                long newWatermark = catchUpAction.fetchAndTrigger(new Date(candidateCatchUpFrom));
+                long newWatermark = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
                 map.put(serverName, newWatermark);
                 return MissedEventsCatchUpOutcome.PERFORMED;
             } catch (IOException e) {

@@ -75,11 +75,17 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
         }
         try {
             long watermark = watermarks.getOrDefault(serverName, 0L);
-            if (watermark >= candidateCatchUpFrom) {
+            // See HazelcastMissedEventsCoordinationStrategy's identical fix: the watermark only
+            // reflects how far a PAST catch-up reached, not whether a NEW gap has opened since -
+            // gating on "watermark >= candidateCatchUpFrom" alone would permanently suppress
+            // catch-up after the first successful fetch on an otherwise-quiet server. Use the more
+            // advanced of the two as the actual fetch lower bound instead of skipping outright.
+            long effectiveLowerBound = Math.max(watermark, candidateCatchUpFrom);
+            if (System.currentTimeMillis() <= effectiveLowerBound) {
                 return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
             }
             try {
-                long newWatermark = catchUpAction.fetchAndTrigger(new Date(candidateCatchUpFrom));
+                long newWatermark = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
                 watermarks.put(serverName, newWatermark);
                 return MissedEventsCatchUpOutcome.PERFORMED;
             } catch (IOException e) {
