@@ -39,7 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Single-JVM implementation of {@link MissedEventsCoordinationStrategy}.
  *
- * <p>One instance of this class is shared (via {@link CoordinationModeFactory}) by every {@code
+ * <p>One instance of this class is shared (via {@link CoordinationMode}) by every {@code
  * GerritMissedEventsPlaybackManager} in the JVM, so the per-server lock and watermark maps here
  * are genuinely shared state - mirroring how a distributed implementation shares state via a
  * cluster-wide map. In a single JVM there is no other process to coordinate with, so this reduces

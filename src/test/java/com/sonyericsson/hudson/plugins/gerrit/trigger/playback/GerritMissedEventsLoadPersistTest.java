@@ -27,7 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.playback;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
@@ -407,11 +407,11 @@ class GerritMissedEventsLoadPersistTest {
         MissedEventsCoordinationStrategy coordinationStrategy = mock(MissedEventsCoordinationStrategy.class);
         when(coordinationStrategy.getSharedInstanceFreshness(serverName))
                 .thenReturn(OptionalLong.of(borrowedTimestampMillis));
-        CoordinationModeFactory factory = mock(CoordinationModeFactory.class);
+        CoordinationMode factory = mock(CoordinationMode.class);
         when(factory.getMissedEventsCoordinationStrategy()).thenReturn(coordinationStrategy);
 
-        try (MockedStatic<CoordinationModeFactory> factoryMockedStatic = mockStatic(CoordinationModeFactory.class)) {
-            factoryMockedStatic.when(CoordinationModeFactory::get).thenReturn(factory);
+        try (MockedStatic<CoordinationMode> factoryMockedStatic = mockStatic(CoordinationMode.class)) {
+            factoryMockedStatic.when(CoordinationMode::get).thenReturn(factory);
 
             GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
             PatchsetCreated event = Setup.createPatchsetCreated(serverName, "project", "ref",
@@ -453,11 +453,11 @@ class GerritMissedEventsLoadPersistTest {
                 .thenReturn(OptionalLong.of(sharedFreshnessMillis));
         when(coordinationStrategy.coordinateCatchUp(eq(serverName), eq(sharedFreshnessMillis), any(), any()))
                 .thenReturn(MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP);
-        CoordinationModeFactory factory = mock(CoordinationModeFactory.class);
+        CoordinationMode factory = mock(CoordinationMode.class);
         when(factory.getMissedEventsCoordinationStrategy()).thenReturn(coordinationStrategy);
 
-        try (MockedStatic<CoordinationModeFactory> factoryMockedStatic = mockStatic(CoordinationModeFactory.class)) {
-            factoryMockedStatic.when(CoordinationModeFactory::get).thenReturn(factory);
+        try (MockedStatic<CoordinationMode> factoryMockedStatic = mockStatic(CoordinationMode.class)) {
+            factoryMockedStatic.when(CoordinationMode::get).thenReturn(factory);
 
             GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
             assertNull("no local file exists yet for this fresh server", manager.serverTimestamp);

@@ -28,7 +28,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.NamedGerritEventListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.InstanceIdentity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
@@ -290,7 +290,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         }
 
         MissedEventsCoordinationStrategy coordinationStrategy =
-                CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
+                CoordinationMode.get().getMissedEventsCoordinationStrategy();
         OptionalLong candidate = maxOptionalLong(
                 instanceTimestampStore.computeMaxTimestampAcrossInstances(),
                 coordinationStrategy.getSharedInstanceFreshness(serverName));
@@ -744,7 +744,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         public void run() {
             long ownTimeSlice = serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE;
             MissedEventsCoordinationStrategy coordinationStrategy =
-                    CoordinationModeFactory.get().getMissedEventsCoordinationStrategy();
+                    CoordinationMode.get().getMissedEventsCoordinationStrategy();
 
             // Push this instance's own freshness up first, so peers can see it - independently
             // throttled from the local persist below, since the two can legitimately diverge
