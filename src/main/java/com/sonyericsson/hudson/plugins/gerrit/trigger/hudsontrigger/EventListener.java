@@ -24,7 +24,7 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.lifecycle.GerritEventLifecycle;
@@ -127,7 +127,7 @@ public final class EventListener implements GerritEventListener {
         if (event instanceof GerritTriggeredEvent triggeredEvent) {
 
             // Claim event for processing (prevents duplicate builds in distributed scenarios)
-            EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+            EventClaimStrategy eventClaimStrategy = CoordinationMode.get().getEventClaimStrategy();
             eventClaimStrategy.withClaim(triggeredEvent, () -> {
                 synchronized (EventListener.this) {
                     if (t.isInteresting(triggeredEvent)) {
@@ -172,7 +172,7 @@ public final class EventListener implements GerritEventListener {
         }
 
         // Claim event for processing (prevents duplicate builds in distributed scenarios)
-        EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+        EventClaimStrategy eventClaimStrategy = CoordinationMode.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
             synchronized (EventListener.this) {
                 if (t.isInteresting(event)) {
@@ -223,7 +223,7 @@ public final class EventListener implements GerritEventListener {
         }
 
         // Claim event for processing (prevents duplicate builds in distributed scenarios)
-        EventClaimStrategy eventClaimStrategy = CoordinationModeFactory.get().getEventClaimStrategy();
+        EventClaimStrategy eventClaimStrategy = CoordinationMode.get().getEventClaimStrategy();
         eventClaimStrategy.withClaim(event, () -> {
             synchronized (EventListener.this) {
                 if (t.isInteresting(event) && t.commentAddedMatch(event)) {

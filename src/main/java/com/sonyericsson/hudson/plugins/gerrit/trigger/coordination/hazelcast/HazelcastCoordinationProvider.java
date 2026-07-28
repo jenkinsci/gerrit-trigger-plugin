@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
  * All three coordination concerns (build state storage, notification rights, event processing rights)
  * now use the same Extension Points pattern consistently.
  *
- * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory
+ * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode
  * @see com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalCoordinationProvider (fallback)
  */
 @Extension(ordinal = HazelcastCoordinationProvider.HAZELCAST_PRIORITY)
@@ -131,11 +131,11 @@ public class HazelcastCoordinationProvider extends CoordinationModeProvider {
      * modes, only that one helper method needs to be updated.
      * <p>
      * The initialization check is necessary because
-     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory}
+     * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode}
      * may call this method before
      * {@link com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl}
-     * has initialized providers. Without this check, the factory would select Hazelcast provider
-     * before Hazelcast is actually running, causing builds to not trigger.
+     * has initialized providers. Without this check, {@code CoordinationMode} would select the
+     * Hazelcast provider before Hazelcast is actually running, causing builds to not trigger.
      *
      * @return true if Hazelcast coordination mode is available, false otherwise
      */

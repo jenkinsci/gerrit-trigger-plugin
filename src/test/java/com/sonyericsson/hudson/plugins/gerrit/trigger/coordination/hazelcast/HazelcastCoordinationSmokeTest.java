@@ -25,7 +25,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationModeFactory;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.CompareType;
@@ -192,13 +192,13 @@ public class HazelcastCoordinationSmokeTest {
     @Test
     @LocalData("common")
     public void testHazelcastCoordinationModeTriggersAndCompletesBuild() throws Exception {
-        CoordinationModeFactory factory = CoordinationModeFactory.get();
-        String storageClass = factory.getStorage().getClass().getSimpleName();
+        CoordinationMode mode = CoordinationMode.get();
+        String storageClass = mode.getStorage().getClass().getSimpleName();
         assertEquals("Expected Hazelcast storage - falling back to local mode would defeat "
                 + "the point of this smoke test", "HazelcastBuildMemoryStorage", storageClass);
-        assertNotNull("Expected a selected coordination mode", factory.getSelectedMode());
+        assertNotNull("Expected a selected coordination mode", mode.getSelectedProvider());
         assertEquals("Expected Hazelcast mode", "Hazelcast (Distributed)",
-                factory.getSelectedMode().getModeName());
+                mode.getSelectedProvider().getModeName());
 
         FreeStyleProject project = jenkins.createFreeStyleProject();
         GerritTrigger trigger = Setup.createDefaultTrigger(project);
