@@ -34,7 +34,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * <p>This abstract class enables switching between local (standalone) and coordination modes:</p>
  * <ul>
  *   <li><b>Local mode:</b> Always claims events - no coordination needed</li>
- *   <li><b>Hazelcast mode:</b> Uses distributed coordination to ensure only one replica processes each event</li>
+ *   <li><b>Distributed mode:</b> Uses distributed coordination to ensure only one replica processes each event</li>
  *   <li><b>Future modes:</b> Redis, JDBC, etc.</li>
  * </ul>
  *

@@ -40,6 +40,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritCause;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.NewPatchSetInterruption;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.PipelineAbortHelper;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.BuildMemoryStorage;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventIdGenerator;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import hudson.model.Computer;
 import hudson.model.Executor;

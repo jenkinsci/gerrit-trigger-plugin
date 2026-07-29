@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
+package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Change;
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.PatchSet;
@@ -46,6 +46,13 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.events.RefUpdated;
  * <p>
  * <b>Important:</b> Uses {@code eventCreatedOn} (server timestamp) rather than {@code receivedOn}
  * (replica timestamp) to ensure identical event IDs across all replicas receiving the same event.
+ * <p>
+ * Deliberately placed here in {@code spi} rather than under any one coordination mode's own
+ * package: the algorithm itself has no dependency on a specific coordination technology - it is
+ * pure logic over {@link GerritTriggeredEvent}'s own fields - so any current or future distributed
+ * mode that needs a deterministic, cross-replica-consistent key for a Gerrit event can depend on
+ * it the same way the base {@link BuildMemoryStorage#eventsMatch} contract already does, without
+ * that base contract having to reach into one specific implementation's package to get it.
  *
  */
 public final class EventIdGenerator {

@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  * <p>
  * This utility class eliminates code duplication across local and distributed claim strategies
  * by providing reusable result implementations. All strategies (NotificationClaimStrategy and
- * EventClaimStrategy, both local and Hazelcast modes) can use these shared implementations.
+ * EventClaimStrategy, both local and distributed modes) can use these shared implementations.
  * <p>
  * <strong>Usage:</strong>
  * <pre>

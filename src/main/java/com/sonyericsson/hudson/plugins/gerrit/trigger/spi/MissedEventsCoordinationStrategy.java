@@ -36,8 +36,9 @@ import java.util.OptionalLong;
  * <ul>
  *   <li><b>Local mode:</b> a single JVM has nothing to coordinate with, so this reduces to a
  *       trivial in-process lock plus watermark.</li>
- *   <li><b>Hazelcast mode:</b> a distributed lock and shared watermark ensure only one replica
- *       fetches at a time, and every replica observes the same "already covered up to" point.</li>
+ *   <li><b>Distributed mode:</b> a distributed lock and shared watermark ensure only one
+ *       instance fetches at a time, and every instance observes the same "already covered up
+ *       to" point.</li>
  * </ul>
  *
  * <p>Implementations MUST guarantee both of the following, not just approximate them via lock
@@ -90,9 +91,8 @@ public abstract class MissedEventsCoordinationStrategy {
      * <p>This is deliberately a separate, best-effort signal from {@link #coordinateCatchUp}'s
      * watermark: it only ever moves forward (a max-merge, not an overwrite) and carries no mutual
      * exclusion or lock semantics of its own - multiple JVMs publish to it concurrently and
-     * freely. A coordination mode with only one JVM to coordinate with (e.g. local mode) may
-     * implement this as a no-op, since that JVM's own per-instance file already is its complete
-     * view.</p>
+     * freely. A coordination mode with only one JVM to coordinate with may implement this as a
+     * no-op, since that JVM's own per-instance file already is its complete view.</p>
      *
      * @param serverName the Gerrit server this timestamp is for.
      * @param timestampMillis this JVM's own last-known-alive timestamp (epoch millis) for {@code
@@ -111,8 +111,8 @@ public abstract class MissedEventsCoordinationStrategy {
      * back to the per-instance file scan rather than treating it as "definitely nothing missed" -
      * this signal is a faster-path supplement to that scan, not a replacement for it, since - in
      * a topology where every JVM's coordination-mode member can be lost simultaneously (e.g. a
-     * Hazelcast sidecar co-located with its own Jenkins replica) - this shared value can be wiped
-     * clean by the very same outage the file-based fallback exists to survive.</p>
+     * distributed-mode sidecar co-located with its own Jenkins replica) - this shared value can be
+     * wiped clean by the very same outage the file-based fallback exists to survive.</p>
      *
      * @param serverName the Gerrit server to look up.
      * @return the shared freshness timestamp, or empty if none is known.
