@@ -99,6 +99,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     private static final String STALE_INSTANCE_FILE_AGE_PROPERTY =
             "gerrit.trigger.playback.instance.stale.age.hours";
     private static final int DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS = 168;
+    /**
+     * Used by {@link #roundUpToWholeSecond} to round a sub-second catch-up lower bound up to the
+     * whole-second resolution the events-log plugin's own {@code t1} query parameter is limited to.
+     */
+    private static final long MILLIS_PER_SECOND = 1000L;
 
     private String serverName;
     /**
@@ -595,7 +600,8 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             throws UnsupportedEncodingException {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        String url = EVENTS_LOG_PLUGIN_URL + "?t1=" + URLEncoder.encode(df.format(date1), StandardCharsets.UTF_8);
+        String url = EVENTS_LOG_PLUGIN_URL + "?t1=" + URLEncoder.encode(df.format(roundUpToWholeSecond(date1)),
+                StandardCharsets.UTF_8);
 
         String gerritFrontEndUrl = config.getGerritFrontEndUrl();
         String restUrl = gerritFrontEndUrl;
@@ -603,6 +609,43 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             restUrl = gerritFrontEndUrl + "/";
         }
         return restUrl + url;
+    }
+
+    /**
+     * Rounds {@code date1} up to the next whole second if it carries a sub-second component,
+     * otherwise returns it unchanged.
+     *
+     * <p>The events-log plugin's own {@code t1} query parameter only has whole-second resolution
+     * ({@code df} above has no millisecond pattern) - formatting a sub-second lower bound directly
+     * would silently FLOOR it to the start of that second (e.g. a lower bound of {@code 33.628s}
+     * becomes the string {@code "...:33"}, which the events-log plugin reads back as {@code
+     * 33.000s}), re-widening the query to include everything already processed earlier in that
+     * same second. That is exactly what let two replicas or nodes of the same logical instance,
+     * reconnecting within the same second, both independently re-fetch and re-trigger
+     * the identical missed event even though {@link MissedEventsCoordinationStrategy}'s own
+     * millisecond-precision watermark had already correctly ordered them - only the separate,
+     * per-event {@code EventClaimStrategy} layer kept that from becoming a duplicate build.
+     * {@link #receivedEventCache} alone cannot catch this: it is a per-JVM field, so it only
+     * dedupes a second fetch by the SAME instance, never a peer's.</p>
+     *
+     * <p>Rounding up - never down - trades a bounded, worst-case sub-one-second window (an event
+     * landing between the true lower bound and the next whole second could be first seen by a
+     * later catch-up rather than this one) for eliminating a guaranteed same-second duplicate
+     * re-fetch/re-trigger. That trade is consistent with the precision already inherent elsewhere
+     * in this subsystem - the persistence thread that publishes/refreshes the shared freshness
+     * signal only ticks once per second to begin with (see {@code
+     * GerritMissedEventsPlaybackPersistRunnable#CHECK_INTERVAL}).</p>
+     *
+     * @param date1 the candidate lower bound, possibly sub-second.
+     * @return {@code date1} unchanged if already second-aligned, otherwise the next whole second.
+     */
+    private static Date roundUpToWholeSecond(Date date1) {
+        long millis = date1.getTime();
+        long remainder = millis % MILLIS_PER_SECOND;
+        if (remainder == 0) {
+            return date1;
+        }
+        return new Date(millis - remainder + MILLIS_PER_SECOND);
     }
 
     /**
