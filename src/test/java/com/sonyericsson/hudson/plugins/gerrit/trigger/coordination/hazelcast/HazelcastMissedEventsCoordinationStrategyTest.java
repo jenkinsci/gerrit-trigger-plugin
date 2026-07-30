@@ -24,6 +24,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 
 import org.junit.After;
 import org.junit.Before;
@@ -88,6 +89,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
                 SHORT_LOCK_WAIT_TIMEOUT_SECONDS);
         clearWatermarkMap();
         clearInstanceFreshnessMap();
+        clearEventClaimMap();
     }
 
     @After
@@ -96,6 +98,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         restoreProperty(HazelcastMissedEventsCoordinationStrategy.LOCK_LEASE_PROPERTY, originalLease);
         clearWatermarkMap();
         clearInstanceFreshnessMap();
+        clearEventClaimMap();
     }
 
     private void restoreProperty(String key, String value) {
@@ -133,6 +136,14 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         }
     }
 
+    private void clearEventClaimMap() {
+        if (HazelcastInstanceProvider.isInitialized()) {
+            HazelcastInstanceProvider.getInstance()
+                    .getMap(HazelcastMissedEventsCoordinationStrategy.EVENT_CLAIM_MAP_NAME)
+                    .clear();
+        }
+    }
+
     private HazelcastMissedEventsCoordinationStrategy newStrategy() {
         HazelcastInstance instance = HazelcastInstanceProvider.getInstance();
         return new HazelcastMissedEventsCoordinationStrategy(instance);
@@ -152,7 +163,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
                 "server-a", WATERMARK_1000,
                 lowerBound -> {
                     callCount.incrementAndGet();
-                    return WATERMARK_1000;
+                    return new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_1000), 1);
                 },
                 () -> { });
 
@@ -161,37 +172,33 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
     }
 
     /**
-     * Given a watermark already at or ahead of the current wall-clock time (e.g. just published
-     * by a peer that handled this exact outage moments ago)
-     * When coordinateCatchUp is called, even with a lower (stale) candidate
-     * Then the catch-up action is not invoked - there is genuinely nothing new to fetch.
+     * Given a fetch that runs but finds nothing not already claimed by a peer (e.g. a peer just
+     * handled this exact outage moments ago, and every fetched event was already claimed)
+     * When coordinateCatchUp is called
+     * Then the fetch action still runs (unlike the old wall-clock-based skip this class used to
+     * have - see git history - which permanently suppressed catch-up on an otherwise-quiet
+     * server), but the outcome is classified as ALREADY_CAUGHT_UP because triggeredCount was 0,
+     * not PERFORMED.
      */
     @Test
-    public void testSkipsCatchUpWhenWatermarkIsAlreadyAtOrAheadOfNow() {
+    public void testReportsAlreadyCaughtUpWhenFetchTriggersNothingNew() {
         HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
         AtomicInteger callCount = new AtomicInteger();
-        long recentPastCandidate = System.currentTimeMillis() - RACE_SLEEP_MILLIS;
-        long futureWatermark = System.currentTimeMillis() + ONE_HOUR_MILLIS;
 
-        // Seed the watermark to a point ahead of "now" - standing in for a peer whose fetch
-        // reported a watermark this far ahead (e.g. server clock skew), the case the skip exists
-        // for. The seeding call's own candidate must be in the past, or it would itself be skipped
-        // before ever writing to the watermark.
-        strategy.coordinateCatchUp("server-b", recentPastCandidate, lowerBound -> {
-            callCount.incrementAndGet();
-            return futureWatermark;
-        }, () -> { });
-
-        MissedEventsCatchUpOutcome secondOutcome = strategy.coordinateCatchUp(
+        MissedEventsCatchUpOutcome outcome = strategy.coordinateCatchUp(
                 "server-b", WATERMARK_1500,
                 lowerBound -> {
                     callCount.incrementAndGet();
-                    return WATERMARK_1500;
+                    // Every fetched event turned out to already be claimed by a peer's own
+                    // concurrent catch-up - genuinely new watermark, but zero events actually
+                    // triggered by this call.
+                    return new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_1500), 0);
                 },
                 () -> { });
 
-        assertEquals(MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP, secondOutcome);
-        assertEquals("catch-up action must only have run once", 1, callCount.get());
+        assertEquals(MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP, outcome);
+        assertEquals("the fetch action must still run - only its outcome classification changes",
+                1, callCount.get());
     }
 
     /**
@@ -215,13 +222,13 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         strategy.coordinateCatchUp("server-z", pastWatermark, lowerBound -> {
             callCount.incrementAndGet();
             lowerBoundsSeen.add(lowerBound.getTime());
-            return pastWatermark;
+            return new MissedEventsCatchUpResult(OptionalLong.of(pastWatermark), 1);
         }, () -> { });
 
         MissedEventsCatchUpOutcome secondOutcome = strategy.coordinateCatchUp("server-z", staleCandidate, lowerBound -> {
             callCount.incrementAndGet();
             lowerBoundsSeen.add(lowerBound.getTime());
-            return System.currentTimeMillis();
+            return new MissedEventsCatchUpResult(OptionalLong.of(System.currentTimeMillis()), 1);
         }, () -> { });
 
         assertEquals(MissedEventsCatchUpOutcome.PERFORMED, secondOutcome);
@@ -238,13 +245,15 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
      * starting no earlier than the first one's own reported watermark, so it never re-requests an
      * already-covered range from scratch.
      *
-     * <p>Unlike before this class started comparing the effective lower bound against wall-clock
-     * "now" (see {@link #testPerformsFreshCatchUpWhenTimeHasPassedSinceWatermarkEvenIfCandidateIsStale()}),
-     * this no longer guarantees the second caller's fetch action is skipped outright: by the time
-     * it checks, real time has moved on past the first caller's just-stored watermark, so a second,
-     * near-empty fetch is expected and safe - it costs a redundant REST call, not a duplicate
-     * build. The core guarantee this test protects is mutual exclusion and no context loss across
-     * the hand-off, not "at most one HTTP call".</p>
+     * <p>Both callers' fetch actions genuinely run here (this synthetic action doesn't model
+     * {@code claimEvent} at all - that's covered separately by
+     * {@link #testClaimEventOnlyLetsOneConcurrentCallerThrough()}), so both legitimately report
+     * {@code triggeredCount=1} and both return {@code PERFORMED}: a second caller serializing in
+     * right behind the first via the same lock is expected, not itself a bug (see
+     * {@link #testReportsAlreadyCaughtUpWhenFetchTriggersNothingNew()} for the case where the
+     * second call's fetch finds nothing new). The guarantee this test protects is mutual exclusion
+     * and no context loss across the hand-off - the second fetch must not start earlier than the
+     * first's own reported watermark.</p>
      * @throws Exception if the test threads fail unexpectedly.
      */
     @Test
@@ -262,7 +271,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
                         lowerBoundsSeen.add(lowerBound.getTime());
                     }
                     sleepMillis(RACE_SLEEP_MILLIS);
-                    return System.currentTimeMillis();
+                    return new MissedEventsCatchUpResult(OptionalLong.of(System.currentTimeMillis()), 1);
                 }, () -> { });
             });
             Future<MissedEventsCatchUpOutcome> second = executor.submit(() -> {
@@ -271,7 +280,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
                     synchronized (lowerBoundsSeen) {
                         lowerBoundsSeen.add(lowerBound.getTime());
                     }
-                    return System.currentTimeMillis();
+                    return new MissedEventsCatchUpResult(OptionalLong.of(System.currentTimeMillis()), 1);
                 }, () -> { });
             });
             startLatch.countDown();
@@ -316,7 +325,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
 
             MissedEventsCatchUpOutcome outcome = strategy.coordinateCatchUp("server-d", WATERMARK_1000, lowerBound -> {
                 callCount.incrementAndGet();
-                return WATERMARK_1000;
+                return new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_1000), 1);
             }, () -> { });
 
             assertEquals(MissedEventsCatchUpOutcome.LOCK_TIMEOUT, outcome);
@@ -346,7 +355,7 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         AtomicInteger callCount = new AtomicInteger();
         MissedEventsCatchUpOutcome retryOutcome = strategy.coordinateCatchUp("server-e", WATERMARK_3000, lowerBound -> {
             callCount.incrementAndGet();
-            return WATERMARK_3000;
+            return new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_3000), 1);
         }, () -> { });
 
         assertEquals(MissedEventsCatchUpOutcome.PERFORMED, retryOutcome);
@@ -363,9 +372,11 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
         HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
         AtomicInteger maintenanceRuns = new AtomicInteger();
 
-        strategy.coordinateCatchUp("server-f", WATERMARK_1000, lowerBound -> WATERMARK_1000,
+        strategy.coordinateCatchUp("server-f", WATERMARK_1000,
+                lowerBound -> new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_1000), 1),
                 maintenanceRuns::incrementAndGet);
-        strategy.coordinateCatchUp("server-f", WATERMARK_500, lowerBound -> WATERMARK_500,
+        strategy.coordinateCatchUp("server-f", WATERMARK_500,
+                lowerBound -> new MissedEventsCatchUpResult(OptionalLong.of(WATERMARK_500), 1),
                 maintenanceRuns::incrementAndGet);
 
         assertEquals(2, maintenanceRuns.get());
@@ -431,5 +442,58 @@ public class HazelcastMissedEventsCoordinationStrategyTest {
 
         assertEquals(OptionalLong.of(WATERMARK_2000), strategy.getSharedInstanceFreshness("server-j"));
         assertEquals(OptionalLong.of(WATERMARK_500), strategy.getSharedInstanceFreshness("server-k"));
+    }
+
+    /**
+     * Given two peers (two separate strategy objects backed by the same cluster) racing to claim
+     * the identical event key at essentially the same time
+     * When both call claimEvent concurrently
+     * Then exactly one of them gets {@code true} - this is the direct regression test for the
+     * HZ-026 defect: two replicas whose own concurrent catch-up fetches legitimately overlapped
+     * both independently re-triggered the same {@code PatchsetCreated} event, because nothing
+     * cross-instance recognized it had already been delivered.
+     * @throws Exception if the test threads fail unexpectedly.
+     */
+    @Test
+    public void testClaimEventOnlyLetsOneConcurrentCallerThrough() throws Exception {
+        HazelcastMissedEventsCoordinationStrategy first = newStrategy();
+        HazelcastMissedEventsCoordinationStrategy second = newStrategy();
+        CountDownLatch startLatch = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> firstClaim = executor.submit(() -> {
+                startLatch.await();
+                return first.claimEvent("server-l", "PatchsetCreated: Change-Id for #2809 PatchSet: 1");
+            });
+            Future<Boolean> secondClaim = executor.submit(() -> {
+                startLatch.await();
+                return second.claimEvent("server-l", "PatchsetCreated: Change-Id for #2809 PatchSet: 1");
+            });
+            startLatch.countDown();
+
+            boolean firstResult = firstClaim.get(FUTURE_GET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            boolean secondResult = secondClaim.get(FUTURE_GET_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+            assertTrue("exactly one caller must win the claim", firstResult ^ secondResult);
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    /**
+     * Given an event key already claimed for a server
+     * When claimEvent is called again with the same server/key
+     * Then it returns false - a peer's own concurrent fetch must recognize this event was already
+     * delivered, not re-trigger it.
+     */
+    @Test
+    public void testClaimEventReturnsFalseForAlreadyClaimedKey() {
+        HazelcastMissedEventsCoordinationStrategy strategy = newStrategy();
+
+        assertTrue("first claim of a fresh key must succeed", strategy.claimEvent("server-m", "event-1"));
+        assertTrue("the same key must never collide with a different server",
+                strategy.claimEvent("server-n", "event-1"));
+        assertEquals("a second claim of the same server+key must be rejected",
+                false, strategy.claimEvent("server-m", "event-1"));
     }
 }

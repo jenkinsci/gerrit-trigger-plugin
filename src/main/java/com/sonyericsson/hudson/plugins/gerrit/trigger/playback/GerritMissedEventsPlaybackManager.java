@@ -31,6 +31,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTrigge
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.InstanceIdentity;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.GerritPluginChecker;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.utils.HttpUtils;
@@ -124,6 +125,28 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * field's own push, so the two guards can legitimately diverge.
      */
     private volatile long lastPublishedTimeSlice = 0;
+    /**
+     * The most advanced point this instance has actually PROVEN is safe to advertise to peers (via
+     * {@link MissedEventsCoordinationStrategy#publishInstanceFreshness}) or persist to its own
+     * local file - as opposed to {@link #serverTimestamp}, which advances on every live event this
+     * instance happens to receive, regardless of project, and so proves nothing about whether an
+     * earlier, unrelated gap from this same connection session was ever actually closed.
+     *
+     * <p>Empty until this instance's own {@link #connectionEstablished()} has run at least once
+     * and reached either the "nothing to catch up" shortcut or an actual catch-up attempt - before
+     * that (a brand-new environment with no prior cross-instance signal at all), there is nothing
+     * to prove yet, so the persistence thread falls back to {@link #serverTimestamp} as it always
+     * has, to bootstrap the very first publish/persist cycle.</p>
+     *
+     * <p>Deliberately never advanced by {@link #gerritEvent}/{@link #saveTimestamp} - only by
+     * {@link #connectionEstablished()} itself, once it has confirmed (via the "already fresh"
+     * shortcut, or via {@link MissedEventsCoordinationStrategy#getWatermark}'s own already-proven
+     * value after a catch-up attempt) that this point is genuinely safe to advertise. An ordinary
+     * live event proves only that this JVM is currently receiving events, not that everything
+     * before it - including whatever this same reconnect's own catch-up may have just missed -
+     * has been accounted for.</p>
+     */
+    private volatile OptionalLong confirmedCatchUpFloor = OptionalLong.empty();
     /**
      * Identifier for this JVM process, used to namespace this instance's persisted timestamp
      * file from those of other JVMs sharing the same {@code JENKINS_HOME}.
@@ -273,9 +296,20 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * Gerrit connection and event processing is already deduplicated across JVMs via the event
      * claim strategy, so this cross-instance catch-up specifically covers the case where every
      * JVM was simultaneously unable to process events (e.g. a full outage).</p>
+     *
+     * <p>Waits on {@link JobsLoadedGate} first, before computing anything below - including the
+     * candidate catch-up timestamp itself. This runs on {@code GerritConnection}'s own background
+     * thread (see that class), not on Jenkins' own initializer thread, so blocking here doesn't
+     * delay Jenkins' own boot - but on a cold start, this method can otherwise run (and replay a
+     * missed event) before this server's own jobs have finished loading and registering their
+     * {@code GerritTrigger} listeners, silently dropping that event with no retry. The wait has to
+     * come before the timestamp computation, not just before the actual catch-up call below -
+     * computing "now" early and then blocking would leave that value stale by the time the gate
+     * opens.</p>
      */
     @Override
     public void connectionEstablished() {
+        JobsLoadedGate.await();
         playBackComplete = false;
         checkIfEventsLogPluginSupported();
         if (!isSupported) {
@@ -308,6 +342,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         long diff = System.currentTimeMillis() - candidateCatchUpFrom;
         if (diff <= 0) {
             logger.debug("Zero date range from last-alive timestamp for server {}", serverName);
+            advanceConfirmedCatchUpFloor(candidateCatchUpFrom);
             ensureBaselineCaptured(candidateCatchUpFrom);
             playBackComplete = true;
             return;
@@ -322,9 +357,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         MissedEventsCatchUpOutcome outcome = coordinationStrategy.coordinateCatchUp(
                 serverName,
                 candidateCatchUpFrom,
-                this::fetchAndTriggerMissedEvents,
+                lowerBound -> fetchAndTriggerMissedEvents(lowerBound, coordinationStrategy),
                 () -> instanceTimestampStore.pruneStaleInstanceFiles(staleAgeMillis));
         logger.info("Missed-events catch-up outcome for server {}: {}", serverName, outcome);
+
+        // Whatever the coordination strategy's own watermark now holds is, by construction, only
+        // ever advanced to a point it has actually observed events up to (see that watermark's own
+        // "empty means nothing proven" contract) - safe to advertise regardless of whether this
+        // specific call was the one that advanced it, or a peer's concurrent attempt did.
+        coordinationStrategy.getWatermark(serverName).ifPresent(this::advanceConfirmedCatchUpFloor);
 
         ensureBaselineCaptured(candidateCatchUpFrom);
 
@@ -351,6 +392,20 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      *
      * @param candidateCatchUpFrom the cross-instance floor computed for this call.
      */
+    /**
+     * Advances {@link #confirmedCatchUpFloor} to {@code candidate} if it is more advanced than
+     * whatever this instance already holds - monotonic, same reasoning as {@link
+     * #maxOptionalLong}, so a later call can never regress a floor an earlier call already
+     * established as safe.
+     *
+     * @param candidate a point this call has just confirmed is safe to advertise.
+     */
+    private void advanceConfirmedCatchUpFloor(long candidate) {
+        if (confirmedCatchUpFloor.isEmpty() || candidate > confirmedCatchUpFloor.getAsLong()) {
+            confirmedCatchUpFloor = OptionalLong.of(candidate);
+        }
+    }
+
     private void ensureBaselineCaptured(long candidateCatchUpFrom) {
         if (serverTimestamp == null) {
             serverTimestamp = new EventTimeSlice(candidateCatchUpFrom);
@@ -379,17 +434,27 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     /**
      * Fetches missed events from the given lower bound and feeds them into normal processing.
      * Invoked by the {@link MissedEventsCoordinationStrategy} while its coordination lock is
-     * held, so this never runs concurrently with another JVM's catch-up for the same server.
+     * held, so this never runs concurrently with another JVM's catch-up for the same server -
+     * but a peer may have run its own catch-up moments earlier and released the lock already, so
+     * this fetch can still legitimately overlap a peer's just-completed one (see
+     * {@link MissedEventsCoordinationStrategy#coordinateCatchUp}'s own "no redundant
+     * re-triggering" contract). {@link #receivedEventCache} alone cannot catch that: it is a
+     * per-JVM field, so it only dedupes a second fetch by this same instance, never a peer's -
+     * {@code coordinationStrategy.claimEvent} closes that gap.
      *
      * @param lowerBound the point to fetch missed events from.
-     * @return the epoch-millis timestamp this attempt started at, recorded as the new shared
-     *         watermark on success.
+     * @param coordinationStrategy used to claim each about-to-be-triggered event across every JVM
+     *         sharing this coordination mode, so a peer's own overlapping fetch recognizes it was
+     *         already handled.
+     * @return the new watermark plus how many events this call actually triggered - see
+     *         {@link MissedEventsCatchUpResult}.
      * @throws IOException if fetching or building the playback query URL fails.
      */
-    private long fetchAndTriggerMissedEvents(Date lowerBound) throws IOException {
-        long fetchStartedAt = System.currentTimeMillis();
+    private MissedEventsCatchUpResult fetchAndTriggerMissedEvents(
+            Date lowerBound, MissedEventsCoordinationStrategy coordinationStrategy) throws IOException {
         List<GerritTriggeredEvent> events = getEventsFromDateRange(lowerBound);
         logger.info("({}) missed events to process for server: {} ...", events.size(), serverName);
+        int triggeredCount = 0;
         for (GerritTriggeredEvent evt: events) {
             logger.debug("({}) Processing missed event {}", serverName, evt);
             boolean receivedEvtFound = false;
@@ -414,6 +479,12 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                         continue;
                     }
                 }
+                if (!coordinationStrategy.claimEvent(serverName, evt.toString())) {
+                    logger.debug("({}) Event already claimed by a peer's own catch-up...skipping trigger.",
+                            serverName);
+                    receivedEventCache.add(evt);
+                    continue;
+                }
                 logger.info("({}) Triggering: {}", serverName, evt);
                 GerritServer server = PluginImpl.getServer_(serverName);
                 if (server == null) {
@@ -422,10 +493,17 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 }
                 server.triggerEvent(evt);
                 receivedEventCache.add(evt);
+                triggeredCount++;
                 logger.debug("Added event {} to received cache for server: {}", evt, serverName);
             }
         }
-        return fetchStartedAt;
+        // The latest eventCreatedOn actually present in this fetch's own response - never the
+        // wall-clock instant this call started - so an events-log response that raced ahead of
+        // that plugin's own indexing (and so doesn't yet contain the very event this catch-up
+        // exists to find) leaves the watermark exactly where it was, rather than advancing past a
+        // gap it never actually proved was covered. See MissedEventsCatchUpResult's own javadoc.
+        OptionalLong newWatermark = events.stream().mapToLong(evt -> evt.getEventCreatedOn().getTime()).max();
+        return new MissedEventsCatchUpResult(newWatermark, triggeredCount);
     }
 
     /**
@@ -785,7 +863,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         @Override
         public void run() {
-            long ownTimeSlice = serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE;
+            // Prefer the proven floor once one exists (see its own javadoc for why) - only before
+            // this instance's first connectionEstablished() has run at all (a brand-new
+            // environment with no prior cross-instance signal) does this fall back to the raw,
+            // live-event-driven serverTimestamp, purely to bootstrap the very first publish/persist
+            // cycle.
+            long ownTimeSlice = confirmedCatchUpFloor.isPresent()
+                    ? confirmedCatchUpFloor.getAsLong()
+                    : (serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE);
             MissedEventsCoordinationStrategy coordinationStrategy =
                     CoordinationMode.get().getMissedEventsCoordinationStrategy();
 
@@ -805,25 +890,31 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             long bestKnownTimeSlice = Math.max(ownTimeSlice, sharedTimeSlice);
             if (bestKnownTimeSlice > Long.MIN_VALUE && lastPersistedTimeSlice < bestKnownTimeSlice) {
                 lastPersistedTimeSlice = bestKnownTimeSlice;
-                persistTimeStamp(bestKnownTimeSlice, ownTimeSlice);
+                persistTimeStamp(bestKnownTimeSlice);
             }
         }
 
         /**
-         * Saves {@code timeSliceToPersist} to this instance's own xml file. When it equals this
-         * instance's own {@code ownTimeSlice}, the real {@link #serverTimestamp} (with its known
-         * events) is persisted, same as before this method took parameters; otherwise it's a value
-         * borrowed from a peer via the shared freshness signal, persisted as a bare timestamp with
-         * no events - {@link InstanceTimestampStore#computeMaxTimestampAcrossInstances()} only
-         * ever reads {@link EventTimeSlice#getTimeSlice()} back out, never the events list, so
-         * this loses nothing that read path relies on.
+         * Saves {@code timeSliceToPersist} to this instance's own xml file. When it exactly
+         * matches {@link #serverTimestamp}'s own time slice, the real {@code serverTimestamp}
+         * (with its known events) is persisted; otherwise - a value borrowed from a peer via the
+         * shared freshness signal, or {@code ownTimeSlice} itself coming from {@link
+         * #confirmedCatchUpFloor} rather than {@code serverTimestamp} - it's persisted as a bare
+         * timestamp with no events. {@link InstanceTimestampStore#computeMaxTimestampAcrossInstances()}
+         * only ever reads {@link EventTimeSlice#getTimeSlice()} back out, never the events list, so
+         * this loses nothing that read path relies on. Deliberately checked against {@code
+         * serverTimestamp} directly, not against the {@code ownTimeSlice} parameter this was
+         * originally compared to: the two can now legitimately diverge (see {@link
+         * #confirmedCatchUpFloor}'s own javadoc), and shallow-copying {@code serverTimestamp} under
+         * a timestamp it doesn't actually match would silently attach the wrong events list to it.
          *
          * @param timeSliceToPersist the value to write - this instance's own, or a borrowed one.
-         * @param ownTimeSlice this instance's own current time slice, for comparison.
          */
-        private void persistTimeStamp(long timeSliceToPersist, long ownTimeSlice) {
+        private void persistTimeStamp(long timeSliceToPersist) {
             try {
-                EventTimeSlice toPersist = timeSliceToPersist == ownTimeSlice
+                boolean matchesOwnServerTimestamp =
+                        serverTimestamp != null && serverTimestamp.getTimeSlice() == timeSliceToPersist;
+                EventTimeSlice toPersist = matchesOwnServerTimestamp
                         ? EventTimeSlice.shallowCopy(serverTimestamp)
                         : new EventTimeSlice(timeSliceToPersist);
                 instanceTimestampStore.writeTimestamp(toPersist);

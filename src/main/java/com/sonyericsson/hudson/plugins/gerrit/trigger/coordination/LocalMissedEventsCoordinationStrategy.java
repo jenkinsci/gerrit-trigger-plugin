@@ -23,6 +23,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -75,19 +76,24 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
         }
         try {
             long watermark = watermarks.getOrDefault(serverName, 0L);
-            // See HazelcastMissedEventsCoordinationStrategy's identical fix: the watermark only
-            // reflects how far a PAST catch-up reached, not whether a NEW gap has opened since -
-            // gating on "watermark >= candidateCatchUpFrom" alone would permanently suppress
-            // catch-up after the first successful fetch on an otherwise-quiet server. Use the more
-            // advanced of the two as the actual fetch lower bound instead of skipping outright.
+            // See a distributed-mode strategy's identical reasoning: the watermark
+            // only reflects how far a PAST catch-up reached, not whether a NEW gap has opened
+            // since - gating on "watermark >= candidateCatchUpFrom" alone would permanently
+            // suppress catch-up after the first successful fetch on an otherwise-quiet server, and
+            // there is no reliable wall-clock shortcut either (effectiveLowerBound is always some
+            // point in the past by the time it's compared against "now"). Always fetch from the
+            // more advanced of the two, and classify the outcome from the fetch's own
+            // triggeredCount rather than pre-fetch timing.
             long effectiveLowerBound = Math.max(watermark, candidateCatchUpFrom);
-            if (System.currentTimeMillis() <= effectiveLowerBound) {
-                return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
-            }
             try {
-                long newWatermark = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
-                watermarks.put(serverName, newWatermark);
-                return MissedEventsCatchUpOutcome.PERFORMED;
+                MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
+                // See a distributed-mode strategy's identical reasoning: empty means
+                // nothing to derive a watermark from, so leave the map untouched rather than
+                // advancing on an unproven basis.
+                result.newWatermark().ifPresent(w -> watermarks.put(serverName, w));
+                return result.triggeredCount() > 0
+                        ? MissedEventsCatchUpOutcome.PERFORMED
+                        : MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
             } catch (IOException e) {
                 logger.error("Missed-events catch-up failed for server {}", serverName, e);
                 return MissedEventsCatchUpOutcome.FAILED;
@@ -96,6 +102,33 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
             maintenanceAction.run();
             lock.unlock();
         }
+    }
+
+    /**
+     * @param serverName the Gerrit server to look up.
+     * @return the current watermark for {@code serverName}, or empty if none has been recorded
+     *         yet.
+     */
+    @NonNull
+    @Override
+    public OptionalLong getWatermark(@NonNull String serverName) {
+        Long watermark = watermarks.get(serverName);
+        return watermark != null ? OptionalLong.of(watermark) : OptionalLong.empty();
+    }
+
+    /**
+     * Always returns {@code true}: a single JVM has no peer to race against, so there is nothing
+     * to dedupe here - the per-JVM {@code receivedEventCache} in
+     * {@code GerritMissedEventsPlaybackManager} already covers a second fetch by this same
+     * instance.
+     *
+     * @param serverName unused.
+     * @param eventKey unused.
+     * @return always {@code true}.
+     */
+    @Override
+    public boolean claimEvent(@NonNull String serverName, @NonNull String eventKey) {
+        return true;
     }
 
     /**

@@ -93,6 +93,24 @@ caveat in §2.
 
 ### Known, accepted risks (not blockers — tracked here for visibility)
 
+- **Boot-time catch-up vs. job-loading race (fixed).** `fetchAndTriggerMissedEvents` calls
+  `server.triggerEvent(evt)` and unconditionally marks an event delivered with no confirmation any
+  `GerritTrigger` listener actually received it. Since `GerritServer#startConnection()` fires as
+  early as `InitMilestone.PLUGINS_STARTED` (needed so `GerritTrigger#start()` can register a
+  listener as each job loads), the very first `connectionEstablished()` of a JVM's lifetime could
+  replay a missed event before that job's own trigger had registered — silently dropping it with
+  no retry, confirmed live (gerrit-demo-with-replica's HZ-021, both mc0 and mc1, ~150ms before
+  `InitMilestone.JOB_CONFIG_ADAPTED`). Not distributed/Hazelcast-specific — this code path is
+  identical regardless of coordination mode. Fixed via a one-shot `JobsLoadedGate`
+  (`playback/JobsLoadedGate.java`) that `connectionEstablished()` waits on first, opened by a new
+  `PluginImpl.gerritJobsLoaded()` hook at `InitMilestone.JOB_CONFIG_ADAPTED` (not `COMPLETED` —
+  that milestone is documented as reserved for `Initializer#before()`, and using it as an `after`
+  bound broke every `JenkinsRule`-based test in this plugin's own suite, JENKINS-37759). The gate
+  is process-lifetime and one-shot, so it only guards a JVM's very first catch-up — a related but
+  distinct trigger condition (a CasC job-reconciliation sweep tearing down and rebuilding a
+  trigger well after boot) is not covered by this fix; see
+  `gerrit-demo-with-replica/values/test-resources/CASC_RECONCILIATION_DROPPED_EVENTS.md` for the
+  full writeup of both.
 - **Mid-life reconnect race (§3).** Outside Jenkins' own boot sequence, a sidecar restart
   coinciding with a Gerrit SSH reconnect could still race cluster convergence. Rare — it requires
   two independent events to coincide — but possible. No mitigation currently exists beyond what §3

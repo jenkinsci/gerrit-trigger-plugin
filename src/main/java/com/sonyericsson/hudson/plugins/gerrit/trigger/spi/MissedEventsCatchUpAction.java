@@ -36,11 +36,10 @@ public interface MissedEventsCatchUpAction {
      * Performs the catch-up fetch.
      *
      * @param lowerBound the point to fetch missed events from.
-     * @return the epoch-millis timestamp to record as the new shared watermark - the instant this
-     *         attempt started, not derived from the fetched event list, so that a partial or
-     *         truncated events-log response still correctly advances "covered so far".
+     * @return the new watermark plus how many fetched events were genuinely new - see
+     *         {@link MissedEventsCatchUpResult}.
      * @throws IOException if the fetch or downstream processing fails. The watermark is not
      *         advanced when this is thrown.
      */
-    long fetchAndTrigger(Date lowerBound) throws IOException;
+    MissedEventsCatchUpResult fetchAndTrigger(Date lowerBound) throws IOException;
 }

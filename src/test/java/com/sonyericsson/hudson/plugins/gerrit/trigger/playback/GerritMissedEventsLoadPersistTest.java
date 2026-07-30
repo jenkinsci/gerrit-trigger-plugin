@@ -104,6 +104,11 @@ class GerritMissedEventsLoadPersistTest {
      */
     @BeforeEach
     void setUp() throws Exception {
+        // connectionEstablished() waits on this before doing anything - opening it here
+        // simulates Jenkins having already finished loading jobs, which is what every test in
+        // this file assumes (it's exercising load/persist/catch-up logic, not this gate).
+        JobsLoadedGate.open();
+
         Jenkins jenkinsMock = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
@@ -381,9 +386,9 @@ class GerritMissedEventsLoadPersistTest {
         // ever having restarted.
         manager.load();
 
-        assertEquals("a reconnect must not regress this instance's own live knowledge back to the "
-                        + "stale file value", TimeUnit.SECONDS.toMillis(newerTimestampSeconds),
-                manager.serverTimestamp.getTimeSlice());
+        assertEquals(TimeUnit.SECONDS.toMillis(newerTimestampSeconds), manager.serverTimestamp.getTimeSlice(),
+                "a reconnect must not regress this instance's own live knowledge back to the "
+                        + "stale file value");
     }
 
     /**
@@ -424,10 +429,10 @@ class GerritMissedEventsLoadPersistTest {
                     TimeUnit.SECONDS.toMillis(ownTimestampSeconds));
 
             EventTimeSlice persisted = new InstanceTimestampStore(serverName).readTimestamp();
-            assertNotNull("the borrowed, larger value should have been persisted locally", persisted);
+            assertNotNull(persisted, "the borrowed, larger value should have been persisted locally");
             assertEquals(borrowedTimestampMillis, persisted.getTimeSlice());
-            assertTrue("a borrowed value carries no events, since this instance never observed them",
-                    persisted.getEvents().isEmpty());
+            assertTrue(persisted.getEvents().isEmpty(),
+                    "a borrowed value carries no events, since this instance never observed them");
         }
     }
 
@@ -460,12 +465,12 @@ class GerritMissedEventsLoadPersistTest {
             factoryMockedStatic.when(CoordinationMode::get).thenReturn(factory);
 
             GerritMissedEventsPlaybackManager manager = new GerritMissedEventsPlaybackManager(serverName);
-            assertNull("no local file exists yet for this fresh server", manager.serverTimestamp);
+            assertNull(manager.serverTimestamp, "no local file exists yet for this fresh server");
 
             manager.connectionEstablished();
 
-            assertNotNull("an ALREADY_CAUGHT_UP outcome must still seed this instance's own baseline",
-                    manager.serverTimestamp);
+            assertNotNull(manager.serverTimestamp,
+                    "an ALREADY_CAUGHT_UP outcome must still seed this instance's own baseline");
             assertEquals(sharedFreshnessMillis, manager.serverTimestamp.getTimeSlice());
 
             Field field = GerritMissedEventsPlaybackManager.class.getDeclaredField("persistenceCheck");
@@ -473,8 +478,8 @@ class GerritMissedEventsLoadPersistTest {
             Object persistenceCheck = field.get(manager);
             Method isRunningMethod = persistenceCheck.getClass().getDeclaredMethod("isRunning");
             isRunningMethod.setAccessible(true);
-            assertTrue("the persistence thread must start even if gerritEvent() was never called",
-                    (Boolean)isRunningMethod.invoke(persistenceCheck));
+            assertTrue((Boolean)isRunningMethod.invoke(persistenceCheck),
+                    "the persistence thread must start even if gerritEvent() was never called");
 
             manager.shutdown();
         }

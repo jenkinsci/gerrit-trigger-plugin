@@ -25,6 +25,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -47,9 +48,11 @@ import java.util.concurrent.TimeUnit;
  * <p>The lock is acquired with a bounded wait (so a Gerrit reconnect callback thread never blocks
  * indefinitely) and a lease (a safety net auto-release if a replica crashes mid-fetch; the lock is
  * always explicitly released in the normal path via {@code finally}, so the lease only matters on
- * crash). Mutual exclusion across replicas comes from the lock itself; avoiding a redundant
- * re-fetch after a lock hand-off comes from comparing against the shared watermark immediately
- * after acquiring the lock - the lease/timeout values alone do not guarantee either property.</p>
+ * crash). Mutual exclusion across replicas comes from the lock itself - but two peers reconnecting
+ * concurrently can still each acquire it in turn and each legitimately fetch an overlapping
+ * window; avoiding a redundant re-TRIGGER of the same event across that overlap comes from a
+ * separate {@link #EVENT_CLAIM_MAP_NAME} map (see {@link #claimEvent}), not from the lock or the
+ * watermark alone.</p>
  */
 public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoordinationStrategy {
 
@@ -68,6 +71,17 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
     static final String INSTANCE_FRESHNESS_MAP_NAME = "gerrit-trigger-missed-events-instance-freshness";
 
     /**
+     * Cross-instance event-claim map, keyed by {@code serverName + "\0" + eventKey}, used by
+     * {@link #claimEvent} so a catch-up fetch that legitimately overlaps a peer's own
+     * just-completed fetch (see {@link #coordinateCatchUp}'s own javadoc) can tell that a specific
+     * event was already triggered by that peer, not just that the two fetch windows overlapped.
+     * Entries expire on their own via {@link #EVENT_CLAIM_TTL_SECONDS} - this only needs to
+     * survive long enough to cover a lock hand-off between concurrently-reconnecting peers, not
+     * the lifetime of the JVM.
+     */
+    static final String EVENT_CLAIM_MAP_NAME = "gerrit-trigger-missed-events-claims";
+
+    /**
      * System property: maximum seconds to wait to acquire the missed-events coordination lock.
      */
     public static final String LOCK_WAIT_TIMEOUT_PROPERTY =
@@ -80,9 +94,19 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
     public static final String LOCK_LEASE_PROPERTY =
             "gerrit.trigger.coordination.hazelcast.missedevents.lock.lease.seconds";
 
+    /**
+     * System property: how long an {@link #EVENT_CLAIM_MAP_NAME} entry survives - only needs to
+     * outlast the window between two peers concurrently reconnecting and serializing through the
+     * coordination lock one after another, not the events themselves.
+     */
+    public static final String EVENT_CLAIM_TTL_PROPERTY =
+            "gerrit.trigger.coordination.hazelcast.missedevents.claim.ttl.seconds";
+
     private static final int DEFAULT_LOCK_WAIT_TIMEOUT_SECONDS = 30;
 
     private static final int DEFAULT_LOCK_LEASE_SECONDS = 300;
+
+    private static final int DEFAULT_EVENT_CLAIM_TTL_SECONDS = 60;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -125,17 +149,29 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
             // fetching entirely. The watermark only reflects how far a PAST catch-up reached - it
             // says nothing about whether a NEW gap has opened up since then, so gating on it here
             // would (and did) permanently suppress catch-up after the first successful fetch, on
-            // an otherwise-quiet Gerrit server. Only a truly empty window (nothing possibly missed
-            // since the more advanced of the two) is skipped.
+            // an otherwise-quiet Gerrit server - see this class's own git history. There is no
+            // reliable wall-clock shortcut for "nothing could possibly have happened since
+            // effectiveLowerBound" either (effectiveLowerBound is, by construction, always some
+            // point in the past relative to whenever this comparison itself runs), so this always
+            // fetches once past this point; a peer serializing in right behind another via the
+            // same lock may fetch an overlapping window - that alone is not a bug. What must never
+            // happen is re-triggering the same event twice, which catchUpAction.fetchAndTrigger
+            // itself prevents via claimEvent below; the outcome is classified from its own
+            // triggeredCount, not from this pre-fetch timing.
             long effectiveLowerBound = Math.max(currentWatermark, candidateCatchUpFrom);
-            if (System.currentTimeMillis() <= effectiveLowerBound) {
-                logger.debug("Missed-events effective lower bound for server {} is already current "
-                        + "({}); nothing to catch up on.", serverName, effectiveLowerBound);
-                return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
-            }
             try {
-                long newWatermark = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
-                map.put(serverName, newWatermark);
+                MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
+                // Empty means the fetch found nothing to derive a watermark from (see
+                // MissedEventsCatchUpResult's own javadoc) - leave the map untouched rather than
+                // writing some other stand-in value (fetch time, effectiveLowerBound, 0), any of
+                // which would re-introduce the exact "advanced past an unproven gap" bug this
+                // guards against.
+                result.newWatermark().ifPresent(w -> map.put(serverName, w));
+                if (result.triggeredCount() == 0) {
+                    logger.debug("Missed-events fetch for server {} found nothing not already claimed by a peer; "
+                            + "treating as already caught up.", serverName);
+                    return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
+                }
                 return MissedEventsCatchUpOutcome.PERFORMED;
             } catch (IOException e) {
                 logger.error("Missed-events catch-up failed for server {}", serverName, e);
@@ -145,6 +181,33 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
             maintenanceAction.run();
             map.unlock(serverName);
         }
+    }
+
+    /**
+     * @param serverName the Gerrit server to look up.
+     * @return the current watermark from {@link #WATERMARK_MAP_NAME}, or empty if none has been
+     *         recorded yet.
+     */
+    @NonNull
+    @Override
+    public OptionalLong getWatermark(@NonNull String serverName) {
+        Long watermark = hazelcastInstance.<String, Long>getMap(WATERMARK_MAP_NAME).get(serverName);
+        return watermark != null ? OptionalLong.of(watermark) : OptionalLong.empty();
+    }
+
+    /**
+     * Atomically claims {@code eventKey} for {@code serverName} via {@link IMap#putIfAbsent} with
+     * a short TTL, backed by {@link #EVENT_CLAIM_MAP_NAME} - a single partition-confined
+     * operation, safe for concurrent callers across every live instance without needing the
+     * {@link #coordinateCatchUp} lock (which may already have been released by the time a peer's
+     * own overlapping fetch reaches the same event).
+     */
+    @Override
+    public boolean claimEvent(@NonNull String serverName, @NonNull String eventKey) {
+        IMap<String, Boolean> map = hazelcastInstance.getMap(EVENT_CLAIM_MAP_NAME);
+        int ttlSeconds = Integer.getInteger(EVENT_CLAIM_TTL_PROPERTY, DEFAULT_EVENT_CLAIM_TTL_SECONDS);
+        String key = serverName + '\0' + eventKey;
+        return map.putIfAbsent(key, Boolean.TRUE, ttlSeconds, TimeUnit.SECONDS) == null;
     }
 
     /**

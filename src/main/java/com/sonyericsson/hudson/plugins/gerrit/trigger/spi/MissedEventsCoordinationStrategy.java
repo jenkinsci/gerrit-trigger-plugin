@@ -47,10 +47,17 @@ import java.util.OptionalLong;
  *   <li><b>Mutual exclusion:</b> if the lock cannot be acquired, return {@link
  *       MissedEventsCatchUpOutcome#LOCK_TIMEOUT} and do not fetch - never fall back to an
  *       independent, uncoordinated fetch.</li>
- *   <li><b>No redundant re-fetching:</b> after acquiring the lock, compare against the shared
- *       watermark before fetching; if the watermark is already at or ahead of {@code
- *       candidateCatchUpFrom}, return {@link MissedEventsCatchUpOutcome#ALREADY_CAUGHT_UP}
- *       without fetching.</li>
+ *   <li><b>No redundant re-triggering:</b> a peer serializing in right behind this JVM via the
+ *       same lock may legitimately query an overlapping window - the shared watermark only
+ *       records how far a past fetch reached, not whether a new gap has opened since, so skipping
+ *       the fetch outright whenever the watermark is at or ahead of {@code candidateCatchUpFrom}
+ *       would (and once did, in an earlier distributed-mode implementation - see this project's
+ *       own git history) permanently suppress catch-up after the first successful fetch on an
+ *       otherwise-quiet server. Instead, always fetch from the more-advanced of the watermark and {@code
+ *       candidateCatchUpFrom}, and classify the outcome from {@link
+ *       MissedEventsCatchUpResult#triggeredCount()}: {@link MissedEventsCatchUpOutcome#PERFORMED}
+ *       only if this call actually delivered at least one event not already claimed via {@link
+ *       #claimEvent}, otherwise {@link MissedEventsCatchUpOutcome#ALREADY_CAUGHT_UP}.</li>
  * </ol>
  *
  * <p>Implementations are discovered via the Extension Points pattern using {@link
@@ -81,6 +88,25 @@ public abstract class MissedEventsCoordinationStrategy {
             long candidateCatchUpFrom,
             @NonNull MissedEventsCatchUpAction catchUpAction,
             @NonNull Runnable maintenanceAction);
+
+    /**
+     * Returns this coordination mode's own current watermark for {@code serverName} - the same
+     * value {@link #coordinateCatchUp} itself only ever advances to a point some fetch actually
+     * observed events up to (see {@link MissedEventsCatchUpResult#newWatermark()}'s own contract),
+     * never to a wall-clock instant or any other unproven stand-in.
+     *
+     * <p>Callers use this to learn what is genuinely safe to advertise as this instance's own
+     * cross-instance freshness (see {@link #publishInstanceFreshness}) - an ordinary live event
+     * proves only that this JVM is currently receiving events, not that an earlier, unrelated gap
+     * from the same connection session was ever actually closed, so freshness meant for peers must
+     * be driven by this proven watermark instead.</p>
+     *
+     * @param serverName the Gerrit server to look up.
+     * @return the current watermark, or empty if {@link #coordinateCatchUp} has never advanced one
+     *         for this server (nothing proven yet).
+     */
+    @NonNull
+    public abstract OptionalLong getWatermark(@NonNull String serverName);
 
     /**
      * Publishes this JVM's own last-known-alive timestamp for {@code serverName} to whatever
@@ -119,4 +145,26 @@ public abstract class MissedEventsCoordinationStrategy {
      */
     @NonNull
     public abstract OptionalLong getSharedInstanceFreshness(@NonNull String serverName);
+
+    /**
+     * Atomically claims {@code eventKey} for {@code serverName}, across every JVM sharing this
+     * coordination mode, for a short dedup window - letting a catch-up fetch recognize an event a
+     * peer's own concurrent catch-up already triggered, even though both fetches legitimately
+     * queried an overlapping range from the same watermark (see {@link #coordinateCatchUp}'s
+     * "no redundant re-triggering" contract). A per-JVM cache alone cannot do this: it only
+     * dedupes a second fetch by the same instance, never a peer's.
+     *
+     * <p>Local mode, with only one JVM to coordinate with, may implement this as always returning
+     * {@code true}: nothing to dedupe against, and the per-JVM {@code receivedEventCache} in
+     * {@code GerritMissedEventsPlaybackManager} already handles same-JVM re-fetches.</p>
+     *
+     * @param serverName the Gerrit server this event belongs to; scopes the claim so unrelated
+     *         servers can never collide on the same key.
+     * @param eventKey a stable identifier for the specific event (e.g. its own {@code toString()}
+     *         - already used as this event's display identity in this subsystem's own logging).
+     * @return {@code true} if this call is the first to claim {@code eventKey} within the dedup
+     *         window (the caller should trigger it), {@code false} if some other call - this JVM
+     *         or a peer's - already claimed it first (the caller must not trigger it again).
+     */
+    public abstract boolean claimEvent(@NonNull String serverName, @NonNull String eventKey);
 }
