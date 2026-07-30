@@ -10,6 +10,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritP
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TopicAssociation;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginCommentAddedEvent;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.TestUtils;
 import com.sonymobile.tools.gerrit.gerritevents.dto.GerritChangeStatus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -152,10 +153,21 @@ class TopicAssociationTriggerTest {
      */
     @Test
     void testTopicAssociationTrigger() throws Exception {
-        //CS IGNORE MagicNumber FOR NEXT 41 LINES. REASON: Testdata.
+        //CS IGNORE MagicNumber FOR NEXT 55 LINES. REASON: Testdata.
         server.waitForCommand("gerrit stream-events", 2000);
 
+        // Event delivery is asynchronous: triggerEvent() hands the event to the GerritHandler
+        // worker queue and returns, and waitUntilNoActivity() only observes the Jenkins queue,
+        // not the plugin's in-flight event processing. Under slower coordination backends (e.g.
+        // Hazelcast) the build may not be scheduled yet when we assert, so wait for the expected
+        // completed build before reading the build number. Waiting for the build that IS expected
+        // to run also proves the whole event was dispatched to every listener (notifyListeners is
+        // synchronous and completes before any build executes), which makes the "did not build"
+        // assertions on the other job deterministic too.
+
         triggerAndWait(projects[0], GerritChangeStatus.NEW);
+        TestUtils.waitForBuilds(jobs.get(0), 1);
+        TestUtils.waitForBuilds(jobs.get(1), 1);
         assertEquals(1, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
@@ -165,6 +177,7 @@ class TopicAssociationTriggerTest {
         jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
 
         triggerAndWait(projects[0], GerritChangeStatus.NEW);
+        TestUtils.waitForBuilds(jobs.get(0), 2);
         assertEquals(2, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
@@ -172,6 +185,7 @@ class TopicAssociationTriggerTest {
         jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
 
         triggerAndWait(projects[0], GerritChangeStatus.MERGED);
+        TestUtils.waitForBuilds(jobs.get(0), 3);
         assertEquals(3, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
@@ -179,6 +193,7 @@ class TopicAssociationTriggerTest {
         jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(ta);
 
         triggerAndWait(projects[0], GerritChangeStatus.ABANDONED);
+        TestUtils.waitForBuilds(jobs.get(0), 4);
         assertEquals(4, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
@@ -186,10 +201,12 @@ class TopicAssociationTriggerTest {
         jobs.get(1).getTrigger(GerritTrigger.class).setTopicAssociation(null);
 
         triggerAndWait(projects[0], GerritChangeStatus.NEW);
+        TestUtils.waitForBuilds(jobs.get(0), 5);
         assertEquals(5, jobs.get(0).getLastBuild().getNumber());
         assertEquals(1, jobs.get(1).getLastBuild().getNumber());
 
         triggerAndWait(projects[1], GerritChangeStatus.NEW);
+        TestUtils.waitForBuilds(jobs.get(1), 2);
         assertEquals(5, jobs.get(0).getLastBuild().getNumber());
         assertEquals(2, jobs.get(1).getLastBuild().getNumber());
     }
