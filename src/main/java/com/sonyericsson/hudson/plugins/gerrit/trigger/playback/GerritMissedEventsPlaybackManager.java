@@ -68,6 +68,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -105,6 +106,54 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * whole-second resolution the events-log plugin's own {@code t1} query parameter is limited to.
      */
     private static final long MILLIS_PER_SECOND = 1000L;
+    /**
+     * System property: maximum number of catch-up attempts made for a single reconnect - the
+     * initial synchronous attempt plus however many {@link #scheduleCatchUpRetry} schedules after
+     * it. A hard backstop, not the primary way this stops: {@link #hasWatermarkPassed} normally
+     * ends the sequence earlier, once the events-log plugin's own indexing is confirmed caught up -
+     * this bound only matters when that confirmation never arrives (e.g. a persistently quiet
+     * events-log response), so it's kept small enough to be cheap even then: at the default delay
+     * this adds at most a few seconds to such a reconnect, in exchange for meaningfully raising the
+     * odds of closing a real gap within the same reconnect otherwise. See {@link
+     * #CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY}'s own comment for why this retry exists at all.
+     */
+    private static final String CATCH_UP_RETRY_MAX_ATTEMPTS_PROPERTY =
+            "gerrit.trigger.playback.catchup.retry.max.attempts";
+    private static final int DEFAULT_CATCH_UP_RETRY_MAX_ATTEMPTS = 4;
+    /**
+     * System property: milliseconds to wait before each scheduled catch-up retry attempt.
+     *
+     * <p>The events-log plugin has its own indexing latency between "Gerrit processed this event"
+     * and "this event is queryable via its REST endpoint" - a fetch that races ahead of that can
+     * get back a response that doesn't yet contain the very event it exists to catch up on. {@link
+     * MissedEventsCatchUpResult}'s own watermark semantics keep that race from causing PERMANENT
+     * loss (the floor never advances past ground it hasn't proven), but without this retry a
+     * single unlucky fetch would still leave the gap open until some unrelated future reconnect
+     * happens to occur - this retry instead gives the events-log plugin a brief window to catch up
+     * within the same reconnect, since that indexing lag has been observed to resolve within about
+     * a second in practice. Scheduled on {@link #CATCH_UP_RETRY_SCHEDULER} rather than a blocking
+     * sleep - see that field's own javadoc.</p>
+     */
+    private static final String CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY =
+            "gerrit.trigger.playback.catchup.retry.delay.millis";
+    private static final long DEFAULT_CATCH_UP_RETRY_DELAY_MILLIS = 2000L;
+    /**
+     * Dedicated, process-wide scheduler for {@link #scheduleCatchUpRetry} - deliberately NOT {@code
+     * jenkins.util.Timer}'s own shared executor: that pool is small and fed by a great many
+     * unrelated periodic tasks across all of Jenkins core, and a scheduled task can sit queued
+     * behind other work for far longer than its own requested delay under load (observed directly:
+     * a 2-second retry delay queued for over 90 seconds before running, on a controller doing
+     * nothing more unusual than a handful of concurrent test jobs) - exactly defeating the point of
+     * a short, bounded retry window. One JVM normally configures only a handful of Gerrit servers
+     * at most, so a single dedicated daemon thread shared across every instance of this class is
+     * cheap and keeps this retry's own timing independent of how busy the rest of Jenkins is.
+     */
+    private static final ScheduledExecutorService CATCH_UP_RETRY_SCHEDULER = Executors.newSingleThreadScheduledExecutor(
+            runnable -> {
+                Thread thread = new Thread(runnable, "GerritMissedEventsPlaybackManager-catchup-retry");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     private String serverName;
     /**
@@ -354,11 +403,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         long staleAgeMillis = TimeUnit.HOURS.toMillis(
                 Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS));
-        MissedEventsCatchUpOutcome outcome = coordinationStrategy.coordinateCatchUp(
-                serverName,
-                candidateCatchUpFrom,
-                lowerBound -> fetchAndTriggerMissedEvents(lowerBound, coordinationStrategy),
-                () -> instanceTimestampStore.pruneStaleInstanceFiles(staleAgeMillis));
+        long catchUpAttemptsStartedAt = System.currentTimeMillis();
+        MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
+                coordinationStrategy, candidateCatchUpFrom, staleAgeMillis);
         logger.info("Missed-events catch-up outcome for server {}: {}", serverName, outcome);
 
         // Whatever the coordination strategy's own watermark now holds is, by construction, only
@@ -367,10 +414,116 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         // specific call was the one that advanced it, or a peer's concurrent attempt did.
         coordinationStrategy.getWatermark(serverName).ifPresent(this::advanceConfirmedCatchUpFloor);
 
+        if (outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT && outcome != MissedEventsCatchUpOutcome.FAILED
+                && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
+            scheduleCatchUpRetry(
+                    coordinationStrategy, candidateCatchUpFrom, staleAgeMillis, 2, catchUpAttemptsStartedAt);
+        }
+
         ensureBaselineCaptured(candidateCatchUpFrom);
 
         playBackComplete = true;
         logger.info("Processing completed for server: {}", serverName);
+    }
+
+    /**
+     * Invokes {@link MissedEventsCoordinationStrategy#coordinateCatchUp} once.
+     *
+     * @param coordinationStrategy the coordination strategy to invoke.
+     * @param candidateCatchUpFrom the candidate catch-up floor for this attempt.
+     * @param staleAgeMillis forwarded unchanged to the maintenance action.
+     * @return the outcome of this attempt.
+     */
+    private MissedEventsCatchUpOutcome performCatchUpAttempt(
+            MissedEventsCoordinationStrategy coordinationStrategy, long candidateCatchUpFrom, long staleAgeMillis) {
+        return coordinationStrategy.coordinateCatchUp(
+                serverName,
+                candidateCatchUpFrom,
+                lowerBound -> fetchAndTriggerMissedEvents(lowerBound, coordinationStrategy),
+                () -> instanceTimestampStore.pruneStaleInstanceFiles(staleAgeMillis));
+    }
+
+    /**
+     * @param coordinationStrategy the coordination strategy whose watermark to check.
+     * @param referenceMillis a fixed wall-clock instant to compare against - not "now" at check
+     *         time, which drifts forward regardless of whether the underlying data actually
+     *         became any fresher, but the moment this reconnect's own catch-up sequence began.
+     * @return whether the watermark now holds a value strictly after {@code referenceMillis} - the
+     *         events-log plugin's own response contained an event actually created after this
+     *         reconnect's catch-up sequence started, which is direct, unambiguous proof its
+     *         indexing has caught up to (at least) that instant. Anything genuinely missed by an
+     *         earlier outage happened well before that instant, so this proves events-log's own
+     *         indexing lag - the entire reason this retry exists - is no longer a factor for it:
+     *         if it were still missing, this fetch's response could not legitimately contain
+     *         anything created later without also containing it. Deliberately not "is the
+     *         watermark close to now" (fooled by unrelated busy traffic making a stale response
+     *         look fresh) or "did the watermark change since the last attempt" (fooled by a fixed
+     *         set of already-known duplicate events masking a genuinely new one) - both were tried
+     *         and both were observed to give a false positive in exactly the scenario retrying
+     *         exists to handle. See {@link #scheduleCatchUpRetry}'s own javadoc.
+     */
+    private boolean hasWatermarkPassed(MissedEventsCoordinationStrategy coordinationStrategy, long referenceMillis) {
+        OptionalLong watermark = coordinationStrategy.getWatermark(serverName);
+        return watermark.isPresent() && watermark.getAsLong() > referenceMillis;
+    }
+
+    /**
+     * Schedules attempt {@code attempt} of a catch-up retry on {@link #CATCH_UP_RETRY_SCHEDULER} -
+     * deliberately not a blocking {@code Thread.sleep} loop on the calling ({@code
+     * GerritConnection}) thread, which would hold that thread hostage for the entire retry window
+     * instead of freeing it to keep servicing the live connection, and deliberately not {@code
+     * jenkins.util.Timer}'s own shared executor either - see {@link #CATCH_UP_RETRY_SCHEDULER}'s
+     * own javadoc for why. See {@link #CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY}'s own javadoc for why
+     * this retry exists at all.
+     *
+     * <p>Each retry re-queries from wherever the watermark already reached (not the original
+     * {@code candidateCatchUpFrom} again) - {@link MissedEventsCatchUpResult}'s own watermark
+     * semantics only ever advance it to a point actually observed, so a retry's own {@code
+     * effectiveLowerBound} naturally narrows to just what is still outstanding, same as any other
+     * peer serializing in behind an earlier attempt via the same lock.</p>
+     *
+     * <p>Keeps scheduling further retries until either {@code maxAttempts} is spent or {@link
+     * #hasWatermarkPassed} confirms the events-log plugin's own indexing has caught up past {@code
+     * catchUpAttemptsStartedAt} - see that method's own javadoc for why comparing against that
+     * fixed reference, rather than the watermark's mere closeness to "now" or whether it changed
+     * since the previous attempt, is what actually holds up under real, observed traffic on a busy,
+     * shared Gerrit instance (two earlier versions of this method tried each of those instead, and
+     * both were fooled in exactly the scenario retrying exists to handle).</p>
+     *
+     * <p>Stops, without scheduling a further retry, on {@link MissedEventsCatchUpOutcome#LOCK_TIMEOUT}
+     * or {@link MissedEventsCatchUpOutcome#FAILED} - retrying either here would either fight the
+     * same contention that just caused the timeout, or repeat an I/O failure likely to recur
+     * immediately; the next reconnect (or this coordination mode's own lock semantics) already
+     * covers those cases.</p>
+     *
+     * @param coordinationStrategy the coordination strategy to invoke.
+     * @param candidateCatchUpFrom the original candidate catch-up floor for this reconnect.
+     * @param staleAgeMillis forwarded unchanged to every attempt's own maintenance action.
+     * @param attempt this retry's own attempt number (the first retry is attempt 2 - attempt 1 was
+     *         the synchronous call already made before scheduling this).
+     * @param catchUpAttemptsStartedAt the fixed wall-clock instant this reconnect's whole catch-up
+     *         sequence began - see {@link #hasWatermarkPassed}'s own javadoc.
+     */
+    private void scheduleCatchUpRetry(
+            MissedEventsCoordinationStrategy coordinationStrategy, long candidateCatchUpFrom,
+            long staleAgeMillis, int attempt, long catchUpAttemptsStartedAt) {
+        int maxAttempts = Integer.getInteger(
+                CATCH_UP_RETRY_MAX_ATTEMPTS_PROPERTY, DEFAULT_CATCH_UP_RETRY_MAX_ATTEMPTS);
+        long retryDelayMillis = Long.getLong(
+                CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY, DEFAULT_CATCH_UP_RETRY_DELAY_MILLIS);
+        CATCH_UP_RETRY_SCHEDULER.schedule(() -> {
+            MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
+                    coordinationStrategy, candidateCatchUpFrom, staleAgeMillis);
+            logger.info("Missed-events catch-up retry {}/{} outcome for server {}: {}",
+                    attempt, maxAttempts, serverName, outcome);
+            coordinationStrategy.getWatermark(serverName).ifPresent(this::advanceConfirmedCatchUpFloor);
+            if (outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT && outcome != MissedEventsCatchUpOutcome.FAILED
+                    && attempt < maxAttempts && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
+                scheduleCatchUpRetry(
+                        coordinationStrategy, candidateCatchUpFrom, staleAgeMillis, attempt + 1,
+                        catchUpAttemptsStartedAt);
+            }
+        }, retryDelayMillis, TimeUnit.MILLISECONDS);
     }
 
     /**
