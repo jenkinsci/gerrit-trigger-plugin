@@ -48,12 +48,7 @@ import static org.mockito.Mockito.when;
  */
 public class InstanceTimestampStoreTest {
 
-    private static final long TIMESTAMP_1000 = 1000L;
-    private static final long TIMESTAMP_3000 = 3000L;
-    private static final long TIMESTAMP_5000 = 5000L;
-    private static final long TIMESTAMP_7000 = 7000L;
-    private static final long STALE_AGE_DAYS = 365L;
-
+    // CS IGNORE MagicNumber FOR NEXT 150 LINES. REASON: Test data.
     private MockedStatic<Jenkins> jenkinsMockedStatic;
 
     /**
@@ -88,13 +83,13 @@ public class InstanceTimestampStoreTest {
     public void testComputeMaxAcrossMultipleInstanceFiles() throws IOException {
         InstanceTimestampStore storeA = new InstanceTimestampStore("server-x", "instance-a");
         InstanceTimestampStore storeB = new InstanceTimestampStore("server-x", "instance-b");
-        storeA.writeTimestamp(new EventTimeSlice(TIMESTAMP_1000));
-        storeB.writeTimestamp(new EventTimeSlice(TIMESTAMP_5000));
+        storeA.writeTimestamp(new EventTimeSlice(1000L));
+        storeB.writeTimestamp(new EventTimeSlice(5000L));
 
         OptionalLong max = storeA.computeMaxTimestampAcrossInstances();
 
         assertTrue(max.isPresent());
-        assertEquals(TIMESTAMP_5000, max.getAsLong());
+        assertEquals(5000L, max.getAsLong());
     }
 
     /**
@@ -107,12 +102,12 @@ public class InstanceTimestampStoreTest {
     @Test
     public void testFallsBackToLegacyFileWhenNoInstanceFilesExist() throws IOException {
         InstanceTimestampStore store = new InstanceTimestampStore("server-y", "instance-a");
-        store.getLegacyConfigXml().write(new EventTimeSlice(TIMESTAMP_7000));
+        store.getLegacyConfigXml().write(new EventTimeSlice(7000L));
 
         OptionalLong max = store.computeMaxTimestampAcrossInstances();
 
         assertTrue(max.isPresent());
-        assertEquals(TIMESTAMP_7000, max.getAsLong());
+        assertEquals(7000L, max.getAsLong());
     }
 
     /**
@@ -137,7 +132,7 @@ public class InstanceTimestampStoreTest {
     public void testCorruptInstanceFileIsSkippedNotFatal() throws IOException {
         InstanceTimestampStore storeA = new InstanceTimestampStore("server-w", "instance-a");
         InstanceTimestampStore storeB = new InstanceTimestampStore("server-w", "instance-b");
-        storeA.writeTimestamp(new EventTimeSlice(TIMESTAMP_3000));
+        storeA.writeTimestamp(new EventTimeSlice(3000L));
         File corruptFile = storeB.getInstanceConfigXml().getFile();
         try (PrintWriter out = new PrintWriter(corruptFile)) {
             out.println("not valid xml <<<");
@@ -146,7 +141,7 @@ public class InstanceTimestampStoreTest {
         OptionalLong max = storeA.computeMaxTimestampAcrossInstances();
 
         assertTrue(max.isPresent());
-        assertEquals(TIMESTAMP_3000, max.getAsLong());
+        assertEquals(3000L, max.getAsLong());
     }
 
     /**
@@ -160,7 +155,7 @@ public class InstanceTimestampStoreTest {
         InstanceTimestampStore store = new InstanceTimestampStore("server-v", "instance-a");
         store.writeTimestamp(new EventTimeSlice(1L));
         File ownFile = store.getInstanceConfigXml().getFile();
-        assertTrue(ownFile.setLastModified(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(STALE_AGE_DAYS)));
+        assertTrue(ownFile.setLastModified(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(365L)));
 
         int removed = store.pruneStaleInstanceFiles(TimeUnit.HOURS.toMillis(1));
 
@@ -181,7 +176,7 @@ public class InstanceTimestampStoreTest {
         storeA.writeTimestamp(new EventTimeSlice(1L));
         storeB.writeTimestamp(new EventTimeSlice(2L));
         File otherFile = storeB.getInstanceConfigXml().getFile();
-        assertTrue(otherFile.setLastModified(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(STALE_AGE_DAYS)));
+        assertTrue(otherFile.setLastModified(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(365L)));
 
         int removed = storeA.pruneStaleInstanceFiles(TimeUnit.HOURS.toMillis(1));
 
