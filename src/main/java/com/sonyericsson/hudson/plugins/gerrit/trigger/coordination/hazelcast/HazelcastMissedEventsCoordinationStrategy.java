@@ -25,15 +25,12 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.OptionalLong;
 import java.util.concurrent.TimeUnit;
 
@@ -144,47 +141,13 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
         try {
             Long watermark = map.get(serverName);
             long currentWatermark = watermark != null ? watermark : 0L;
-            // Use whichever of the two is more advanced as the actual fetch lower bound, rather
-            // than treating "a peer's watermark is ahead of my own candidate" as a reason to skip
-            // fetching entirely. The watermark only reflects how far a PAST catch-up reached - it
-            // says nothing about whether a NEW gap has opened up since then, so gating on it here
-            // would (and did) permanently suppress catch-up after the first successful fetch, on
-            // an otherwise-quiet Gerrit server - see this class's own git history. There is no
-            // reliable wall-clock shortcut for "nothing could possibly have happened since
-            // effectiveLowerBound" either (effectiveLowerBound is, by construction, always some
-            // point in the past relative to whenever this comparison itself runs), so this always
-            // fetches once past this point; a peer serializing in right behind another via the
-            // same lock may fetch an overlapping window - that alone is not a bug. What must never
-            // happen is re-triggering the same event twice, which catchUpAction.fetchAndTrigger
-            // itself prevents via claimEvent below; the outcome is classified from its own
-            // triggeredCount, not from this pre-fetch timing.
-            long effectiveLowerBound = Math.max(currentWatermark, candidateCatchUpFrom);
-            try {
-                MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
-                // fetchFailed means the fetch itself could not be completed - never treat that the
-                // same as a confirmed-empty result, or an outage during a reconnect's catch-up
-                // window would look identical to "nothing was missed" and never be retried.
-                if (result.fetchFailed()) {
-                    logger.warn("Missed-events catch-up fetch failed for server {}; leaving watermark unchanged.",
-                            serverName);
-                    return MissedEventsCatchUpOutcome.FAILED;
-                }
-                // Empty means the fetch found nothing to derive a watermark from (see
-                // MissedEventsCatchUpResult's own javadoc) - leave the map untouched rather than
-                // writing some other stand-in value (fetch time, effectiveLowerBound, 0), any of
-                // which would re-introduce the exact "advanced past an unproven gap" bug this
-                // guards against.
-                result.newWatermark().ifPresent(w -> map.put(serverName, w));
-                if (result.triggeredCount() == 0) {
-                    logger.debug("Missed-events fetch for server {} found nothing not already claimed by a peer; "
-                            + "treating as already caught up.", serverName);
-                    return MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
-                }
-                return MissedEventsCatchUpOutcome.PERFORMED;
-            } catch (IOException e) {
-                logger.error("Missed-events catch-up failed for server {}", serverName, e);
-                return MissedEventsCatchUpOutcome.FAILED;
-            }
+            // See the shared coordinateCatchUp contract on MissedEventsCoordinationStrategy: a
+            // peer serializing in right behind another via the same lock may fetch an overlapping
+            // window - that alone is not a bug. What must never happen is re-triggering the same
+            // event twice, which catchUpAction.fetchAndTrigger itself prevents via claimEvent
+            // below.
+            return performCatchUp(serverName, currentWatermark, candidateCatchUpFrom, catchUpAction,
+                    w -> map.put(serverName, w));
         } finally {
             // maintenanceAction must never prevent the unlock below - a RuntimeException out of
             // it (e.g. file I/O in pruneStaleInstanceFiles) would otherwise leave the lock held

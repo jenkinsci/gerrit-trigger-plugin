@@ -22,8 +22,13 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.spi;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.Date;
 import java.util.OptionalLong;
+import java.util.function.LongConsumer;
 
 /**
  * Coordinates missed-events playback catch-up across however many JVMs are sharing one
@@ -66,6 +71,61 @@ import java.util.OptionalLong;
  * @see CoordinationModeProvider
  */
 public abstract class MissedEventsCoordinationStrategy {
+
+    private static final Logger logger = LoggerFactory.getLogger(MissedEventsCoordinationStrategy.class);
+
+    /**
+     * Shared "fetch, classify, advance watermark" implementation of {@link #coordinateCatchUp},
+     * common to every implementation: only lock acquisition/release and the watermark's backing
+     * storage are mode-specific, so subclasses read their own current watermark, call this while
+     * still holding their lock, and store whatever watermark it hands back via {@code
+     * watermarkWriter} - rather than re-implementing this logic themselves (see this class's own
+     * "no redundant re-triggering" contract above, which this method is what actually enforces).
+     *
+     * @param serverName the Gerrit server this catch-up is for; used only for logging here.
+     * @param currentWatermark the caller's own already-read current watermark for {@code
+     *         serverName} (0 if none recorded yet).
+     * @param candidateCatchUpFrom see {@link #coordinateCatchUp}.
+     * @param catchUpAction see {@link #coordinateCatchUp}.
+     * @param watermarkWriter invoked with the fetch's new watermark, if any, so the caller can
+     *         store it in whatever map or field this coordination mode backs its watermark with.
+     * @return the outcome of this attempt.
+     */
+    @NonNull
+    protected final MissedEventsCatchUpOutcome performCatchUp(
+            @NonNull String serverName,
+            long currentWatermark,
+            long candidateCatchUpFrom,
+            @NonNull MissedEventsCatchUpAction catchUpAction,
+            @NonNull LongConsumer watermarkWriter) {
+        // The watermark only reflects how far a PAST catch-up reached, not whether a NEW gap has
+        // opened since - gating on "watermark >= candidateCatchUpFrom" alone would permanently
+        // suppress catch-up after the first successful fetch on an otherwise-quiet server (see
+        // this class's own "no redundant re-triggering" contract above). Always fetch from the
+        // more advanced of the two instead, and classify the outcome from the fetch's own
+        // triggeredCount rather than pre-fetch timing.
+        long effectiveLowerBound = Math.max(currentWatermark, candidateCatchUpFrom);
+        try {
+            MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
+            // fetchFailed means the fetch itself could not be completed - never treat that the
+            // same as a confirmed-empty result, or an outage during a reconnect's catch-up window
+            // would look identical to "nothing was missed" and never be retried.
+            if (result.fetchFailed()) {
+                logger.warn("Missed-events catch-up fetch failed for server {}; leaving watermark unchanged.",
+                        serverName);
+                return MissedEventsCatchUpOutcome.FAILED;
+            }
+            // Empty means nothing to derive a watermark from, so leave it untouched rather than
+            // advancing on an unproven basis.
+            result.newWatermark().ifPresent(watermarkWriter);
+            return result.triggeredCount() > 0
+                    ? MissedEventsCatchUpOutcome.PERFORMED
+                    : MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
+        } catch (IOException e) {
+            logger.error("Missed-events catch-up failed for server {}", serverName, e);
+            return MissedEventsCatchUpOutcome.FAILED;
+        }
+    }
 
     /**
      * Coordinates a missed-events catch-up attempt for one Gerrit server.

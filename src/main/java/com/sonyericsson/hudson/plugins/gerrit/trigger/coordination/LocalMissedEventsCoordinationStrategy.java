@@ -23,15 +23,10 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpAction;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Date;
 import java.util.OptionalLong;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +47,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * crash-without-release scenario here.</p>
  */
 public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinationStrategy {
-
-    private static final Logger logger = LoggerFactory.getLogger(LocalMissedEventsCoordinationStrategy.class);
 
     private static final long LOCK_WAIT_TIMEOUT_SECONDS = 30;
 
@@ -80,36 +73,8 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
         }
         try {
             long watermark = watermarks.getOrDefault(serverName, 0L);
-            // See a distributed-mode strategy's identical reasoning: the watermark
-            // only reflects how far a PAST catch-up reached, not whether a NEW gap has opened
-            // since - gating on "watermark >= candidateCatchUpFrom" alone would permanently
-            // suppress catch-up after the first successful fetch on an otherwise-quiet server, and
-            // there is no reliable wall-clock shortcut either (effectiveLowerBound is always some
-            // point in the past by the time it's compared against "now"). Always fetch from the
-            // more advanced of the two, and classify the outcome from the fetch's own
-            // triggeredCount rather than pre-fetch timing.
-            long effectiveLowerBound = Math.max(watermark, candidateCatchUpFrom);
-            try {
-                MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
-                // fetchFailed means the fetch itself could not be completed - never treat that the
-                // same as a confirmed-empty result, or an outage during a reconnect's catch-up
-                // window would look identical to "nothing was missed" and never be retried.
-                if (result.fetchFailed()) {
-                    logger.warn("Missed-events catch-up fetch failed for server {}; leaving watermark unchanged.",
-                            serverName);
-                    return MissedEventsCatchUpOutcome.FAILED;
-                }
-                // See a distributed-mode strategy's identical reasoning: empty means
-                // nothing to derive a watermark from, so leave the map untouched rather than
-                // advancing on an unproven basis.
-                result.newWatermark().ifPresent(w -> watermarks.put(serverName, w));
-                return result.triggeredCount() > 0
-                        ? MissedEventsCatchUpOutcome.PERFORMED
-                        : MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP;
-            } catch (IOException e) {
-                logger.error("Missed-events catch-up failed for server {}", serverName, e);
-                return MissedEventsCatchUpOutcome.FAILED;
-            }
+            return performCatchUp(serverName, watermark, candidateCatchUpFrom, catchUpAction,
+                    w -> watermarks.put(serverName, w));
         } finally {
             // maintenanceAction must never prevent the unlock below - a RuntimeException out of
             // it would otherwise leave this lock held forever, since (unlike the distributed
