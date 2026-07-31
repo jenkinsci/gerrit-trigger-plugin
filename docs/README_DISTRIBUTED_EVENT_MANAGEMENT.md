@@ -126,5 +126,46 @@ In this topology:
 - The Jenkins service account does not need RBAC permissions for peer discovery, as cluster management is handled entirely by the standalone Hazelcast nodes.
 - You must deploy and manage the Hazelcast cluster independently (e.g. via the official Hazelcast Helm chart), ensuring you configure it to match your expected `HZ_CLUSTERNAME` and port (`5702`).
 
+## AMQP event delivery requirements
+
+In a distributed (multi-replica) set up, Gerrit events are typically delivered to Jenkins via the
+[RabbitMQ Consumer plugin](https://plugins.jenkins.io/rabbitmq-consumer/), which this plugin
+integrates with via
+[`RabbitMQMessageListenerImpl`](../src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/impls/RabbitMQMessageListenerImpl.java).
+That class reconstructs each event's Gerrit server identity entirely from AMQP message headers.
+
+### The `gerrit-name` header is strictly required
+
+Every AMQP message carrying a Gerrit event must include a `gerrit-name` header whose value matches
+the name of a configured `GerritServer` in Jenkins. This is not optional in distributed mode:
+[`PluginImpl#getServer(GerritTriggeredEvent)`](../src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/PluginImpl.java)
+resolves the event's `GerritServer` purely from this header, and if it is missing, empty, or does
+not match a configured server name, resolution returns `null`. Only a warning is logged
+(`Could not find server config for ... - no such server.`) — no exception is thrown and nothing is
+surfaced to the operator.
+
+Event-scoped processing that depends on identifying the originating Gerrit server - including
+`BuildMemory#cancelOutdatedEvents()`, which aborts a job's previous, superseded-patchset build when
+a new patchset event arrives - does not run once server resolution fails. A missing `gerrit-name`
+header therefore causes outdated-build cancellation to silently do nothing: builds for
+superseded patchsets are left running instead of being cancelled, and event deduplication breaks
+in the same silent way.
+
+Whatever component publishes Gerrit stream events onto the AMQP broker (e.g. a stream-events-to-AMQP
+bridge) must be configured to set `gerrit-name` to the exact `GerritServer` name configured in
+Jenkins for every message it publishes.
+
+### The RabbitMQ Consumer plugin's compatibility with multi-replica deployments has not been verified
+
+The distributed event-claiming model described above depends on **every** replica receiving **every** event
+so that exactly one of them can claim it. The RabbitMQ Consumer plugin configures a single, fixed queue
+name per consume item, with no way to bind a distinct queue per replica. Under standard AMQP
+competing-consumer semantics, only one consumer would receive each message from that shared queue, which
+would be expected to prevent every replica from seeing every event.
+
+This has not been tested in distributed mode, so the actual behavior cannot be verified. Until it has
+been, treat the RabbitMQ Consumer plugin as unproven for multi-replica set ups of this feature and
+prefer a single Jenkins instance/replica.
+
 (*) Jenkins does not support multiple replicas or nodes for a single logical instance, this feature is not tested with Jenkins. This feature is provided for CloudBees CI (Enterprise Jenkins).
 This feature is provided as a community effort and is not endorsed or officially supported by CloudBees.
