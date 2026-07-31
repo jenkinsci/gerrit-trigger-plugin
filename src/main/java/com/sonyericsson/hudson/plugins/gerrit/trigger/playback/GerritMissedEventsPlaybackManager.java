@@ -30,6 +30,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.CoordinationMode;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.InstanceIdentity;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.LocalMissedEventsCoordinationStrategy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpOutcome;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCatchUpResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.MissedEventsCoordinationStrategy;
@@ -212,6 +213,28 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     protected List<GerritTriggeredEvent> receivedEventCache
         = Collections.synchronizedList(new ArrayList<>());
+    /**
+     * True from the moment {@link #connectionEstablished()} first schedules a {@link
+     * #scheduleCatchUpRetry} attempt until that retry sequence has genuinely finished (either
+     * {@link #hasWatermarkPassed} confirms events-log's own indexing has caught up, {@code
+     * maxAttempts} is spent, or an attempt returns {@code LOCK_TIMEOUT}/{@code FAILED}).
+     *
+     * <p>{@link #gerritEvent} - itself invoked for every event {@link #fetchAndTriggerMissedEvents}
+     * just triggered, since {@code server.triggerEvent(evt)} re-enters the normal live-event
+     * dispatch pipeline this same listener is also registered on - uses this to tell "genuinely
+     * back to live operation" apart from "still mid-retry-sequence for this reconnect": without
+     * it, that re-entrant delivery of the very event this reconnect just caught up on would arrive
+     * after {@link #playBackComplete} has already flipped {@code true} (set once the first,
+     * synchronous attempt returns, well before any 2-second-later scheduled retry runs) and wipe
+     * {@link #receivedEventCache} clean via {@link #gerritEvent}'s own reset branch - discarding
+     * the very record a still-pending retry needs to recognize that event as already delivered,
+     * and defeating {@link #receivedEventCache}'s purpose for exactly the window it exists to
+     * cover: without this guard, a retry attempt seconds later re-fetching the same
+     * already-triggered event (a legitimate, expected overlap - see {@link
+     * #CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY}'s own javadoc on events-log's whole-second query
+     * resolution) finds an empty cache and calls {@code server.triggerEvent(evt)} on it again.</p>
+     */
+    private volatile boolean catchUpRetryPending = false;
 
     private boolean isSupported = false;
     private boolean playBackComplete = false;
@@ -412,12 +435,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         // ever advanced to a point it has actually observed events up to (see that watermark's own
         // "empty means nothing proven" contract) - safe to advertise regardless of whether this
         // specific call was the one that advanced it, or a peer's concurrent attempt did.
-        coordinationStrategy.getWatermark(serverName).ifPresent(this::advanceConfirmedCatchUpFloor);
+        OptionalLong watermarkAfterAttempt = coordinationStrategy.getWatermark(serverName);
+        watermarkAfterAttempt.ifPresent(this::advanceConfirmedCatchUpFloor);
 
         if (outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT && outcome != MissedEventsCatchUpOutcome.FAILED
                 && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
+            catchUpRetryPending = true;
             scheduleCatchUpRetry(
-                    coordinationStrategy, candidateCatchUpFrom, staleAgeMillis, 2, catchUpAttemptsStartedAt);
+                    coordinationStrategy, watermarkAfterAttempt.orElse(candidateCatchUpFrom), staleAgeMillis, 2,
+                    catchUpAttemptsStartedAt);
         }
 
         ensureBaselineCaptured(candidateCatchUpFrom);
@@ -476,11 +502,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * own javadoc for why. See {@link #CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY}'s own javadoc for why
      * this retry exists at all.
      *
-     * <p>Each retry re-queries from wherever the watermark already reached (not the original
-     * {@code candidateCatchUpFrom} again) - {@link MissedEventsCatchUpResult}'s own watermark
-     * semantics only ever advance it to a point actually observed, so a retry's own {@code
-     * effectiveLowerBound} naturally narrows to just what is still outstanding, same as any other
-     * peer serializing in behind an earlier attempt via the same lock.</p>
+     * <p>Each retry re-queries from wherever the watermark already reached as of the previous
+     * attempt (not the original candidate again) - {@link MissedEventsCatchUpResult}'s own
+     * watermark semantics only ever advance it to a point actually observed, so a retry's own
+     * {@code effectiveLowerBound} naturally narrows to just what is still outstanding, same as any
+     * other peer serializing in behind an earlier attempt via the same lock. This narrowing is
+     * cooperative with (not a substitute for) {@link LocalMissedEventsCoordinationStrategy}'s own
+     * {@code Math.max(watermark, candidateCatchUpFrom)} floor - passing the advanced watermark
+     * here just keeps this parameter honest with what the coordination strategy already does
+     * internally, rather than silently relying on it.</p>
      *
      * <p>Keeps scheduling further retries until either {@code maxAttempts} is spent or {@link
      * #hasWatermarkPassed} confirms the events-log plugin's own indexing has caught up past {@code
@@ -494,10 +524,14 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * or {@link MissedEventsCatchUpOutcome#FAILED} - retrying either here would either fight the
      * same contention that just caused the timeout, or repeat an I/O failure likely to recur
      * immediately; the next reconnect (or this coordination mode's own lock semantics) already
-     * covers those cases.</p>
+     * covers those cases. Either way, clears {@link #catchUpRetryPending} - this was the last
+     * attempt this reconnect will make, so {@link #gerritEvent} is safe to treat this server as
+     * genuinely back to live operation again.</p>
      *
      * @param coordinationStrategy the coordination strategy to invoke.
-     * @param candidateCatchUpFrom the original candidate catch-up floor for this reconnect.
+     * @param catchUpFrom the catch-up floor to query from for this attempt - the original
+     *         candidate for the first retry (attempt 2), or the watermark as of the previous
+     *         attempt for every one after that.
      * @param staleAgeMillis forwarded unchanged to every attempt's own maintenance action.
      * @param attempt this retry's own attempt number (the first retry is attempt 2 - attempt 1 was
      *         the synchronous call already made before scheduling this).
@@ -505,7 +539,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      *         sequence began - see {@link #hasWatermarkPassed}'s own javadoc.
      */
     private void scheduleCatchUpRetry(
-            MissedEventsCoordinationStrategy coordinationStrategy, long candidateCatchUpFrom,
+            MissedEventsCoordinationStrategy coordinationStrategy, long catchUpFrom,
             long staleAgeMillis, int attempt, long catchUpAttemptsStartedAt) {
         int maxAttempts = Integer.getInteger(
                 CATCH_UP_RETRY_MAX_ATTEMPTS_PROPERTY, DEFAULT_CATCH_UP_RETRY_MAX_ATTEMPTS);
@@ -513,15 +547,18 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                 CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY, DEFAULT_CATCH_UP_RETRY_DELAY_MILLIS);
         CATCH_UP_RETRY_SCHEDULER.schedule(() -> {
             MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
-                    coordinationStrategy, candidateCatchUpFrom, staleAgeMillis);
+                    coordinationStrategy, catchUpFrom, staleAgeMillis);
             logger.info("Missed-events catch-up retry {}/{} outcome for server {}: {}",
                     attempt, maxAttempts, serverName, outcome);
-            coordinationStrategy.getWatermark(serverName).ifPresent(this::advanceConfirmedCatchUpFloor);
+            OptionalLong watermarkAfterAttempt = coordinationStrategy.getWatermark(serverName);
+            watermarkAfterAttempt.ifPresent(this::advanceConfirmedCatchUpFloor);
             if (outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT && outcome != MissedEventsCatchUpOutcome.FAILED
                     && attempt < maxAttempts && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
                 scheduleCatchUpRetry(
-                        coordinationStrategy, candidateCatchUpFrom, staleAgeMillis, attempt + 1,
+                        coordinationStrategy, watermarkAfterAttempt.orElse(catchUpFrom), staleAgeMillis, attempt + 1,
                         catchUpAttemptsStartedAt);
+            } else {
+                catchUpRetryPending = false;
             }
         }, retryDelayMillis, TimeUnit.MILLISECONDS);
     }
@@ -696,7 +733,13 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
             saveTimestamp(triggeredEvent);
             //add to cache
-            if (!playBackComplete) {
+            // Also true while catchUpRetryPending, not just !playBackComplete: fetchAndTriggerMissedEvents's
+            // own server.triggerEvent(evt) call re-enters this same listener, so the event a retry attempt
+            // still needs receivedEventCache to recognize as already-delivered can arrive here again well
+            // before that retry runs - see catchUpRetryPending's own javadoc for why treating that as
+            // "playback complete, safe to reset" would silently defeat this cache for exactly the window it
+            // exists to cover.
+            if (!playBackComplete || catchUpRetryPending) {
                 boolean receivedEvtFound = false;
                 synchronized (this) {
                     // Must be in synchronized block
