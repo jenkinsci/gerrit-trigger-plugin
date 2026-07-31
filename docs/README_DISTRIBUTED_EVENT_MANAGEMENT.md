@@ -105,7 +105,7 @@ In this topology:
 
 ## AMQP event delivery requirements
 
-In an HA (multi-replica) deployment, Gerrit events are typically delivered to Jenkins via the
+In a distributed (multi-replica) set up, Gerrit events are typically delivered to Jenkins via the
 [RabbitMQ Consumer plugin](https://plugins.jenkins.io/rabbitmq-consumer/), which this plugin
 integrates with via
 [`RabbitMQMessageListenerImpl`](../src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/impls/RabbitMQMessageListenerImpl.java).
@@ -114,16 +114,16 @@ That class reconstructs each event's Gerrit server identity entirely from AMQP m
 ### The `gerrit-name` header is strictly required
 
 Every AMQP message carrying a Gerrit event must include a `gerrit-name` header whose value matches
-the name of a configured `GerritServer` in Jenkins. This is not optional in an HA setup:
+the name of a configured `GerritServer` in Jenkins. This is not optional in distributed mode:
 [`PluginImpl#getServer(GerritTriggeredEvent)`](../src/main/java/com/sonyericsson/hudson/plugins/gerrit/trigger/PluginImpl.java)
 resolves the event's `GerritServer` purely from this header, and if it is missing, empty, or does
 not match a configured server name, resolution returns `null`. Only a warning is logged
 (`Could not find server config for ... - no such server.`) — no exception is thrown and nothing is
 surfaced to the operator.
 
-Event-scoped processing that depends on identifying the originating Gerrit server — including
+Event-scoped processing that depends on identifying the originating Gerrit server - including
 `BuildMemory#cancelOutdatedEvents()`, which aborts a job's previous, superseded-patchset build when
-a new patchset event arrives — does not run once server resolution fails. A missing `gerrit-name`
+a new patchset event arrives - does not run once server resolution fails. A missing `gerrit-name`
 header therefore causes outdated-build cancellation to silently do nothing: builds for
 superseded patchsets are left running instead of being cancelled, and event deduplication breaks
 in the same silent way.
@@ -132,22 +132,17 @@ Whatever component publishes Gerrit stream events onto the AMQP broker (e.g. a s
 bridge) must be configured to set `gerrit-name` to the exact `GerritServer` name configured in
 Jenkins for every message it publishes.
 
-### Exchange type and per-replica queues
+### The RabbitMQ Consumer plugin's compatibility with multi-replica deployments has not been verified
 
-The RabbitMQ Consumer plugin does not declare or bind any exchange or queue itself — the operator
-provisions them and configures a fixed queue name per consume item. This has direct consequences for
-the HA event-claiming model described above, which depends on **every** replica receiving **every**
-event so that exactly one of them can claim it:
+The distributed event-claiming model described above depends on **every** replica receiving **every** event
+so that exactly one of them can claim it. The RabbitMQ Consumer plugin configures a single, fixed queue
+name per consume item, with no way to bind a distinct queue per replica. Under standard AMQP
+competing-consumer semantics, only one consumer would receive each message from that shared queue, which
+would be expected to prevent every replica from seeing every event.
 
-- Each Jenkins replica must consume from its **own dedicated queue**, and that queue must receive a
-  copy of every published event. A `fanout` exchange — or a `topic` exchange with a routing key that
-  matches all per-replica queue bindings — satisfies this, since every queue bound to the exchange
-  gets its own copy of each message.
-- Do **not** point multiple replicas at the same queue name, and do not rely on a `direct` exchange
-  with a single shared queue across replicas. Standard AMQP competing-consumer semantics apply to any
-  queue: only one consumer receives each message. If replicas share a queue, most events reach only
-  one replica; if that replica happens to be down, the event is never claimed by any surviving
-  replica, defeating the purpose of running more than one.
+This has not been tested in distributed mode, so the actual behavior cannot be verified. Until it has
+been, treat the RabbitMQ Consumer plugin as unproven for multi-replica set ups of this feature and
+prefer a single Jenkins instance/replica.
 
 (*) Jenkins does not support multiple replicas or nodes for a single logical instance, this feature is not tested with Jenkins. This feature is provided for CloudBees CI (Enterprise Jenkins).
 This feature is provided as a community effort and is not endorsed or officially supported by CloudBees.
