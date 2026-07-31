@@ -40,12 +40,16 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Single-JVM implementation of {@link MissedEventsCoordinationStrategy}.
  *
- * <p>One instance of this class is shared (via {@link CoordinationMode}) by every {@code
- * GerritMissedEventsPlaybackManager} in the JVM, so the per-server lock and watermark maps here
- * are genuinely shared state - mirroring how a distributed implementation shares state via a
- * cluster-wide map. In a single JVM there is no other process to coordinate with, so this reduces
- * to a plain in-process lock: no lease is needed, since {@code finally} always releases it on the
- * same thread/JVM (no cross-JVM crash-without-release scenario exists here).</p>
+ * <p>The per-server lock is still needed even though there is only one JVM: {@code
+ * GerritMissedEventsPlaybackManager#connectionEstablished()} runs on {@code GerritConnection}'s
+ * own thread on every reconnect and never checks whether a previous reconnect's catch-up retry
+ * (scheduled separately on {@code GerritMissedEventsPlaybackManager#CATCH_UP_RETRY_SCHEDULER}) is
+ * still pending. So a fresh reconnect and a stale retry for the very same server can call {@link
+ * #coordinateCatchUp} concurrently from two different threads. Without the lock, both could read
+ * the same stale watermark, run overlapping fetches, and race on the watermark write. No lease is
+ * needed to guard against this, though (unlike the distributed strategy's cluster-wide map),
+ * since {@code finally} always releases it on the same thread/JVM - there is no cross-JVM
+ * crash-without-release scenario here.</p>
  */
 public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinationStrategy {
 
