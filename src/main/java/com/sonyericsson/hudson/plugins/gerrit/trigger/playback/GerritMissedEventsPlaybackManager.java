@@ -104,11 +104,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
             "gerrit.trigger.playback.instance.stale.age.hours";
     private static final int DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS = 168;
     /**
-     * Used by {@link #roundUpToWholeSecond} to round a sub-second catch-up lower bound up to the
-     * whole-second resolution the events-log plugin's own {@code t1} query parameter is limited to.
-     */
-    private static final long MILLIS_PER_SECOND = 1000L;
-    /**
      * System property: maximum number of catch-up attempts made for a single reconnect - the
      * initial synchronous attempt plus however many {@link #scheduleCatchUpRetry} schedules after
      * it. A hard backstop, not the primary way this stops: {@link #hasWatermarkPassed} normally
@@ -999,11 +994,11 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     private static Date roundUpToWholeSecond(Date date1) {
         long millis = date1.getTime();
-        long remainder = millis % MILLIS_PER_SECOND;
-        if (remainder == 0) {
+        long wholeSeconds = TimeUnit.MILLISECONDS.toSeconds(millis);
+        if (TimeUnit.SECONDS.toMillis(wholeSeconds) == millis) {
             return date1;
         }
-        return new Date(millis - remainder + MILLIS_PER_SECOND);
+        return new Date(TimeUnit.SECONDS.toMillis(wholeSeconds + 1));
     }
 
     /**
