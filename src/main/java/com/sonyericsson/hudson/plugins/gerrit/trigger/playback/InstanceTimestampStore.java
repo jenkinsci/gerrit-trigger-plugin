@@ -243,7 +243,10 @@ public class InstanceTimestampStore {
     /**
      * Deletes instance files that have not been rewritten in more than {@code maxAgeMillis},
      * indicating a permanently decommissioned JVM - orphaned files would otherwise accumulate
-     * forever. Never deletes this store's own instance file, regardless of its age.
+     * forever. Never deletes this store's own instance file, regardless of its age. Also deletes
+     * the legacy single-file fallback ({@link #getLegacyConfigXml()}) once it is equally stale,
+     * since it is no longer written to by current code and would otherwise linger forever as a
+     * read-fallback candidate in {@link #computeMaxTimestampAcrossInstances()}.
      *
      * @param maxAgeMillis the staleness threshold, based on the file's last-modified time.
      * @return the number of files removed.
@@ -251,10 +254,10 @@ public class InstanceTimestampStore {
     public int pruneStaleInstanceFiles(long maxAgeMillis) {
         File instancesDir = getInstancesDir();
         int removed = 0;
+        long now = System.currentTimeMillis();
         if (instancesDir != null && instancesDir.isDirectory()) {
             File[] files = instancesDir.listFiles((dir, name) -> name.endsWith(INSTANCE_FILE_SUFFIX));
             if (files != null) {
-                long now = System.currentTimeMillis();
                 String currentFileName = instanceId + INSTANCE_FILE_SUFFIX;
                 for (File file : files) {
                     if (file.getName().equals(currentFileName)) {
@@ -267,6 +270,17 @@ public class InstanceTimestampStore {
                             logger.warn("Failed to delete stale instance timestamp file {}", file);
                         }
                     }
+                }
+            }
+        }
+        XmlFile legacy = getLegacyConfigXml();
+        if (legacy != null && legacy.exists()) {
+            File legacyFile = legacy.getFile();
+            if (now - legacyFile.lastModified() > maxAgeMillis) {
+                if (legacyFile.delete()) {
+                    removed++;
+                } else {
+                    logger.warn("Failed to delete stale legacy timestamp file {}", legacyFile);
                 }
             }
         }
