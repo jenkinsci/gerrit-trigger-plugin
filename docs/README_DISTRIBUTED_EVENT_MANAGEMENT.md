@@ -32,10 +32,33 @@ All distributed storage settings are controlled by JVM system properties passed 
 | `gerrit.trigger.coordination.mode` | `local` | Set to `hazelcast` to enable distributed coordination |
 | `gerrit.trigger.coordination.hazelcast.client.addresses` | `localhost:5702` | Comma-separated `host:port` list of sidecar addresses |
 | `gerrit.trigger.coordination.hazelcast.client.cluster.name` | `gerrit-trigger-cluster` | Cluster name to connect to                            |
+| `gerrit.trigger.coordination.hazelcast.claim.ttl.seconds` | `300` | TTL, in seconds, for an event claim                   |
 
 Port `5702` is used by default to avoid potential conflicts with other Hazelcast cluster, which could occupy port `5701`.
 
 Cluster name must be different for each logical instance. Multiple replicas or nodes of a logical instance may configure the same cluster name. Different logical instances require separate cluster names.
+
+### Claim TTL
+
+When an instance claims a Gerrit event for processing, the claim is stored in hazelcast with a time-to-live
+(TTL), after which it expires and the event becomes eligible to be claimed again. The TTL is
+controlled by the `gerrit.trigger.coordination.hazelcast.claim.ttl.seconds` property and defaults
+to 300 seconds (5 minutes).
+
+**Current situation:** if a hazelcast replica is offline (or otherwise unable to complete processing) for
+longer than the claim TTL, the claims it holds on events processed before the outage expire. When
+Gerrit event playback replays those events after the outage, they are treated as unclaimed and are
+picked up again, causing duplicate builds.
+
+**Recommendation:** set `gerrit.trigger.coordination.hazelcast.claim.ttl.seconds` explicitly, and
+size it to exceed the maximum downtime you expect a hazelcast replica could experience (e.g. a rolling
+restart, node eviction, or extended network partition) before Gerrit event playback would replay
+missed events for that period. Extending the TTL prevents old claims from expiring during a
+prolonged outage and stops stale events from re-triggering builds once the replica returns.
+
+Increasing the TTL trades off against how long a claim from a hazelcast replica that has permanently failed
+(not just gone temporarily offline) blocks that event from being reprocessed by another instance.
+Choose a value that reflects your actual expected downtime rather than leaving it at the default.
 
 ### Configuration Example
 
