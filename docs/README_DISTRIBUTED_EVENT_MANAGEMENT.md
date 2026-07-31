@@ -40,23 +40,23 @@ Cluster name must be different for each logical instance. Multiple replicas or n
 
 ### Claim TTL
 
-When an instance claims a Gerrit event for processing, the claim is stored with a time-to-live
+When an instance claims a Gerrit event for processing, the claim is stored in hazelcast with a time-to-live
 (TTL), after which it expires and the event becomes eligible to be claimed again. The TTL is
 controlled by the `gerrit.trigger.coordination.hazelcast.claim.ttl.seconds` property and defaults
 to 300 seconds (5 minutes).
 
-**Current situation:** if a replica is offline (or otherwise unable to complete processing) for
+**Current situation:** if a hazelcast replica is offline (or otherwise unable to complete processing) for
 longer than the claim TTL, the claims it holds on events processed before the outage expire. When
 Gerrit event playback replays those events after the outage, they are treated as unclaimed and are
 picked up again, causing duplicate builds.
 
 **Recommendation:** set `gerrit.trigger.coordination.hazelcast.claim.ttl.seconds` explicitly, and
-size it to exceed the maximum downtime you expect a replica could experience (e.g. a rolling
+size it to exceed the maximum downtime you expect a hazelcast replica could experience (e.g. a rolling
 restart, node eviction, or extended network partition) before Gerrit event playback would replay
 missed events for that period. Extending the TTL prevents old claims from expiring during a
 prolonged outage and stops stale events from re-triggering builds once the replica returns.
 
-Increasing the TTL trades off against how long a claim from a replica that has permanently failed
+Increasing the TTL trades off against how long a claim from a hazelcast replica that has permanently failed
 (not just gone temporarily offline) blocks that event from being reprocessed by another instance.
 Choose a value that reflects your actual expected downtime rather than leaving it at the default.
 
