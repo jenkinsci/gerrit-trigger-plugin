@@ -543,6 +543,20 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * attempt this reconnect will make, so {@link #gerritEvent} is safe to treat this server as
      * genuinely back to live operation again.</p>
      *
+     * <p>Re-checks {@link MissedEventsCoordinationStrategy#getSharedInstanceFreshness} immediately
+     * before each attempt's own {@link #performCatchUpAttempt} call - unlike {@link
+     * #connectionEstablished()}'s own initial "diff &lt;= 0" shortcut, {@link #performCatchUpAttempt}
+     * fetches from events-log by raw date range and re-triggers anything not already in this JVM's
+     * own {@link #receivedEventCache}, with no awareness of what a peer has published since this
+     * retry was scheduled - a live peer's shared freshness signal advancing past {@code catchUpFrom}
+     * in the delay between attempts is direct proof that peer already processed everything up to
+     * that point live, so skipping straight to a fresh events-log fetch here would re-surface and
+     * re-trigger an event a live peer already handled (confirmed root cause of a spurious
+     * missed-events re-trigger on an already-stable, long-connected peer - HZ-023/024, 2026-07-31 -
+     * this same incident {@link #confirmedCatchUpFloor} was introduced for kept recurring afterward
+     * because that fix only closed the gap in the *published* freshness value, not this retry loop's
+     * own failure to ever re-consult it).</p>
+     *
      * @param coordinationStrategy the coordination strategy to invoke.
      * @param catchUpFrom the catch-up floor to query from for this attempt - the original
      *         candidate for the first retry (attempt 2), or the watermark as of the previous
@@ -561,6 +575,15 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         long retryDelayMillis = Long.getLong(
                 CATCH_UP_RETRY_DELAY_MILLIS_PROPERTY, DEFAULT_CATCH_UP_RETRY_DELAY_MILLIS);
         CATCH_UP_RETRY_SCHEDULER.schedule(() -> {
+            OptionalLong freshnessBeforeAttempt = coordinationStrategy.getSharedInstanceFreshness(serverName);
+            if (freshnessBeforeAttempt.isPresent() && freshnessBeforeAttempt.getAsLong() >= catchUpFrom) {
+                logger.info("Missed-events catch-up retry {}/{} outcome for server {}: {} (shared freshness "
+                        + "signal already covers this gap - skipping events-log re-fetch)",
+                        attempt, maxAttempts, serverName, MissedEventsCatchUpOutcome.ALREADY_CAUGHT_UP);
+                advanceConfirmedCatchUpFloor(freshnessBeforeAttempt.getAsLong());
+                catchUpRetryPending = false;
+                return;
+            }
             MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
                     coordinationStrategy, catchUpFrom, staleAgeMillis);
             logger.info("Missed-events catch-up retry {}/{} outcome for server {}: {}",
