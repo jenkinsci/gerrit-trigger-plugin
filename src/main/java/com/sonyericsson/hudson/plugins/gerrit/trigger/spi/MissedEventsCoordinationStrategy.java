@@ -180,11 +180,20 @@ public abstract class MissedEventsCoordinationStrategy {
      * freely. A coordination mode with only one JVM to coordinate with may implement this as a
      * no-op, since that JVM's own per-instance file already is its complete view.</p>
      *
+     * <p>Returns the resulting shared value (this JVM's own {@code timestampMillis}, or a peer's
+     * already-more-advanced one) rather than {@code void}, so a caller that just published can read
+     * back the current cross-instance freshness without a second round trip via {@link
+     * #getSharedInstanceFreshness} - the merge already had to look at the shared value to decide
+     * whether to advance it, so handing that back here is free.</p>
+     *
      * @param serverName the Gerrit server this timestamp is for.
      * @param timestampMillis this JVM's own last-known-alive timestamp (epoch millis) for {@code
      *         serverName}.
+     * @return the shared freshness value for {@code serverName} after merging in {@code
+     *         timestampMillis} - the more advanced of this call's own value and whatever was
+     *         already shared.
      */
-    public abstract void publishInstanceFreshness(@NonNull String serverName, long timestampMillis);
+    public abstract long publishInstanceFreshness(@NonNull String serverName, long timestampMillis);
 
     /**
      * Returns the most advanced last-known-alive timestamp published by any JVM (including this

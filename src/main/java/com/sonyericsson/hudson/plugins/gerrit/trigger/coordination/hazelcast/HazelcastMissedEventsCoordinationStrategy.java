@@ -195,11 +195,14 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
      *
      * @param serverName the Gerrit server this timestamp is for.
      * @param timestampMillis this JVM's own last-known-alive timestamp (epoch millis).
+     * @return the shared freshness value {@link IMap#merge} settled on - already computed as part
+     *         of the merge itself, so returning it here spares the caller a separate {@link
+     *         #getSharedInstanceFreshness} round trip.
      */
     @Override
-    public void publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
+    public long publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
         IMap<String, Long> map = hazelcastInstance.getMap(INSTANCE_FRESHNESS_MAP_NAME);
-        map.merge(serverName, timestampMillis, Math::max);
+        return map.merge(serverName, timestampMillis, Math::max);
     }
 
     /**

@@ -71,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -412,6 +413,10 @@ class GerritMissedEventsLoadPersistTest {
         MissedEventsCoordinationStrategy coordinationStrategy = mock(MissedEventsCoordinationStrategy.class);
         when(coordinationStrategy.getSharedInstanceFreshness(serverName))
                 .thenReturn(OptionalLong.of(borrowedTimestampMillis));
+        // Mirrors what a real IMap#merge would settle on: the more advanced of this instance's own
+        // published value and the already-shared, borrowed one.
+        when(coordinationStrategy.publishInstanceFreshness(eq(serverName), anyLong()))
+                .thenReturn(borrowedTimestampMillis);
         CoordinationMode factory = mock(CoordinationMode.class);
         when(factory.getMissedEventsCoordinationStrategy()).thenReturn(coordinationStrategy);
 

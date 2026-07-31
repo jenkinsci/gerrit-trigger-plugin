@@ -119,11 +119,14 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
      * file already is its complete view.
      *
      * @param serverName unused.
-     * @param timestampMillis unused.
+     * @param timestampMillis this JVM's own last-known-alive timestamp; handed straight back since
+     *         there is no peer value it could ever lose to.
+     * @return {@code timestampMillis}, unchanged.
      */
     @Override
-    public void publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
+    public long publishInstanceFreshness(@NonNull String serverName, long timestampMillis) {
         // Nothing to share with in a single-JVM deployment.
+        return timestampMillis;
     }
 
     /**

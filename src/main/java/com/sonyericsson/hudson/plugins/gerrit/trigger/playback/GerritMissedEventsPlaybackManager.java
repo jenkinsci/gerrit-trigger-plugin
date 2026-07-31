@@ -1158,17 +1158,22 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
             // Push this instance's own freshness up first, so peers can see it - independently
             // throttled from the local persist below, since the two can legitimately diverge
-            // (e.g. this instance's own value hasn't moved, but a peer's has).
+            // (e.g. this instance's own value hasn't moved, but a peer's has). publishInstanceFreshness
+            // already merges against the shared value to decide whether to advance it, so its return
+            // value doubles as this cycle's shared read - only fall back to a separate
+            // getSharedInstanceFreshness round trip when publish was skipped and that read never happened.
+            long sharedTimeSlice;
             if (ownTimeSlice > lastPublishedTimeSlice) {
                 lastPublishedTimeSlice = ownTimeSlice;
-                coordinationStrategy.publishInstanceFreshness(serverName, ownTimeSlice);
+                sharedTimeSlice = coordinationStrategy.publishInstanceFreshness(serverName, ownTimeSlice);
+            } else {
+                sharedTimeSlice = coordinationStrategy.getSharedInstanceFreshness(serverName).orElse(Long.MIN_VALUE);
             }
 
             // Persist the best currently-known value - this instance's own, or a fresher one
             // borrowed from a peer via the shared signal - to this instance's own local file, so a
             // later cold-start file scan sees cluster-wide freshness, not just what this specific
             // instance itself ever directly observed.
-            long sharedTimeSlice = coordinationStrategy.getSharedInstanceFreshness(serverName).orElse(Long.MIN_VALUE);
             long bestKnownTimeSlice = Math.max(ownTimeSlice, sharedTimeSlice);
             if (bestKnownTimeSlice > Long.MIN_VALUE && lastPersistedTimeSlice < bestKnownTimeSlice) {
                 lastPersistedTimeSlice = bestKnownTimeSlice;
