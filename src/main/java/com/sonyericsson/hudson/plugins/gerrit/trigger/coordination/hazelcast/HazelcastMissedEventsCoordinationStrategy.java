@@ -186,8 +186,14 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
                 return MissedEventsCatchUpOutcome.FAILED;
             }
         } finally {
-            maintenanceAction.run();
-            map.unlock(serverName);
+            // maintenanceAction must never prevent the unlock below - a RuntimeException out of
+            // it (e.g. file I/O in pruneStaleInstanceFiles) would otherwise leave the lock held
+            // until the lease expires instead of being released immediately.
+            try {
+                maintenanceAction.run();
+            } finally {
+                map.unlock(serverName);
+            }
         }
     }
 

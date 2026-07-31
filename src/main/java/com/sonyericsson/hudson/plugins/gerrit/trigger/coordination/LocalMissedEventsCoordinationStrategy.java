@@ -107,8 +107,14 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
                 return MissedEventsCatchUpOutcome.FAILED;
             }
         } finally {
-            maintenanceAction.run();
-            lock.unlock();
+            // maintenanceAction must never prevent the unlock below - a RuntimeException out of
+            // it would otherwise leave this lock held forever, since (unlike the distributed
+            // strategy) there is no lease here to release it.
+            try {
+                maintenanceAction.run();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
