@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -236,9 +237,11 @@ class GerritMissedEventsPlaybackManagerTest {
                         .withBody(json)));
 
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(1, events.size(), "Should have 1 event");
+        assertTrue(events.isPresent(), "Fetch should have succeeded");
+        assertEquals(1, events.get().size(), "Should have 1 event");
 
     }
 
@@ -246,8 +249,9 @@ class GerritMissedEventsPlaybackManagerTest {
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
      * And we receive a malformed response
-     * Then we log an error
-     * And we return an empty set of events.
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleMalformedConnection() {
@@ -257,18 +261,20 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.MALFORMED_RESPONSE_CHUNK)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A malformed connection must be reported as a failed fetch, not confirmed-empty");
 
     }
 
     /**
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
-     * And we receive a malformed response
-     * Then we log an error
-     * And we return an empty set of events.
+     * And the connection drops with no response at all
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleEmptyResponse() {
@@ -278,9 +284,10 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A dropped connection must be reported as a failed fetch, not confirmed-empty");
 
     }
 
@@ -288,8 +295,9 @@ class GerritMissedEventsPlaybackManagerTest {
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
      * And we receive garbage as a response
-     * Then we log an error
-     * And we return an empty set of events.
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleGarbageResponse() {
@@ -299,9 +307,10 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A garbage response must be reported as a failed fetch, not confirmed-empty");
 
     }
 

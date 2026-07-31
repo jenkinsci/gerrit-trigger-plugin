@@ -87,6 +87,14 @@ public class LocalMissedEventsCoordinationStrategy extends MissedEventsCoordinat
             long effectiveLowerBound = Math.max(watermark, candidateCatchUpFrom);
             try {
                 MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
+                // fetchFailed means the fetch itself could not be completed - never treat that the
+                // same as a confirmed-empty result, or an outage during a reconnect's catch-up
+                // window would look identical to "nothing was missed" and never be retried.
+                if (result.fetchFailed()) {
+                    logger.warn("Missed-events catch-up fetch failed for server {}; leaving watermark unchanged.",
+                            serverName);
+                    return MissedEventsCatchUpOutcome.FAILED;
+                }
                 // See a distributed-mode strategy's identical reasoning: empty means
                 // nothing to derive a watermark from, so leave the map untouched rather than
                 // advancing on an unproven basis.

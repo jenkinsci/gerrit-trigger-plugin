@@ -46,8 +46,12 @@ public enum MissedEventsCatchUpOutcome {
     LOCK_TIMEOUT,
 
     /**
-     * The lock was acquired but the catch-up action itself failed (e.g. an I/O error fetching
-     * events). The shared watermark is left unchanged so the next reconnect retries.
+     * The lock was acquired but the catch-up action itself failed - either it threw (an
+     * unanticipated error) or it returned a result with {@link
+     * MissedEventsCatchUpResult#fetchFailed()} set (the expected, routine case: the fetch itself
+     * could not be completed, e.g. events-log was unreachable or returned a non-success response -
+     * see that field's own javadoc for why this is a plain result rather than a thrown exception).
+     * Either way, the shared watermark is left unchanged so the next reconnect retries.
      */
     FAILED
 }

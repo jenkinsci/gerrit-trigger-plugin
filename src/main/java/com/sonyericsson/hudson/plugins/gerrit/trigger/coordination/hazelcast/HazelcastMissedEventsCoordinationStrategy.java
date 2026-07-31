@@ -161,6 +161,14 @@ public class HazelcastMissedEventsCoordinationStrategy extends MissedEventsCoord
             long effectiveLowerBound = Math.max(currentWatermark, candidateCatchUpFrom);
             try {
                 MissedEventsCatchUpResult result = catchUpAction.fetchAndTrigger(new Date(effectiveLowerBound));
+                // fetchFailed means the fetch itself could not be completed - never treat that the
+                // same as a confirmed-empty result, or an outage during a reconnect's catch-up
+                // window would look identical to "nothing was missed" and never be retried.
+                if (result.fetchFailed()) {
+                    logger.warn("Missed-events catch-up fetch failed for server {}; leaving watermark unchanged.",
+                            serverName);
+                    return MissedEventsCatchUpOutcome.FAILED;
+                }
                 // Empty means the fetch found nothing to derive a watermark from (see
                 // MissedEventsCatchUpResult's own javadoc) - leave the map untouched rather than
                 // writing some other stand-in value (fetch time, effectiveLowerBound, 0), any of

@@ -46,6 +46,31 @@ import java.util.OptionalLong;
  *         overlapping window when one serializes in via the coordination lock right behind the
  *         other - that alone is not a bug - but only whichever JVM(s) actually deliver at least
  *         one not-already-claimed event should report {@code PERFORMED}.
+ * @param fetchFailed true if the underlying fetch could not be completed at all (e.g. the
+ *         events-log plugin was unreachable, or returned a non-success response) - as opposed to
+ *         completing and genuinely finding nothing. {@link MissedEventsCoordinationStrategy#coordinateCatchUp}
+ *         must report {@link MissedEventsCatchUpOutcome#FAILED} for this, not {@link
+ *         MissedEventsCatchUpOutcome#ALREADY_CAUGHT_UP} - the two are indistinguishable from {@code
+ *         triggeredCount} alone (both are 0), but mean opposite things: one is proof the gap is
+ *         covered, the other is proof it was never actually checked. Deliberately a plain field
+ *         rather than a thrown exception - the underlying fetch failure is a routine, expected
+ *         condition (a network blip, Gerrit mid-restart), not an exceptional one, and modeling it
+ *         as an exception would mean either a stack trace on every occurrence or throwing away
+ *         that detail to keep logs quiet; see {@code
+ *         GerritMissedEventsPlaybackManager#getEventsFromEventsLogPlugin}'s own reasoning. Defaults
+ *         to {@code false} via the two-argument constructor for every ordinary (non-failed) result.
  */
-public record MissedEventsCatchUpResult(OptionalLong newWatermark, int triggeredCount) {
+public record MissedEventsCatchUpResult(OptionalLong newWatermark, int triggeredCount, boolean fetchFailed) {
+
+    /**
+     * Convenience constructor for an ordinary, non-failed result - {@code fetchFailed} defaults to
+     * {@code false}. Use the three-argument canonical constructor directly, with {@code
+     * fetchFailed=true}, when the fetch itself could not be completed.
+     *
+     * @param newWatermark see the canonical constructor.
+     * @param triggeredCount see the canonical constructor.
+     */
+    public MissedEventsCatchUpResult(OptionalLong newWatermark, int triggeredCount) {
+        this(newWatermark, triggeredCount, false);
+    }
 }

@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
@@ -188,13 +189,23 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      * to prove yet, so the persistence thread falls back to {@link #serverTimestamp} as it always
      * has, to bootstrap the very first publish/persist cycle.</p>
      *
-     * <p>Deliberately never advanced by {@link #gerritEvent}/{@link #saveTimestamp} - only by
-     * {@link #connectionEstablished()} itself, once it has confirmed (via the "already fresh"
-     * shortcut, or via {@link MissedEventsCoordinationStrategy#getWatermark}'s own already-proven
-     * value after a catch-up attempt) that this point is genuinely safe to advertise. An ordinary
-     * live event proves only that this JVM is currently receiving events, not that everything
-     * before it - including whatever this same reconnect's own catch-up may have just missed -
-     * has been accounted for.</p>
+     * <p>This field itself is deliberately never advanced by {@link #gerritEvent}/{@link
+     * #saveTimestamp} - only by {@link #connectionEstablished()} itself, once it has confirmed
+     * (via the "already fresh" shortcut, or via {@link MissedEventsCoordinationStrategy#getWatermark}'s
+     * own already-proven value after a catch-up attempt) that this point is genuinely safe to
+     * advertise. Before that first confirmation, an ordinary live event proves only that this JVM
+     * is currently receiving events, not that everything before it - including whatever this same
+     * reconnect's own catch-up may have just missed - has been accounted for.</p>
+     *
+     * <p>Once a floor IS established, though, a live event timestamped AFTER it is equally
+     * trustworthy: this JVM receiving it live is itself direct proof nothing at that point was
+     * missed, for exactly the same reason {@link #hasWatermarkPassed} treats a fresh watermark
+     * value as proof of indexing catch-up. See {@link GerritMissedEventsPlaybackPersistRunnable#run}
+     * for where this is actually combined with {@link #serverTimestamp} - this field alone, read in
+     * isolation, would otherwise silently freeze at whatever this instance's LAST reconnect
+     * established, understating its true freshness for however long it stays connected without
+     * reconnecting again (confirmed root cause of a spurious missed-events re-trigger on an
+     * already-stable, long-connected peer - HZ-023/024, 2026-07-31).</p>
      */
     private volatile OptionalLong confirmedCatchUpFloor = OptionalLong.empty();
     /**
@@ -438,15 +449,24 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         OptionalLong watermarkAfterAttempt = coordinationStrategy.getWatermark(serverName);
         watermarkAfterAttempt.ifPresent(this::advanceConfirmedCatchUpFloor);
 
-        if (outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT && outcome != MissedEventsCatchUpOutcome.FAILED
-                && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
+        // LOCK_TIMEOUT/FAILED mean this attempt confirmed NOTHING - the next reconnect must retry
+        // (see each outcome's own javadoc) - so neither the retry schedule below nor
+        // ensureBaselineCaptured's own baseline-seeding may treat candidateCatchUpFrom as proven.
+        boolean catchUpAttemptTrustworthy = outcome != MissedEventsCatchUpOutcome.LOCK_TIMEOUT
+                && outcome != MissedEventsCatchUpOutcome.FAILED;
+
+        if (catchUpAttemptTrustworthy && !hasWatermarkPassed(coordinationStrategy, catchUpAttemptsStartedAt)) {
             catchUpRetryPending = true;
             scheduleCatchUpRetry(
                     coordinationStrategy, watermarkAfterAttempt.orElse(candidateCatchUpFrom), staleAgeMillis, 2,
                     catchUpAttemptsStartedAt);
         }
 
-        ensureBaselineCaptured(candidateCatchUpFrom);
+        if (catchUpAttemptTrustworthy) {
+            ensureBaselineCaptured(candidateCatchUpFrom);
+        } else {
+            ensurePersistenceCheckStarted();
+        }
 
         playBackComplete = true;
         logger.info("Processing completed for server: {}", serverName);
@@ -564,25 +584,6 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
-     * Ensures this instance's own known baseline reflects at least {@code candidateCatchUpFrom} -
-     * the cross-instance floor just confirmed by this {@link #connectionEstablished()} call - and
-     * that the persistence thread is running to push/pull it immediately.
-     *
-     * <p>Neither an {@code ALREADY_CAUGHT_UP} outcome (this instance never itself fetched) nor a
-     * {@code PERFORMED} outcome whose fetched range happened to be empty (nor the "already
-     * essentially caught up" {@code diff <= 0} short-circuit above) ever calls {@link
-     * #saveTimestamp}, so none of them touch {@link #serverTimestamp} on their own. Without this,
-     * a newly caught-up instance that just confirmed a real floor value would have nothing
-     * capturing it - not {@code serverTimestamp}, not its own local file, not even a push to the
-     * shared freshness signal - until its own live Gerrit stream happens to deliver an event,
-     * which may be arbitrarily far in the future. The persistence thread is likewise only ever
-     * started from {@link #gerritEvent}, so an instance that has never yet processed an event of
-     * its own (live or replayed) needs it started here too, rather than waiting on that same
-     * first event.</p>
-     *
-     * @param candidateCatchUpFrom the cross-instance floor computed for this call.
-     */
-    /**
      * Advances {@link #confirmedCatchUpFloor} to {@code candidate} if it is more advanced than
      * whatever this instance already holds - monotonic, same reasoning as {@link
      * #maxOptionalLong}, so a later call can never regress a floor an earlier call already
@@ -596,10 +597,49 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         }
     }
 
+    /**
+     * Ensures this instance's own known baseline reflects at least {@code candidateCatchUpFrom} -
+     * the cross-instance floor just confirmed by this {@link #connectionEstablished()} call - and
+     * that the persistence thread is running to push/pull it immediately.
+     *
+     * <p>Callers must only reach this when the catch-up attempt was genuinely trustworthy (not
+     * {@code LOCK_TIMEOUT}/{@code FAILED} - see each outcome's own javadoc): those two outcomes
+     * confirm nothing at all, so seeding {@link #serverTimestamp} from {@code candidateCatchUpFrom}
+     * on either would fabricate a baseline as if the gap had been checked and found clear, when it
+     * was never actually checked - silently and permanently losing anything genuinely missed in
+     * that window, with no future retry, since a later {@link #load()} will no longer read past
+     * this false value. Use {@link #ensurePersistenceCheckStarted()} alone for those two outcomes.</p>
+     *
+     * <p>Neither an {@code ALREADY_CAUGHT_UP} outcome (this instance never itself fetched) nor a
+     * {@code PERFORMED} outcome whose fetched range happened to be empty (nor the "already
+     * essentially caught up" {@code diff <= 0} short-circuit above) ever calls {@link
+     * #saveTimestamp}, so none of them touch {@link #serverTimestamp} on their own. Without this,
+     * a newly caught-up instance that just confirmed a real floor value would have nothing
+     * capturing it - not {@code serverTimestamp}, not its own local file, not even a push to the
+     * shared freshness signal - until its own live Gerrit stream happens to deliver an event,
+     * which may be arbitrarily far in the future.</p>
+     *
+     * @param candidateCatchUpFrom the cross-instance floor just confirmed by this call.
+     */
     private void ensureBaselineCaptured(long candidateCatchUpFrom) {
         if (serverTimestamp == null) {
             serverTimestamp = new EventTimeSlice(candidateCatchUpFrom);
         }
+        ensurePersistenceCheckStarted();
+    }
+
+    /**
+     * Starts the persistence thread if it isn't already running - unlike {@link
+     * #ensureBaselineCaptured}, safe to call regardless of whether this reconnect's own catch-up
+     * attempt actually confirmed anything: an instance with nothing yet proven simply publishes
+     * and persists nothing until it has something real to report (see {@link
+     * GerritMissedEventsPlaybackPersistRunnable#run}'s own {@code Long.MIN_VALUE} handling), so
+     * starting it early is harmless. The persistence thread is likewise only ever started from
+     * {@link #gerritEvent} otherwise, so an instance that has never yet processed an event of its
+     * own (live or replayed) needs it started here too, rather than waiting on that same first
+     * event.
+     */
+    private void ensurePersistenceCheckStarted() {
         if (!persistenceCheck.isRunning()) {
             startPersistenceCheck();
         }
@@ -637,12 +677,19 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      *         sharing this coordination mode, so a peer's own overlapping fetch recognizes it was
      *         already handled.
      * @return the new watermark plus how many events this call actually triggered - see
-     *         {@link MissedEventsCatchUpResult}.
-     * @throws IOException if fetching or building the playback query URL fails.
+     *         {@link MissedEventsCatchUpResult}. Returns a {@link MissedEventsCatchUpResult#fetchFailed()}
+     *         result, rather than throwing, if {@link #getEventsFromDateRange} could not complete
+     *         the fetch at all - see that method's own javadoc for why.
      */
     private MissedEventsCatchUpResult fetchAndTriggerMissedEvents(
-            Date lowerBound, MissedEventsCoordinationStrategy coordinationStrategy) throws IOException {
-        List<GerritTriggeredEvent> events = getEventsFromDateRange(lowerBound);
+            Date lowerBound, MissedEventsCoordinationStrategy coordinationStrategy) {
+        Optional<List<GerritTriggeredEvent>> fetchedEvents = getEventsFromDateRange(lowerBound);
+        if (fetchedEvents.isEmpty()) {
+            logger.warn("({}) Could not fetch missed events - treating this catch-up attempt as failed, "
+                    + "not as confirmed empty.", serverName);
+            return new MissedEventsCatchUpResult(OptionalLong.empty(), 0, true);
+        }
+        List<GerritTriggeredEvent> events = fetchedEvents.get();
         logger.info("({}) missed events to process for server: {} ...", events.size(), serverName);
         int triggeredCount = 0;
         for (GerritTriggeredEvent evt: events) {
@@ -766,22 +813,33 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
     /**
      * Get events for a given lower bound date.
+     *
      * @param lowerDate lower bound for which to request missed events.
-     * @return collection of gerrit events.
-     * @throws IOException if HTTP errors occur
+     * @return the collection of Gerrit events, or empty if the fetch could not be completed at
+     *         all (server config missing, URL could not be built, or {@link
+     *         #getEventsFromEventsLogPlugin} itself failed) - deliberately distinct from a present
+     *         but empty list, which means the fetch completed and genuinely found nothing. See
+     *         {@link #getEventsFromEventsLogPlugin}'s own javadoc for why this is a plain return
+     *         value rather than a thrown exception.
      */
-    protected List<GerritTriggeredEvent> getEventsFromDateRange(Date lowerDate) throws IOException {
+    protected Optional<List<GerritTriggeredEvent>> getEventsFromDateRange(Date lowerDate) {
 
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server == null) {
-            logger.error("Server for {} could not be found.", serverName);
-            return Collections.synchronizedList(new ArrayList<>());
+            logger.warn("({}) Could not fetch missed events - server config not found.", serverName);
+            return Optional.empty();
         }
         IGerritHudsonTriggerConfig config = server.getConfig();
 
-        String events = getEventsFromEventsLogPlugin(config, buildEventsLogURL(config, lowerDate));
+        String url;
+        try {
+            url = buildEventsLogURL(config, lowerDate);
+        } catch (UnsupportedEncodingException e) {
+            logger.warn("({}) Could not build missed-events query URL: {}", serverName, e.getMessage());
+            return Optional.empty();
+        }
 
-        return createEventsFromString(events);
+        return getEventsFromEventsLogPlugin(config, url).map(this::createEventsFromString);
     }
 
     /**
@@ -818,49 +876,75 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     }
 
     /**
+     * Fetches the raw events-log response body for {@code url}.
+     *
+     * <p>Deliberately never throws - a connection failure, a non-success status, or a body-read
+     * failure here is a routine, expected condition (a network blip, Gerrit mid-restart, or the
+     * events-log plugin briefly erroring), not an exceptional one, and this runs on {@code
+     * GerritConnection}'s own background thread on every reconnect (including the very first one
+     * at boot, via {@link #connectionEstablished()}) - modeling it as a thrown exception would
+     * mean either a full stack trace logged on every occurrence (this can recur every retry
+     * attempt and every subsequent reconnect until the underlying problem clears) or discarding
+     * that detail just to keep logs quiet. Each failure path instead logs one concise line with
+     * only the underlying message, and returns {@link Optional#empty()} - which {@link
+     * #getEventsFromDateRange} and {@link #fetchAndTriggerMissedEvents} propagate as a {@link
+     * MissedEventsCatchUpResult#fetchFailed()} result, letting {@link
+     * MissedEventsCoordinationStrategy#coordinateCatchUp} report {@link
+     * MissedEventsCatchUpOutcome#FAILED} - never {@link MissedEventsCatchUpOutcome#ALREADY_CAUGHT_UP}
+     * - without any exception ever crossing a thread boundary or disrupting the connection this
+     * runs on.</p>
      *
      * @param config Gerrit config for server.
      * @param url URL to use.
-     * @return String of gerrit events.
+     * @return the response body, or empty if it could not be fetched at all - distinct from a
+     *         present but empty body, which means events-log responded successfully and simply
+     *         had nothing to report.
      */
-    protected String getEventsFromEventsLogPlugin(IGerritHudsonTriggerConfig config, String url) {
+    protected Optional<String> getEventsFromEventsLogPlugin(IGerritHudsonTriggerConfig config, String url) {
         logger.debug("({}) Going to GET: {}", serverName, url);
 
-        HttpResponse execute = null;
+        HttpResponse execute;
         try {
             execute = HttpUtils.performHTTPGet(config, url);
         } catch (IOException e) {
-            logger.warn(e.getMessage(), e);
-            return "";
+            logger.warn("({}) Could not reach {} plugin at {}: {}", serverName, EVENTS_LOG_PLUGIN_NAME, url,
+                    e.getMessage());
+            return Optional.empty();
         }
 
         int statusCode = execute.getStatusLine().getStatusCode();
         logger.debug("Received status code: {} for server: {}", statusCode, serverName);
 
-        if (statusCode == HttpURLConnection.HTTP_OK) {
-            try {
-                HttpEntity entity = execute.getEntity();
-                if (entity != null) {
-                    ContentType contentType = ContentType.get(entity);
-                    if (contentType == null) {
-                        contentType = ContentType.DEFAULT_TEXT;
-                    }
-                    Charset charset = contentType.getCharset();
-                    if (charset == null) {
-                        charset = Charset.defaultCharset();
-                    }
-                    InputStream bodyStream = entity.getContent();
-                    String body = IOUtils.toString(bodyStream, charset);
-                    logger.debug(body);
-                    return body;
-                }
-            } catch (IOException ioe) {
-                logger.warn(ioe.getMessage(), ioe);
-            }
+        if (statusCode != HttpURLConnection.HTTP_OK) {
+            logger.warn("({}) Unexpected HTTP {} requesting missed events from {} plugin at {}",
+                    serverName, statusCode, EVENTS_LOG_PLUGIN_NAME, url);
+            return Optional.empty();
         }
-        logger.warn("Not successful at requesting missed events from {} plugin. (errorcode: {})",
-                EVENTS_LOG_PLUGIN_NAME, statusCode);
-        return "";
+
+        HttpEntity entity = execute.getEntity();
+        if (entity == null) {
+            logger.warn("({}) Empty response entity requesting missed events from {} plugin at {}",
+                    serverName, EVENTS_LOG_PLUGIN_NAME, url);
+            return Optional.empty();
+        }
+        try {
+            ContentType contentType = ContentType.get(entity);
+            if (contentType == null) {
+                contentType = ContentType.DEFAULT_TEXT;
+            }
+            Charset charset = contentType.getCharset();
+            if (charset == null) {
+                charset = Charset.defaultCharset();
+            }
+            InputStream bodyStream = entity.getContent();
+            String body = IOUtils.toString(bodyStream, charset);
+            logger.debug(body);
+            return Optional.of(body);
+        } catch (IOException ioe) {
+            logger.warn("({}) Failed reading response body from {} plugin at {}: {}",
+                    serverName, EVENTS_LOG_PLUGIN_NAME, url, ioe.getMessage());
+            return Optional.empty();
+        }
     }
 
     /**
@@ -1059,14 +1143,21 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
 
         @Override
         public void run() {
-            // Prefer the proven floor once one exists (see its own javadoc for why) - only before
-            // this instance's first connectionEstablished() has run at all (a brand-new
-            // environment with no prior cross-instance signal) does this fall back to the raw,
-            // live-event-driven serverTimestamp, purely to bootstrap the very first publish/persist
-            // cycle.
+            // The proven floor (confirmedCatchUpFloor) is the baseline - before it exists at all
+            // (brand-new environment, first connectionEstablished() not yet run), this falls back
+            // to the raw, live-event-driven serverTimestamp to bootstrap the first publish/persist
+            // cycle. But once a floor DOES exist, still take the max with serverTimestamp rather
+            // than pinning to the floor alone: serverTimestamp keeps advancing on every live event
+            // this instance receives (see saveTimestamp), and any such event timestamped past the
+            // floor is itself proof this instance has not missed that point - not advancing this
+            // published value to match would freeze it at whatever the LAST reconnect established
+            // for as long as this connection stays up without reconnecting again, silently
+            // understating this instance's true freshness to every peer relying on it (see
+            // confirmedCatchUpFloor's own javadoc for the confirmed incident this caused).
+            long liveTimeSlice = serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE;
             long ownTimeSlice = confirmedCatchUpFloor.isPresent()
-                    ? confirmedCatchUpFloor.getAsLong()
-                    : (serverTimestamp != null ? serverTimestamp.getTimeSlice() : Long.MIN_VALUE);
+                    ? Math.max(confirmedCatchUpFloor.getAsLong(), liveTimeSlice)
+                    : liveTimeSlice;
             MissedEventsCoordinationStrategy coordinationStrategy =
                     CoordinationMode.get().getMissedEventsCoordinationStrategy();
 
