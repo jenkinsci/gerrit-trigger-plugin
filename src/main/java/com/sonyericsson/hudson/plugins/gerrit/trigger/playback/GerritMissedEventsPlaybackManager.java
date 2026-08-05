@@ -98,7 +98,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
     /**
      * System property: maximum age in hours a per-instance timestamp file may go without being
      * rewritten before it is considered orphaned (from a permanently decommissioned JVM) and
-     * pruned. Default is 7 days.
+    private static final Duration DEFAULT_STALE_INSTANCE_FILE_AGE = Duration.ofDays(7);
      */
     private static final String STALE_INSTANCE_FILE_AGE_PROPERTY =
             "gerrit.trigger.playback.instance.stale.age.hours";
