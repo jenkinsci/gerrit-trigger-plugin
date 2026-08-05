@@ -432,7 +432,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
         }
 
         long staleAgeMillis = Duration.ofHours(
-                Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, (int) DEFAULT_STALE_INSTANCE_FILE_AGE.toHours()))
+                Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, (int)DEFAULT_STALE_INSTANCE_FILE_AGE.toHours()))
                 .toMillis();
         long catchUpAttemptsStartedAt = System.currentTimeMillis();
         MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
