@@ -77,6 +77,16 @@ public final class JobsLoadedGate {
     private static final long AWAIT_TIMEOUT_MINUTES =
             Long.getLong(AWAIT_TIMEOUT_MINUTES_PROPERTY, DEFAULT_AWAIT_TIMEOUT.toMinutes());
 
+    /**
+     * Deliberately a plain static field, not an {@code @Extension} singleton: there is no Jenkins
+     * event that would ever need to reopen this gate. {@code Jenkins#reload()} (the "Reload
+     * Configuration from Disk" action) explicitly documents that it "calls neither {@code
+     * ItemListener#onLoaded} nor Initializers", and its own {@code loadTasks()} task graph never
+     * re-requires {@link hudson.init.InitMilestone#JOB_CONFIG_ADAPTED} - so our {@code
+     * @Initializer(after = JOB_CONFIG_ADAPTED)} hook cannot fire again on reload, and there is
+     * nothing for an {@code @Extension} to listen for that would re-arm this latch. (Verified
+     * against jenkins-core 2.479.3's {@code jenkins/model/Jenkins.java}.)
+     */
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
     private JobsLoadedGate() {
