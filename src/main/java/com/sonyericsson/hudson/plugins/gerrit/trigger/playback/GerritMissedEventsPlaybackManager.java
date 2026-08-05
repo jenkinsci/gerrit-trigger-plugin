@@ -63,6 +63,7 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -102,7 +103,7 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
      */
     private static final String STALE_INSTANCE_FILE_AGE_PROPERTY =
             "gerrit.trigger.playback.instance.stale.age.hours";
-    private static final int DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS = 168;
+    private static final Duration DEFAULT_STALE_INSTANCE_FILE_AGE = Duration.ofDays(7);
     /**
      * System property: maximum number of catch-up attempts made for a single reconnect - the
      * initial synchronous attempt plus however many {@link #scheduleCatchUpRetry} schedules after
@@ -430,8 +431,9 @@ public class GerritMissedEventsPlaybackManager implements ConnectionListener, Na
                     , serverName, Util.getPastTimeString(diff));
         }
 
-        long staleAgeMillis = TimeUnit.HOURS.toMillis(
-                Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, DEFAULT_STALE_INSTANCE_FILE_AGE_HOURS));
+        long staleAgeMillis = Duration.ofHours(
+                Integer.getInteger(STALE_INSTANCE_FILE_AGE_PROPERTY, (int) DEFAULT_STALE_INSTANCE_FILE_AGE.toHours()))
+                .toMillis();
         long catchUpAttemptsStartedAt = System.currentTimeMillis();
         MissedEventsCatchUpOutcome outcome = performCatchUpAttempt(
                 coordinationStrategy, candidateCatchUpFrom, staleAgeMillis);
