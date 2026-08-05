@@ -27,6 +27,7 @@ package com.sonyericsson.hudson.plugins.gerrit.trigger.playback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -63,13 +64,18 @@ public final class JobsLoadedGate {
     private static final Logger logger = LoggerFactory.getLogger(JobsLoadedGate.class);
 
     /**
-     * Upper bound on how long {@link #await()} will block before giving up and letting the
-     * caller proceed anyway. Not expected to ever be hit in practice ({@link
-     * hudson.init.InitMilestone#JOB_CONFIG_ADAPTED} is reached during ordinary Jenkins startup) -
-     * this exists only so a stalled/broken initializer elsewhere can't wedge missed-events
-     * catch-up for the lifetime of the JVM.
+     * System property: upper bound in minutes on how long {@link #await()} will block before
+     * giving up and letting the caller proceed anyway. Default is 30 minutes. Large instances
+     * with many jobs can take far longer than a few minutes to reach {@link
+     * hudson.init.InitMilestone#JOB_CONFIG_ADAPTED} - this timeout exists only so a stalled/broken
+     * initializer elsewhere can't wedge missed-events catch-up for the lifetime of the JVM, so it
+     * should be set well above any expected startup time rather than tuned tight.
      */
-    private static final long AWAIT_TIMEOUT_MINUTES = 5;
+    private static final String AWAIT_TIMEOUT_MINUTES_PROPERTY =
+            "gerrit.trigger.playback.jobsLoadedGate.timeout.minutes";
+    private static final Duration DEFAULT_AWAIT_TIMEOUT = Duration.ofMinutes(30);
+    private static final long AWAIT_TIMEOUT_MINUTES =
+            Long.getLong(AWAIT_TIMEOUT_MINUTES_PROPERTY, DEFAULT_AWAIT_TIMEOUT.toMinutes());
 
     private static final CountDownLatch LATCH = new CountDownLatch(1);
 
