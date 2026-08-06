@@ -26,6 +26,7 @@ import com.hazelcast.map.IMap;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResult;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.ClaimResults;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventClaimStrategy;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventIdGenerator;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.slf4j.Logger;

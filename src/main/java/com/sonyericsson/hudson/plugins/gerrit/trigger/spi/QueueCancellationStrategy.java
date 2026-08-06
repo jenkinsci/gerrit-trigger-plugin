@@ -35,7 +35,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * <ul>
  *   <li><b>Local mode:</b> Always returns false — no load balancer present in standalone mode.</li>
- *   <li><b>Hazelcast mode:</b> Inspects the item's actions and cause-of-blockage for
+ *   <li><b>Distributed mode:</b> Inspects the item's actions and cause-of-blockage for
  *       load-balancer markers to avoid sending premature Gerrit feedback.</li>
  * </ul>
  *

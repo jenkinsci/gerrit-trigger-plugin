@@ -47,8 +47,11 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.MockedStatic;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.Optional;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -59,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -83,12 +87,11 @@ class GerritMissedEventsPlaybackManagerTest {
     private static final WireMockExtension WIRE_MOCK = WireMockExtension.newInstance()
             .options(wireMockConfig().dynamicPort())
             .build();
-    private XmlFile xmlFile;
     private static final int SLEEPTIME = 500;
     private static final int HTTPOK = 200;
+    private static final long FIXTURE_TIME_SLICE = 1430244884000L;
     private MockedStatic<Jenkins> jenkinsMockedStatic;
     private MockedStatic<PluginImpl> pluginMockedStatic;
-    private MockedStatic<GerritMissedEventsPlaybackManager> playbackManagerMockedStatic;
     private MockedStatic<GerritPluginChecker> pluginCheckerMockedStatic;
 
     /**
@@ -99,8 +102,13 @@ class GerritMissedEventsPlaybackManagerTest {
         Jenkins jenkinsMock = mock(Jenkins.class);
         jenkinsMockedStatic = mockStatic(Jenkins.class);
         jenkinsMockedStatic.when(Jenkins::get).thenReturn(jenkinsMock);
+        jenkinsMockedStatic.when(Jenkins::getInstanceOrNull).thenReturn(jenkinsMock);
         jenkinsMockedStatic.when(Jenkins::getAuthentication).thenReturn(ACL.SYSTEM);
         jenkinsMockedStatic.when(Jenkins::getAuthentication2).thenReturn(ACL.SYSTEM2);
+
+        File jenkinsRootDir = Files.createTempDirectory("jenkins-root").toFile();
+        jenkinsRootDir.deleteOnExit();
+        when(jenkinsMock.getRootDir()).thenReturn(jenkinsRootDir);
 
         PluginImpl plugin = mock(PluginImpl.class);
         GerritServer server = mock(GerritServer.class);
@@ -119,26 +127,6 @@ class GerritMissedEventsPlaybackManagerTest {
         pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
         pluginMockedStatic.when(() -> PluginImpl.getServer_(any(String.class))).thenReturn(server);
 
-        playbackManagerMockedStatic = mockStatic(GerritMissedEventsPlaybackManager.class);
-
-        File tmpFile = File.createTempFile("gerrit-server-timestamps", ".xml");
-        tmpFile.deleteOnExit();
-        PrintWriter out = new PrintWriter(tmpFile);
-        String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
-                + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
-                + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
-                + "<timeSlice>1430244884000</timeSlice>"
-                + "<events>"
-                + "</events>"
-                + "</com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice>";
-        out.println(text);
-        out.close();
-
-        xmlFile = new XmlFile(tmpFile);
-        playbackManagerMockedStatic
-                .when(() -> GerritMissedEventsPlaybackManager.getConfigXml("defaultServer"))
-                .thenReturn(xmlFile);
-
         pluginCheckerMockedStatic = mockStatic(GerritPluginChecker.class);
         pluginCheckerMockedStatic.when(() -> GerritPluginChecker.isPluginEnabled(any(IGerritHudsonTriggerConfig.class)
                 , anyString(), anyBoolean())).thenReturn(true);
@@ -148,8 +136,27 @@ class GerritMissedEventsPlaybackManagerTest {
     void tearDown() {
         jenkinsMockedStatic.close();
         pluginMockedStatic.close();
-        playbackManagerMockedStatic.close();
         pluginCheckerMockedStatic.close();
+    }
+
+    /**
+     * Writes a fixture instance timestamp file for the given server, as if this JVM instance had
+     * previously persisted it, so that {@code load()} finds it.
+     * @param serverName the Gerrit server name.
+     * @throws IOException if it occurs.
+     */
+    private void writeInstanceTimestampFixture(String serverName) throws IOException {
+        XmlFile xml = new InstanceTimestampStore(serverName).getInstanceConfigXml();
+        String text = "<?xml version='1.0' encoding='UTF-8'?>\n"
+                + "<com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice "
+                + "plugin='gerrit-trigger@2.14.0-SNAPSHOT'>"
+                + "<timeSlice>" + FIXTURE_TIME_SLICE + "</timeSlice>"
+                + "<events>"
+                + "</events>"
+                + "</com.sonyericsson.hudson.plugins.gerrit.trigger.playback.EventTimeSlice>";
+        try (PrintWriter out = new PrintWriter(xml.getFile())) {
+            out.println(text);
+        }
     }
 
     /**
@@ -157,6 +164,12 @@ class GerritMissedEventsPlaybackManagerTest {
      * @return GerritMissedEventsPlaybackManager.
      */
     private GerritMissedEventsPlaybackManager setupManager() {
+        try {
+            writeInstanceTimestampFixture("defaultServer");
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
+
         GerritMissedEventsPlaybackManager missingEventsPlaybackManager
                 = new GerritMissedEventsPlaybackManager("defaultServer");
         assertDoesNotThrow(missingEventsPlaybackManager::load);
@@ -224,9 +237,11 @@ class GerritMissedEventsPlaybackManagerTest {
                         .withBody(json)));
 
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(1, events.size(), "Should have 1 event");
+        assertTrue(events.isPresent(), "Fetch should have succeeded");
+        assertEquals(1, events.get().size(), "Should have 1 event");
 
     }
 
@@ -234,8 +249,9 @@ class GerritMissedEventsPlaybackManagerTest {
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
      * And we receive a malformed response
-     * Then we log an error
-     * And we return an empty set of events.
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleMalformedConnection() {
@@ -245,18 +261,20 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.MALFORMED_RESPONSE_CHUNK)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A malformed connection must be reported as a failed fetch, not confirmed-empty");
 
     }
 
     /**
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
-     * And we receive a malformed response
-     * Then we log an error
-     * And we return an empty set of events.
+     * And the connection drops with no response at all
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleEmptyResponse() {
@@ -266,9 +284,10 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A dropped connection must be reported as a failed fetch, not confirmed-empty");
 
     }
 
@@ -276,8 +295,9 @@ class GerritMissedEventsPlaybackManagerTest {
      * Given a Gerrit Server with Events-log plugin installed
      * When we request the events from a time range
      * And we receive garbage as a response
-     * Then we log an error
-     * And we return an empty set of events.
+     * Then we log a warning, without throwing
+     * And we report the fetch as failed - not as a confirmed-empty result - so a genuine
+     * catch-up gap in this window is retried rather than silently treated as covered.
      */
     @Test
     void testHandleGarbageResponse() {
@@ -287,9 +307,10 @@ class GerritMissedEventsPlaybackManagerTest {
         WIRE_MOCK.stubFor(get(urlMatching(EVENTS_LOG_CHANGE_EVENTS_URL_REGEXP))
                 .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
 
-        List<GerritTriggeredEvent> events = assertDoesNotThrow(() -> missingEventsPlaybackManager.getEventsFromDateRange(
+        Optional<List<GerritTriggeredEvent>> events = assertDoesNotThrow(
+                () -> missingEventsPlaybackManager.getEventsFromDateRange(
                     missingEventsPlaybackManager.getDateFromTimestamp()));
-        assertEquals(0, events.size(), "Should have 0 event");
+        assertTrue(events.isEmpty(), "A garbage response must be reported as a failed fetch, not confirmed-empty");
 
     }
 

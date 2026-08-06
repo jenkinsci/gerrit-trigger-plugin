@@ -23,6 +23,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.spi.EventIdGenerator;
+
 /**
  * Represents a claimed Gerrit event in the distributed cluster.
  * <p>

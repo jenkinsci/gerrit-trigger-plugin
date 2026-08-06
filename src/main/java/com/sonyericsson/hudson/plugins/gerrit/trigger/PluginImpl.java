@@ -37,6 +37,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.PluginConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.events.ManualPatchsetCreated;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContextConverter;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.JobsLoadedGate;
 
 import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
@@ -808,6 +809,30 @@ public class PluginImpl extends GlobalConfiguration {
             throw new IllegalStateException("Jenkins is not up");
         }
         instance.start();
+    }
+
+    /**
+     * Opens {@link JobsLoadedGate} once every job's configuration/trigger registration has been
+     * adapted/updated - see that class's own javadoc for why {@code
+     * GerritMissedEventsPlaybackManager} waits on it before running missed-events catch-up.
+     *
+     * <p>Deliberately {@code JOB_CONFIG_ADAPTED}, not {@code COMPLETED}: {@link
+     * InitMilestone}'s own javadoc documents {@code COMPLETED} as reserved for {@link
+     * Initializer#before()} ("the very last milestone... used in {@code Initializer#before()}
+     * since annotations cannot have null as the default value"), not {@code after()} - using it
+     * as an {@code after} bound here caused {@code JenkinsRule}-based tests to fail outright with
+     * "Jenkins initialization has not reached the COMPLETED initialization stage" (a known Jenkins
+     * core limitation, JENKINS-37759), confirmed by reverting this one change and re-running
+     * {@code GerritMissedEventsFunctionalTest}. {@code JOB_CONFIG_ADAPTED} is the last milestone
+     * InitMilestone documents as safe for {@code after()}, and matches the actual race window
+     * observed live (gerrit-demo-with-replica's HZ-021 on mc0/mc1: the dropped-event race resolved
+     * within ~150ms of the "Configuration for all jobs updated" log line, i.e. this exact
+     * milestone) - it does not need to wait all the way to {@code COMPLETED}.
+     */
+    @Initializer(after = InitMilestone.JOB_CONFIG_ADAPTED)
+    @Restricted(DoNotUse.class)
+    public static void gerritJobsLoaded() {
+        JobsLoadedGate.open();
     }
 
     /**

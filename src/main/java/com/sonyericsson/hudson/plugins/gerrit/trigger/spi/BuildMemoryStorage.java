@@ -319,9 +319,9 @@ public abstract class BuildMemoryStorage {
      *       This deliberately ignores timestamp so that deserialized event instances
      *       (e.g. {@code GerritCause.tEvent} loaded from disk) correctly match against
      *       in-memory events representing the same logical change.</li>
-     *   <li><strong>Distributed mode:</strong> Uses {@link com.sonyericsson.hudson.plugins.gerrit.trigger.coordination.hazelcast.EventIdGenerator#generateEventId},
+     *   <li><strong>Distributed mode:</strong> Uses {@link EventIdGenerator#generateEventId},
      *       which produces a deterministic string key including the server-side timestamp.
-     *       The timestamp is needed because the IMap key must uniquely identify each
+     *       The timestamp is needed because the shared map's key must uniquely identify each
      *       event reception across replicas; without it, two different events on the
      *       same patchset could collide.</li>
      * </ul>

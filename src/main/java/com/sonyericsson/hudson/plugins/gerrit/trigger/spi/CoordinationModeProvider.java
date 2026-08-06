@@ -87,7 +87,8 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * <strong>Future:</strong> Can check UI configuration when providers add config pages
      * (e.g., Redis/JDBC providers with connection settings in Jenkins UI)
      *
-     * @return the configured mode name (e.g., "local", "hazelcast", "redis", "jdbc")
+     * @return the configured mode name (default "local"; any other value is matched by whichever
+     *         provider's own {@link #isAvailable()} recognizes it)
      */
     public static String getConfiguredMode() {
         return System.getProperty(COORDINATION_MODE_PROPERTY, "local");
@@ -99,7 +100,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * <p>Examples:</p>
      * <ul>
      *   <li>Local mode: always returns true (fallback)</li>
-     *   <li>Cluster mode: checks if cluster mode enabled AND Hazelcast available</li>
+     *   <li>Cluster mode: checks if cluster mode enabled AND its distributed backend is available</li>
      * </ul>
      *
      * <p>Called during provider discovery to filter out unavailable modes.</p>
@@ -153,7 +154,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      *
      * <p>The EventClaimStrategy prevents duplicate build processing when multiple Jenkins
      * instances receive the same Gerrit event in distributed scenarios. In local mode, this
-     * is a NO-OP (always claims). In distributed mode (e.g., Hazelcast), this uses
+     * is a NO-OP (always claims). In distributed mode, this uses
      * distributed coordination to ensure only one instance processes each event.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
@@ -173,7 +174,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * <p>The QueueCancellationStrategy determines whether a cancelled Jenkins queue item
      * should be ignored because it was moved by the distributed load balancer rather than being
      * cancelled by a user or a new patchset event. In local mode, this is a NO-OP (always
-     * returns false). In distributed mode (e.g., Hazelcast), this inspects the item for
+     * returns false). In distributed mode, this inspects the item for
      * load-balancer markers.</p>
      *
      * <p><b>Thread Safety:</b> This method may be called from multiple threads during
@@ -185,13 +186,33 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
     public abstract QueueCancellationStrategy createQueueCancellationStrategy();
 
     /**
+     * Creates a new MissedEventsCoordinationStrategy instance for this mode.
+     *
+     * <p>Called once during factory initialization after this provider is selected
+     * as the highest-priority available provider.</p>
+     *
+     * <p>The MissedEventsCoordinationStrategy ensures that when multiple Jenkins instances share
+     * one {@code JENKINS_HOME}, at most one of them performs missed-events playback catch-up for
+     * a given Gerrit server at a time, and a later reconnect never re-requests an already-covered
+     * range. In local mode, this reduces to a trivial in-process lock. In distributed mode,
+     * this uses a distributed lock and shared watermark.</p>
+     *
+     * <p><b>Thread Safety:</b> This method may be called from multiple threads during
+     * factory initialization (double-checked locking). Implementations should be stateless
+     * or properly synchronized.</p>
+     *
+     * @return a new MissedEventsCoordinationStrategy instance (non-null)
+     */
+    public abstract MissedEventsCoordinationStrategy createMissedEventsCoordinationStrategy();
+
+    /**
      * Initializes this coordination mode provider.
      *
      * <p>Called during plugin startup (PluginImpl.start()) to initialize any resources
      * needed by this provider. For example:</p>
      * <ul>
      *   <li>Local mode: no-op (no initialization needed)</li>
-     *   <li>Hazelcast mode: initializes Hazelcast instance and cluster membership</li>
+     *   <li>Distributed mode: initializes its clustering instance and cluster membership</li>
      *   <li>Redis mode: establishes connection pool</li>
      *   <li>JDBC mode: initializes database connection</li>
      * </ul>
@@ -216,7 +237,7 @@ public abstract class CoordinationModeProvider implements ExtensionPoint {
      * held by this provider. For example:</p>
      * <ul>
      *   <li>Local mode: no-op (no resources to release)</li>
-     *   <li>Hazelcast mode: shuts down Hazelcast instance gracefully</li>
+     *   <li>Distributed mode: shuts down its clustering instance gracefully</li>
      *   <li>Redis mode: closes connection pool</li>
      *   <li>JDBC mode: closes database connections</li>
      * </ul>
