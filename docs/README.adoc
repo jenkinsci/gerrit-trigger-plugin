@@ -300,6 +300,31 @@ in the Jenkins log file when the Gerrit Server Connection is started:
 INFO: (8) missed events to process for server: defaultServer ...
 ----
 
+==== Configuring the Startup Wait Timeout
+
+On startup, missed-events catch-up waits for Jenkins to finish loading all job
+configurations before replaying any missed events. This avoids a race where a
+replayed event arrives before a job's Gerrit Trigger has registered as a
+listener, which would cause that event to be silently dropped.
+
+This wait is capped by the `gerrit.trigger.playback.jobsLoadedGate.timeout.minutes`
+system property, which defaults to *30 minutes*. If the timeout elapses before job
+loading finishes, missed-events catch-up proceeds anyway and a warning is logged.
+
+NOTE: Instances with a very large number of jobs can take longer than 30 minutes to
+finish loading job configurations on startup. If your instance's startup routinely
+exceeds 30 minutes, set this property to a value comfortably above your instance's
+actual startup time rather than tuning it tight, for example:
+
+[source,syntaxhighlighter-pre]
+----
+-Dgerrit.trigger.playback.jobsLoadedGate.timeout.minutes=60
+----
+
+This setting only affects the very first missed-events catch-up after the JVM
+starts; later reconnects (e.g. after a network blip) always occur well after job
+loading has completed and are unaffected by it.
+
 == Skip Vote
 
 "Skipping" the vote means that if more than one build is triggered by a

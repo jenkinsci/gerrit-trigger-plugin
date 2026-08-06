@@ -167,5 +167,15 @@ This has not been tested in distributed mode, so the actual behavior cannot be v
 been, treat the RabbitMQ Consumer plugin as unproven for multi-replica set ups of this feature and
 prefer a single Jenkins instance/replica.
 
+## Configuration Options
+
+Instances with a large number of jobs — including multi-replica deployments running under
+this feature — can take longer than 30 minutes to finish loading job configurations on
+startup. See
+[Configuring the Startup Wait Timeout](README.adoc#_configuring_the_startup_wait_timeout)
+in the main README for how to raise the `gerrit.trigger.playback.jobsLoadedGate.timeout.minutes`
+system property above your instance's actual startup time, so missed-events catch-up doesn't
+proceed before every replica's jobs have finished loading.
+
 (*) Jenkins does not support multiple replicas or nodes for a single logical instance, this feature is not tested with Jenkins. This feature is provided for CloudBees CI (Enterprise Jenkins).
 This feature is provided as a community effort and is not endorsed or officially supported by CloudBees.
