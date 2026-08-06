@@ -64,54 +64,64 @@ Choose a value that reflects your actual expected downtime rather than leaving i
 
 #### Kubernetes — Client Mode with Hazelcast Sidecar
 
-The plugin can connect to Hazelcast cluster as a lightweight client. For example, if we are running 
+The plugin can connect to Hazelcast cluster as a lightweight client. For example, if we are running
 K8s environment with the Jenkins instance inside a pod, we can have a side-container with Hazelcast
-to set up the Hazelcast cluster. In this kind of cases, we would the a configuration setup similar
+to set up the Hazelcast cluster. In this kind of cases, we would use a configuration setup similar
 to the following one:
 
-Add the following JVM arguments to the Jenkins instance:
+The plugin's default configuration values (`localhost:5702` and cluster name `gerrit-trigger-cluster`)
+already match this sidecar setup, so the only JVM argument needed on the Jenkins instance is:
 
     -Dgerrit.trigger.coordination.mode=hazelcast
-    -Dgerrit.trigger.coordination.hazelcast.client.addresses=localhost:5702
-    -Dgerrit.trigger.coordination.hazelcast.client.cluster.name=gerrit-trigger-cluster
 
 Add the sidecar container to the instance pod spec:
 
 ```yaml
 - name: hazelcast
   image: hazelcast/hazelcast:5.3.8
-  ports:
-    - containerPort: 5702
-      name: hazelcast
   env:
-    - name: JAVA_OPTS
-      value: >-
-        -Dhazelcast.config=/dev/stdin
-        -Dhazelcast.local.publicAddress=$(POD_IP):5702
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    # Network and cluster setup (HZ_CLUSTERNAME = plugin's default gerrit-trigger-cluster)
     - name: HZ_CLUSTERNAME
       value: gerrit-trigger-cluster
     - name: HZ_NETWORK_PORT_PORT
       value: "5702"
+    - name: HZ_NETWORK_PORT_AUTOINCREMENT
+      value: "false"
+    - name: HZ_NETWORK_PUBLICADDRESS
+      value: "$(POD_IP):5702"
+    # Kubernetes Discovery configuration
+    - name: HZ_NETWORK_JOIN_MULTICAST_ENABLED
+      value: "false"
+    - name: HZ_NETWORK_JOIN_KUBERNETES_ENABLED
+      value: "true"
+    - name: HZ_NETWORK_JOIN_KUBERNETES_SERVICEPORT
+      value: "5702"
+    - name: HZ_NETWORK_JOIN_KUBERNETES_PODLABELNAME
+      value: "tenant"
+    - name: HZ_NETWORK_JOIN_KUBERNETES_PODLABELVALUE
+      value: "${name}"
+  ports:
+    - containerPort: 5702
+      name: gerritstorage
 ```
 
-Grant the pod's service account read access to Kubernetes endpoints so Hazelcast can
-discover its peers:
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: hazelcast-gerrit-trigger
-rules:
-  - apiGroups: [""]
-    resources: ["endpoints", "pods", "nodes", "services"]
-    verbs: ["get", "list"]
-  - apiGroups: ["discovery.k8s.io"]
-    resources: ["endpointslices"]
-    verbs: ["get", "list"]
-```
+> [!NOTE]
+> `HZ_NETWORK_JOIN_KUBERNETES_PODLABELNAME`/`PODLABELVALUE` scope peer discovery to only the pods
+> that belong to this logical instance's cluster. Set them so no other pod in the namespace matches.
+> For a logical instance named `my-instance`, label every valid pod `tenant=my-instance`.
+>
+> `HZ_CLUSTERNAME` and `gerrit.trigger.coordination.hazelcast.client.cluster.name` must match exactly.
+> Plugin defaults to `gerrit-trigger-cluster`. Override one, override the other the same way.
 
 #### Kubernetes — Client Mode with Separate Hazelcast Cluster
+
+> [!IMPORTANT]
+> Each instance needs its own unique cluster name, or their event claims and build memory will collide.
+> e.g. for a logical instance named `my-instance`, use `gerrit-trigger-cluster-my-instance` for both settings.
 
 For larger deployments or strict separation of concerns, you can decouple the coordination layer by running a standalone Hazelcast cluster. Jenkins still connects as a lightweight client, but routes traffic to the separate cluster via a Kubernetes service instead of a sidecar.
 
@@ -122,6 +132,7 @@ Add the following JVM arguments to the Jenkins instance, updating the client add
     -Dgerrit.trigger.coordination.hazelcast.client.cluster.name=gerrit-trigger-cluster-<LOGICAL_INSTANCE_NAME>
 
 In this topology:
+
 - You do not need to add the sidecar container to the Jenkins pod spec.
 - The Jenkins service account does not need RBAC permissions for peer discovery, as cluster management is handled entirely by the standalone Hazelcast nodes.
 - You must deploy and manage the Hazelcast cluster independently (e.g. via the official Hazelcast Helm chart), ensuring you configure it to match your expected `HZ_CLUSTERNAME` and port (`5702`).
