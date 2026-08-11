@@ -57,6 +57,8 @@ The plugin supports an distributed event management for the memory that will tra
 See [README_DISTRIBUTED_EVENT_MANAGEMENT.md](docs/README_DISTRIBUTED_EVENT_MANAGEMENT.md) for configuration
 properties and deployment examples.
 
+This feature is provided for use with CloudBees CI and is provided as a community effort which is neither endorsed nor supported by CloudBees.
+Jenkins does not support multiple replicas or nodes for a single logical instance, this feature is not tested with Jenkins.
 
 # License
 
