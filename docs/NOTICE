@@ -1,0 +1,2 @@
+Jenkins does not support multiple replicas or nodes for a single logical instance, this feature is not tested with Jenkins.
+This feature is provided for use with CloudBees CI and is provided as a community effort which is neither endorsed nor supported by CloudBees.
