@@ -61,6 +61,7 @@
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <no-test-jar>false</no-test-jar>
+        <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
         <findbugs.failOnError>false</findbugs.failOnError>
         <build-failure-analyzer-plugin.version>3.887.vc872cf1b_7dff</build-failure-analyzer-plugin.version>
         <checkstyle.version>3.6.0</checkstyle.version>
