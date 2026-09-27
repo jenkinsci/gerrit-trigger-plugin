@@ -19,6 +19,7 @@ unclassified:
           gerritEMail: "gerrit@example.com"
           gerritAuthKeyFile: "/key/file"
           gerritAuthKeyFilePassword: "never_use_plaintext_password_ever"
+          gerritCredentialsId: "gerrit-ssh"
           buildCurrentPatchesOnly:
             abortNewPatchsets: true
             abortManualPatchsets: true

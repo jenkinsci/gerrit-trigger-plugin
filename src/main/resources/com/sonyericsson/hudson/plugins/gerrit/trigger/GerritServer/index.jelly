@@ -75,13 +75,27 @@
                         <f:textbox name="gerritEMail"
                                    value="${it.config.gerritEMail}"/>
                     </f:entry>
+                    <f:entry title="${%SSH Credentials}"
+                             help="/plugin/gerrit-trigger/help-GerritCredentialsId.html">
+                        <j:set var="currentCredentialsId" value="${it.config.gerritCredentialsId}"/>
+                        <div class="jenkins-select">
+                            <select name="gerritCredentialsId" class="jenkins-select__input">
+                                <j:forEach var="option" items="${it.gerritCredentialsIdItems}">
+                                    <option value="${option.value}"
+                                            selected="${option.value == currentCredentialsId ? 'selected' : null}">
+                                        ${option.name}
+                                    </option>
+                                </j:forEach>
+                            </select>
+                        </div>
+                    </f:entry>
                     <f:entry title="${%SSH Keyfile}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFile.html">
                         <f:textbox name="gerritAuthKeyFile"
                                    value="${it.config.gerritAuthKeyFile}"
                                    default="${com.sonyericsson.hudson.plugins.gerrit.gerritevents.GerritDefaultValues.DEFAULT_GERRIT_AUTH_KEY_FILE}"
                                    checkUrl="${rootURL}/${serverURL}/validKeyFileCheck"
-                                   checkDependsOn=""/>
+                                   checkDependsOn="gerritCredentialsId"/>
                     </f:entry>
                     <f:entry title="${%SSH Keyfile Password}"
                              help="/plugin/gerrit-trigger/help-GerritKeyFilePassword.html">
@@ -130,7 +144,7 @@
                     <f:validateButton title="${%Test Connection}"
                                       progress="${%Testing...}"
                                       method="testConnection"
-                                      with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
+                                      with="gerritHostName,gerritSshPort,gerritProxy,gerritUserName,gerritCredentialsId,gerritAuthKeyFile,gerritAuthKeyFilePassword"/>
                 </f:section>
                 <f:section title="${%Gerrit Reporting Values}" icon="symbol-list-outline plugin-ionicons-api">
                     <div class="gt-config__subsection">${%Verify}</div>

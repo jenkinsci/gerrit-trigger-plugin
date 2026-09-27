@@ -29,12 +29,14 @@ import com.sonymobile.tools.gerrit.gerritevents.dto.attr.Provider;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.GerritTriggeredEvent;
 import com.sonymobile.tools.gerrit.gerritevents.dto.rest.Notify;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time;
 import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.TimeSpan;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.VerdictCategory;
 
+import hudson.Util;
 import hudson.util.Secret;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -43,6 +45,8 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Calendar;
@@ -163,6 +167,8 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
 
+    private static final Logger logger = LoggerFactory.getLogger(Config.class);
+
     private String gerritHostName;
     private int gerritSshPort;
     private String gerritProxy;
@@ -170,6 +176,10 @@ public class Config implements IGerritHudsonTriggerConfig {
     private String gerritEMail;
     private File gerritAuthKeyFile;
     private Secret gerritAuthKeyFilePassword;
+    /**
+     * Id of an SSH private key credential; when set it is used instead of {@link #gerritAuthKeyFile}.
+     */
+    private String gerritCredentialsId;
     private boolean useRestApi;
     private String gerritHttpUserName;
     private Secret gerritHttpPassword;
@@ -241,6 +251,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         notificationLevel = config.getNotificationLevel();
         gerritAuthKeyFile = new File(config.getGerritAuthKeyFile().getPath());
         gerritAuthKeyFilePassword = Secret.fromString(config.getGerritAuthKeyFilePassword());
+        gerritCredentialsId = config.getGerritCredentialsId();
         useRestApi = config.isUseRestApi();
         gerritHttpUserName = config.getGerritHttpUserName();
         gerritHttpPassword = Secret.fromString(config.getGerritHttpPassword());
@@ -307,6 +318,7 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritAuthKeyFilePassword = Secret.fromString(formData.optString(
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
+        gerritCredentialsId = Util.fixEmptyAndTrim(formData.optString("gerritCredentialsId", null));
 
         if (formData.has("buildCurrentPatchesOnly")) {
             JSONObject currentPatchesOnly = formData.getJSONObject("buildCurrentPatchesOnly");
@@ -601,6 +613,22 @@ public class Config implements IGerritHudsonTriggerConfig {
     @Override
     public Secret getGerritAuthKeyFileSecretPassword() {
         return gerritAuthKeyFilePassword;
+    }
+
+    @Override
+    public String getGerritCredentialsId() {
+        return gerritCredentialsId;
+    }
+
+    /**
+     * The id of an SSH private key credential used to connect to Gerrit.
+     * When set, it takes precedence over the key file.
+     *
+     * @param gerritCredentialsId the credentials id, or null/empty to use the key file.
+     * @see #getGerritCredentialsId()
+     */
+    public void setGerritCredentialsId(String gerritCredentialsId) {
+        this.gerritCredentialsId = Util.fixEmptyAndTrim(gerritCredentialsId);
     }
 
     @Override
@@ -1271,6 +1299,21 @@ public class Config implements IGerritHudsonTriggerConfig {
 
     @Override
     public Authentication getGerritAuthentication() {
+        if (gerritCredentialsId != null) {
+            // Looked up whenever a connection or command job needs it, so a rotated key is picked up then.
+            SSHUserPrivateKey credential = SshCredentialsHelper.lookup(gerritCredentialsId);
+            if (credential != null) {
+                try {
+                    return SshCredentialsHelper.toAuthentication(credential, gerritUserName);
+                } catch (IllegalStateException e) {
+                    logger.error("Cannot use SSH credentials '{}' for Gerrit {}: {}. Falling back to key file {}",
+                            gerritCredentialsId, gerritHostName, e.getMessage(), gerritAuthKeyFile);
+                }
+            } else {
+                logger.error("SSH credentials '{}' configured for Gerrit {} were not found. "
+                        + "Falling back to key file {}", gerritCredentialsId, gerritHostName, gerritAuthKeyFile);
+            }
+        }
         return new Authentication(gerritAuthKeyFile, gerritUserName, getGerritAuthKeyFilePassword());
     }
 
