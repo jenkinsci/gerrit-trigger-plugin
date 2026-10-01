@@ -365,4 +365,19 @@ public class MockPluginCheckerConfig implements IGerritHudsonTriggerConfig {
     public boolean isVoteSameTopic() {
         return false;
     }
+
+    @Override
+    public boolean isUseHttpsPoller() {
+        return false;
+    }
+
+    @Override
+    public int getHttpsPollInterval() {
+        return com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_INTERVAL;
+    }
+
+    @Override
+    public int getHttpsPollMaxChanges() {
+        return com.sonymobile.tools.gerrit.gerritevents.GerritDefaultValues.DEFAULT_HTTPS_POLL_MAX_CHANGES;
+    }
 }

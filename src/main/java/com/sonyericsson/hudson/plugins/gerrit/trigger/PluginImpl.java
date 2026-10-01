@@ -336,6 +336,23 @@ public class PluginImpl extends GlobalConfiguration {
     }
 
     /**
+     * Get the server with the given name, falling back to the first server
+     * when the named server is not found.
+     *
+     * @param name the server name, or null.
+     * @return the server, or null if no server could be found.
+     */
+    @CheckForNull
+    //CS IGNORE MethodName FOR NEXT 1 LINES. REASON: Static equivalent marker.
+    public static GerritServer getServerOrFirst_(String name) {
+        GerritServer server = getServer_(name);
+        if (server == null) {
+            server = getFirstServer_();
+        }
+        return server;
+    }
+
+    /**
      * Set the list of Gerrit servers.
      *
      * @param servers the list to be set.
