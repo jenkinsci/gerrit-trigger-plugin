@@ -27,12 +27,11 @@ import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 import com.sonymobile.tools.gerrit.gerritevents.ssh.Authentication;
-import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import net.sf.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -219,14 +218,30 @@ class SshCredentialsHelperTest {
     }
 
     /**
-     * The key file is not checked when a credential is selected, since it is not used then.
+     * The configuration page submits the selected authentication method as a radio block.
+     * Selecting credentials keeps the key file, selecting the key file clears the credential.
      */
     @Test
-    void keyFileCheckSkippedWithCredentials() {
-        GerritServer server = new GerritServer("test");
-        assertEquals(FormValidation.Kind.ERROR, server.doValidKeyFileCheck("/does/not/exist", null).kind);
-        assertEquals(FormValidation.Kind.ERROR, server.doValidKeyFileCheck("/does/not/exist", " ").kind);
-        assertEquals(FormValidation.Kind.OK, server.doValidKeyFileCheck("/does/not/exist", ID).kind);
+    void configAuthMethodFromForm() {
+        Config config = new Config();
+        config.setGerritAuthKeyFile(new File("/some/key"));
+
+        JSONObject credentials = new JSONObject();
+        credentials.put("value", Config.AUTH_METHOD_CREDENTIALS);
+        credentials.put("gerritCredentialsId", ID);
+        JSONObject form = new JSONObject();
+        form.put("gerritAuthMethod", credentials);
+        config.setValues(form);
+        assertEquals(ID, config.getGerritCredentialsId());
+        assertEquals(new File("/some/key"), config.getGerritAuthKeyFile());
+
+        JSONObject keyFile = new JSONObject();
+        keyFile.put("value", Config.AUTH_METHOD_KEY_FILE);
+        keyFile.put("gerritAuthKeyFile", "/other/key");
+        form.put("gerritAuthMethod", keyFile);
+        config.setValues(form);
+        assertNull(config.getGerritCredentialsId());
+        assertEquals(new File("/other/key"), config.getGerritAuthKeyFile());
     }
 
     /**

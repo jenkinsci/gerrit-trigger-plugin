@@ -207,6 +207,7 @@ public final class SshCredentialsHelper {
             this.privateKey = privateKey;
         }
 
+        // Despite its name, gerrit-events' getPrivateKeyPhrase() holds the private key itself, not its passphrase.
         @Override
         public byte[] getPrivateKeyPhrase() {
             return privateKey.getPlainText().getBytes(StandardCharsets.UTF_8);

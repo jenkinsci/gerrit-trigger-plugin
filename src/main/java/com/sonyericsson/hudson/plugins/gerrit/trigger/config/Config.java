@@ -167,6 +167,16 @@ public class Config implements IGerritHudsonTriggerConfig {
      */
     public static final Notify DEFAULT_NOTIFICATION_LEVEL = Notify.ALL;
 
+    /**
+     * Value of the "gerritAuthMethod" radio button on the configuration page that selects SSH credentials.
+     */
+    public static final String AUTH_METHOD_CREDENTIALS = "credentials";
+
+    /**
+     * Value of the "gerritAuthMethod" radio button on the configuration page that selects the key file.
+     */
+    public static final String AUTH_METHOD_KEY_FILE = "keyFile";
+
     private static final Logger logger = LoggerFactory.getLogger(Config.class);
 
     private String gerritHostName;
@@ -300,15 +310,12 @@ public class Config implements IGerritHudsonTriggerConfig {
         watchTimeExceptionData = addWatchTimeExceptionData(config.getExceptionData());
     }
 
-    @Override
-    public void setValues(JSONObject formData) {
-        gerritHostName = formData.optString("gerritHostName", DEFAULT_GERRIT_HOSTNAME);
-        gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
-        gerritProxy = formData.optString("gerritProxy", DEFAULT_GERRIT_PROXY);
-        gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
-        gerritEMail = formData.optString("gerritEMail", "");
-        notificationLevel = Notify.valueOf(formData.optString("notificationLevel",
-                Config.DEFAULT_NOTIFICATION_LEVEL.toString()));
+    /**
+     * Sets the key file and its password from form data.
+     *
+     * @param formData the form data holding gerritAuthKeyFile and gerritAuthKeyFilePassword.
+     */
+    private void setAuthKeyFileValues(JSONObject formData) {
         String file = formData.optString("gerritAuthKeyFile", null);
         if (file != null) {
             gerritAuthKeyFile = new File(file);
@@ -318,7 +325,28 @@ public class Config implements IGerritHudsonTriggerConfig {
         gerritAuthKeyFilePassword = Secret.fromString(formData.optString(
                 "gerritAuthKeyFilePassword",
                 DEFAULT_GERRIT_AUTH_KEY_FILE_PASSWORD));
-        gerritCredentialsId = Util.fixEmptyAndTrim(formData.optString("gerritCredentialsId", null));
+    }
+
+    @Override
+    public void setValues(JSONObject formData) {
+        gerritHostName = formData.optString("gerritHostName", DEFAULT_GERRIT_HOSTNAME);
+        gerritSshPort = formData.optInt("gerritSshPort", DEFAULT_GERRIT_SSH_PORT);
+        gerritProxy = formData.optString("gerritProxy", DEFAULT_GERRIT_PROXY);
+        gerritUserName = formData.optString("gerritUserName", DEFAULT_GERRIT_USERNAME);
+        gerritEMail = formData.optString("gerritEMail", "");
+        notificationLevel = Notify.valueOf(formData.optString("notificationLevel",
+                Config.DEFAULT_NOTIFICATION_LEVEL.toString()));
+        JSONObject authMethod = formData.optJSONObject("gerritAuthMethod");
+        if (authMethod == null) {
+            setAuthKeyFileValues(formData);
+            gerritCredentialsId = Util.fixEmptyAndTrim(formData.optString("gerritCredentialsId", null));
+        } else if (AUTH_METHOD_CREDENTIALS.equals(authMethod.optString("value"))) {
+            // The key file fields are not submitted, keep them as they are.
+            gerritCredentialsId = Util.fixEmptyAndTrim(authMethod.optString("gerritCredentialsId", null));
+        } else {
+            setAuthKeyFileValues(authMethod);
+            gerritCredentialsId = null;
+        }
 
         if (formData.has("buildCurrentPatchesOnly")) {
             JSONObject currentPatchesOnly = formData.getJSONObject("buildCurrentPatchesOnly");

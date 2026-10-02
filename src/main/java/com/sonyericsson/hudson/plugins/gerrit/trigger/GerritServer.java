@@ -1394,20 +1394,13 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
     /**
      * Checks to see if the provided value is a file path to a valid private key file.
-     * The key file is not used, and so not checked, when SSH credentials are selected.
      * @param value the value.
-     * @param gerritCredentialsId the selected SSH credentials id, if any.
      * @return {@link FormValidation#ok() } if it is so.
      */
     public FormValidation doValidKeyFileCheck(
             @QueryParameter("value")
-            final String value,
-            @QueryParameter("gerritCredentialsId")
-            final String gerritCredentialsId) {
+            final String value) {
 
-        if (Util.fixEmptyAndTrim(gerritCredentialsId) != null) {
-            return FormValidation.ok();
-        }
         File f = new File(value);
         if (!f.exists()) {
             return FormValidation.error(Messages.FileNotFoundError(value));
