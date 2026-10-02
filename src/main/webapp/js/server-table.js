@@ -57,6 +57,25 @@ function refreshServerTable() {
         return td;
     }
 
+    function createElementFromHtml(html) {
+        const template = document.createElement("template");
+        template.innerHTML = html.trim();
+        return template.content.firstElementChild;
+    }
+
+    function removeServer(event, element) {
+        event.preventDefault();
+        const row = element.closest("tr");
+        let serverUrl = row.dataset.serverUrl;
+        let message = table.dataset.removeMessage;
+        let serverName = createElementFromHtml(`<div>${row.dataset.name}</div>`).innerText;
+        message = message.replace("__SERVER__", serverName);
+        dialog.wizard(serverUrl + "/removeDialog", {
+            minWidth: "min(550px, 100vw)",
+            preventCloseOnOutsideClick: true,
+        });
+    }
+
     function toggleServer(event, element) {
         event.preventDefault();
         const row = element.closest("tr");
@@ -67,7 +86,7 @@ function refreshServerTable() {
         if (status === "up") {
             statusIcon = generateSVGIcon("gerrit-status-disconnecting");
             serverUrl +="/sleep";
-        } else if(status == "down") {
+        } else if (status === "down") {
             statusIcon = generateSVGIcon("gerrit-status-connecting");
             serverUrl +="/wakeup";
         }
@@ -82,10 +101,11 @@ function refreshServerTable() {
         });
     }
 
-    function createTableRow(server, tbody) {
+    function createTableRow(server, tbody, serverCount) {
         const row = document.createElement("tr");
         row.setAttribute("data-server-url", server.serverUrl);
         row.setAttribute("data-status", server.status);
+        row.setAttribute("data-name", server.name);
         const nameTd = document.createElement("td");
         if (server.frontEndUrl !== '') {
             const a = document.createElement("a");
@@ -127,12 +147,19 @@ function refreshServerTable() {
             icon.classList.add("jenkins-!-warning-color");
         }
         row.appendChild(createLink(`${server.serverUrl}/`, icon));
+        if (serverCount > 1) {
+            row.appendChild(createLink("", generateSVGIcon("gerrit-symbol-remove"), "button", removeServer, false, null));
+        } else {
+            row.appendChild(createLink("", generateSVGIcon("gerrit-symbol-remove"), "button", removeServer, true, table.dataset.nodeleteLast));
+        }
 
-        row.appendChild(createLink(`${server.serverUrl}/remove`, generateSVGIcon("gerrit-symbol-remove")));
         tbody.appendChild(row);
     }
 
-    fetch("serverStatuses").then(function(rsp) {
+    fetch("serverStatuses", {
+        method: "post",
+        headers: crumb.wrap({}),
+    }).then(function(rsp) {
         if (rsp.ok) {
             rsp.json().then(function(json) {
                 if (json.hasOwnProperty("servers") && json.servers.length > 0) {
@@ -140,7 +167,7 @@ function refreshServerTable() {
                 }
                 const tbody = table.createTBody();
                 json.servers.forEach(function(server) {
-                    createTableRow(server, tbody)
+                    createTableRow(server, tbody, json.servers.length)
                 });
                 Behaviour.apply(table);
                 table.tBodies[0].remove();

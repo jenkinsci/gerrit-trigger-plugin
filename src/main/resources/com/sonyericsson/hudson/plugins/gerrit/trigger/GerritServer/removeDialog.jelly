@@ -1,0 +1,32 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+  <st:setHeader name="X-Dialog-Title" value="${%Remove Server}" />
+
+  <l:ajax>
+    <form name="removal" method="post" action="removeConfirm">
+      <j:choose>
+        <j:when test="${it.isLastServer()}">
+          <div class="jenkins-!-margin-top-2 jenkins-!-destructive-color">
+            ${%RemoveLastServerWarning}
+          </div>
+        </j:when>
+        <j:otherwise>
+          <div class="jenkins-!-margin-bottom-2">
+            ${%RemoveServerConfirmationWithNoJobs(it.name)}
+          </div>
+          <j:if test="${not it.configuredJobs.isEmpty()}">
+            ${%RemoveServerConfirmation(it.name)}
+            <ul>
+              <j:forEach var="job" items="${it.configuredJobs}" varStatus="loop">
+                <li> <a href="${rootURL}/${job.url}configure" target="_blank"> ${job.name} </a> </li>
+              </j:forEach>
+            </ul>
+          </j:if>
+          <f:bottomButtonBar borderless="true">
+            <f:submit value="${%Remove}" clazz="jenkins-!-destructive-color"/>
+          </f:bottomButtonBar>
+        </j:otherwise>
+      </j:choose>
+    </form>
+  </l:ajax>
+</j:jelly>
