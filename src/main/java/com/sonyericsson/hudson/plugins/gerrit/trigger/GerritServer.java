@@ -40,6 +40,7 @@ import hudson.model.Failure;
 import hudson.model.Descriptor;
 import hudson.security.Permission;
 import hudson.util.FormValidation;
+import hudson.Util;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import hudson.util.ListBoxModel.Option;
@@ -112,6 +113,8 @@ import com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.SshCredentialsHelper;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
@@ -750,6 +753,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
          * @param gerritSshPort the ssh-port
          * @param gerritProxy the proxy url
          * @param gerritUserName the username
+         * @param gerritCredentialsId the id of an SSH credential, takes precedence over the key file if set.
          * @param gerritAuthKeyFile the private key file
          * @param gerritAuthKeyFilePassword the password for the keyfile or null if there is none.
          * @return {@link FormValidation#ok() } if can be done,
@@ -761,54 +765,80 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 @QueryParameter("gerritSshPort") final int gerritSshPort,
                 @QueryParameter("gerritProxy") final String gerritProxy,
                 @QueryParameter("gerritUserName") final String gerritUserName,
+                @QueryParameter("gerritCredentialsId") final String gerritCredentialsId,
                 @QueryParameter("gerritAuthKeyFile") final String gerritAuthKeyFile,
                 @QueryParameter("gerritAuthKeyFilePassword") final String gerritAuthKeyFilePassword) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
 
-            File file = new File(gerritAuthKeyFile);
-            String password = null;
-            if (gerritAuthKeyFilePassword != null && !gerritAuthKeyFilePassword.isEmpty()) {
-                password = Secret.fromString(gerritAuthKeyFilePassword).getPlainText();
-            }
-            if (SshUtil.checkPassPhrase(file, password)) {
-                if (file.exists() && file.isFile()) {
-                    try {
-                        final SshConnection sshConnection = SshConnectionFactory.getConnection(
-                                gerritHostName,
-                                gerritSshPort,
-                                gerritProxy,
-                                new Authentication(file, gerritUserName, password));
-                        ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
-                        Future<Integer> future = service.submit(
-                                () -> sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read()
-                        );
-                        int readChar;
-                        try {
-                            readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);
-                        } catch (TimeoutException ex) {
-                            readChar = 0;
-                        } finally {
-                            sshConnection.disconnect();
-                        }
-                        if (readChar < 0) {
-                            return FormValidation.error(Messages.StreamEventsCapabilityException(gerritUserName));
-                        } else {
-                            return FormValidation.ok(Messages.Success());
-                        }
-                    } catch (SshConnectException ex) {
-                        return FormValidation.error(Messages.SshConnectException());
-                    } catch (SshAuthenticationException ex) {
-                        return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
-                    } catch (Exception e) {
-                        return FormValidation.error(Messages.ConnectionError(e.getMessage()));
-                    }
-                } else {
+            final Authentication authentication;
+            if (Util.fixEmptyAndTrim(gerritCredentialsId) != null) {
+                SSHUserPrivateKey credential = SshCredentialsHelper.lookup(gerritCredentialsId);
+                if (credential == null) {
+                    return FormValidation.error(Messages.SshCredentialsNotFoundError(gerritCredentialsId));
+                }
+                if (!SshCredentialsHelper.isKeyUsable(credential)) {
+                    return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+                }
+                authentication = SshCredentialsHelper.toAuthentication(credential, gerritUserName);
+            } else {
+                File file = new File(gerritAuthKeyFile);
+                String password = null;
+                if (gerritAuthKeyFilePassword != null && !gerritAuthKeyFilePassword.isEmpty()) {
+                    password = Secret.fromString(gerritAuthKeyFilePassword).getPlainText();
+                }
+                if (!SshUtil.checkPassPhrase(file, password)) {
+                    return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+                }
+                if (!file.exists() || !file.isFile()) {
                     return FormValidation.error(Messages.SshKeyFileNotFoundError(gerritAuthKeyFile));
                 }
-            } else {
-                return FormValidation.error(Messages.BadSshkeyOrPasswordError());
+                authentication = new Authentication(file, gerritUserName, password);
             }
+            return testSshConnection(gerritHostName, gerritSshPort, gerritProxy, authentication);
+        }
 
+        /**
+         * Opens an SSH connection and checks that the user may stream events.
+         * @param gerritHostName the hostname
+         * @param gerritSshPort the ssh-port
+         * @param gerritProxy the proxy url
+         * @param authentication the authentication to use
+         * @return the validation result.
+         */
+        private FormValidation testSshConnection(String gerritHostName, int gerritSshPort, String gerritProxy,
+                                                 Authentication authentication) {
+            try {
+                final SshConnection sshConnection = SshConnectionFactory.getConnection(
+                        gerritHostName,
+                        gerritSshPort,
+                        gerritProxy,
+                        authentication);
+                ExecutorService service = Executors.newFixedThreadPool(THREADS_FOR_TEST_CONNECTION);
+                Future<Integer> future = service.submit(
+                        () -> sshConnection.executeCommandReader(GerritConnection.CMD_STREAM_EVENTS).read()
+                );
+                int readChar;
+                try {
+                    readChar = future.get(TIMEOUT_FOR_TEST_CONNECTION, TimeUnit.SECONDS);
+                } catch (TimeoutException ex) {
+                    readChar = 0;
+                } finally {
+                    sshConnection.disconnect();
+                    service.shutdownNow();
+                }
+                if (readChar < 0) {
+                    return FormValidation.error(
+                            Messages.StreamEventsCapabilityException(authentication.getUsername()));
+                } else {
+                    return FormValidation.ok(Messages.Success());
+                }
+            } catch (SshConnectException ex) {
+                return FormValidation.error(Messages.SshConnectException());
+            } catch (SshAuthenticationException ex) {
+                return FormValidation.error(Messages.SshAuthenticationException(ex.getMessage()));
+            } catch (Exception e) {
+                return FormValidation.error(Messages.ConnectionError(e.getMessage()));
+            }
         }
 
         /**
@@ -1349,6 +1379,17 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 return FormValidation.error(Messages.BadUrlError());
             }
         }
+    }
+
+    /**
+     * The SSH private key credentials that can be selected for this server.
+     * Used by the configuration page.
+     *
+     * @return the list box model.
+     */
+    public ListBoxModel getGerritCredentialsIdItems() {
+        checkPermission();
+        return SshCredentialsHelper.fillCredentialsIdItems(config.getGerritCredentialsId());
     }
 
     /**

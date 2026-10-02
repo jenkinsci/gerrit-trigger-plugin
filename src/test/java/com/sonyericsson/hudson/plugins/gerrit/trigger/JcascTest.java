@@ -72,6 +72,7 @@ class JcascTest {
             assertThat(exported, containsString("- from: \"23:13\""));
             assertThat(exported, containsString("to: \"05:07\""));
 
+            assertThat(exported, containsString("gerritCredentialsId: \"gerrit-ssh\""));
             assertThat(exported, not(containsString("FAILED TO EXPORT")));
 
             ConfigurationAsCode.get().configureWith(YamlSource.of(new StringInputStream(exported)));
@@ -105,6 +106,7 @@ class JcascTest {
             assertEquals("never_use_plaintext_password", c.getGerritHttpSecretPassword().getPlainText());
         }
         assertEquals("/key/file", c.getGerritAuthKeyFile().getAbsolutePath());
+        assertEquals("gerrit-ssh", c.getGerritCredentialsId());
         if (checkPasswords) {
             assertEquals("never_use_plaintext_password_ever", c.getGerritAuthKeyFileSecretPassword().getPlainText());
         }

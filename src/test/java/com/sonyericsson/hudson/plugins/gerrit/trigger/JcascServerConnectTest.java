@@ -31,9 +31,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.sonymobile.tools.gerrit.gerritevents.mock.SshdServerMock;
 import io.jenkins.plugins.casc.ConfigurationAsCode;
 import io.jenkins.plugins.casc.yaml.YamlSource;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import org.apache.sshd.server.SshServer;
 import net.sf.json.JSONArray;
@@ -245,6 +250,34 @@ class JcascServerConnectTest {
     }
 
     /**
+     * Test connecting with a private key from the credentials store (JENKINS-21637).
+     * The configured key file does not exist, so the connection can only succeed if the
+     * key is taken from the credential.
+     *
+     * @throws Exception throw if so.
+     */
+    @Test
+    void testConnectWithSshCredentials() throws Exception {
+        String key = new String(Files.readAllBytes(sshKey.getPrivateKey().toPath()), StandardCharsets.UTF_8);
+        SystemCredentialsProvider store = SystemCredentialsProvider.getInstance();
+        store.getCredentials().add(new BasicSSHUserPrivateKey(CredentialsScope.GLOBAL, "gerrit-ssh", "nobody",
+                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(key), null, "test"));
+        store.save();
+
+        JSONObject server = generateConfigForServer(sshd1);
+        JSONObject serverCfg = server.getJSONObject("config");
+        serverCfg.put("gerritAuthKeyFile", "/does/not/exist/id_rsa");
+        serverCfg.put("gerritCredentialsId", "gerrit-ssh");
+        String config = wrapCascConfig(JSONArray.fromObject(new Object[]{server}));
+        ConfigurationAsCode.get().configureWith(YamlSource.of(new StringInputStream(config)));
+
+        assertEquals(1, pluginImpl.getServers().size());
+        GerritServer gerritServer = pluginImpl.getServers().get(0);
+        assertEquals("gerrit-ssh", gerritServer.getConfig().getGerritCredentialsId());
+        waitForConnectedState(gerritServer);
+    }
+
+    /**
      * Wait for Gerrit server state to change to "connected".
      *
      * @param server Server instance to wait for.
@@ -274,6 +307,16 @@ class JcascServerConnectTest {
                     .forEachOrdered(sshd -> servers.add(generateConfigForServer(sshd)));
         }
 
+        return wrapCascConfig(servers);
+    }
+
+    /**
+     * Wrap server configuration blocks into a configuration document.
+     *
+     * @param servers the server blocks.
+     * @return Configuration JSON document (as a subset of YAML).
+     */
+    private String wrapCascConfig(JSONArray servers) {
         JSONObject plugin = new JSONObject();
         plugin.put("servers", servers);
 
