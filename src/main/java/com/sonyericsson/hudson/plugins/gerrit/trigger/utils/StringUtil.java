@@ -29,6 +29,7 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonymobile.tools.gerrit.gerritevents.GerritEventListener;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.ChangeBasedEvent;
 import java.util.regex.Pattern;
+import hudson.Functions;
 
 /**
  * Various string making utility methods.
@@ -115,6 +116,18 @@ public final class StringUtil {
      */
     public static String getPluginJsUrl(String jsName) {
         return PLUGIN_JS_URL + jsName;
+    }
+
+    /**
+     * Creates a Gerrit git clone URL from the frontend URL and project name.
+     * Gerrit exposes git repositories at {@code {frontend_url}/a/{project}.git}.
+     *
+     * @param frontEndUrl the Gerrit front-end URL (with or without trailing slash).
+     * @param project the Gerrit project name.
+     * @return the git clone URL.
+     */
+    public static String makeGerritGitUrl(String frontEndUrl, String project) {
+        return Functions.joinPath(frontEndUrl, "a/" + project + ".git");
     }
 
     /**

@@ -274,7 +274,7 @@ class ManualTriggerActionTest {
             pluginMockedStatic.when(PluginImpl::getInstance).thenReturn(plugin);
 
             ManualTriggerAction action = new ManualTriggerAction();
-            String url = action.getGerritUrl(change, null);
+            String url = action.getGerritUrl(change, "testServer");
 
             assertEquals("http://gerrit/100", url);
         }

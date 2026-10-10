@@ -153,6 +153,9 @@ public class ManualTriggerAction implements RootAction {
      * @return the config of the server or null if config not found.
      */
     private IGerritHudsonTriggerConfig getServerConfig(String serverName) {
+        if (serverName == null) {
+            return null;
+        }
         GerritServer server = PluginImpl.getServer_(serverName);
         if (server != null) {
             IGerritHudsonTriggerConfig config = server.getConfig();
@@ -168,6 +171,24 @@ public class ManualTriggerAction implements RootAction {
     }
 
     /**
+     * Get the server config for the given server name, falling back to
+     * the first enabled server when the named server is not found.
+     *
+     * @param serverName the name of the server, or null.
+     * @return the config, or null if no server could be found.
+     */
+    private IGerritHudsonTriggerConfig getServerConfigOrFirst(String serverName) {
+        IGerritHudsonTriggerConfig config = getServerConfig(serverName);
+        if (config == null) {
+            ArrayList<String> enabledServers = getEnabledServers();
+            if (!enabledServers.isEmpty()) {
+                config = getServerConfig(enabledServers.get(0));
+            }
+        }
+        return config;
+    }
+
+    /**
      * Return the front end url of selected server, or first enabled server if
      * selected doesn't exists (happens when serverName is null also). First
      *
@@ -177,14 +198,9 @@ public class ManualTriggerAction implements RootAction {
     @SuppressWarnings("unused")
     //called from jelly
     public String getFrontEndUrl(String serverName) {
-        IGerritHudsonTriggerConfig serverConfig = getServerConfig(serverName);
+        IGerritHudsonTriggerConfig serverConfig = getServerConfigOrFirst(serverName);
         if (serverConfig != null) {
             return serverConfig.getGerritFrontEndUrl();
-        } else {
-            ArrayList<String> enabledServers = getEnabledServers();
-            if (!enabledServers.isEmpty()) {
-                return getServerConfig(enabledServers.get(0)).getGerritFrontEndUrl();
-            }
         }
         return null;
     }
@@ -325,7 +341,13 @@ public class ManualTriggerAction implements RootAction {
         IGerritHudsonTriggerConfig config = getServerConfig(selectedServer);
 
         if (config != null) {
-            GerritQueryHandler handler = new GerritQueryHandler(config);
+            GerritServer server = PluginImpl.getServer_(selectedServer);
+            GerritQueryHandler handler = null;
+            if (server != null) {
+                handler = server.getQueryHandler();
+            } else {
+                handler = new GerritQueryHandler(config);
+            }
             clearSessionData(session);
             session.setAttribute("queryString", queryString);
 
@@ -592,8 +614,9 @@ public class ManualTriggerAction implements RootAction {
         if (url != null && !url.isEmpty()) {
             return url;
         } else if (!change.optString("number", "").isEmpty()) {
-            if (getServerConfig(serverName) != null) {
-                return getServerConfig(serverName).getGerritFrontEndUrlFor(
+            IGerritHudsonTriggerConfig config = getServerConfigOrFirst(serverName);
+            if (config != null) {
+                return config.getGerritFrontEndUrlFor(
                     change.getString("number"), "1");
             } else {
                 logger.error("Could not get config for the server: {}", serverName);
