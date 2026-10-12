@@ -77,16 +77,11 @@ class GerritTriggeredBuildListenerTest {
     private static CountDownLatch buildListenerLatch;
 
     /**
-     * Runs before test method.
-     *
-     * @param rule the jenkins rule
-     *
-     * @throws Exception throw if so.
+     * Clear Hazelcast notification flags between test methods to prevent claim key collision.
+     * Test events use a fixed eventCreatedOn timestamp, producing identical claim keys across tests.
      */
     @BeforeEach
     void clearHazelcastFlags() {
-        // Clear Hazelcast notification flags between test methods to prevent claim key collision.
-        // Test events use a fixed eventCreatedOn timestamp, producing identical claim keys across tests.
         if (HazelcastManager.isInitialized()) {
             HazelcastInstanceProvider.getInstance()
                     .getMap("gerrit-trigger-notification-flags")
@@ -94,6 +89,13 @@ class GerritTriggeredBuildListenerTest {
         }
     }
 
+    /**
+     * Runs before test method.
+     *
+     * @param rule the jenkins rule
+     *
+     * @throws Exception throw if so.
+     */
     @BeforeEach
     void setUp(JenkinsRule rule) throws Exception {
         j = rule;

@@ -72,8 +72,7 @@ public class RunningJobs {
     * @param policy policy to decide cancelling build or not
     */
    @Deprecated
-   public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy)
-   {
+   public void cancelTriggeredJob(ChangeBasedEvent event, String jobName, BuildCancellationPolicy policy) {
        logger.warn("call to deprecated method cancelTriggeredJob.");
        Jenkins jenkins = Jenkins.getInstanceOrNull();
        if (jenkins == null) {
