@@ -30,6 +30,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
 
+import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+
 /**
  * Tests for {@link com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.EventListener}.
  */
@@ -135,6 +140,41 @@ class EventListenerTest {
         verify(listener).gerritEvent(same(commentAdded));
         verify(trigger).commentAddedMatch(same(commentAdded));
         verify(listener).schedule(same(trigger), isExactClass(GerritCause.class), same(commentAdded));
+    }
+
+    /**
+     * Tests that when both job-level and server-wide build cancellation policies are enabled,
+     * the newly arriving event does not cancel and evict itself from {@link RunningJobs}.
+     */
+    @Test
+    void testAbortBuildDoesNotSelfCancelWhenJobAndServerPolicyEnabled() {
+        BuildCancellationPolicy jobPolicy = new BuildCancellationPolicy();
+        jobPolicy.setEnabled(true);
+        jobPolicy.setAbortNewPatchsets(true);
+
+        BuildCancellationPolicy serverPolicy = new BuildCancellationPolicy();
+        serverPolicy.setEnabled(true);
+        serverPolicy.setAbortNewPatchsets(true);
+
+        IGerritHudsonTriggerConfig serverConfig = mock(IGerritHudsonTriggerConfig.class);
+        when(serverConfig.isGerritBuildCurrentPatchesOnly()).thenReturn(true);
+        when(serverConfig.getBuildCurrentPatchesOnly()).thenReturn(serverPolicy);
+        pluginMockedStatic.when(() -> PluginImpl.getServerConfig(any(GerritTriggeredEvent.class)))
+                .thenReturn(serverConfig);
+
+        RunningJobs runningJobs = spy(new RunningJobs(trigger, project));
+        when(trigger.getJob()).thenReturn(project);
+        when(trigger.getBuildCancellationPolicy()).thenReturn(jobPolicy);
+        when(trigger.getRunningJobs(project)).thenReturn(runningJobs);
+
+        PatchsetCreated patchsetCreated = Setup.createPatchsetCreated();
+        handler.notifyListeners(patchsetCreated);
+
+        verify(runningJobs).cancelTriggeredJob(same(patchsetCreated), same("MockProject"), same(jobPolicy));
+        verify(runningJobs, never()).scheduled(same(patchsetCreated));
+        runningJobs.cancelTriggeredJob(patchsetCreated, "MockProject", jobPolicy);
+        assertTrue(runningJobs.remove(patchsetCreated),
+                "Newly triggered event should remain tracked in RunningJobs");
     }
 
     /**
