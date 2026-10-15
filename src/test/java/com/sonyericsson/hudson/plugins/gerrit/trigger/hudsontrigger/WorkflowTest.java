@@ -41,7 +41,6 @@ import org.hamcrest.MatcherAssert;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -93,7 +92,7 @@ class WorkflowTest {
      * This prevents test pollution when running multiple WorkflowTest methods in Hazelcast mode,
      * since all tests use the same mock event ID.
      */
-    @Before
+    @BeforeEach
     public void clearHazelcastNotificationMap() {
         // Only clear if Hazelcast is initialized
         if (HazelcastInstanceProvider.isInitialized()) {
