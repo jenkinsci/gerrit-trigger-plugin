@@ -24,14 +24,20 @@ public class GerritQueueListener extends QueueListener {
 
     @Override
     public void onLeft(LeftItem item) {
-        if (item.isCancelled() && item.task instanceof Job) {
+        if (item.isCancelled() && item.task instanceof Job job) {
             for (Cause cause : item.getCauses()) {
-                if (cause instanceof GerritCause gerritCause && !gerritCause.isSilentMode()) {
+                if (cause instanceof GerritCause gerritCause) {
                     GerritTriggeredEvent event = gerritCause.getEvent();
-                    ToGerritRunListener runListener = ToGerritRunListener.getInstance();
-                    runListener.setQueueCancelled((Job)item.task, event);
-                    TaskListener taskListener = new LogTaskListener(logger, Level.WARNING);
-                    runListener.allBuildsCompleted(event, gerritCause, taskListener);
+                    GerritTrigger trigger = GerritTrigger.getTrigger(job);
+                    if (trigger != null) {
+                        trigger.notifyBuildEnded(event);
+                    }
+                    if (!gerritCause.isSilentMode()) {
+                        ToGerritRunListener runListener = ToGerritRunListener.getInstance();
+                        runListener.setQueueCancelled(job, event);
+                        TaskListener taskListener = new LogTaskListener(logger, Level.WARNING);
+                        runListener.allBuildsCompleted(event, gerritCause, taskListener);
+                    }
                 }
             }
         }

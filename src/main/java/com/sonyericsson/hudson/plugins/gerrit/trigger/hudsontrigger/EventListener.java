@@ -236,11 +236,11 @@ public final class EventListener implements GerritEventListener {
         if (t.getBuildCancellationPolicy() != null && t.getBuildCancellationPolicy().isEnabled()) {
             t.getRunningJobs(t.getJob()).cancelTriggeredJob(changeBasedEvent,
                     t.getJob().getFullName(), t.getBuildCancellationPolicy());
-        }
-
-        IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
-        if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
-            t.getRunningJobs(t.getJob()).scheduled(changeBasedEvent);
+        } else {
+            IGerritHudsonTriggerConfig serverConfig = getServerConfig(event);
+            if (serverConfig != null && (serverConfig.isGerritBuildCurrentPatchesOnly())) {
+                t.getRunningJobs(t.getJob()).scheduled(changeBasedEvent);
+            }
         }
     }
 
