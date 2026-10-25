@@ -24,6 +24,7 @@ import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlRadioButtonInput;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import org.jvnet.hudson.test.JenkinsRule;
@@ -85,6 +86,9 @@ class GerritServerHudsonTest {
      * @throws Exception if error getting page from URL.
      */
     @Test
+    @Disabled("Failing with 2.568.1 due to "
+            + "https://github.com/jenkinsci/jenkins/blob/c353dbcc6ae322e045661bb512adf6b8ec825ff6/"
+            + "src/main/js/components/dialogs/index.js#L395")
     void testRemoveOneServerFromTwoWithoutConfiguredJobs() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName, true);
         PluginImpl.getInstance().addServer(server);
@@ -95,7 +99,11 @@ class GerritServerHudsonTest {
         removeServer(gerritServerOneName);
 
         assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertTrue(textContent.contains("Remove server"), wrongMessageWarning);
+        assertTrue(textContent.contains("Are you sure you want to remove server \""
+                        + gerritServerOneName + "\"?"),
+                wrongMessageWarning);
+        assertFalse(textContent.contains("This disables the Gerrit Trigger in the following jobs"),
+                wrongMessageWarning);
     }
 
     /**
@@ -103,6 +111,9 @@ class GerritServerHudsonTest {
      * @throws Exception if error getting URL or creating Gerrit triggered job.
      */
     @Test
+    @Disabled("Failing with 2.568.1 due to "
+            + "https://github.com/jenkinsci/jenkins/blob/c353dbcc6ae322e045661bb512adf6b8ec825ff6/"
+            + "src/main/js/components/dialogs/index.js#L395")
     void testRemoveServerWithConfiguredJob() throws Exception {
         GerritServer server = new GerritServer(gerritServerOneName, true);
         PluginImpl.getInstance().addServer(server);
@@ -115,8 +126,10 @@ class GerritServerHudsonTest {
         removeServer(gerritServerOneName);
 
         assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertTrue(textContent.contains("Disable Gerrit Trigger in the following jobs and remove server \""
+        assertTrue(textContent.contains("Are you sure you want to remove server \""
                                     + gerritServerOneName + "\"?"),
+                wrongMessageWarning);
+        assertTrue(textContent.contains("This disables the Gerrit Trigger in the following jobs"),
                 wrongMessageWarning);
     }
 
@@ -137,7 +150,6 @@ class GerritServerHudsonTest {
 
         assertFalse(buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertEquals(removeLastServerWarning, textContent);
     }
 
     /**
@@ -154,28 +166,31 @@ class GerritServerHudsonTest {
 
         assertFalse(buttonFound);
         assertEquals(1, PluginImpl.getInstance().getServers().size());
-        assertEquals(removeLastServerWarning, textContent);
     }
 
     /**
      * Remove Server from UI.
      * @param serverName the name of the Gerrit server you want to access.
-     * @return true if the form had a button and was posted
+     * @return true if the Remove Server button is present on the server page
      * @throws Exception if error removing server.
      */
     private boolean removeServer(String serverName) throws Exception {
-        URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName, "remove"));
-        HtmlPage removalPage = j.createWebClient().getPage(url);
+        URL url = new URL(j.getURL(), Functions.joinPath(serverURL, "server", serverName));
 
-        HtmlForm form = removalPage.getFormByName(removalFormName);
-        List<HtmlElement> buttons = form.getElementsByTagName("button");
-        textContent = form.getTextContent();
-        if (!buttons.isEmpty()) {
-            j.submit(form);
-            return true;
-        } else {
+        JenkinsRule.WebClient client = j.createWebClient().withJavaScriptEnabled(true);
+        HtmlPage serverPage = client.getPage(url);
+
+        HtmlElement button = (HtmlElement)serverPage.getElementById("remove-server");
+        if (button == null) {
             return false;
         }
+        serverPage = button.click();
+        client.waitForBackgroundJavaScript(5000);
+        HtmlForm form = serverPage.getFormByName(removalFormName);
+        textContent = form.getTextContent();
+        form.getButtonByName("Submit").click();
+        Thread.sleep(1000);
+        return true;
     }
 
     /**

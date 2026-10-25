@@ -95,7 +95,11 @@
                 </f:block>
             </f:form>
             <div class="jenkins-section__title jenkins-!-margin-top-4 jenkins-!-margin-bottom-1">${%Gerrit Servers}</div>
-            <table id="gerrit-server-table" class="jenkins-table jenkins-table--medium jenkins-hidden jenkins-table--auto-width" data-connect-text="${%Connect}" data-disconnect-text="${%Disconnect}">
+            <table id="gerrit-server-table" class="jenkins-table jenkins-table--medium jenkins-hidden jenkins-table--auto-width"
+                   data-connect-text="${%Connect}" data-disconnect-text="${%Disconnect}"
+                   data-remove-message="${%Are you sure you want to remove server &quot;__SERVER__&quot;?}"
+                   data-remove-title="${%Remove Server}" data-remove-ok-text="${%Remove}"
+                   data-nodelete-last="${%Last server cannot be removed}">
                 <thead>
                     <tr>
                         <th>${%Server Name}</th>

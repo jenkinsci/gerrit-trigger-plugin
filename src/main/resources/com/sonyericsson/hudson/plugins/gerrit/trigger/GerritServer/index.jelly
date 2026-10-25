@@ -8,19 +8,24 @@
         </l:header>
         <l:side-panel>
             <l:app-bar title="${%Configure}"/>
-            <div id="tasks">
-                <j:if test="${!it.isLastServer()}">
-                    <l:task icon="icon-edit-delete icon-md" href="remove" title="Remove Server"/>
-                </j:if>
-            </div>
+            <div id="tasks"/>
         </l:side-panel>
         <l:main-panel>
             <j:set var="instance" value="${it}"/>
             <j:set var="descriptor" value="${it.descriptor}"/>
             <j:set var="serverURL" value="${it.url}"/>
+            <div style="max-width: var(--form-item-max-width);">
+              <l:app-bar title="Gerrit Server ${it.name}">
+                <j:if test="${!it.isLastServer()}">
+                    <button id="remove-server" class="jenkins-button jenkins-!-destructive-color"
+                            data-type="dialog-opener"
+                            data-dialog-url="removeDialog">
+                      ${%Remove Server}
+                    </button>
+                </j:if>
+              </l:app-bar>
+            </div>
             <f:form method="post" action="configSubmit" name="config" tableClass="config-table" class="jenkins-form">
-                <l:app-bar title="Gerrit Server ${it.name}">
-                </l:app-bar>
                 <st:include page="message.jelly" optional="true"/>
                 <br/>
                 <f:section title="${%Gerrit Connection Setting}" icon="symbol-wifi-outline plugin-ionicons-api">

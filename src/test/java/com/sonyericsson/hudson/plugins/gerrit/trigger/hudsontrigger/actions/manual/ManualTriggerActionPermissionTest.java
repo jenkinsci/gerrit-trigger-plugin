@@ -27,6 +27,7 @@ import org.htmlunit.ElementNotFoundException;
 import org.htmlunit.FailingHttpStatusCodeException;
 import org.htmlunit.Page;
 import org.htmlunit.html.HtmlAnchor;
+import org.htmlunit.html.HtmlButton;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlPage;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
@@ -44,11 +45,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 //CS IGNORE MagicNumber FOR NEXT 200 LINES. REASON: Test-data.
 
@@ -102,12 +99,10 @@ class ManualTriggerActionPermissionTest {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
-        JenkinsRule.WebClient wc = j.createWebClient();
+        JenkinsRule.WebClient wc = j.createWebClient().withJavaScriptEnabled(true);
         HtmlPage page = wc.goTo("");
-
-        assertThrows(ElementNotFoundException.class,
-                () -> page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName())),
-                "Anonymous should not see the RootAction");
+        HtmlButton button = (HtmlButton)page.getElementById("header-more-actions");
+        assertNull(button, "Anonymous should not see the RootAction");
     }
 
     /**
@@ -121,8 +116,11 @@ class ManualTriggerActionPermissionTest {
         //add a server so that the manual trigger action URL can be accessed by users with proper access rights.
         PluginImpl.getInstance().addServer(new GerritServer("testServer"));
         ManualTriggerAction action = getManualTriggerAction();
-        JenkinsRule.WebClient wc = j.createWebClient().login("admin", "admin");
+        JenkinsRule.WebClient wc = j.createWebClient().withJavaScriptEnabled(true);
+        wc.login("admin", "admin");
         HtmlPage page = wc.goTo("");
+        page.getElementById("header-more-actions").click();
+        wc.waitForBackgroundJavaScript(5000);
         HtmlAnchor a = assertDoesNotThrow(() ->
             page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName())),
                 "Admin should see the RootAction");
@@ -142,6 +140,8 @@ class ManualTriggerActionPermissionTest {
         ManualTriggerAction action = getManualTriggerAction();
         JenkinsRule.WebClient wc = j.createWebClient().login("bobby", "bobby");
         HtmlPage page = wc.goTo("");
+        page.getElementById("header-more-actions").click();
+        wc.waitForBackgroundJavaScript(5000);
         assertDoesNotThrow(() -> {
             HtmlAnchor a = page.getAnchorByHref(Functions.joinPath(j.contextPath, action.getUrlName()));
             assertNotNull(a);
