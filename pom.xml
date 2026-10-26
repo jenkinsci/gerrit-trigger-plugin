@@ -62,6 +62,8 @@
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <no-test-jar>false</no-test-jar>
         <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
+        <ban-deprecated-stapler.skip>false</ban-deprecated-stapler.skip>
+        <banObsoleteDependencyOverrides.skip>false</banObsoleteDependencyOverrides.skip>
         <findbugs.failOnError>false</findbugs.failOnError>
         <build-failure-analyzer-plugin.version>3.887.vc872cf1b_7dff</build-failure-analyzer-plugin.version>
         <checkstyle.version>3.6.0</checkstyle.version>
@@ -69,6 +71,8 @@
         <forkCount>0.5C</forkCount>
         <spotbugs.threshold>High</spotbugs.threshold>
         <ban-junit4-imports.skip>true</ban-junit4-imports.skip>
+        <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
+        <hpi.bundledArtifacts>gerrit-events</hpi.bundledArtifacts>
     </properties>
 
     <dependencies>
@@ -84,7 +88,7 @@
                 </exclusion>
                 <!-- Provided by jsch plugin -->
                 <exclusion>
-                    <groupId>com.jcraft</groupId>
+                    <groupId>com.github.mwiede</groupId>
                     <artifactId>jsch</artifactId>
                 </exclusion>
                 <!-- Provided by core -->
@@ -106,8 +110,16 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
             </exclusions>
             <!-- New source is here: https://github.com/sonyxperiadev/gerrit-events -->
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>commons-lang3-api</artifactId>
         </dependency>
         <dependency>
             <groupId>io.jenkins.plugins</groupId>
