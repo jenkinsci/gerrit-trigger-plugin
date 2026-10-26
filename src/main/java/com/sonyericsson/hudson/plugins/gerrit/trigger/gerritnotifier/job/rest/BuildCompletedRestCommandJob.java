@@ -57,6 +57,7 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
     private final IGerritHudsonTriggerConfig config;
+    private final boolean notifyTopic;
 
     /**
      * Constructor.
@@ -67,12 +68,37 @@ public class BuildCompletedRestCommandJob extends AbstractRestCommandJob {
      */
     public BuildCompletedRestCommandJob(IGerritHudsonTriggerConfig config, BuildMemory.MemoryImprint memoryImprint,
                                         TaskListener listener) {
+        this(config, memoryImprint, listener, (ChangeBasedEvent)memoryImprint.getEvent(), true);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param config        config
+     * @param memoryImprint memory
+     * @param listener      listener
+     * @param event         the change to send the review to
+     * @param notifyTopic   also notify the other changes in the same topic
+     */
+    private BuildCompletedRestCommandJob(IGerritHudsonTriggerConfig config, BuildMemory.MemoryImprint memoryImprint,
+                                         TaskListener listener, ChangeBasedEvent event, boolean notifyTopic) {
         //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
-        super(config, (listener != null ? listener.getLogger() : null), (ChangeBasedEvent)memoryImprint.getEvent());
+        super(config, (listener != null ? listener.getLogger() : null), event);
         this.memoryImprint = memoryImprint;
         this.listener = listener;
         this.parameterExpander = new ParameterExpander(config);
         this.config = config;
+        this.notifyTopic = notifyTopic;
+    }
+
+    @Override
+    public void run() {
+        super.run();
+        if (notifyTopic) {
+            for (ChangeBasedEvent topicEvent : TopicChangeEvents.of(config, event)) {
+                new BuildCompletedRestCommandJob(config, memoryImprint, listener, topicEvent, false).run();
+            }
+        }
     }
 
     @Override

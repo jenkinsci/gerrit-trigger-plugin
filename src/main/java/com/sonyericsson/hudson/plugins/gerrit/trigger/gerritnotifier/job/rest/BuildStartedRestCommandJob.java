@@ -55,6 +55,7 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
     private final TaskListener listener;
     private final ParameterExpander parameterExpander;
     private final IGerritHudsonTriggerConfig config;
+    private final boolean notifyTopic;
 
     /**
      * Constructor.
@@ -67,6 +68,21 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
      */
     public BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, Run build, TaskListener listener,
                                       ChangeBasedEvent event, BuildsStartedStats stats) {
+        this(config, build, listener, event, stats, true);
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param config      config
+     * @param build       build
+     * @param listener    listener
+     * @param event       event
+     * @param stats       stats
+     * @param notifyTopic also notify the other changes in the same topic
+     */
+    private BuildStartedRestCommandJob(IGerritHudsonTriggerConfig config, Run build, TaskListener listener,
+                                       ChangeBasedEvent event, BuildsStartedStats stats, boolean notifyTopic) {
         //CS IGNORE AvoidInlineConditionals FOR NEXT 1 LINES. REASON: Only more hard to read alternatives apply.
         super(config, (listener != null ? listener.getLogger() : null), event);
         this.build = build;
@@ -74,6 +90,17 @@ public class BuildStartedRestCommandJob extends AbstractRestCommandJob {
         this.listener = listener;
         this.parameterExpander = new ParameterExpander(config);
         this.config = config;
+        this.notifyTopic = notifyTopic;
+    }
+
+    @Override
+    public void run() {
+        super.run();
+        if (notifyTopic) {
+            for (ChangeBasedEvent topicEvent : TopicChangeEvents.of(config, event)) {
+                new BuildStartedRestCommandJob(config, build, listener, topicEvent, stats, false).run();
+            }
+        }
     }
 
     /**
