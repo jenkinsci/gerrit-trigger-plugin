@@ -351,4 +351,14 @@ public interface IGerritHudsonTriggerConfig extends GerritConnectionConfig2 {
       * @return the instance of {@link Secret}.
       */
      Secret getGerritAuthKeyFileSecretPassword();
+
+     /**
+      * The id of an SSH private key credential (SSH Credentials Plugin) used to connect to Gerrit.
+      * When set, it takes precedence over {@link #getGerritAuthKeyFile()}.
+      *
+      * @return the credentials id, or null if the key file is used.
+      */
+     default String getGerritCredentialsId() {
+         return null;
+     }
 }

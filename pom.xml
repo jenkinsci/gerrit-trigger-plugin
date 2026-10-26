@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>6.2189.v695a_c41f5249</version>
+        <version>6.2236.v12dd4c483242</version>
         <relativePath />
     </parent>
 
@@ -61,6 +61,7 @@
         <changelist>999999-SNAPSHOT</changelist>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <no-test-jar>false</no-test-jar>
+        <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
         <findbugs.failOnError>false</findbugs.failOnError>
         <build-failure-analyzer-plugin.version>3.887.vc872cf1b_7dff</build-failure-analyzer-plugin.version>
         <checkstyle.version>3.6.0</checkstyle.version>
@@ -74,7 +75,7 @@
         <dependency>
             <groupId>com.sonymobile.tools.gerrit</groupId>
             <artifactId>gerrit-events</artifactId>
-            <version>2.22.0</version>
+            <version>2.24.0</version>
             <exclusions>
                 <!-- Provided by gson-api plugin -->
                 <exclusion>
@@ -153,7 +154,10 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>credentials</artifactId>
-            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>ssh-credentials</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>

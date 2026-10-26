@@ -29,7 +29,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.Messages;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -96,7 +95,7 @@ public class PluginChangeMergedEvent extends PluginGerritEvent implements Serial
         if (!super.shouldTriggerOn(event)) {
             return false;
         }
-        if (StringUtils.isNotEmpty(commitMessageContainsRegEx)) {
+        if (commitMessageContainsRegEx != null && !commitMessageContainsRegEx.isEmpty()) {
             if (commitMessagePattern == null) {
                 commitMessagePattern = Pattern.compile(
                         this.commitMessageContainsRegEx, Pattern.DOTALL | Pattern.MULTILINE);

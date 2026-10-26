@@ -43,6 +43,7 @@ import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import com.sonyericsson.hudson.plugins.gerrit.trigger.gerritnotifier.ToGerritRunListener;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.BuildCancellationPolicy;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
 import com.sonymobile.tools.gerrit.gerritevents.dto.events.PatchsetCreated;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
@@ -77,9 +78,14 @@ class GerritQueueListenerTest {
     @Test
     void testCancelledQueueItemIsOnlyTriggeredProject() throws Exception {
         FreeStyleProject project = j.createFreeStyleProject();
+        GerritTrigger trigger = Setup.createDefaultTrigger(project);
+        BuildCancellationPolicy policy = new BuildCancellationPolicy();
+        policy.setEnabled(true);
+        trigger.setBuildCancellationPolicy(policy);
         PatchsetCreated event = Setup.createPatchsetCreated();
         final GerritCause gerritCause = new GerritCause(event, false);
 
+        trigger.getRunningJobs(project).add(event);
         ToGerritRunListener runListener = ToGerritRunListener.getInstance();
         runListener.onTriggered(project, event);
         project.scheduleBuild2(QUIET_PERIOD, gerritCause);
@@ -90,6 +96,7 @@ class GerritQueueListenerTest {
         assertThat(queue.isEmpty(), equalTo(true));
         assertThat(project.getBuilds().size(), equalTo(0));
         assertThat(runListener.isBuilding(event), equalTo(false));
+        assertThat(trigger.getRunningJobs(project).remove(event), equalTo(false));
     }
 
     /**

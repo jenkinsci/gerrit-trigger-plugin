@@ -171,6 +171,9 @@ public class RunningJobs {
     */
    private boolean shouldIgnoreEvent(ChangeBasedEvent event,
            BuildCancellationPolicy policy, ChangeBasedEvent runningChangeBasedEvent) {
+       if (event == runningChangeBasedEvent) {
+           return true;
+       }
        // Find all entries in runningJobs with the same Change #.
        // Optionally, ignore all manual patchsets and don't cancel builds due to
        // a retrigger of an older build.
