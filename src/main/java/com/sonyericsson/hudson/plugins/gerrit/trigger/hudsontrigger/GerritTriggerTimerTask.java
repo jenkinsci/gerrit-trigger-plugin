@@ -23,6 +23,7 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import com.thoughtworks.xstream.converters.basic.NullConverter;
 import hudson.model.Job;
 import hudson.triggers.SafeTimerTask;
 
@@ -109,4 +110,15 @@ public class GerritTriggerTimerTask extends SafeTimerTask {
 
     @Deprecated
     private transient GerritTrigger gerritTrigger;
+
+    /**
+     * Discards legacy persisted tasks without deserializing inherited TimerTask state.
+     * XStream2 discovers this converter automatically; start() recreates the runtime task.
+     */
+    public static class ConverterImpl extends NullConverter {
+        @Override
+        public boolean canConvert(Class type) {
+            return GerritTriggerTimerTask.class.isAssignableFrom(type);
+        }
+    }
 }

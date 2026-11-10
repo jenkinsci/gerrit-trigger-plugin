@@ -165,7 +165,8 @@ public class GerritTrigger extends Trigger<Job> {
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
-    private GerritTriggerTimerTask gerritTriggerTimerTask;
+    // Recreated by start(); GerritTriggerTimerTask.ConverterImpl discards legacy persisted tasks.
+    private transient GerritTriggerTimerTask gerritTriggerTimerTask;
     private GerritTriggerInformationAction triggerInformationAction;
 
     /**
